@@ -124,29 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
     closeFullscreenSettings();
   });
 
-  // Settings Tabs in Sidebar
+  // Settings Button in Sidebar (Opens in-page Settings Overlay)
   document.getElementById('btn-open-settings')?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     openFullscreenSettings('ai');
-  });
-
-  document.getElementById('btn-nav-agents')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openFullscreenSettings('agents');
-  });
-
-  document.getElementById('btn-nav-skills')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openFullscreenSettings('skills');
-  });
-
-  document.getElementById('btn-nav-memories')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openFullscreenSettings('memories');
   });
 
   if (btnCloseSettingsOverlay) {
@@ -155,21 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
       closeFullscreenSettings();
     });
   }
-
-  // Sync Badges from Storage
-  try {
-    chrome.storage.local.get(['agents_list', 'skills_list', 'memories_list'], (res) => {
-      const agCount = Array.isArray(res.agents_list) ? res.agents_list.length : 10;
-      const skCount = Array.isArray(res.skills_list) ? res.skills_list.length : 46;
-      const memCount = Array.isArray(res.memories_list) ? res.memories_list.length : 28;
-      const elAg = document.getElementById('newtab-badge-count-agents');
-      const elSk = document.getElementById('newtab-badge-count-skills');
-      const elMem = document.getElementById('newtab-badge-count-memories');
-      if (elAg) elAg.textContent = agCount;
-      if (elSk) elSk.textContent = skCount;
-      if (elMem) elMem.textContent = memCount;
-    });
-  } catch (e) {}
 
   window.addEventListener('message', (e) => {
     if (e.data?.action === 'closeSettings') {

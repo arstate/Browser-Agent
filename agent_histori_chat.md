@@ -1570,6 +1570,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.23.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 224: Clean Homescreen Sidebar with In-Page Settings Access
+- **Problem**:
+  - Di Homescreen (Welcomescreen New Tab), menampilkan seluruh sub-menu settings membuat sidebar terasa padat. Pengguna menginginkan menu sidebar homescreen tetap ultra-clean (hanya `Home`, `Riwayat Chat`, dan tombol `Pengaturan`), di mana ketika tombol `Pengaturan` diklik langsung membuka layar pengaturan di dalam tab yang sama tanpa membuka tab browser baru (`kalo di homescren sidebar menunya tetep kasih menu pengaturan aja bro tombolnya biar lebih clean trus klau di klik pengaturan itu langsung ke pengaturan gaperlu open tab baru`).
+- **Penyebab & Solusi**:
+  1. **Sidebar Homescreen Ultra-Clean**:
+     - Menyederhanakan elemen `.app-sidebar` di New Tab menjadi:
+       - Header profil: `a arya Personal`
+       - Menu 1: `Home` (icon rumah)
+       - Menu 2: `Riwayat Chat` (icon history)
+       - Menu 3: `Pengaturan` (icon gear)
+  2. **In-Page Overlay Access (Tanpa Buka Tab Baru)**:
+     - Mengklik tombol `Pengaturan` langsung mengaktifkan `#fullscreen-settings-overlay` yang memuat `options.html` di dalam iframe layar penuh seketika.
+     - Di dalam layar Pengaturan, sidebar menampilkan daftar tab lengkap (`AI & Providers`, `Multi-Agent`, `Skills`, `Memory`) serta tombol `Home` untuk kembali ke percakapan.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.24.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
