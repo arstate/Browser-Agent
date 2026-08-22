@@ -135,8 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-open-settings')?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
     openFullscreenSettings('ai');
-  });
+  }, true);
 
   if (btnCloseSettingsOverlay) {
     btnCloseSettingsOverlay.addEventListener('click', (e) => {

@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.26.0`
-- **Iterasi:** `Iterasi 226`
-- **Tanggal Rilis:** 22 Agustus 2026 (23:58 WIB)
+- **Versi Terkini:** `v2.27.0`
+- **Iterasi:** `Iterasi 227`
+- **Tanggal Rilis:** 22 Agustus 2026 (23:59 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.5 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.27.0** | 227 | 22-08-2026 23:59 | `v2.27.0` | **Fix In-Page Settings Bug (Zero External Tab Creation):** Memperbaiki event handler tombol `Pengaturan` di `sidepanel.js` dan `newtab.js` dengan `stopImmediatePropagation` dan pemeriksaan `#fullscreen-settings-overlay` sehingga 100% dipastikan membuka layar pengaturan di dalam tab yang sama (in-tab overlay) dan tidak lagi membuka tab Chrome baru. | 🟢 STABLE | `./restore.sh v2.27.0` |
 | **v2.26.0** | 226 | 22-08-2026 23:58 | `v2.26.0` | **Fix Welcome-Card DOM Theft Bug on Home Click:** Memperbaiki bug di mana mengklik tombol `Home` saat berada di Homescreen menyebabkan elemen kartu hero (`#welcome-card`) ter-append secara keliru ke dalam `#chat-messages` yang tersembunyi sehingga layar hero menjadi kosong. Kini `resetChatMessagesUI()` melindungi DOM `welcomeCard` tetap berada di `#agent-workspace`. | 🟢 STABLE | `./restore.sh v2.26.0` |
 | **v2.25.0** | 225 | 22-08-2026 23:55 | `v2.25.0` | **Hover-Reveal Clean Sidebar on Homescreen:** Menjadikan sidebar di Homescreen ter-collapse/hide (58px) secara default agar workspace chat luas dan bersih, dan otomatis slide-out/show (220px) dengan smooth transition saat dihover kursor mouse. | 🟢 STABLE | `./restore.sh v2.25.0` |
 | **v2.24.0** | 224 | 22-08-2026 23:54 | `v2.24.0` | **Clean Homescreen Sidebar with In-Page Settings Access:** Mengembalikan sidebar Homescreen ke tampilan ultra-clean (hanya berisi `Home`, `Riwayat Chat`, dan tombol `Pengaturan`). Mengklik `Pengaturan` akan langsung membuka overlay pengaturan secara instan di dalam halaman tanpa membuka tab browser baru. | 🟢 STABLE | `./restore.sh v2.24.0` |

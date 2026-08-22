@@ -1617,6 +1617,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.26.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 227: Fix In-Page Settings Bug (Zero External Tab Creation)
+- **Problem**:
+  - Mengklik tombol `Pengaturan` di sidebar homescreen masih membuka tab browser baru `options.html` di Chrome (`bug ketika di sidebar homescren klik pengaturan masih muncul tab baru pengaturan harusnya gausah tab baru pengaturan jadi tab nya tetep sama tab homescren di chromenya`).
+- **Penyebab & Solusi**:
+  1. **Akar Masalah**:
+     - `sidepanel.js` memasang event listener global pada `#btn-open-settings` yang memanggil `openOptionsTab()` (`chrome.tabs.create` / `chrome.runtime.openOptionsPage()`).
+  2. **Perbaikan**:
+     - Memperbarui `openOptionsTab()` di `sidepanel.js` untuk mendeteksi keberadaan `#fullscreen-settings-overlay`. Jika elemen tersebut ada (halaman New Tab), fungsi langsung menampilkan overlay iframe `options.html` di halaman yang sama dan membatalkan pembuatan tab baru.
+     - Memperbarui listener `#btn-open-settings` di `newtab.js` dengan `stopImmediatePropagation()` dan fase capture (`true`).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.27.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

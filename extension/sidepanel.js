@@ -5758,6 +5758,18 @@ async function openOptionsTab(e) {
     e.preventDefault();
     e.stopPropagation();
   }
+
+  // If in newtab (embedded fullscreen-settings-overlay exists), open in-page overlay directly!
+  const settingsOverlay = document.getElementById('fullscreen-settings-overlay');
+  if (settingsOverlay) {
+    settingsOverlay.style.display = 'flex';
+    const settingsIframe = document.getElementById('settings-embedded-iframe');
+    if (settingsIframe && (!settingsIframe.src || !settingsIframe.src.includes('options.html'))) {
+      settingsIframe.src = 'options.html';
+    }
+    return;
+  }
+
   if (isOpeningOptions) return;
   isOpeningOptions = true;
   setTimeout(() => { isOpeningOptions = false; }, 600);
