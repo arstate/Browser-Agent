@@ -594,6 +594,9 @@ body.newtab-body {
   transition: bottom 0.32s cubic-bezier(0.16, 1, 0.3, 1),
               top 0.32s cubic-bezier(0.16, 1, 0.3, 1),
               left 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-radius 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              min-height 0.28s ease,
+              padding 0.28s ease,
               box-shadow 0.32s ease,
               border-color 0.2s ease,
               transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1605,6 +1608,26 @@ body.has-messages #btn-mode-websearch {
   display: none !important;
 }
 
+/* Web Search Mode Pill Shape & Compact Centered Input */
+.chat-input-container.mode-websearch {
+  border-radius: 9999px !important;
+  min-height: 86px !important;
+  padding: 10px 14px 10px 20px !important;
+  gap: 4px !important;
+}
+
+body:not(.has-messages) .chat-input-container.mode-websearch::before {
+  border-radius: 9999px !important;
+}
+
+.chat-input-container.mode-websearch .chat-input-top-bar {
+  margin-bottom: 2px !important;
+}
+
+.chat-input-container.mode-websearch .chat-input-bar {
+  align-items: center !important;
+}
+
 .chat-input-container.mode-websearch #btn-attach-file,
 .chat-input-container.mode-websearch #execution-mode-wrapper,
 .chat-input-container.mode-websearch .attachments-preview-bar,
@@ -1614,8 +1637,15 @@ body.has-messages #btn-mode-websearch {
 }
 
 .chat-input-container.mode-websearch #chat-input {
-  min-height: 52px;
-  height: 52px;
+  min-height: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  padding: 0 !important;
+  font-size: 15px !important;
+}
+
+.chat-input-container.mode-websearch #btn-send {
+  align-self: center !important;
 }
 
 .chat-input-container.mode-websearch #btn-send .send-icon {
@@ -1628,6 +1658,11 @@ body.has-messages #btn-mode-websearch {
   opacity: 1 !important;
   transform: rotate(0deg) scale(1) !important;
   pointer-events: auto !important;
+}
+
+.chat-input-container.mode-websearch .websearch-suggestions-dropdown {
+  border-radius: 24px !important;
+  top: calc(100% + 10px) !important;
 }
 
 /* Web Search Autocomplete Suggestions Dropdown - Clean Dark SaaS (Zero Neon Blur) */

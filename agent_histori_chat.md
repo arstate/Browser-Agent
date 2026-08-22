@@ -1999,6 +1999,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.54.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 255: Full-Rounded Pill Shape Search Bar & Vertically Centered Search Icon in Web Search Mode
+- **Problem**:
+  - Pada mode `🌐 Web Search`, pengguna menginginkan bentuk kotak pencarian menjadi *full rounded pill* dengan ukuran tinggi yang lebih pendek/ringkas dan ikon search berada pas di posisi tengah vertikal (*center*) (`buat ketika di mode websearch input prompt jadi full rounded sampingnya dan ukuran lebih di pendekin lagi tingginya biar ui enak dan pas dilihat jadi nanti icon searchnya pas center tangh bukan lagi dibawah`).
+- **Penyebab & Solusi**:
+  1. **Full-Rounded Pill Shape Morphing**:
+     - Mengubah `.chat-input-container.mode-websearch` menjadi `border-radius: 9999px !important; min-height: 86px !important; padding: 10px 14px 10px 20px !important;` dengan transisi kurva halus.
+     - Menyesuaikan pseudo-element glow `::before` menjadi `border-radius: 9999px !important;`.
+  2. **Penyelarasan Posisi Tengah Vertikal (*Vertical Center Alignment*)**:
+     - Mengubah `.chat-input-container.mode-websearch .chat-input-bar` menjadi `align-items: center !important;`.
+     - Mengatur `#chat-input` di mode websearch menjadi `min-height: 28px; height: 28px; line-height: 28px; padding: 0;` dan tombol `#btn-send` menjadi `align-self: center !important;`.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (356.1 KB).
+  - Restore Point: `v2.55.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

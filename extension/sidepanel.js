@@ -7248,7 +7248,7 @@ try {
 function adjustChatInputHeight() {
   if (!chatInput) return;
   const isWebSearch = currentChatMode === 'websearch';
-  const baseHeight = isWebSearch ? 52 : 32;
+  const baseHeight = isWebSearch ? 28 : 32;
 
   if (!chatInput.value || chatInput.value.trim() === '') {
     chatInput.style.height = baseHeight + 'px';
