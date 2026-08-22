@@ -3723,6 +3723,8 @@ function setChatMode(mode) {
       chrome.storage.local.set({ browser_agent_mode: mode });
     } catch (e) {}
   }
+
+  adjustChatInputHeight();
 }
 
 async function runChatModeLoop(userMessage, attachments = [], explicitMentions = []) {
@@ -7242,19 +7244,26 @@ try {
   initExecutionModeDropdown();
 } catch (e) {}
 
-// Robust auto-expand and auto-shrink textarea
+// Robust auto-expand and auto-shrink textarea with mode-adaptive base height
 function adjustChatInputHeight() {
   if (!chatInput) return;
+  const isWebSearch = currentChatMode === 'websearch';
+  const baseHeight = isWebSearch ? 52 : 32;
+
   if (!chatInput.value || chatInput.value.trim() === '') {
-    chatInput.style.height = '32px';
+    chatInput.style.height = baseHeight + 'px';
   } else {
-    chatInput.style.height = '32px';
-    const newHeight = Math.min(Math.max(chatInput.scrollHeight, 32), 120);
+    chatInput.style.height = baseHeight + 'px';
+    const newHeight = Math.min(Math.max(chatInput.scrollHeight, baseHeight), 160);
     chatInput.style.height = newHeight + 'px';
   }
 
   syncHeroPlaceholderHeight();
 }
+
+try {
+  adjustChatInputHeight();
+} catch (e) {}
 
 function syncHeroPlaceholderHeight() {
   const placeholder = document.getElementById('hero-input-placeholder');

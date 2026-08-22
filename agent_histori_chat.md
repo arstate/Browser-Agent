@@ -1984,6 +1984,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.53.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 254: Fix Initial Prompt Height Shrink Bug & Unified Consistent Container Sizing
+- **Problem**:
+  - Pada video screencast pengguna, saat tab baru / refresh, tinggi kotak input prompt kadang menyusut lebih pendek (karena tinggi default textarea 24px) lalu baru membesar ketika diketik atau pindah mode (`kadang bug ukuran input prompt ketika di agent mode kek mengecil sedikit tingginya trus ketika input huruf langsung normal trus ketika mengecil sedikit ketika pindah ke websearch langsung normal`).
+- **Penyebab & Solusi**:
+  1. **Consistent Minimum Heights**:
+     - Menetapkan `min-height: 118px; box-sizing: border-box;` pada `.chat-input-container` di `newtab.css`.
+     - Menetapkan `min-height: 32px; height: 32px; box-sizing: border-box; padding: 4px 0;` pada `#chat-input`.
+     - Menyembunyikan `.chat-input-bottom-actions` saat di mode Web Search dan mengatur `#chat-input` menjadi `min-height: 52px; height: 52px;` sehingga tinggi total container di semua mode (Agent, Chat, Web Search) selalu persis sama (118px).
+  2. **Initial Auto-Adjustment Execution**:
+     - Menjalankan `adjustChatInputHeight()` secara langsung saat inisialisasi awal skrip dan di dalam `setChatMode()` untuk memastikan tinggi kotak prompt selalu presisi sejak milidetik pertama halaman dimuat.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (356.0 KB).
+  - Restore Point: `v2.54.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

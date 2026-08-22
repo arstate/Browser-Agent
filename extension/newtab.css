@@ -579,6 +579,8 @@ body.newtab-body {
   transform: translate(-50%, -50%);
   width: calc(100% - 36px);
   max-width: 780px;
+  min-height: 118px;
+  box-sizing: border-box;
   z-index: 100;
   background: rgba(25, 25, 29, 0.95);
   backdrop-filter: blur(24px) saturate(180%);
@@ -1606,8 +1608,14 @@ body.has-messages #btn-mode-websearch {
 .chat-input-container.mode-websearch #btn-attach-file,
 .chat-input-container.mode-websearch #execution-mode-wrapper,
 .chat-input-container.mode-websearch .attachments-preview-bar,
-.chat-input-container.mode-websearch .active-mentions-bar {
+.chat-input-container.mode-websearch .active-mentions-bar,
+.chat-input-container.mode-websearch .chat-input-bottom-actions {
   display: none !important;
+}
+
+.chat-input-container.mode-websearch #chat-input {
+  min-height: 52px;
+  height: 52px;
 }
 
 .chat-input-container.mode-websearch #btn-send .send-icon {
@@ -2648,9 +2656,13 @@ body.has-messages #btn-mode-websearch {
   font-size: 14.5px;
   color: #FFFFFF;
   resize: none;
-  min-height: 24px;
+  min-height: 32px;
+  height: 32px;
   max-height: 160px;
   line-height: 1.5;
+  box-sizing: border-box;
+  padding: 4px 0;
+  overflow-y: auto;
 }
 
 #chat-input::placeholder {

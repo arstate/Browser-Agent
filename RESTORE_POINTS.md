@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.53.0`
-- **Iterasi:** `Iterasi 253`
-- **Tanggal Rilis:** 23 Agustus 2026 (00:58 WIB)
+- **Versi Terkini:** `v2.54.0`
+- **Iterasi:** `Iterasi 254`
+- **Tanggal Rilis:** 23 Agustus 2026 (01:03 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (355.9 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (356.0 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.54.0** | 254 | 23-08-2026 01:03 | `v2.54.0` | **Fix Initial Prompt Height Shrink Bug & Unified Consistent Container Sizing:** Mengatasi bug tinggi input prompt yang menyusut saat reload / new tab dengan menetapkan `min-height: 118px;` pada `.chat-input-container`, `min-height: 32px; height: 32px;` pada `#chat-input`, `min-height: 52px;` pada mode Web Search (saat toolbar bawah disembunyikan), serta menjalankan `adjustChatInputHeight()` otomatis saat inisialisasi awal sehingga tinggi kotak prompt selalu stabil 100% tanpa lonjakan ukuran. | 🟢 STABLE | `./restore.sh v2.54.0` |
 | **v2.53.0** | 253 | 23-08-2026 00:58 | `v2.53.0` | **Single-Line Zero-Wrap Hero Title in Chat Mode (Anti-Stacking):** Mengubah display hero-title menjadi `display: block; white-space: nowrap; font-size: clamp(26px, 3vw, 38px);` dan highlight menjadi `display: inline;`, memastikan kalimat *"What would you like to talk about today?"* pada Chat Mode selalu tampil rapi dalam satu baris (sebaris) tanpa terpotong atau bertumpuk vertikal. | 🟢 STABLE | `./restore.sh v2.53.0` |
 | **v2.52.0** | 252 | 23-08-2026 00:56 | `v2.52.0` | **Silky-Smooth Progressive Decipher Wave & Anti-Jitter Header Transition:** Mengoptimalkan algoritma animasi teks menjadi gelombang *progressive decipher wave* dari kiri ke kanan dengan karakter matriks halus (`01—+_/\<>*~`), mengunci `min-height` header container (`.welcome-hero-header`) untuk mencegah lonjakan layout vertikal (*zero-jitter*), serta menambahkan transisi fade-glide pada sub-judul. | 🟢 STABLE | `./restore.sh v2.52.0` |
 | **v2.51.0** | 251 | 23-08-2026 00:53 | `v2.51.0` | **Cyber Text Glitch Scramble Animation & Elastic Send/Search Icon Morph on Mode Switch:** Mengintegrasikan animasi pergantian teks glitch per-karakter (*cyber text scramble animation*) pada judul & subtitle hero Homescreen saat berganti mode, serta efek animasi rotasi elastis morphing (`↑` $\leftrightarrow$ `🔍`) pada tombol submit prompt. | 🟢 STABLE | `./restore.sh v2.51.0` |
