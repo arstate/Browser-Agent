@@ -4,21 +4,21 @@
    ========================================================================= */
 
 :root {
-  --bg-app: #0B0F17;
-  --bg-sidebar: #080C14;
-  --bg-card: #131A26;
-  --bg-card-hover: #182232;
-  --bg-input: #0B0F17;
-  --text-primary: #FFFFFF;
-  --text-secondary: #94A3B8;
-  --text-muted: #64748B;
+  --bg-app: #121214;
+  --bg-sidebar: #17171A;
+  --bg-card: #1C1C1F;
+  --bg-card-hover: #242428;
+  --bg-input: #161618;
+  --text-primary: #F4F4F6;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
   --border-card: rgba(255, 255, 255, 0.08);
   --border-subtle: rgba(255, 255, 255, 0.05);
   --accent-lime: #CEF128;
   --accent-lime-hover: #bde01d;
   --accent-orange: #F97316;
   --accent-blue: #3B82F6;
-  --accent-dark: #0F172A;
+  --accent-dark: #1E1E22;
   --radius-card: 16px;
   --radius-pill: 9999px;
   --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -326,7 +326,7 @@ body.options-body {
 
 /* Hero Provider Card */
 .bento-hero-provider-card {
-  background: linear-gradient(135deg, #131A26 0%, #172131 100%);
+  background: linear-gradient(135deg, #1C1C20 0%, #242429 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 22px 26px;
 }
@@ -854,7 +854,7 @@ body.options-body {
 .model-input-name {
   flex: 1;
   min-width: 130px;
-  background: #080C14;
+  background: #141416;
   border: 1px solid var(--border-card);
   border-radius: 8px;
   padding: 8px 12px;
@@ -875,7 +875,7 @@ body.options-body {
 .model-input-id {
   flex: 1.2;
   min-width: 160px;
-  background: #080C14;
+  background: #141416;
   border: 1px solid var(--border-card);
   border-radius: 8px;
   padding: 8px 12px;
@@ -1113,7 +1113,7 @@ body.options-body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #080C14;
+  background: #141416;
   border: 1px solid var(--border-card);
   padding: 8px 12px;
   border-radius: 8px;
@@ -1254,7 +1254,7 @@ body.options-body {
 }
 
 .boss-hero-card {
-  background: linear-gradient(135deg, #131A26 0%, #1A2436 100%);
+  background: linear-gradient(135deg, #1C1C20 0%, #242429 100%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-card);
   padding: 22px 24px;
@@ -1543,20 +1543,20 @@ body.options-body {
 }
 
 .item-code-preview {
-  background: #080C14;
+  background: #141416;
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   padding: 8px 10px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: #94A3B8;
+  color: #A1A1AA;
   flex: 1;
   max-height: 100px;
   overflow-y: auto;
   white-space: pre-wrap;
   line-height: 1.4;
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+  scrollbar-color: rgba(161, 161, 170, 0.25) transparent;
 }
 
 .item-code-preview::-webkit-scrollbar {

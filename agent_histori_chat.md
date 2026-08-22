@@ -1631,6 +1631,28 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.27.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 228: Neutral Monochrome Charcoal Dark Mode Theme
+- **Problem**:
+  - Tema dark mode sebelumnya memiliki rona kebiruan (*navy slate tint*) yang kurang disukai dan tidak netral. Pengguna menginginkan tema dark mode berbasis monokromatik abu-abu netral / hitam arang (*dark charcoal*), namun bukan hitam pekat (*pitch black #000*) yang terlalu kontras (`update tema color darkmode itu kek monochrome abu abu atau hitam tapi jangan hitam pekat soalnya kalau gelap kebiruan jelek bro`).
+- **Penyebab & Solusi**:
+  1. **Monochrome Charcoal & Neutral Gray Palette**:
+     - Memperbarui variabel warna dasar di `newtab.css` dan `options.css`:
+       - Background Canvas / App (`--bg-canvas`, `--bg-app`): `#121214` (Dark Charcoal Netral, bukan #000 dan bukan #0B0F17 kebiruan).
+       - Sidebar (`--bg-sidebar`): `#17171A` (Abu-abu gelap netral).
+       - Card & Surfaces (`--bg-card`, `--bg-surface`): `#1C1C1F` (Permukaan abu-abu elegan).
+       - Card Hover (`--bg-card-hover`): `#242428`.
+       - Input Background (`--bg-input`): `#161618`.
+       - Text Primary (`--text-primary`): `#F4F4F6` (Putih gading bersih).
+       - Text Secondary (`--text-secondary`): `#A1A1AA` (Zinc/Neutral 400).
+       - Text Muted (`--text-muted`): `#71717A` (Zinc/Neutral 500).
+  2. **Pembersihan Gradien & Panel Gelap Kebiruan**:
+     - Mengganti gradien hero card dan boss agent card menjadi `linear-gradient(135deg, #1C1C20 0%, #242429 100%)`.
+     - Mengganti latar belakang panel kode preview dan input dari `#080C14` / `#131A26` menjadi `#141416` yang bersih dari tint biru.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.28.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
