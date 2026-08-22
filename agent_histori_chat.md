@@ -1525,6 +1525,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.20.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 221: Scrollable Tags & Uniform Height Grid for Multi-Agent & Skills
+- **Problem**:
+  - Sub-agent yang memiliki banyak skills/memories (10-20 item) membuat kartu item melar ke bawah hingga sangat tinggi, sehingga grid kartu menjadi timpang dan tidak sejajar (`improve ui multi agent skill dan memory yang dipilih buat bisa di scroling biar container multi agent sama ga beda beda dan ga terlalu tinggi`).
+- **Penyebab & Solusi**:
+  1. **Tinggi Kartu Seragam (`height: 280px`)**:
+     - Mengatur tinggi setiap kartu `.item-card` menjadi seragam 280px dengan layout flex terstruktur (header + deskripsi + tag container scrollable + action buttons di bagian bawah).
+  2. **Scrollable Tag Container (`.item-tags-row` & `.boss-hero-tags`)**:
+     - Menetapkan `max-height: 100px; overflow-y: auto;` pada kontainer tag chip dengan custom thin scrollbar bertema Lime/Dark Slate.
+  3. **Scrollable Code Preview (`.item-code-preview`)**:
+     - Menetapkan `max-height: 100px; overflow-y: auto;` pada preview kode SOP & Memory.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (351.1 KB).
+  - Restore Point: `v2.21.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
