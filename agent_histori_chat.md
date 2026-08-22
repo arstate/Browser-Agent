@@ -1737,8 +1737,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Mengatur `backdrop-filter: blur(28px) saturate(190%);` & `-webkit-backdrop-filter: blur(28px) saturate(190%);`
      - Memberikan border tipis elegan `1px solid rgba(255, 255, 255, 0.12)` sehingga pesan chat yang di-scroll di belakang bar input akan ter-blur halus dan estetik sementara input teks tetap tajam dan terbaca jelas.
 - **CRX Build & Sync**:
-  - Re-pack `extension.crx` (352.5 KB).
+  - Re-pack `extension.crx` (352.6 KB).
   - Restore Point: `v2.34.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
+### 🚀 Iterasi 235: Neutral Dark Header Bar & Dropdowns (100% Anti-Navy)
+- **Problem**:
+  - Bilah Header Atas di New Tab (`.fullscreen-header`) dan status chips masih memiliki warna latar dark navy/slate kebiruan (`rgba(11, 15, 23, 0.85)` & `rgba(19, 26, 38, 0.98)`) (`ini masih kek dark kebiruan bro`).
+- **Penyebab & Solusi**:
+  1. **Pembersihan Rona Biru Header & Status Chips**:
+     - Mengubah background `.fullscreen-header` menjadi `rgba(18, 18, 20, 0.88)` (Dark Charcoal Netral).
+     - Mengubah background tombol pill header `.header-pill-btn` menjadi `rgba(255, 255, 255, 0.04)` dengan border `1px solid rgba(255, 255, 255, 0.08)`.
+     - Mengubah background status chip `.bento-status-chip` dan `.chip-dark` menjadi `rgba(26, 26, 30, 0.9)` / `rgba(24, 24, 28, 0.85)`.
+     - Mengubah background dropdown menu model & agent (`.model-dropdown-menu`, `.agent-dropdown-menu`) menjadi `rgba(24, 24, 28, 0.98)`.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.6 KB).
+  - Restore Point: `v2.35.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
 ---
