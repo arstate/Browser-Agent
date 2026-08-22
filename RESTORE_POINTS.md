@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.30.0`
-- **Iterasi:** `Iterasi 230`
-- **Tanggal Rilis:** 23 Agustus 2026 (00:05 WIB)
+- **Versi Terkini:** `v2.31.0`
+- **Iterasi:** `Iterasi 231`
+- **Tanggal Rilis:** 23 Agustus 2026 (00:07 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.5 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.31.0** | 231 | 23-08-2026 00:07 | `v2.31.0` | **Pixel-Perfect Horizontal & Vertical Centering on Homescreen:** Memperbaiki titik pusat koordinat `.chat-input-container` yang sebelumnya tergeser 29px ke kiri karena memakai `left: 50%` viewport (tanpa memperhitungkan sidebar 58px). Sekarang diatur presisi dengan `left: calc(50% + 29px)` dan `top: calc(50% + 28px)` (kompensasi header 56px), sehingga seluruh blok Welcome Title, Input Prompt, dan Recent Sites berada tepat di satu garis sumbu simetris vertikal dan horizontal yang sempurna. | 🟢 STABLE | `./restore.sh v2.31.0` |
 | **v2.30.0** | 230 | 23-08-2026 00:05 | `v2.30.0` | **Neutral Dark Prompt Input with Subtle Professional Neon Glow:** Mengganti warna background container input prompt dari dark kebiruan (`#131A26`) ke neutral dark charcoal (`rgba(25, 25, 29, 0.95)` / `#1C1C1F`) dan tombol mode ke `#27272A`, serta menambahkan aura *subtle neon lime/green ambient glow* (`rgba(206, 241, 40, 0.12)`) di belakang bar input yang bersih, modern, dan profesional. | 🟢 STABLE | `./restore.sh v2.30.0` |
 | **v2.29.0** | 229 | 23-08-2026 00:02 | `v2.29.0` | **Zero Box-Shadow on Homescreen Hover Sidebar:** Menghapus efek box-shadow pada sidebar Homescreen saat hover/show (`box-shadow: none !important;`) sehingga tampilan sidebar tetap flat, bersih, menyatu mulus (*seamless*), dan konsisten dengan border garis 1px tanpa bayangan tebal. | 🟢 STABLE | `./restore.sh v2.29.0` |
 | **v2.28.0** | 228 | 23-08-2026 00:01 | `v2.28.0` | **Neutral Monochrome Charcoal Dark Mode Theme:** Mengganti palet warna dark mode ke nuansa monokromatik abu-abu netral dan dark charcoal (`#121214`, `#17171A`, `#1C1C1F`, `#242428`, `#F4F4F6`, `#A1A1AA`, `#71717A`), membersihkan seluruh corak kebiruan (navy slate) dan menghindari hitam pekat (#000), sehingga menghasilkan estetika SaaS Dark Luxury yang bersih, elegan, dan nyaman di mata. | 🟢 STABLE | `./restore.sh v2.28.0` |

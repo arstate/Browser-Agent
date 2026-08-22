@@ -1680,6 +1680,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.30.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 231: Pixel-Perfect Horizontal & Vertical Centering on Homescreen
+- **Problem**:
+  - Tampilan UI di Homescreen terasa tidak simetris dan kurang presisi ke tengah workspace (`kok kek ada yang kurang center tengah ya bro ui ini`).
+- **Penyebab & Solusi**:
+  1. **Akar Masalah Ketidaksimetrisan**:
+     - `.chat-input-container` menggunakan `position: fixed; left: 50%`, yang menghitung titik tengah berdasarkan 100vw layar penuh dari ujung kiri browser, tanpa memperhitungkan lebar sidebar `58px`.
+     - Akibatnya, bar input tergeser ke kiri sebesar **29px** dibandingkan `#welcome-card` dan `#recent-sites-section` yang berada di dalam kontainer kerja `.fullscreen-agent-app` (`margin-left: 58px`).
+     - Selain itu, `top: 50%` tidak memperhitungkan tinggi header atas (56px).
+  2. **Presisi Koordinat Sumbu Simetri**:
+     - Menyesuaikan posisi horizontal menjadi `left: calc(50% + 29px)` (dan `left: calc(50% + 110px)` saat sidebar hover melar).
+     - Menyesuaikan posisi vertikal menjadi `top: calc(50% + 28px)` (kompensasi tinggi header 56px).
+     - Menyeimbangkan margin atas/bawah `#welcome-card` (72px) dan `#recent-sites-section` (48px), sehingga seluruh elemen sejajar simetris secara sempurna (*pixel-perfect*).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.31.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

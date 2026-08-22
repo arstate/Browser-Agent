@@ -578,7 +578,7 @@ body.newtab-body {
 /* Prompt Input Container - Glides smoothly between Center and Bottom with Neon Ambient Glow */
 .chat-input-container {
   position: fixed;
-  left: 50%;
+  left: calc(50% + 29px);
   transform: translate(-50%, -50%);
   width: calc(100% - 36px);
   max-width: 780px;
@@ -594,6 +594,7 @@ body.newtab-body {
   gap: 8px;
   transition: bottom 0.32s cubic-bezier(0.16, 1, 0.3, 1),
               top 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+              left 0.22s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.32s ease,
               border-color 0.2s ease,
               transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
@@ -622,6 +623,10 @@ body.newtab-body {
   filter: blur(20px);
 }
 
+.app-sidebar:hover ~ .fullscreen-agent-app .chat-input-container {
+  left: calc(50% + 110px);
+}
+
 /* 1. INITIAL STATE: Centered Hero -> Bento Input (Center) -> Recent Sites */
 body:not(.has-messages) .fullscreen-chat-main {
   justify-content: center;
@@ -634,14 +639,14 @@ body:not(.has-messages) .welcome-card {
   align-items: center;
   text-align: center;
   width: 100%;
-  margin-bottom: 80px;
+  margin-bottom: 72px;
 }
 
 body:not(.has-messages) .recent-sites-section {
   display: block;
   width: 100%;
   max-width: 780px;
-  margin: 56px auto 0 auto;
+  margin: 48px auto 0 auto;
 }
 
 body:not(.has-messages) .chat-messages {
@@ -649,8 +654,9 @@ body:not(.has-messages) .chat-messages {
 }
 
 body:not(.has-messages) .chat-input-container {
-  top: 50%;
+  top: calc(50% + 28px);
   bottom: auto;
+  left: calc(50% + 29px);
   transform: translate(-50%, -50%);
   box-shadow: 0 0 40px -6px rgba(206, 241, 40, 0.12), 0 18px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
@@ -673,6 +679,7 @@ body.has-messages .fullscreen-chat-main {
 body.has-messages .chat-input-container {
   top: auto;
   bottom: 22px;
+  left: calc(50% + 29px);
   transform: translate(-50%, 0);
   box-shadow: 0 0 35px -6px rgba(206, 241, 40, 0.1), 0 20px 56px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
