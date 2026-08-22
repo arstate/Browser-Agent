@@ -497,6 +497,24 @@
     </div>
   </div>
 
+  <!-- Lightbox Modal for Images and Videos -->
+  <div class="image-lightbox-modal" id="image-lightbox-modal" style="display: none;">
+    <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+    <div class="lightbox-container">
+      <div class="lightbox-header">
+        <a href="#" download="media-file" class="btn-lightbox-action btn-lightbox-download" id="lightbox-download-link" target="_blank" rel="noopener noreferrer" title="Unduh Media">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span id="lightbox-download-text">Unduh Media</span>
+        </a>
+        <button type="button" class="btn-lightbox-close" id="btn-close-lightbox" title="Tutup (Esc)">&times;</button>
+      </div>
+      <div class="lightbox-img-wrapper">
+        <img src="" id="lightbox-full-img" alt="Fullscreen Preview" style="display: none;">
+        <video src="" id="lightbox-full-video" controls autoplay playsinline style="display: none; max-width: 100%; max-height: 82vh; border-radius: 12px; background: #000000;"></video>
+      </div>
+    </div>
+  </div>
+
   <!-- Core Scripts -->
   <script src="xterm.js"></script>
   <script src="xterm-addon-fit.js"></script>

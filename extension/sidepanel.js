@@ -7498,106 +7498,150 @@ window.addEventListener('resize', () => {
 // =========================================================================
 // Fullscreen Media Lightbox Modal Logic (Image & Video)
 // =========================================================================
-const lightboxModal = document.getElementById('image-lightbox-modal');
-const lightboxImg = document.getElementById('lightbox-full-img');
-const lightboxVideo = document.getElementById('lightbox-full-video');
-const lightboxDownload = document.getElementById('lightbox-download-link');
-const lightboxDownloadText = document.getElementById('lightbox-download-text');
-const btnCloseLightbox = document.getElementById('btn-close-lightbox');
-const lightboxBackdrop = document.getElementById('lightbox-backdrop');
+// Lightbox Fullscreen Media Viewer
+// =========================================================================
+function getLightboxElements() {
+  return {
+    modal: document.getElementById('image-lightbox-modal'),
+    img: document.getElementById('lightbox-full-img'),
+    video: document.getElementById('lightbox-full-video'),
+    downloadLink: document.getElementById('lightbox-download-link'),
+    downloadText: document.getElementById('lightbox-download-text'),
+    closeBtn: document.getElementById('btn-close-lightbox'),
+    backdrop: document.getElementById('lightbox-backdrop')
+  };
+}
 
 async function openMediaLightbox(src, isVideo = false, filename = '') {
-  if (!lightboxModal || !src) return;
+  if (!src) return;
+  const { modal, img, video, downloadLink, downloadText } = getLightboxElements();
+  if (!modal) return;
 
   let resolvedSrc = src;
   if (src.startsWith('local-img://')) {
     const imgId = src.replace('local-img://', '');
-    const cached = await getImageFromIndexedDB(imgId);
-    if (cached?.dataUrl) {
-      resolvedSrc = cached.dataUrl;
-    } else if (nativePort) {
-      try {
+    try {
+      const cached = await getImageFromIndexedDB(imgId);
+      if (cached?.dataUrl) {
+        resolvedSrc = cached.dataUrl;
+      } else if (typeof nativePort !== 'undefined' && nativePort) {
         const res = await sendNativeRpc("get_generated_image", { image_id: imgId });
         if (res && res.status === "ok" && res.data_url) {
           resolvedSrc = res.data_url;
         }
-      } catch (e) {}
+      }
+    } catch (e) {
+      console.warn("Error resolving local image for lightbox:", e);
     }
   }
 
   if (isVideo) {
-    if (lightboxImg) lightboxImg.style.display = 'none';
-    if (lightboxVideo) {
-      lightboxVideo.src = resolvedSrc;
-      lightboxVideo.style.display = 'block';
-      try { lightboxVideo.play(); } catch (e) {}
+    if (img) {
+      img.src = '';
+      img.style.display = 'none';
     }
-    if (lightboxDownloadText) lightboxDownloadText.textContent = 'Unduh Video';
-    if (lightboxDownload) {
-      lightboxDownload.href = resolvedSrc;
-      lightboxDownload.download = filename || 'video.mp4';
+    if (video) {
+      video.src = resolvedSrc;
+      video.style.display = 'block';
+      try { video.play(); } catch (e) {}
+    }
+    if (downloadText) downloadText.textContent = 'Unduh Video';
+    if (downloadLink) {
+      downloadLink.href = resolvedSrc;
+      downloadLink.download = filename || 'video.mp4';
     }
   } else {
-    if (lightboxVideo) {
-      lightboxVideo.pause();
-      lightboxVideo.style.display = 'none';
-      lightboxVideo.src = '';
+    if (video) {
+      try { video.pause(); } catch (e) {}
+      video.style.display = 'none';
+      video.src = '';
     }
-    if (lightboxImg) {
-      lightboxImg.src = resolvedSrc;
-      lightboxImg.style.display = 'block';
+    if (img) {
+      img.src = resolvedSrc;
+      img.style.display = 'block';
     }
-    if (lightboxDownloadText) lightboxDownloadText.textContent = 'Unduh Gambar';
-    if (lightboxDownload) {
-      lightboxDownload.href = resolvedSrc;
-      lightboxDownload.download = filename || 'ai-generated-image.png';
+    if (downloadText) downloadText.textContent = 'Unduh Gambar';
+    if (downloadLink) {
+      downloadLink.href = resolvedSrc;
+      downloadLink.download = filename || 'ai-generated-image.png';
     }
   }
 
-  lightboxModal.style.display = 'flex';
+  modal.style.display = 'flex';
 }
 
 function closeMediaLightbox() {
-  if (!lightboxModal) return;
-  lightboxModal.style.display = 'none';
-  if (lightboxImg) {
-    lightboxImg.src = '';
-    lightboxImg.style.display = 'none';
+  const { modal, img, video } = getLightboxElements();
+  if (!modal) return;
+  modal.style.display = 'none';
+  if (img) {
+    img.src = '';
+    img.style.display = 'none';
   }
-  if (lightboxVideo) {
-    try { lightboxVideo.pause(); } catch (e) {}
-    lightboxVideo.src = '';
-    lightboxVideo.style.display = 'none';
+  if (video) {
+    try { video.pause(); } catch (e) {}
+    video.src = '';
+    video.style.display = 'none';
   }
 }
 
-btnCloseLightbox?.addEventListener('click', closeMediaLightbox);
-lightboxBackdrop?.addEventListener('click', closeMediaLightbox);
-
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && lightboxModal && lightboxModal.style.display === 'flex') {
-    closeMediaLightbox();
+  if (e.key === 'Escape') {
+    const { modal } = getLightboxElements();
+    if (modal && modal.style.display === 'flex') {
+      closeMediaLightbox();
+    }
   }
 });
 
 // Delegate click on generated image cards, thumbnails, and user attached videos to open fullscreen preview
 document.addEventListener('click', (e) => {
-  const imgWrapper = e.target.closest('.gen-img-wrapper');
-  if (imgWrapper && !e.target.closest('.btn-gen-img-download')) {
-    const src = imgWrapper.getAttribute('data-src') || (imgWrapper.getAttribute('data-local-id') ? `local-img://${imgWrapper.getAttribute('data-local-id')}` : imgWrapper.querySelector('img')?.src);
-    if (src) {
-      openMediaLightbox(src, false);
-    }
+  // 1. Close Lightbox Click
+  if (e.target.closest('#btn-close-lightbox') || e.target.closest('#lightbox-backdrop')) {
+    closeMediaLightbox();
     return;
   }
 
+  // 2. AI Generated Image Card / Zoom Button
+  const zoomBtn = e.target.closest('.btn-gen-img-zoom');
+  const imgWrapper = e.target.closest('.gen-img-wrapper');
+  if (zoomBtn || (imgWrapper && !e.target.closest('.btn-gen-img-download'))) {
+    const targetWrapper = (zoomBtn ? zoomBtn.closest('.gen-img-wrapper') : imgWrapper) || imgWrapper;
+    if (targetWrapper) {
+      const imgEl = targetWrapper.querySelector('img');
+      const src = targetWrapper.getAttribute('data-src') || (targetWrapper.getAttribute('data-local-id') ? `local-img://${targetWrapper.getAttribute('data-local-id')}` : (imgEl?.currentSrc || imgEl?.src));
+      const alt = imgEl?.alt || 'AI Generated Image';
+      if (src && !src.startsWith('data:image/gif;base64,')) {
+        openMediaLightbox(src, false, alt.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30) + '.png');
+        return;
+      } else if (imgEl?.src && !imgEl.src.startsWith('data:image/gif;base64,')) {
+        openMediaLightbox(imgEl.src, false, alt.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30) + '.png');
+        return;
+      }
+    }
+  }
+
+  // 3. Click directly on any markdown/assistant image (excluding icons/avatars)
+  const assistantImg = e.target.closest('.message.assistant .message-content img:not(.template-provider-img):not(.avatar):not(.quick-provider-icon)');
+  if (assistantImg && !e.target.closest('.btn-gen-img-download') && !e.target.closest('.gen-img-wrapper')) {
+    const src = assistantImg.currentSrc || assistantImg.src;
+    if (src && !src.startsWith('data:image/gif;base64,')) {
+      openMediaLightbox(src, false, (assistantImg.alt || 'ai-image').toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30) + '.png');
+      return;
+    }
+  }
+
+  // 4. User attached image thumbnail
   const userThumb = e.target.closest('.user-attached-thumb');
   if (userThumb) {
     const src = userThumb.querySelector('img')?.src;
-    if (src) openMediaLightbox(src, false, userThumb.getAttribute('title') || 'image.png');
-    return;
+    if (src) {
+      openMediaLightbox(src, false, userThumb.getAttribute('title') || 'image.png');
+      return;
+    }
   }
 
+  // 5. User attached video card fullscreen button
   const fullscreenBtn = e.target.closest('.btn-video-fullscreen-overlay');
   if (fullscreenBtn) {
     e.stopPropagation();
@@ -7628,6 +7672,7 @@ document.addEventListener('click', (e) => {
     return;
   }
 
+  // 6. User attached video card body
   const userVideoCard = e.target.closest('.user-attached-video-card');
   if (userVideoCard) {
     const vidId = userVideoCard.getAttribute('data-video-id');

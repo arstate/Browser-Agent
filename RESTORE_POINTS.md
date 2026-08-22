@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.65.0`
-- **Iterasi:** `Iterasi 265`
-- **Tanggal Rilis:** 23 Agustus 2026 (01:44 WIB)
+- **Versi Terkini:** `v2.66.0`
+- **Iterasi:** `Iterasi 266`
+- **Tanggal Rilis:** 23 Agustus 2026 (01:55 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (368.5 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.66.0** | 266 | 23-08-2026 01:55 | `v2.66.0` | **Fix AI Image Fullscreen Modal Lightbox & Resolve Content Script Animation TypeError on Standalone SVG/XML Tabs:** (1) Menambahkan container modal `#image-lightbox-modal` pada `newtab.html`, styling `.image-lightbox-modal` di `newtab.css`, serta memperbarui delegasi klik dan helper dinamis `openMediaLightbox()` di `sidepanel.js` agar tombol "Lihat Penuh" (`.btn-gen-img-zoom`), kartu gambar AI, maupun gambar markdown di bubble chat dapat diperbesar layar penuh secara instan dan mulus. (2) Mengatasi error `Uncaught TypeError: Cannot use 'in' operator to search for 'animation' in undefined` di `content-scripts/content.js` dengan guard pengecekan elemen non-HTML/SVG di level atas dan defensive fallback `ad = (document.createElement('div').style || {})` saat `fl(t)` dijalankan. | 🟢 STABLE | `./restore.sh v2.66.0` |
 | **v2.65.0** | 265 | 23-08-2026 01:44 | `v2.65.0` | **Update 9Router Official Brand SVG Logo in Provider Templates:** Mengganti ikon 9Router dengan logo SVG resmi 9Router yang baru (`9router-local.svg` & `9router.svg`) dengan gradasi oranye dan tipografi 9R putih elegan di `extension/icons/providers/`. | 🟢 STABLE | `./restore.sh v2.65.0` |
 | **v2.64.0** | 264 | 23-08-2026 01:42 | `v2.64.0` | **Organize Provider SVG Asset Directory (`extension/icons/providers/`) & Implement Official Dark-Mode Optimized Brand Logos:** Memindahkan dan merapikan 12 file logo SVG resmi penyedia AI (Google Gemini, OpenAI, Claude, OpenRouter, Ollama, 9Router, DeepSeek, LMStudio, Qwen, Moonshot Kimi, GitHub Copilot, Custom Endpoint) ke folder `extension/icons/providers/`, mengoptimalkan warna monokrom menjadi putih bersih `#FFFFFF` untuk kontras sempurna pada tema gelap, serta menghubungkannya ke kartu *Quick provider templates* di `options.html`. | 🟢 STABLE | `./restore.sh v2.64.0` |
 | **v2.63.0** | 263 | 23-08-2026 01:38 | `v2.63.0` | **Fix User Chat Bubble Over-Rounded Oval Shape Bug on Long Multi-Line Text:** Mengubah `border-radius: 9999px` pada gelembung chat pengguna (`.message.user .message-content`) menjadi `border-radius: 18px;` (dan `16px` di sidepanel) agar bubble pesan panjang tetap berupa *rounded rectangle* yang simetris, rapi, dan tidak membulat ekstrem menyerupai bola/oval saat teks membungkus beberapa baris. | 🟢 STABLE | `./restore.sh v2.63.0` |

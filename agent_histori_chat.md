@@ -2157,9 +2157,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   1. **Official 9Router SVG Integration**:
      - Mengganti `extension/icons/providers/9router-local.svg` dan `9router.svg` dengan file SVG resmi baru yang menampilkan squircle gradasi oranye (`#f97815` ke `#c2590a`) dan tipografi putih 9R yang presisi.
 - **CRX Build & Sync**:
-  - Re-pack `extension.crx` (368.5 KB).
-  - Restore Point: `v2.65.0`.
-  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+### Iterasi 266: Perbaikan Lightbox Fullscreen Gambar AI & Eliminasi TypeError Animation pada Tab SVG/XML
+- **Kebutuhan Pengguna**:
+  1. Memperbaiki bug tidak bisa melihat gambar hasil AI secara fullscreen (tombol "Lihat Penuh" / overlay klik tidak membuka lightbox preview).
+  2. Mengatasi error console: `Uncaught TypeError: Cannot use 'in' operator to search for 'animation' in undefined` pada `content-scripts/content.js:57` saat membuka tab SVG atau media standalone (misal `upload.wikimedia.org/.../Google_Gemini_logo.svg`).
+- **Akar Masalah (Root Cause)**:
+  1. Lightbox modal `#image-lightbox-modal` sebelumnya hanya ada di `sidepanel.html` dan `sidepanel.css`, belum disertakan di `newtab.html` dan `newtab.css`. Saat pengguna berinteraksi di halaman New Tab / Homescreen, pemanggilan `openMediaLightbox` gagal karena `lightboxModal` bernilai `null`.
+  2. Pada tab dokumen SVG / XML murni di Chrome, pemanggilan `document.createElement("div")` menghasilkan elemen generic non-HTML tanpa properti `.style` (`undefined`). Pengecekan `"animation" in ad` pada sistem deteksi fitur React DOM di `content.js` kemudian melempar `TypeError: Cannot use 'in' operator to search for 'animation' in undefined`.
+- **Solusi & Peningkatan**:
+  1. **Lightbox Fullscreen di New Tab & Sidepanel**:
+     - Menambahkan elemen modal `#image-lightbox-modal` ke `newtab.html`.
+     - Menambahkan rule styling `.image-lightbox-modal`, `.lightbox-backdrop`, `.lightbox-container`, `.lightbox-img-wrapper` ke `newtab.css`.
+     - Mengubah fungsi `getLightboxElements()`, `openMediaLightbox()`, dan `closeMediaLightbox()` di `sidepanel.js` agar mencari elemen DOM secara dinamis dan aman.
+     - Memperluas listener delegasi klik sehingga tombol `.btn-gen-img-zoom`, container kartu gambar AI `.gen-img-wrapper`, thumbnail user `.user-attached-thumb`, maupun gambar inline assistant message dapat diperbesar ke layar penuh dengan nama file unduh otomatis yang rapi.
+  2. **Defensive Guard pada Content Script (`content.js`)**:
+     - Menambahkan pengecekan di baris awal `content.js` untuk melewati mounting / eksekusi pada dokumen SVG/XML/media murni (`cType.includes("image/") || cType.includes("svg") || rootTag === "svg"`).
+     - Memperbaiki inisialisasi objek `ad = (mn && document.createElement("div") && document.createElement("div").style) || {}`.
+     - Memperbaiki lookup `fl(t)` menjadi `if (e.hasOwnProperty(n) && ad && (n in ad))` dan safe deletion pada `Kl.animationend` & `Kl.transitionend`.
+  3. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100% tanpa error di seluruh file JS.
+     - Restore Point: `v2.66.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
 ---
 
@@ -2200,9 +2218,10 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.15.0` (Iterasi 215).
+  - **Versi Terkini:** `v2.66.0` (Iterasi 266).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
+
 
 
 
