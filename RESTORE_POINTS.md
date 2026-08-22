@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.62.0`
-- **Iterasi:** `Iterasi 262`
-- **Tanggal Rilis:** 23 Agustus 2026 (01:33 WIB)
+- **Versi Terkini:** `v2.63.0`
+- **Iterasi:** `Iterasi 263`
+- **Tanggal Rilis:** 23 Agustus 2026 (01:38 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (358.5 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (359.0 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.63.0** | 263 | 23-08-2026 01:38 | `v2.63.0` | **Fix User Chat Bubble Over-Rounded Oval Shape Bug on Long Multi-Line Text:** Mengubah `border-radius: 9999px` pada gelembung chat pengguna (`.message.user .message-content`) menjadi `border-radius: 18px;` (dan `16px` di sidepanel) agar bubble pesan panjang tetap berupa *rounded rectangle* yang simetris, rapi, dan tidak membulat ekstrem menyerupai bola/oval saat teks membungkus beberapa baris. | 🟢 STABLE | `./restore.sh v2.63.0` |
 | **v2.62.0** | 262 | 23-08-2026 01:33 | `v2.62.0` | **Authentic Official Vector Brand Logos for All 12 Quick Provider Templates:** Mengganti semua ikon emoji pada 12 kartu "Quick provider templates" (Google Gemini, OpenAI, Claude Code, OpenRouter, Ollama, 9Router, DeepSeek, LMStudio, Qwen Code, Moonshot AI, GitHub Copilot, Custom Endpoint) dengan logo vektor SVG resmi, tajam, dan bergradasi warna autentik. | 🟢 STABLE | `./restore.sh v2.62.0` |
 | **v2.61.0** | 261 | 23-08-2026 01:29 | `v2.61.0` | **Remove Redundant Google Search Button from Top Navbar:** Menghapus tombol "Google Search" dari baris kanan atas navbar (`.fullscreen-header .header-right`) untuk tampilan UI yang lebih bersih, rapi, dan minimalis. | 🟢 STABLE | `./restore.sh v2.61.0` |
 | **v2.60.0** | 260 | 23-08-2026 01:25 | `v2.60.0` | **Pixel-Perfect 56px Sidebar Header Height Alignment Matching Top Navbar:** Mengubah tinggi header sidebar (`.sidebar-top`) di halaman New Tab utama dan halaman Pengaturan (`options-sidebar`) menjadi tepat `56px` dengan border bottom yang sejajar 100% secara horizontal dengan navbar atas (`.fullscreen-header`). | 🟢 STABLE | `./restore.sh v2.60.0` |

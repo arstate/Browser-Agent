@@ -2120,6 +2120,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.62.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 263: Fix User Chat Bubble Over-Rounded Oval Shape Bug on Long Multi-Line Text
+- **Problem**:
+  - Gelembung pesan chat pengguna sebelumnya menggunakan `border-radius: 9999px` (kapsul pill) yang menyebabkan pesan teks panjang berbentuk melengkung ekstrem menyerupai bola/oval yang memotong teks samping secara aneh (`bug ui buble user terlalu rounded kalau banyak teks buat jangan full rounded kalau banyak teks`).
+- **Penyebab & Solusi**:
+  1. **Consistent Rounded Rectangle Bubble**:
+     - Mengubah kelengkungan `.message.user .message-content` menjadi `border-radius: 18px;` (dan `16px` di sidepanel) dengan `padding: 10px 18px; box-sizing: border-box; max-width: 100%;`.
+     - Ketika pesan pendek (1 baris), gelembung tetap terlihat ramping dan modern; ketika pesan panjang/multiline, gelembung membentuk *rounded rectangle* simetris tanpa distorsi oval.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (359.0 KB).
+  - Restore Point: `v2.63.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
