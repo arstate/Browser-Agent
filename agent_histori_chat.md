@@ -1755,6 +1755,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.35.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 236: Zero Background Neon Blur in Chat Canvas (100% Clean Flat Dark Charcoal)
+- **Problem**:
+  - Di latar belakang canvas chat New Tab masih tampak pendaran/bias warna neon hijau kuning yang mengambang (`background agent tab di chat gausah ada background blur neon bro`).
+- **Penyebab & Solusi**:
+  1. **Penghapusan Total Radial Gradient & Pseudo-Element Glow**:
+     - Menghapus `radial-gradient(circle at 50% 12%, rgba(206, 241, 40, 0.025) ...)` pada `body.newtab-body` sehingga background menjadi flat murni `var(--bg-canvas)` (`#121214`).
+     - Menghapus pseudo-element `.chat-input-container::before` yang sebelumnya memancarkan radial glow neon di kanvas.
+     - Mengubah box-shadow input prompt menjadi bayangan hitam natural (`0 18px 48px rgba(0, 0, 0, 0.65)`).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.6 KB).
+  - Restore Point: `v2.36.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
