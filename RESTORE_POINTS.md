@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.60.0`
-- **Iterasi:** `Iterasi 260`
-- **Tanggal Rilis:** 23 Agustus 2026 (01:25 WIB)
+- **Versi Terkini:** `v2.61.0`
+- **Iterasi:** `Iterasi 261`
+- **Tanggal Rilis:** 23 Agustus 2026 (01:29 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (357.3 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.61.0** | 261 | 23-08-2026 01:29 | `v2.61.0` | **Remove Redundant Google Search Button from Top Navbar:** Menghapus tombol "Google Search" dari baris kanan atas navbar (`.fullscreen-header .header-right`) untuk tampilan UI yang lebih bersih, rapi, dan minimalis. | 🟢 STABLE | `./restore.sh v2.61.0` |
 | **v2.60.0** | 260 | 23-08-2026 01:25 | `v2.60.0` | **Pixel-Perfect 56px Sidebar Header Height Alignment Matching Top Navbar:** Mengubah tinggi header sidebar (`.sidebar-top`) di halaman New Tab utama dan halaman Pengaturan (`options-sidebar`) menjadi tepat `56px` dengan border bottom yang sejajar 100% secara horizontal dengan navbar atas (`.fullscreen-header`). | 🟢 STABLE | `./restore.sh v2.60.0` |
 | **v2.59.0** | 259 | 23-08-2026 01:23 | `v2.59.0` | **Migrate Browser Agent Brand Badge to Left Sidebar (Collapsible Logo Icon in Default State & Full Brand on Hover / Settings):** Memindahkan logo dan nama brand **Browser Agent** ke bagian paling atas sidebar kiri (menggantikan avatar profil 'a' / 'arya'). Ketika sidebar dalam kondisi normal (tertutup / width 58px), hanya squircle logo `B` neon lime yang tampil di tengah. Ketika sidebar di-hover atau di halaman Pengaturan (width 240px), teks `Browser Agent` muncul secara mulus. | 🟢 STABLE | `./restore.sh v2.59.0` |
 | **v2.58.0** | 258 | 23-08-2026 01:19 | `v2.58.0` | **Ultra-Clean Minimalist Text-Only Search Engine Dropup (Removed Icon Box & Subtitle Descriptions):** Menyederhanakan UI dropdown dan tombol pemilih Search Engine menjadi teks minimalis yang bersih (menghapus kotak ikon besar, menghapus deskripsi subtitle, dan menghapus ikon pada tombol trigger) dengan lebar menu yang lebih ringkas (`width: 165px`) sesuai permintaan visual pengguna. | 🟢 STABLE | `./restore.sh v2.58.0` |

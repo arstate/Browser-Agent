@@ -4,15 +4,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   const recentSitesGrid = document.getElementById('recent-sites-grid');
-  const btnSwitchDefault = document.getElementById('btn-switch-default-tab');
   const chatInput = document.getElementById('chat-input');
-
-  // Google Search quick switch
-  if (btnSwitchDefault) {
-    btnSwitchDefault.addEventListener('click', () => {
-      window.location.href = "https://www.google.com";
-    });
-  }
 
   // Populate Recent Sites Grid
   function renderRecentSites() {

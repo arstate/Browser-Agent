@@ -2083,6 +2083,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.60.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 261: Remove Redundant Google Search Button from Top Navbar
+- **Problem**:
+  - Tombol pintasan "Google Search" di navbar kanan atas (`#btn-switch-default-tab`) sudah tidak diperlukan lagi karena pengguna sudah memiliki fitur Web Search langsung pada kotak input prompt (`ini dihapus aja`).
+- **Penyebab & Solusi**:
+  1. **Clean Navbar Removal**:
+     - Menghapus elemen button `#btn-switch-default-tab` dari `newtab.html`.
+     - Menghapus event listener `btnSwitchDefault` di `newtab.js`.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (357.3 KB).
+  - Restore Point: `v2.61.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
