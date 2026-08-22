@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.15.0`
-- **Iterasi:** `Iterasi 215`
-- **Tanggal Rilis:** 22 Agustus 2026 (23:40 WIB)
+- **Versi Terkini:** `v2.16.0`
+- **Iterasi:** `Iterasi 216`
+- **Tanggal Rilis:** 22 Agustus 2026 (23:42 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (350.1 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.16.0** | 216 | 22-08-2026 23:42 | `v2.16.0` | **Clean Settings Sidebar:** Menghapus sub-menu redundant "SYSTEM & INTEGRATION" dan "HELP & INFO" dari sidebar kiri Pengaturan untuk menyederhanakan navigasi. | 🟢 STABLE | `./restore.sh v2.16.0` |
 | **v2.15.0** | 215 | 22-08-2026 23:40 | `v2.15.0` | **Major Overhaul Settings Layout:** 2-Column Dark Luxury SaaS, Left Settings Sidebar Navigation, 12 Quick Provider Templates, Model Priority #1/#2, Test AI Connection live latency, Newtab Settings Overlay. | 🟢 STABLE | `./restore.sh v2.15.0` |
 | **v2.14.0** | 214 | 22-08-2026 23:25 | `v2.14.0` | **Sidebar Menu Cleaning:** Menghapus item "Terminal Shell" dari sidebar New Tab, menyisakan 3 menu inti (Home, Riwayat Chat, Settings). | 🟢 STABLE | `./restore.sh v2.14.0` |
 | **v2.13.0** | 213 | 22-08-2026 23:10 | `v2.13.0` | **Collapsible Hover Mini-Rail Sidebar:** Sidebar New Tab hover-expandable (58px ke 220px) dengan profil pengguna dan navigasi cepat. | 🟢 STABLE | `./restore.sh v2.13.0` |

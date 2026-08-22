@@ -1453,6 +1453,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Re-pack `extension.crx` (350.1 KB).
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 216: Clean Settings Sidebar - Remove Redundant Sub-Navigation Items
+- **Problem**:
+  - Sub-menu `SYSTEM & INTEGRATION` (PC Bridge, AI Image Generation, Parameter Generasi) dan `HELP & INFO` (Dokumentasi) pada sidebar kiri halaman Pengaturan membuat sidebar terlalu ramai dan tidak dibutuhkan pengguna (`ini hapus aja bro`).
+- **Penyebab & Solusi**:
+  - Menghapus grup sub-navigasi `SYSTEM & INTEGRATION` dan `HELP & INFO` dari `.sidebar-nav-scroll` di [options.html](file:///home/arya/browser-agent/extension/options.html).
+  - Sidebar kiri kini bersih, fokus pada 4 pilar menu inti: **AI & Providers**, **Multi-Agent Persona**, **Skills (Kemampuan)**, dan **Memory & Aturan**.
+  - Seluruh fitur PC Bridge, Image Gen, dan Parameter Generasi tetap aktif normal di dalam kartu bento tab AI & Providers.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (350.1 KB).
+  - Restore Point: `v2.16.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
