@@ -3598,6 +3598,9 @@ function setChatMode(mode) {
   const btnWebSearch = document.getElementById('btn-mode-websearch');
   const inputContainer = document.getElementById('chat-input-container');
   const agentStatusEl = document.getElementById('agent-status-text');
+  const btnSendEl = document.getElementById('btn-send');
+  const heroTitleEl = document.querySelector('.hero-title');
+  const heroSubtitleEl = document.querySelector('.hero-subtitle');
 
   btnChat?.classList.remove('active');
   btnAgent?.classList.remove('active');
@@ -3609,16 +3612,27 @@ function setChatMode(mode) {
     inputContainer?.classList.add('mode-websearch');
     if (chatInput) chatInput.placeholder = 'Cari di Google atau ketik URL web...';
     if (agentStatusEl) agentStatusEl.textContent = 'Web Search';
+    if (btnSendEl) btnSendEl.title = 'Cari di Web';
+    if (heroTitleEl) heroTitleEl.innerHTML = 'Search the web or <span class="hero-highlight">find anything</span> online';
+    if (heroSubtitleEl) heroSubtitleEl.textContent = 'Instant Google search, website navigation, and smart suggestions.';
     clearAttachments();
     clearMentionAgents();
   } else if (mode === 'chat') {
     btnChat?.classList.add('active');
     if (chatInput) chatInput.placeholder = 'Ketik pesan chat di sini...';
     if (agentStatusEl) agentStatusEl.textContent = 'Chat Ready';
+    if (btnSendEl) btnSendEl.title = 'Kirim Pesan';
+    if (heroTitleEl) heroTitleEl.innerHTML = 'What would you like to <span class="hero-highlight">talk about</span> today?';
+    if (heroSubtitleEl) heroSubtitleEl.textContent = 'Chat freely with your personal AI assistant — fast, direct, and conversational.';
+    hideWebSearchSuggestions();
   } else {
     btnAgent?.classList.add('active');
     if (chatInput) chatInput.placeholder = 'Ketik perintah atau drop/paste gambar di sini...';
     if (agentStatusEl) agentStatusEl.textContent = 'Agent Ready';
+    if (btnSendEl) btnSendEl.title = 'Kirim Perintah';
+    if (heroTitleEl) heroTitleEl.innerHTML = 'What should your agent <span class="hero-highlight">work on</span> next?';
+    if (heroSubtitleEl) heroSubtitleEl.textContent = 'Pick Browser Agent or any specialist, then start a task — all without leaving this tab.';
+    hideWebSearchSuggestions();
   }
 
   if (mode !== 'websearch') {

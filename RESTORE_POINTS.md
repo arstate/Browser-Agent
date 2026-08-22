@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.49.0`
-- **Iterasi:** `Iterasi 249`
-- **Tanggal Rilis:** 23 Agustus 2026 (00:48 WIB)
+- **Versi Terkini:** `v2.50.0`
+- **Iterasi:** `Iterasi 250`
+- **Tanggal Rilis:** 23 Agustus 2026 (00:50 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (354.6 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.50.0** | 250 | 23-08-2026 00:50 | `v2.50.0` | **Adaptive Search Icon & Dynamic Contextual Hero Header for Web Search Mode:** Mengubah ikon tombol kirim prompt menjadi ikon kaca pembesar pencarian (`🔍`) saat di mode `🌐 Web Search`, serta mengubah judul dan sub-judul hero Homescreen secara dinamis menjadi *"Search the web or find anything online"* dengan subtitle *"Instant Google search, website navigation, and smart suggestions."*. | 🟢 STABLE | `./restore.sh v2.50.0` |
 | **v2.49.0** | 249 | 23-08-2026 00:48 | `v2.49.0` | **Zero Neon Glow/Blur on Web Search Suggestions Dropdown (Clean Flat Dark SaaS):** Menghapus seluruh efek glow pendaran neon blur (`::before` dan colored box-shadow) pada dropdown saran rekomendasi pencarian, menjadikannya bergaya Clean Dark SaaS solid yang elegan dan netral. | 🟢 STABLE | `./restore.sh v2.49.0` |
 | **v2.48.0** | 248 | 23-08-2026 00:47 | `v2.48.0` | **Seamless Unified Settings Redirect from Sidepanel to Homescreen Overlay:** Menyesuaikan aksi klik menu Pengaturan di Sidepanel ekstensi agar selalu membuka/mengarahkan ke layout Pengaturan terpadu New Tab (`newtab.html#settings`) alih-alih membuka tab `options.html` terpisah yang terisolasi, sehingga pengalaman navigasi antarmuka pengguna 100% konsisten dan seamless. | 🟢 STABLE | `./restore.sh v2.48.0` |
 | **v2.47.0** | 247 | 23-08-2026 00:45 | `v2.47.0` | **Unified 240px Sidebar Width on Homescreen Hover (100% Seamless Match with Settings):** Menyesuaikan lebar sidebar saat di-hover/tampil di Homescreen (`.app-sidebar:hover`) menjadi tepat `240px` (sebelumnya `220px`), sehingga lebarnya 100% identik dan seamless dengan sidebar halaman Pengaturan (`.options-sidebar`). | 🟢 STABLE | `./restore.sh v2.47.0` |

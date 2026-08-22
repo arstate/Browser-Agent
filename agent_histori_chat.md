@@ -1929,6 +1929,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.49.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 250: Adaptive Search Icon & Dynamic Contextual Hero Header for Web Search Mode
+- **Problem**:
+  - Saat di mode `🌐 Web Search`, tombol submit masih menampilkan icon panah chat (`↑`) dan judul hero tetap *"What should your agent work on next?"* yang kurang relevan untuk konteks pencarian web (`ketika di mode websearch input prompt tombol icon send prompt jadi tombol search kaca pembesar dan teks what should .... itu ganti jadi yang lebih relevan untuk web search`).
+- **Penyebab & Solusi**:
+  1. **Adaptive Search Button Icon (`🔍`)**:
+     - Menambahkan SVG icon kaca pembesar `.search-icon` di dalam `#btn-send` yang aktif saat `.chat-input-container.mode-websearch`.
+     - Mengubah tooltip tombol menjadi *"Cari di Web"*.
+  2. **Dinamis Contextual Hero Header**:
+     - Mengupdate judul hero menjadi *"Search the web or find anything online"* dengan highlight lime pada *"find anything"*.
+     - Mengupdate sub-judul menjadi *"Instant Google search, website navigation, and smart suggestions."*.
+     - Kembali ke judul agent atau chat ketika mode diubah.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (354.6 KB).
+  - Restore Point: `v2.50.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

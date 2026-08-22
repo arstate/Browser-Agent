@@ -1590,6 +1590,17 @@ body.has-messages #btn-mode-websearch {
   display: none !important;
 }
 
+.chat-input-container.mode-websearch #btn-send .send-icon {
+  display: none !important;
+}
+
+.chat-input-container.mode-websearch #btn-send .search-icon {
+  display: block !important;
+  width: 15px !important;
+  height: 15px !important;
+  margin: auto;
+}
+
 /* Web Search Autocomplete Suggestions Dropdown - Clean Dark SaaS (Zero Neon Blur) */
 .websearch-suggestions-dropdown {
   position: absolute;
