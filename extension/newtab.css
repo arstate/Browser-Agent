@@ -1244,7 +1244,7 @@ body.has-messages .chat-messages {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: #141B26;
+  background: #1C1C1F;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 8px 12px;
@@ -1254,7 +1254,7 @@ body.has-messages .chat-messages {
 }
 
 .tree-agent-card:hover {
-  background: #192231;
+  background: #242428;
   border-color: rgba(206, 241, 40, 0.25);
 }
 
@@ -2372,7 +2372,7 @@ body.has-messages .chat-messages {
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #141B26;
+  background: #1C1C1F;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2403,7 +2403,7 @@ body.has-messages .chat-messages {
   height: 58px !important;
   max-width: 78px !important;
   max-height: 58px !important;
-  background: #0F141C;
+  background: #161619;
 }
 
 .attachment-preview-card.is-video img,
@@ -2439,7 +2439,7 @@ body.has-messages .chat-messages {
 .attachment-preview-card.is-file {
   padding: 6px 10px;
   height: 36px;
-  background: #18202F;
+  background: #1E1E22;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -2997,7 +2997,7 @@ body.has-messages .chat-messages {
 .clarification-card {
   margin: 0;
   padding: 14px 16px;
-  background: #141B26;
+  background: #1C1C1F;
   border: 1px solid rgba(206, 241, 40, 0.4);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(206, 241, 40, 0.08);
@@ -3081,7 +3081,7 @@ body.has-messages .chat-messages {
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
-  background: #18202F;
+  background: #18181B;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   color: #E2E8F0;
@@ -3096,7 +3096,7 @@ body.has-messages .chat-messages {
 }
 
 .clarification-chip:hover {
-  background: #1E293B;
+  background: #27272A;
   border-color: var(--accent-lime);
   color: #FFFFFF;
   transform: translateY(-1px);
@@ -3163,7 +3163,7 @@ body.has-messages .chat-messages {
 .agent-switch-card {
   margin: 12px 0 4px 0;
   padding: 14px 16px;
-  background: #141B26;
+  background: #1C1C1F;
   border: 1px solid rgba(206, 241, 40, 0.4);
   border-radius: 14px;
   color: #F8FAFC;
@@ -3257,7 +3257,7 @@ body.has-messages .chat-messages {
   width: 100%;
   max-width: 100%;
   margin-bottom: 8px;
-  background: #141B26;
+  background: #18181B;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.15);
@@ -3283,7 +3283,7 @@ body.has-messages .chat-messages {
   justify-content: space-between;
   gap: 8px;
   padding: 8px 14px;
-  background: #0F141C;
+  background: #141416;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 11px;
   font-weight: 700;
@@ -3324,7 +3324,7 @@ body.has-messages .chat-messages {
   gap: 10px;
   padding: 8px 14px;
   cursor: pointer;
-  background: #141B26;
+  background: #18181B;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   border-left: 3px solid transparent;
   transition: all 0.12s ease;
@@ -3337,7 +3337,7 @@ body.has-messages .chat-messages {
 
 .mention-dropup-item:hover,
 .mention-dropup-item.active {
-  background: #1B2433;
+  background: #242428;
   border-left-color: var(--accent-lime);
 }
 

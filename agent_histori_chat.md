@@ -1697,6 +1697,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.31.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 232: Neutral Dark Sub-Agent Execution Cards & Dropups (100% Anti-Navy)
+- **Problem**:
+  - Kartu daftar sub-agent yang ditugaskan (*Tim Agen yang Ditugaskan*) di dalam pesan chat masih berwarna dark kebiruan (`#141B26` / `#192231`) (`ini masih kek dark kebiruan bro coba fix`).
+- **Penyebab & Solusi**:
+  1. **Pembersihan Rona Biru Kartu Sub-Agent**:
+     - Mengubah background `.tree-agent-card` menjadi Neutral Charcoal Dark `#1C1C1F` (dan `#242428` pada `:hover`).
+     - Membersihkan seluruh elemen turunan di `newtab.css` seperti `.clarification-card`, `.agent-switch-card`, `.agent-mention-dropup`, `.mention-dropup-item`, dan `.attachment-preview-card` agar 100% beralih ke warna abu-abu arang netral monokromatik.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.32.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
