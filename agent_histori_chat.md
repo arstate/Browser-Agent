@@ -1653,6 +1653,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.28.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 229: Zero Box-Shadow on Homescreen Hover Sidebar
+- **Problem**:
+  - Saat sidebar di Homescreen melar / show ketika di-hover mouse, masih muncul efek bayangan tebal (*box-shadow drop*) yang membuat visual kurang flat dan kurang bersih (`sidebar homescreen ketika show gausah ada shadownya bro`).
+- **Penyebab & Solusi**:
+  1. **Penghapusan Box-Shadow Total**:
+     - Mengubah styling `.app-sidebar` dan `.app-sidebar:hover` di `newtab.css` menjadi `box-shadow: none !important;`.
+     - Sidebar kini tampil flat, elegan, menyatu (*seamless*) dengan garis pembatas tipis `1px solid rgba(255, 255, 255, 0.08)`.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.29.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

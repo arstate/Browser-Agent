@@ -77,8 +77,9 @@ body.newtab-body {
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: none;
-  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease;
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+  box-shadow: none !important;
 }
 
 .app-sidebar::-webkit-scrollbar {
@@ -87,7 +88,7 @@ body.newtab-body {
 
 .app-sidebar:hover {
   width: 220px;
-  box-shadow: 12px 0 36px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: none !important;
 }
 
 .fullscreen-agent-app {
