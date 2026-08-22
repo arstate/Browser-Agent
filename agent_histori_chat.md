@@ -1830,6 +1830,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.41.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 242: Integrated Web Search Mode on Homescreen Input Prompt
+- **Problem**:
+  - Pengguna ingin menambahkan opsi mode `🌐 Web Search` di switcher mode input prompt Homescreen (`[Agent Mode] [Chat Mode] [Web Search]`). Ketika mode Web Search aktif: tombol upload file (`+`) dan dropdown alur kerja (`Accept/Planning`) otomatis di-hide, placeholder berubah menjadi *"Cari di Google atau ketik URL web..."*, serta input teks langsung mengeksekusi pencarian Google atau membuka URL target secara instan. Opsi Web Search ini otomatis disembunyikan saat sesi chat AI sedang berlangsung di bagian bawah.
+- **Penyebab & Solusi**:
+  1. **Penambahan Mode Switcher `btn-mode-websearch`**:
+     - Menambahkan tombol toggle `🌐 Web Search` di dalam `.chat-mode-switch-group` pada `newtab.html`.
+     - Mengatur CSS `.chat-input-container.mode-websearch #btn-attach-file, #execution-mode-wrapper { display: none !important; }`.
+     - Mengatur CSS `body.has-messages #btn-mode-websearch { display: none !important; }` agar saat chat aktif opsi pencarian web otomatis disembunyikan.
+  2. **Eksekusi Instant Google Search & Direct URL**:
+     - Menyesuaikan `handleSendMessage()` saat `currentChatMode === 'websearch'` agar langsung redirect ke `https://www.google.com/search?q=...` atau membuka URL yang diketik tanpa memulai sesi chat AI.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.42.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

@@ -1579,6 +1579,17 @@ body.has-messages .chat-messages {
   color: var(--accent-lime);
 }
 
+body.has-messages #btn-mode-websearch {
+  display: none !important;
+}
+
+.chat-input-container.mode-websearch #btn-attach-file,
+.chat-input-container.mode-websearch #execution-mode-wrapper,
+.chat-input-container.mode-websearch .attachments-preview-bar,
+.chat-input-container.mode-websearch .active-mentions-bar {
+  display: none !important;
+}
+
 /* Execution Mode Dropup Selector (Accept vs Planning) */
 .execution-mode-wrapper {
   position: relative;

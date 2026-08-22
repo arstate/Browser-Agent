@@ -3590,28 +3590,42 @@ function hidePlanApprovalDock() {
 }
 
 function setChatMode(mode) {
-  if (mode !== 'chat' && mode !== 'agent') mode = 'agent';
+  if (mode !== 'chat' && mode !== 'agent' && mode !== 'websearch') mode = 'agent';
   currentChatMode = mode;
   
   const btnChat = document.getElementById('btn-mode-chat');
   const btnAgent = document.getElementById('btn-mode-agent');
+  const btnWebSearch = document.getElementById('btn-mode-websearch');
+  const inputContainer = document.getElementById('chat-input-container');
   const agentStatusEl = document.getElementById('agent-status-text');
 
-  if (mode === 'chat') {
+  btnChat?.classList.remove('active');
+  btnAgent?.classList.remove('active');
+  btnWebSearch?.classList.remove('active');
+  inputContainer?.classList.remove('mode-websearch');
+
+  if (mode === 'websearch') {
+    btnWebSearch?.classList.add('active');
+    inputContainer?.classList.add('mode-websearch');
+    if (chatInput) chatInput.placeholder = 'Cari di Google atau ketik URL web...';
+    if (agentStatusEl) agentStatusEl.textContent = 'Web Search';
+    clearAttachments();
+    clearMentionAgents();
+  } else if (mode === 'chat') {
     btnChat?.classList.add('active');
-    btnAgent?.classList.remove('active');
     if (chatInput) chatInput.placeholder = 'Ketik pesan chat di sini...';
     if (agentStatusEl) agentStatusEl.textContent = 'Chat Ready';
   } else {
     btnAgent?.classList.add('active');
-    btnChat?.classList.remove('active');
     if (chatInput) chatInput.placeholder = 'Ketik perintah atau drop/paste gambar di sini...';
     if (agentStatusEl) agentStatusEl.textContent = 'Agent Ready';
   }
 
-  try {
-    chrome.storage.local.set({ browser_agent_mode: mode });
-  } catch (e) {}
+  if (mode !== 'websearch') {
+    try {
+      chrome.storage.local.set({ browser_agent_mode: mode });
+    } catch (e) {}
+  }
 }
 
 async function runChatModeLoop(userMessage, attachments = [], explicitMentions = []) {
@@ -6679,6 +6693,22 @@ function handleSendMessage() {
   const text = chatInput.value.trim();
   if (!text && pendingAttachments.length === 0 && selectedMentionAgents.length === 0) return;
 
+  // Web Search mode: Instant Search / Open URL directly without starting AI chat session
+  if (currentChatMode === 'websearch') {
+    if (!text) return;
+    let targetUrl = text;
+    if (/^https?:\/\//i.test(text)) {
+      targetUrl = text;
+    } else if (/^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/.*)?$/i.test(text) && !text.includes(' ')) {
+      targetUrl = 'https://' + text;
+    } else {
+      targetUrl = 'https://www.google.com/search?q=' + encodeURIComponent(text);
+    }
+    chatInput.value = '';
+    window.location.href = targetUrl;
+    return;
+  }
+
   // Auto-dismiss and clear docked clarification card upon giving guidance / submitting prompt
   hideClarificationDock();
 
@@ -6965,6 +6995,7 @@ document.addEventListener('click', (e) => {
 // Mode Switcher Listeners & Persistence (Default: Agent Mode)
 document.getElementById('btn-mode-chat')?.addEventListener('click', () => setChatMode('chat'));
 document.getElementById('btn-mode-agent')?.addEventListener('click', () => setChatMode('agent'));
+document.getElementById('btn-mode-websearch')?.addEventListener('click', () => setChatMode('websearch'));
 
 try {
   chrome.storage.local.get(['browser_agent_mode'], (res) => {
