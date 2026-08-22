@@ -1958,6 +1958,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.51.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 252: Silky-Smooth Progressive Decipher Wave & Anti-Jitter Header Transition
+- **Problem**:
+  - Pada video screencast pengguna, animasi glitch sebelumnya terasa kasar / jittering karena mengacak seluruh kalimat secara acak dengan simbol-simbol lebar yang menyebabkan lonjakan tinggi layout dan baris teks (*layout shift / jitter*) (`coba lihat video ini bro kok kayak aneh ya kek kurang smoth gitu ya bro`).
+- **Penyebab & Solusi**:
+  1. **Progressive Decipher Wave (Left-to-Right Scanline)**:
+     - Mengubah algoritma acak total menjadi *progressive wave scanline* dari kiri ke kanan yang hanya mengacak 2-3 karakter tepat pada titik gelombang berjalan menggunakan karakter matriks halus (`01—+_/\<>*~`).
+  2. **Anti-Jitter Height Locking & Smooth Subtitle Fade**:
+     - Mengunci `min-height: 98px;` pada `.welcome-hero-header` dan `min-height: 48px;` pada `.hero-title` sehingga tinggi teks tetap stabil tanpa lonjakan layout sama sekali.
+     - Mengganti scramble teks pada sub-judul menjadi transisi fade-glide halus (`opacity 0 -> 1` dan `translateY(3px -> 0)`).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (355.8 KB).
+  - Restore Point: `v2.52.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

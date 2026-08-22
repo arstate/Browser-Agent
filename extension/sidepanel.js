@@ -3590,11 +3590,11 @@ function hidePlanApprovalDock() {
 }
 
 // =========================================================================
-// Cyber / Matrix Text Glitch Scramble Animation Effect
+// Silky-Smooth Cyber Decipher Wave Animation (Anti-Jitter)
 // =========================================================================
-const GLITCH_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~|}{[]';
+const SLEEK_GLITCH_CHARS = '01—+_/\<>*~';
 
-function scrambleText(element, targetHTML, duration = 320) {
+function scrambleText(element, targetHTML, duration = 340) {
   if (!element) return;
   
   if (element._scrambleTimer) {
@@ -3604,23 +3604,30 @@ function scrambleText(element, targetHTML, duration = 320) {
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = targetHTML;
   const targetText = tempDiv.textContent;
+  const oldText = element.textContent || '';
   
   const startTime = performance.now();
-  const totalChars = targetText.length;
+  const targetLen = targetText.length;
 
   function updateScramble(currentTime) {
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    const resolvedCount = Math.floor(progress * totalChars);
+    const wavePos = progress * (targetLen + 4);
 
-    let scrambled = '';
-    for (let i = 0; i < totalChars; i++) {
-      if (targetText[i] === ' ') {
-        scrambled += ' ';
-      } else if (i < resolvedCount) {
-        scrambled += targetText[i];
+    let output = '';
+    for (let i = 0; i < targetLen; i++) {
+      const charTarget = targetText[i];
+      if (charTarget === ' ') {
+        output += ' ';
+        continue;
+      }
+
+      if (i < wavePos - 3) {
+        output += charTarget;
+      } else if (i <= wavePos) {
+        output += SLEEK_GLITCH_CHARS[Math.floor(Math.random() * SLEEK_GLITCH_CHARS.length)];
       } else {
-        scrambled += GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+        output += (i < oldText.length && oldText[i] !== ' ') ? oldText[i] : SLEEK_GLITCH_CHARS[Math.floor(Math.random() * SLEEK_GLITCH_CHARS.length)];
       }
     }
 
@@ -3634,24 +3641,35 @@ function scrambleText(element, targetHTML, duration = 320) {
           const highlightWord = highlightMatch[1];
           const highlightIndex = targetText.indexOf(highlightWord);
           if (highlightIndex !== -1) {
-            const before = scrambled.slice(0, highlightIndex);
-            const mid = scrambled.slice(highlightIndex, highlightIndex + highlightWord.length);
-            const after = scrambled.slice(highlightIndex + highlightWord.length);
+            const before = output.slice(0, highlightIndex);
+            const mid = output.slice(highlightIndex, highlightIndex + highlightWord.length);
+            const after = output.slice(highlightIndex + highlightWord.length);
             element.innerHTML = `${before}<span class="hero-highlight">${mid}</span>${after}`;
           } else {
-            element.textContent = scrambled;
+            element.textContent = output;
           }
         } else {
-          element.textContent = scrambled;
+          element.textContent = output;
         }
       } else {
-        element.textContent = scrambled;
+        element.textContent = output;
       }
       element._scrambleTimer = requestAnimationFrame(updateScramble);
     }
   }
 
   element._scrambleTimer = requestAnimationFrame(updateScramble);
+}
+
+function updateHeroSubtitleSmooth(element, newText) {
+  if (!element || element.textContent === newText) return;
+  element.style.opacity = '0';
+  element.style.transform = 'translateY(3px)';
+  setTimeout(() => {
+    element.textContent = newText;
+    element.style.opacity = '1';
+    element.style.transform = 'translateY(0)';
+  }, 140);
 }
 
 function setChatMode(mode) {
@@ -3679,7 +3697,7 @@ function setChatMode(mode) {
     if (agentStatusEl) agentStatusEl.textContent = 'Web Search';
     if (btnSendEl) btnSendEl.title = 'Cari di Web';
     if (heroTitleEl) scrambleText(heroTitleEl, 'Search the web or <span class="hero-highlight">find anything</span> online', 340);
-    if (heroSubtitleEl) scrambleText(heroSubtitleEl, 'Instant Google search, website navigation, and smart suggestions.', 380);
+    if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Instant Google search, website navigation, and smart suggestions.');
     clearAttachments();
     clearMentionAgents();
   } else if (mode === 'chat') {
@@ -3688,7 +3706,7 @@ function setChatMode(mode) {
     if (agentStatusEl) agentStatusEl.textContent = 'Chat Ready';
     if (btnSendEl) btnSendEl.title = 'Kirim Pesan';
     if (heroTitleEl) scrambleText(heroTitleEl, 'What would you like to <span class="hero-highlight">talk about</span> today?', 340);
-    if (heroSubtitleEl) scrambleText(heroSubtitleEl, 'Chat freely with your personal AI assistant — fast, direct, and conversational.', 380);
+    if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Chat freely with your personal AI assistant — fast, direct, and conversational.');
     hideWebSearchSuggestions();
   } else {
     btnAgent?.classList.add('active');
@@ -3696,7 +3714,7 @@ function setChatMode(mode) {
     if (agentStatusEl) agentStatusEl.textContent = 'Agent Ready';
     if (btnSendEl) btnSendEl.title = 'Kirim Perintah';
     if (heroTitleEl) scrambleText(heroTitleEl, 'What should your agent <span class="hero-highlight">work on</span> next?', 340);
-    if (heroSubtitleEl) scrambleText(heroSubtitleEl, 'Pick Browser Agent or any specialist, then start a task — all without leaving this tab.', 380);
+    if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Pick Browser Agent or any specialist, then start a task — all without leaving this tab.');
     hideWebSearchSuggestions();
   }
 
