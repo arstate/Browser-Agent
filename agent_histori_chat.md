@@ -1972,6 +1972,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.52.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 253: Single-Line Zero-Wrap Hero Title in Chat Mode (Anti-Stacking)
+- **Problem**:
+  - Pada Chat Mode, kalimat judul hero *"What would you like to talk about today?"* terpotong dan terbungkus menjadi 2 baris canggung dengan kata *"talk about"* bertumpuk vertikal akibat `display: flex` pada judul (`yang di chat ga rapih bro buat yang di chat itu sebaris aja bro`).
+- **Penyebab & Solusi**:
+  1. **Penyelarasan Display Block & White-space Nowrap**:
+     - Mengubah `.hero-title` di `newtab.css` menjadi `display: block; white-space: nowrap; font-size: clamp(26px, 3vw, 38px); text-align: center;`.
+     - Mengubah `.hero-highlight` menjadi `display: inline;` sehingga seluruh teks judul di mode Chat, Agent, maupun Web Search selalu tersusun rapi dalam satu baris (*sebaris*) tanpa pemisahan canggung.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (355.9 KB).
+  - Restore Point: `v2.53.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
