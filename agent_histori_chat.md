@@ -1806,6 +1806,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.39.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 240: Neon Lime Border Stroke on Prompt Focus (Zero Over-Glow Shadow)
+- **Problem**:
+  - Pengguna menginginkan agar saat bar input prompt diklik/fokus (`:focus-within`), border stroke tetap berubah menjadi aksen neon lime yang tajam dan presisi, baik pada Homescreen maupun pada bar input di bagian bawah saat chat aktif, tanpa efek shadow glow yang berlebihan (`ketika di klik buat tetep stroke jadi neon bro gausah stroke gausah glow, di input prompt bawah juga sama`).
+- **Penyebab & Solusi**:
+  1. **Aksen Border Stroke Neon Lime pada Focus**:
+     - Mengubah `border-color: rgba(206, 241, 40, 0.45)` saat `:focus-within` pada kontainer `.chat-input-container` (Homescreen dan Bottom Chat).
+     - Menjaga bayangan shadow tetap bersih dan rapi (`0 20px 52px -4px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(206, 241, 40, 0.2)`).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.40.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

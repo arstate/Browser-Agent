@@ -598,8 +598,8 @@ body.newtab-body {
 }
 
 .chat-input-container:focus-within {
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  border-color: rgba(206, 241, 40, 0.45);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(206, 241, 40, 0.2);
 }
 
 /* 1. INITIAL STATE: Centered Hero -> Bento Input (Center) with Frosted Neon Blur Glow -> Recent Sites */
@@ -654,7 +654,7 @@ body:not(.has-messages) .chat-input-container::before {
 }
 
 body:not(.has-messages) .chat-input-container:focus-within {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(206, 241, 40, 0.45);
   box-shadow: 0 0 45px -8px rgba(206, 241, 40, 0.15), 0 20px 50px rgba(0, 0, 0, 0.7);
 }
 
@@ -692,8 +692,8 @@ body.has-messages .chat-input-container::before {
 
 body.has-messages .chat-input-container:focus-within {
   background: rgba(26, 26, 31, 0.92);
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 20px 52px -4px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  border-color: rgba(206, 241, 40, 0.45);
+  box-shadow: 0 20px 52px -4px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(206, 241, 40, 0.2);
 }
 
 body.has-messages .chat-messages {
