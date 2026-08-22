@@ -5779,7 +5779,7 @@ async function openOptionsTab(e) {
     settingsOverlay.style.display = 'flex';
     const settingsIframe = document.getElementById('settings-embedded-iframe');
     if (settingsIframe && (!settingsIframe.src || !settingsIframe.src.includes('options.html'))) {
-      settingsIframe.src = 'options.html';
+      settingsIframe.src = 'options.html#ai';
     }
     return;
   }
@@ -5788,25 +5788,29 @@ async function openOptionsTab(e) {
   isOpeningOptions = true;
   setTimeout(() => { isOpeningOptions = false; }, 600);
 
-  const url = chrome.runtime.getURL('options.html');
+  const targetUrl = chrome.runtime.getURL('newtab.html#settings');
   try {
-    const existingTabs = await chrome.tabs.query({ url });
-    if (existingTabs && existingTabs.length > 0) {
-      await chrome.tabs.update(existingTabs[0].id, { active: true });
-      if (existingTabs[0].windowId) {
-        await chrome.windows.update(existingTabs[0].windowId, { focused: true });
+    const allTabs = await chrome.tabs.query({});
+    const existingNewTab = allTabs.find(t => t.url && (t.url.includes('newtab.html') || t.url === 'chrome://newtab/'));
+    
+    if (existingNewTab) {
+      await chrome.tabs.update(existingNewTab.id, { active: true, url: targetUrl });
+      if (existingNewTab.windowId) {
+        await chrome.windows.update(existingNewTab.windowId, { focused: true });
       }
+      try {
+        chrome.tabs.sendMessage(existingNewTab.id, { action: 'openSettingsOverlay', tab: 'ai' });
+      } catch (err) {}
       return;
     }
-    await chrome.tabs.create({ url, active: true });
+
+    await chrome.tabs.create({ url: targetUrl, active: true });
   } catch (err) {
     try {
-      if (chrome.runtime.openOptionsPage) {
-        chrome.runtime.openOptionsPage();
-        return;
-      }
-    } catch (e) {}
-    window.open(url, '_blank');
+      await chrome.tabs.create({ url: targetUrl, active: true });
+    } catch (e) {
+      window.open(targetUrl, '_blank');
+    }
   }
 }
 

@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.47.0`
-- **Iterasi:** `Iterasi 247`
-- **Tanggal Rilis:** 23 Agustus 2026 (00:45 WIB)
+- **Versi Terkini:** `v2.48.0`
+- **Iterasi:** `Iterasi 248`
+- **Tanggal Rilis:** 23 Agustus 2026 (00:47 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (354.3 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.48.0** | 248 | 23-08-2026 00:47 | `v2.48.0` | **Seamless Unified Settings Redirect from Sidepanel to Homescreen Overlay:** Menyesuaikan aksi klik menu Pengaturan di Sidepanel ekstensi agar selalu membuka/mengarahkan ke layout Pengaturan terpadu New Tab (`newtab.html#settings`) alih-alih membuka tab `options.html` terpisah yang terisolasi, sehingga pengalaman navigasi antarmuka pengguna 100% konsisten dan seamless. | 🟢 STABLE | `./restore.sh v2.48.0` |
 | **v2.47.0** | 247 | 23-08-2026 00:45 | `v2.47.0` | **Unified 240px Sidebar Width on Homescreen Hover (100% Seamless Match with Settings):** Menyesuaikan lebar sidebar saat di-hover/tampil di Homescreen (`.app-sidebar:hover`) menjadi tepat `240px` (sebelumnya `220px`), sehingga lebarnya 100% identik dan seamless dengan sidebar halaman Pengaturan (`.options-sidebar`). | 🟢 STABLE | `./restore.sh v2.47.0` |
 | **v2.46.0** | 246 | 23-08-2026 00:44 | `v2.46.0` | **Zero Scrollbars Clean Suggestions Dropdown:** Menghapus seluruh scrollbar (horizontal & vertikal) pada dropdown saran rekomendasi pencarian (`overflow: hidden !important; scrollbar-width: none;`), serta membatasi rekomendasi menjadi top 6 item presisi agar tampil rapi, elegan, dan bersih tanpa elemen scrollbar yang mengganggu. | 🟢 STABLE | `./restore.sh v2.46.0` |
 | **v2.45.0** | 245 | 23-08-2026 00:42 | `v2.45.0` | **Solid Dark Surface with Ambient Neon Blur Glow on Search Suggestions Dropdown (Zero Ghosting Behind):** Mengubah latar belakang menu dropdown saran pencarian menjadi Dark Charcoal solid (`background: #16161A`) dengan penambahan aura pendaran neon blur di belakangnya (`.websearch-suggestions-dropdown::before`), sehingga ikon/teks Recent Sites di belakang dropdown tertutup bersih tanpa tembus pandang (*anti-ghosting*) namun tetap memiliki estetika ambient blur yang estetik. | 🟢 STABLE | `./restore.sh v2.45.0` |

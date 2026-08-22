@@ -151,6 +151,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Auto-open settings overlay if opened with hash (e.g. newtab.html#settings)
+  function checkUrlForAutoSettings() {
+    const hash = window.location.hash;
+    if (hash && (hash.startsWith('#settings') || hash.startsWith('#ai') || hash.startsWith('#models') || hash.startsWith('#agents') || hash.startsWith('#skills') || hash.startsWith('#memory'))) {
+      let tab = 'ai';
+      if (hash.includes('models')) tab = 'models';
+      else if (hash.includes('agents')) tab = 'agents';
+      else if (hash.includes('skills')) tab = 'skills';
+      else if (hash.includes('memory')) tab = 'memory';
+      openFullscreenSettings(tab);
+    }
+  }
+  checkUrlForAutoSettings();
+  window.addEventListener('hashchange', checkUrlForAutoSettings);
+
+  try {
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+      chrome.runtime.onMessage.addListener((msg) => {
+        if (msg && msg.action === 'openSettingsOverlay') {
+          openFullscreenSettings(msg.tab || 'ai');
+        }
+      });
+    }
+  } catch (e) {}
+
   window.addEventListener('message', (e) => {
     if (e.data?.action === 'closeSettings') {
       closeFullscreenSettings();

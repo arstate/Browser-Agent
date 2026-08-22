@@ -1905,6 +1905,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.47.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 248: Seamless Unified Settings Redirect from Sidepanel to Homescreen Overlay
+- **Problem**:
+  - Saat mengklik menu Pengaturan dari Sidepanel ekstensi, aplikasi membuka tab baru yang mengarah ke `options.html` standalone mentah secara terpisah, bukan membuka overlay Pengaturan terpadu New Tab (`newtab.html#settings`) (`buat ketika klik pengaturan di sidepanel ekstension itu akan menuju ke pengaturan yang sama di newtab homescren bukan newtab link.html biar seamles bro`).
+- **Penyebab & Solusi**:
+  1. **Penyelarasan Target URL & Auto-Open Overlay**:
+     - Mengubah fungsi `openOptionsTab()` di `sidepanel.js` agar mencari tab New Tab yang sudah aktif atau membuka tab baru menuju `newtab.html#settings`.
+     - Menambahkan handler `checkUrlForAutoSettings()` dan runtime message listener di `newtab.js` yang secara otomatis membuka `#fullscreen-settings-overlay` saat URL mengandung hash `#settings` atau tab spesifik (`#ai`, `#models`, `#agents`, `#skills`, `#memory`).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (354.3 KB).
+  - Restore Point: `v2.48.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
