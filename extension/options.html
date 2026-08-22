@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pengaturan Browser Agent — AI, Multi-Agent, Skills &amp; Memory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body class="options-body">
+  <div class="options-app-shell">
+    <!-- Left Navigation Sidebar -->
+    <aside class="options-sidebar">
+      <div class="sidebar-top-bar">
+        <button type="button" class="btn-back-chat" id="btn-back-chat" title="Kembali ke Percakapan Agent (Esc)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+          <span>Back</span>
+        </button>
+        <div class="theme-dark-badge" title="Dark Luxury Mode Aktif">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="sidebar-nav-scroll">
+        <!-- Section: Provider Settings -->
+        <div class="sidebar-group-header">SETTINGS</div>
+        <div class="sidebar-group-subheader">PROVIDER SETTINGS</div>
+        
+        <nav class="sidebar-nav-list">
+          <button type="button" class="sidebar-tab-btn active" data-tab="ai" id="tab-btn-ai">
+            <div class="tab-btn-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="16" height="16" rx="3"/>
+                <rect x="9" y="9" width="6" height="6" rx="1"/>
+                <path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/>
+              </svg>
+            </div>
+            <span class="tab-btn-label">AI &amp; Providers</span>
+          </button>
+
+          <button type="button" class="sidebar-tab-btn" data-tab="agents" id="tab-btn-agents">
+            <div class="tab-btn-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <span class="tab-btn-label">Multi-Agent Persona</span>
+            <span class="tab-btn-badge" id="badge-count-agents">0</span>
+          </button>
+
+          <button type="button" class="sidebar-tab-btn" data-tab="skills" id="tab-btn-skills">
+            <div class="tab-btn-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <span class="tab-btn-label">Skills (Kemampuan)</span>
+            <span class="tab-btn-badge" id="badge-count-skills">0</span>
+          </button>
+
+          <button type="button" class="sidebar-tab-btn" data-tab="memories" id="tab-btn-memories">
+            <div class="tab-btn-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-5.04z"/>
+                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-5.04z"/>
+              </svg>
+            </div>
+            <span class="tab-btn-label">Memory &amp; Aturan</span>
+            <span class="tab-btn-badge" id="badge-count-memories">0</span>
+          </button>
+        </nav>
+
+        <!-- Section: System & Integration -->
+        <div class="sidebar-group-header" style="margin-top: 24px;">SYSTEM &amp; INTEGRATION</div>
+        <nav class="sidebar-nav-list">
+          <button type="button" class="sidebar-tab-btn" data-tab="ai" data-target="card-pc-bridge" id="tab-btn-pcbridge">
+            <div class="tab-btn-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                <line x1="6" y1="6" x2="6.01" y2="6"/>
+                <line x1="6" y1="18" x2="6.01" y2="18"/>
+              </svg>
+            </div>
+            <span class="tab-btn-label">PC Bridge &amp; Native Host</span>
+          </button>
+
+          <button type="button" class="sidebar-tab-btn" data-tab="ai" data-target="card-image-gen" id="tab-btn-image">
+            <div class="tab-btn-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+            <span class="tab-btn-label">AI Image Generation</span>
+          </button>
+
+          <button type="button" class="sidebar-tab-btn" data-tab="ai" data-target="card-params" id="tab-btn-params">
+            <div class="tab-btn-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="21" x2="4" y2="14"/>
+                <line x1="4" y1="10" x2="4" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12" y2="3"/>
+                <line x1="20" y1="21" x2="20" y2="16"/>
+                <line x1="20" y1="12" x2="20" y2="3"/>
+                <line x1="1" y1="14" x2="7" y2="14"/>
+                <line x1="9" y1="8" x2="15" y2="8"/>
+                <line x1="17" y1="16" x2="23" y2="16"/>
+              </svg>
+            </div>
+            <span class="tab-btn-label">Parameter Generasi</span>
+          </button>
+        </nav>
+
+        <!-- Section: Help & Info -->
+        <div class="sidebar-group-header" style="margin-top: 24px;">HELP &amp; INFO</div>
+        <nav class="sidebar-nav-list">
+          <button type="button" class="sidebar-tab-btn" data-tab="ai" data-target="card-pc-bridge" id="tab-btn-docs">
+            <div class="tab-btn-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+            </div>
+            <span class="tab-btn-label">Dokumentasi &amp; Setup</span>
+          </button>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="options-main-content">
+      <!-- TAB 1: AI & Providers -->
+      <div class="options-view active" id="tab-view-ai">
+        <!-- Hero Card: LLM Providers Header -->
+        <div class="bento-card bento-hero-provider-card">
+          <div class="hero-provider-top-row">
+            <div class="hero-provider-brand">
+              <div class="hero-provider-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+              </div>
+              <div>
+                <h1 class="hero-provider-title">LLM Providers</h1>
+                <p class="hero-provider-desc">Tambahkan AI provider Anda dan kelola urutan prioritas model untuk percakapan baru</p>
+              </div>
+            </div>
+            <div class="hero-provider-actions">
+              <button type="button" class="btn-save-header" id="btn-save-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>Simpan Perubahan</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="hero-provider-controls-row">
+            <div class="default-provider-picker">
+              <span class="default-provider-label">Default Provider / Model:</span>
+              <div class="model-choice-pill">
+                <span id="display-active-model-choice">Auto (Rotating Priority)</span>
+              </div>
+            </div>
+            <button type="button" class="btn-add-custom-provider" id="btn-add-model-row-quick">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>+ Add custom model</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Provider Templates Grid -->
+        <div class="bento-card bento-quick-templates-card">
+          <div class="card-header">
+            <div>
+              <h2>Quick provider templates</h2>
+              <p class="subtitle">12 template provider siap pakai — klik <strong>USE</strong> untuk menerapkan konfigurasi otomatis</p>
+            </div>
+          </div>
+
+          <div class="quick-templates-grid">
+            <!-- Google Gemini -->
+            <div class="template-item" data-preset="gemini">
+              <div class="template-item-left">
+                <div class="template-icon">✨</div>
+                <div class="template-info">
+                  <span class="template-name">Google Gemini</span>
+                  <span class="template-tag">Gemini 2.5 Flash / Pro</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill active" data-preset="gemini">USE</button>
+            </div>
+
+            <!-- OpenAI -->
+            <div class="template-item" data-preset="openai">
+              <div class="template-item-left">
+                <div class="template-icon">⚡</div>
+                <div class="template-info">
+                  <span class="template-name">OpenAI</span>
+                  <span class="template-tag">GPT-4o &amp; o3-mini</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="openai">USE</button>
+            </div>
+
+            <!-- Claude Code / Anthropic -->
+            <div class="template-item" data-preset="claude">
+              <div class="template-item-left">
+                <div class="template-icon">💫</div>
+                <div class="template-info">
+                  <span class="template-name">Claude Code</span>
+                  <span class="template-tag">Claude 3.7 / 3.5 Sonnet</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="claude">USE</button>
+            </div>
+
+            <!-- OpenRouter -->
+            <div class="template-item" data-preset="openrouter">
+              <div class="template-item-left">
+                <div class="template-icon">🌐</div>
+                <div class="template-info">
+                  <span class="template-name">OpenRouter</span>
+                  <span class="template-tag">Multi-Model Hub</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="openrouter">USE</button>
+            </div>
+
+            <!-- Ollama Lokal -->
+            <div class="template-item" data-preset="ollama">
+              <div class="template-item-left">
+                <div class="template-icon">🦙</div>
+                <div class="template-info">
+                  <span class="template-name">Ollama (Lokal)</span>
+                  <span class="template-tag">http://localhost:11434</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="ollama">USE</button>
+            </div>
+
+            <!-- 9Router Local Proxy -->
+            <div class="template-item" data-preset="9router">
+              <div class="template-item-left">
+                <div class="template-icon">🚀</div>
+                <div class="template-info">
+                  <span class="template-name">9Router Local</span>
+                  <span class="template-tag">http://localhost:20128</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="9router">USE</button>
+            </div>
+
+            <!-- DeepSeek -->
+            <div class="template-item" data-preset="deepseek">
+              <div class="template-item-left">
+                <div class="template-icon">🐋</div>
+                <div class="template-info">
+                  <span class="template-name">DeepSeek</span>
+                  <span class="template-tag">DeepSeek-V3 / R1</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="deepseek">USE</button>
+            </div>
+
+            <!-- LMStudio -->
+            <div class="template-item" data-preset="lmstudio">
+              <div class="template-item-left">
+                <div class="template-icon">🤖</div>
+                <div class="template-info">
+                  <span class="template-name">LMStudio</span>
+                  <span class="template-tag">http://localhost:1234</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="lmstudio">USE</button>
+            </div>
+
+            <!-- Qwen Code -->
+            <div class="template-item" data-preset="qwen">
+              <div class="template-item-left">
+                <div class="template-icon">💻</div>
+                <div class="template-info">
+                  <span class="template-name">Qwen Code</span>
+                  <span class="template-tag">Alibaba Cloud / Qwen 2.5</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="qwen">USE</button>
+            </div>
+
+            <!-- Moonshot AI -->
+            <div class="template-item" data-preset="moonshot">
+              <div class="template-item-left">
+                <div class="template-icon">🌙</div>
+                <div class="template-info">
+                  <span class="template-name">Moonshot AI</span>
+                  <span class="template-tag">Kimi Long Context</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="moonshot">USE</button>
+            </div>
+
+            <!-- GitHub Copilot -->
+            <div class="template-item" data-preset="copilot">
+              <div class="template-item-left">
+                <div class="template-icon">🐙</div>
+                <div class="template-info">
+                  <span class="template-name">GitHub Copilot</span>
+                  <span class="template-tag">Copilot OpenAI Proxy</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="copilot">USE</button>
+            </div>
+
+            <!-- Custom Endpoint -->
+            <div class="template-item" data-preset="custom">
+              <div class="template-item-left">
+                <div class="template-icon">⚙️</div>
+                <div class="template-info">
+                  <span class="template-name">Custom Endpoint</span>
+                  <span class="template-tag">OpenAI Compatible URL</span>
+                </div>
+              </div>
+              <button type="button" class="btn-template-use preset-pill" data-preset="custom">USE</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="options-grid-2col">
+          <!-- Left Column: Connection & Prioritas Model -->
+          <div class="options-col">
+            <!-- Connection Card -->
+            <div class="bento-card" id="card-ai-connection">
+              <div class="card-header">
+                <div class="header-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2>AI Connection &amp; Key</h2>
+                  <p>Endpoint URL dan API Key otentikasi provider yang sedang aktif</p>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="setting-endpoint">Endpoint URL (OpenAI-compatible)</label>
+                <input type="text" id="setting-endpoint" placeholder="https://api.openai.com/v1" spellcheck="false">
+                <small class="form-hint">Harus mendukung endpoint <code>/chat/completions</code></small>
+              </div>
+
+              <div class="form-group">
+                <label for="setting-apikey">API Key / Token</label>
+                <div class="input-with-action">
+                  <input type="password" id="setting-apikey" placeholder="Masukkan API Key Anda..." spellcheck="false">
+                  <button type="button" class="input-action-btn" id="btn-toggle-apikey" title="Tampilkan/Sembunyikan API Key">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 14px;">
+                <button type="button" class="btn-test-ai-connection" id="btn-test-ai-conn">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  <span>Test AI Connection</span>
+                </button>
+                <div id="test-ai-result-box" class="test-result-box" style="display: none;"></div>
+              </div>
+            </div>
+
+            <!-- Model Priority Ranking Card -->
+            <div class="bento-card" id="card-models-priority">
+              <div class="card-header">
+                <div class="header-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                    <polyline points="2 17 12 22 22 17"/>
+                    <polyline points="2 12 12 17 22 12"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2>Prioritas Model AI</h2>
+                  <p>Urutkan prioritas model 1, 2, 3 dari atas ke bawah untuk rotasi otomatis saat mode Auto (Rotating) aktif</p>
+                </div>
+              </div>
+
+              <div class="models-management-box">
+                <div class="models-priority-hint-row">
+                  <span class="priority-hint-text">Urutan prioritas dieksekusi dari <strong>#1 (Atas)</strong> ke bawah. Nama UI akan tampil di dropdown:</span>
+                </div>
+                <div class="models-rows-list" id="settings-models-rows">
+                  <!-- Rendered via JS -->
+                </div>
+
+                <button type="button" class="btn-add-model-dashed" id="btn-add-model-row">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  <span>Tambah Model Baru</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Generation Params & Native Bridge -->
+          <div class="options-col">
+            <!-- Parameter Generasi -->
+            <div class="bento-card" id="card-params">
+              <div class="card-header">
+                <div class="header-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14"/>
+                    <line x1="4" y1="10" x2="4" y2="3"/>
+                    <line x1="12" y1="21" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12" y2="3"/>
+                    <line x1="20" y1="21" x2="20" y2="16"/>
+                    <line x1="20" y1="12" x2="20" y2="3"/>
+                    <line x1="1" y1="14" x2="7" y2="14"/>
+                    <line x1="9" y1="8" x2="15" y2="8"/>
+                    <line x1="17" y1="16" x2="23" y2="16"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2>Parameter Generasi</h2>
+                  <p>Pengaturan kreativitas respon dan limit output token</p>
+                </div>
+              </div>
+
+              <div class="form-row-2col">
+                <div class="form-group">
+                  <label for="setting-temp">Temperature (<span id="temp-val-display">0.2</span>)</label>
+                  <input type="range" id="setting-temp" min="0" max="1" step="0.05" value="0.2">
+                  <div class="range-labels">
+                    <span>0.0 (Presisi)</span>
+                    <span>1.0 (Kreatif)</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-max-tokens">Max Output Tokens</label>
+                  <input type="number" id="setting-max-tokens" min="512" max="1000000" step="512" value="4096">
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Image Generation Setup -->
+            <div class="bento-card" id="card-image-gen">
+              <div class="card-header">
+                <div class="header-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2>AI Image Generation</h2>
+                  <p>Model custom untuk pembuatan gambar otomatis saat diminta</p>
+                </div>
+              </div>
+
+              <div class="form-row-2col">
+                <div class="form-group">
+                  <label for="setting-image-model">Model Name Image Generation</label>
+                  <input type="text" id="setting-image-model" placeholder="dall-e-3, imagen-3.0-generate-002, flux..." value="dall-e-3" spellcheck="false">
+                  <small class="form-hint">Mendukung DALL-E 3, Imagen 3, Flux Schnell, SDXL, dll.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-image-aspect">Aspek Rasio</label>
+                  <input type="text" id="setting-image-aspect" value="Auto (Menyesuaikan Prompt)" readonly disabled>
+                  <small class="form-hint">Ditetapkan otomatis sesuai kebutuhan prompt</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Local PC Native Bridge -->
+            <div class="bento-card" id="card-pc-bridge">
+              <div class="card-header">
+                <div class="header-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                    <line x1="6" y1="6" x2="6.01" y2="6"/>
+                    <line x1="6" y1="18" x2="6.01" y2="18"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2>PC Bridge &amp; Local Tools (Native Host)</h2>
+                  <p>Memberikan akses ke file lokal, terminal command, dan database SQLite</p>
+                </div>
+              </div>
+
+              <div class="bridge-status-indicator">
+                <div class="indicator-dot" id="bridge-status-dot"></div>
+                <div class="indicator-text">
+                  <strong id="bridge-status-title">Memeriksa Status PC Bridge...</strong>
+                  <span id="bridge-status-desc">Menghubungkan ke native host binary</span>
+                </div>
+                <button type="button" class="btn-test-conn" id="btn-test-connection">Test Koneksi</button>
+              </div>
+
+              <div class="os-setup-section">
+                <label>Instalasi 1-Klik PC Bridge:</label>
+                <div class="os-tabs-nav">
+                  <button type="button" class="os-tab active" data-os="linux">Linux (Bash)</button>
+                  <button type="button" class="os-tab" data-os="mac">macOS (Zsh)</button>
+                  <button type="button" class="os-tab" data-os="windows">Windows (PowerShell)</button>
+                </div>
+
+                <div class="os-code-panel" id="os-cmd-linux">
+                  <code>cd ~/browser-agent &amp;&amp; ./install.sh</code>
+                  <button type="button" class="copy-cmd-btn" data-copy="cd ~/browser-agent &amp;&amp; ./install.sh">Salin Perintah</button>
+                </div>
+
+                <div class="os-code-panel" id="os-cmd-mac" style="display: none;">
+                  <code>cd ~/browser-agent &amp;&amp; ./install.sh</code>
+                  <button type="button" class="copy-cmd-btn" data-copy="cd ~/browser-agent &amp;&amp; ./install.sh">Salin Perintah</button>
+                </div>
+
+                <div class="os-code-panel" id="os-cmd-windows" style="display: none;">
+                  <code>cd %USERPROFILE%rowser-agent ; .\install.bat</code>
+                  <button type="button" class="copy-cmd-btn" data-copy="cd %USERPROFILE%rowser-agent ; .\install.bat">Salin Perintah</button>
+                </div>
+              </div>
+
+              <div id="test-connection-result" class="test-result-box" style="display: none;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Multi-Agent Management -->
+      <div class="options-view" id="tab-view-agents" style="display: none;">
+        <div class="view-header-bar">
+          <div>
+            <h2>Manajemen Multi-Agent Persona</h2>
+            <p>Konfigurasi Master Agent (Supreme Orchestrator) dan sub-agent otonom dengan keahlian serta instruksi masing-masing.</p>
+          </div>
+          <button type="button" class="btn-add-primary" id="btn-open-add-agent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Tambah Sub-Agent Baru</span>
+          </button>
+        </div>
+
+        <!-- MASTER AGENT HERO CARD (TOP CENTER) -->
+        <div class="boss-agent-hero-container" id="boss-agent-hero-section">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Sub-Agents Subheading & Search -->
+        <div class="section-subheading-group">
+          <div class="section-subheading-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <h3>Daftar Sub-Agent Pekerja (Workers &amp; Specialists)</h3>
+          </div>
+          <p>Sub-agent spesialis yang diperintah dan diaudit oleh Master Agent sesuai kebutuhan prompt pengguna</p>
+        </div>
+
+        <!-- Search Bar Sub-Agents -->
+        <div class="catalog-search-wrapper">
+          <div class="search-input-box">
+            <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="search-agents-input" class="catalog-search-input" placeholder="Cari sub-agent (nama, deskripsi, skill, model, prompt)..." spellcheck="false">
+            <button type="button" class="btn-clear-search" id="btn-clear-search-agents" title="Hapus pencarian" style="display: none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="search-result-stats" id="stats-search-agents" style="display: none;"></div>
+        </div>
+
+        <div class="items-cards-grid" id="agents-cards-grid">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- TAB 3: Skills Management -->
+      <div class="options-view" id="tab-view-skills" style="display: none;">
+        <div class="view-header-bar">
+          <div>
+            <h2>Katalog Kemampuan Khusus (Skills)</h2>
+            <p>Daftar SOP, tata cara analisis, atau instruksi tools terstruktur yang dapat disematkan ke Agent.</p>
+          </div>
+          <button type="button" class="btn-add-primary" id="btn-open-add-skill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Tambah Skill Baru</span>
+          </button>
+        </div>
+
+        <!-- Search Bar Skills -->
+        <div class="catalog-search-wrapper">
+          <div class="search-input-box">
+            <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="search-skills-input" class="catalog-search-input" placeholder="Cari skill / SOP (nama, id, deskripsi, isi SOP)..." spellcheck="false">
+            <button type="button" class="btn-clear-search" id="btn-clear-search-skills" title="Hapus pencarian" style="display: none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="search-result-stats" id="stats-search-skills" style="display: none;"></div>
+        </div>
+
+        <div class="items-cards-grid" id="skills-cards-grid">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- TAB 4: Memories Management -->
+      <div class="options-view" id="tab-view-memories" style="display: none;">
+        <div class="view-header-bar">
+          <div>
+            <h2>Memori Permanen &amp; Preferensi Pengguna</h2>
+            <p>Aturan tetap, preferensi komunikasi, dan pengetahuan penting yang selalu diingat oleh Agent.</p>
+          </div>
+          <button type="button" class="btn-add-primary" id="btn-open-add-memory">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Tambah Memory Baru</span>
+          </button>
+        </div>
+
+        <!-- Search Bar Memories -->
+        <div class="catalog-search-wrapper">
+          <div class="search-input-box">
+            <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="search-memories-input" class="catalog-search-input" placeholder="Cari memory / aturan (nama, id, deskripsi, isi konten)..." spellcheck="false">
+            <button type="button" class="btn-clear-search" id="btn-clear-search-memories" title="Hapus pencarian" style="display: none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="search-result-stats" id="stats-search-memories" style="display: none;"></div>
+        </div>
+
+        <div class="items-cards-grid" id="memories-cards-grid">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </main>
+
+    <!-- ======================================================== -->
+    <!-- MODAL: Tambah / Edit Agent -->
+    <!-- ======================================================== -->
+    <div class="custom-modal-overlay" id="modal-agent" style="display: none;">
+      <div class="custom-modal-dialog modal-wide">
+        <div class="modal-header">
+          <div class="modal-title-box">
+            <h3 id="modal-agent-title">Tambah Agent Baru</h3>
+            <p>Konfigurasi persona, skill yang dimiliki, dan model default</p>
+          </div>
+          <button type="button" class="btn-modal-close" id="btn-close-agent-modal">&times;</button>
+        </div>
+
+        <div class="modal-mode-tabs">
+          <button type="button" class="modal-mode-tab active" data-mode="manual" id="agent-mode-manual-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>Input Manual</span>
+          </button>
+          <button type="button" class="modal-mode-tab" data-mode="ai" id="agent-mode-ai-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span>Buat dengan AI</span>
+          </button>
+        </div>
+
+        <!-- AI Generator Section -->
+        <div class="ai-generator-box" id="agent-ai-section" style="display: none;">
+          <div class="ai-model-select-row">
+            <label for="agent-ai-model-select">Pilih Model Generator AI:</label>
+            <select id="agent-ai-model-select" class="ai-model-select">
+              <!-- Populated via JS -->
+            </select>
+          </div>
+          <label for="agent-ai-prompt">Prompt Permintaan Agent:</label>
+          <textarea id="agent-ai-prompt" rows="3" placeholder="Contoh: Buatkan agent spesialis riset pasar & kompetitor dengan gaya analisis data terstruktur dan objektif..."></textarea>
+          <button type="button" class="btn-generate-ai" id="btn-generate-agent-ai">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span>Generate Persona Agent</span>
+          </button>
+          <div class="ai-status-msg" id="agent-ai-status" style="display: none;"></div>
+        </div>
+
+        <!-- Agent Form -->
+        <form id="form-agent">
+          <input type="hidden" id="agent-form-id">
+          
+          <div class="form-row-2col">
+            <div class="form-group">
+              <label for="agent-form-name">Nama Agent</label>
+              <input type="text" id="agent-form-name" placeholder="Contoh: Deep Web Researcher" required>
+            </div>
+            <div class="form-group">
+              <label for="agent-form-model">Model Default</label>
+              <select id="agent-form-model">
+                <option value="">Gunakan Model Global</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="agent-form-desc">Deskripsi Singkat</label>
+            <input type="text" id="agent-form-desc" placeholder="Tugas utama atau spesialisasi agent...">
+          </div>
+
+          <div class="form-group">
+            <label for="agent-form-prompt">System Prompt / Instruksi Persona (Markdown)</label>
+            <textarea id="agent-form-prompt" rows="6" placeholder="Definisikan persona, aturan perilaku, gaya bahasa, dan tujuan agent..." required></textarea>
+          </div>
+
+          <!-- Skills Selection Grid -->
+          <div class="form-group">
+            <label>Pilih Skills yang Dimiliki Agent Ini:</label>
+            <div class="checkbox-selection-grid" id="agent-skills-checkboxes">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Memories Selection Grid -->
+          <div class="form-group">
+            <label>Pilih Memory / Aturan yang Dipatuhi:</label>
+            <div class="checkbox-selection-grid" id="agent-memories-checkboxes">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <div class="form-group-checkbox">
+            <label class="custom-checkbox-label">
+              <input type="checkbox" id="agent-form-default">
+              <span class="custom-checkbox-styled"></span>
+              <span>Jadikan Agent Default (Aktif Utama)</span>
+            </label>
+          </div>
+
+          <div class="modal-footer-actions">
+            <button type="button" class="btn-modal-cancel" id="btn-cancel-agent-modal">Batal</button>
+            <button type="submit" class="btn-modal-save" id="btn-save-agent-modal">Simpan Agent</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL: Tambah / Edit Skill -->
+    <!-- ======================================================== -->
+    <div class="custom-modal-overlay" id="modal-skill" style="display: none;">
+      <div class="custom-modal-dialog">
+        <div class="modal-header">
+          <div class="modal-title-box">
+            <h3 id="modal-skill-title">Tambah Skill Baru</h3>
+            <p>SOP dan panduan instruksi spesifik untuk disematkan ke Agent</p>
+          </div>
+          <button type="button" class="btn-modal-close" id="btn-close-skill-modal">&times;</button>
+        </div>
+
+        <div class="modal-mode-tabs">
+          <button type="button" class="modal-mode-tab active" data-mode="manual" id="skill-mode-manual-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>Input Manual</span>
+          </button>
+          <button type="button" class="modal-mode-tab" data-mode="ai" id="skill-mode-ai-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span>Buat dengan AI</span>
+          </button>
+        </div>
+
+        <!-- AI Generator Section -->
+        <div class="ai-generator-box" id="skill-ai-section" style="display: none;">
+          <div class="ai-model-select-row">
+            <label for="skill-ai-model-select">Pilih Model Generator AI:</label>
+            <select id="skill-ai-model-select" class="ai-model-select">
+              <!-- Populated via JS -->
+            </select>
+          </div>
+          <label for="skill-ai-prompt">Prompt Permintaan Skill:</label>
+          <textarea id="skill-ai-prompt" rows="3" placeholder="Contoh: Buatkan skill analisa teknikal crypto dan stock market lengkap dengan rumus indikator RSI & MACD..."></textarea>
+          <button type="button" class="btn-generate-ai" id="btn-generate-skill-ai">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span>Generate Dokumen Skill</span>
+          </button>
+          <div class="ai-status-msg" id="skill-ai-status" style="display: none;"></div>
+        </div>
+
+        <!-- Skill Form -->
+        <form id="form-skill">
+          <input type="hidden" id="skill-form-id">
+          
+          <div class="form-group">
+            <label for="skill-form-name">Nama Skill</label>
+            <input type="text" id="skill-form-name" placeholder="Contoh: Ekstraksi Data Tabel &amp; Format JSON" required>
+          </div>
+
+          <div class="form-group">
+            <label for="skill-form-desc">Deskripsi Singkat</label>
+            <input type="text" id="skill-form-desc" placeholder="Penjelasan kegunaan skill...">
+          </div>
+
+          <div class="form-group">
+            <label for="skill-form-content">Isi Panduan Skill (Markdown)</label>
+            <textarea id="skill-form-content" rows="8" placeholder="Tuliskan SOP, format output, atau tata cara pemrosesan data di sini..." required></textarea>
+          </div>
+
+          <div class="modal-footer-actions">
+            <button type="button" class="btn-modal-cancel" id="btn-cancel-skill-modal">Batal</button>
+            <button type="submit" class="btn-modal-save" id="btn-save-skill-modal">Simpan Skill</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL: Tambah / Edit Memory -->
+    <!-- ======================================================== -->
+    <div class="custom-modal-overlay" id="modal-memory" style="display: none;">
+      <div class="custom-modal-dialog">
+        <div class="modal-header">
+          <div class="modal-title-box">
+            <h3 id="modal-memory-title">Tambah Memory Baru</h3>
+            <p>Pengetahuan penting dan preferensi permanen pengguna</p>
+          </div>
+          <button type="button" class="btn-modal-close" id="btn-close-memory-modal">&times;</button>
+        </div>
+
+        <div class="modal-mode-tabs">
+          <button type="button" class="modal-mode-tab active" data-mode="manual" id="memory-mode-manual-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>Input Manual</span>
+          </button>
+          <button type="button" class="modal-mode-tab" data-mode="ai" id="memory-mode-ai-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span>Buat dengan AI</span>
+          </button>
+        </div>
+
+        <!-- AI Generator Section -->
+        <div class="ai-generator-box" id="memory-ai-section" style="display: none;">
+          <div class="ai-model-select-row">
+            <label for="memory-ai-model-select">Pilih Model Generator AI:</label>
+            <select id="memory-ai-model-select" class="ai-model-select">
+              <!-- Populated via JS -->
+            </select>
+          </div>
+          <label for="memory-ai-prompt">Prompt Permintaan Memory:</label>
+          <textarea id="memory-ai-prompt" rows="3" placeholder="Contoh: Buatkan memori aturan preferensi gaya komunikasi: selalu gunakan bahasa Indonesia santai, ringkas, to the point..."></textarea>
+          <button type="button" class="btn-generate-ai" id="btn-generate-memory-ai">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span>Generate Memory</span>
+          </button>
+          <div class="ai-status-msg" id="memory-ai-status" style="display: none;"></div>
+        </div>
+
+        <!-- Memory Form -->
+        <form id="form-memory">
+          <input type="hidden" id="memory-form-id">
+          
+          <div class="form-group">
+            <label for="memory-form-name">Nama / Judul Memory</label>
+            <input type="text" id="memory-form-name" placeholder="Contoh: Preferensi Gaya Bicara Pengguna" required>
+          </div>
+
+          <div class="form-group">
+            <label for="memory-form-desc">Deskripsi Singkat</label>
+            <input type="text" id="memory-form-desc" placeholder="Kategori atau konteks memori...">
+          </div>
+
+          <div class="form-group">
+            <label for="memory-form-content">Isi Catatan / Aturan (Markdown)</label>
+            <textarea id="memory-form-content" rows="6" placeholder="- Selalu jawab dalam Bahasa Indonesia&#10;- Hindari jawaban panjang bertele-tele&#10;- Prioritaskan kode langsung" required></textarea>
+          </div>
+
+          <div class="modal-footer-actions">
+            <button type="button" class="btn-modal-cancel" id="btn-cancel-memory-modal">Batal</button>
+            <button type="submit" class="btn-modal-save" id="btn-save-memory-modal">Simpan Memory</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Floating Save Toast -->
+    <div class="save-toast" id="save-toast" style="display: none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <span>Pengaturan berhasil disimpan dan langsung aktif!</span>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
