@@ -1882,6 +1882,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.45.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 246: Zero Scrollbars Clean Suggestions Dropdown
+- **Problem**:
+  - Muncul scrollbar vertikal dan horizontal pada kotak dropdown saran rekomendasi pencarian yang mengurangi estetika kebersihan tampilan (`jangan ada scroling bro biar gada ui scrolbar biar lebih clean`).
+- **Penyebab & Solusi**:
+  1. **Penghapusan Scrollbar & Batasan List Rapi**:
+     - Mengubah `.websearch-suggestions-dropdown` menjadi `overflow: hidden !important; scrollbar-width: none !important;` dan menyembunyikan `::-webkit-scrollbar { display: none !important; }`.
+     - Membatasi kuota saran rekomendasi menjadi top 6 item presisi pada `sidepanel.js` (`data[1].slice(0, 6)`) sehingga kotak dropdown berukuran proporsional, pas, dan tidak pernah memicu scrollbar.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (354.3 KB).
+  - Restore Point: `v2.46.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

@@ -6979,7 +6979,7 @@ async function fetchGoogleSuggestions(query) {
     if (!response.ok) return;
     const data = await response.json();
     if (Array.isArray(data) && Array.isArray(data[1])) {
-      const suggestions = data[1].slice(0, 7); // Top 7 suggestions
+      const suggestions = data[1].slice(0, 6); // Top 6 clean suggestions without overflow
       renderWebSearchSuggestions(suggestions, query.trim());
     }
   } catch (err) {

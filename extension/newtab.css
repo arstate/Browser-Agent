@@ -1590,7 +1590,7 @@ body.has-messages #btn-mode-websearch {
   display: none !important;
 }
 
-/* Web Search Autocomplete Suggestions Dropdown */
+/* Web Search Autocomplete Suggestions Dropdown - Clean Zero Scrollbars */
 .websearch-suggestions-dropdown {
   position: absolute;
   top: calc(100% + 8px);
@@ -1604,10 +1604,17 @@ body.has-messages #btn-mode-websearch {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 360px;
-  overflow-y: auto;
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
   z-index: 1000;
   animation: fadeIn 0.15s ease-out;
+}
+
+.websearch-suggestions-dropdown::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .websearch-suggestions-dropdown::before {
