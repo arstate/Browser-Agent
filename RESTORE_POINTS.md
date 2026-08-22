@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.44.0`
-- **Iterasi:** `Iterasi 244`
-- **Tanggal Rilis:** 23 Agustus 2026 (00:41 WIB)
+- **Versi Terkini:** `v2.45.0`
+- **Iterasi:** `Iterasi 245`
+- **Tanggal Rilis:** 23 Agustus 2026 (00:42 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (354.2 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.45.0** | 245 | 23-08-2026 00:42 | `v2.45.0` | **Solid Dark Surface with Ambient Neon Blur Glow on Search Suggestions Dropdown (Zero Ghosting Behind):** Mengubah latar belakang menu dropdown saran pencarian menjadi Dark Charcoal solid (`background: #16161A`) dengan penambahan aura pendaran neon blur di belakangnya (`.websearch-suggestions-dropdown::before`), sehingga ikon/teks Recent Sites di belakang dropdown tertutup bersih tanpa tembus pandang (*anti-ghosting*) namun tetap memiliki estetika ambient blur yang estetik. | 🟢 STABLE | `./restore.sh v2.45.0` |
 | **v2.44.0** | 244 | 23-08-2026 00:41 | `v2.44.0` | **Translucent Frosted Glass Styling on Web Search Suggestions Dropdown:** Mengubah container dropdown rekomendasi pencarian `.websearch-suggestions-dropdown` menjadi estetika *frosted glass* semi-transparan (`background: rgba(18, 18, 22, 0.72)` dengan `backdrop-filter: blur(32px) saturate(190%)` dan border `rgba(255, 255, 255, 0.12)`). | 🟢 STABLE | `./restore.sh v2.44.0` |
 | **v2.43.0** | 243 | 23-08-2026 00:39 | `v2.43.0` | **Live Google Search Autocomplete Suggestions Dropdown in Web Search Mode:** Mengintegrasikan live autocomplete search suggestions dari Google Suggest API saat pengguna mengetik di mode `🌐 Web Search`. Dilengkapi dengan dropdown menu Dark Charcoal (`.websearch-suggestions-dropdown`), highlight kata kunci, navigasi keyboard panah atas/bawah (`ArrowUp`/`ArrowDown`), dan eksekusi instan saat diklik atau ditekan Enter. | 🟢 STABLE | `./restore.sh v2.43.0` |
 | **v2.42.0** | 242 | 23-08-2026 00:35 | `v2.42.0` | **Integrated Web Search Mode on Homescreen Input Prompt:** Menambahkan opsi mode `🌐 Web Search` di switcher mode input prompt Homescreen (`[Agent Mode] [Chat Mode] [Web Search]`). Ketika mode Web Search aktif: tombol upload file (`+`) dan dropdown alur kerja (`Accept/Planning`) otomatis di-hide, placeholder berubah menjadi *"Cari di Google atau ketik URL web..."*, serta input teks langsung mengeksekusi pencarian Google atau membuka URL target secara instan. Opsi Web Search ini otomatis disembunyikan saat sesi chat AI sedang berlangsung di bagian bawah. | 🟢 STABLE | `./restore.sh v2.42.0` |

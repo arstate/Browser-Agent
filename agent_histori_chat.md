@@ -1870,6 +1870,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.44.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 245: Solid Dark Surface with Ambient Neon Blur Glow on Search Suggestions Dropdown (Zero Ghosting Behind)
+- **Problem**:
+  - Saat menggunakan background transparan, ikon dan teks Recent Sites di belakang dropdown rekomendasi pencarian terlihat tembus pandang secara tajam sehingga mengganggu keterbacaan teks (*ghosting*) (`kok malah makin jelas bro maksud saya buat blur biar background nya blur rekomendasi searchnya`).
+- **Penyebab & Solusi**:
+  1. **Solid Dark Charcoal Surface + Ambient Neon Blur Glow**:
+     - Mengubah `.websearch-suggestions-dropdown` menjadi background solid `background: #16161A` dengan border `1px solid rgba(255, 255, 255, 0.12)` dan bayangan lembut.
+     - Menambahkan pseudo-element `.websearch-suggestions-dropdown::before` dengan pendaran neon blur lembut (`filter: blur(18px)`, opacity `0.85`) sehingga konten di belakang tertutup rapat tanpa tembus pandang, namun tepi dropdown memancarkan efek ambient blur yang mewah layaknya bar input prompt.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (354.2 KB).
+  - Restore Point: `v2.45.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
