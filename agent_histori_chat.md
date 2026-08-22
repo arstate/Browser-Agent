@@ -1601,6 +1601,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.25.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 226: Fix Welcome-Card DOM Theft Bug on Home Click
+- **Problem**:
+  - Saat berada di Homescreen dan pengguna mengklik tombol `Home`, teks hero utama (*"What should your agent work on next?"*) tiba-tiba hilang dan menyisakan ruang hitam kosong di tengah (`bug kalau di homescren sidebar klik menu home padahal sudah di home jadi bug ui jadi kek gini bro`).
+- **Penyebab & Solusi**:
+  1. **Akar Masalah (DOM Theft)**:
+     - Di `sidepanel.js`, fungsi `startNewChat()` mengeksekusi `chatMessages.appendChild(welcomeCard)`.
+     - Pada New Tab, `welcomeCard` seharusnya berada di `#agent-workspace`, bukan di `#chat-messages` (karena `#chat-messages` memiliki CSS `display: none` saat tidak ada pesan aktif / `body:not(.has-messages)`).
+     - Akibatnya, `welcomeCard` ikut tersembunyi karena dipindahkan ke container `#chat-messages`.
+  2. **Perbaikan `resetChatMessagesUI()`**:
+     - Membuat helper `resetChatMessagesUI()` di `sidepanel.js` yang memeriksa posisi DOM `welcomeCard`: jika berada di `#agent-workspace`, `welcomeCard` tidak dipindahkan ke `#chat-messages`, melainkan dipastikan tetap tampil (`welcomeCard.style.display = 'flex'`).
+     - Memperbarui event listener `Home` di `newtab.js` untuk memastikan tampilan hero tetap stabil dan utuh.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.26.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

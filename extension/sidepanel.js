@@ -6157,6 +6157,22 @@ function cancelExecution() {
   updateFooterStatus("Agent Ready");
 }
 
+function resetChatMessagesUI() {
+  if (!chatMessages) return;
+  const workspace = document.getElementById('agent-workspace');
+  if (welcomeCard && workspace && workspace.contains(welcomeCard) && !chatMessages.contains(welcomeCard)) {
+    chatMessages.innerHTML = '';
+    welcomeCard.style.display = 'flex';
+  } else {
+    chatMessages.innerHTML = '';
+    if (welcomeCard) {
+      chatMessages.appendChild(welcomeCard);
+      welcomeCard.style.display = 'block';
+    }
+  }
+  document.body.classList.remove('has-messages');
+}
+
 function startNewChat() {
   if (isExecuting) {
     cancelExecution();
@@ -6169,12 +6185,7 @@ function startNewChat() {
   conversationHistory = [];
   pendingAttachments = [];
   clearAttachments();
-  chatMessages.innerHTML = '';
-  if (welcomeCard) {
-    chatMessages.appendChild(welcomeCard);
-    welcomeCard.style.display = 'block';
-  }
-  document.body.classList.remove('has-messages');
+  resetChatMessagesUI();
   isExecuting = false;
   abortController = null;
   updateSendButtonState(false);
@@ -6263,12 +6274,7 @@ async function confirmDeleteSession() {
     currentSessionTitle = "New Chat";
     currentSessionCreatedAt = null;
     conversationHistory = [];
-    chatMessages.innerHTML = '';
-    if (welcomeCard) {
-      chatMessages.appendChild(welcomeCard);
-      welcomeCard.style.display = 'block';
-    }
-    document.body.classList.remove('has-messages');
+    resetChatMessagesUI();
 
     hideDeleteConfirmModal();
     const searchInput = document.getElementById('input-search-history');
@@ -6303,11 +6309,7 @@ async function confirmDeleteSession() {
     currentSessionTitle = "New Chat";
     currentSessionCreatedAt = null;
     conversationHistory = [];
-    chatMessages.innerHTML = '';
-    if (welcomeCard) {
-      chatMessages.appendChild(welcomeCard);
-      welcomeCard.style.display = 'block';
-    }
+    resetChatMessagesUI();
   }
 
   hideDeleteConfirmModal();

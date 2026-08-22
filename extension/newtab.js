@@ -118,10 +118,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Home Button (Back to Chat)
+  // Home Button (Back to Chat / Reset to Clean Welcome Screen)
   document.getElementById('btn-header-new-chat')?.addEventListener('click', (e) => {
     e.preventDefault();
     closeFullscreenSettings();
+    const welcomeCardEl = document.getElementById('welcome-card');
+    if (welcomeCardEl) {
+      welcomeCardEl.style.display = 'flex';
+      welcomeCardEl.style.opacity = '1';
+    }
+    document.body.classList.remove('has-messages');
+    updateActiveSidebarTab('home');
   });
 
   // Settings Button in Sidebar (Opens in-page Settings Overlay)
