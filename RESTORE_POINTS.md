@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.33.0`
-- **Iterasi:** `Iterasi 233`
-- **Tanggal Rilis:** 23 Agustus 2026 (00:15 WIB)
+- **Versi Terkini:** `v2.34.0`
+- **Iterasi:** `Iterasi 234`
+- **Tanggal Rilis:** 23 Agustus 2026 (00:16 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.5 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.34.0** | 234 | 23-08-2026 00:16 | `v2.34.0` | **Translucent Frosted Glass Blur Input in Active Chat (Zero Neon Glow):** Mengubah gaya input prompt di bagian bawah layar saat chat aktif (`body.has-messages`) menjadi Glassmorphism frosted glass transparan yang elegan (`backdrop-filter: blur(28px) saturate(190%)`, `background: rgba(22, 22, 26, 0.82)`), serta menghapus glow neon di belakang bar input agar pesan chat yang lewat di belakangnya tampak ter-blur halus dengan teks dan kontrol input yang tetap jernih dan tajam. | 🟢 STABLE | `./restore.sh v2.34.0` |
 | **v2.33.0** | 233 | 23-08-2026 00:15 | `v2.33.0` | **Neutral Dark Charcoal Markdown Tables, Code Cards & Clarification UI:** Mengganti warna background tabel markdown (`.md-table-wrapper`, `th`, `td`), kartu kode (`.md-code-card`), opsi pilihan klarifikasi interaktif, serta modal-modal sistem dari warna dark kebiruan (`#0F172A`, `#0B111E`, `#131A26`) menjadi Neutral Dark Charcoal (`#18181B`, `#202024`, `#141416`) yang bersih dan seragam. | 🟢 STABLE | `./restore.sh v2.33.0` |
 | **v2.32.0** | 232 | 23-08-2026 00:11 | `v2.32.0` | **Neutral Dark Sub-Agent Execution Cards & Dropups (100% Anti-Navy):** Mengganti warna background kartu sub-agent yang ditugaskan (`.tree-agent-card`) dari warna dark kebiruan (`#141B26` / `#192231`) menjadi Neutral Dark Charcoal (`#1C1C1F` / `#242428`), serta membersihkan seluruh kartu klarifikasi, agent switch, mention autocomplete, dan preview attachment ke palet abu-abu arang netral yang konsisten. | 🟢 STABLE | `./restore.sh v2.32.0` |
 | **v2.31.0** | 231 | 23-08-2026 00:07 | `v2.31.0` | **Pixel-Perfect Horizontal & Vertical Centering on Homescreen:** Memperbaiki titik pusat koordinat `.chat-input-container` yang sebelumnya tergeser 29px ke kiri karena memakai `left: 50%` viewport (tanpa memperhitungkan sidebar 58px). Sekarang diatur presisi dengan `left: calc(50% + 29px)` dan `top: calc(50% + 28px)` (kompensasi header 56px), sehingga seluruh blok Welcome Title, Input Prompt, dan Recent Sites berada tepat di satu garis sumbu simetris vertikal dan horizontal yang sempurna. | 🟢 STABLE | `./restore.sh v2.31.0` |

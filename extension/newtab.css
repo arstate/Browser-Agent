@@ -670,7 +670,7 @@ body:not(.has-messages) .hero-input-placeholder {
   transition: opacity 0.22s ease-out, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.22s ease-out;
 }
 
-/* 2. ACTIVE CHAT STATE: Prompt glides down to bottom, other elements dissolve */
+/* 2. ACTIVE CHAT STATE: Translucent Frosted Glass Blur Input (No Neon Glow) */
 body.has-messages .fullscreen-chat-main {
   justify-content: flex-start;
   padding: 24px 20px 160px 20px !important;
@@ -681,7 +681,22 @@ body.has-messages .chat-input-container {
   bottom: 22px;
   left: calc(50% + 29px);
   transform: translate(-50%, 0);
-  box-shadow: 0 0 35px -6px rgba(206, 241, 40, 0.1), 0 20px 56px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: rgba(22, 22, 26, 0.82);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 44px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+body.has-messages .chat-input-container::before {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+body.has-messages .chat-input-container:focus-within {
+  background: rgba(26, 26, 31, 0.92);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 20px 52px -4px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 body.has-messages .chat-messages {

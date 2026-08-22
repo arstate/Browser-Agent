@@ -1725,6 +1725,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.33.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 234: Translucent Frosted Glass Blur Input in Active Chat (Zero Neon Glow)
+- **Problem**:
+  - Saat chat aktif di mana input prompt berada di bagian bawah layar (`body.has-messages`), pengguna menginginkan agar efek glow hijau neon di belakangnya dihilangkan dan diganti dengan gaya *Glassmorphism Frosted Glass Blur* yang bersih, transparan namun tetap kontras dan jelas (`ketika input prompt agent homescren di chat ketika input prompt dibawah input prompt gausah ada glow neon dibelakang tapi jadi input prompt stylenya itu kek glasses blur tapi harus tetep jelas`).
+- **Penyebab & Solusi**:
+  1. **Penghapusan Neon Glow di Active Chat**:
+     - Mengatur `body.has-messages .chat-input-container::before { display: none !important; opacity: 0 !important; }`.
+     - Mengatur `box-shadow` pada `body.has-messages .chat-input-container` menjadi shadow gelap natural tanpa warna hijau neon (`0 16px 44px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05)`).
+  2. **Penerapan Translucent Frosted Glassmorphism**:
+     - Mengatur `background: rgba(22, 22, 26, 0.82);`
+     - Mengatur `backdrop-filter: blur(28px) saturate(190%);` & `-webkit-backdrop-filter: blur(28px) saturate(190%);`
+     - Memberikan border tipis elegan `1px solid rgba(255, 255, 255, 0.12)` sehingga pesan chat yang di-scroll di belakang bar input akan ter-blur halus dan estetik sementara input teks tetap tajam dan terbaca jelas.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.34.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
