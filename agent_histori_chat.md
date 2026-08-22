@@ -1709,6 +1709,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.32.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 233: Neutral Dark Charcoal Markdown Tables, Code Cards & Clarification UI
+- **Problem**:
+  - Tampilan tabel analisis markdown (`.md-table-wrapper`), kartu kode (`.md-code-card`), serta opsi kartu klarifikasi interaktif masih memiliki warna latar dark navy/slate kebiruan (`#0F172A`, `#0B111E`, `#131A26`) (`ini juga kek masih dark kebiruan bro coba lo fix`).
+- **Penyebab & Solusi**:
+  1. **Pembersihan Rona Biru Tabel & Kartu Kode**:
+     - Mengubah background `.md-table-wrapper` di `newtab.css` & `sidepanel.css` dari `rgba(15, 23, 42, 0.85)` ke `#18181B` (Neutral Charcoal Dark).
+     - Mengubah header tabel `th` ke `#202024` dan teks cell `td` ke `#A1A1AA` / `#E4E4E7`.
+     - Mengubah background `.md-code-card` dari `#0B111E` ke `#141416`.
+  2. **Pembersihan Komponen Dialog, Modal & Opsi**:
+     - Mengubah opsi chip pilihan klarifikasi `.clarification-chip` ke `#202024` (hover `#27272B`).
+     - Mengubah background modal `.modal-content` ke `#18181B`, preview kotak delete `#141416`, dan form input/select ke `#141416`.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.33.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

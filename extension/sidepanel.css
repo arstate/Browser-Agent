@@ -1697,9 +1697,9 @@ body {
   max-width: 100%;
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(15, 23, 42, 0.85);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #18181B;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -1729,31 +1729,31 @@ body {
   font-size: 12px;
   text-align: left;
   line-height: 1.45;
-  color: #CBD5E1;
+  color: #E4E4E7;
 }
 
 .message.assistant .message-content .md-table th {
-  background: rgba(255, 255, 255, 0.05);
-  color: #F8FAFC;
+  background: #202024;
+  color: #F4F4F6;
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.3px;
   padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   white-space: nowrap;
   vertical-align: middle;
 }
 
 .message.assistant .message-content .md-table td {
   padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  color: #94A3B8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #A1A1AA;
   vertical-align: middle;
   word-break: normal;
 }
 
 .message.assistant .message-content .md-table tr:hover td {
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .message.assistant .message-content .md-table tr:last-child td {
