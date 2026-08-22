@@ -2026,6 +2026,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.56.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 257: Integrated Search Engine Selector Dropup (Google, DuckDuckGo, Bing, Brave, Ecosia, Yandex) in Web Search Mode
+- **Problem**:
+  - Pengguna ingin menambahkan opsi menu pilihan Search Engine pada baris atas kotak input prompt saat berada di mode `🌐 Web Search` (`mau tanya misal saya mau tambah opsi dropup menu pilihan search engine di kotak yang saya kotan in ini bisa ga ya`).
+- **Penyebab & Solusi**:
+  1. **Komponen Dropup Search Engine Modern (`#search-engine-wrapper`)**:
+     - Menambahkan komponen dropup selector search engine di kanan atas bar input (mengisi tempat kosong saat `#execution-mode-wrapper` disembunyikan di Web Search Mode).
+     - Menyediakan 6 mesin pencari terpopuler: 🔍 **Google**, 🦆 **DuckDuckGo**, 🌐 **Bing**, 🦁 **Brave Search**, 🌲 **Ecosia**, dan 🔴 **Yandex**.
+  2. **Interaktivitas & Auto-Sync Dinamis**:
+     - Ikon logo dan label mesin pencari otomatis berubah sesuai pilihan aktif.
+     - Placeholder input prompt otomatis diperbarui (misal: *"Cari di DuckDuckGo atau ketik URL web..."*).
+     - Preferensi mesin pencari tersimpan otomatis di `chrome.storage.local`.
+     - Eksekusi pencarian langsung mengarahkan query pencarian ke URL mesin pencari yang sedang dipilih.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (356.5 KB).
+  - Restore Point: `v2.57.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

@@ -3508,6 +3508,117 @@ function initExecutionModeDropdown() {
   } catch (e) {}
 }
 
+const SEARCH_ENGINES = {
+  google: {
+    name: 'Google',
+    icon: '🔍',
+    placeholder: 'Cari di Google atau ketik URL web...',
+    searchUrl: (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`
+  },
+  duckduckgo: {
+    name: 'DuckDuckGo',
+    icon: '🦆',
+    placeholder: 'Cari di DuckDuckGo atau ketik URL web...',
+    searchUrl: (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`
+  },
+  bing: {
+    name: 'Bing',
+    icon: '🌐',
+    placeholder: 'Cari di Bing atau ketik URL web...',
+    searchUrl: (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
+  },
+  brave: {
+    name: 'Brave Search',
+    icon: '🦁',
+    placeholder: 'Cari di Brave Search atau ketik URL web...',
+    searchUrl: (q) => `https://search.brave.com/search?q=${encodeURIComponent(q)}`
+  },
+  ecosia: {
+    name: 'Ecosia',
+    icon: '🌲',
+    placeholder: 'Cari di Ecosia atau ketik URL web...',
+    searchUrl: (q) => `https://www.ecosia.org/search?q=${encodeURIComponent(q)}`
+  },
+  yandex: {
+    name: 'Yandex',
+    icon: '🔴',
+    placeholder: 'Cari di Yandex atau ketik URL web...',
+    searchUrl: (q) => `https://yandex.com/search/?text=${encodeURIComponent(q)}`
+  }
+};
+
+let currentSearchEngine = 'google';
+
+function setSearchEngine(engineKey) {
+  if (!SEARCH_ENGINES[engineKey]) engineKey = 'google';
+  currentSearchEngine = engineKey;
+  const info = SEARCH_ENGINES[engineKey];
+
+  const iconEl = document.getElementById('search-engine-icon');
+  const labelEl = document.getElementById('search-engine-label');
+  if (iconEl) iconEl.textContent = info.icon;
+  if (labelEl) labelEl.textContent = info.name;
+
+  if (currentChatMode === 'websearch' && chatInput) {
+    chatInput.placeholder = info.placeholder;
+  }
+
+  // Update active status in dropup list
+  document.querySelectorAll('.engine-dropup-item').forEach(item => {
+    if (item.getAttribute('data-engine') === engineKey) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+
+  try {
+    chrome.storage.local.set({ browser_agent_search_engine: engineKey });
+  } catch (e) {}
+}
+
+function initSearchEngineDropdown() {
+  const trigger = document.getElementById('btn-search-engine-trigger');
+  const dropup = document.getElementById('search-engine-dropup');
+
+  trigger?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!dropup) return;
+    const isHidden = (dropup.style.display === 'none' || !dropup.style.display);
+    dropup.style.display = isHidden ? 'flex' : 'none';
+    trigger.classList.toggle('open', isHidden);
+  });
+
+  document.querySelectorAll('.engine-dropup-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const engine = item.getAttribute('data-engine');
+      if (engine) setSearchEngine(engine);
+      if (dropup) dropup.style.display = 'none';
+      trigger?.classList.remove('open');
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (dropup && !dropup.contains(e.target) && !trigger?.contains(e.target)) {
+      dropup.style.display = 'none';
+      trigger?.classList.remove('open');
+    }
+  });
+
+  try {
+    chrome.storage.local.get(['browser_agent_search_engine'], (res) => {
+      if (res && res.browser_agent_search_engine) {
+        setSearchEngine(res.browser_agent_search_engine);
+      } else {
+        setSearchEngine('google');
+      }
+    });
+  } catch (e) {
+    setSearchEngine('google');
+  }
+}
+
 function showPlanApprovalDock() {
   const container = document.getElementById('chat-input-container');
   const dock = document.getElementById('plan-approval-dock');
@@ -3693,9 +3804,10 @@ function setChatMode(mode) {
   if (mode === 'websearch') {
     btnWebSearch?.classList.add('active');
     inputContainer?.classList.add('mode-websearch');
-    if (chatInput) chatInput.placeholder = 'Cari di Google atau ketik URL web...';
+    const activeEngine = SEARCH_ENGINES[currentSearchEngine] || SEARCH_ENGINES.google;
+    if (chatInput) chatInput.placeholder = activeEngine.placeholder;
     if (agentStatusEl) agentStatusEl.textContent = 'Web Search';
-    if (btnSendEl) btnSendEl.title = 'Cari di Web';
+    if (btnSendEl) btnSendEl.title = `Cari di ${activeEngine.name}`;
     if (heroTitleEl) scrambleText(heroTitleEl, 'Search the web or <span class="hero-highlight">find anything</span> online', 340);
     if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Instant Google search, website navigation, and smart suggestions.');
     clearAttachments();
@@ -6805,7 +6917,8 @@ function handleSendMessage() {
     } else if (/^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/.*)?$/i.test(text) && !text.includes(' ')) {
       targetUrl = 'https://' + text;
     } else {
-      targetUrl = 'https://www.google.com/search?q=' + encodeURIComponent(text);
+      const engine = SEARCH_ENGINES[currentSearchEngine] || SEARCH_ENGINES.google;
+      targetUrl = engine.searchUrl(text);
     }
     chatInput.value = '';
     window.location.href = targetUrl;
@@ -7242,6 +7355,7 @@ try {
 
 try {
   initExecutionModeDropdown();
+  initSearchEngineDropdown();
 } catch (e) {}
 
 // Robust auto-expand and auto-shrink textarea with mode-adaptive base height
