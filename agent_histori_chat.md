@@ -1790,8 +1790,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Menambahkan pseudo-element `body:not(.has-messages) .chat-input-container::before` dengan `radial-gradient` neon lime/green yang di-blur halus (`filter: blur(20px)` hingga `26px` pada `:focus-within`).
      - Memastikan active chat (`body.has-messages`) tetap bersih dari neon glow (`display: none !important; opacity: 0 !important;`).
 - **CRX Build & Sync**:
-  - Re-pack `extension.crx` (352.4 KB).
+  - Re-pack `extension.crx` (352.6 KB).
   - Restore Point: `v2.38.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
+### 🚀 Iterasi 239: Constant Soft Ambient Glow on Input Focus (Anti-Overbright)
+- **Problem**:
+  - Saat input prompt di-klik/fokus (`:focus-within`), pendaran cahaya neon menjadi semakin terang dan menyilaukan (*over-bright*) (`ketika di klik glow gausah ditambah terang soalnya malah over bro biarkan tetep aja`).
+- **Penyebab & Solusi**:
+  1. **Menjaga Intensitas Glow Tetap Konstan**:
+     - Menghapus aturan `body:not(.has-messages) .chat-input-container:focus-within::before` yang sebelumnya meningkatkan opacity menjadi `1`, blur menjadi `26px`, dan memperbesar gradient.
+     - Pendaran cahaya neon kini tetap konstan dan konsisten pada tingkat kelembutan yang pas (`filter: blur(20px)`, opacity `0.85`, dan shadow `0 0 45px -8px rgba(206, 241, 40, 0.15)`), baik sebelum maupun sesudah diklik.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.6 KB).
+  - Restore Point: `v2.39.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
 ---

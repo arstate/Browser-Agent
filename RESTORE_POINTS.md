@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.38.0`
-- **Iterasi:** `Iterasi 238`
-- **Tanggal Rilis:** 23 Agustus 2026 (00:24 WIB)
+- **Versi Terkini:** `v2.39.0`
+- **Iterasi:** `Iterasi 239`
+- **Tanggal Rilis:** 23 Agustus 2026 (00:28 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.4 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.6 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.39.0** | 239 | 23-08-2026 00:28 | `v2.39.0` | **Constant Soft Ambient Glow on Input Focus (Anti-Overbright):** Menghapus penambahan intensitas cahaya/brightness saat bar input diklik (`:focus-within`), sehingga tingkat pendaran cahaya neon frosted glass tetap konstan, lembut, tenang, dan tidak menyilaukan (*over-glowing*). | 🟢 STABLE | `./restore.sh v2.39.0` |
 | **v2.38.0** | 238 | 23-08-2026 00:24 | `v2.38.0` | **Frosted Glass Input Prompt with Ambient Neon Blur Glow on Homescreen:** Menambahkan kembali efek aura frosted glassmorphism semi-transparan (`background: rgba(22, 22, 26, 0.88)`, `backdrop-filter: blur(28px)`) dengan pendaran cahaya neon lime/green yang lembut dan elegan (`filter: blur(20px)`) khusus di belakang bar input prompt pada tampilan awal Homescreen (`body:not(.has-messages)`), sementara active chat tetap bersih tanpa neon glow. | 🟢 STABLE | `./restore.sh v2.38.0` |
 | **v2.37.0** | 237 | 23-08-2026 00:23 | `v2.37.0` | **Fix Sidebar Hover Input Shift Bug (Zero Unwanted Horizontal Offset):** Menghapus rule `left: calc(50% + 110px)` pada saat sidebar di-hover, sehingga posisi container input prompt tetap terkunci simetris dan sejajar sempurna dengan `#welcome-card` dan `#recent-sites-section` tanpa bergeser ke kanan saat sidebar terbuka/melar. | 🟢 STABLE | `./restore.sh v2.37.0` |
 | **v2.36.0** | 236 | 23-08-2026 00:22 | `v2.36.0` | **Zero Background Neon Blur in Chat Canvas (100% Clean Flat Dark Charcoal):** Menghapus seluruh efek radial-gradient neon blur dan pseudo-element glow hijau/kuning dari background canvas (`body.newtab-body`) dan kontainer input prompt, menghasilkan latar belakang chat yang bersih, elegan, flat, dan 100% neutral monochrome dark charcoal. | 🟢 STABLE | `./restore.sh v2.36.0` |
