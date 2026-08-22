@@ -1540,6 +1540,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.21.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 222: Identical Fixed Sidebar (Welcomescreen & Settings 240px, No Shadow)
+- **Problem**:
+  - Sidebar di Welcomescreen masih menggunakan mode mini (58px hover melar ke 220px dengan bayangan/shadow tebal), berbeda dengan sidebar halaman Pengaturan (Image 2) sehingga terasa tidak mulus/seamless (`style ui sidebar welcome screen buat sama kek di style ui sidebar pengaturan image 2 dan ukuran lebarnya juga buat sama biar kelihatan seamles, gaperlu shadow sidebarnya`).
+- **Penyebab & Solusi**:
+  1. **Lebar Tetap 240px Tanpa Shadow**:
+     - Mengatur lebar `.app-sidebar` (New Tab) dan `.options-sidebar` (Pengaturan) menjadi tetap **240px** dengan `box-shadow: none !important;` dan border-right halus `1px solid rgba(255, 255, 255, 0.08)`.
+     - Teks label (`.sidebar-user-info`, `.sidebar-nav-label`) selalu tampil permanen tanpa animasi collapse/expand.
+     - Kontainer utama `.fullscreen-agent-app` memiliki margin-left tetap `240px` (`width: calc(100% - 240px)`).
+  2. **Struktur Navigasi Identik**:
+     - Menambahkan item `AI & Providers`, `Multi-Agent Persona (10)`, `Skills (46)`, dan `Memory (28)` langsung pada sidebar Welcomescreen New Tab.
+     - Mengklik item pengaturan langsung membuka tab terkait tanpa lag.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (351.5 KB).
+  - Restore Point: `v2.22.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

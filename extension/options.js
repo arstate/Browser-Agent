@@ -1849,6 +1849,22 @@ function setupEventListeners() {
     });
   });
 
+  function activateTabByName(tabName) {
+    const tabBtn = document.querySelector(`.sidebar-tab-btn[data-tab="${tabName}"]`);
+    if (tabBtn) tabBtn.click();
+  }
+
+  if (window.location.hash) {
+    const hashTab = window.location.hash.replace('#', '');
+    if (hashTab) setTimeout(() => activateTabByName(hashTab), 50);
+  }
+
+  window.addEventListener('message', (e) => {
+    if (e.data?.action === 'switchTab' && e.data?.tab) {
+      activateTabByName(e.data.tab);
+    }
+  });
+
   // Modal Open Buttons
   document.getElementById('btn-open-add-agent')?.addEventListener('click', () => openAgentModal(null));
   document.getElementById('btn-open-add-skill')?.addEventListener('click', () => openSkillModal(null));

@@ -77,16 +77,35 @@ document.addEventListener('DOMContentLoaded', () => {
   chatInput?.focus();
 
   // In-Tab Fullscreen Settings Handler (No separate browser tab)
-  const btnOpenSettings = document.getElementById('btn-open-settings');
   const settingsOverlay = document.getElementById('fullscreen-settings-overlay');
   const btnCloseSettingsOverlay = document.getElementById('btn-close-settings-overlay');
   const settingsIframe = document.getElementById('settings-embedded-iframe');
+  const sidebarItems = document.querySelectorAll('.app-sidebar .sidebar-nav-item');
 
-  function openFullscreenSettings() {
+  function updateActiveSidebarTab(tabName) {
+    sidebarItems.forEach(item => {
+      const itemTab = item.getAttribute('data-tab');
+      if (itemTab === tabName) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  }
+
+  function openFullscreenSettings(tabName = 'ai') {
     if (settingsOverlay) {
       settingsOverlay.style.display = 'flex';
+      updateActiveSidebarTab(tabName);
       if (settingsIframe) {
-        settingsIframe.src = 'options.html';
+        const targetUrl = 'options.html#' + tabName;
+        if (!settingsIframe.src || !settingsIframe.src.includes('options.html')) {
+          settingsIframe.src = targetUrl;
+        } else {
+          try {
+            settingsIframe.contentWindow?.postMessage({ action: 'switchTab', tab: tabName }, '*');
+          } catch (e) {}
+        }
       }
     }
   }
@@ -94,18 +113,41 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeFullscreenSettings() {
     if (settingsOverlay) {
       settingsOverlay.style.display = 'none';
+      updateActiveSidebarTab('home');
       chatInput?.focus();
     }
   }
 
-  if (btnOpenSettings) {
-    btnOpenSettings.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      openFullscreenSettings();
-    }, true);
-  }
+  // Home Button (Back to Chat)
+  document.getElementById('btn-header-new-chat')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeFullscreenSettings();
+  });
+
+  // Settings Tabs in Sidebar
+  document.getElementById('btn-open-settings')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openFullscreenSettings('ai');
+  });
+
+  document.getElementById('btn-nav-agents')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openFullscreenSettings('agents');
+  });
+
+  document.getElementById('btn-nav-skills')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openFullscreenSettings('skills');
+  });
+
+  document.getElementById('btn-nav-memories')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openFullscreenSettings('memories');
+  });
 
   if (btnCloseSettingsOverlay) {
     btnCloseSettingsOverlay.addEventListener('click', (e) => {
@@ -113,6 +155,21 @@ document.addEventListener('DOMContentLoaded', () => {
       closeFullscreenSettings();
     });
   }
+
+  // Sync Badges from Storage
+  try {
+    chrome.storage.local.get(['agents_list', 'skills_list', 'memories_list'], (res) => {
+      const agCount = Array.isArray(res.agents_list) ? res.agents_list.length : 10;
+      const skCount = Array.isArray(res.skills_list) ? res.skills_list.length : 46;
+      const memCount = Array.isArray(res.memories_list) ? res.memories_list.length : 28;
+      const elAg = document.getElementById('newtab-badge-count-agents');
+      const elSk = document.getElementById('newtab-badge-count-skills');
+      const elMem = document.getElementById('newtab-badge-count-memories');
+      if (elAg) elAg.textContent = agCount;
+      if (elSk) elSk.textContent = skCount;
+      if (elMem) elMem.textContent = memCount;
+    });
+  } catch (e) {}
 
   window.addEventListener('message', (e) => {
     if (e.data?.action === 'closeSettings') {

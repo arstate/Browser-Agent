@@ -77,9 +77,9 @@ body.options-body {
    Left Navigation Sidebar
    ========================================================================= */
 .options-sidebar {
-  width: 250px;
+  width: 240px;
   background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-card);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -89,6 +89,7 @@ body.options-body {
   height: 100vh;
   box-sizing: border-box;
   z-index: 50;
+  box-shadow: none !important;
 }
 
 /* Sidebar Header & User Profile (Exact Match to Welcomescreen) */
