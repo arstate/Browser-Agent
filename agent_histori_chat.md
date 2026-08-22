@@ -1491,5 +1491,10 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Theme:** Clean Elegant Rounded Light SaaS (Lime Chartreuse, Pure White, Dark Slate).
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
+- **Versioning & Restore Point Mandate:**
+  - **Versi Terkini:** `v2.15.0` (Iterasi 215).
+  - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
+  - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
+
 
 

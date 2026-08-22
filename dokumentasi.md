@@ -82,3 +82,16 @@ graph TD
 1. **Target Tab Binding:** Saat sidepanel dimuat, target debugger langsung dikunci ke tab awal. Berpindah ke tab lain saat multitasking tidak akan memindahkan target automasi.
 2. **Re-binding Interaktif:** Pengguna dapat berpindah target tab kapan saja dengan mengklik chip status `Tab: [Nama]`.
 3. **Local RPC Isolation:** Hanya ekstensi dengan ID yang terdaftar dalam manifest Native Messaging yang diizinkan memanggil RPC file dan shell execution.
+
+---
+
+## 🛡️ 5. Protokol Versioning & Restore Points
+
+- **Versi Terkini:** `v2.15.0`
+- **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
+- **Alat Bantu Otomatis:**
+  - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, dan snapshot fisik.
+  - `./restore.sh list`: Menampilkan seluruh daftar versi dan restore point yang tersedia.
+  - `./restore.sh <VERSION_TAG>`: Rollback instan 1-klik ke versi stabil pilihan.
+- **Mandat Agent:** Selalu menyebutkan versi terbaru yang aktif di setiap balasan akhir.
+
