@@ -1556,6 +1556,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.22.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 223: Real-Time Auto-Save Database (Zero Manual Save Button Required)
+- **Problem**:
+  - Pengguna harus menekan tombol "Simpan Perubahan" secara manual setiap kali mengedit konfigurasi, yang memicu friksi dan risiko setting belum tersimpan jika lupa ditekan (`buat ketika setting apapun di pengaturan langsung kesimpen secara realtime di database bro jadi gaperlu klik tombol simpan`).
+- **Penyebab & Solusi**:
+  1. **Real-Time Auto-Save Hook (`triggerAutoSave`)**:
+     - Memasang event listener `input` dan `change` pada seluruh elemen konfigurasi (`settingEndpoint`, `settingApiKey`, `settingImageModel`, `settingTemp`, `settingMaxTokens`, input nama dan API Model ID di tabel prioritas, tombol Reorder, Delete, Add Row, serta Preset Pills).
+     - Seluruh perubahan otomatis tersimpan ke `chrome.storage.local` dengan debounced auto-save yang cerdas dan instan.
+  2. **Indikator Status Real-Time (`.auto-save-status-badge`)**:
+     - Menambahkan badge status modern dengan dot pulse hijau bertuliskan **"Tersimpan otomatis"** (berubah menjadi "Menyimpan..." saat mengetik), menggantikan tombol simpan konvensional.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.1 KB).
+  - Restore Point: `v2.23.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

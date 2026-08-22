@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.22.0`
-- **Iterasi:** `Iterasi 222`
-- **Tanggal Rilis:** 22 Agustus 2026 (23:52 WIB)
+- **Versi Terkini:** `v2.23.0`
+- **Iterasi:** `Iterasi 223`
+- **Tanggal Rilis:** 22 Agustus 2026 (23:53 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (351.5 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.1 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.23.0** | 223 | 22-08-2026 23:53 | `v2.23.0` | **Real-Time Auto-Save Database:** Menghapus keharusan menekan tombol simpan manual. Setiap perubahan setting (Endpoint, API Key, Model Prioritas, Suhu, Preset, Tambah/Hapus Model) langsung tersimpan otomatis secara realtime ke `chrome.storage.local` dengan indikator status "● Tersimpan otomatis". | 🟢 STABLE | `./restore.sh v2.23.0` |
 | **v2.22.0** | 222 | 22-08-2026 23:52 | `v2.22.0` | **Identical Fixed Sidebar (Welcomescreen & Settings 240px, No Shadow):** Menyamakan lebar sidebar (`240px`) dan gaya visual antara Welcomescreen dan Pengaturan secara 100% identik tanpa shadow hover, teks menu selalu terlihat, dilengkapi tab langsung `AI & Providers`, `Multi-Agent Persona`, `Skills`, dan `Memory` di sidebar utama. | 🟢 STABLE | `./restore.sh v2.22.0` |
 | **v2.21.0** | 221 | 22-08-2026 23:50 | `v2.21.0` | **Scrollable Tags & Uniform Height Grid:** Mengatur tinggi kartu Sub-Agent & Skill seragam (`280px`), menambahkan scrollbar halus pada kontainer skill & memory tags (`.item-tags-row` dan `.boss-hero-tags`), sehingga kartu dengan puluhan skill tidak melar tinggi dan seluruh grid tampil rapi sejajar. | 🟢 STABLE | `./restore.sh v2.21.0` |
 | **v2.20.0** | 220 | 22-08-2026 23:48 | `v2.20.0` | **Major UI Polish Prioritas Model AI:** Merombak total kartu "Prioritas Model AI" dengan layout tabel modern SaaS (`.models-table-header`), rank badge `#1 (Utama)` lime vibrant, dua input field presisi (Nama UI + Model ID monospaced), tombol reorder 🔼 🔽 berdimensi rapi, tombol hapus 🗑️ dengan hover merah, dan tombol tambah model dashed. | 🟢 STABLE | `./restore.sh v2.20.0` |

@@ -369,6 +369,41 @@ body.options-body {
   margin-top: 2px;
 }
 
+.auto-save-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(206, 241, 40, 0.08);
+  border: 1px solid rgba(206, 241, 40, 0.28);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-lime);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.save-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-lime);
+  box-shadow: 0 0 8px var(--accent-lime);
+  transition: all 0.2s ease;
+}
+
+.auto-save-status-badge.saving {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #94A3B8;
+}
+
+.auto-save-status-badge.saving .save-status-dot {
+  background: #94A3B8;
+  box-shadow: none;
+}
+
 .btn-save-header {
   background: var(--accent-lime);
   color: #0F172A;

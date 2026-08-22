@@ -368,19 +368,10 @@ function renderModelsRows() {
       await chrome.storage.local.set({ browser_agent_config: config, active_agent_id: activeAgentId });
     };
 
-    nameInput.addEventListener('change', async () => {
-      await updateCurrentModel();
-      renderModelsRows();
-    });
-
-    idInput.addEventListener('change', async () => {
-      await updateCurrentModel();
-      renderModelsRows();
-    });
-
     nameInput.addEventListener('input', () => {
       models[index].name = nameInput.value.trim();
       config.models = models;
+      triggerAutoSave(300);
     });
 
     idInput.addEventListener('input', () => {
@@ -392,6 +383,7 @@ function renderModelsRows() {
         config.model = models[index].id;
       }
       config.models = models;
+      triggerAutoSave(300);
     });
 
     const moveUpBtn = row.querySelector('.btn-model-move-up');
@@ -404,6 +396,7 @@ function renderModelsRows() {
         if (config.selectedModelChoice !== "auto") config.model = models[0].id;
         await chrome.storage.local.set({ browser_agent_config: config, active_agent_id: activeAgentId });
         renderModelsRows();
+        triggerAutoSave(0);
       }
     });
 
@@ -417,6 +410,7 @@ function renderModelsRows() {
         if (config.selectedModelChoice !== "auto") config.model = models[0].id;
         await chrome.storage.local.set({ browser_agent_config: config, active_agent_id: activeAgentId });
         renderModelsRows();
+        triggerAutoSave(0);
       }
     });
 
@@ -431,13 +425,38 @@ function renderModelsRows() {
       config.models = [...models];
       await chrome.storage.local.set({ browser_agent_config: config, active_agent_id: activeAgentId });
       renderModelsRows();
+      triggerAutoSave(0);
     });
 
     modelsRowsContainer.appendChild(row);
   });
 }
 
-async function saveAllConfig() {
+let autoSaveTimer = null;
+
+function setAutoSaveStatus(status) {
+  const badge = document.getElementById('auto-save-status-badge');
+  const text = document.getElementById('auto-save-status-text');
+  if (!badge || !text) return;
+  if (status === 'saving') {
+    badge.classList.add('saving');
+    text.textContent = 'Menyimpan...';
+  } else {
+    badge.classList.remove('saving');
+    text.textContent = 'Tersimpan otomatis';
+  }
+}
+
+function triggerAutoSave(delayMs = 250) {
+  setAutoSaveStatus('saving');
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(async () => {
+    await saveAllConfig(true);
+    setAutoSaveStatus('saved');
+  }, delayMs);
+}
+
+async function saveAllConfig(silent = false) {
   const models = [];
   document.querySelectorAll('.model-row-card').forEach(row => {
     const idInput = row.querySelector('.model-input-id');
@@ -467,8 +486,11 @@ async function saveAllConfig() {
   }
 
   await chrome.storage.local.set({ browser_agent_config: config, active_agent_id: activeAgentId });
+  setAutoSaveStatus('saved');
 
-  showToast();
+  if (!silent) {
+    showToast();
+  }
 }
 
 function showToast() {
@@ -2063,12 +2085,20 @@ function setupEventListeners() {
       }
       applyConfigToUI();
       renderModelsRows();
+      triggerAutoSave(0);
     });
   });
+
+  // Real-time Auto-saving on inputs
+  settingEndpoint?.addEventListener('input', () => triggerAutoSave(300));
+  settingApiKey?.addEventListener('input', () => triggerAutoSave(300));
+  settingImageModel?.addEventListener('input', () => triggerAutoSave(300));
+  settingMaxTokens?.addEventListener('input', () => triggerAutoSave(300));
 
   // Temperature Slider
   settingTemp?.addEventListener('input', (e) => {
     if (tempValDisplay) tempValDisplay.textContent = parseFloat(e.target.value).toFixed(2);
+    triggerAutoSave(150);
   });
 
   // Toggle API Key visibility
@@ -2083,20 +2113,24 @@ function setupEventListeners() {
   });
 
   // Add Model Row Button
-  btnAddRow?.addEventListener('click', async () => {
+  const handleAddModelRow = async () => {
     const models = getModelsList(true);
     models.push({ id: '', name: '' });
     config.models = models;
     await chrome.storage.local.set({ browser_agent_config: config, active_agent_id: activeAgentId });
     renderModelsRows();
+    triggerAutoSave(0);
     const inputs = document.querySelectorAll('.model-input-name');
     if (inputs.length > 0) {
       inputs[inputs.length - 1].focus();
     }
-  });
+  };
 
-  // Header Save Button
-  btnSaveHeader?.addEventListener('click', saveAllConfig);
+  btnAddRow?.addEventListener('click', handleAddModelRow);
+  document.getElementById('btn-add-model-row-quick')?.addEventListener('click', handleAddModelRow);
+
+  // Header Save Button (Optional manual trigger)
+  btnSaveHeader?.addEventListener('click', () => saveAllConfig(false));
 
   // OS Tab Switcher
   document.querySelectorAll('.os-tab').forEach(tab => {
