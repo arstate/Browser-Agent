@@ -1894,6 +1894,17 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.46.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 247: Unified 240px Sidebar Width on Homescreen Hover (100% Seamless Match with Settings)
+- **Problem**:
+  - Ukuran lebar sidebar Homescreen saat di-hover (`.app-sidebar:hover`) berukuran `220px`, sementara sidebar Pengaturan (`.options-sidebar`) berukuran `240px`, sehingga terlihat tidak konsisten (*tidak seamless*) (`baut ukuran sidebar homescren ketika show itu ukuran shownya seukuran sidebar di penggaturan buat sama biar kelihatan seamles`).
+- **Penyebab & Solusi**:
+  1. **Penyelarasan Lebar Sidebar 240px**:
+     - Mengubah `.app-sidebar:hover` di `newtab.css` menjadi `width: 240px;` (100% presisi dan identik dengan sidebar pengaturan 240px).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (354.3 KB).
+  - Restore Point: `v2.47.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
