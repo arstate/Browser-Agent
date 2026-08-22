@@ -1917,6 +1917,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.48.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 249: Zero Neon Glow/Blur on Web Search Suggestions Dropdown (Clean Flat Dark SaaS)
+- **Problem**:
+  - Efek blur neon di belakang dropdown saran rekomendasi pencarian masih tampak mengganggu dan diminta untuk dihilangkan sepenuhnya (`ini gausah ada blur neonnya bro`).
+- **Penyebab & Solusi**:
+  1. **Penghapusan Neon Aura & Pendaran**:
+     - Menghapus pseudo-element `.websearch-suggestions-dropdown::before` yang berisi filter neon blur.
+     - Membersihkan colored box-shadow neon pada `.websearch-suggestions-dropdown` sehingga hanya menggunakan bayangan elevasi hitam natural (`box-shadow: 0 24px 56px -4px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05)`).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (354.6 KB).
+  - Restore Point: `v2.49.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

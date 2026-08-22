@@ -1590,7 +1590,7 @@ body.has-messages #btn-mode-websearch {
   display: none !important;
 }
 
-/* Web Search Autocomplete Suggestions Dropdown - Clean Zero Scrollbars */
+/* Web Search Autocomplete Suggestions Dropdown - Clean Dark SaaS (Zero Neon Blur) */
 .websearch-suggestions-dropdown {
   position: absolute;
   top: calc(100% + 8px);
@@ -1599,7 +1599,7 @@ body.has-messages #btn-mode-websearch {
   background: #16161A;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
-  box-shadow: 0 24px 56px -4px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 35px -8px rgba(206, 241, 40, 0.12);
+  box-shadow: 0 24px 56px -4px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
   padding: 6px;
   display: flex;
   flex-direction: column;
@@ -1615,21 +1615,6 @@ body.has-messages #btn-mode-websearch {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
-}
-
-.websearch-suggestions-dropdown::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: -6px;
-  right: -6px;
-  bottom: -6px;
-  background: radial-gradient(circle at center, rgba(206, 241, 40, 0.15) 0%, rgba(138, 222, 100, 0.06) 55%, transparent 80%);
-  filter: blur(18px);
-  z-index: -1;
-  border-radius: 22px;
-  opacity: 0.85;
-  pointer-events: none;
 }
 
 .websearch-suggestion-item {
