@@ -3528,7 +3528,7 @@ body.has-messages .chat-messages {
   to { transform: rotate(360deg); }
 }
 
-/* Fullscreen Embedded Settings Overlay */
+/* Fullscreen Embedded Settings Overlay - Instant Cut (Zero Animation/Transition) */
 .fullscreen-settings-overlay {
   position: fixed;
   top: 0;
@@ -3541,18 +3541,8 @@ body.has-messages .chat-messages {
   z-index: 99999;
   display: flex;
   flex-direction: column;
-  animation: settings-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes settings-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.99);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  animation: none !important;
+  transition: none !important;
 }
 
 .settings-overlay-body {
@@ -3562,6 +3552,8 @@ body.has-messages .chat-messages {
   position: relative;
   background: #121214;
   overflow: hidden;
+  animation: none !important;
+  transition: none !important;
 }
 
 .settings-embedded-iframe {

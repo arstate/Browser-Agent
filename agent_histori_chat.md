@@ -1818,6 +1818,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.40.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 241: Instant Cut Transition to Settings (Zero Animation/Lag)
+- **Problem**:
+  - Perpindahan ke halaman pengaturan (`.fullscreen-settings-overlay`) masih memiliki animasi fade-in / transisi yang dirasa memperlambat respon aplikasi (`udpate ketika pindah ke pengaturan gausah ada animasi apapun jadi biar ga berat, langsung kayak cut aja`).
+- **Penyebab & Solusi**:
+  1. **Penghapusan Animasi Transisi**:
+     - Mengubah `.fullscreen-settings-overlay` dan `.settings-overlay-body` menjadi `animation: none !important; transition: none !important;`.
+     - Menambahkan background preloading pada iframe `options.html` di `newtab.js` saat halaman dimuat, sehingga ketika tombol Pengaturan diklik, tampilan pengaturan langsung muncul secara instan (*instant hard-cut*) dengan latensi 0ms.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.41.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

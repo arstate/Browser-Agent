@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.40.0`
-- **Iterasi:** `Iterasi 240`
-- **Tanggal Rilis:** 23 Agustus 2026 (00:30 WIB)
+- **Versi Terkini:** `v2.41.0`
+- **Iterasi:** `Iterasi 241`
+- **Tanggal Rilis:** 23 Agustus 2026 (00:32 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.5 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.41.0** | 241 | 23-08-2026 00:32 | `v2.41.0` | **Instant Cut Transition to Settings (Zero Animation/Lag):** Menghapus seluruh animasi fade-in dan transisi pada overlay pengaturan (`.fullscreen-settings-overlay`), serta menambahkan background preloading pada iframe `options.html` sehingga perpindahan ke halaman pengaturan dan kembali ke homescreen berlangsung secara instan (*hard-cut*, 0ms latency) tanpa beban animasi rendering GPU. | 🟢 STABLE | `./restore.sh v2.41.0` |
 | **v2.40.0** | 240 | 23-08-2026 00:30 | `v2.40.0` | **Neon Lime Border Stroke on Prompt Focus (Zero Over-Glow Shadow):** Mengubah border stroke saat bar input prompt diklik (`:focus-within`) menjadi neon lime accent (`border-color: rgba(206, 241, 40, 0.45)`), berlaku secara konsisten baik pada tampilan Homescreen maupun pada bar input di bagian bawah saat chat aktif, tanpa menambahkan efek bayangan glow yang menyilaukan. | 🟢 STABLE | `./restore.sh v2.40.0` |
 | **v2.39.0** | 239 | 23-08-2026 00:28 | `v2.39.0` | **Constant Soft Ambient Glow on Input Focus (Anti-Overbright):** Menghapus penambahan intensitas cahaya/brightness saat bar input diklik (`:focus-within`), sehingga tingkat pendaran cahaya neon frosted glass tetap konstan, lembut, tenang, dan tidak menyilaukan (*over-glowing*). | 🟢 STABLE | `./restore.sh v2.39.0` |
 | **v2.38.0** | 238 | 23-08-2026 00:24 | `v2.38.0` | **Frosted Glass Input Prompt with Ambient Neon Blur Glow on Homescreen:** Menambahkan kembali efek aura frosted glassmorphism semi-transparan (`background: rgba(22, 22, 26, 0.88)`, `backdrop-filter: blur(28px)`) dengan pendaran cahaya neon lime/green yang lembut dan elegan (`filter: blur(20px)`) khusus di belakang bar input prompt pada tampilan awal Homescreen (`body:not(.has-messages)`), sementara active chat tetap bersih tanpa neon glow. | 🟢 STABLE | `./restore.sh v2.38.0` |
