@@ -2043,6 +2043,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.57.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 258: Ultra-Clean Minimalist Text-Only Search Engine Dropup (Removed Icon Box & Subtitle Descriptions)
+- **Problem**:
+  - Tampilan dropdown sebelumnya terasa terlalu ramai dan kurang clean karena adanya kotak ikon besar, deskripsi subtitle di bawah setiap nama, dan ikon di tombol trigger (`udpate ui ini gaperlu ada bro trus soalnya kek kurang clean ui yang seakrang bro`).
+- **Penyebab & Solusi**:
+  1. **Ultra-Clean Text-Only Items**:
+     - Menghapus kolom kotak ikon (`.dropup-item-icon-box`) dan teks deskripsi (`.dropup-item-desc`), menyisakan nama mesin pencari yang bersih dan tanda checklist aktif.
+     - Menghapus ikon pada tombol trigger di baris input sehingga hanya menampilkan teks label ramping (misal: `Google ▾`).
+  2. **Slim & Compact Dropup Layout**:
+     - Memperkecil lebar menu dropdown dari `285px` menjadi `165px` dengan padding ringkas (`4px`) dan sudut membulat elegan (`10px`).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (357.7 KB).
+  - Restore Point: `v2.58.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

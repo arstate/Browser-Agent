@@ -3554,9 +3554,7 @@ function setSearchEngine(engineKey) {
   currentSearchEngine = engineKey;
   const info = SEARCH_ENGINES[engineKey];
 
-  const iconEl = document.getElementById('search-engine-icon');
   const labelEl = document.getElementById('search-engine-label');
-  if (iconEl) iconEl.textContent = info.icon;
   if (labelEl) labelEl.textContent = info.name;
 
   if (currentChatMode === 'websearch' && chatInput) {
