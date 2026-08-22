@@ -575,7 +575,7 @@ body.newtab-body {
   transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Prompt Input Container - Glides smoothly between Center and Bottom */
+/* Prompt Input Container - Glides smoothly between Center and Bottom with Neon Ambient Glow */
 .chat-input-container {
   position: fixed;
   left: 50%;
@@ -583,10 +583,10 @@ body.newtab-body {
   width: calc(100% - 36px);
   max-width: 780px;
   z-index: 100;
-  background: rgba(19, 26, 38, 0.94);
+  background: rgba(25, 25, 29, 0.95);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 20px;
   padding: 10px 14px 10px 16px;
   display: flex;
@@ -599,9 +599,27 @@ body.newtab-body {
               transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.chat-input-container::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 21px;
+  background: radial-gradient(circle at 50% 50%, rgba(206, 241, 40, 0.12) 0%, rgba(206, 241, 40, 0.03) 60%, transparent 80%);
+  filter: blur(16px);
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.8;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
 .chat-input-container:focus-within {
-  border-color: var(--border-focus);
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.7), 0 0 20px rgba(206, 241, 40, 0.12);
+  border-color: rgba(206, 241, 40, 0.35);
+  box-shadow: 0 0 45px -4px rgba(206, 241, 40, 0.18), 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(206, 241, 40, 0.2);
+}
+
+.chat-input-container:focus-within::before {
+  opacity: 1;
+  filter: blur(20px);
 }
 
 /* 1. INITIAL STATE: Centered Hero -> Bento Input (Center) -> Recent Sites */
@@ -634,7 +652,7 @@ body:not(.has-messages) .chat-input-container {
   top: 50%;
   bottom: auto;
   transform: translate(-50%, -50%);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 40px -6px rgba(206, 241, 40, 0.12), 0 18px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 body:not(.has-messages) .welcome-card,
@@ -656,7 +674,7 @@ body.has-messages .chat-input-container {
   top: auto;
   bottom: 22px;
   transform: translate(-50%, 0);
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.7), 0 0 2px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 35px -6px rgba(206, 241, 40, 0.1), 0 20px 56px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 body.has-messages .chat-messages {
@@ -1475,10 +1493,10 @@ body.has-messages .chat-messages {
 
 /* Prompt Input Box */
 .chat-input-container {
-  background: rgba(19, 26, 38, 0.94);
+  background: rgba(25, 25, 29, 0.95);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 20px;
   padding: 10px 14px 10px 16px;
   display: flex;
@@ -1488,8 +1506,8 @@ body.has-messages .chat-messages {
 }
 
 .chat-input-container:focus-within {
-  border-color: var(--border-focus);
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.7), 0 0 20px rgba(206, 241, 40, 0.12);
+  border-color: rgba(206, 241, 40, 0.35);
+  box-shadow: 0 0 45px -4px rgba(206, 241, 40, 0.18), 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(206, 241, 40, 0.2);
 }
 
 .chat-input-top-bar {
@@ -1538,7 +1556,7 @@ body.has-messages .chat-messages {
 }
 
 .btn-chat-mode-toggle.active {
-  background: #1E293B;
+  background: #27272A;
   color: var(--accent-lime);
 }
 
@@ -1557,7 +1575,7 @@ body.has-messages .chat-messages {
   box-sizing: border-box;
   padding: 0 12px;
   border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--text-muted);
   font-size: 11px;
@@ -1580,7 +1598,7 @@ body.has-messages .chat-messages {
 
 .btn-execution-mode-trigger .execution-mode-label {
   font-weight: 600;
-  color: #E2E8F0;
+  color: #F4F4F6;
 }
 
 .btn-execution-mode-trigger .execution-mode-chevron {
@@ -1598,8 +1616,8 @@ body.has-messages .chat-messages {
   right: 0;
   left: auto;
   width: 275px;
-  background: #111827;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #18181B;
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 12px;
   padding: 5px;
   box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);

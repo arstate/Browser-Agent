@@ -1665,6 +1665,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.29.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 230: Neutral Dark Prompt Input with Subtle Professional Neon Glow
+- **Problem**:
+  - Warna kontainer input prompt di Welcomescreen masih memiliki rona kebiruan (`#131A26`), dan pengguna menginginkan kontainer input diperbaiki menjadi abu-abu gelap / dark charcoal netral serta dilengkapi efek glow hijau neon yang halus (*subtle*) di belakang bar input agar tetap clean dan profesional (`input prompt warnnya masih dark kebiruan bro coba lo fix, trus buat di belakang input promp ada kek glow hijau neon tapi jangan terlalu pekat biar tetep clean profesional`).
+- **Penyebab & Solusi**:
+  1. **Pembersihan Rona Gelap Kebiruan pada Input Prompt**:
+     - Mengubah background `.chat-input-container` menjadi `rgba(25, 25, 29, 0.95)` / `#1C1C1F`.
+     - Mengubah background tombol mode toggle aktif (`.btn-chat-mode-toggle.active`) menjadi `#27272A` (zinc 800) dan dropup selector menjadi `#18181B`.
+  2. **Subtle Neon Lime / Green Ambient Glow**:
+     - Menambahkan pseudo-element `.chat-input-container::before` dengan radial-gradient neon lime (`rgba(206, 241, 40, 0.12)`) dan filter blur 16px-20px di belakang bar input.
+     - Mengatur `box-shadow` dengan ambient glow halus (`0 0 40px -6px rgba(206, 241, 40, 0.12)`), yang semakin bersinar elegan saat input difokuskan (`:focus-within`).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.5 KB).
+  - Restore Point: `v2.30.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
