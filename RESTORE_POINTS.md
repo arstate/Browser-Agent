@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.24.0`
-- **Iterasi:** `Iterasi 224`
-- **Tanggal Rilis:** 22 Agustus 2026 (23:54 WIB)
+- **Versi Terkini:** `v2.25.0`
+- **Iterasi:** `Iterasi 225`
+- **Tanggal Rilis:** 22 Agustus 2026 (23:55 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.5 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.1 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.25.0** | 225 | 22-08-2026 23:55 | `v2.25.0` | **Hover-Reveal Clean Sidebar on Homescreen:** Menjadikan sidebar di Homescreen ter-collapse/hide (58px) secara default agar workspace chat luas dan bersih, dan otomatis slide-out/show (220px) dengan smooth transition saat dihover kursor mouse. | 🟢 STABLE | `./restore.sh v2.25.0` |
 | **v2.24.0** | 224 | 22-08-2026 23:54 | `v2.24.0` | **Clean Homescreen Sidebar with In-Page Settings Access:** Mengembalikan sidebar Homescreen ke tampilan ultra-clean (hanya berisi `Home`, `Riwayat Chat`, dan tombol `Pengaturan`). Mengklik `Pengaturan` akan langsung membuka overlay pengaturan secara instan di dalam halaman tanpa membuka tab browser baru. | 🟢 STABLE | `./restore.sh v2.24.0` |
 | **v2.23.0** | 223 | 22-08-2026 23:53 | `v2.23.0` | **Real-Time Auto-Save Database:** Menghapus keharusan menekan tombol simpan manual. Setiap perubahan setting (Endpoint, API Key, Model Prioritas, Suhu, Preset, Tambah/Hapus Model) langsung tersimpan otomatis secara realtime ke `chrome.storage.local` dengan indikator status "● Tersimpan otomatis". | 🟢 STABLE | `./restore.sh v2.23.0` |
 | **v2.22.0** | 222 | 22-08-2026 23:52 | `v2.22.0` | **Identical Fixed Sidebar (Welcomescreen & Settings 240px, No Shadow):** Menyamakan lebar sidebar (`240px`) dan gaya visual antara Welcomescreen dan Pengaturan secara 100% identik tanpa shadow hover, teks menu selalu terlihat, dilengkapi tab langsung `AI & Providers`, `Multi-Agent Persona`, `Skills`, dan `Memory` di sidebar utama. | 🟢 STABLE | `./restore.sh v2.22.0` |

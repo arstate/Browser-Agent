@@ -1588,6 +1588,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.24.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 225: Hover-Reveal Clean Sidebar on Homescreen
+- **Problem**:
+  - Pengguna menginginkan sidebar di Homescreen (New Tab) berada dalam posisi ter-hide / collapse secara default agar ruang chat lapang dan bersih, dan baru membesar / show saat di-hover (`buat sidebar di homescreen tetep di hide kalau di hover baru show`).
+- **Penyebab & Solusi**:
+  1. **Hover-Reveal Behavior**:
+     - Mengembalikan mode collapse default `58px` pada `.app-sidebar` di New Tab (`width: 58px; overflow-x: hidden;`).
+     - Teks label (`.sidebar-user-info`, `.sidebar-nav-label`) disembunyikan secara default (`opacity: 0`).
+     - Saat kursor mouse masuk ke area sidebar (`.app-sidebar:hover`), sidebar otomatis melar halus menjadi `220px` (`opacity: 1`) dengan bayangan elevasi dark glass dan transisi cubic-bezier yang mulus.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.1 KB).
+  - Restore Point: `v2.25.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
