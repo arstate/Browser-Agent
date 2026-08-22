@@ -1781,6 +1781,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.37.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 238: Frosted Glass Input Prompt with Ambient Neon Blur Glow on Homescreen
+- **Problem**:
+  - Pengguna menginginkan agar bar input prompt pada tampilan Homescreen awal (`body:not(.has-messages)`) tetap memiliki efek pendaran blur neon di belakangnya agar terlihat estetik, mewah, dan berkarakter *frosted glass* (`buat input prompt di homescren tetep buat belakangnya kek ada blur neon bro biar kek kelihatan lebih glasses`).
+- **Penyebab & Solusi**:
+  1. **Aura Frosted Glass & Neon Blur pada Homescreen Prompt**:
+     - Menerapkan `background: rgba(22, 22, 26, 0.88)` dengan `backdrop-filter: blur(28px) saturate(190%)` dan border `1px solid rgba(255, 255, 255, 0.12)`.
+     - Menambahkan pseudo-element `body:not(.has-messages) .chat-input-container::before` dengan `radial-gradient` neon lime/green yang di-blur halus (`filter: blur(20px)` hingga `26px` pada `:focus-within`).
+     - Memastikan active chat (`body.has-messages`) tetap bersih dari neon glow (`display: none !important; opacity: 0 !important;`).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.4 KB).
+  - Restore Point: `v2.38.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
