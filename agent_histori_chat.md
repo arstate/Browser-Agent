@@ -2014,6 +2014,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.55.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 256: 100% Uniform Prompt Box Dimensions Across Agent, Chat & Web Search Modes
+- **Problem**:
+  - Pengguna menghendaki agar ukuran, tinggi, dan bentuk kotak input prompt di mode Web Search tidak berubah sama sekali, melainkan tetap seragam dan identik dengan ukuran kotak di mode Agent dan Chat (`buat ketika di websearch mode ukuran input promp jangan berubah jadi tetap sama kek ukuran di agent atau chatmode`).
+- **Penyebab & Solusi**:
+  1. **Penyelarasan Dimensi & Bentuk Seragam**:
+     - Mengembalikan sudut kelengkungan `.chat-input-container` menjadi `border-radius: 20px;` seragam di semua mode.
+     - Menetapkan tinggi kotak prompt tetap `min-height: 118px;` dengan `padding: 10px 14px 10px 16px;` dan `#chat-input` setinggi `min-height: 32px; height: 32px;` di mode Web Search, Agent, maupun Chat.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (356.2 KB).
+  - Restore Point: `v2.56.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

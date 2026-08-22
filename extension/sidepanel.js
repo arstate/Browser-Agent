@@ -7247,8 +7247,7 @@ try {
 // Robust auto-expand and auto-shrink textarea with mode-adaptive base height
 function adjustChatInputHeight() {
   if (!chatInput) return;
-  const isWebSearch = currentChatMode === 'websearch';
-  const baseHeight = isWebSearch ? 28 : 32;
+  const baseHeight = 32;
 
   if (!chatInput.value || chatInput.value.trim() === '') {
     chatInput.style.height = baseHeight + 'px';

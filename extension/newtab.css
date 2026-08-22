@@ -1608,44 +1608,17 @@ body.has-messages #btn-mode-websearch {
   display: none !important;
 }
 
-/* Web Search Mode Pill Shape & Compact Centered Input */
-.chat-input-container.mode-websearch {
-  border-radius: 9999px !important;
-  min-height: 86px !important;
-  padding: 10px 14px 10px 20px !important;
-  gap: 4px !important;
-}
-
-body:not(.has-messages) .chat-input-container.mode-websearch::before {
-  border-radius: 9999px !important;
-}
-
-.chat-input-container.mode-websearch .chat-input-top-bar {
-  margin-bottom: 2px !important;
-}
-
-.chat-input-container.mode-websearch .chat-input-bar {
-  align-items: center !important;
-}
-
+/* Web Search Mode - Identical Size & Geometry to Agent/Chat Mode */
 .chat-input-container.mode-websearch #btn-attach-file,
 .chat-input-container.mode-websearch #execution-mode-wrapper,
 .chat-input-container.mode-websearch .attachments-preview-bar,
-.chat-input-container.mode-websearch .active-mentions-bar,
-.chat-input-container.mode-websearch .chat-input-bottom-actions {
+.chat-input-container.mode-websearch .active-mentions-bar {
   display: none !important;
 }
 
 .chat-input-container.mode-websearch #chat-input {
-  min-height: 28px !important;
-  height: 28px !important;
-  line-height: 28px !important;
-  padding: 0 !important;
-  font-size: 15px !important;
-}
-
-.chat-input-container.mode-websearch #btn-send {
-  align-self: center !important;
+  min-height: 32px;
+  height: 32px;
 }
 
 .chat-input-container.mode-websearch #btn-send .send-icon {
@@ -1658,11 +1631,6 @@ body:not(.has-messages) .chat-input-container.mode-websearch::before {
   opacity: 1 !important;
   transform: rotate(0deg) scale(1) !important;
   pointer-events: auto !important;
-}
-
-.chat-input-container.mode-websearch .websearch-suggestions-dropdown {
-  border-radius: 24px !important;
-  top: calc(100% + 10px) !important;
 }
 
 /* Web Search Autocomplete Suggestions Dropdown - Clean Dark SaaS (Zero Neon Blur) */
