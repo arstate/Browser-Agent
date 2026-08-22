@@ -3589,6 +3589,71 @@ function hidePlanApprovalDock() {
   syncHeroPlaceholderHeight();
 }
 
+// =========================================================================
+// Cyber / Matrix Text Glitch Scramble Animation Effect
+// =========================================================================
+const GLITCH_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~|}{[]';
+
+function scrambleText(element, targetHTML, duration = 320) {
+  if (!element) return;
+  
+  if (element._scrambleTimer) {
+    cancelAnimationFrame(element._scrambleTimer);
+  }
+
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = targetHTML;
+  const targetText = tempDiv.textContent;
+  
+  const startTime = performance.now();
+  const totalChars = targetText.length;
+
+  function updateScramble(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const resolvedCount = Math.floor(progress * totalChars);
+
+    let scrambled = '';
+    for (let i = 0; i < totalChars; i++) {
+      if (targetText[i] === ' ') {
+        scrambled += ' ';
+      } else if (i < resolvedCount) {
+        scrambled += targetText[i];
+      } else {
+        scrambled += GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+      }
+    }
+
+    if (progress >= 1) {
+      element.innerHTML = targetHTML;
+      element._scrambleTimer = null;
+    } else {
+      if (targetHTML.includes('hero-highlight')) {
+        const highlightMatch = targetHTML.match(/<span class="hero-highlight">(.*?)<\/span>/);
+        if (highlightMatch) {
+          const highlightWord = highlightMatch[1];
+          const highlightIndex = targetText.indexOf(highlightWord);
+          if (highlightIndex !== -1) {
+            const before = scrambled.slice(0, highlightIndex);
+            const mid = scrambled.slice(highlightIndex, highlightIndex + highlightWord.length);
+            const after = scrambled.slice(highlightIndex + highlightWord.length);
+            element.innerHTML = `${before}<span class="hero-highlight">${mid}</span>${after}`;
+          } else {
+            element.textContent = scrambled;
+          }
+        } else {
+          element.textContent = scrambled;
+        }
+      } else {
+        element.textContent = scrambled;
+      }
+      element._scrambleTimer = requestAnimationFrame(updateScramble);
+    }
+  }
+
+  element._scrambleTimer = requestAnimationFrame(updateScramble);
+}
+
 function setChatMode(mode) {
   if (mode !== 'chat' && mode !== 'agent' && mode !== 'websearch') mode = 'agent';
   currentChatMode = mode;
@@ -3613,8 +3678,8 @@ function setChatMode(mode) {
     if (chatInput) chatInput.placeholder = 'Cari di Google atau ketik URL web...';
     if (agentStatusEl) agentStatusEl.textContent = 'Web Search';
     if (btnSendEl) btnSendEl.title = 'Cari di Web';
-    if (heroTitleEl) heroTitleEl.innerHTML = 'Search the web or <span class="hero-highlight">find anything</span> online';
-    if (heroSubtitleEl) heroSubtitleEl.textContent = 'Instant Google search, website navigation, and smart suggestions.';
+    if (heroTitleEl) scrambleText(heroTitleEl, 'Search the web or <span class="hero-highlight">find anything</span> online', 340);
+    if (heroSubtitleEl) scrambleText(heroSubtitleEl, 'Instant Google search, website navigation, and smart suggestions.', 380);
     clearAttachments();
     clearMentionAgents();
   } else if (mode === 'chat') {
@@ -3622,16 +3687,16 @@ function setChatMode(mode) {
     if (chatInput) chatInput.placeholder = 'Ketik pesan chat di sini...';
     if (agentStatusEl) agentStatusEl.textContent = 'Chat Ready';
     if (btnSendEl) btnSendEl.title = 'Kirim Pesan';
-    if (heroTitleEl) heroTitleEl.innerHTML = 'What would you like to <span class="hero-highlight">talk about</span> today?';
-    if (heroSubtitleEl) heroSubtitleEl.textContent = 'Chat freely with your personal AI assistant — fast, direct, and conversational.';
+    if (heroTitleEl) scrambleText(heroTitleEl, 'What would you like to <span class="hero-highlight">talk about</span> today?', 340);
+    if (heroSubtitleEl) scrambleText(heroSubtitleEl, 'Chat freely with your personal AI assistant — fast, direct, and conversational.', 380);
     hideWebSearchSuggestions();
   } else {
     btnAgent?.classList.add('active');
     if (chatInput) chatInput.placeholder = 'Ketik perintah atau drop/paste gambar di sini...';
     if (agentStatusEl) agentStatusEl.textContent = 'Agent Ready';
     if (btnSendEl) btnSendEl.title = 'Kirim Perintah';
-    if (heroTitleEl) heroTitleEl.innerHTML = 'What should your agent <span class="hero-highlight">work on</span> next?';
-    if (heroSubtitleEl) heroSubtitleEl.textContent = 'Pick Browser Agent or any specialist, then start a task — all without leaving this tab.';
+    if (heroTitleEl) scrambleText(heroTitleEl, 'What should your agent <span class="hero-highlight">work on</span> next?', 340);
+    if (heroSubtitleEl) scrambleText(heroSubtitleEl, 'Pick Browser Agent or any specialist, then start a task — all without leaving this tab.', 380);
     hideWebSearchSuggestions();
   }
 

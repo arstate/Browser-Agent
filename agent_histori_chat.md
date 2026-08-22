@@ -1945,6 +1945,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.50.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 251: Cyber Text Glitch Scramble Animation & Elastic Send/Search Icon Morph on Mode Switch
+- **Problem**:
+  - Pergantian mode terasa statis dan membutuhkan animasi futuristik karakter per-karakter berganti acak (*glitch text scramble effect*) pada judul hero serta animasi rotasi elastis morphing pada ikon tombol kirim prompt (`buat ketika ganti mode websearch ada animasi teks gantinya kek animasi glitch per huruf berganti, dan animasi kek animasi morph icon send prompt ganti jadi icon pembesar kaca`).
+- **Penyebab & Solusi**:
+  1. **Cyber Text Glitch Scramble Animation (`scrambleText`)**:
+     - Mengimplementasikan algoritma glitch text scramble performa tinggi berbasis `requestAnimationFrame` yang mengacak karakter dengan simbol dan huruf acak sebelum secara berurutan mengunci teks target dalam ~340ms, dengan tetap mempertahankan highlight warna lime pada elemen `.hero-highlight`.
+  2. **Elastic Send/Search Icon Morphing**:
+     - Mengubah styling CSS `.btn-send svg` dengan transisi rotasi elastis `cubic-bezier(0.34, 1.56, 0.64, 1)` dan opacity fade sehingga ikon panah `↑` berputar dan mengecil menghilang sementara ikon `🔍` berputar masuk dengan efek elastis halus yang memukau.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (355.0 KB).
+  - Restore Point: `v2.51.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

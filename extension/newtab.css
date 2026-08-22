@@ -1591,14 +1591,15 @@ body.has-messages #btn-mode-websearch {
 }
 
 .chat-input-container.mode-websearch #btn-send .send-icon {
-  display: none !important;
+  opacity: 0 !important;
+  transform: rotate(-90deg) scale(0.3) !important;
+  pointer-events: none !important;
 }
 
 .chat-input-container.mode-websearch #btn-send .search-icon {
-  display: block !important;
-  width: 15px !important;
-  height: 15px !important;
-  margin: auto;
+  opacity: 1 !important;
+  transform: rotate(0deg) scale(1) !important;
+  pointer-events: auto !important;
 }
 
 /* Web Search Autocomplete Suggestions Dropdown - Clean Dark SaaS (Zero Neon Blur) */
@@ -2667,8 +2668,9 @@ body.has-messages #btn-mode-websearch {
   color: var(--text-primary);
 }
 
-/* Send Button */
+/* Send Button with Smooth Icon Morph */
 .btn-send {
+  position: relative;
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -2684,18 +2686,30 @@ body.has-messages #btn-mode-websearch {
   flex-shrink: 0;
   padding: 0;
   box-shadow: 0 4px 12px rgba(206, 241, 40, 0.35);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  overflow: hidden;
 }
 
 .btn-send svg {
+  position: absolute;
   width: 16px !important;
   height: 16px !important;
-  display: block;
+  transition: opacity 0.25s ease, transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .btn-send .send-icon {
   stroke: var(--accent-dark);
   stroke-width: 2.6;
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.btn-send .search-icon {
+  stroke: var(--accent-dark);
+  stroke-width: 2.6;
+  opacity: 0;
+  transform: rotate(90deg) scale(0.3);
+  pointer-events: none;
 }
 
 .btn-send .stop-icon {
