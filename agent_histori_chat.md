@@ -2071,6 +2071,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.59.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 260: Pixel-Perfect 56px Sidebar Header Height Alignment Matching Top Navbar
+- **Problem**:
+  - Tinggi kotak header sidebar (`.sidebar-top`) belum sejajar horizontal dengan tinggi navbar atas (`.fullscreen-header`), sehingga garis pemisah bawah (*bottom border*) terlihat patah / tidak lurus (`ukuranya ini dibuat tingginya sama kek navbar atas bro, di pengaturan juga bro`).
+- **Penyebab & Solusi**:
+  1. **Penyelarasan Tinggi Presisi 56px**:
+     - Menetapkan `height: 56px; min-height: 56px; max-height: 56px;` pada `.sidebar-top` di `newtab.css` dan `options.css`.
+     - Menyamakan border bottom `1px solid rgba(255, 255, 255, 0.08)` sehingga header sidebar dan navbar atas membentuk satu garis horizontal yang lurus dan seamless 100%.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (357.3 KB).
+  - Restore Point: `v2.60.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
