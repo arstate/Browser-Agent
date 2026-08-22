@@ -507,9 +507,19 @@ body.options-body {
 }
 
 .template-icon {
-  font-size: 18px;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+}
+
+.template-icon svg {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 .template-info {
