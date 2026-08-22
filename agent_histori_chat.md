@@ -1482,6 +1482,17 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.17.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 218: Clean Settings Overlay - Remove Duplicate Top Header Bar
+- **Problem**:
+  - Header bar atas `.settings-overlay-header` (`[ ← Kembali ke Chat ]` dan `Pengaturan Browser Agent`) pada overlay New Tab menumpuk dan menduplikasi fungsi tombol `← Back` yang sudah ada di sidebar kiri halaman Pengaturan (`hapus aja`).
+- **Penyebab & Solusi**:
+  - Menghapus elemen `.settings-overlay-header` dari `#fullscreen-settings-overlay` di [newtab.html](file:///home/arya/browser-agent/extension/newtab.html).
+  - Menyesuaikan `.settings-overlay-body` di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css) menjadi `height: 100vh;` sehingga iframe pengaturan mengisi 100% layar penuh secara mulus tanpa bar ekstra di atasnya.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (350.8 KB).
+  - Restore Point: `v2.18.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

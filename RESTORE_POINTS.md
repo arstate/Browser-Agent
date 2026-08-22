@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.17.0`
-- **Iterasi:** `Iterasi 217`
-- **Tanggal Rilis:** 22 Agustus 2026 (23:44 WIB)
+- **Versi Terkini:** `v2.18.0`
+- **Iterasi:** `Iterasi 218`
+- **Tanggal Rilis:** 22 Agustus 2026 (23:45 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (350.5 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (350.8 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.18.0** | 218 | 22-08-2026 23:45 | `v2.18.0` | **Clean Settings Overlay:** Menghapus top header bar ganda (`.settings-overlay-header`) dari overlay New Tab sehingga halaman pengaturan langsung tampil 100% full-height dengan tombol Back bawaan sidebar. | 🟢 STABLE | `./restore.sh v2.18.0` |
 | **v2.17.0** | 217 | 22-08-2026 23:44 | `v2.17.0` | **Fix UI Memory, Skills & Multi-Agent:** Menata ulang seluruh kartu item Dark Luxury (`.item-card`, `.boss-hero-card`), preview kode SOP/memory, tag pill, dan mengunci ukuran SVG icon agar tidak raksasa. | 🟢 STABLE | `./restore.sh v2.17.0` |
 | **v2.16.0** | 216 | 22-08-2026 23:42 | `v2.16.0` | **Clean Settings Sidebar:** Menghapus sub-menu redundant "SYSTEM & INTEGRATION" dan "HELP & INFO" dari sidebar kiri Pengaturan untuk menyederhanakan navigasi. | 🟢 STABLE | `./restore.sh v2.16.0` |
 | **v2.15.0** | 215 | 22-08-2026 23:40 | `v2.15.0` | **Major Overhaul Settings Layout:** 2-Column Dark Luxury SaaS, Left Settings Sidebar Navigation, 12 Quick Provider Templates, Model Priority #1/#2, Test AI Connection live latency, Newtab Settings Overlay. | 🟢 STABLE | `./restore.sh v2.15.0` |
