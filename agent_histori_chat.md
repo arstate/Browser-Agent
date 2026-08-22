@@ -1764,8 +1764,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Menghapus pseudo-element `.chat-input-container::before` yang sebelumnya memancarkan radial glow neon di kanvas.
      - Mengubah box-shadow input prompt menjadi bayangan hitam natural (`0 18px 48px rgba(0, 0, 0, 0.65)`).
 - **CRX Build & Sync**:
-  - Re-pack `extension.crx` (352.6 KB).
+  - Re-pack `extension.crx` (352.4 KB).
   - Restore Point: `v2.36.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
+### 🚀 Iterasi 237: Fix Sidebar Hover Input Shift Bug (Zero Unwanted Horizontal Offset)
+- **Problem**:
+  - Saat sidebar di-hover/muncul (`width: 220px`), bar input prompt bergeser ke kanan dan tidak sejajar dengan judul (*What should your agent work on next?*) serta Recent Sites (`bug ketika sidebar homescren show, input prompt jadi kegeser bro`).
+- **Penyebab & Solusi**:
+  1. **Penghapusan Override Offset `.app-sidebar:hover`**:
+     - Kontainer aplikasi `.fullscreen-agent-app` bersifat statis dengan `margin-left: 58px` (sidebar overlay), sehingga komponen in-flow tidak bergerak.
+     - Menghapus aturan CSS `.app-sidebar:hover ~ .fullscreen-agent-app .chat-input-container { left: calc(50% + 110px); }`.
+     - Bar input prompt kini selalu terkunci presisi di `left: calc(50% + 29px)` baik saat sidebar diminimalkan maupun saat di-hover terbuka.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (352.4 KB).
+  - Restore Point: `v2.37.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
 ---

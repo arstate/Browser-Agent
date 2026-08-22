@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.36.0`
-- **Iterasi:** `Iterasi 236`
-- **Tanggal Rilis:** 23 Agustus 2026 (00:22 WIB)
+- **Versi Terkini:** `v2.37.0`
+- **Iterasi:** `Iterasi 237`
+- **Tanggal Rilis:** 23 Agustus 2026 (00:23 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.6 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.4 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.37.0** | 237 | 23-08-2026 00:23 | `v2.37.0` | **Fix Sidebar Hover Input Shift Bug (Zero Unwanted Horizontal Offset):** Menghapus rule `left: calc(50% + 110px)` pada saat sidebar di-hover, sehingga posisi container input prompt tetap terkunci simetris dan sejajar sempurna dengan `#welcome-card` dan `#recent-sites-section` tanpa bergeser ke kanan saat sidebar terbuka/melar. | 🟢 STABLE | `./restore.sh v2.37.0` |
 | **v2.36.0** | 236 | 23-08-2026 00:22 | `v2.36.0` | **Zero Background Neon Blur in Chat Canvas (100% Clean Flat Dark Charcoal):** Menghapus seluruh efek radial-gradient neon blur dan pseudo-element glow hijau/kuning dari background canvas (`body.newtab-body`) dan kontainer input prompt, menghasilkan latar belakang chat yang bersih, elegan, flat, dan 100% neutral monochrome dark charcoal. | 🟢 STABLE | `./restore.sh v2.36.0` |
 | **v2.35.0** | 235 | 23-08-2026 00:20 | `v2.35.0` | **Neutral Dark Header Bar & Dropdowns (100% Anti-Navy):** Mengganti background seluruh bilah Header Atas (`.fullscreen-header`), status chips (`.bento-status-chip`, `.chip-dark`), tombol pill header, dan dropdown menu (`.model-dropdown-menu`, `.agent-dropdown-menu`) dari warna kebiruan (`rgba(11, 15, 23, 0.85)` / `rgba(19, 26, 38, 0.98)`) menjadi Neutral Dark Charcoal (`rgba(18, 18, 20, 0.88)` / `rgba(24, 24, 28, 0.98)` / `rgba(26, 26, 30, 0.9)`), menyempurnakan seluruh permukaan antarmuka New Tab agar 100% monokromatik netral. | 🟢 STABLE | `./restore.sh v2.35.0` |
 | **v2.34.0** | 234 | 23-08-2026 00:16 | `v2.34.0` | **Translucent Frosted Glass Blur Input in Active Chat (Zero Neon Glow):** Mengubah gaya input prompt di bagian bawah layar saat chat aktif (`body.has-messages`) menjadi Glassmorphism frosted glass transparan yang elegan (`backdrop-filter: blur(28px) saturate(190%)`, `background: rgba(22, 22, 26, 0.82)`), serta menghapus glow neon di belakang bar input agar pesan chat yang lewat di belakangnya tampak ter-blur halus dengan teks dan kontrol input yang tetap jernih dan tajam. | 🟢 STABLE | `./restore.sh v2.34.0` |

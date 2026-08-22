@@ -602,10 +602,6 @@ body.newtab-body {
   box-shadow: 0 20px 56px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-.app-sidebar:hover ~ .fullscreen-agent-app .chat-input-container {
-  left: calc(50% + 110px);
-}
-
 /* 1. INITIAL STATE: Centered Hero -> Bento Input (Center) -> Recent Sites */
 body:not(.has-messages) .fullscreen-chat-main {
   justify-content: center;
