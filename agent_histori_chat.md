@@ -2057,6 +2057,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.58.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 259: Migrate Browser Agent Brand Badge to Left Sidebar (Collapsible Logo Icon in Default State & Full Brand on Hover / Settings)
+- **Problem**:
+  - Pengguna ingin logo brand **Browser Agent** dipindahkan ke bagian atas sidebar navigasi kiri (menggantikan avatar profil "arya / Personal") sesuai gambar acuan. Ketika sidebar dalam kondisi normal (tertutup / 58px), hanya squircle logo `B` neon lime yang tampil, dan ketika sidebar dibuka (hover / settings) teks lengkap `Browser Agent` muncul (`ini ganti jadi browser agent bro kek image 2 , jadi browser agent di pindah di sidebar posisinya, kalau sidebar di hide maka cuman muncul logonya aja, di menu pengaturan juga sama bro ganti jadi logo browser agent`).
+- **Penyebab & Solusi**:
+  1. **Sidebar Brand Badge Component (`.sidebar-brand-badge`)**:
+     - Mengganti `.sidebar-user-badge` di `newtab.html` dan `options.html` dengan `.sidebar-brand-badge` yang berisi squircle logo `B` neon lime (`28x28px`, `border-radius: 8px`) dan nama brand `Browser Agent` tebal putih.
+  2. **Collapsible Responsive Behavior**:
+     - Pada sidebar tertutup (`58px`), `.sidebar-brand-info` disembunyikan (`opacity: 0`), hanya menampilkan logo `B` di tengah.
+     - Pada saat hover atau di halaman Pengaturan (`options-sidebar` 240px), `.sidebar-brand-info` otomatis tampil secara halus (`opacity: 1; transform: translateX(0)`).
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (357.5 KB).
+  - Restore Point: `v2.59.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

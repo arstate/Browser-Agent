@@ -98,79 +98,65 @@ body.newtab-body {
   transition: margin-left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Sidebar Header & User Profile */
+/* Sidebar Header & Brand Logo Badge */
 .sidebar-top {
-  padding: 12px 10px;
+  padding: 14px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
+  box-sizing: border-box;
 }
 
-.sidebar-user-badge {
+.sidebar-brand-badge {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 4px;
+  padding: 2px 3px;
   border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.15s ease;
+  user-select: none;
+  cursor: default;
 }
 
-.sidebar-user-badge:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.sidebar-avatar {
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  min-height: 30px;
-  border-radius: 50%;
-  background: #3F3F46;
-  color: #FFFFFF;
-  font-weight: 700;
-  font-size: 13px;
+.sidebar-brand-logo {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 8px;
+  background: var(--accent-lime);
+  color: #0F172A;
+  font-weight: 900;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-transform: lowercase;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(206, 241, 40, 0.22);
   flex-shrink: 0;
 }
 
-.sidebar-user-info {
+.sidebar-brand-info {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   min-width: 0;
   opacity: 0;
   transform: translateX(-4px);
   transition: opacity 0.18s ease, transform 0.18s ease;
   white-space: nowrap;
+  pointer-events: none;
 }
 
-.app-sidebar:hover .sidebar-user-info {
+.app-sidebar:hover .sidebar-brand-info {
   opacity: 1;
   transform: translateX(0);
+  pointer-events: auto;
 }
 
-.sidebar-user-name-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #F4F4F6;
-  font-size: 13px;
+.sidebar-brand-name {
+  color: #FFFFFF;
+  font-size: 15px;
   font-weight: 700;
-}
-
-.sidebar-user-name-row svg {
-  color: #A1A1AA;
-}
-
-.sidebar-user-role {
-  font-size: 11px;
-  color: #71717A;
-  font-weight: 500;
+  letter-spacing: -0.2px;
 }
 
 /* Sidebar Navigation Items */

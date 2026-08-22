@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.58.0`
-- **Iterasi:** `Iterasi 258`
-- **Tanggal Rilis:** 23 Agustus 2026 (01:19 WIB)
+- **Versi Terkini:** `v2.59.0`
+- **Iterasi:** `Iterasi 259`
+- **Tanggal Rilis:** 23 Agustus 2026 (01:23 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (357.7 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (357.5 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.59.0** | 259 | 23-08-2026 01:23 | `v2.59.0` | **Migrate Browser Agent Brand Badge to Left Sidebar (Collapsible Logo Icon in Default State & Full Brand on Hover / Settings):** Memindahkan logo dan nama brand **Browser Agent** ke bagian paling atas sidebar kiri (menggantikan avatar profil 'a' / 'arya'). Ketika sidebar dalam kondisi normal (tertutup / width 58px), hanya squircle logo `B` neon lime yang tampil di tengah. Ketika sidebar di-hover atau di halaman Pengaturan (width 240px), teks `Browser Agent` muncul secara mulus. | 🟢 STABLE | `./restore.sh v2.59.0` |
 | **v2.58.0** | 258 | 23-08-2026 01:19 | `v2.58.0` | **Ultra-Clean Minimalist Text-Only Search Engine Dropup (Removed Icon Box & Subtitle Descriptions):** Menyederhanakan UI dropdown dan tombol pemilih Search Engine menjadi teks minimalis yang bersih (menghapus kotak ikon besar, menghapus deskripsi subtitle, dan menghapus ikon pada tombol trigger) dengan lebar menu yang lebih ringkas (`width: 165px`) sesuai permintaan visual pengguna. | 🟢 STABLE | `./restore.sh v2.58.0` |
 | **v2.57.0** | 257 | 23-08-2026 01:16 | `v2.57.0` | **Integrated Search Engine Selector Dropup (Google, DuckDuckGo, Bing, Brave, Ecosia, Yandex) in Web Search Mode:** Menambahkan menu dropup pemilih mesin pencari di pojok kanan atas bar input saat berada di mode Web Search, lengkap dengan ikon, nama mesin pencari, deskripsi, checklist aktif, update placeholder dinamis, penyimpanan preferensi lokal, dan eksekusi pencarian langsung sesuai mesin pencari yang dipilih. | 🟢 STABLE | `./restore.sh v2.57.0` |
 | **v2.56.0** | 256 | 23-08-2026 01:11 | `v2.56.0` | **100% Uniform Prompt Box Dimensions Across Agent, Chat & Web Search Modes:** Memastikan ukuran, tinggi (`min-height: 118px;`), padding, dan sudut kelengkungan (`border-radius: 20px;`) kotak input prompt di mode Web Search tetap 100% persis sama tanpa ada perubahan ukuran terhadap mode Agent dan Chat. | 🟢 STABLE | `./restore.sh v2.56.0` |

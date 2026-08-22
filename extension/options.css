@@ -92,71 +92,55 @@ body.options-body {
   box-shadow: none !important;
 }
 
-/* Sidebar Header & User Profile (Exact Match to Welcomescreen) */
+/* Sidebar Header & Brand Logo Badge (Exact Match to Welcomescreen) */
 .sidebar-top {
-  padding: 12px 14px;
+  padding: 14px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
+  box-sizing: border-box;
 }
 
-.sidebar-user-badge {
+.sidebar-brand-badge {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 4px;
+  padding: 2px 3px;
   border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.15s ease;
+  user-select: none;
+  cursor: default;
 }
 
-.sidebar-user-badge:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.sidebar-avatar {
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  min-height: 30px;
-  border-radius: 50%;
-  background: #64748B;
-  color: #FFFFFF;
-  font-weight: 700;
-  font-size: 13px;
+.sidebar-brand-logo {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 8px;
+  background: var(--accent-lime);
+  color: #0F172A;
+  font-weight: 900;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-transform: lowercase;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(206, 241, 40, 0.22);
   flex-shrink: 0;
 }
 
-.sidebar-user-info {
+.sidebar-brand-info {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   min-width: 0;
   white-space: nowrap;
 }
 
-.sidebar-user-name-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #F8FAFC;
-  font-size: 13px;
+.sidebar-brand-name {
+  color: #FFFFFF;
+  font-size: 15px;
   font-weight: 700;
-}
-
-.sidebar-user-name-row svg {
-  color: #94A3B8;
-}
-
-.sidebar-user-role {
-  font-size: 11px;
-  color: #64748B;
-  font-weight: 500;
+  letter-spacing: -0.2px;
 }
 
 .sidebar-divider {
