@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.42.0`
-- **Iterasi:** `Iterasi 242`
-- **Tanggal Rilis:** 23 Agustus 2026 (00:35 WIB)
+- **Versi Terkini:** `v2.43.0`
+- **Iterasi:** `Iterasi 243`
+- **Tanggal Rilis:** 23 Agustus 2026 (00:39 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (352.5 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (353.0 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.43.0** | 243 | 23-08-2026 00:39 | `v2.43.0` | **Live Google Search Autocomplete Suggestions Dropdown in Web Search Mode:** Mengintegrasikan live autocomplete search suggestions dari Google Suggest API saat pengguna mengetik di mode `🌐 Web Search`. Dilengkapi dengan dropdown menu Dark Charcoal (`.websearch-suggestions-dropdown`), highlight kata kunci, navigasi keyboard panah atas/bawah (`ArrowUp`/`ArrowDown`), dan eksekusi instan saat diklik atau ditekan Enter. | 🟢 STABLE | `./restore.sh v2.43.0` |
 | **v2.42.0** | 242 | 23-08-2026 00:35 | `v2.42.0` | **Integrated Web Search Mode on Homescreen Input Prompt:** Menambahkan opsi mode `🌐 Web Search` di switcher mode input prompt Homescreen (`[Agent Mode] [Chat Mode] [Web Search]`). Ketika mode Web Search aktif: tombol upload file (`+`) dan dropdown alur kerja (`Accept/Planning`) otomatis di-hide, placeholder berubah menjadi *"Cari di Google atau ketik URL web..."*, serta input teks langsung mengeksekusi pencarian Google atau membuka URL target secara instan. Opsi Web Search ini otomatis disembunyikan saat sesi chat AI sedang berlangsung di bagian bawah. | 🟢 STABLE | `./restore.sh v2.42.0` |
 | **v2.41.0** | 241 | 23-08-2026 00:32 | `v2.41.0` | **Instant Cut Transition to Settings (Zero Animation/Lag):** Menghapus seluruh animasi fade-in dan transisi pada overlay pengaturan (`.fullscreen-settings-overlay`), serta menambahkan background preloading pada iframe `options.html` sehingga perpindahan ke halaman pengaturan dan kembali ke homescreen berlangsung secara instan (*hard-cut*, 0ms latency) tanpa beban animasi rendering GPU. | 🟢 STABLE | `./restore.sh v2.41.0` |
 | **v2.40.0** | 240 | 23-08-2026 00:30 | `v2.40.0` | **Neon Lime Border Stroke on Prompt Focus (Zero Over-Glow Shadow):** Mengubah border stroke saat bar input prompt diklik (`:focus-within`) menjadi neon lime accent (`border-color: rgba(206, 241, 40, 0.45)`), berlaku secara konsisten baik pada tampilan Homescreen maupun pada bar input di bagian bawah saat chat aktif, tanpa menambahkan efek bayangan glow yang menyilaukan. | 🟢 STABLE | `./restore.sh v2.40.0` |

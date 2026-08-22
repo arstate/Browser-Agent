@@ -1845,6 +1845,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.42.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 243: Live Google Search Autocomplete Suggestions Dropdown in Web Search Mode
+- **Problem**:
+  - Pengguna ingin agar saat mengetik kata kunci di mode `🌐 Web Search`, muncul dropdown rekomendasi pencarian (live autocomplete suggestions) seperti pada Google Search (`bisa ga kalau di websearch itu muncul kek rekomendasi pencarian bro`).
+- **Penyebab & Solusi**:
+  1. **Google Suggest API Live Integration**:
+     - Mengintegrasikan fungsi asynchronous `fetchGoogleSuggestions(query)` yang memanggil Google Suggest API secara real-time dengan debouncing 120ms.
+  2. **Dark Charcoal Autocomplete Dropdown (`.websearch-suggestions-dropdown`)**:
+     - Merender daftar saran pencarian lengkap dengan highlight kecocokan teks, ikon kaca pembesar `🔍`, dan panah quick fill `↖`.
+     - Mendukung navigasi keyboard (`ArrowDown` & `ArrowUp`) untuk memilih saran, dan penekanan `Enter` atau klik mouse untuk langsung mengeksekusi pencarian Google.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (353.0 KB).
+  - Restore Point: `v2.43.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

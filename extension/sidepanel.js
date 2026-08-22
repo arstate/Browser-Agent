@@ -6951,6 +6951,109 @@ function handleChatInputMentionCheck() {
   hideMentionDropup();
 }
 
+// =========================================================================
+// Web Search Google Suggestions Autocomplete Engine
+// =========================================================================
+const webSearchDropup = document.getElementById('websearch-suggestions-dropdown');
+let activeSuggestionIndex = -1;
+let currentSuggestionsList = [];
+let suggestionDebounceTimer = null;
+
+function hideWebSearchSuggestions() {
+  if (!webSearchDropup) return;
+  webSearchDropup.style.display = 'none';
+  webSearchDropup.innerHTML = '';
+  activeSuggestionIndex = -1;
+  currentSuggestionsList = [];
+}
+
+async function fetchGoogleSuggestions(query) {
+  if (!query || !query.trim() || currentChatMode !== 'websearch') {
+    hideWebSearchSuggestions();
+    return;
+  }
+
+  try {
+    const url = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query.trim())}`;
+    const response = await fetch(url);
+    if (!response.ok) return;
+    const data = await response.json();
+    if (Array.isArray(data) && Array.isArray(data[1])) {
+      const suggestions = data[1].slice(0, 7); // Top 7 suggestions
+      renderWebSearchSuggestions(suggestions, query.trim());
+    }
+  } catch (err) {
+    console.debug('Error fetching suggestions:', err);
+  }
+}
+
+function renderWebSearchSuggestions(suggestions, rawQuery) {
+  if (!webSearchDropup) return;
+  if (!suggestions || suggestions.length === 0 || currentChatMode !== 'websearch') {
+    hideWebSearchSuggestions();
+    return;
+  }
+
+  currentSuggestionsList = suggestions;
+  activeSuggestionIndex = -1;
+
+  let html = '';
+  suggestions.forEach((sug, idx) => {
+    let formattedText = sug;
+    const lowerSug = sug.toLowerCase();
+    const lowerQ = rawQuery.toLowerCase();
+    if (lowerSug.startsWith(lowerQ)) {
+      formattedText = `<strong>${sug.slice(0, rawQuery.length)}</strong>${sug.slice(rawQuery.length)}`;
+    }
+
+    html += `
+      <div class="websearch-suggestion-item" data-index="${idx}" data-val="${sug.replace(/"/g, '&quot;')}">
+        <svg class="websearch-suggestion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span class="websearch-suggestion-text">${formattedText}</span>
+        <svg class="websearch-suggestion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="7" y1="17" x2="17" y2="7"></line>
+          <polyline points="7 7 17 7 17 17"></polyline>
+        </svg>
+      </div>
+    `;
+  });
+
+  webSearchDropup.innerHTML = html;
+  webSearchDropup.style.display = 'flex';
+
+  webSearchDropup.querySelectorAll('.websearch-suggestion-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const val = item.getAttribute('data-val');
+      if (val) {
+        chatInput.value = val;
+        hideWebSearchSuggestions();
+        handleSendMessage();
+      }
+    });
+  });
+}
+
+function updateActiveSuggestionItem() {
+  if (!webSearchDropup) return;
+  const items = webSearchDropup.querySelectorAll('.websearch-suggestion-item');
+  items.forEach((it, idx) => {
+    if (idx === activeSuggestionIndex) {
+      it.classList.add('selected');
+      it.scrollIntoView({ block: 'nearest' });
+      const val = it.getAttribute('data-val');
+      if (val && chatInput) {
+        chatInput.value = val;
+      }
+    } else {
+      it.classList.remove('selected');
+    }
+  });
+}
+
 chatInput.addEventListener('keydown', (e) => {
   // If mention dropup is open, intercept ArrowUp, ArrowDown, Enter, Tab, Escape
   if (mentionDropup && mentionDropup.style.display !== 'none' && currentMentionMatches.length > 0) {
@@ -6978,17 +7081,42 @@ chatInput.addEventListener('keydown', (e) => {
     }
   }
 
+  // If Web Search suggestions are open, intercept ArrowUp, ArrowDown, Escape
+  if (webSearchDropup && webSearchDropup.style.display !== 'none' && currentSuggestionsList.length > 0) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeSuggestionIndex = (activeSuggestionIndex + 1) % currentSuggestionsList.length;
+      updateActiveSuggestionItem();
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeSuggestionIndex = (activeSuggestionIndex - 1 + currentSuggestionsList.length) % currentSuggestionsList.length;
+      updateActiveSuggestionItem();
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      hideWebSearchSuggestions();
+      return;
+    }
+  }
+
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     hideMentionDropup();
+    hideWebSearchSuggestions();
     handleSendMessage();
   }
 });
 
-// Close mention dropup when clicking outside
+// Close mention dropup and suggestions when clicking outside
 document.addEventListener('click', (e) => {
   if (mentionDropup && !mentionDropup.contains(e.target) && e.target !== chatInput) {
     hideMentionDropup();
+  }
+  if (webSearchDropup && !webSearchDropup.contains(e.target) && e.target !== chatInput) {
+    hideWebSearchSuggestions();
   }
 });
 
@@ -7052,11 +7180,23 @@ try {
 chatInput.addEventListener('input', () => {
   adjustChatInputHeight();
   handleChatInputMentionCheck();
+  if (currentChatMode === 'websearch') {
+    clearTimeout(suggestionDebounceTimer);
+    suggestionDebounceTimer = setTimeout(() => {
+      fetchGoogleSuggestions(chatInput.value);
+    }, 120);
+  }
 });
 chatInput.addEventListener('keyup', (e) => {
   adjustChatInputHeight();
   if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Enter' && e.key !== 'Tab') {
     handleChatInputMentionCheck();
+    if (currentChatMode === 'websearch') {
+      clearTimeout(suggestionDebounceTimer);
+      suggestionDebounceTimer = setTimeout(() => {
+        fetchGoogleSuggestions(chatInput.value);
+      }, 120);
+    }
   }
 });
 chatInput.addEventListener('change', adjustChatInputHeight);
