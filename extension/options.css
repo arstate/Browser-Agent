@@ -32,6 +32,10 @@
   scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
 }
 
+svg {
+  max-width: 100%;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -1039,76 +1043,404 @@ body.options-body {
   padding-left: 4px;
 }
 
+/* =========================================================================
+   Master Agent Hero Card Styling
+   ========================================================================= */
+.boss-agent-hero-container {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.boss-hero-card {
+  background: linear-gradient(135deg, #131A26 0%, #1A2436 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-card);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.boss-hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.boss-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.boss-crown-icon-box {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 12px;
+  background: rgba(206, 241, 40, 0.15);
+  border: 1px solid rgba(206, 241, 40, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-lime);
+}
+
+.boss-crown-icon-box svg {
+  width: 22px !important;
+  height: 22px !important;
+  stroke: currentColor;
+  fill: none;
+}
+
+.boss-title-text h3 {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.boss-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-lime);
+  background: rgba(206, 241, 40, 0.1);
+  border: 1px solid rgba(206, 241, 40, 0.25);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-top: 4px;
+}
+
+.boss-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-lime);
+  box-shadow: 0 0 8px var(--accent-lime);
+}
+
+.boss-hero-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.boss-hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.boss-tag-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-card);
+  color: var(--text-secondary);
+}
+
+.boss-tag-pill.highlight {
+  background: rgba(206, 241, 40, 0.12);
+  border-color: rgba(206, 241, 40, 0.3);
+  color: var(--accent-lime);
+  font-weight: 700;
+}
+
+.boss-hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.boss-hero-actions-info {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.btn-edit-boss {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-lime);
+  color: #0F172A;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-edit-boss svg {
+  width: 14px !important;
+  height: 14px !important;
+  stroke: #0F172A;
+  fill: none;
+}
+
+.btn-edit-boss:hover {
+  background: var(--accent-lime-hover);
+  transform: translateY(-1px);
+}
+
+/* =========================================================================
+   Section Subheading & Items Cards Grid
+   ========================================================================= */
+.section-subheading-group {
+  margin: 20px 0 14px;
+}
+
+.section-subheading-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-subheading-title svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: var(--accent-lime);
+  stroke: currentColor;
+}
+
+.section-subheading-title h3 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.section-subheading-group p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
 .items-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 14px;
 }
 
-.catalog-card-item {
+.item-card {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-card);
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 12px;
   transition: all 0.15s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
 }
 
-.catalog-card-item:hover {
+.item-card:hover {
   border-color: rgba(255, 255, 255, 0.18);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-.catalog-card-header {
+.item-card-top {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.item-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.item-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  width: 100%;
 }
 
-.catalog-card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #FFFFFF;
+.badge-builtin {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 2px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
-.catalog-card-desc {
-  font-size: 12.5px;
+.item-card-desc {
+  font-size: 12px;
   color: var(--text-secondary);
-  line-height: 1.4;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.catalog-card-footer {
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-subtle);
+.item-code-preview {
+  background: #080C14;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #94A3B8;
+  max-height: 65px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre-wrap;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.item-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.tag-pill {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-card);
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-pill.skill-tag {
+  background: rgba(206, 241, 40, 0.08);
+  border-color: rgba(206, 241, 40, 0.2);
+  color: #D9F92F;
+  font-weight: 700;
+}
+
+.tag-pill.memory-tag {
+  background: rgba(249, 115, 22, 0.08);
+  border-color: rgba(249, 115, 22, 0.2);
+  color: #FB923C;
+}
+
+.tag-pill.model-tag {
+  background: rgba(148, 163, 184, 0.08);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #CBD5E1;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tag-pill code {
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  padding: 0;
+}
+
+.item-card-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
 }
 
-.btn-card-action {
-  background: rgba(255, 255, 255, 0.05);
+.btn-item-action {
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border-card);
-  color: var(--text-secondary);
-  padding: 4px 10px;
+  color: #E2E8F0;
+  padding: 5px 12px;
   border-radius: 6px;
   font-family: inherit;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.12s ease;
 }
 
-.btn-card-action:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #FFFFFF;
+.btn-item-action:hover {
+  background: rgba(206, 241, 40, 0.15);
+  border-color: var(--accent-lime);
+  color: var(--accent-lime);
+}
+
+.btn-item-del {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.btn-item-del svg {
+  width: 14px !important;
+  height: 14px !important;
+  stroke: currentColor;
+  fill: none;
+}
+
+.btn-item-del:hover:not(.disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #F87171;
+}
+
+.empty-placeholder {
+  grid-column: 1 / -1;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border-card);
+  border-radius: var(--radius-card);
+  font-size: 13px;
 }
 
 /* Modals */
@@ -1269,6 +1601,71 @@ body.options-body {
   font-family: inherit;
   font-size: 12.5px;
   font-weight: 800;
+  cursor: pointer;
+}
+
+/* Checkbox Selection Grid & Chip Labels */
+.checkbox-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-card);
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 6px;
+  box-sizing: border-box;
+}
+
+.checkbox-chip-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  font-size: 12px;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.checkbox-chip-label:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+}
+
+.checkbox-chip-label input[type="checkbox"] {
+  accent-color: var(--accent-lime);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.form-group-checkbox {
+  margin: 14px 0;
+}
+
+.custom-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFFFFF;
+  cursor: pointer;
+  user-select: none;
+}
+
+.custom-checkbox-label input[type="checkbox"] {
+  accent-color: var(--accent-lime);
+  width: 16px;
+  height: 16px;
   cursor: pointer;
 }
 

@@ -1465,6 +1465,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.16.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 217: Fix UI Memory, Skills & Multi-Agent (Card System & Anti-Giant Icon)
+- **Problem**:
+  - Tampilan tab Multi-Agent, Skills, dan Memories mengalami bug visual: kartu-kartu item tidak memiliki border/background SaaS (hanya teks polos bertumpuk), dan icon mahkota/edit pada Master Agent membengkak menjadi ukuran raksasa di layar (`bug ui memory skill multi agent`).
+- **Penyebab & Solusi**:
+  1. **Card System Dark Luxury (`.item-card`)**:
+     - Menambahkan styling lengkap untuk `.item-card`, `.item-card-top`, `.item-card-header`, `.item-card-title`, `.badge-builtin`, `.item-card-desc`, `.item-code-preview`, `.tag-pill`, `.skill-tag`, `.memory-tag`, `.model-tag`, `.btn-item-action`, dan `.btn-item-del`.
+     - Setiap item kini terbungkus rapi dalam kartu frosted dark dengan shadow elegan, chip tags warna-warni yang presisi, dan tombol aksi terstruktur.
+  2. **Anti-Giant SVG Icon pada Master Agent (`.boss-hero-card`)**:
+     - Mengunci dimensi SVG pada `.boss-crown-icon-box svg` (22px) dan `.btn-edit-boss svg` (14px).
+     - Menambahkan aturan global `svg { max-width: 100%; }` untuk mencegah SVG melebar keluar kontainer.
+  3. **Modal Checkbox Selection Styling**:
+     - Menambahkan styling grid untuk `.checkbox-selection-grid` dan `.checkbox-chip-label` pada modal penambahan Agent/Skill.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (350.5 KB).
+  - Restore Point: `v2.17.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
