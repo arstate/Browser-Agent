@@ -1507,6 +1507,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.19.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 220: Major UI Polish - Prioritas Model AI (Modern Dark Luxury Table)
+- **Problem**:
+  - Tampilan kartu "Prioritas Model AI" terlihat berantakan dan kurang rapi: badge rank terputus di atas, input text terpotong, dan tombol aksi reorder / delete gepeng dan bertumpuk tanpa tata letak yang jelas (`improve ui desain ini bro soalnya jelek`).
+- **Penyebab & Solusi**:
+  1. **Tabel Kolom SaaS Modern (`.models-table-header`)**:
+     - Menambahkan header kolom yang jelas: `PRIORITAS`, `NAMA TAMPILAN (UI)`, `API MODEL ID`, dan `URUTAN / AKSI`.
+  2. **Row Strip Card Sleek (`.model-row-card`)**:
+     - Setiap model terbungkus dalam kartu baris horizontal dark glass dengan rank pill `#1 (Utama)` (lime vibrant `#CEF128`) dan `#2 (Cadangan 1)` (slate clean).
+     - Input field Nama UI (font standar jelas) dan API Model ID (`JetBrains Mono` lime code font) dengan border focus highlight.
+  3. **Tombol Aksi Reorder & Delete Presisi**:
+     - Tombol 🔼 🔽 berdimensi 32x32px dengan hover highlight elegan.
+     - Tombol 🗑️ dengan styling background crimson lembut dan hover red glow.
+     - Tombol `+ Tambah Model Baru` berbentuk dashed strip beraksen lime.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (350.8 KB).
+  - Restore Point: `v2.20.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

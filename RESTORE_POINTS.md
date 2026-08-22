@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.19.0`
-- **Iterasi:** `Iterasi 219`
-- **Tanggal Rilis:** 22 Agustus 2026 (23:46 WIB)
+- **Versi Terkini:** `v2.20.0`
+- **Iterasi:** `Iterasi 220`
+- **Tanggal Rilis:** 22 Agustus 2026 (23:48 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (350.8 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.20.0** | 220 | 22-08-2026 23:48 | `v2.20.0` | **Major UI Polish Prioritas Model AI:** Merombak total kartu "Prioritas Model AI" dengan layout tabel modern SaaS (`.models-table-header`), rank badge `#1 (Utama)` lime vibrant, dua input field presisi (Nama UI + Model ID monospaced), tombol reorder 🔼 🔽 berdimensi rapi, tombol hapus 🗑️ dengan hover merah, dan tombol tambah model dashed. | 🟢 STABLE | `./restore.sh v2.20.0` |
 | **v2.19.0** | 219 | 22-08-2026 23:46 | `v2.19.0` | **Unified Seamless Sidebar:** Menyamakan sidebar Pengaturan 100% dengan sidebar Welcomescreen (`a arya Personal`, tombol `Home` dengan icon rumah, divider halus, dan tab navigasi Settings yang seragam) sehingga tidak terasa beda aplikasi. | 🟢 STABLE | `./restore.sh v2.19.0` |
 | **v2.18.0** | 218 | 22-08-2026 23:45 | `v2.18.0` | **Clean Settings Overlay:** Menghapus top header bar ganda (`.settings-overlay-header`) dari overlay New Tab sehingga halaman pengaturan langsung tampil 100% full-height dengan tombol Back bawaan sidebar. | 🟢 STABLE | `./restore.sh v2.18.0` |
 | **v2.17.0** | 217 | 22-08-2026 23:44 | `v2.17.0` | **Fix UI Memory, Skills & Multi-Agent:** Menata ulang seluruh kartu item Dark Luxury (`.item-card`, `.boss-hero-card`), preview kode SOP/memory, tag pill, dan mengunci ukuran SVG icon agar tidak raksasa. | 🟢 STABLE | `./restore.sh v2.17.0` |
