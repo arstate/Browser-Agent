@@ -2132,6 +2132,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Restore Point: `v2.63.0`.
   - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### 🚀 Iterasi 264: Organize Provider SVG Asset Directory (`extension/icons/providers/`) & Implement Official Dark-Mode Optimized Brand Logos
+- **Problem**:
+  - Pengguna ingin agar aset ikon SVG penyedia AI dirapikan ke dalam folder terstruktur di dalam proyek ekstensi, dan ikon-ikon yang berwarna hitam diubah menjadi putih bersih agar terlihat jelas di tema gelap (`udpate icon nya ini bro buat folder di project ekstension kasih icon atau apa gitu biar rapih /home/arya/Downloads/ai-provider-icons/... , kalau svg hitam buat jadi putih bro`).
+- **Penyebab & Solusi**:
+  1. **Dedicated Asset Directory (`extension/icons/providers/`)**:
+     - Membuat direktori `extension/icons/providers/` dan mengimpor seluruh 12 file SVG resmi:
+       - `google-gemini.svg`, `openai.svg`, `claude.svg`, `openrouter.svg`, `ollama.svg`, `9router-local.svg`, `deepseek.svg`, `lmstudio.svg`, `qwen.svg`, `moonshot-kimi.svg`, `github-copilot.svg`, `custom-endpoint.svg`.
+  2. **Dark-Mode SVG Color Optimization**:
+     - Mengubah seluruh `currentColor` dan warna hitam pada `openai.svg`, `openrouter.svg`, `ollama.svg`, `lmstudio.svg`, `github-copilot.svg` menjadi `#FFFFFF` (putih solid).
+     - Menyesuaikan stroke `9router-local.svg` (`#CEF128`) dan `custom-endpoint.svg` (`#10B981`) untuk kontras tajam.
+  3. **Clean HTML & CSS Integration**:
+     - Memperbarui `options.html` menggunakan elemen `<img src="icons/providers/*.svg" ... class="template-provider-img">` yang bersih dan modular.
+     - Menambahkan styling `.template-provider-img` (`width: 22px; height: 22px; object-fit: contain;`) di `options.css`.
+- **CRX Build & Sync**:
+  - Re-pack `extension.crx` (360.2 KB).
+  - Restore Point: `v2.64.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya

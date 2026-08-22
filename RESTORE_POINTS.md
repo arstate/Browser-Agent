@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.63.0`
-- **Iterasi:** `Iterasi 263`
-- **Tanggal Rilis:** 23 Agustus 2026 (01:38 WIB)
+- **Versi Terkini:** `v2.64.0`
+- **Iterasi:** `Iterasi 264`
+- **Tanggal Rilis:** 23 Agustus 2026 (01:42 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (359.0 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (360.2 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.64.0** | 264 | 23-08-2026 01:42 | `v2.64.0` | **Organize Provider SVG Asset Directory (`extension/icons/providers/`) & Implement Official Dark-Mode Optimized Brand Logos:** Memindahkan dan merapikan 12 file logo SVG resmi penyedia AI (Google Gemini, OpenAI, Claude, OpenRouter, Ollama, 9Router, DeepSeek, LMStudio, Qwen, Moonshot Kimi, GitHub Copilot, Custom Endpoint) ke folder `extension/icons/providers/`, mengoptimalkan warna monokrom menjadi putih bersih `#FFFFFF` untuk kontras sempurna pada tema gelap, serta menghubungkannya ke kartu *Quick provider templates* di `options.html`. | 🟢 STABLE | `./restore.sh v2.64.0` |
 | **v2.63.0** | 263 | 23-08-2026 01:38 | `v2.63.0` | **Fix User Chat Bubble Over-Rounded Oval Shape Bug on Long Multi-Line Text:** Mengubah `border-radius: 9999px` pada gelembung chat pengguna (`.message.user .message-content`) menjadi `border-radius: 18px;` (dan `16px` di sidepanel) agar bubble pesan panjang tetap berupa *rounded rectangle* yang simetris, rapi, dan tidak membulat ekstrem menyerupai bola/oval saat teks membungkus beberapa baris. | 🟢 STABLE | `./restore.sh v2.63.0` |
 | **v2.62.0** | 262 | 23-08-2026 01:33 | `v2.62.0` | **Authentic Official Vector Brand Logos for All 12 Quick Provider Templates:** Mengganti semua ikon emoji pada 12 kartu "Quick provider templates" (Google Gemini, OpenAI, Claude Code, OpenRouter, Ollama, 9Router, DeepSeek, LMStudio, Qwen Code, Moonshot AI, GitHub Copilot, Custom Endpoint) dengan logo vektor SVG resmi, tajam, dan bergradasi warna autentik. | 🟢 STABLE | `./restore.sh v2.62.0` |
 | **v2.61.0** | 261 | 23-08-2026 01:29 | `v2.61.0` | **Remove Redundant Google Search Button from Top Navbar:** Menghapus tombol "Google Search" dari baris kanan atas navbar (`.fullscreen-header .header-right`) untuk tampilan UI yang lebih bersih, rapi, dan minimalis. | 🟢 STABLE | `./restore.sh v2.61.0` |
