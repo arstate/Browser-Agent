@@ -2458,13 +2458,29 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.84.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 285: Pengelompokan Header Kanan (Switch Tab & Accept) & Auto-Hide di Mode Web Search
+- **Kebutuhan Pengguna**:
+  - Posisi tombol Switch Tab harus pas di samping kiri tombol Accept (tanpa celah kosong/gap besar di tengah).
+  - Jika mode Web Search aktif, sembunyikan tombol Switch Tab karena tidak diperlukan dalam pencarian instan web.
+- **Solusi & Peningkatan**:
+  1. **Struktur DOM Flex Grouping (`newtab.html`, `sidepanel.html`)**:
+     - Membungkus `.switch-tab-mode-wrapper` dan `.execution-mode-wrapper` di dalam `<div class="chat-input-header-right">`.
+     - Bilah atas prompt (`.chat-input-top-bar`) kini memiliki 2 elemen flex utama: mode switcher group di kiri dan `.chat-input-header-right` di kanan.
+  2. **Styling & Gap Precision (`newtab.css`, `sidepanel.css`)**:
+     - Menambahkan class `.chat-input-header-right` dengan `display: flex; align-items: center; gap: 8px;` (6px pada Sidepanel) sehingga tombol Switch Tab duduk rapat berdampingan di samping kiri tombol Accept.
+     - Menambahkan aturan `.chat-input-container.mode-websearch #switch-tab-mode-wrapper { display: none !important; }` sehingga otomatis hilang saat berpindah ke mode Web Search.
+  3. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.85.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **Auto Switch Tab Dropup Controller:** Toggle ON / OFF dropdown menu on input prompt top bar to control whether agent automatically switches active tabs or runs in background (`#switch-tab-mode-wrapper`).
+- **Auto Switch Tab Dropup Controller:** Right-aligned side-by-side with Accept (`.chat-input-header-right`), auto-hidden in Web Search mode (`#switch-tab-mode-wrapper`).
 - **Modular Stickman Animation Structure:** Located in `extension/stickman-animation/` (`stickman-config.js`, `stickman-physics.js`, `stickman-scenery.js`, `stickman-engine.js`, `stickman-styles.css`, `index.html`).
 - **Stickman Swarm Proportions:** 64px / 58px height, zero bottom gap (`margin-bottom: 0`, `FLOOR_Y: 61`), generous 11px top headroom clearance, edge-to-edge full width docked directly atop the chat input container.
 - **AI Stickman Swarm Working Animation:** 60fps canvas animation docked above the prompt container displaying busy runner stickmen, cable technicians, and blinking server racks during generation.
@@ -2472,7 +2488,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.84.0` (Iterasi 284).
+  - **Versi Terkini:** `v2.85.0` (Iterasi 285).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

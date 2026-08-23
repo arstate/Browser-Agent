@@ -2679,9 +2679,16 @@ body {
 .chat-input-top-bar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-bottom: 6px;
   padding: 0 2px;
+}
+
+.chat-input-header-left,
+.chat-input-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .chat-mode-switch-group {
@@ -2735,6 +2742,15 @@ body {
 
 .btn-chat-mode-toggle#btn-mode-agent.active svg {
   stroke: #CEF128;
+}
+
+/* Web Search Mode in Sidepanel */
+.chat-input-container.mode-websearch #btn-attach-file,
+.chat-input-container.mode-websearch #execution-mode-wrapper,
+.chat-input-container.mode-websearch #switch-tab-mode-wrapper,
+.chat-input-container.mode-websearch .attachments-preview-bar,
+.chat-input-container.mode-websearch .active-mentions-bar {
+  display: none !important;
 }
 
 /* Switch Tab Dropup Menu (ON / OFF Auto Switch Tab) in Sidepanel */

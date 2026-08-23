@@ -1672,7 +1672,8 @@ body.has-messages .chat-messages {
   padding-bottom: 4px;
 }
 
-.chat-input-header-left {
+.chat-input-header-left,
+.chat-input-header-right {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1722,6 +1723,7 @@ body.has-messages #btn-mode-websearch {
 /* Web Search Mode - Identical Size & Geometry to Agent/Chat Mode */
 .chat-input-container.mode-websearch #btn-attach-file,
 .chat-input-container.mode-websearch #execution-mode-wrapper,
+.chat-input-container.mode-websearch #switch-tab-mode-wrapper,
 .chat-input-container.mode-websearch .attachments-preview-bar,
 .chat-input-container.mode-websearch .active-mentions-bar {
   display: none !important;

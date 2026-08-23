@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.84.0`
-- **Iterasi:** `Iterasi 284`
-- **Tanggal Rilis:** 23 Agustus 2026 (12:12 WIB)
+- **Versi Terkini:** `v2.85.0`
+- **Iterasi:** `Iterasi 285`
+- **Tanggal Rilis:** 23 Agustus 2026 (12:15 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (382.4 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (382.8 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.85.0** | 285 | 23-08-2026 12:15 | `v2.85.0` | **Right-Aligned Header Flex Grouping for Switch Tab & Auto-Hide in Websearch Mode:** Mengelompokkan tombol `Switch Tab` dan `Accept` berdampingan di sisi kanan bilah atas prompt (`.chat-input-header-right` dengan gap 8px/6px) sehingga posisi Switch Tab duduk pas di samping kiri Accept tanpa celah kosong di tengah. Menambahkan aturan CSS `.chat-input-container.mode-websearch #switch-tab-mode-wrapper { display: none !important; }` agar tombol Switch Tab otomatis tersembunyi saat mode Web Search aktif. | 🟢 STABLE | `./restore.sh v2.85.0` |
 | **v2.84.0** | 284 | 23-08-2026 12:12 | `v2.84.0` | **Switch Tab Dropup Menu & Auto-Switch Tab Toggle Controller (ON / OFF):** Menambahkan tombol dropdown menu `Switch Tab` pada bilah atas kotak input prompt (`.chat-input-top-bar`) di New Tab dan Sidepanel. Mode **ON** (default) otomatis mengalihkan fokus layar ke tab aksi browser agent. Mode **OFF** membuat browser agent mengeksekusi otomatisasi dan membuka/mengontrol tab di latar belakang (background) tanpa mengalihkan tab aktif pengguna. | 🟢 STABLE | `./restore.sh v2.84.0` |
 | **v2.83.0** | 283 | 23-08-2026 12:07 | `v2.83.0` | **Zero Bottom Gap & Generous Top Breathing Room for Stickman Swarm Banner:** Menghapus seluruh jarak kosong di bagian bawah banner (`margin: -10px -14px 0 -16px;` & `FLOOR_Y: 61` pada tinggi 64px) sehingga lantai pijakan stickman duduk rapat di batas bawah panggung. Memberikan ruang napas atas yang lega (`HEAD_RADIUS: 5.2px`, torso 10.5px) agar kepala avatar pelari dan teknisi tidak mepet dengan garis border atas. | 🟢 STABLE | `./restore.sh v2.83.0` |
 | **v2.82.0** | 282 | 23-08-2026 12:05 | `v2.82.0` | **Sleek Compact Height & Extended Full-Width Prompt Docking for Stickman Animation:** Memperkecil tinggi panggung kanvas stickman menjadi ramping (68px New Tab / 62px Sidepanel) dan memperpanjang lebar container dengan `width: calc(100% + 30px); margin: -10px -14px 6px -16px; border-radius: 19px 19px 0 0;` sehingga membentang menyatu penuh 100% dari ujung kiri ke ujung kanan bingkai input prompt tanpa celah padding. Menyesuaikan ulang seluruh proporsi avatar kinematika, radius kepala (5.8px), dan rak server agar proporsional sempurna. | 🟢 STABLE | `./restore.sh v2.82.0` |
