@@ -463,9 +463,7 @@ async function saveAllConfig(silent = false) {
     const nameInput = row.querySelector('.model-input-name');
     const idVal = idInput ? idInput.value.trim() : "";
     const nameVal = nameInput ? nameInput.value.trim() : "";
-    if (idVal) {
-      models.push({ id: idVal, name: nameVal || idVal });
-    }
+    models.push({ id: idVal, name: nameVal || idVal });
   });
 
   config.endpoint = settingEndpoint ? settingEndpoint.value.trim() : config.endpoint;
@@ -2494,7 +2492,6 @@ function setupEventListeners() {
     config.models = models;
     await chrome.storage.local.set({ browser_agent_config: config, active_agent_id: activeAgentId });
     renderModelsRows();
-    triggerAutoSave(0);
     const inputs = document.querySelectorAll('.model-input-name');
     if (inputs.length > 0) {
       inputs[inputs.length - 1].focus();
@@ -2686,6 +2683,12 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.browser_agent_config) {
     config = { ...config, ...changes.browser_agent_config.newValue };
     applyConfigToUI();
-    renderModelsRows();
+    const isTypingModel = document.activeElement && (
+      document.activeElement.classList.contains('model-input-name') || 
+      document.activeElement.classList.contains('model-input-id')
+    );
+    if (!isTypingModel) {
+      renderModelsRows();
+    }
   }
 });

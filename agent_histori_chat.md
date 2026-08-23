@@ -2735,6 +2735,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.101.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 302: Fix Add Model Row Bug in Options & Settings
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug di mana tombol `+ Tambah Model Baru` pada menu Pengaturan (Options) tidak merespons atau tidak memunculkan baris input baru ketika diklik.
+- **Solusi & Peningkatan**:
+  1. **Preserve Draft Models in Save Pipeline (`options.js`)**:
+     - Memperbaiki `saveAllConfig` agar tidak membuang baris yang memiliki ID kosong saat auto-save dipicu, sehingga baris draft yang baru ditambahkan tidak terhapus.
+     - Membersihkan `handleAddModelRow` dari panggilan instan `triggerAutoSave(0)` yang sebelumnya memicu siklus simpan dan merender ulang DOM.
+     - Menambahkan proteksi pada listener `storage.onChanged` agar tidak menimpa fokus form saat pengguna sedang aktif mengetik di input model.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.102.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2742,6 +2755,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
+- **Add Model Row:** Tombol `+ Tambah Model Baru` di Options dan Sidepanel Settings menambahkan baris draft `{ id: '', name: '' }` secara instan dan fokus langsung ke input Nama UI.
 - **Search Engine Selector Seamless Pill:** `#btn-search-engine-trigger` duduk flush di dalam `.chat-input-header-right` (tanpa double wrapper/nesting), berlatar `#27272A`, icon Globe + teks neon lime `#CEF128`, chevron dropup.
 - **Stickman Swarm Compact Proportions:** 50px height (Newtab) / 44px (Sidepanel), `FLOOR_Y: 47`, 4.8px head radius, zero bottom gap, docked directly atop the chat input prompt.
 - **AI Generator Modal Layout:** Tab 'Buat dengan AI' pada modal Agent, Skill, dan Memory menggunakan container vertikal kolumnar 100% lebar penuh dengan dropdown model, textarea lapang, dan tombol generate neon lime.
