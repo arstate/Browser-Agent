@@ -2351,16 +2351,29 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.77.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 278: Penghapusan Total Efek Glow & Orb Animasi pada Input Prompt Saat AI Generate
+- **Kebutuhan Pengguna**:
+  - Menghapus seluruh efek glow neon dan orb gerak pada kotak input prompt saat AI generate agar tampilan kembali bersih, minimalis, dan tidak mengganggu visual pengetikan.
+- **Solusi & Peningkatan**:
+  1. **Pembersihan CSS & JS (`newtab.css`, `sidepanel.css`, & `sidepanel.js`)**:
+     - Menghapus seluruh blok CSS `.chat-input-container.ai-thinking`, `.chat-input-bar.ai-thinking`, pseudo-element `::before`, serta keyframes `smoothOrbSweepFade` / `smoothOrbSweepSidepanel`.
+     - Mengembalikan styling kotak input ke format murni dark frosted glass transparan dengan border standar yang rapi.
+     - Membersihkan fungsi `updateSendButtonState(loading)` di `sidepanel.js` dari penambahan/penghapusan kelas `.ai-thinking` / `.ai-is-generating`.
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.78.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **Hardware-Accelerated Translating Orb:** 250px neon light orb using `translate3d(20px, 0, 0)` to `translate3d(360px, 0, 0)` (4.8s loop) with unpinned `right: auto` ensuring 100% visible left-to-right gliding motion.
+- **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.77.0` (Iterasi 277).
+  - **Versi Terkini:** `v2.78.0` (Iterasi 278).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
