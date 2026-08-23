@@ -2712,7 +2712,8 @@ async function loadPersistentBrainData() {
       const statFacts = document.getElementById('stat-brain-facts');
       const statExp = document.getElementById('stat-brain-experiences');
       const statAP = document.getElementById('stat-brain-antipatterns');
-      const statAuto = document.getElementById('stat-brain-autoskills');
+      const statSkills = document.getElementById('stat-brain-skills');
+      const statAgents = document.getElementById('stat-brain-agents');
       const statTrain = document.getElementById('stat-brain-training');
       const badgeBrain = document.getElementById('badge-count-brain');
 
@@ -2726,7 +2727,8 @@ async function loadPersistentBrainData() {
       if (statFacts) statFacts.textContent = brainData.user_memories.length || 0;
       if (statExp) statExp.textContent = brainData.experience_ledger.length || 0;
       if (statAP) statAP.textContent = brainData.anti_patterns.length || 0;
-      if (statAuto) statAuto.textContent = ((brainData.autonomous_skills.length || 0) + (brainData.autonomous_agents.length || 0));
+      if (statSkills) statSkills.textContent = brainData.autonomous_skills.length || 0;
+      if (statAgents) statAgents.textContent = brainData.autonomous_agents.length || 0;
       if (statTrain) statTrain.textContent = brainData.training_corpus.length || 0;
       if (badgeBrain) badgeBrain.textContent = totalItems;
 
@@ -2853,20 +2855,15 @@ function renderPersistentBrain(searchQuery = "") {
       `;
       container.appendChild(card);
     });
-  } else if (activeBrainSubtab === "autonomous") {
+  } else if (activeBrainSubtab === "skills") {
     let skills = brainData.autonomous_skills || [];
-    let agents = brainData.autonomous_agents || [];
-
     if (q) {
-      skills = skills.filter(s => (s.name || "").toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q));
-      agents = agents.filter(a => (a.name || "").toLowerCase().includes(q) || (a.role_description || "").toLowerCase().includes(q));
+      skills = skills.filter(s => (s.name || "").toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q) || (s.workflow_markdown || "").toLowerCase().includes(q));
     }
-
-    if (skills.length === 0 && agents.length === 0) {
-      container.innerHTML = '<div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;"><p>Belum ada Autonomous Skill atau Agent buatan AI.</p></div>';
+    if (skills.length === 0) {
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;"><p>Belum ada Autonomous Skill tercatat.</p></div>';
       return;
     }
-
     skills.forEach(item => {
       const card = document.createElement('div');
       card.className = 'brain-card';
@@ -2886,15 +2883,35 @@ function renderPersistentBrain(searchQuery = "") {
           ${makeDeleteBtn("skill", item.id, "Hapus Skill")}
         </div>
         <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 4px;">${escapeHtml(item.name)}</div>
-        <div style="font-size: 12.5px; color: #94a3b8; line-height: 1.45;">${escapeHtml(item.description)}</div>
+        <div style="font-size: 12.5px; color: #94a3b8; line-height: 1.45; margin-top: 4px;">${escapeHtml(item.description)}</div>
+        <div style="margin-top: 12px;">
+          <button type="button" class="btn-export-all-db btn-view-brain-detail" data-type="skill" data-id="${item.id}" style="font-size: 11.5px; padding: 6px 12px; border-color: rgba(52, 211, 153, 0.4); color: #6ee7b7;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span>Lihat Detail SOP (MD)</span>
+          </button>
+        </div>
       `;
       container.appendChild(card);
     });
-
+  } else if (activeBrainSubtab === "agents") {
+    let agents = brainData.autonomous_agents || [];
+    if (q) {
+      agents = agents.filter(a => (a.name || "").toLowerCase().includes(q) || (a.role_description || "").toLowerCase().includes(q) || (a.system_prompt || "").toLowerCase().includes(q));
+    }
+    if (agents.length === 0) {
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;"><p>Belum ada Specialist Agent tercatat.</p></div>';
+      return;
+    }
     agents.forEach(item => {
       const card = document.createElement('div');
       card.className = 'brain-card';
       card.style.borderColor = 'rgba(168, 85, 247, 0.3)';
+      
+      const assigned = Array.isArray(item.assigned_skills) ? item.assigned_skills : [];
+      const skillsHtml = assigned.length > 0
+        ? assigned.map(skId => `<span class="brain-badge skill" style="font-size: 10px; padding: 2px 7px; background: rgba(52, 211, 153, 0.1); border-color: rgba(52, 211, 153, 0.25); color: #6ee7b7;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/> ${escapeHtml(skId)}</span>`).join(' ')
+        : '<span style="font-size: 11px; color: #64748b; font-style: italic;">Auto-Routed to General Skills</span>';
+
       card.innerHTML = `
         <div class="brain-card-header">
           <div class="brain-badge-group">
@@ -2910,7 +2927,17 @@ function renderPersistentBrain(searchQuery = "") {
           ${makeDeleteBtn("agent", item.id, "Hapus Agent")}
         </div>
         <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 4px;">${escapeHtml(item.name)}</div>
-        <div style="font-size: 12.5px; color: #94a3b8; line-height: 1.45;">${escapeHtml(item.role_description)}</div>
+        <div style="font-size: 12.5px; color: #94a3b8; line-height: 1.45; margin-top: 4px;">${escapeHtml(item.role_description)}</div>
+        <div style="margin-top: 10px; padding: 8px 10px; background: rgba(0,0,0,0.25); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+          <div style="font-size: 10.5px; font-weight: 700; color: #a78bfa; text-transform: uppercase; margin-bottom: 4px;">🔗 Connected Skills (Autonomous Routing):</div>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">${skillsHtml}</div>
+        </div>
+        <div style="margin-top: 12px;">
+          <button type="button" class="btn-export-all-db btn-view-brain-detail" data-type="agent" data-id="${item.id}" style="font-size: 11.5px; padding: 6px 12px; border-color: rgba(168, 85, 247, 0.4); color: #c084fc;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span>Lihat Persona &amp; Routing (MD)</span>
+          </button>
+        </div>
       `;
       container.appendChild(card);
     });
@@ -2968,6 +2995,82 @@ document.addEventListener('click', async (e) => {
     }
   }
 
+  // View detail markdown modal
+  const viewDetailBtn = e.target.closest('.btn-view-brain-detail');
+  if (viewDetailBtn) {
+    const itemType = viewDetailBtn.getAttribute('data-type');
+    const itemId = viewDetailBtn.getAttribute('data-id');
+    const modal = document.getElementById('modal-brain-detail');
+    const titleEl = document.getElementById('modal-brain-detail-title');
+    const badgeEl = document.getElementById('modal-brain-detail-badge');
+    const metaEl = document.getElementById('modal-brain-detail-meta');
+    const codeEl = document.getElementById('modal-brain-detail-code');
+
+    if (modal && titleEl && badgeEl && codeEl) {
+      if (itemType === "skill") {
+        const item = (brainData.autonomous_skills || []).find(s => s.id === itemId);
+        if (item) {
+          titleEl.textContent = item.name || "Autonomous Skill";
+          badgeEl.className = "brain-badge skill";
+          badgeEl.textContent = `SKILL ${item.version || 'v1.0.0'}`;
+          if (metaEl) metaEl.textContent = `ID: ${item.id} | Source: ${item.source || 'autonomous_ai'}`;
+          
+          codeEl.textContent = `---
+id: ${item.id}
+name: "${item.name}"
+type: autonomous_skill
+version: "${item.version || 'v1.0.0'}"
+description: "${item.description || ''}"
+source: "${item.source || 'autonomous_ai'}"
+success_count: ${item.success_count || 1}
+failure_count: ${item.failure_count || 0}
+---
+
+# ⚡ ${item.name} (${item.version || 'v1.0.0'})
+
+## 🎯 Trigger & Deskripsi:
+${item.description || ''}
+
+## 📋 Prosedur Langkah demi Langkah (SOP / Workflow):
+${item.workflow_markdown || '(Tidak ada alur kerja spesifik)'}`;
+          modal.style.display = 'flex';
+        }
+      } else if (itemType === "agent") {
+        const item = (brainData.autonomous_agents || []).find(a => a.id === itemId);
+        if (item) {
+          titleEl.textContent = item.name || "Specialist Agent";
+          badgeEl.className = "brain-badge agent";
+          badgeEl.textContent = "SPECIALIST AGENT";
+          if (metaEl) metaEl.textContent = `ID: ${item.id} | Source: ${item.source || 'autonomous_ai'}`;
+          
+          const assigned = Array.isArray(item.assigned_skills) ? item.assigned_skills : [];
+          const skillsListMd = assigned.length > 0 ? assigned.map(s => `- \`${s}\``).join('\n') : '- Auto-Routed to General Skills';
+
+          codeEl.textContent = `---
+id: ${item.id}
+name: "${item.name}"
+type: specialist_agent
+description: "${item.role_description || ''}"
+source: "${item.source || 'autonomous_ai'}"
+assigned_skills: ${JSON.stringify(assigned)}
+---
+
+# 🤖 ${item.name} (Specialist Autonomous Agent)
+
+## 🎭 Persona & Role Target:
+${item.role_description || ''}
+
+## 🔗 Connected Skills (Autonomous Routing):
+${skillsListMd}
+
+## 📜 System Prompt & Instruksi Operasional:
+${item.system_prompt || '(Tidak ada custom system prompt)'}`;
+          modal.style.display = 'flex';
+        }
+      }
+    }
+  }
+
   // Delete persistent item
   const delBtn = e.target.closest('.btn-delete-brain-item');
   if (delBtn) {
@@ -2985,6 +3088,21 @@ document.addEventListener('click', async (e) => {
       } catch (err) {
         alert("Error: " + err.message);
       }
+    }
+  }
+
+  // Close modal detail
+  if (e.target.id === 'btn-close-brain-modal' || e.target.id === 'btn-close-brain-modal-2' || e.target.id === 'modal-brain-detail') {
+    const modal = document.getElementById('modal-brain-detail');
+    if (modal) modal.style.display = 'none';
+  }
+
+  // Copy Markdown
+  if (e.target.closest('#btn-copy-brain-md')) {
+    const codeEl = document.getElementById('modal-brain-detail-code');
+    if (codeEl && codeEl.textContent) {
+      navigator.clipboard.writeText(codeEl.textContent);
+      showToast("✅ Format Markdown berhasil disalin ke clipboard!");
     }
   }
 });

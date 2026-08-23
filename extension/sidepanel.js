@@ -526,9 +526,29 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
   // Inject Autonomous Skills
   const autoSkills = cachedPersistentMemory.autonomous_skills || [];
   if (autoSkills.length > 0) {
-    prompt += `\n⚡ AUTONOMOUS SKILLS VAULT (SKILL YANG DICIPTAKAN & DISEMPURNAKAN SENDIRI OLEH AI):\n`;
+    prompt += `\n⚡ AUTONOMOUS SKILLS VAULT (SOP & ALUR KERJA OTONOM):\n`;
     autoSkills.forEach(sk => {
-      prompt += `\n### [🤖 Autonomous Skill ${sk.version || 'v1.0.0'}] ${sk.name}\n- Deskripsi: ${sk.description}\n- Alur Kerja:\n${sk.workflow_markdown}\n`;
+      prompt += `\n### [⚡ Skill ${sk.version || 'v1.0.0'}] ${sk.name} (ID: ${sk.id})\n- Trigger: ${sk.description}\n- Prosedur Operasional:\n${sk.workflow_markdown}\n`;
+    });
+  }
+
+  // Inject Autonomous Specialist Agents with Connected Skills Routing
+  const autoAgents = cachedPersistentMemory.autonomous_agents || [];
+  if (autoAgents.length > 0) {
+    prompt += `\n🎭 SPECIALIST AGENTS & AUTONOMOUS ROUTING VAULT:\n`;
+    autoAgents.forEach(ag => {
+      const assigned = Array.isArray(ag.assigned_skills) ? ag.assigned_skills : [];
+      const skillsStr = assigned.length > 0 ? assigned.join(", ") : "General Skills";
+      prompt += `\n### [🤖 Specialist Agent] ${ag.name} (ID: ${ag.id})\n- Persona & Target: ${ag.role_description}\n- Terhubung ke Skill (Connected Skills): [${skillsStr}]\n- Instruksi Operasional:\n${ag.system_prompt}\n`;
+    });
+  }
+
+  // Inject Top Distilled Training Corpus Points (Few-Shot Point-by-Point Learning)
+  const trainingItems = cachedPersistentMemory.training_corpus || [];
+  if (trainingItems.length > 0) {
+    prompt += `\n🎯 DISTILLED TRAINING CORPUS (INTISARI RIWAYAT PERCAKAPAN & WORKFLOW SUKSES):\n`;
+    trainingItems.slice(0, 3).forEach(tr => {
+      prompt += `\n#### Sesi Sukses: ${tr.title} (ID: ${tr.session_id})\n${tr.distilled_points_md}\n`;
     });
   }
 

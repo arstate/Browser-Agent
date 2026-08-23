@@ -1805,15 +1805,16 @@ def db_save_autonomous_skill(sk):
         conn.close()
         conn = None
 
-        # Write markdown file
+        # Write formatted markdown file
         fname = f"{skid}.md"
         fpath = os.path.join(PM_AUTONOMOUS_SKILLS_DIR, fname)
         os.makedirs(PM_AUTONOMOUS_SKILLS_DIR, exist_ok=True)
         md_content = f"""---
 id: {skid}
 name: "{name}"
-description: "{description}"
+type: autonomous_skill
 version: "{version}"
+description: "{description}"
 source: "{source}"
 success_count: {success_count}
 failure_count: {failure_count}
@@ -1824,10 +1825,10 @@ updated_at: {updated_at}
 
 # ⚡ {name} ({version})
 
-## 🎯 Trigger & Deskripsi:
+## 🎯 Deskripsi & Trigger:
 {description}
 
-## 📋 Alur Kerja (Workflow):
+## 📋 Prosedur Langkah demi Langkah (SOP / Workflow):
 {workflow_markdown}
 """
         with open(fpath, "w", encoding="utf-8") as f:
@@ -1853,15 +1854,45 @@ def db_save_autonomous_agent(ag):
         name = str(ag.get("name") or "Autonomous Agent").strip()
         role_description = str(ag.get("role_description") or "").strip()
         system_prompt = str(ag.get("system_prompt") or "").strip()
-        assigned_skills = ag.get("assigned_skills") or []
-        assigned_skills_json = json.dumps(assigned_skills) if not isinstance(assigned_skills, str) else assigned_skills
+        raw_skills = ag.get("assigned_skills") or []
+        
+        if isinstance(raw_skills, str):
+            try: assigned_skills = json.loads(raw_skills)
+            except Exception: assigned_skills = [raw_skills] if raw_skills.strip() else []
+        elif isinstance(raw_skills, list):
+            assigned_skills = raw_skills
+        else:
+            assigned_skills = []
+
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # Intelligent Auto-Routing: If assigned_skills is empty, search existing autonomous_skills for relevant keywords
+        if not assigned_skills:
+            cursor.execute("SELECT id, name, description FROM autonomous_skills")
+            all_skills = [dict(r) for r in cursor.fetchall()]
+            for sk in all_skills:
+                sk_name = (sk.get("name") or "").lower()
+                sk_desc = (sk.get("description") or "").lower()
+                agent_text = (name + " " + role_description).lower()
+                
+                # Check keyword matches
+                tokens = [t for t in sk_name.split() if len(t) > 3]
+                if any(tok in agent_text for tok in tokens) or (sk.get("id") in agent_text):
+                    if sk["id"] not in assigned_skills:
+                        assigned_skills.append(sk["id"])
+            
+            # If still empty but skills exist, attach top skill by default
+            if not assigned_skills and all_skills:
+                assigned_skills.append(all_skills[0]["id"])
+
+        assigned_skills_json = json.dumps(assigned_skills)
         source = str(ag.get("source") or "autonomous_ai")
         reason = str(ag.get("reason") or "")
         created_at = int(ag.get("created_at") or now)
         updated_at = now
 
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO autonomous_agents (id, name, role_description, system_prompt, assigned_skills_json, source, reason, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -1875,17 +1906,31 @@ def db_save_autonomous_agent(ag):
                 updated_at=excluded.updated_at
         """, (agid, name, role_description, system_prompt, assigned_skills_json, source, reason, created_at, updated_at))
         conn.commit()
+
+        # Fetch connected skills detail for rich markdown rendering
+        skills_details = []
+        if assigned_skills:
+            placeholders = ",".join(["?"] * len(assigned_skills))
+            cursor.execute(f"SELECT id, name, description FROM autonomous_skills WHERE id IN ({placeholders})", assigned_skills)
+            skills_details = [dict(r) for r in cursor.fetchall()]
+
         cursor.close()
         conn.close()
         conn = None
 
-        # Write markdown file
+        if skills_details:
+            skills_bullet_points = "\n".join([f"- **`{s['id']}`** ({s.get('name', '')}): {s.get('description', '')}" for s in skills_details])
+        else:
+            skills_bullet_points = "- Tidak ada skill terhubung langsung (General Agent)."
+
+        # Write formatted markdown file
         fname = f"{agid}.md"
         fpath = os.path.join(PM_AUTONOMOUS_AGENTS_DIR, fname)
         os.makedirs(PM_AUTONOMOUS_AGENTS_DIR, exist_ok=True)
         md_content = f"""---
 id: {agid}
 name: "{name}"
+type: specialist_agent
 description: "{role_description}"
 source: "{source}"
 reason: "{reason}"
@@ -1894,18 +1939,21 @@ created_at: {created_at}
 updated_at: {updated_at}
 ---
 
-# 🤖 {name} (Autonomous Agent)
+# 🤖 {name} (Specialist Autonomous Agent)
 
-## 🎭 Persona & Role:
+## 🎭 Persona & Role Target:
 {role_description}
 
-## 📜 System Prompt & Instruksi:
+## 🔗 Connected Skills (Autonomous Routing):
+{skills_bullet_points}
+
+## 📜 System Prompt & Instruksi Operasional:
 {system_prompt}
 """
         with open(fpath, "w", encoding="utf-8") as f:
             f.write(md_content)
 
-        return {"status": "ok", "id": agid, "name": name}
+        return {"status": "ok", "id": agid, "name": name, "assigned_skills": assigned_skills}
     except Exception as e:
         log(f"Error in db_save_autonomous_agent: {e}")
         return {"status": "error", "error": str(e)}

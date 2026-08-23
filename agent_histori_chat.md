@@ -3238,7 +3238,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.135.0` (Iterasi 335).
+  - **Versi Terkini:** `v2.136.0` (Iterasi 336).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
 
@@ -3313,6 +3313,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Render kartu training padat lengkap dengan badge token savings dan delete icon.
   4. **Automated Unit Testing & Validation**:
      - `test_training_corpus.py` (3/3 tests passed).
+
+---
+
+### 🚀 Iterasi 336: Differentiated Skill vs Agent Markdown Formats, Auto-Skill Routing & Modal Detail Viewer
+- **Fitur & Arsitektur Utama**:
+  1. **Differentiated Markdown Structure on Disk (`PERSISTENT MEMORY/`)**:
+     - **Skills Markdown (`autonomous_skills/`)**: Standar SOP alur kerja teknis (`# ⚡ {name}`, `## 🎯 Trigger & Deskripsi`, `## 📋 Prosedur Langkah demi Langkah (SOP / Workflow)`).
+     - **Agents Markdown (`autonomous_agents/`)**: Persona multi-agent & Routing (`# 🤖 {name}`, `## 🎭 Persona & Role Target`, `## 🔗 Connected Skills (Autonomous Routing)`, `## 📜 System Prompt & Instruksi Operasional`).
+  2. **Master Orchestrator Intelligent Auto-Skill Routing (`native_host.py` & `sidepanel.js`)**:
+     - Master AI otomatis menganalisis teks peran agen dan memetakan (auto-match) skill relevan yang ada di `autonomous_skills` untuk di-konekkan ke Specialist Agent.
+     - Runtime context injection membundel seluruh SOP skill yang terhubung langsung ke dalam system prompt agen.
+  3. **UI Persistent Brain Subtab Split & Markdown Detail Viewer (`options.html` & `options.js`)**:
+     - Pemisahan subtab `⚡ Autonomous Skills (SOP)` dan `🎭 Specialist Agents & Routing`.
+     - Tombol interaktif **"Lihat Detail SOP (MD)"** dan **"Lihat Persona & Routing (MD)"** pada kartu.
+     - Modal viewer elegan (`#modal-brain-detail`) dengan copy-to-clipboard button.
+  4. **Testing & Verification**:
+     - `test_phase1_memory.py` & `test_training_corpus.py` (10/10 tests passed).
 
 
 

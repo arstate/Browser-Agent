@@ -820,11 +820,11 @@
           </div>
 
           <!-- Quick Metrics Bento Grid -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 18px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 18px;">
             <div class="brain-metric-tile">
               <div class="brain-metric-label">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span>Personal Facts &amp; Rules</span>
+                <span>Facts &amp; Rules</span>
               </div>
               <div id="stat-brain-facts" class="brain-metric-value" style="color: #38bdf8;">0</div>
             </div>
@@ -838,21 +838,28 @@
             <div class="brain-metric-tile">
               <div class="brain-metric-label">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Anti-Patterns Vault</span>
+                <span>Anti-Patterns</span>
               </div>
               <div id="stat-brain-antipatterns" class="brain-metric-value" style="color: #f87171;">0</div>
             </div>
             <div class="brain-metric-tile">
               <div class="brain-metric-label">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                <span>Autonomous Skills &amp; Agents</span>
+                <span>Autonomous Skills</span>
               </div>
-              <div id="stat-brain-autoskills" class="brain-metric-value" style="color: #34d399;">0</div>
+              <div id="stat-brain-skills" class="brain-metric-value" style="color: #34d399;">0</div>
+            </div>
+            <div class="brain-metric-tile">
+              <div class="brain-metric-label">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>Specialist Agents</span>
+              </div>
+              <div id="stat-brain-agents" class="brain-metric-value" style="color: #c084fc;">0</div>
             </div>
             <div class="brain-metric-tile">
               <div class="brain-metric-label">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                <span>Training Corpus (MD)</span>
+                <span>Training Corpus</span>
               </div>
               <div id="stat-brain-training" class="brain-metric-value" style="color: #fbbf24;">0</div>
             </div>
@@ -871,11 +878,15 @@
           </button>
           <button type="button" class="brain-subnav-btn" data-subtab="antipatterns" id="brain-subtab-antipatterns">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>Anti-Patterns (Pelajaran Kesalahan)</span>
+            <span>Anti-Patterns Vault</span>
           </button>
-          <button type="button" class="brain-subnav-btn" data-subtab="autonomous" id="brain-subtab-autonomous">
+          <button type="button" class="brain-subnav-btn" data-subtab="skills" id="brain-subtab-skills">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span>Autonomous Skills &amp; Agents</span>
+            <span>Autonomous Skills (SOP)</span>
+          </button>
+          <button type="button" class="brain-subnav-btn" data-subtab="agents" id="brain-subtab-agents">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Specialist Agents &amp; Routing</span>
           </button>
           <button type="button" class="brain-subnav-btn" data-subtab="training" id="brain-subtab-training">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
@@ -1131,6 +1142,30 @@
             <button type="submit" class="btn-modal-save" id="btn-save-memory-modal">Simpan Memory</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Modal Detail Markdown Viewer for Persistent Brain -->
+    <div class="custom-modal-overlay" id="modal-brain-detail" style="display: none;">
+      <div class="custom-modal-dialog" style="max-width: 720px; width: 92%;">
+        <div class="custom-modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="modal-brain-detail-badge" class="brain-badge skill">SKILL</span>
+            <h3 id="modal-brain-detail-title" style="margin: 0; font-size: 16px; font-weight: 700; color: #f1f5f9;">Detail</h3>
+          </div>
+          <button type="button" class="btn-card-action" id="btn-close-brain-modal" style="font-size: 18px; line-height: 1;">&times;</button>
+        </div>
+        <div class="custom-modal-body" style="padding: 16px 20px; max-height: 520px; overflow-y: auto;">
+          <div id="modal-brain-detail-meta" style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;"></div>
+          <pre id="modal-brain-detail-code" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px; font-size: 12px; color: #e2e8f0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; line-height: 1.5;"></pre>
+        </div>
+        <div class="modal-footer-actions" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 0;">
+          <button type="button" class="btn-export-all-db" id="btn-copy-brain-md" style="font-size: 12px;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Salin Markdown</span>
+          </button>
+          <button type="button" class="btn-modal-cancel" id="btn-close-brain-modal-2" style="font-size: 12px;">Tutup</button>
+        </div>
       </div>
     </div>
 
