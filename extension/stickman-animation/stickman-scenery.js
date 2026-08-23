@@ -23,28 +23,28 @@
   function drawMechanic(ctx, time, width, floorY, serverWorkers) {
     if (!ctx) return;
     const isNarrow = width < 460;
-    const x = isNarrow ? 26 : 38;
+    const x = isNarrow ? 22 : 32;
     const reach = serverWorkers.left.reachOut;
     const bodyLean = Math.sin(time * 2.5) * 0.08 * (1 - reach) + (reach * 0.15);
-    const pelvis = { x: x, y: floorY - 22 };
-    const chest = { x: x - Math.sin(bodyLean) * 7 + (reach * 2.5), y: pelvis.y - 9 };
-    const neck = { x: chest.x - 2.5, y: chest.y - 3.5 };
-    const head = { x: neck.x - 1, y: neck.y - 4.5 };
+    const pelvis = { x: x, y: floorY - 17 };
+    const chest = { x: x - Math.sin(bodyLean) * 5.5 + (reach * 2.0), y: pelvis.y - 7.5 };
+    const neck = { x: chest.x - 2.0, y: chest.y - 3.0 };
+    const head = { x: neck.x - 0.8, y: neck.y - 3.6 };
 
-    if (P.drawBranchLeg) P.drawBranchLeg(ctx, pelvis, { x: x - 3.5, y: floorY - 9 }, { x: x - 6, y: floorY }, 1.8, C.NEON_MAIN);
-    if (P.drawUnifiedSpineAndLeg) P.drawUnifiedSpineAndLeg(ctx, neck, chest, pelvis, { x: x + 3.5, y: floorY - 9 }, { x: x + 6, y: floorY }, 1.8, C.NEON_MAIN);
+    if (P.drawBranchLeg) P.drawBranchLeg(ctx, pelvis, { x: x - 2.8, y: floorY - 7.5 }, { x: x - 4.8, y: floorY }, 1.5, C.NEON_MAIN);
+    if (P.drawUnifiedSpineAndLeg) P.drawUnifiedSpineAndLeg(ctx, neck, chest, pelvis, { x: x + 2.8, y: floorY - 7.5 }, { x: x + 4.8, y: floorY }, 1.5, C.NEON_MAIN);
 
     ctx.beginPath();
-    ctx.arc(head.x, head.y, 5.2, 0, Math.PI * 2);
+    ctx.arc(head.x, head.y, 4.0, 0, Math.PI * 2);
     ctx.fillStyle = C.NEON_MAIN;
     ctx.fill();
 
     const pull = Math.sin(time * 3.5);
-    const elbow_Work = { x: chest.x - 6 + pull * 2.2, y: chest.y + 3.5 + pull * 1.2 };
-    const hand_Work = { x: elbow_Work.x - 5.5, y: elbow_Work.y - 2.5 };
+    const elbow_Work = { x: chest.x - 5.0 + pull * 1.8, y: chest.y + 2.8 + pull * 1.0 };
+    const hand_Work = { x: elbow_Work.x - 4.5, y: elbow_Work.y - 2.0 };
 
-    const elbow_Reach = { x: chest.x + 5.5, y: chest.y + 2.5 };
-    const hand_Reach = { x: chest.x + 12.5, y: chest.y + 1.2 };
+    const elbow_Reach = { x: chest.x + 4.5, y: chest.y + 2.0 };
+    const hand_Reach = { x: chest.x + 10.5, y: chest.y + 1.0 };
 
     const elbow = {
       x: P.numLerp ? P.numLerp(elbow_Work.x, elbow_Reach.x, reach) : elbow_Work.x,
@@ -55,16 +55,16 @@
       y: P.numLerp ? P.numLerp(hand_Work.y, hand_Reach.y, reach) : hand_Work.y
     };
 
-    if (P.drawSeamlessArm) P.drawSeamlessArm(ctx, chest, elbow, hand, 1.8, C.NEON_MAIN);
+    if (P.drawSeamlessArm) P.drawSeamlessArm(ctx, chest, elbow, hand, 1.5, C.NEON_MAIN);
 
     if (reach < 0.3) {
       ctx.strokeStyle = C.NEON_MAIN;
-      ctx.lineWidth = 1.2;
-      ctx.strokeRect(hand.x - 2.5, hand.y - 2.5, 2.5, 2.5);
+      ctx.lineWidth = 1.0;
+      ctx.strokeRect(hand.x - 2.0, hand.y - 2.0, 2.0, 2.0);
 
       if (pull > 0.45) {
         ctx.fillStyle = C.NEON_MAIN;
-        ctx.fillRect(hand.x - 3.5 + Math.random() * 2.5, hand.y - 3.5 + Math.random() * 2.5, 1.2, 1.2);
+        ctx.fillRect(hand.x - 2.8 + Math.random() * 2.0, hand.y - 2.8 + Math.random() * 2.0, 1.0, 1.0);
       }
     }
 
@@ -74,27 +74,27 @@
   function drawCableTech(ctx, time, width, floorY, serverWorkers) {
     if (!ctx) return;
     const isNarrow = width < 460;
-    const x = width - (isNarrow ? 26 : 38);
+    const x = width - (isNarrow ? 22 : 32);
     const reach = serverWorkers.right.reachOut;
     const bodyLean = Math.sin(time * 2) * 0.05 * (1 - reach) - (reach * 0.15);
-    const pelvis = { x: x, y: floorY - 22 };
-    const chest = { x: x + Math.sin(bodyLean) * 6 - (reach * 2.5), y: pelvis.y - 9 };
-    const neck = { x: chest.x + 1.8, y: chest.y - 3.5 };
-    const head = { x: neck.x + 0.8, y: neck.y - 4.5 };
+    const pelvis = { x: x, y: floorY - 17 };
+    const chest = { x: x + Math.sin(bodyLean) * 5.0 - (reach * 2.0), y: pelvis.y - 7.5 };
+    const neck = { x: chest.x + 1.5, y: chest.y - 3.0 };
+    const head = { x: neck.x + 0.6, y: neck.y - 3.6 };
 
-    if (P.drawBranchLeg) P.drawBranchLeg(ctx, pelvis, { x: x - 3.5, y: floorY - 9 }, { x: x - 5.5, y: floorY }, 1.8, C.NEON_MAIN);
-    if (P.drawUnifiedSpineAndLeg) P.drawUnifiedSpineAndLeg(ctx, neck, chest, pelvis, { x: x + 3.5, y: floorY - 9 }, { x: x + 5.5, y: floorY }, 1.8, C.NEON_MAIN);
+    if (P.drawBranchLeg) P.drawBranchLeg(ctx, pelvis, { x: x - 2.8, y: floorY - 7.5 }, { x: x - 4.5, y: floorY }, 1.5, C.NEON_MAIN);
+    if (P.drawUnifiedSpineAndLeg) P.drawUnifiedSpineAndLeg(ctx, neck, chest, pelvis, { x: x + 2.8, y: floorY - 7.5 }, { x: x + 4.5, y: floorY }, 1.5, C.NEON_MAIN);
 
     ctx.beginPath();
-    ctx.arc(head.x, head.y, 5.2, 0, Math.PI * 2);
+    ctx.arc(head.x, head.y, 4.0, 0, Math.PI * 2);
     ctx.fillStyle = C.NEON_MAIN;
     ctx.fill();
 
-    const elbow_Work = { x: chest.x + 5.5, y: chest.y + 3.0 };
-    const hand_Work = { x: elbow_Work.x + 4.0, y: elbow_Work.y + (Math.sin(time * 3) * 1.8) };
+    const elbow_Work = { x: chest.x + 4.5, y: chest.y + 2.5 };
+    const hand_Work = { x: elbow_Work.x + 3.2, y: elbow_Work.y + (Math.sin(time * 3) * 1.5) };
 
-    const elbow_Reach = { x: chest.x - 5.5, y: chest.y + 2.5 };
-    const hand_Reach = { x: chest.x - 12.5, y: chest.y + 1.2 };
+    const elbow_Reach = { x: chest.x - 4.5, y: chest.y + 2.0 };
+    const hand_Reach = { x: chest.x - 10.5, y: chest.y + 1.0 };
 
     const elbow = {
       x: P.numLerp ? P.numLerp(elbow_Work.x, elbow_Reach.x, reach) : elbow_Work.x,
@@ -105,12 +105,12 @@
       y: P.numLerp ? P.numLerp(hand_Work.y, hand_Reach.y, reach) : hand_Work.y
     };
 
-    if (P.drawSeamlessArm) P.drawSeamlessArm(ctx, chest, elbow, hand, 1.8, C.NEON_MAIN);
+    if (P.drawSeamlessArm) P.drawSeamlessArm(ctx, chest, elbow, hand, 1.5, C.NEON_MAIN);
 
     if (reach < 0.3) {
       ctx.beginPath();
       ctx.moveTo(hand.x, hand.y);
-      ctx.quadraticCurveTo(hand.x + 5, hand.y + 5, width - 12, floorY - 15);
+      ctx.quadraticCurveTo(hand.x + 4, hand.y + 4, width - 10, floorY - 12);
       ctx.strokeStyle = '#777777';
       ctx.lineWidth = 1.0;
       ctx.setLineDash([2, 2]);
@@ -130,21 +130,21 @@
     ctx.strokeRect(x, y, rw, rh);
 
     const slotCount = 4;
-    const slotH = (rh - 6) / slotCount;
+    const slotH = (rh - 5) / slotCount;
     for (let i = 0; i < slotCount; i++) {
-      const slotY = y + 2.0 + i * slotH;
+      const slotY = y + 1.5 + i * slotH;
       ctx.fillStyle = C.SERVER_SLOT || '#1A1A22';
-      ctx.fillRect(x + 2, slotY, rw - 4, slotH - 1.2);
+      ctx.fillRect(x + 1.8, slotY, rw - 3.6, slotH - 1.0);
 
       const blink = Math.sin(time * 4 + i + offset) > 0;
       ctx.fillStyle = blink ? (i === 0 ? (C.LED_ALERT || '#E11D48') : C.NEON_MAIN) : (C.LED_OFF || '#444444');
       ctx.beginPath();
-      ctx.arc(x + 3.8, slotY + (slotH - 1.2) * 0.5, 0.9, 0, Math.PI * 2);
+      ctx.arc(x + 3.2, slotY + (slotH - 1.0) * 0.5, 0.8, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.fillStyle = !blink ? C.NEON_MAIN : (C.LED_OFF || '#444444');
       ctx.beginPath();
-      ctx.arc(x + rw - 3.8, slotY + (slotH - 1.2) * 0.5, 0.9, 0, Math.PI * 2);
+      ctx.arc(x + rw - 3.2, slotY + (slotH - 1.0) * 0.5, 0.8, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -159,10 +159,10 @@
     ctx.stroke();
 
     const isNarrow = width < 460;
-    const rackW = isNarrow ? 18 : 22;
-    const rackH = isNarrow ? 26 : 30;
-    drawServerRack(ctx, 5, floorY - rackH, rackW, rackH, time, 0);
-    drawServerRack(ctx, width - (rackW + 5), floorY - rackH, rackW, rackH, time, 1.5);
+    const rackW = isNarrow ? 15 : 18;
+    const rackH = isNarrow ? 20 : 24;
+    drawServerRack(ctx, 4, floorY - rackH, rackW, rackH, time, 0);
+    drawServerRack(ctx, width - (rackW + 4), floorY - rackH, rackW, rackH, time, 1.5);
   }
 
   window.StickmanScenery = {

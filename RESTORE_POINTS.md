@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.114.0`
-- **Iterasi:** `Iterasi 314`
-- **Tanggal Rilis:** 24 Agustus 2026 (01:03 WIB)
+- **Versi Terkini:** `v2.115.0`
+- **Iterasi:** `Iterasi 315`
+- **Tanggal Rilis:** 24 Agustus 2026 (01:06 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.6 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.115.0** | 315 | 24-08-2026 01:06 | `v2.115.0` | **Proportional Headroom Clearance for Stickman Characters & Technicians:** Menyesuaikan proporsi tinggi kinematik tubuh stickman pelari, teknisi server, dan rak server (radius kepala `3.8px`, tungkai `1.6px`, tinggi tubuh `~38px` dari lantai `Y=47px`), memberikan jarak napas atas (headroom) `~9px` yang bersih dan proporsional di bawah border atas container tanpa mengubah tinggi panggung 50px. | 🟢 STABLE | `./restore.sh v2.115.0` |
 | **v2.114.0** | 314 | 24-08-2026 01:03 | `v2.114.0` | **Reversed Same-Direction Parallax with Organic Lerp Inertia Delay:** Menyelaraskan arah pergerakan paralaks background kotak-kotak tipis searah dengan scroll chat (bergerak ke atas bersama konten saat scroll ke bawah) dengan rasio kedalaman 10% dan peredaman inersia (Lerp dampening factor `0.07`), sehingga efek paralaks terasa sangat alami, lembut, memiliki jeda/delay organik, dan tidak menyebabkan pusing visual. | 🟢 STABLE | `./restore.sh v2.114.0` |
 | **v2.113.0** | 313 | 24-08-2026 01:00 | `v2.113.0` | **Subtle & Gentle Parallax Scroll Effect for Background Grid Stroke:** Menambahkan efek paralaks halus dan nyaman (rasio 15% via `requestAnimationFrame` + CSS custom property `--parallax-grid-y`) pada pola stroke garis kotak-kotak tipis di latar belakang saat chat di-scroll, memberikan kesan kedalaman 3D visual yang elegan tanpa membuat pusing. | 🟢 STABLE | `./restore.sh v2.113.0` |
 | **v2.112.0** | 312 | 24-08-2026 00:58 | `v2.112.0` | **Optimized Balanced Chat Clearance Spacing Above Stickman Stage:** Merampingkan jarak vertical clearance pada area chat bawah saat animasi stickman aktif dari `340px` menjadi `225px` (dan `scrollToBottom` offset dari `360px` menjadi `220px`), sehingga pesan dan card tindakan agent terbawah memiliki jarak napas yang proporsional, rapi, dan tidak menyisakan ruang kosong (void) yang terlalu renggang di atas panggung stickman. | 🟢 STABLE | `./restore.sh v2.112.0` |

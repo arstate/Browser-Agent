@@ -2748,6 +2748,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 315: Proportional Headroom Clearance for Stickman Characters & Technicians
+- **Kebutuhan Pengguna**:
+  - Memberikan jarak napas (headroom) di atas kepala karakter stickman agar tidak menyentuh garis batas border atas container, dengan tetap mempertahankan tinggi kanvas panggung 50px yang ramping.
+- **Solusi & Peningkatan**:
+  1. **Proportional Biomechanical Scaling (`stickman-config.js`, `stickman-physics.js`, `stickman-scenery.js`)**:
+     - Menyesuaikan radius kepala avatar dari `4.8px` ke `3.8px` dan ketebalan garis menjadi `1.6px`.
+     - Mengatur ulang kinematika tinggi pelvis pelari (`floorY - 18`), panjang torso (`8.5px`), dan leher (`3.8px`) sehingga puncak kepala berada di `Y = ~9px`, menyisakan jarak napas ~9px yang bersih di bawah batas atas kanvas (Y=0).
+     - Menyesuaikan proporsi teknisi kiri/kanan dan rak server agar serasi dan memiliki jarak atas yang seimbang.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.115.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 314: Reversed Same-Direction Parallax with Organic Lerp Inertia Delay
 - **Kebutuhan Pengguna**:
   - Membalik arah paralaks background kotak-kotak agar bergerak searah dengan pergerakan chat (ke atas saat scroll ke bawah) dan menambahkan efek delay/inersia yang lembut agar nyaman di mata dan tidak membuat pusing.

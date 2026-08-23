@@ -24,8 +24,8 @@ window.STICKMAN_CONFIG = {
     STAGE_HEIGHT_COMPACT: 44,                    // Tinggi kanvas di Sidepanel (px)
     FLOOR_Y: 47,                                 // Lantai tepat di batas bawah (jarak bawah 0/hilang)
     FLOOR_Y_COMPACT: 41,                         // Lantai Sidepanel
-    HEAD_RADIUS: 4.8,                            // Radius lingkaran kepala (px)
-    LIMB_THICKNESS: 1.9                          // Ketebalan garis tubuh & tulang (px)
+    HEAD_RADIUS: 3.8,                            // Radius lingkaran kepala proporsional & elegan (px)
+    LIMB_THICKNESS: 1.6                          // Ketebalan garis tubuh & tulang (px)
   },
 
   // === DAFTAR PELARI (RUNNERS) LAYAR LEBAR (NEW TAB) ===
