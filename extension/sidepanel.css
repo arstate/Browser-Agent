@@ -1709,11 +1709,11 @@ body.stickman-active .chat-messages {
   max-width: 100%;
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: #18181B;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.85) !important;
   box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
 }
 
 .message.assistant .message-content .md-table-wrapper::-webkit-scrollbar {
@@ -1820,11 +1820,13 @@ body.stickman-active .chat-messages {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11.5px;
   font-weight: 600;
-  background: #F1F5F9;
-  color: #0F172A;
-  padding: 2px 6px;
+  background: rgba(30, 41, 59, 0.9) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #CEF128 !important;
+  padding: 2px 7px;
   border-radius: 6px;
-  border: 1px solid #E2E8F0;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   word-break: break-all !important;
   overflow-wrap: anywhere !important;
   white-space: pre-wrap !important;
@@ -1836,13 +1838,16 @@ body.stickman-active .chat-messages {
 
 .message.assistant .message-content .md-quote {
   margin: 12px 0;
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-left: 3px solid #CEF128;
-  background: rgba(206, 241, 40, 0.04);
+  background: rgba(15, 23, 42, 0.78) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
   border-radius: 0 8px 8px 0;
   color: #CBD5E1;
   font-style: italic;
   line-height: 1.55;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   overflow-wrap: break-word !important;
   word-break: break-word !important;
 }
@@ -1872,11 +1877,13 @@ body.stickman-active .chat-messages {
 }
 
 .message.assistant .message-content .md-code-card {
-  background: #0B111E;
+  background: rgba(11, 17, 30, 0.88) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   border-radius: 12px;
   margin: 12px 0 14px 0;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
   width: 100%;
   box-sizing: border-box;
@@ -2350,21 +2357,21 @@ body.stickman-active .chat-messages {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 12px;
   padding: 10px 14px;
   margin: 10px 0;
   transition: all 0.15s ease;
   overflow: hidden;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
 }
 
 .md-file-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(30, 41, 59, 0.92) !important;
+  border-color: rgba(206, 241, 40, 0.3) !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
@@ -3422,16 +3429,19 @@ body.stickman-active .chat-messages {
   counter-increment: plan-step-counter;
   position: relative;
   padding: 10px 14px 10px 42px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 9px;
-  line-height: 1.45;
+  background: rgba(15, 23, 42, 0.82) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px;
+  line-height: 1.5;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.35);
   transition: all 0.2s ease;
 }
 
 .message.assistant .message-content ol > li:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(30, 41, 59, 0.92) !important;
+  border-color: rgba(206, 241, 40, 0.3) !important;
 }
 
 .message.assistant .message-content ol > li::before {
@@ -3467,7 +3477,9 @@ body.stickman-active .chat-messages {
 .agent-switch-card {
   margin: 12px 0 4px 0;
   padding: 14px 16px;
-  background: linear-gradient(145deg, #0F172A 0%, #1E293B 100%);
+  background: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   border: 1px solid rgba(206, 241, 40, 0.35);
   border-radius: 14px;
   color: #F8FAFC;

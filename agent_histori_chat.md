@@ -2748,6 +2748,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 329: Frosted Glass Backdrop Blur on All AI Chat Containers
+- **Kebutuhan Pengguna**:
+  - Mengupdate seluruh elemen container AI di chat (kotak daftar bernomor rekomendasi/langkah kerja, code cards, tabel data, tool badges, blockquotes, file cards) agar memiliki efek blur latar belakang (*backdrop-filter blur*) sehingga grid background layar tidak mengganggu keterbacaan teks dan pembacaan menjadi jauh lebih jelas, nyaman, dan kontras.
+- **Root Cause & Solusi Teknis**:
+  - Sebelumnya elemen kotak list `.message.assistant .message-content ol > li` dan container card memiliki background dengan opasitas sangat rendah (`rgba(255, 255, 255, 0.03)`) tanpa `backdrop-filter: blur`, sehingga garis grid new tab/sidepanel menembus dan memotong teks.
+  - Menambahkan `background: rgba(22, 22, 26, 0.82)`, `backdrop-filter: blur(28px) saturate(180%)`, `-webkit-backdrop-filter: blur(28px) saturate(180%)`, `border: 1px solid rgba(255, 255, 255, 0.1)`, dan `box-shadow` pada:
+    1. `.message.assistant .message-content ol > li` (Kotak bernomor rekomendasi & action steps).
+    2. `.message.assistant .message-content .md-inline-code` & `.message code` (Badge tag inline).
+    3. `.message.assistant .message-content .md-table-wrapper` (Tabel data markdown).
+    4. `.message.assistant .message-content .md-code-card` (Kartu syntax code).
+    5. `.message.assistant .message-content .md-quote` (Kutipan blockquote).
+    6. `.tool-toggle-header` & `.tool-badge` (Eksekusi tools bar).
+    7. `.md-file-card` & `.agent-switch-card` (Kartu file lokal & switch agent).
+- **Verifikasi**:
+  - JS & CSS Syntax check lulus 100%.
+  - Restore Point: `v2.129.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 328: Update AI Thinking Level Label to Extreme
 - **Kebutuhan Pengguna**:
   - Mengubah teks opsi penalaran berpikir tertinggi dari `Max (10x)` menjadi `Extreme`.

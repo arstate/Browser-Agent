@@ -1244,6 +1244,26 @@ body.has-messages .chat-messages {
   line-height: 1.5;
 }
 
+.message.assistant .message-content .md-inline-code,
+.message code:not(pre code) {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: rgba(32, 32, 38, 0.92) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: var(--accent-lime) !important;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
+  white-space: pre-wrap !important;
+  display: inline !important;
+  vertical-align: baseline;
+  box-sizing: border-box;
+}
+
 .message.assistant .message-actions {
   display: flex;
   align-items: center;
@@ -1583,21 +1603,24 @@ body.has-messages .chat-messages {
   align-items: center;
   justify-content: space-between;
   padding: 6px 12px;
-  background: rgba(206, 241, 40, 0.06);
-  border: 1px solid rgba(206, 241, 40, 0.15);
+  background: rgba(22, 22, 26, 0.85) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(206, 241, 40, 0.25) !important;
   border-radius: 8px;
   color: var(--accent-lime);
   font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   width: 100%;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   transition: all 0.15s ease;
   user-select: none;
 }
 
 .tool-toggle-header:hover {
-  background: rgba(206, 241, 40, 0.12);
-  border-color: rgba(206, 241, 40, 0.3);
+  background: rgba(30, 30, 36, 0.95) !important;
+  border-color: rgba(206, 241, 40, 0.4) !important;
 }
 
 .tool-toggle-left {
@@ -1656,8 +1679,11 @@ body.has-messages .chat-messages {
   gap: 8px;
   padding: 6px 12px;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--border-subtle);
+  background: rgba(18, 18, 22, 0.82) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   color: #94A3B8;
@@ -2616,16 +2642,19 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
   counter-increment: plan-step-counter;
   position: relative;
   padding: 10px 14px 10px 42px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 9px;
-  line-height: 1.45;
+  background: rgba(22, 22, 26, 0.82) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px;
+  line-height: 1.5;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
   transition: all 0.2s ease;
 }
 
 .message.assistant .message-content ol > li:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(30, 30, 36, 0.92) !important;
+  border-color: rgba(206, 241, 40, 0.3) !important;
 }
 
 .message.assistant .message-content ol > li::before {
@@ -2664,11 +2693,11 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
   max-width: 100%;
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: #18181B;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(24, 24, 27, 0.85) !important;
   box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
 }
 
 .message.assistant .message-content .md-table-wrapper::-webkit-scrollbar {
@@ -2700,7 +2729,7 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
 }
 
 .message.assistant .message-content .md-table th {
-  background: #202024;
+  background: rgba(32, 32, 36, 0.95);
   color: #F4F4F6;
   font-weight: 700;
   font-size: 11px;
@@ -2735,11 +2764,13 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
 
 /* Clean Dark Luxury Code Block Cards */
 .message.assistant .message-content .md-code-card {
-  background: #141416;
+  background: rgba(20, 20, 22, 0.88) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   border-radius: 12px;
   margin: 12px 0 14px 0;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
   width: 100%;
   box-sizing: border-box;
@@ -2842,24 +2873,24 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: #1C1C1F;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(28, 28, 31, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 12px;
   padding: 10px 14px;
   margin: 10px 0;
   transition: all 0.15s ease;
   overflow: hidden;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   width: 100%;
   max-width: 540px;
   box-sizing: border-box;
 }
 
 .message.assistant .message-content .md-file-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(36, 36, 42, 0.92) !important;
+  border-color: rgba(206, 241, 40, 0.3) !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
