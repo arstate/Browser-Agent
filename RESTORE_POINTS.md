@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.107.0`
-- **Iterasi:** `Iterasi 307`
-- **Tanggal Rilis:** 24 Agustus 2026 (00:47 WIB)
+- **Versi Terkini:** `v2.108.0`
+- **Iterasi:** `Iterasi 308`
+- **Tanggal Rilis:** 24 Agustus 2026 (00:48 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.5 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.108.0** | 308 | 24-08-2026 00:48 | `v2.108.0` | **Clean White Active Pill Typography with Neon Lime Icon Accents:** Mengubah seluruh warna teks pada tombol pill mode yang sedang aktif (`Agent Mode`, `Chat Mode`, `Web Search`, `Switch Tab: ON`, `Accept`) menjadi warna putih bersih (`#FFFFFF`) di Newtab dan Sidepanel, sementara icon tetap menggunakan aksen neon lime `#CEF128` sehingga tampilan antarmuka tampak sangat clean, kontras, dan elegan. | 🟢 STABLE | `./restore.sh v2.108.0` |
 | **v2.107.0** | 307 | 24-08-2026 00:47 | `v2.107.0` | **100% Pixel-Perfect Height & Baseline Alignment for Sidepanel Top Bar Controls:** Menyelaraskan seluruh dimensi tinggi (`height: 29px`), tinggi pill tombol (`height: 22px`), padding (`0 11px`), font-size (`11.5px`), font-weight (`600`), dan line-height (`1`) antara kapsul kanan (`Switch Tab: ON`, `Accept`, `Search Engine`) dengan kapsul kiri `Chat | Agent` pada Sidepanel sehingga kedua kontrol sejajar presisi dan simetris tanpa perbedaan ketinggian pixel. | 🟢 STABLE | `./restore.sh v2.107.0` |
 | **v2.106.0** | 306 | 24-08-2026 00:44 | `v2.106.0` | **White Search Engine Trigger Text, Sidepanel Stickman Removal, & Harmonized Sidepanel Pill Controls:** Mengubah teks dan chevron tombol trigger `#btn-search-engine-trigger` menjadi putih bersih (`#FFFFFF`) agar bersih dan kontras. Menghilangkan animasi stickman secara total pada Sidepanel agar tampilan sidepanel compact dan ringan. Menyelaraskan styling kapsul kontrol kanan Sidepanel (`Switch Tab: ON`, `Accept/Planning`, dan `Search Engine`) dengan latar track `#F1F5F9` dan border `#E2E8F0` agar 100% konsisten dan simetris dengan tombol pill kiri `Chat | Agent`. | 🟢 STABLE | `./restore.sh v2.106.0` |
 | **v2.105.0** | 305 | 24-08-2026 00:43 | `v2.105.0` | **Clean 1 2 3 Priority Numbering & Generous Stickman Clearance Spacing:** Memperbarui label badge prioritas model pada Pengaturan dan Modal Sidepanel menjadi nomor bersih `1`, `2`, `3` yang kompak dan modern (menggantikan `#1 (UTAMA)`, `#2 (CADANGAN 1)`). Meningkatkan padding clearance bawah saat animasi stickman aktif (`padding-bottom: 340px !important` di Newtab & `120px` di Sidepanel) serta offset `scrollToBottom (+360px)` sehingga teks dan elemen card tindakan agent terbawah memiliki ruang napas luas dan tidak bertabrakan dengan panggung stickman. | 🟢 STABLE | `./restore.sh v2.105.0` |

@@ -1734,7 +1734,11 @@ body.has-messages .chat-messages {
 
 .btn-chat-mode-toggle.active {
   background: #27272A;
-  color: var(--accent-lime);
+  color: #FFFFFF;
+}
+
+.btn-chat-mode-toggle.active svg {
+  stroke: var(--accent-lime);
 }
 
 body.has-messages #btn-mode-websearch {
@@ -1908,7 +1912,7 @@ body.has-messages #btn-mode-websearch {
 /* Switch Tab ON -> Left Active Pill */
 .btn-switch-tab-mode-trigger.is-on {
   background: #27272A;
-  color: var(--accent-lime);
+  color: #FFFFFF;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -1916,10 +1920,13 @@ body.has-messages #btn-mode-websearch {
   background: #323238;
 }
 
-.btn-switch-tab-mode-trigger.is-on .switch-tab-mode-icon,
-.btn-switch-tab-mode-trigger.is-on .switch-tab-mode-label {
+.btn-switch-tab-mode-trigger.is-on .switch-tab-mode-icon {
   color: var(--accent-lime);
-  font-weight: 700;
+}
+
+.btn-switch-tab-mode-trigger.is-on .switch-tab-mode-label {
+  color: #FFFFFF;
+  font-weight: 600;
 }
 
 /* Switch Tab OFF -> Clean Muted Inner State */
@@ -1951,7 +1958,7 @@ body.has-messages #btn-mode-websearch {
   border-top-right-radius: 9999px;
   border-bottom-right-radius: 9999px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
@@ -1966,7 +1973,7 @@ body.has-messages #btn-mode-websearch {
 /* Accept Mode -> Right Active Pill */
 .btn-execution-mode-trigger.mode-accept {
   background: #27272A;
-  color: var(--accent-lime);
+  color: #FFFFFF;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -1974,10 +1981,13 @@ body.has-messages #btn-mode-websearch {
   background: #323238;
 }
 
-.btn-execution-mode-trigger.mode-accept .execution-mode-icon,
-.btn-execution-mode-trigger.mode-accept .execution-mode-label {
+.btn-execution-mode-trigger.mode-accept .execution-mode-icon {
   color: var(--accent-lime);
-  font-weight: 700;
+}
+
+.btn-execution-mode-trigger.mode-accept .execution-mode-label {
+  color: #FFFFFF;
+  font-weight: 600;
 }
 
 /* Planning Mode -> Right Active Blue Pill */

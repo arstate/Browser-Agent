@@ -2748,6 +2748,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 308: Clean White Active Pill Typography with Neon Lime Icon Accents
+- **Kebutuhan Pengguna**:
+  - Mengubah seluruh warna teks pada pill tombol mode aktif (`Agent Mode`, `Chat Mode`, `Web Search`, `Switch Tab`, `Accept`) menjadi warna putih bersih (`#FFFFFF`) agar tampilan UI lebih bersih, tajam, dan elegan.
+- **Solusi & Peningkatan**:
+  1. **Clean White Active Pill Text (`newtab.css`, `sidepanel.css`)**:
+     - Mengubah warna teks pill tombol aktif (`.btn-chat-mode-toggle.active`, `.btn-switch-tab-mode-trigger.is-on`, `.btn-execution-mode-trigger.mode-accept`) menjadi `#FFFFFF`.
+     - Mempertahankan warna neon lime `#CEF128` khusus pada icon vektor SVG sebagai aksen modern.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.108.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 307: 100% Pixel-Perfect Height & Baseline Alignment for Sidepanel Top Bar Controls
 - **Kebutuhan Pengguna**:
   - Menyamakan ketinggian dan dimensi kapsul kontrol kanan (`Switch Tab: ON`, `Accept`) agar 100% sejajar dan presisi dengan tombol `Chat | Agent` di sebelah kiri pada Sidepanel.
