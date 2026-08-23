@@ -18,26 +18,26 @@ window.STICKMAN_CONFIG = {
     LED_OFF: '#444444'                           // LED indikator mati
   },
 
-  // === GEOMETRI & TATA LETAK ===
+  // === GEOMETRI & TATA LETAK (COMPACT SLEEK BANNER) ===
   LAYOUT: {
-    STAGE_HEIGHT_WIDE: 100,                      // Tinggi kanvas di New Tab (px)
-    STAGE_HEIGHT_COMPACT: 90,                    // Tinggi kanvas di Sidepanel (px)
-    FLOOR_Y: 84,                                 // Posisi Y lantai pijakan kaki (px)
-    HEAD_RADIUS: 8.0,                            // Radius lingkaran kepala (px)
-    LIMB_THICKNESS: 3.0                          // Ketebalan garis tubuh & tulang (px)
+    STAGE_HEIGHT_WIDE: 68,                       // Tinggi kanvas ramping di New Tab (px)
+    STAGE_HEIGHT_COMPACT: 62,                    // Tinggi kanvas ramping di Sidepanel (px)
+    FLOOR_Y: 55,                                 // Posisi Y lantai pijakan kaki (px)
+    HEAD_RADIUS: 5.8,                            // Radius lingkaran kepala (px)
+    LIMB_THICKNESS: 2.2                          // Ketebalan garis tubuh & tulang (px)
   },
 
   // === DAFTAR PELARI (RUNNERS) LAYAR LEBAR (NEW TAB) ===
   RUNNERS_WIDE: [
-    { startX: 95,  gaitType: 'fatigue_cargo', facing: 1,  hasBox: true },   // Pelari capek (bawa paket + istirahat)
-    { startX: 140, gaitType: 'sprint',        facing: 1,  hasBox: true },   // Pelari sprint cepat
+    { startX: 75,  gaitType: 'fatigue_cargo', facing: 1,  hasBox: true },   // Pelari capek (bawa paket + istirahat)
+    { startX: 120, gaitType: 'sprint',        facing: 1,  hasBox: true },   // Pelari sprint cepat
     { startX: 620, gaitType: 'jog',           facing: -1, hasBox: true },   // Pelari santai arah balik
-    { startX: 220, gaitType: 'slow_walk',     facing: 1,  hasBox: false }   // Pelari jalan pelan santai
+    { startX: 200, gaitType: 'slow_walk',     facing: 1,  hasBox: false }   // Pelari jalan pelan santai
   ],
 
   // === DAFTAR PELARI (RUNNERS) LAYAR KOMPAK (SIDEPANEL) ===
   RUNNERS_COMPACT: [
-    { startX: 68,  gaitType: 'sprint',        facing: 1,  hasBox: true },
+    { startX: 55,  gaitType: 'sprint',        facing: 1,  hasBox: true },
     { startX: 240, gaitType: 'jog',           facing: -1, hasBox: true }
   ]
 };

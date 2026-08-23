@@ -2,6 +2,7 @@
  * ============================================================================
  * 🏃 STICKMAN PHYSICS & BIOMECHANICAL KINEMATICS ENGINE
  * Berisi model matematika pergerakan tubuh, kurva bezier, dan ekspresi wajah.
+ * Dioptimalkan untuk tinggi kanvas ramping (Compact Sleek Proportions).
  * ============================================================================
  */
 (() => {
@@ -10,9 +11,8 @@
     NEON_MAIN: '#CEF128',
     NEON_SECONDARY: 'rgba(206, 241, 40, 0.38)'
   };
-  const L = cfg.LAYOUT || { FLOOR_Y: 84, HEAD_RADIUS: 8.0, LIMB_THICKNESS: 3.0 };
+  const L = cfg.LAYOUT || { FLOOR_Y: 55, HEAD_RADIUS: 5.8, LIMB_THICKNESS: 2.2 };
 
-  // Interpolasi linear & eksponensial halus
   function numLerp(a, b, t) {
     const clampedT = Math.max(0, Math.min(1, t));
     return a + (b - a) * clampedT;
@@ -24,12 +24,11 @@
     return current + (target - current) * factor;
   }
 
-  // Kurva bezier tulang belakang menyatu dengan kaki depan
   function drawUnifiedSpineAndLeg(ctx, neck, chest, pelvis, knee, foot, thickness, color) {
     if (!ctx) return;
     ctx.beginPath();
     ctx.moveTo(neck.x, neck.y);
-    ctx.bezierCurveTo(chest.x, chest.y, pelvis.x, pelvis.y - 4, pelvis.x, pelvis.y);
+    ctx.bezierCurveTo(chest.x, chest.y, pelvis.x, pelvis.y - 3, pelvis.x, pelvis.y);
     
     const cpX = 2 * knee.x - 0.5 * pelvis.x - 0.5 * foot.x;
     const cpY = 2 * knee.y - 0.5 * pelvis.y - 0.5 * foot.y;
@@ -77,39 +76,39 @@
     const cosY = Math.cos(angleY);
     if (Math.abs(cosY) < 0.12) return;
 
-    const eyeOffX = 3.2 * cosY;
-    const eyeDist = 5.0 * cosY;
+    const eyeOffX = 2.4 * cosY;
+    const eyeDist = 3.6 * cosY;
     const leftEyeX = headX + eyeOffX - eyeDist / 2;
     const rightEyeX = headX + eyeOffX + eyeDist / 2;
-    const eyeY = headY - 1;
+    const eyeY = headY - 0.8;
 
     ctx.save();
     ctx.fillStyle = '#141414';
     ctx.strokeStyle = '#141414';
-    ctx.lineWidth = 1.4;
+    ctx.lineWidth = 1.1;
     ctx.lineCap = 'round';
 
-    const pant = Math.sin(time * 8) * 0.6 * exprBlend;
-    const browAngleL = (-3.2 * (1 - exprBlend)) + (1.6 * exprBlend);
-    const browAngleR = (-2.4 * (1 - exprBlend)) + (-1.6 * exprBlend);
+    const pant = Math.sin(time * 8) * 0.4 * exprBlend;
+    const browAngleL = (-2.4 * (1 - exprBlend)) + (1.2 * exprBlend);
+    const browAngleR = (-1.8 * (1 - exprBlend)) + (-1.2 * exprBlend);
 
     ctx.beginPath();
-    ctx.moveTo(leftEyeX - 2.2 * cosY, eyeY - 3 + browAngleL + pant);
-    ctx.lineTo(leftEyeX + 1.8 * cosY, eyeY - 1.5 + pant);
-    ctx.moveTo(rightEyeX - 1.8 * cosY, eyeY - 1.5 + pant);
-    ctx.lineTo(rightEyeX + 2.2 * cosY, eyeY - 3 + browAngleR + pant);
+    ctx.moveTo(leftEyeX - 1.6 * cosY, eyeY - 2.2 + browAngleL + pant);
+    ctx.lineTo(leftEyeX + 1.4 * cosY, eyeY - 1.0 + pant);
+    ctx.moveTo(rightEyeX - 1.4 * cosY, eyeY - 1.0 + pant);
+    ctx.lineTo(rightEyeX + 1.6 * cosY, eyeY - 2.2 + browAngleR + pant);
     ctx.stroke();
 
-    const eyeHeight = Math.max(1.0, 3.4 * (1 - exprBlend * 0.7));
-    ctx.fillRect(leftEyeX - 1.3 * cosY, eyeY - 0.5 + pant, 2.6 * Math.abs(cosY), eyeHeight);
-    ctx.fillRect(rightEyeX - 1.3 * cosY, eyeY - 0.5 + pant, 2.6 * Math.abs(cosY), eyeHeight);
+    const eyeHeight = Math.max(0.8, 2.4 * (1 - exprBlend * 0.7));
+    ctx.fillRect(leftEyeX - 1.0 * cosY, eyeY - 0.4 + pant, 2.0 * Math.abs(cosY), eyeHeight);
+    ctx.fillRect(rightEyeX - 1.0 * cosY, eyeY - 0.4 + pant, 2.0 * Math.abs(cosY), eyeHeight);
     ctx.restore();
   }
 
-  // Kelas Pelari Biomekanik (BiomechanicalRunner)
+  // Kelas Pelari Biomekanik
   class BiomechanicalRunner {
     constructor(cfgRunner) {
-      this.startX = cfgRunner.startX || 92;
+      this.startX = cfgRunner.startX || 75;
       this.gaitType = cfgRunner.gaitType || 'sprint';
       
       if (this.gaitType === 'slow_walk') this.maxSpeed = 1.15;
@@ -145,8 +144,8 @@
 
     update(dt, t, width, floorY, serverWorkers) {
       const isNarrow = width < 460;
-      const leftServerBound = isNarrow ? 62 : 92;
-      const rightServerBound = Math.max(140, width - (isNarrow ? 75 : 110));
+      const leftServerBound = isNarrow ? 48 : 70;
+      const rightServerBound = Math.max(120, width - (isNarrow ? 58 : 85));
       const restTargetX = (leftServerBound + rightServerBound) * 0.48;
 
       let targetSpeed = this.maxSpeed;
@@ -156,7 +155,7 @@
 
       // 1. Fatigue Stop di Tengah Jalan
       if (this.gaitType === 'fatigue_cargo') {
-        if (this.state === 'traveling' && !this.hasRested && this.facing === 1 && Math.abs(this.x - restTargetX) < 35) {
+        if (this.state === 'traveling' && !this.hasRested && this.facing === 1 && Math.abs(this.x - restTargetX) < 30) {
           this.state = 'resting';
           this.restTimer = 3.8;
         }
@@ -170,9 +169,9 @@
 
         if (Math.random() < 0.25) {
           this.sweatParticles.push({
-            x: this.x + 8 * Math.cos(this.angleY),
-            y: floorY - 36,
-            vy: 0.9 + Math.random() * 0.8,
+            x: this.x + 6 * Math.cos(this.angleY),
+            y: floorY - 26,
+            vy: 0.7 + Math.random() * 0.6,
             alpha: 1
           });
         }
@@ -186,14 +185,14 @@
       // 2. Interaksi Serah-Terima Berkas di Server Kiri/Kanan
       if (this.state === 'traveling') {
         const distToServer = (this.facing === 1) ? (rightServerBound - this.x) : (this.x - leftServerBound);
-        if (distToServer < 60) {
+        if (distToServer < 50) {
           this.state = 'approaching_server';
         }
       } else if (this.state === 'approaching_server') {
         targetSpeed = 0.45;
         const distToServer = (this.facing === 1) ? (rightServerBound - this.x) : (this.x - leftServerBound);
 
-        if (distToServer <= 10) {
+        if (distToServer <= 8) {
           this.state = 'handover';
           this.interactionTimer = 1.3;
         }
@@ -247,8 +246,8 @@
         ? 0.72 
         : (0.06 + Math.pow(speedNorm, 1.35) * 0.62);
       const realHeightDrop = (targetHunched > 0.5) 
-        ? 14.0 
-        : (Math.pow(speedNorm, 1.25) * 12.0);
+        ? 9.5 
+        : (Math.pow(speedNorm, 1.25) * 8.5);
       const realElbowLock = (targetHunched > 0.5)
         ? 0.4
         : (0.15 + Math.pow(speedNorm, 1.2) * 0.85);
@@ -276,7 +275,7 @@
       if (this.state !== 'handover' && this.state !== 'resting') {
         this.x += this.facing * this.vx * 60 * dt;
         this.gaitPhase += Math.max(0.4, this.vx * 6.8) * dt;
-        this.x = Math.max(leftServerBound - 5, Math.min(rightServerBound + 5, this.x));
+        this.x = Math.max(leftServerBound - 4, Math.min(rightServerBound + 4, this.x));
       } else {
         this.gaitPhase += dt * 2.5;
       }
@@ -285,44 +284,44 @@
     draw(ctx, time, floorY) {
       if (!ctx) return;
       const cosY = Math.cos(this.angleY);
-      const flightStretch = Math.max(0, Math.cos(this.gaitPhase * 2)) * 3.2 * this.pose.speedFactor;
-      const plantSquash = Math.max(0, -Math.cos(this.gaitPhase * 2)) * 2.2 * this.pose.speedFactor;
-      const verticalBob = (Math.abs(Math.sin(this.gaitPhase)) * 3.8 * this.pose.speedFactor) + flightStretch - plantSquash;
+      const flightStretch = Math.max(0, Math.cos(this.gaitPhase * 2)) * 2.2 * this.pose.speedFactor;
+      const plantSquash = Math.max(0, -Math.cos(this.gaitPhase * 2)) * 1.6 * this.pose.speedFactor;
+      const verticalBob = (Math.abs(Math.sin(this.gaitPhase)) * 2.6 * this.pose.speedFactor) + flightStretch - plantSquash;
 
-      let pelvisY = floorY - 38 + verticalBob + this.pose.heightDrop;
+      let pelvisY = floorY - 26 + verticalBob + this.pose.heightDrop;
       const pelvis = { x: this.x, y: pelvisY };
 
       const lean = this.pose.forwardLean;
-      const torsoLength = 16 + (flightStretch * 0.4);
+      const torsoLength = 11.5 + (flightStretch * 0.3);
       const chest = {
         x: this.x + Math.sin(lean) * torsoLength * cosY,
         y: pelvisY - Math.cos(lean) * torsoLength
       };
       const neck = {
-        x: chest.x + Math.sin(lean * 1.25) * 8 * cosY,
-        y: chest.y - Math.cos(lean * 1.25) * 8
+        x: chest.x + Math.sin(lean * 1.25) * 5.5 * cosY,
+        y: chest.y - Math.cos(lean * 1.25) * 5.5
       };
 
-      const pantOffset = Math.sin(time * 8) * (2.8 * this.pose.gaspIntensity);
+      const pantOffset = Math.sin(time * 8) * (2.0 * this.pose.gaspIntensity);
       const head = {
-        x: neck.x + 2 * cosY,
-        y: neck.y - 7 + pantOffset
+        x: neck.x + 1.5 * cosY,
+        y: neck.y - 5.5 + pantOffset
       };
 
-      // Kaki Kinematik
+      // Kaki Kinematik Kompak
       const legStride = Math.sin(this.gaitPhase) * (0.3 + this.pose.speedFactor * 0.75);
       const kneeDriveL = Math.max(0, Math.cos(this.gaitPhase)) * (0.2 + this.pose.speedFactor * 1.0);
       const kneeDriveR = Math.max(0, -Math.cos(this.gaitPhase)) * (0.2 + this.pose.speedFactor * 1.0);
 
-      const kneeL_Rest = { x: pelvis.x + 11 * cosY, y: pelvis.y + 16 };
-      const footL_Rest = { x: pelvis.x + 6 * cosY, y: floorY };
+      const kneeL_Rest = { x: pelvis.x + 8 * cosY, y: pelvis.y + 11 };
+      const footL_Rest = { x: pelvis.x + 4 * cosY, y: floorY };
       const kneeL_Run = {
-        x: pelvis.x + (Math.sin(legStride) * 14 + (kneeDriveL * 15)) * cosY,
-        y: pelvis.y + 16 - (kneeDriveL * 14)
+        x: pelvis.x + (Math.sin(legStride) * 9 + (kneeDriveL * 10)) * cosY,
+        y: pelvis.y + 11 - (kneeDriveL * 9)
       };
       const footL_Run = {
-        x: pelvis.x + (Math.sin(legStride) * 24) * cosY,
-        y: floorY - (kneeDriveL * 6)
+        x: pelvis.x + (Math.sin(legStride) * 16) * cosY,
+        y: floorY - (kneeDriveL * 4)
       };
       const kneePosL = {
         x: numLerp(kneeL_Run.x, kneeL_Rest.x, this.pose.hunchedTired),
@@ -333,15 +332,15 @@
         y: numLerp(footL_Run.y, footL_Rest.y, this.pose.hunchedTired)
       };
 
-      const kneeR_Rest = { x: pelvis.x - 9 * cosY, y: pelvis.y + 16 };
-      const footR_Rest = { x: pelvis.x - 4 * cosY, y: floorY };
+      const kneeR_Rest = { x: pelvis.x - 6 * cosY, y: pelvis.y + 11 };
+      const footR_Rest = { x: pelvis.x - 3 * cosY, y: floorY };
       const kneeR_Run = {
-        x: pelvis.x + (Math.sin(-legStride) * 14 + (kneeDriveR * 15)) * cosY,
-        y: pelvis.y + 16 - (kneeDriveR * 14)
+        x: pelvis.x + (Math.sin(-legStride) * 9 + (kneeDriveR * 10)) * cosY,
+        y: pelvis.y + 11 - (kneeDriveR * 9)
       };
       const footR_Run = {
-        x: pelvis.x + (Math.sin(-legStride) * 24) * cosY,
-        y: floorY - (kneeDriveR * 6)
+        x: pelvis.x + (Math.sin(-legStride) * 16) * cosY,
+        y: floorY - (kneeDriveR * 4)
       };
       const kneePosR = {
         x: numLerp(kneeR_Run.x, kneeR_Rest.x, this.pose.hunchedTired),
@@ -352,7 +351,7 @@
         y: numLerp(footR_Run.y, footR_Rest.y, this.pose.hunchedTired)
       };
 
-      const strokeThickness = L.LIMB_THICKNESS || 3.0;
+      const strokeThickness = L.LIMB_THICKNESS || 2.2;
 
       // 1. Kaki Belakang
       if (cosY >= 0) drawBranchLeg(ctx, pelvis, kneePosL, footPosL, strokeThickness * 0.85, C.NEON_SECONDARY);
@@ -364,7 +363,7 @@
 
       // Kepala Avatar Neon Solid
       ctx.beginPath();
-      ctx.arc(head.x, head.y, L.HEAD_RADIUS || 8.0, 0, Math.PI * 2);
+      ctx.arc(head.x, head.y, L.HEAD_RADIUS || 5.8, 0, Math.PI * 2);
       ctx.fillStyle = C.NEON_MAIN;
       ctx.fill();
 
@@ -376,21 +375,21 @@
 
       const armSwingL = Math.sin(armCycle) * pumpAmp;
       const elbowL_Sprint = {
-        x: shoulder.x - Math.sin(armSwingL) * 11 * cosY,
-        y: shoulder.y + 9 + Math.cos(armSwingL) * 2
+        x: shoulder.x - Math.sin(armSwingL) * 7.5 * cosY,
+        y: shoulder.y + 6 + Math.cos(armSwingL) * 1.5
       };
       const handL_Sprint = {
-        x: elbowL_Sprint.x + Math.sin(armSwingL + 1.25) * 10 * cosY,
-        y: elbowL_Sprint.y - Math.cos(armSwingL + 1.25) * 9.5
+        x: elbowL_Sprint.x + Math.sin(armSwingL + 1.25) * 7.0 * cosY,
+        y: elbowL_Sprint.y - Math.cos(armSwingL + 1.25) * 6.5
       };
 
       const elbowL_Walk = {
-        x: shoulder.x + Math.sin(armSwingL * 0.5) * 8 * cosY,
-        y: shoulder.y + 11
+        x: shoulder.x + Math.sin(armSwingL * 0.5) * 5.5 * cosY,
+        y: shoulder.y + 7.5
       };
       const handL_Walk = {
-        x: elbowL_Walk.x + Math.sin(armSwingL * 0.55) * 9 * cosY,
-        y: elbowL_Walk.y + 9
+        x: elbowL_Walk.x + Math.sin(armSwingL * 0.55) * 6.5 * cosY,
+        y: elbowL_Walk.y + 6.5
       };
 
       const elbowL_Run = {
@@ -404,21 +403,21 @@
 
       const armSwingR = Math.sin(-armCycle) * pumpAmp;
       const elbowR_Sprint = {
-        x: shoulder.x - Math.sin(armSwingR) * 11 * cosY + 3 * cosY,
-        y: shoulder.y + 9 + Math.cos(armSwingR) * 2
+        x: shoulder.x - Math.sin(armSwingR) * 7.5 * cosY + 2 * cosY,
+        y: shoulder.y + 6 + Math.cos(armSwingR) * 1.5
       };
       const handR_Sprint = {
-        x: elbowR_Sprint.x + Math.sin(armSwingR + 1.25) * 10 * cosY,
-        y: elbowR_Sprint.y - Math.cos(armSwingR + 1.25) * 9.5
+        x: elbowR_Sprint.x + Math.sin(armSwingR + 1.25) * 7.0 * cosY,
+        y: elbowR_Sprint.y - Math.cos(armSwingR + 1.25) * 6.5
       };
 
       const elbowR_Walk = {
-        x: shoulder.x + Math.sin(armSwingR * 0.5) * 8 * cosY + 2 * cosY,
-        y: shoulder.y + 11
+        x: shoulder.x + Math.sin(armSwingR * 0.5) * 5.5 * cosY + 1.5 * cosY,
+        y: shoulder.y + 7.5
       };
       const handR_Walk = {
-        x: elbowR_Walk.x + Math.sin(armSwingR * 0.55) * 9 * cosY,
-        y: elbowR_Walk.y + 9
+        x: elbowR_Walk.x + Math.sin(armSwingR * 0.55) * 6.5 * cosY,
+        y: elbowR_Walk.y + 6.5
       };
 
       const elbowR_Run = {
@@ -430,13 +429,13 @@
         y: numLerp(handR_Walk.y, handR_Sprint.y, elbowLock)
       };
 
-      const elbowR_Handover = { x: shoulder.x + 10 * cosY, y: shoulder.y + 4 };
-      const handR_Handover = { x: shoulder.x + 22 * cosY, y: shoulder.y + 2 };
+      const elbowR_Handover = { x: shoulder.x + 7 * cosY, y: shoulder.y + 3 };
+      const handR_Handover = { x: shoulder.x + 15 * cosY, y: shoulder.y + 1 };
 
-      const elbowL_Rest = { x: (shoulder.x + kneePosL.x) / 2 - 5 * cosY, y: (shoulder.y + kneePosL.y) / 2 };
-      const handL_Rest = { x: kneePosL.x + 1 * cosY, y: kneePosL.y - 2 };
-      const elbowR_Rest = { x: (shoulder.x + kneePosR.x) / 2 + 5 * cosY, y: (shoulder.y + kneePosR.y) / 2 };
-      const handR_Rest = { x: kneePosR.x + 2 * cosY, y: kneePosR.y - 2 };
+      const elbowL_Rest = { x: (shoulder.x + kneePosL.x) / 2 - 3.5 * cosY, y: (shoulder.y + kneePosL.y) / 2 };
+      const handL_Rest = { x: kneePosL.x + 1 * cosY, y: kneePosL.y - 1.5 };
+      const elbowR_Rest = { x: (shoulder.x + kneePosR.x) / 2 + 3.5 * cosY, y: (shoulder.y + kneePosR.y) / 2 };
+      const handR_Rest = { x: kneePosR.x + 1.5 * cosY, y: kneePosR.y - 1.5 };
 
       let elbowPosL = {
         x: numLerp(elbowL_Run.x, elbowL_Rest.x, this.pose.hunchedTired),
@@ -468,7 +467,7 @@
         ctx.fillStyle = C.NEON_MAIN;
         this.sweatParticles.forEach(p => {
           ctx.globalAlpha = p.alpha * this.pose.hunchedTired;
-          ctx.fillRect(p.x, p.y, 2, 4);
+          ctx.fillRect(p.x, p.y, 1.5, 3);
         });
         ctx.globalAlpha = 1;
       }
@@ -477,12 +476,12 @@
         ctx.save();
         ctx.fillStyle = '#222222';
         ctx.strokeStyle = C.NEON_MAIN;
-        ctx.lineWidth = 1.5;
-        const boxW = 10 * Math.abs(cosY), boxH = 9;
+        ctx.lineWidth = 1.2;
+        const boxW = 7.5 * Math.abs(cosY), boxH = 6.5;
         const boxAlpha = Math.max(0.2, (1 - this.pose.hunchedTired * 0.6));
         ctx.globalAlpha = boxAlpha;
-        ctx.fillRect(handPosR.x - 2 * cosY, handPosR.y - boxH + 2, boxW, boxH);
-        ctx.strokeRect(handPosR.x - 2 * cosY, handPosR.y - boxH + 2, boxW, boxH);
+        ctx.fillRect(handPosR.x - 1.5 * cosY, handPosR.y - boxH + 1.5, boxW, boxH);
+        ctx.strokeRect(handPosR.x - 1.5 * cosY, handPosR.y - boxH + 1.5, boxW, boxH);
         ctx.restore();
       }
 
