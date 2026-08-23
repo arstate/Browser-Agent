@@ -3238,7 +3238,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.132.0` (Iterasi 332).
+  - **Versi Terkini:** `v2.133.0` (Iterasi 333).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
 
@@ -3266,6 +3266,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Tab `🧠 Persistent Brain` di halaman Options dengan filter 4 sub-kategori, search bar, sync button, dan counter metrics bento.
      - Badge `[🤖 Autonomous AI]` neon blue.
      - Quick-access drawer button di header Side Panel dengan counter badge real-time.
+
+---
+
+### 🚀 Iterasi 333: Dark Luxury UI Overhaul for Persistent Brain & Anti-Patterns Vault
+- **Problem**:
+  - Subtab kategori pada tab Persistent Brain tampil sebagai tombol kotak putih unstyled default HTML.
+  - Kartu-kartu memori, pengalaman, dan anti-pattern tidak memiliki background container kartu (tampil sebagai teks mengambang tanpa batas), tombol hapus tampil sebagai karakter `x` unstyled, dan terdapat raw emoji yang melanggar Zero Emoji Protocol.
+- **Penyebab & Solusi**:
+  1. **Dark Luxury Card Component (`options.css` & `options.js`)**:
+     - Menambahkan `.brain-card` dengan background `var(--bg-card)` (`#1C1C1F`), border `1px solid var(--border-card)`, border-radius `16px`, padding `18px 20px`, box-shadow, dan hover effect yang smooth.
+     - Mengganti tombol `x` raw dengan `.brain-delete-btn` ber-ikon SVG trash/delete interaktif yang menyala merah saat di-hover.
+  2. **Modern Sub-Nav Pills (`options.html` & `options.css`)**:
+     - Mengganti tombol unstyled dengan `.brain-subnav-btn` ber-ikon vector SVG (`User`, `Book`, `Shield`, `Zap`) dengan active state glowing blue (`rgba(59, 130, 246, 0.15)` & border `#3B82F6`).
+  3. **Structured Anti-Pattern & Experience Layout**:
+     - Kotak merah lembut untuk deskripsi gejala kesalahan (`.brain-ap-problem`) dan kotak hijau lembut untuk solusi pemenang (`.brain-ap-solution`).
+     - Box terstruktur dengan custom scrollbar untuk intisari pengalaman (`.brain-exp-markdown`).
+  4. **Zero Emoji Protocol Enforcement**:
+     - Seluruh ikon diganti dengan Vector SVG murni.
+  5. **CRX Build & Backup**:
+     - Re-pack `extension.crx` (431.2 KB), sync ke Downloads, dan auto-push ke GitHub.
 
 
 

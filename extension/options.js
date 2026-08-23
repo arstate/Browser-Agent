@@ -2736,29 +2736,52 @@ function renderPersistentBrain(searchQuery = "") {
 
   const q = searchQuery.toLowerCase().trim();
 
+  // Helper for trash delete button
+  const makeDeleteBtn = (type, id, title = "Hapus") => `
+    <button type="button" class="brain-delete-btn btn-delete-brain-item" data-type="${escapeHtml(type)}" data-id="${escapeHtml(id)}" title="${escapeHtml(title)}">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      </svg>
+    </button>
+  `;
+
   if (activeBrainSubtab === "facts") {
     let items = brainData.user_memories || [];
     if (q) {
-      items = items.filter(m => (m.content || "").toLowerCase().includes(q) || (m.category || "").toLowerCase().includes(q));
+      items = items.filter(m => (m.content || "").toLowerCase().includes(q) || (m.category || "").toLowerCase().includes(q) || (m.reason || "").toLowerCase().includes(q));
     }
     if (items.length === 0) {
-      container.innerHTML = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;"><p>Belum ada fakta atau aturan pengguna tercatat.</p></div>';
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;"><p>Belum ada fakta atau aturan pengguna tercatat.</p></div>';
       return;
     }
     items.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'custom-item-card';
+      card.className = 'brain-card';
       const isAI = item.source === 'autonomous_ai';
       card.innerHTML = `
-        <div class="item-card-header">
-          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <span class="item-tag-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">${escapeHtml((item.category || 'fact').toUpperCase())}</span>
-            <span class="item-tag-badge" style="background: ${isAI ? 'rgba(59, 130, 246, 0.15)' : 'rgba(168, 85, 247, 0.15)'}; color: ${isAI ? '#60a5fa' : '#c084fc'}; border: 1px solid ${isAI ? 'rgba(59, 130, 246, 0.3)' : 'rgba(168, 85, 247, 0.3)'}; font-weight: 700;">${isAI ? '🤖 Autonomous AI' : '👤 User Direct'}</span>
+        <div class="brain-card-header">
+          <div class="brain-badge-group">
+            <span class="brain-badge category">${escapeHtml((item.category || 'fact').toUpperCase())}</span>
+            <span class="brain-badge ${isAI ? 'autonomous' : 'user-direct'}">
+              ${isAI ? `
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>
+                Autonomous AI
+              ` : `
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                User Direct
+              `}
+            </span>
           </div>
-          <button type="button" class="btn-card-action btn-delete-brain-item" data-type="memory" data-id="${item.id}" title="Hapus Memory">&times;</button>
+          ${makeDeleteBtn("memory", item.id, "Hapus Memory")}
         </div>
-        <div style="font-size: 14px; font-weight: 600; color: #f1f5f9; margin-top: 10px; line-height: 1.5;">${escapeHtml(item.content)}</div>
-        ${item.reason ? `<div style="font-size: 12px; color: #94a3b8; margin-top: 8px; font-style: italic;">Alasan: ${escapeHtml(item.reason)}</div>` : ''}
+        <div class="brain-card-main">${escapeHtml(item.content)}</div>
+        ${item.reason ? `
+          <div class="brain-card-reason">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Alasan: ${escapeHtml(item.reason)}</span>
+          </div>
+        ` : ''}
       `;
       container.appendChild(card);
     });
@@ -2768,19 +2791,22 @@ function renderPersistentBrain(searchQuery = "") {
       items = items.filter(e => (e.title || "").toLowerCase().includes(q) || (e.distilled_markdown || "").toLowerCase().includes(q));
     }
     if (items.length === 0) {
-      container.innerHTML = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;"><p>Belum ada pengalaman terdistilasi tercatat.</p></div>';
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;"><p>Belum ada pengalaman terdistilasi tercatat.</p></div>';
       return;
     }
     items.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'custom-item-card';
+      card.className = 'brain-card';
       card.innerHTML = `
-        <div class="item-card-header">
-          <span class="item-tag-badge" style="background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.3);">🧠 EXPERIENCE LEDGER</span>
-          <button type="button" class="btn-card-action btn-delete-brain-item" data-type="experience" data-id="${item.id}" title="Hapus Exp">&times;</button>
+        <div class="brain-card-header">
+          <span class="brain-badge" style="background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.3);">
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            EXPERIENCE LEDGER
+          </span>
+          ${makeDeleteBtn("experience", item.id, "Hapus Pengalaman")}
         </div>
-        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 10px;">${escapeHtml(item.title)}</div>
-        <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px; line-height: 1.5; white-space: pre-wrap; max-height: 140px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 8px; border-radius: 6px;">${escapeHtml(item.distilled_markdown)}</div>
+        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 4px;">${escapeHtml(item.title)}</div>
+        <div class="brain-exp-markdown">${escapeHtml(item.distilled_markdown)}</div>
       `;
       container.appendChild(card);
     });
@@ -2790,24 +2816,31 @@ function renderPersistentBrain(searchQuery = "") {
       items = items.filter(ap => (ap.target_domain || "").toLowerCase().includes(q) || (ap.mistake_description || "").toLowerCase().includes(q) || (ap.winning_fix || "").toLowerCase().includes(q));
     }
     if (items.length === 0) {
-      container.innerHTML = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;"><p>Belum ada catatan anti-pattern / kesalahan.</p></div>';
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;"><p>Belum ada catatan anti-pattern / kesalahan.</p></div>';
       return;
     }
     items.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'custom-item-card';
+      card.className = 'brain-card';
       card.style.borderColor = 'rgba(239, 68, 68, 0.25)';
       card.innerHTML = `
-        <div class="item-card-header">
-          <span class="item-tag-badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">🛡️ [${escapeHtml(item.target_domain)}]</span>
-          <button type="button" class="btn-card-action btn-delete-brain-item" data-type="anti_pattern" data-id="${item.id}" title="Hapus Anti-Pattern">&times;</button>
+        <div class="brain-card-header">
+          <span class="brain-badge anti-pattern">
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            ${escapeHtml(item.target_domain || 'GENERAL')}
+          </span>
+          ${makeDeleteBtn("anti_pattern", item.id, "Hapus Anti-Pattern")}
         </div>
-        <div style="font-size: 14px; font-weight: 700; color: #fca5a5; margin-top: 10px;">⚠️ ${escapeHtml(item.mistake_description)}</div>
-        <div style="font-size: 12px; color: #86efac; margin-top: 8px; line-height: 1.4; background: rgba(34, 197, 94, 0.1); padding: 8px; border-radius: 6px; border: 1px solid rgba(34, 197, 94, 0.2);">
-          <strong>✅ Solusi Permanen:</strong> ${escapeHtml(item.winning_fix)}
+        <div class="brain-ap-problem">
+          <div style="font-size: 11px; text-transform: uppercase; color: #f87171; font-weight: 700; margin-bottom: 4px;">Penyebab / Gejala Kesalahan:</div>
+          ${escapeHtml(item.mistake_description)}
         </div>
-        <div style="font-size: 11px; color: #94a3b8; margin-top: 6px;">
-          <strong>🔒 Aturan Pencegahan:</strong> ${escapeHtml(item.prevention_rule)}
+        <div class="brain-ap-solution">
+          <div style="font-size: 11px; text-transform: uppercase; color: #4ade80; font-weight: 700; margin-bottom: 4px;">Solusi Permanen (Winning Fix):</div>
+          ${escapeHtml(item.winning_fix)}
+        </div>
+        <div class="brain-ap-rule">
+          <span style="color: #64748b; font-weight: 600;">Aturan Pencegahan:</span> ${escapeHtml(item.prevention_rule)}
         </div>
       `;
       container.appendChild(card);
@@ -2822,42 +2855,54 @@ function renderPersistentBrain(searchQuery = "") {
     }
 
     if (skills.length === 0 && agents.length === 0) {
-      container.innerHTML = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;"><p>Belum ada Autonomous Skill / Agent yang dibuat oleh AI.</p></div>';
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;"><p>Belum ada Autonomous Skill atau Agent buatan AI.</p></div>';
       return;
     }
 
     skills.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'custom-item-card';
+      card.className = 'brain-card';
       card.style.borderColor = 'rgba(52, 211, 153, 0.3)';
       card.innerHTML = `
-        <div class="item-card-header">
-          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-            <span class="item-tag-badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3);">⚡ SKILL ${escapeHtml(item.version || 'v1.0.0')}</span>
-            <span class="item-tag-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700;">🤖 Autonomous AI</span>
+        <div class="brain-card-header">
+          <div class="brain-badge-group">
+            <span class="brain-badge skill">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              SKILL ${escapeHtml(item.version || 'v1.0.0')}
+            </span>
+            <span class="brain-badge autonomous">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg>
+              Autonomous AI
+            </span>
           </div>
-          <button type="button" class="btn-card-action btn-delete-brain-item" data-type="skill" data-id="${item.id}" title="Hapus Skill">&times;</button>
+          ${makeDeleteBtn("skill", item.id, "Hapus Skill")}
         </div>
-        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 10px;">${escapeHtml(item.name)}</div>
-        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">${escapeHtml(item.description)}</div>
+        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 4px;">${escapeHtml(item.name)}</div>
+        <div style="font-size: 12.5px; color: #94a3b8; line-height: 1.45;">${escapeHtml(item.description)}</div>
       `;
       container.appendChild(card);
     });
 
     agents.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'custom-item-card';
+      card.className = 'brain-card';
       card.style.borderColor = 'rgba(168, 85, 247, 0.3)';
       card.innerHTML = `
-        <div class="item-card-header">
-          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-            <span class="item-tag-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">🎭 AGENT</span>
-            <span class="item-tag-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700;">🤖 Autonomous AI</span>
+        <div class="brain-card-header">
+          <div class="brain-badge-group">
+            <span class="brain-badge agent">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              SPECIALIST AGENT
+            </span>
+            <span class="brain-badge autonomous">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg>
+              Autonomous AI
+            </span>
           </div>
-          <button type="button" class="btn-card-action btn-delete-brain-item" data-type="agent" data-id="${item.id}" title="Hapus Agent">&times;</button>
+          ${makeDeleteBtn("agent", item.id, "Hapus Agent")}
         </div>
-        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 10px;">${escapeHtml(item.name)}</div>
-        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">${escapeHtml(item.role_description)}</div>
+        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 4px;">${escapeHtml(item.name)}</div>
+        <div style="font-size: 12.5px; color: #94a3b8; line-height: 1.45;">${escapeHtml(item.role_description)}</div>
       `;
       container.appendChild(card);
     });
@@ -2866,12 +2911,12 @@ function renderPersistentBrain(searchQuery = "") {
 
 // Subtab buttons event listeners
 document.addEventListener('click', async (e) => {
-  const subtabBtn = e.target.closest('#tab-view-persistent-brain .btn-mode-pill');
+  const subtabBtn = e.target.closest('#tab-view-persistent-brain .brain-subnav-btn');
   if (subtabBtn) {
     const subtab = subtabBtn.getAttribute('data-subtab');
     if (subtab) {
       activeBrainSubtab = subtab;
-      document.querySelectorAll('#tab-view-persistent-brain .btn-mode-pill').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#tab-view-persistent-brain .brain-subnav-btn').forEach(b => b.classList.remove('active'));
       subtabBtn.classList.add('active');
       const searchInput = document.getElementById('search-brain-input');
       renderPersistentBrain(searchInput ? searchInput.value : "");

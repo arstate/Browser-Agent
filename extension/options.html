@@ -789,7 +789,7 @@
       <!-- TAB 5: Persistent Brain & Self-Improving Vault (Hermes-Surpassing) -->
       <div class="options-view" id="tab-view-persistent-brain" style="display: none;">
         <!-- Hero Header -->
-        <div class="bento-card bento-hero-provider-card" style="margin-bottom: 20px; border-color: rgba(59, 130, 246, 0.3);">
+        <div class="bento-card bento-hero-provider-card" style="margin-bottom: 20px; border-color: rgba(59, 130, 246, 0.25);">
           <div class="hero-provider-top-row">
             <div class="hero-provider-brand">
               <div class="hero-provider-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">
@@ -799,8 +799,8 @@
                 </svg>
               </div>
               <div>
-                <h1 class="hero-provider-title" style="color: #60a5fa;">🧠 Persistent Memory &amp; Self-Improving Brain</h1>
-                <p class="hero-provider-desc">Otak mandiri AI yang terus belajar dari setiap percakapan, mengekstrak pengalaman, mencegah kesalahan berulang (Anti-Patterns), dan menciptakan skill/agent baru secara otonom.</p>
+                <h1 class="hero-provider-title" style="color: #60a5fa;">Persistent Memory &amp; Autonomous Brain</h1>
+                <p class="hero-provider-desc">Otak otonom mandiri yang terus belajar dari setiap percakapan, mengekstrak intisari pengalaman, mencegah kesalahan berulang (Anti-Patterns), dan melahirkan skill/agent baru.</p>
               </div>
             </div>
             <div class="hero-provider-actions">
@@ -814,36 +814,60 @@
           </div>
 
           <!-- Quick Metrics Bento Grid -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px;">
-            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 14px;">
-              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Personal Facts</div>
-              <div id="stat-brain-facts" style="font-size: 22px; font-weight: 700; color: #38bdf8; margin-top: 4px;">0</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 18px;">
+            <div class="brain-metric-tile">
+              <div class="brain-metric-label">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Personal Facts &amp; Rules</span>
+              </div>
+              <div id="stat-brain-facts" class="brain-metric-value" style="color: #38bdf8;">0</div>
             </div>
-            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 14px;">
-              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Experience Ledger</div>
-              <div id="stat-brain-experiences" style="font-size: 22px; font-weight: 700; color: #a78bfa; margin-top: 4px;">0</div>
+            <div class="brain-metric-tile">
+              <div class="brain-metric-label">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <span>Experience Ledger</span>
+              </div>
+              <div id="stat-brain-experiences" class="brain-metric-value" style="color: #a78bfa;">0</div>
             </div>
-            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 14px;">
-              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Anti-Patterns Vault</div>
-              <div id="stat-brain-antipatterns" style="font-size: 22px; font-weight: 700; color: #f87171; margin-top: 4px;">0</div>
+            <div class="brain-metric-tile">
+              <div class="brain-metric-label">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Anti-Patterns Vault</span>
+              </div>
+              <div id="stat-brain-antipatterns" class="brain-metric-value" style="color: #f87171;">0</div>
             </div>
-            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 14px;">
-              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Autonomous Skills &amp; Agents</div>
-              <div id="stat-brain-autoskills" style="font-size: 22px; font-weight: 700; color: #34d399; margin-top: 4px;">0</div>
+            <div class="brain-metric-tile">
+              <div class="brain-metric-label">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>Autonomous Skills &amp; Agents</span>
+              </div>
+              <div id="stat-brain-autoskills" class="brain-metric-value" style="color: #34d399;">0</div>
             </div>
           </div>
         </div>
 
         <!-- Brain Category Sub-Nav Pills -->
-        <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; flex-wrap: wrap;">
-          <button type="button" class="btn-mode-pill active" data-subtab="facts" id="brain-subtab-facts">📌 User Profile &amp; Rules</button>
-          <button type="button" class="btn-mode-pill" data-subtab="experiences" id="brain-subtab-experiences">🧠 Experience Ledger</button>
-          <button type="button" class="btn-mode-pill" data-subtab="antipatterns" id="brain-subtab-antipatterns">🛡️ Anti-Patterns (Pelajaran Kesalahan)</button>
-          <button type="button" class="btn-mode-pill" data-subtab="autonomous" id="brain-subtab-autonomous">🤖 Autonomous Skills &amp; Agents</button>
+        <div class="brain-subnav-container">
+          <button type="button" class="brain-subnav-btn active" data-subtab="facts" id="brain-subtab-facts">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>User Profile &amp; Rules</span>
+          </button>
+          <button type="button" class="brain-subnav-btn" data-subtab="experiences" id="brain-subtab-experiences">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Experience Ledger</span>
+          </button>
+          <button type="button" class="brain-subnav-btn" data-subtab="antipatterns" id="brain-subtab-antipatterns">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Anti-Patterns (Pelajaran Kesalahan)</span>
+          </button>
+          <button type="button" class="brain-subnav-btn" data-subtab="autonomous" id="brain-subtab-autonomous">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Autonomous Skills &amp; Agents</span>
+          </button>
         </div>
 
         <!-- Search Bar Brain -->
-        <div class="catalog-search-wrapper" style="margin-bottom: 16px;">
+        <div class="catalog-search-wrapper" style="margin-bottom: 20px;">
           <div class="search-input-box">
             <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="search-brain-input" class="catalog-search-input" placeholder="Cari dalam Persistent Memory &amp; Brain vault (nama, domain, kesalahan, fakta, skill)..." spellcheck="false">
@@ -851,7 +875,7 @@
         </div>
 
         <!-- Cards Container -->
-        <div class="items-cards-grid" id="brain-cards-grid">
+        <div class="brain-cards-grid" id="brain-cards-grid">
           <!-- Rendered via JS -->
         </div>
       </div>
