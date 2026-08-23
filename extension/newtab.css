@@ -1729,48 +1729,172 @@ body.has-messages .chat-messages {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.chat-mode-switch-group {
-  display: flex;
+/* Mode Switcher Single Pill Dropup (Clean Dark Luxury) */
+.chat-mode-dropup-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-chat-mode-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 28px;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.4);
+  padding: 0 12px;
   border-radius: 9999px;
-  padding: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.btn-chat-mode-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: 100%;
-  box-sizing: border-box;
-  padding: 0 10px;
-  border-radius: 9999px;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 11px;
+  background: #27272A;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  user-select: none;
+  transition: all 0.18s ease;
 }
 
-.btn-chat-mode-toggle svg {
+.btn-chat-mode-trigger:hover {
+  background: #323238;
+  border-color: rgba(206, 241, 40, 0.35);
+}
+
+.btn-chat-mode-trigger.open {
+  border-color: var(--accent-lime);
+  box-shadow: 0 0 12px rgba(206, 241, 40, 0.15);
+}
+
+.chat-mode-trigger-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-mode-trigger-icon svg {
   width: 12px !important;
   height: 12px !important;
-}
-
-.btn-chat-mode-toggle.active {
-  background: #27272A;
-  color: #FFFFFF;
-}
-
-.btn-chat-mode-toggle.active svg {
   stroke: var(--accent-lime);
 }
 
-body.has-messages #btn-mode-websearch {
+.chat-mode-trigger-label {
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+.chat-mode-trigger-chevron {
+  width: 9px !important;
+  height: 9px !important;
+  color: #FFFFFF;
+  margin-left: 1px;
+  transition: transform 0.18s ease;
+}
+
+.btn-chat-mode-trigger.open .chat-mode-trigger-chevron {
+  transform: rotate(180deg);
+}
+
+/* Mode Dropup Menu */
+.chat-mode-dropup-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 250px;
+  background: rgba(22, 22, 26, 0.94);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  z-index: 500;
+  animation: dropupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropupFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chat-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.chat-mode-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.chat-mode-option.active {
+  background: rgba(206, 241, 40, 0.1);
+  border-color: rgba(206, 241, 40, 0.35);
+}
+
+.mode-option-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.chat-mode-option:hover .mode-option-icon {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.chat-mode-option.active .mode-option-icon {
+  background: rgba(206, 241, 40, 0.2);
+  color: var(--accent-lime);
+}
+
+.mode-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mode-option-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+
+.chat-mode-option.active .mode-option-title {
+  color: var(--accent-lime);
+}
+
+.mode-option-desc {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+body.has-messages .chat-mode-option[data-mode="websearch"] {
   display: none !important;
 }
 

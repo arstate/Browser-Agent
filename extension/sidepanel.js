@@ -3840,26 +3840,53 @@ function updateHeroSubtitleSmooth(element, newText) {
   }, 140);
 }
 
+const CHAT_MODES_CONFIG = {
+  agent: {
+    key: 'agent',
+    name: 'Agent Mode',
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg>`
+  },
+  chat: {
+    key: 'chat',
+    name: 'Chat Mode',
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`
+  },
+  websearch: {
+    key: 'websearch',
+    name: 'Web Search',
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`
+  }
+};
+
 function setChatMode(mode) {
   if (mode !== 'chat' && mode !== 'agent' && mode !== 'websearch') mode = 'agent';
   currentChatMode = mode;
   
-  const btnChat = document.getElementById('btn-mode-chat');
-  const btnAgent = document.getElementById('btn-mode-agent');
-  const btnWebSearch = document.getElementById('btn-mode-websearch');
+  const iconEl = document.getElementById('chat-mode-trigger-icon');
+  const labelEl = document.getElementById('chat-mode-trigger-label');
+  const modeInfo = CHAT_MODES_CONFIG[mode] || CHAT_MODES_CONFIG.agent;
+
+  if (iconEl) iconEl.innerHTML = modeInfo.icon;
+  if (labelEl) labelEl.textContent = modeInfo.name;
+
+  // Update active state in dropup menu options
+  document.querySelectorAll('.chat-mode-option').forEach(opt => {
+    if (opt.getAttribute('data-mode') === mode) {
+      opt.classList.add('active');
+    } else {
+      opt.classList.remove('active');
+    }
+  });
+
   const inputContainer = document.getElementById('chat-input-container');
   const agentStatusEl = document.getElementById('agent-status-text');
   const btnSendEl = document.getElementById('btn-send');
   const heroTitleEl = document.querySelector('.hero-title');
   const heroSubtitleEl = document.querySelector('.hero-subtitle');
 
-  btnChat?.classList.remove('active');
-  btnAgent?.classList.remove('active');
-  btnWebSearch?.classList.remove('active');
   inputContainer?.classList.remove('mode-websearch');
 
   if (mode === 'websearch') {
-    btnWebSearch?.classList.add('active');
     inputContainer?.classList.add('mode-websearch');
     const activeEngine = SEARCH_ENGINES[currentSearchEngine] || SEARCH_ENGINES.google;
     if (chatInput) chatInput.placeholder = activeEngine.placeholder;
@@ -3870,7 +3897,6 @@ function setChatMode(mode) {
     clearAttachments();
     clearMentionAgents();
   } else if (mode === 'chat') {
-    btnChat?.classList.add('active');
     if (chatInput) chatInput.placeholder = 'Ketik pesan chat di sini...';
     if (agentStatusEl) agentStatusEl.textContent = 'Chat Ready';
     if (btnSendEl) btnSendEl.title = 'Kirim Pesan';
@@ -3878,7 +3904,6 @@ function setChatMode(mode) {
     if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Chat freely with your personal AI assistant — fast, direct, and conversational.');
     hideWebSearchSuggestions();
   } else {
-    btnAgent?.classList.add('active');
     if (chatInput) chatInput.placeholder = 'Ketik perintah atau drop/paste gambar di sini...';
     if (agentStatusEl) agentStatusEl.textContent = 'Agent Ready';
     if (btnSendEl) btnSendEl.title = 'Kirim Perintah';
@@ -3894,6 +3919,38 @@ function setChatMode(mode) {
   }
 
   adjustChatInputHeight();
+}
+
+function initChatModeDropdown() {
+  const trigger = document.getElementById('btn-chat-mode-trigger');
+  const dropup = document.getElementById('chat-mode-dropup-menu');
+
+  trigger?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!dropup) return;
+    const isHidden = (dropup.style.display === 'none' || !dropup.style.display);
+    dropup.style.display = isHidden ? 'flex' : 'none';
+    trigger.classList.toggle('open', isHidden);
+  });
+
+  document.querySelectorAll('.chat-mode-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const selectedMode = opt.getAttribute('data-mode');
+      if (selectedMode) {
+        setChatMode(selectedMode);
+      }
+      if (dropup) dropup.style.display = 'none';
+      trigger?.classList.remove('open');
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (dropup && !dropup.contains(e.target) && !trigger?.contains(e.target)) {
+      dropup.style.display = 'none';
+      trigger?.classList.remove('open');
+    }
+  });
 }
 
 async function runChatModeLoop(userMessage, attachments = [], explicitMentions = []) {
@@ -7627,10 +7684,13 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Mode Switcher Listeners & Persistence (Default: Agent Mode)
-document.getElementById('btn-mode-chat')?.addEventListener('click', () => setChatMode('chat'));
-document.getElementById('btn-mode-agent')?.addEventListener('click', () => setChatMode('agent'));
-document.getElementById('btn-mode-websearch')?.addEventListener('click', () => setChatMode('websearch'));
+// Mode Switcher Dropdown & Persistence (Default: Agent Mode)
+try {
+  initChatModeDropdown();
+  initExecutionModeDropdown();
+  initSwitchTabDropdown();
+  initSearchEngineDropdown();
+} catch (e) {}
 
 try {
   chrome.storage.local.get(['browser_agent_mode'], (res) => {
@@ -7643,12 +7703,6 @@ try {
 } catch (e) {
   setChatMode('agent');
 }
-
-try {
-  initExecutionModeDropdown();
-  initSwitchTabDropdown();
-  initSearchEngineDropdown();
-} catch (e) {}
 
 // Robust auto-expand and auto-shrink textarea with mode-adaptive base height
 function adjustChatInputHeight() {

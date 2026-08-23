@@ -2748,6 +2748,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 317: Consolidated Single Pill Button with Dropup Menu for Mode Switcher
+- **Kebutuhan Pengguna**:
+  - Mengubah 3 tombol mode yang berjajar di atas input chat (`Agent Mode`, `Chat Mode`, `Web Search`) menjadi 1 tombol pill tunggal yang bersih dan rapi, di mana saat diklik akan memunculkan menu dropup pilihan mode.
+- **Solusi & Peningkatan**:
+  1. **Consolidated Dropup Pill (`newtab.html` & `sidepanel.html`)**:
+     - Mengganti elemen capsule `.chat-mode-switch-group` dengan `.chat-mode-dropup-wrapper` yang berisi 1 tombol trigger tunggal (`#btn-chat-mode-trigger`) berlabel mode aktif dan chevron panah.
+     - Menyediakan menu dropup `.chat-mode-dropup-menu` dengan 3 opsi terperinci:
+       * **Agent Mode** (Otomasi & eksekusi browser)
+       * **Chat Mode** (Tanya jawab & diskusi AI)
+       * **Web Search** (Cari Google & jelajah web)
+  2. **Styling & Interaction Engine (`newtab.css`, `sidepanel.css`, `sidepanel.js`)**:
+     - Menambahkan fungsi `initChatModeDropdown()` dengan dukungan auto-close saat klik di luar area (*click-outside listener*).
+     - Mengintegrasikan update otomatis ikon, label, dan persistent state Chrome Storage pada `setChatMode()`.
+  3. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.117.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 316: Modern Frosted Glassmorphism Container for Chat History Modal
 - **Kebutuhan Pengguna**:
   - Menghapus background overlay gelap pekat dan blur yang menutupi layar penuh saat membuka riwayat chat, dan mengubah container modal histori menjadi style frosted glass blur modern yang estetik.

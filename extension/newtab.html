@@ -152,31 +152,68 @@
 
         <!-- Top Status / Mode Switch Bar inside Input Container -->
         <div class="chat-input-top-bar">
-          <div class="chat-mode-switch-group">
-            <button type="button" class="btn-chat-mode-toggle active" id="btn-mode-agent" data-mode="agent" title="Mode Agent Otonom (Eksekusi Tool Otomatis)">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="10" rx="2"/>
-                <circle cx="12" cy="5" r="2"/>
-                <path d="M12 7v4"/>
-                <line x1="8" y1="16" x2="8.01" y2="16"/>
-                <line x1="16" y1="16" x2="16.01" y2="16"/>
+          <!-- Single Clean Pill Button with Dropup Menu for Mode Switching -->
+          <div class="chat-mode-dropup-wrapper" id="chat-mode-dropup-wrapper">
+            <button type="button" class="btn-chat-mode-trigger" id="btn-chat-mode-trigger" title="Pilih Mode Interaksi (Agent, Chat, Web Search)">
+              <span class="chat-mode-trigger-icon" id="chat-mode-trigger-icon">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="10" rx="2"/>
+                  <circle cx="12" cy="5" r="2"/>
+                  <path d="M12 7v4"/>
+                  <line x1="8" y1="16" x2="8.01" y2="16"/>
+                  <line x1="16" y1="16" x2="16.01" y2="16"/>
+                </svg>
+              </span>
+              <span class="chat-mode-trigger-label" id="chat-mode-trigger-label">Agent Mode</span>
+              <svg class="chat-mode-trigger-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                <polyline points="6 9 12 15 18 9"/>
               </svg>
-              <span>Agent Mode</span>
             </button>
-            <button type="button" class="btn-chat-mode-toggle" id="btn-mode-chat" data-mode="chat" title="Mode Percakapan Cepat (Tanpa Eksekusi Tool)">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-              <span>Chat Mode</span>
-            </button>
-            <button type="button" class="btn-chat-mode-toggle" id="btn-mode-websearch" data-mode="websearch" title="Cari di Google / Buka Web Langsung">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="2" y1="12" x2="22" y2="12"/>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-              </svg>
-              <span>Web Search</span>
-            </button>
+
+            <!-- Mode Dropup Menu -->
+            <div class="chat-mode-dropup-menu" id="chat-mode-dropup-menu" style="display: none;">
+              <button type="button" class="chat-mode-option active" data-mode="agent">
+                <div class="mode-option-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="10" rx="2"/>
+                    <circle cx="12" cy="5" r="2"/>
+                    <path d="M12 7v4"/>
+                    <line x1="8" y1="16" x2="8.01" y2="16"/>
+                    <line x1="16" y1="16" x2="16.01" y2="16"/>
+                  </svg>
+                </div>
+                <div class="mode-option-text">
+                  <span class="mode-option-title">Agent Mode</span>
+                  <span class="mode-option-desc">Otomasi &amp; eksekusi browser</span>
+                </div>
+              </button>
+
+              <button type="button" class="chat-mode-option" data-mode="chat">
+                <div class="mode-option-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </div>
+                <div class="mode-option-text">
+                  <span class="mode-option-title">Chat Mode</span>
+                  <span class="mode-option-desc">Tanya jawab &amp; diskusi AI</span>
+                </div>
+              </button>
+
+              <button type="button" class="chat-mode-option" data-mode="websearch">
+                <div class="mode-option-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                </div>
+                <div class="mode-option-text">
+                  <span class="mode-option-title">Web Search</span>
+                  <span class="mode-option-desc">Cari Google &amp; jelajah web</span>
+                </div>
+              </button>
+            </div>
           </div>
 
           <!-- Right Actions Container (Switch Tab & Execution Mode direct instant toggles) -->

@@ -2702,7 +2702,7 @@ body.stickman-active .chat-messages {
   gap: 6px;
 }
 
-.chat-mode-switch-group,
+.chat-mode-dropup-wrapper,
 .chat-input-header-right {
   display: inline-flex;
   align-items: center;
@@ -2716,7 +2716,11 @@ body.stickman-active .chat-messages {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.btn-chat-mode-toggle,
+.chat-mode-dropup-wrapper {
+  position: relative;
+}
+
+.btn-chat-mode-trigger,
 .btn-switch-tab-mode-trigger,
 .btn-execution-mode-trigger,
 .btn-search-engine-trigger {
@@ -2740,34 +2744,121 @@ body.stickman-active .chat-messages {
   user-select: none;
 }
 
-.btn-chat-mode-toggle svg,
-.btn-switch-tab-mode-trigger .switch-tab-mode-icon svg,
-.btn-execution-mode-trigger .execution-mode-icon svg {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
-}
-
-.btn-chat-mode-toggle:hover:not(.active),
-.btn-switch-tab-mode-trigger.is-off:hover {
-  color: #0F172A;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.btn-chat-mode-toggle.active {
+.btn-chat-mode-trigger {
   background: #0F172A;
   color: #FFFFFF;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
 }
 
-.btn-chat-mode-toggle#btn-mode-agent.active {
+.btn-chat-mode-trigger:hover {
+  background: #1E293B;
+}
+
+.btn-chat-mode-trigger .chat-mode-trigger-icon svg,
+.btn-switch-tab-mode-trigger .switch-tab-mode-icon svg,
+.btn-execution-mode-trigger .execution-mode-icon svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  stroke: #CEF128;
+  transition: transform 0.15s ease;
+}
+
+.chat-mode-trigger-chevron {
+  width: 9px;
+  height: 9px;
+  color: #FFFFFF;
+  transition: transform 0.18s ease;
+}
+
+.btn-chat-mode-trigger.open .chat-mode-trigger-chevron {
+  transform: rotate(180deg);
+}
+
+/* Dropup Menu in Sidepanel */
+.chat-mode-dropup-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
   background: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+  z-index: 500;
+  animation: dropupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chat-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.chat-mode-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chat-mode-option.active {
+  background: rgba(206, 241, 40, 0.12);
+  border-color: rgba(206, 241, 40, 0.35);
+}
+
+.mode-option-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94A3B8;
+  flex-shrink: 0;
+}
+
+.chat-mode-option:hover .mode-option-icon {
   color: #FFFFFF;
 }
 
-.btn-chat-mode-toggle#btn-mode-agent.active svg {
-  stroke: #CEF128;
+.chat-mode-option.active .mode-option-icon {
+  background: rgba(206, 241, 40, 0.22);
+  color: #CEF128;
+}
+
+.mode-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mode-option-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+
+.chat-mode-option.active .mode-option-title {
+  color: #CEF128;
+}
+
+.mode-option-desc {
+  font-size: 10px;
+  color: #94A3B8;
+  line-height: 1.2;
 }
 
 /* Web Search Mode in Sidepanel */
