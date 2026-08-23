@@ -2425,6 +2425,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.82.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 283: Penghapusan Jarak Bawah & Penambahan Jarak Atas Proporsional pada Banner Stickman
+- **Kebutuhan Pengguna**:
+  - Menghilangkan jarak kosong di bagian bawah banner stickman dan memberikan ruang napas/jarak yang cukup di bagian atas agar kepala avatar tidak mepet dengan garis border.
+- **Solusi & Peningkatan**:
+  1. **Penghapusan Jarak Bawah (Zero Bottom Gap)**:
+     - Mengubah margin container menjadi `margin: -10px -14px 0 -16px;` (margin bottom 0) pada `stickman-styles.css`.
+     - Menyesuaikan `FLOOR_Y: 61` pada tinggi stage 64px sehingga garis lantai pijakan duduk rapat di batas bawah panggung.
+  2. **Ruang Napas Atas (Top Headroom Clearance)**:
+     - Menyesuaikan radius kepala `HEAD_RADIUS: 5.2px`, panjang torso `10.5px`, serta tinggi server rack `34px` pada `stickman-physics.js` & `stickman-scenery.js`.
+     - Memberikan jarak lega (~11px) antara bagian atas kepala avatar pelari/teknisi dengan garis border atas panggung.
+  3. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.83.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2432,13 +2447,13 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **Modular Stickman Animation Structure:** Located in `extension/stickman-animation/` (`stickman-config.js`, `stickman-physics.js`, `stickman-scenery.js`, `stickman-engine.js`, `stickman-styles.css`, `index.html`).
-- **Stickman Swarm Proportions:** Compact sleek height (68px / 62px) edge-to-edge full width docked directly atop the chat input container.
+- **Stickman Swarm Proportions:** 64px / 58px height, zero bottom gap (`margin-bottom: 0`, `FLOOR_Y: 61`), generous 11px top headroom clearance, edge-to-edge full width docked directly atop the chat input container.
 - **AI Stickman Swarm Working Animation:** 60fps canvas animation docked above the prompt container displaying busy runner stickmen, cable technicians, and blinking server racks during generation.
 - **User Attached Media Thumbnails:** Constrained 84x84px compact square thumbnails (`.user-attached-thumb`) with Lightbox fullscreen click zoom.
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.82.0` (Iterasi 282).
+  - **Versi Terkini:** `v2.83.0` (Iterasi 283).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

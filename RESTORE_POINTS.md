@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.82.0`
-- **Iterasi:** `Iterasi 282`
-- **Tanggal Rilis:** 23 Agustus 2026 (12:05 WIB)
+- **Versi Terkini:** `v2.83.0`
+- **Iterasi:** `Iterasi 283`
+- **Tanggal Rilis:** 23 Agustus 2026 (12:07 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (381.8 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.83.0** | 283 | 23-08-2026 12:07 | `v2.83.0` | **Zero Bottom Gap & Generous Top Breathing Room for Stickman Swarm Banner:** Menghapus seluruh jarak kosong di bagian bawah banner (`margin: -10px -14px 0 -16px;` & `FLOOR_Y: 61` pada tinggi 64px) sehingga lantai pijakan stickman duduk rapat di batas bawah panggung. Memberikan ruang napas atas yang lega (`HEAD_RADIUS: 5.2px`, torso 10.5px) agar kepala avatar pelari dan teknisi tidak mepet dengan garis border atas. | 🟢 STABLE | `./restore.sh v2.83.0` |
 | **v2.82.0** | 282 | 23-08-2026 12:05 | `v2.82.0` | **Sleek Compact Height & Extended Full-Width Prompt Docking for Stickman Animation:** Memperkecil tinggi panggung kanvas stickman menjadi ramping (68px New Tab / 62px Sidepanel) dan memperpanjang lebar container dengan `width: calc(100% + 30px); margin: -10px -14px 6px -16px; border-radius: 19px 19px 0 0;` sehingga membentang menyatu penuh 100% dari ujung kiri ke ujung kanan bingkai input prompt tanpa celah padding. Menyesuaikan ulang seluruh proporsi avatar kinematika, radius kepala (5.8px), dan rak server agar proporsional sempurna. | 🟢 STABLE | `./restore.sh v2.82.0` |
 | **v2.81.0** | 281 | 23-08-2026 12:03 | `v2.81.0` | **Modular Separation of Stickman Animation Codebase for Easy Maintenance & Customization:** Memecah seluruh arsitektur animasi stickman ke dalam folder khusus `extension/stickman-animation/` dengan modul-modul independen: `stickman-config.js` (warna, kecepatan, runners), `stickman-physics.js` (kinematika tubuh & kurva bezier), `stickman-scenery.js` (server rack & teknisi), `stickman-engine.js` (orchestrator & 60fps render loop), `stickman-styles.css` (stylesheet dedicated), dan `index.html` (live sandbox preview). | 🟢 STABLE | `./restore.sh v2.81.0` |
 | **v2.80.0** | 280 | 23-08-2026 12:00 | `v2.80.0` | **Integration of AI Stickman Swarm Dynamic Working Animation Docked Above Prompt Input:** Mengintegrasikan sistem animasi kanvas 2D modular `stickman-animation.js` yang menampilkan swarm stickman biomekanik (pelari sprint, teknisi kabel, mekanik obeng, dan server rack berkedip) tepat di atas kotak input prompt saat AI sedang generate respon / mengeksekusi tugas. Berjalan dengan 60fps canvas render loop otomatis saat aktif dan berhenti total (0% CPU idle) saat selesai. | 🟢 STABLE | `./restore.sh v2.80.0` |

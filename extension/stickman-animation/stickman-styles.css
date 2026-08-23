@@ -2,15 +2,16 @@
  * ============================================================================
  * 🎨 STICKMAN ANIMATION STYLESHEET
  * Styling panggung kanvas stickman swarm:
- * - Ukuran tinggi diperkecil ramping (68px New Tab / 62px Sidepanel)
- * - Ukuran panjang diperpanjang membentang 100% menyatu penuh dengan kotak input prompt.
+ * - Jarak atas diberikan ruang napas proporsional.
+ * - Jarak bawah dihilangkan (margin-bottom 0 & lantai rapat batas bawah).
+ * - Ukuran panjang membentang 100% menyatu penuh dengan kotak input prompt.
  * ============================================================================
  */
 
 .ai-stickman-swarm-container {
   width: calc(100% + 30px);
   max-width: calc(100% + 30px);
-  margin: -10px -14px 6px -16px;
+  margin: -10px -14px 0 -16px;
   border-radius: 19px 19px 0 0;
   overflow: hidden;
   background: #141417;
@@ -34,7 +35,7 @@
 .ai-stickman-stage {
   position: relative;
   width: 100%;
-  height: 68px;
+  height: 64px;
   background: #141417;
   overflow: hidden;
   border-radius: 19px 19px 0 0;
@@ -54,13 +55,13 @@
   .ai-stickman-swarm-container {
     width: calc(100% + 20px);
     max-width: calc(100% + 20px);
-    margin: -8px -10px 6px -10px;
+    margin: -8px -10px 0 -10px;
     border-radius: 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
   
   .ai-stickman-stage {
-    height: 62px;
+    height: 58px;
     border-radius: 0;
   }
 }

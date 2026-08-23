@@ -2,7 +2,7 @@
  * ============================================================================
  * 🏃 STICKMAN PHYSICS & BIOMECHANICAL KINEMATICS ENGINE
  * Berisi model matematika pergerakan tubuh, kurva bezier, dan ekspresi wajah.
- * Dioptimalkan untuk tinggi kanvas ramping (Compact Sleek Proportions).
+ * Dioptimalkan untuk tinggi kanvas ramping dengan jarak atas proporsional & tanpa sela bawah.
  * ============================================================================
  */
 (() => {
@@ -11,7 +11,7 @@
     NEON_MAIN: '#CEF128',
     NEON_SECONDARY: 'rgba(206, 241, 40, 0.38)'
   };
-  const L = cfg.LAYOUT || { FLOOR_Y: 55, HEAD_RADIUS: 5.8, LIMB_THICKNESS: 2.2 };
+  const L = cfg.LAYOUT || { FLOOR_Y: 61, HEAD_RADIUS: 5.2, LIMB_THICKNESS: 2.0 };
 
   function numLerp(a, b, t) {
     const clampedT = Math.max(0, Math.min(1, t));
@@ -76,32 +76,32 @@
     const cosY = Math.cos(angleY);
     if (Math.abs(cosY) < 0.12) return;
 
-    const eyeOffX = 2.4 * cosY;
-    const eyeDist = 3.6 * cosY;
+    const eyeOffX = 2.2 * cosY;
+    const eyeDist = 3.3 * cosY;
     const leftEyeX = headX + eyeOffX - eyeDist / 2;
     const rightEyeX = headX + eyeOffX + eyeDist / 2;
-    const eyeY = headY - 0.8;
+    const eyeY = headY - 0.7;
 
     ctx.save();
     ctx.fillStyle = '#141414';
     ctx.strokeStyle = '#141414';
-    ctx.lineWidth = 1.1;
+    ctx.lineWidth = 1.0;
     ctx.lineCap = 'round';
 
-    const pant = Math.sin(time * 8) * 0.4 * exprBlend;
-    const browAngleL = (-2.4 * (1 - exprBlend)) + (1.2 * exprBlend);
-    const browAngleR = (-1.8 * (1 - exprBlend)) + (-1.2 * exprBlend);
+    const pant = Math.sin(time * 8) * 0.35 * exprBlend;
+    const browAngleL = (-2.2 * (1 - exprBlend)) + (1.1 * exprBlend);
+    const browAngleR = (-1.6 * (1 - exprBlend)) + (-1.1 * exprBlend);
 
     ctx.beginPath();
-    ctx.moveTo(leftEyeX - 1.6 * cosY, eyeY - 2.2 + browAngleL + pant);
-    ctx.lineTo(leftEyeX + 1.4 * cosY, eyeY - 1.0 + pant);
-    ctx.moveTo(rightEyeX - 1.4 * cosY, eyeY - 1.0 + pant);
-    ctx.lineTo(rightEyeX + 1.6 * cosY, eyeY - 2.2 + browAngleR + pant);
+    ctx.moveTo(leftEyeX - 1.4 * cosY, eyeY - 2.0 + browAngleL + pant);
+    ctx.lineTo(leftEyeX + 1.2 * cosY, eyeY - 0.9 + pant);
+    ctx.moveTo(rightEyeX - 1.2 * cosY, eyeY - 0.9 + pant);
+    ctx.lineTo(rightEyeX + 1.4 * cosY, eyeY - 2.0 + browAngleR + pant);
     ctx.stroke();
 
-    const eyeHeight = Math.max(0.8, 2.4 * (1 - exprBlend * 0.7));
-    ctx.fillRect(leftEyeX - 1.0 * cosY, eyeY - 0.4 + pant, 2.0 * Math.abs(cosY), eyeHeight);
-    ctx.fillRect(rightEyeX - 1.0 * cosY, eyeY - 0.4 + pant, 2.0 * Math.abs(cosY), eyeHeight);
+    const eyeHeight = Math.max(0.7, 2.2 * (1 - exprBlend * 0.7));
+    ctx.fillRect(leftEyeX - 0.9 * cosY, eyeY - 0.4 + pant, 1.8 * Math.abs(cosY), eyeHeight);
+    ctx.fillRect(rightEyeX - 0.9 * cosY, eyeY - 0.4 + pant, 1.8 * Math.abs(cosY), eyeHeight);
     ctx.restore();
   }
 
@@ -170,8 +170,8 @@
         if (Math.random() < 0.25) {
           this.sweatParticles.push({
             x: this.x + 6 * Math.cos(this.angleY),
-            y: floorY - 26,
-            vy: 0.7 + Math.random() * 0.6,
+            y: floorY - 24,
+            vy: 0.6 + Math.random() * 0.5,
             alpha: 1
           });
         }
@@ -243,11 +243,11 @@
 
       const speedNorm = Math.max(0, Math.min(1.2, this.vx / 3.3));
       const realLean = (targetHunched > 0.5) 
-        ? 0.72 
-        : (0.06 + Math.pow(speedNorm, 1.35) * 0.62);
+        ? 0.70 
+        : (0.06 + Math.pow(speedNorm, 1.35) * 0.60);
       const realHeightDrop = (targetHunched > 0.5) 
-        ? 9.5 
-        : (Math.pow(speedNorm, 1.25) * 8.5);
+        ? 8.5 
+        : (Math.pow(speedNorm, 1.25) * 7.5);
       const realElbowLock = (targetHunched > 0.5)
         ? 0.4
         : (0.15 + Math.pow(speedNorm, 1.2) * 0.85);
@@ -284,28 +284,28 @@
     draw(ctx, time, floorY) {
       if (!ctx) return;
       const cosY = Math.cos(this.angleY);
-      const flightStretch = Math.max(0, Math.cos(this.gaitPhase * 2)) * 2.2 * this.pose.speedFactor;
-      const plantSquash = Math.max(0, -Math.cos(this.gaitPhase * 2)) * 1.6 * this.pose.speedFactor;
-      const verticalBob = (Math.abs(Math.sin(this.gaitPhase)) * 2.6 * this.pose.speedFactor) + flightStretch - plantSquash;
+      const flightStretch = Math.max(0, Math.cos(this.gaitPhase * 2)) * 1.8 * this.pose.speedFactor;
+      const plantSquash = Math.max(0, -Math.cos(this.gaitPhase * 2)) * 1.4 * this.pose.speedFactor;
+      const verticalBob = (Math.abs(Math.sin(this.gaitPhase)) * 2.2 * this.pose.speedFactor) + flightStretch - plantSquash;
 
-      let pelvisY = floorY - 26 + verticalBob + this.pose.heightDrop;
+      let pelvisY = floorY - 24 + verticalBob + this.pose.heightDrop;
       const pelvis = { x: this.x, y: pelvisY };
 
       const lean = this.pose.forwardLean;
-      const torsoLength = 11.5 + (flightStretch * 0.3);
+      const torsoLength = 10.5 + (flightStretch * 0.25);
       const chest = {
         x: this.x + Math.sin(lean) * torsoLength * cosY,
         y: pelvisY - Math.cos(lean) * torsoLength
       };
       const neck = {
-        x: chest.x + Math.sin(lean * 1.25) * 5.5 * cosY,
-        y: chest.y - Math.cos(lean * 1.25) * 5.5
+        x: chest.x + Math.sin(lean * 1.25) * 5.0 * cosY,
+        y: chest.y - Math.cos(lean * 1.25) * 5.0
       };
 
-      const pantOffset = Math.sin(time * 8) * (2.0 * this.pose.gaspIntensity);
+      const pantOffset = Math.sin(time * 8) * (1.8 * this.pose.gaspIntensity);
       const head = {
-        x: neck.x + 1.5 * cosY,
-        y: neck.y - 5.5 + pantOffset
+        x: neck.x + 1.2 * cosY,
+        y: neck.y - 5.0 + pantOffset
       };
 
       // Kaki Kinematik Kompak
@@ -313,15 +313,15 @@
       const kneeDriveL = Math.max(0, Math.cos(this.gaitPhase)) * (0.2 + this.pose.speedFactor * 1.0);
       const kneeDriveR = Math.max(0, -Math.cos(this.gaitPhase)) * (0.2 + this.pose.speedFactor * 1.0);
 
-      const kneeL_Rest = { x: pelvis.x + 8 * cosY, y: pelvis.y + 11 };
-      const footL_Rest = { x: pelvis.x + 4 * cosY, y: floorY };
+      const kneeL_Rest = { x: pelvis.x + 7 * cosY, y: pelvis.y + 10 };
+      const footL_Rest = { x: pelvis.x + 3.5 * cosY, y: floorY };
       const kneeL_Run = {
-        x: pelvis.x + (Math.sin(legStride) * 9 + (kneeDriveL * 10)) * cosY,
-        y: pelvis.y + 11 - (kneeDriveL * 9)
+        x: pelvis.x + (Math.sin(legStride) * 8 + (kneeDriveL * 9)) * cosY,
+        y: pelvis.y + 10 - (kneeDriveL * 8)
       };
       const footL_Run = {
-        x: pelvis.x + (Math.sin(legStride) * 16) * cosY,
-        y: floorY - (kneeDriveL * 4)
+        x: pelvis.x + (Math.sin(legStride) * 15) * cosY,
+        y: floorY - (kneeDriveL * 3.5)
       };
       const kneePosL = {
         x: numLerp(kneeL_Run.x, kneeL_Rest.x, this.pose.hunchedTired),
@@ -332,15 +332,15 @@
         y: numLerp(footL_Run.y, footL_Rest.y, this.pose.hunchedTired)
       };
 
-      const kneeR_Rest = { x: pelvis.x - 6 * cosY, y: pelvis.y + 11 };
-      const footR_Rest = { x: pelvis.x - 3 * cosY, y: floorY };
+      const kneeR_Rest = { x: pelvis.x - 5.5 * cosY, y: pelvis.y + 10 };
+      const footR_Rest = { x: pelvis.x - 2.5 * cosY, y: floorY };
       const kneeR_Run = {
-        x: pelvis.x + (Math.sin(-legStride) * 9 + (kneeDriveR * 10)) * cosY,
-        y: pelvis.y + 11 - (kneeDriveR * 9)
+        x: pelvis.x + (Math.sin(-legStride) * 8 + (kneeDriveR * 9)) * cosY,
+        y: pelvis.y + 10 - (kneeDriveR * 8)
       };
       const footR_Run = {
-        x: pelvis.x + (Math.sin(-legStride) * 16) * cosY,
-        y: floorY - (kneeDriveR * 4)
+        x: pelvis.x + (Math.sin(-legStride) * 15) * cosY,
+        y: floorY - (kneeDriveR * 3.5)
       };
       const kneePosR = {
         x: numLerp(kneeR_Run.x, kneeR_Rest.x, this.pose.hunchedTired),
@@ -351,7 +351,7 @@
         y: numLerp(footR_Run.y, footR_Rest.y, this.pose.hunchedTired)
       };
 
-      const strokeThickness = L.LIMB_THICKNESS || 2.2;
+      const strokeThickness = L.LIMB_THICKNESS || 2.0;
 
       // 1. Kaki Belakang
       if (cosY >= 0) drawBranchLeg(ctx, pelvis, kneePosL, footPosL, strokeThickness * 0.85, C.NEON_SECONDARY);
@@ -363,7 +363,7 @@
 
       // Kepala Avatar Neon Solid
       ctx.beginPath();
-      ctx.arc(head.x, head.y, L.HEAD_RADIUS || 5.8, 0, Math.PI * 2);
+      ctx.arc(head.x, head.y, L.HEAD_RADIUS || 5.2, 0, Math.PI * 2);
       ctx.fillStyle = C.NEON_MAIN;
       ctx.fill();
 
@@ -375,21 +375,21 @@
 
       const armSwingL = Math.sin(armCycle) * pumpAmp;
       const elbowL_Sprint = {
-        x: shoulder.x - Math.sin(armSwingL) * 7.5 * cosY,
-        y: shoulder.y + 6 + Math.cos(armSwingL) * 1.5
+        x: shoulder.x - Math.sin(armSwingL) * 6.8 * cosY,
+        y: shoulder.y + 5.5 + Math.cos(armSwingL) * 1.2
       };
       const handL_Sprint = {
-        x: elbowL_Sprint.x + Math.sin(armSwingL + 1.25) * 7.0 * cosY,
-        y: elbowL_Sprint.y - Math.cos(armSwingL + 1.25) * 6.5
+        x: elbowL_Sprint.x + Math.sin(armSwingL + 1.25) * 6.5 * cosY,
+        y: elbowL_Sprint.y - Math.cos(armSwingL + 1.25) * 6.0
       };
 
       const elbowL_Walk = {
-        x: shoulder.x + Math.sin(armSwingL * 0.5) * 5.5 * cosY,
-        y: shoulder.y + 7.5
+        x: shoulder.x + Math.sin(armSwingL * 0.5) * 5.0 * cosY,
+        y: shoulder.y + 6.8
       };
       const handL_Walk = {
-        x: elbowL_Walk.x + Math.sin(armSwingL * 0.55) * 6.5 * cosY,
-        y: elbowL_Walk.y + 6.5
+        x: elbowL_Walk.x + Math.sin(armSwingL * 0.55) * 5.8 * cosY,
+        y: elbowL_Walk.y + 5.8
       };
 
       const elbowL_Run = {
@@ -403,21 +403,21 @@
 
       const armSwingR = Math.sin(-armCycle) * pumpAmp;
       const elbowR_Sprint = {
-        x: shoulder.x - Math.sin(armSwingR) * 7.5 * cosY + 2 * cosY,
-        y: shoulder.y + 6 + Math.cos(armSwingR) * 1.5
+        x: shoulder.x - Math.sin(armSwingR) * 6.8 * cosY + 1.8 * cosY,
+        y: shoulder.y + 5.5 + Math.cos(armSwingR) * 1.2
       };
       const handR_Sprint = {
-        x: elbowR_Sprint.x + Math.sin(armSwingR + 1.25) * 7.0 * cosY,
-        y: elbowR_Sprint.y - Math.cos(armSwingR + 1.25) * 6.5
+        x: elbowR_Sprint.x + Math.sin(armSwingR + 1.25) * 6.5 * cosY,
+        y: elbowR_Sprint.y - Math.cos(armSwingR + 1.25) * 6.0
       };
 
       const elbowR_Walk = {
-        x: shoulder.x + Math.sin(armSwingR * 0.5) * 5.5 * cosY + 1.5 * cosY,
-        y: shoulder.y + 7.5
+        x: shoulder.x + Math.sin(armSwingR * 0.5) * 5.0 * cosY + 1.2 * cosY,
+        y: shoulder.y + 6.8
       };
       const handR_Walk = {
-        x: elbowR_Walk.x + Math.sin(armSwingR * 0.55) * 6.5 * cosY,
-        y: elbowR_Walk.y + 6.5
+        x: elbowR_Walk.x + Math.sin(armSwingR * 0.55) * 5.8 * cosY,
+        y: elbowR_Walk.y + 5.8
       };
 
       const elbowR_Run = {
@@ -429,13 +429,13 @@
         y: numLerp(handR_Walk.y, handR_Sprint.y, elbowLock)
       };
 
-      const elbowR_Handover = { x: shoulder.x + 7 * cosY, y: shoulder.y + 3 };
-      const handR_Handover = { x: shoulder.x + 15 * cosY, y: shoulder.y + 1 };
+      const elbowR_Handover = { x: shoulder.x + 6 * cosY, y: shoulder.y + 2.5 };
+      const handR_Handover = { x: shoulder.x + 13 * cosY, y: shoulder.y + 1.0 };
 
-      const elbowL_Rest = { x: (shoulder.x + kneePosL.x) / 2 - 3.5 * cosY, y: (shoulder.y + kneePosL.y) / 2 };
-      const handL_Rest = { x: kneePosL.x + 1 * cosY, y: kneePosL.y - 1.5 };
-      const elbowR_Rest = { x: (shoulder.x + kneePosR.x) / 2 + 3.5 * cosY, y: (shoulder.y + kneePosR.y) / 2 };
-      const handR_Rest = { x: kneePosR.x + 1.5 * cosY, y: kneePosR.y - 1.5 };
+      const elbowL_Rest = { x: (shoulder.x + kneePosL.x) / 2 - 3.0 * cosY, y: (shoulder.y + kneePosL.y) / 2 };
+      const handL_Rest = { x: kneePosL.x + 0.8 * cosY, y: kneePosL.y - 1.2 };
+      const elbowR_Rest = { x: (shoulder.x + kneePosR.x) / 2 + 3.0 * cosY, y: (shoulder.y + kneePosR.y) / 2 };
+      const handR_Rest = { x: kneePosR.x + 1.2 * cosY, y: kneePosR.y - 1.2 };
 
       let elbowPosL = {
         x: numLerp(elbowL_Run.x, elbowL_Rest.x, this.pose.hunchedTired),
@@ -467,7 +467,7 @@
         ctx.fillStyle = C.NEON_MAIN;
         this.sweatParticles.forEach(p => {
           ctx.globalAlpha = p.alpha * this.pose.hunchedTired;
-          ctx.fillRect(p.x, p.y, 1.5, 3);
+          ctx.fillRect(p.x, p.y, 1.2, 2.5);
         });
         ctx.globalAlpha = 1;
       }
@@ -476,12 +476,12 @@
         ctx.save();
         ctx.fillStyle = '#222222';
         ctx.strokeStyle = C.NEON_MAIN;
-        ctx.lineWidth = 1.2;
-        const boxW = 7.5 * Math.abs(cosY), boxH = 6.5;
+        ctx.lineWidth = 1.1;
+        const boxW = 6.8 * Math.abs(cosY), boxH = 5.8;
         const boxAlpha = Math.max(0.2, (1 - this.pose.hunchedTired * 0.6));
         ctx.globalAlpha = boxAlpha;
-        ctx.fillRect(handPosR.x - 1.5 * cosY, handPosR.y - boxH + 1.5, boxW, boxH);
-        ctx.strokeRect(handPosR.x - 1.5 * cosY, handPosR.y - boxH + 1.5, boxW, boxH);
+        ctx.fillRect(handPosR.x - 1.2 * cosY, handPosR.y - boxH + 1.2, boxW, boxH);
+        ctx.strokeRect(handPosR.x - 1.2 * cosY, handPosR.y - boxH + 1.2, boxW, boxH);
         ctx.restore();
       }
 
