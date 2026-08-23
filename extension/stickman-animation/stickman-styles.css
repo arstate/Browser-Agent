@@ -5,31 +5,43 @@
  * - Jarak atas diberikan ruang napas proporsional.
  * - Jarak bawah dihilangkan (margin-bottom 0 & lantai rapat batas bawah).
  * - Ukuran panjang membentang 100% menyatu penuh dengan kotak input prompt.
+ * - Animasi morphing ekspansi & kolaps yang halus, mulus, dan seamless.
  * ============================================================================
  */
 
 .ai-stickman-swarm-container {
   width: calc(100% + 30px);
   max-width: calc(100% + 30px);
-  margin: -10px -14px 0 -16px;
+  margin: 0 -14px 0 -16px;
   border-radius: 19px 19px 0 0;
   overflow: hidden;
   background: #141417;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
-  animation: stickmanFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
   box-sizing: border-box;
+
+  /* Smooth Morphing Transition (Expand / Collapse) */
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(12px) scaleY(0.65);
+  transform-origin: bottom center;
+  pointer-events: none;
+  transition: max-height 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease,
+              transform 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              margin-top 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              border-bottom-color 0.3s ease,
+              box-shadow 0.35s ease;
 }
 
-@keyframes stickmanFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.ai-stickman-swarm-container.is-active {
+  max-height: 50px;
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+  margin-top: -10px;
+  border-bottom-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
 }
 
 .ai-stickman-stage {
@@ -55,9 +67,14 @@
   .ai-stickman-swarm-container {
     width: calc(100% + 20px);
     max-width: calc(100% + 20px);
-    margin: -8px -10px 0 -10px;
+    margin: 0 -10px 0 -10px;
     border-radius: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .ai-stickman-swarm-container.is-active {
+    max-height: 44px;
+    margin-top: -8px;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
   }
   
   .ai-stickman-stage {

@@ -1103,6 +1103,11 @@ body {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  transition: padding-bottom 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.stickman-active .chat-messages {
+  padding-bottom: 64px;
 }
 
 /* Clean Elegant Welcome Hero Card */

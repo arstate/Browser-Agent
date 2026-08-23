@@ -2748,6 +2748,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 303: Smooth Morphing Animation & Dynamic Chat Clearance Spacing for Stickman Swarm
+- **Kebutuhan Pengguna**:
+  - Memberikan jarak otomatis di atas container stickman ketika animasi aktif agar pesan/kartu aksi agent tidak tertutup atau menempel rapat di atas panggung stickman, dengan transisi kembalinya yang smooth/tidak patah saat selesai.
+  - Membuat animasi kemunculan dan hilangnya container stickman swarm menjadi transisi morphing yang mulus dan seamless.
+- **Solusi & Peningkatan**:
+  1. **Smooth Morphing Transition for Stickman (`stickman-styles.css`, `stickman-engine.js`)**:
+     - Merancang `.ai-stickman-swarm-container` dengan `max-height: 0`, `opacity: 0`, `transform: translateY(12px) scaleY(0.65)` saat inaktif, dan bertransisi mulus ke `max-height: 50px`, `opacity: 1`, `transform: translateY(0) scaleY(1)` (`.is-active`) menggunakan kurva `cubic-bezier(0.16, 1, 0.3, 1)`.
+     - Saat stop, container dikolaps mulus selama 400ms sembari render loop tetap berjalan sebelum kanvas dibersihkan dan di-hide.
+  2. **Dynamic Chat Room Spacing (`newtab.css`, `sidepanel.css`)**:
+     - Menambahkan class `body.stickman-active` saat animasi menyala.
+     - `.fullscreen-chat-main` padding-bottom otomatis bertambah dari 160px menjadi 235px (dan `.chat-messages` diberi padding-bottom ekstra) dengan transisi `0.38s cubic-bezier(0.16, 1, 0.3, 1)`.
+     - Ketika AI selesai bekerja, jarak chat room meluncur kembali ke posisi normal secara halus tanpa patah.
+  3. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.103.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2755,6 +2772,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
+- **Stickman Swarm Smooth Morphing & Chat Spacing:** Transisi `max-height 0.38s cubic-bezier(0.16, 1, 0.3, 1)`, class `body.stickman-active` menambahkan padding-bottom 235px pada chat room secara mulus saat bekerja dan meluncur kembali ke posisi normal saat selesai.
 - **Add Model Row:** Tombol `+ Tambah Model Baru` di Options dan Sidepanel Settings menambahkan baris draft `{ id: '', name: '' }` secara instan dan fokus langsung ke input Nama UI.
 - **Search Engine Selector Seamless Pill:** `#btn-search-engine-trigger` duduk flush di dalam `.chat-input-header-right` (tanpa double wrapper/nesting), berlatar `#27272A`, icon Globe + teks neon lime `#CEF128`, chevron dropup.
 - **Stickman Swarm Compact Proportions:** 50px height (Newtab) / 44px (Sidepanel), `FLOOR_Y: 47`, 4.8px head radius, zero bottom gap, docked directly atop the chat input prompt.

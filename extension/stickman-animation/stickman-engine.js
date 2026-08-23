@@ -90,11 +90,23 @@
     }
   }
 
+  let hideTimeout = null;
+
   window.startStickmanSwarmAnimation = () => {
     setupElements();
     if (!wrapper || !canvas) return;
     
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
+    }
+
     wrapper.style.display = 'block';
+    // Force layout reflow before triggering smooth CSS expansion transition
+    void wrapper.offsetWidth;
+    wrapper.classList.add('is-active');
+    document.body.classList.add('stickman-active');
+    
     resize();
     initRunners();
     
@@ -104,20 +116,32 @@
       if (animFrameId) cancelAnimationFrame(animFrameId);
       animFrameId = requestAnimationFrame(renderLoop);
     }
+
+    if (typeof scrollToBottom === 'function') {
+      setTimeout(() => { scrollToBottom(true); }, 50);
+    }
   };
 
   window.stopStickmanSwarmAnimation = () => {
-    isRunning = false;
-    if (animFrameId) {
-      cancelAnimationFrame(animFrameId);
-      animFrameId = null;
-    }
-    if (wrapper) {
-      wrapper.style.display = 'none';
-    }
-    if (ctx && canvas) {
-      ctx.clearRect(0, 0, width, height);
-    }
+    if (!wrapper) return;
+    
+    document.body.classList.remove('stickman-active');
+    wrapper.classList.remove('is-active');
+    
+    if (hideTimeout) clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(() => {
+      isRunning = false;
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      if (wrapper && !wrapper.classList.contains('is-active')) {
+        wrapper.style.display = 'none';
+      }
+      if (ctx && canvas && !isRunning) {
+        ctx.clearRect(0, 0, width, height);
+      }
+    }, 400); // 400ms matches smooth morph transition
   };
 
   window.addEventListener('resize', () => {

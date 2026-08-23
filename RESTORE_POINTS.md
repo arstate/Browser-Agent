@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.102.0`
-- **Iterasi:** `Iterasi 302`
-- **Tanggal Rilis:** 24 Agustus 2026 (00:33 WIB)
+- **Versi Terkini:** `v2.103.0`
+- **Iterasi:** `Iterasi 303`
+- **Tanggal Rilis:** 24 Agustus 2026 (00:37 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.1 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.2 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.103.0** | 303 | 24-08-2026 00:37 | `v2.103.0` | **Smooth Morphing Animation & Dynamic Chat Clearance Spacing for Stickman Swarm:** Mengimplementasikan transisi morphing mulus (`max-height: 0` ➔ `50px`, `transform: translateY` + `scaleY`, `opacity`) pada kemunculan dan kolaps panggung animasi stickman swarm (`.ai-stickman-swarm-container`) sehingga tidak patah/abrupt saat mulai maupun selesai. Menambahkan jarak dinamis otomatis dengan transisi cubic-bezier pada area chat bawah (`.fullscreen-chat-main` padding-bottom: 235px & `.chat-messages` padding-bottom) saat animasi aktif, sehingga pesan/kartu aksi agent tidak tertutup atau menempel rapat di atas kanvas stickman. | 🟢 STABLE | `./restore.sh v2.103.0` |
 | **v2.102.0** | 302 | 24-08-2026 00:33 | `v2.102.0` | **Fix Add Model Row Bug in Options & Settings:** Memperbaiki bug di mana tombol `+ Tambah Model Baru` tidak menambahkan baris model karena fungsi `saveAllConfig` sebelumnya menyaring/mengabaikan baris dengan string ID kosong saat auto-save dipicu, sehingga event `storage.onChanged` merender ulang dan menghapus baris baru sebelum pengguna sempat mengetik. Menjaga baris draft model tetap ada di array konfigurasi dan mencegah render ulang menimpa fokus input saat pengguna sedang mengetik. | 🟢 STABLE | `./restore.sh v2.102.0` |
 | **v2.101.0** | 301 | 24-08-2026 00:31 | `v2.101.0` | **Fix Double-Track Nesting & Perfectly Flush Symmetrical Pill Alignment:** Menghilangkan double-border dan double-background gelap yang terjadi karena `#search-engine-wrapper` sebelumnya didefinisikan sebagai track well di dalam `.chat-input-header-right` yang sudah memiliki track tersendiri. Mengubah `#search-engine-wrapper` menjadi transparan (`background: transparent; border: none; padding: 0`) dan menata `#btn-search-engine-trigger` menjadi satu pill tunggal yang duduk flush presisi di dalam track header, dengan icon-text-chevron baseline `line-height: 1` yang rapi dan simetris 100% dengan toggle kiri. | 🟢 STABLE | `./restore.sh v2.101.0` |
 | **v2.100.0** | 300 | 24-08-2026 00:30 | `v2.100.0` | **Seamless Track Well & Borderless Fill Aesthetic for Search Engine Selector Pill:** Menggantikan border/stroke outline neon yang sebelumnya mencolok pada tombol `#btn-search-engine-trigger` dengan gaya seamless pill persis seperti toggle tab Agent Mode & Web Search. Tombol duduk rapi di dalam track well semi-transparan (`rgba(0,0,0,0.4)` dengan padding 2px) dengan fill dark slate `#27272A`, tanpa border stroke luar (`border: none`), dan icon Globe + teks neon lime `#CEF128` yang tajam dan elegan. | 🟢 STABLE | `./restore.sh v2.100.0` |
