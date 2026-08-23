@@ -2748,6 +2748,17 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 328: Update AI Thinking Level Label to Extreme
+- **Kebutuhan Pengguna**:
+  - Mengubah teks opsi penalaran berpikir tertinggi dari `Max (10x)` menjadi `Extreme`.
+- **Solusi Teknis**:
+  - Mengubah markup teks tombol dan dropup di `newtab.html` dan `sidepanel.html` menjadi `Extreme`.
+  - Mengubah label trigger dan directive di `sidepanel.js` (`Thinking: Extreme`).
+- **Verifikasi**:
+  - JS & CSS Syntax check lulus 100%.
+  - Restore Point: `v2.128.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 327: Hacked Client-Side AI Thinking Level Selector (Low, Medium, High, Xhigh, Max 10x)
 - **Kebutuhan Pengguna**:
   - Menambahkan tombol dropup tingkat berpikir AI di sebelah tombol `Agent Mode` (Clean text only, tanpa icon) dengan 5 tingkatan logika: Low, Medium, High, Xhigh, dan Max (10x lipat mikir keras).

@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.127.0`
-- **Iterasi:** `Iterasi 327`
-- **Tanggal Rilis:** 24 Agustus 2026 (01:51 WIB)
+- **Versi Terkini:** `v2.128.0`
+- **Iterasi:** `Iterasi 328`
+- **Tanggal Rilis:** 24 Agustus 2026 (01:53 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.6 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.128.0** | 328 | 24-08-2026 01:53 | `v2.128.0` | **Update AI Thinking Level Label to Extreme:** Mengubah teks label opsi penalaran tingkat tertinggi dari `Max (10x)` menjadi `Extreme` pada trigger button, menu dropup, dan meta-cognitive directive di New Tab dan Sidepanel. | 🟢 STABLE | `./restore.sh v2.128.0` |
 | **v2.127.0** | 327 | 24-08-2026 01:51 | `v2.127.0` | **Hacked Client-Side AI Thinking Level Selector (Low, Medium, High, Xhigh, Max 10x):** Menambahkan tombol dropup tingkat penalaran AI `[ Thinking: High ⌵ ]` di sebelah kanan `Agent Mode` (Clean minimal text tanpa icon) yang diakali langsung pada level meta-prompting sistem tanpa bergantung pada API model, memaksa agen berpikir bertahap hingga 10x lipat lebih keras pada level Max. | 🟢 STABLE | `./restore.sh v2.127.0` |
 | **v2.126.0** | 326 | 24-08-2026 01:43 | `v2.126.0` | **Full Rounded Pill Styling for Switch Tab & Execution Mode Triggers:** Mengubah tombol `Switch Tab: ON` dan `Accept/Planning` dari bentuk split capsule terpotong menjadi tombol kapsul bulat penuh (standalone full rounded pill `border-radius: 9999px`) dengan border dan background yang serasi 100% dengan tombol `Agent Mode`. | 🟢 STABLE | `./restore.sh v2.126.0` |
 | **v2.125.0** | 325 | 24-08-2026 01:42 | `v2.125.0` | **Live AI Image Rendering & Clean Standalone Search Engine Pill:** Menghilangkan penyebab gambar AI `generate_image` hanya muncul di histori chat dengan mempertahankan markdown gambar langsung di bubble chat aktif secara live (melalui array session tracker dan streaming hydration seketika), serta memastikan tombol search engine bersih tanpa background/border ganda. | 🟢 STABLE | `./restore.sh v2.125.0` |

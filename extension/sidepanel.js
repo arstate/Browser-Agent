@@ -493,8 +493,9 @@ function getThinkingDirective(level) {
       return `\n\n=== [AI THINKING LEVEL: XHIGH (Kritik Diri Ketat — Adversarial Red-Teaming)] ===
 - Bertindaklah sebagai pengkritik paling tajam terhadap draf Anda sendiri (Devil's Advocate).
 - Cari minimal 3 potensi celah, bug, asumsi keliru, atau kontradiksi logis pada draf Anda, perbaiki seluruh kelemahan tersebut, lalu sajikan solusi yang kokoh tanpa celah.`;
+    case "extreme":
     case "max":
-      return `\n\n=== [AI THINKING LEVEL: MAX (10x LIPAT MIKIR KERAS — First Principles & Exhaustive Stress-Testing)] ===
+      return `\n\n=== [AI THINKING LEVEL: EXTREME (10x LIPAT MIKIR KERAS — First Principles & Exhaustive Stress-Testing)] ===
 - KERAHKAN KAPASITAS PENALARAN MAKSIMAL (10x LIPAT LEBIH MIKIR KERAS).
 - Dekonstruksi seluruh masalah dari prinsip paling mendasar (First Principles).
 - Simulasikan skenario kegagalan sistem terburuk (Worst-Case Failure Modes & Edge Case Stress-Testing).
@@ -2803,7 +2804,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   try {
     while (currentStep < maxSteps && isExecuting) {
       currentStep++;
-      const thinkTag = currentThinkingLevel === 'max' ? ' (Max 10x)' : (currentThinkingLevel === 'xhigh' ? ' (Xhigh)' : (currentThinkingLevel === 'low' ? ' (Fast)' : ''));
+      const thinkTag = (currentThinkingLevel === 'max' || currentThinkingLevel === 'extreme') ? ' (Extreme 10x)' : (currentThinkingLevel === 'xhigh' ? ' (Xhigh)' : (currentThinkingLevel === 'low' ? ' (Fast)' : ''));
       if (hasBoss) {
         updateFooterStatus(`👑 Master Agent${thinkTag} (Step ${currentStep})...`);
         notifyActiveTabExecutionState(true, currentStep, maxSteps, `Master Agent${thinkTag}: Step ${currentStep}/${maxSteps}`);
@@ -3747,7 +3748,7 @@ function initSearchEngineDropdown() {
 }
 
 function setThinkingLevel(level) {
-  if (!['low', 'medium', 'high', 'xhigh', 'max'].includes(level)) level = 'high';
+  if (!['low', 'medium', 'high', 'xhigh', 'extreme', 'max'].includes(level)) level = 'high';
   currentThinkingLevel = level;
 
   const labels = {
@@ -3755,14 +3756,16 @@ function setThinkingLevel(level) {
     medium: "Thinking: Medium",
     high: "Thinking: High",
     xhigh: "Thinking: Xhigh",
-    max: "Thinking: Max (10x)"
+    extreme: "Thinking: Extreme",
+    max: "Thinking: Extreme"
   };
 
   const labelEl = document.getElementById('thinking-level-label');
   if (labelEl) labelEl.textContent = labels[level] || "Thinking: High";
 
   document.querySelectorAll('.thinking-level-option').forEach(opt => {
-    if (opt.getAttribute('data-level') === level) {
+    const optLvl = opt.getAttribute('data-level');
+    if (optLvl === level || (level === 'extreme' && optLvl === 'max') || (level === 'max' && optLvl === 'extreme')) {
       opt.classList.add('active');
     } else {
       opt.classList.remove('active');
