@@ -4792,12 +4792,20 @@ function getToolIcon(name) {
 
 function updateSendButtonState(loading) {
   if (!btnSend) return;
+  const inputContainer = document.getElementById('chat-input-container') || document.querySelector('.chat-input-container');
+  const inputBar = document.getElementById('chat-input-bar') || document.querySelector('.chat-input-bar');
   if (loading) {
     btnSend.classList.add('loading');
     btnSend.title = "Batalkan eksekusi (Cancel)";
+    if (inputContainer) inputContainer.classList.add('ai-thinking');
+    if (inputBar) inputBar.classList.add('ai-thinking');
+    document.body.classList.add('ai-is-generating');
   } else {
     btnSend.classList.remove('loading');
     btnSend.title = "Kirim perintah (Enter)";
+    if (inputContainer) inputContainer.classList.remove('ai-thinking');
+    if (inputBar) inputBar.classList.remove('ai-thinking');
+    document.body.classList.remove('ai-is-generating');
   }
 }
 

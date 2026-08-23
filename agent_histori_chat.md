@@ -2238,15 +2238,32 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.69.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 270: Pendar Aura Gradien Neon Halus pada Frosted Glass Prompt Input Saat AI Berpikir
+- **Kebutuhan Pengguna**:
+  - Memberikan efek pendar glow neon gradien halus yang menyelimuti perimeter dan memancar di belakang kotak input prompt saat AI sedang berpikir (`loading`/`generating`).
+  - Efek glow menyatu dengan desain frosted glass transparan tanpa animasi naik-turun yang berlebihan (*natural ambient breathing*).
+- **Solusi & Peningkatan**:
+  1. **Styling Aura Gradien Neon (`newtab.css` & `sidepanel.css`)**:
+     - Menambahkan layer pseudo-element `::before` dengan `radial-gradient(ellipse at 50% 60%, rgba(206, 241, 40, 0.35) 0%, rgba(163, 230, 53, 0.22) 40%, rgba(34, 197, 94, 0.12) 65%, transparent 80%)` dan `filter: blur(24px)`.
+     - Mengimplementasikan `@keyframes smoothNeonAuraGlow` (4 detik loop bolak-balik) dengan modulasi kelembutan opacity (0.72 - 1.0) dan scale micro (0.99 - 1.015) tanpa translasi vertikal yang mengganggu.
+     - Menambahkan iluminasi halus border neon lime (`border-color: rgba(206, 241, 40, 0.45)`) dan ambient drop-shadow berlapis pada `.chat-input-container.ai-thinking` dan `.chat-input-bar.ai-thinking`.
+  2. **Sinkronisasi State JS (`sidepanel.js`)**:
+     - Memperbarui fungsi `updateSendButtonState(loading)` untuk mengaktifkan/menonaktifkan kelas `.ai-thinking` pada `#chat-input-container` dan `#chat-input-bar` serta `.ai-is-generating` pada `document.body`.
+  3. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.70.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
+- **Ambient Neon Frosted Glass Glow:** Smooth breathing neon gradient aura (`smoothNeonAuraGlow`) behind & surrounding the input prompt container during AI generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.69.0` (Iterasi 269).
+  - **Versi Terkini:** `v2.70.0` (Iterasi 270).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

@@ -680,14 +680,65 @@ body.has-messages .chat-input-container {
 }
 
 body.has-messages .chat-input-container::before {
-  display: none !important;
-  opacity: 0 !important;
+  content: '';
+  position: absolute;
+  inset: -6px -12px -8px -12px;
+  border-radius: 28px;
+  background: radial-gradient(ellipse at 50% 60%, rgba(206, 241, 40, 0.35) 0%, rgba(163, 230, 53, 0.22) 40%, rgba(34, 197, 94, 0.12) 65%, transparent 80%);
+  filter: blur(24px);
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease, filter 0.35s ease;
 }
 
 body.has-messages .chat-input-container:focus-within {
   background: rgba(26, 26, 31, 0.92);
   border-color: rgba(206, 241, 40, 0.45);
   box-shadow: 0 20px 52px -4px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(206, 241, 40, 0.2);
+}
+
+/* ========================================================= */
+/* AI THINKING / GENERATING AMBIENT NEON FROSTED GLASS GLOW */
+/* ========================================================= */
+.chat-input-container.ai-thinking,
+.chat-input-container:has(#btn-send.loading),
+body.has-messages .chat-input-container.ai-thinking,
+body.has-messages .chat-input-container:has(#btn-send.loading),
+body.ai-is-generating .chat-input-container {
+  border-color: rgba(206, 241, 40, 0.45) !important;
+  box-shadow: 0 16px 44px -4px rgba(0, 0, 0, 0.75),
+              0 0 35px -2px rgba(206, 241, 40, 0.28),
+              0 0 12px 1px rgba(206, 241, 40, 0.22),
+              inset 0 0 20px rgba(206, 241, 40, 0.04) !important;
+}
+
+.chat-input-container.ai-thinking::before,
+.chat-input-container:has(#btn-send.loading)::before,
+body.has-messages .chat-input-container.ai-thinking::before,
+body.has-messages .chat-input-container:has(#btn-send.loading)::before,
+body.ai-is-generating .chat-input-container::before {
+  display: block !important;
+  opacity: 0.95 !important;
+  animation: smoothNeonAuraGlow 4s ease-in-out infinite alternate !important;
+}
+
+@keyframes smoothNeonAuraGlow {
+  0% {
+    opacity: 0.72;
+    filter: blur(20px);
+    transform: scale(0.99);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(28px);
+    transform: scale(1.015);
+  }
+  100% {
+    opacity: 0.78;
+    filter: blur(22px);
+    transform: scale(1);
+  }
 }
 
 body.has-messages .chat-messages {

@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.69.0`
-- **Iterasi:** `Iterasi 269`
-- **Tanggal Rilis:** 23 Agustus 2026 (10:50 WIB)
+- **Versi Terkini:** `v2.70.0`
+- **Iterasi:** `Iterasi 270`
+- **Tanggal Rilis:** 23 Agustus 2026 (10:55 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (372.5 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (373.2 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.70.0** | 270 | 23-08-2026 10:55 | `v2.70.0` | **Smooth Ambient Neon Glow Gradient Frosted Glass Aura around Prompt Input when AI is Generating:** Menambahkan efek pendar aura neon lime gradien halus (`smoothNeonAuraGlow`) di sekeliling dan di belakang kotak input prompt (`.chat-input-container` & `.chat-input-bar`) saat AI sedang berpikir / generate respon (`.ai-thinking` / `body.ai-is-generating`). Efek aura menyelimuti pinggiran frosted glass secara lembut dengan breathing opacity/scale natural tanpa gerakan naik-turun yang berlebihan. | 🟢 STABLE | `./restore.sh v2.70.0` |
 | **v2.69.0** | 269 | 23-08-2026 10:50 | `v2.69.0` | **Dynamic Animated Eyebrows & 4-Phase Emotion AI Face Loop (Mikir, Stres, Nemu Ide, Nemu Jawaban):** Menambahkan elemen alis (`gen-eyebrow`) dan container wajah AI interaktif di dalam tombol bulat neon `#btn-send`. Mengimplementasikan 4 siklus emosi keyframes 8 detik secara dinamis: (1) **Mikir** (alis terangkat penasaran & mata melirik atas-kiri), (2) **Stres** (alis berkerut tajam & mata menyipit tegang bergetar micro-jitter), (3) **Nemu Ide** (alis melonjak tinggi eureka & mata membelalak lebar memantul ceria), (4) **Nemu Jawaban** (alis rileks puas & mata mengedip percaya diri saat solusi mengalir). | 🟢 STABLE | `./restore.sh v2.69.0` |
 | **v2.68.0** | 268 | 23-08-2026 10:48 | `v2.68.0` | **100% Circular Round Shape & Solid Neon Lime Fill on Generating Pause Button (Removed Outer Stroke):** Mengunci bentuk tombol Send / Pause agar selalu 100% bundar sempurna (`border-radius: 50%`) dan tetap menggunakan fill warna Neon Lime solid (`#CEF128`), menghapus lingkaran ring stroke berputar di luar tombol, serta menampilkan animasi dua slit garis kapsul gelap (`||`) yang melirik/memindai ke kiri-kanan secara halus di dalam tombol saat AI sedang generate respon. | 🟢 STABLE | `./restore.sh v2.68.0` |
 | **v2.67.0** | 267 | 23-08-2026 10:44 | `v2.67.0` | **Cybernetic Morphing Stop/Pause Generating Button with Radar Orbit Ring & Scanning Eye-Slit Animation:** Mengubah transisi tombol Send prompt menjadi animasi morphing elastis saat generasi aktif: tombol memanjang menjadi kapsul dark charcoal (`#18181B`) dengan border neon lime (`#CEF128`), ring radar orbit berputar 360° di sekeliling tombol (`radarOrbitSpin`), serta dua garis mata kapsul (`gen-eye-slit`) melirik/memindai kiri-kanan secara halus (`eyesScanGlance`) sesuai referensi video. Saat di-hover, tombol bermutasi menjadi ikon Stop merah (`#EF4444`) untuk membatalkan eksekusi. | 🟢 STABLE | `./restore.sh v2.67.0` |
