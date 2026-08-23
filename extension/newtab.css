@@ -1992,18 +1992,17 @@ body.has-messages #btn-mode-websearch {
   position: relative;
   display: inline-flex;
   align-items: center;
-  height: 28px;
+  height: 100%;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 2px;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: transparent;
+  padding: 0;
+  border: none;
 }
 
 .btn-search-engine-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   height: 100%;
   box-sizing: border-box;
   padding: 0 10px;
@@ -2013,6 +2012,7 @@ body.has-messages #btn-mode-websearch {
   color: var(--accent-lime);
   font-size: 11px;
   font-weight: 700;
+  line-height: 1;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -2026,6 +2026,7 @@ body.has-messages #btn-mode-websearch {
 .btn-search-engine-trigger .search-engine-icon {
   display: flex;
   align-items: center;
+  justify-content: center;
   color: var(--accent-lime);
 }
 
@@ -2033,7 +2034,7 @@ body.has-messages #btn-mode-websearch {
   font-size: 11px;
   font-weight: 700;
   color: var(--accent-lime);
-  letter-spacing: 0.01em;
+  line-height: 1;
 }
 
 .btn-search-engine-trigger .search-engine-chevron {
@@ -2041,6 +2042,7 @@ body.has-messages #btn-mode-websearch {
   height: 9px;
   stroke: var(--accent-lime);
   transition: transform 0.2s ease;
+  margin-left: 1px;
 }
 
 .btn-search-engine-trigger.open .search-engine-chevron {

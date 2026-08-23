@@ -2723,6 +2723,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.100.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 301: Fix Double-Track Nesting & Perfectly Flush Symmetrical Pill Alignment
+- **Kebutuhan Pengguna**:
+  - Memperbaiki tampilan tombol pemilih mesin pencari yang sebelumnya tampak kurang rapi karena terbungkus double-ring/double-track di dalam header bar.
+- **Solusi & Peningkatan**:
+  1. **Transparent Wrapper & Flush Single Pill (`newtab.css`, `sidepanel.css`)**:
+     - Mengubah `.search-engine-wrapper` menjadi transparan (`background: transparent; border: none; padding: 0`) sehingga tidak lagi menghasilkan double-border di dalam `.chat-input-header-right`.
+     - Menata `.btn-search-engine-trigger` menjadi satu pill tunggal presisi (`height: 100%; border-radius: 9999px; background: #27272A; line-height: 1`), dengan perataan vertikal icon Globe + teks + chevron yang rapi dan 100% simetris dengan pill toggle di sebelah kiri.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.101.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2730,7 +2742,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
-- **Search Engine Selector Seamless Pill:** `#btn-search-engine-trigger` di dalam track well `.search-engine-wrapper` (`rgba(0,0,0,0.4)` + 2px padding), tanpa border stroke luar (`border: none`), latar `#27272A`, icon Globe + teks neon lime `#CEF128`.
+- **Search Engine Selector Seamless Pill:** `#btn-search-engine-trigger` duduk flush di dalam `.chat-input-header-right` (tanpa double wrapper/nesting), berlatar `#27272A`, icon Globe + teks neon lime `#CEF128`, chevron dropup.
 - **Stickman Swarm Compact Proportions:** 50px height (Newtab) / 44px (Sidepanel), `FLOOR_Y: 47`, 4.8px head radius, zero bottom gap, docked directly atop the chat input prompt.
 - **AI Generator Modal Layout:** Tab 'Buat dengan AI' pada modal Agent, Skill, dan Memory menggunakan container vertikal kolumnar 100% lebar penuh dengan dropdown model, textarea lapang, dan tombol generate neon lime.
 - **Switch Tab Toggle (ON / OFF):**
