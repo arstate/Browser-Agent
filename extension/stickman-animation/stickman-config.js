@@ -20,12 +20,12 @@ window.STICKMAN_CONFIG = {
 
   // === GEOMETRI & TATA LETAK (COMPACT SLEEK BANNER) ===
   LAYOUT: {
-    STAGE_HEIGHT_WIDE: 64,                       // Tinggi kanvas di New Tab (px)
-    STAGE_HEIGHT_COMPACT: 58,                    // Tinggi kanvas di Sidepanel (px)
-    FLOOR_Y: 61,                                 // Lantai tepat di batas bawah (jarak bawah 0/hilang)
-    FLOOR_Y_COMPACT: 55,                         // Lantai Sidepanel
-    HEAD_RADIUS: 5.2,                            // Radius lingkaran kepala (px)
-    LIMB_THICKNESS: 2.0                          // Ketebalan garis tubuh & tulang (px)
+    STAGE_HEIGHT_WIDE: 50,                       // Tinggi kanvas di New Tab (px, ramping & proporsional)
+    STAGE_HEIGHT_COMPACT: 44,                    // Tinggi kanvas di Sidepanel (px)
+    FLOOR_Y: 47,                                 // Lantai tepat di batas bawah (jarak bawah 0/hilang)
+    FLOOR_Y_COMPACT: 41,                         // Lantai Sidepanel
+    HEAD_RADIUS: 4.8,                            // Radius lingkaran kepala (px)
+    LIMB_THICKNESS: 1.9                          // Ketebalan garis tubuh & tulang (px)
   },
 
   // === DAFTAR PELARI (RUNNERS) LAYAR LEBAR (NEW TAB) ===

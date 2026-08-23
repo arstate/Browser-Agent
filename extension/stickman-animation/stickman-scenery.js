@@ -130,20 +130,21 @@
     ctx.strokeRect(x, y, rw, rh);
 
     const slotCount = 4;
+    const slotH = (rh - 6) / slotCount;
     for (let i = 0; i < slotCount; i++) {
-      const slotY = y + 2.5 + i * 7.5;
+      const slotY = y + 2.0 + i * slotH;
       ctx.fillStyle = C.SERVER_SLOT || '#1A1A22';
-      ctx.fillRect(x + 2, slotY, rw - 4, 5.5);
+      ctx.fillRect(x + 2, slotY, rw - 4, slotH - 1.2);
 
       const blink = Math.sin(time * 4 + i + offset) > 0;
       ctx.fillStyle = blink ? (i === 0 ? (C.LED_ALERT || '#E11D48') : C.NEON_MAIN) : (C.LED_OFF || '#444444');
       ctx.beginPath();
-      ctx.arc(x + 4.0, slotY + 2.8, 1.0, 0, Math.PI * 2);
+      ctx.arc(x + 3.8, slotY + (slotH - 1.2) * 0.5, 0.9, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.fillStyle = !blink ? C.NEON_MAIN : (C.LED_OFF || '#444444');
       ctx.beginPath();
-      ctx.arc(x + rw - 4.0, slotY + 2.8, 1.0, 0, Math.PI * 2);
+      ctx.arc(x + rw - 3.8, slotY + (slotH - 1.2) * 0.5, 0.9, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -158,9 +159,10 @@
     ctx.stroke();
 
     const isNarrow = width < 460;
-    const rackW = isNarrow ? 18 : 24;
-    drawServerRack(ctx, 5, floorY - 34, rackW, 34, time, 0);
-    drawServerRack(ctx, width - (rackW + 5), floorY - 34, rackW, 34, time, 1.5);
+    const rackW = isNarrow ? 18 : 22;
+    const rackH = isNarrow ? 26 : 30;
+    drawServerRack(ctx, 5, floorY - rackH, rackW, rackH, time, 0);
+    drawServerRack(ctx, width - (rackW + 5), floorY - rackH, rackW, rackH, time, 1.5);
   }
 
   window.StickmanScenery = {

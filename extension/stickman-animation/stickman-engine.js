@@ -25,7 +25,11 @@
 
   function getFloorY() {
     const cfg = window.STICKMAN_CONFIG || {};
-    return (cfg.LAYOUT && cfg.LAYOUT.FLOOR_Y) || 84;
+    const isNarrow = width < 460;
+    if (isNarrow && cfg.LAYOUT && cfg.LAYOUT.FLOOR_Y_COMPACT) {
+      return cfg.LAYOUT.FLOOR_Y_COMPACT;
+    }
+    return (cfg.LAYOUT && cfg.LAYOUT.FLOOR_Y) || 47;
   }
 
   function initRunners() {

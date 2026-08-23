@@ -2696,6 +2696,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.98.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 299: Compact Sleek Height Optimization for Docked Stickman Swarm Animation
+- **Kebutuhan Pengguna**:
+  - Memperkecil sedikit tinggi panggung kanvas animasi stickman swarm di atas container input prompt agar tampil lebih ramping, compact, dan hemat ruang vertikal.
+- **Solusi & Peningkatan**:
+  1. **Slimmer Stage Canvas Height (`stickman-styles.css`, `stickman-config.js`)**:
+     - Mengurangi tinggi stage `.ai-stickman-stage` dari 64px menjadi **50px** di New Tab (dan 44px di mode mobile/sidepanel).
+  2. **Harmonized Physics & Scenery Coordinates (`stickman-engine.js`, `stickman-scenery.js`)**:
+     - Menyesuaikan garis lantai `FLOOR_Y` menjadi 47px (`FLOOR_Y_COMPACT` 41px).
+     - Menyesuaikan tinggi rak server menjadi 30px dengan 4 slot LED proporsional dan radius kepala stickman menjadi 4.8px.
+  3. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.99.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2703,6 +2717,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
+- **Stickman Swarm Compact Proportions:** 50px height (Newtab) / 44px (Sidepanel), `FLOOR_Y: 47`, 4.8px head radius, zero bottom gap, docked directly atop the chat input prompt.
+- **Search Engine Selector Pill:** `#btn-search-engine-trigger` dengan ikon Globe neon lime (`#CEF128`), background `#27272A`, border `rgba(206, 241, 40, 0.35)`, chevron dropup, dan realtime storage sync.
+- **AI Generator Modal Layout:** Tab 'Buat dengan AI' pada modal Agent, Skill, dan Memory menggunakan container vertikal kolumnar 100% lebar penuh dengan dropdown model, textarea lapang, dan tombol generate neon lime.
+- **Switch Tab Toggle (ON / OFF):**
+  - `ON`: Otomatis berpindah tab dan memfokuskan jendela saat agent beraksi.
+  - `OFF`: Aksi browser dieksekusi hening di latar belakang (background) via CDP tanpa mengganggu tab aktif pengguna, memungkinkan multitasking 100%.
+- **All-Data Universal .tar.gz Engine:** 100% full workspace backup (`chat_history.db` 75MB, `walkthrough_screenshots/`, `generated_images/`, `skills/`, `memories/`, `agents/`, `storage_settings.json`) dengan chunked streaming import (512KB/chunk) dan direct download save.
+- **Balanced Settings Grid & Full-Width Bento Backup:** 2 kolom seimbang di atas, kartu Backup & Restore Full-Width 100% di bawah dengan 2 Bento Panels (Database `.tar.gz` & Settings `.json`).
+- **Unified Segmented Header Capsule:**
+  - Outer Well: Single capsule container track `rgba(0, 0, 0, 0.4)` dengan `border-radius: 9999px`.
+  - Left Segment (`Switch Tab`): `border-radius: 9999px 0 0 9999px` (flat di kanan).
+  - Right Segment (`Accept/Planning`): `border-radius: 0 9999px 9999px 0` (flat di kiri).
+- **Modular Stickman Animation Structure:** Located in `extension/stickman-animation/` (`stickman-config.js`, `stickman-physics.js`, `stickman-scenery.js`, `stickman-engine.js`, `stickman-styles.css`, `index.html`).
+- **AI Stickman Swarm Working Animation:** 60fps canvas animation docked above the prompt container displaying busy runner stickmen, cable technicians, and blinking server racks during generation.
+- **User Attached Media Thumbnails:** Constrained 84x84px compact square thumbnails (`.user-attached-thumb`) with Lightbox fullscreen click zoom.
+- **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
+- **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
+- **Versioning & Restore Point Mandate:**
+  - **Versi Terkini:** `v2.99.0` (Iterasi 299).
+  - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **Search Engine Selector Pill:** `#btn-search-engine-trigger` dengan ikon Globe neon lime (`#CEF128`), background `#27272A`, border `rgba(206, 241, 40, 0.35)`, chevron dropup, dan realtime storage sync.
 - **AI Generator Modal Layout:** Tab 'Buat dengan AI' pada modal Agent, Skill, dan Memory menggunakan container vertikal kolumnar 100% lebar penuh dengan dropdown model, textarea lapang, dan tombol generate neon lime.
 - **Switch Tab Toggle (ON / OFF):**
