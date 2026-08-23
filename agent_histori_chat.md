@@ -2748,6 +2748,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 314: Reversed Same-Direction Parallax with Organic Lerp Inertia Delay
+- **Kebutuhan Pengguna**:
+  - Membalik arah paralaks background kotak-kotak agar bergerak searah dengan pergerakan chat (ke atas saat scroll ke bawah) dan menambahkan efek delay/inersia yang lembut agar nyaman di mata dan tidak membuat pusing.
+- **Solusi & Peningkatan**:
+  1. **Same-Direction Parallax & Organic Lerp Dampening (`newtab.js`)**:
+     - Mengubah target translasi menjadi searah dengan chat (`targetParallaxY = -scrollY * 0.10`).
+     - Menerapkan interpolasi linear (Lerp dengan faktor `0.07`) dalam loop `requestAnimationFrame` sehingga pergerakan grid memiliki efek jeda/delay inersia yang halus dan berhenti mulus saat scroll berhenti.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.114.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 313: Subtle & Gentle Parallax Scroll Effect for Background Grid Stroke
 - **Kebutuhan Pengguna**:
   - Menambahkan efek paralaks lembut dan nyaman pada ornamen background garis kotak-kotak tipis saat chat di-scroll agar visual terasa hidup dan memiliki kedalaman ruang, tanpa berlebihan/membuat pusing.

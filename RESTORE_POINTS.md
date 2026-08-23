@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.113.0`
-- **Iterasi:** `Iterasi 313`
-- **Tanggal Rilis:** 24 Agustus 2026 (01:00 WIB)
+- **Versi Terkini:** `v2.114.0`
+- **Iterasi:** `Iterasi 314`
+- **Tanggal Rilis:** 24 Agustus 2026 (01:03 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.6 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.114.0** | 314 | 24-08-2026 01:03 | `v2.114.0` | **Reversed Same-Direction Parallax with Organic Lerp Inertia Delay:** Menyelaraskan arah pergerakan paralaks background kotak-kotak tipis searah dengan scroll chat (bergerak ke atas bersama konten saat scroll ke bawah) dengan rasio kedalaman 10% dan peredaman inersia (Lerp dampening factor `0.07`), sehingga efek paralaks terasa sangat alami, lembut, memiliki jeda/delay organik, dan tidak menyebabkan pusing visual. | 🟢 STABLE | `./restore.sh v2.114.0` |
 | **v2.113.0** | 313 | 24-08-2026 01:00 | `v2.113.0` | **Subtle & Gentle Parallax Scroll Effect for Background Grid Stroke:** Menambahkan efek paralaks halus dan nyaman (rasio 15% via `requestAnimationFrame` + CSS custom property `--parallax-grid-y`) pada pola stroke garis kotak-kotak tipis di latar belakang saat chat di-scroll, memberikan kesan kedalaman 3D visual yang elegan tanpa membuat pusing. | 🟢 STABLE | `./restore.sh v2.113.0` |
 | **v2.112.0** | 312 | 24-08-2026 00:58 | `v2.112.0` | **Optimized Balanced Chat Clearance Spacing Above Stickman Stage:** Merampingkan jarak vertical clearance pada area chat bawah saat animasi stickman aktif dari `340px` menjadi `225px` (dan `scrollToBottom` offset dari `360px` menjadi `220px`), sehingga pesan dan card tindakan agent terbawah memiliki jarak napas yang proporsional, rapi, dan tidak menyisakan ruang kosong (void) yang terlalu renggang di atas panggung stickman. | 🟢 STABLE | `./restore.sh v2.112.0` |
 | **v2.111.0** | 311 | 24-08-2026 00:57 | `v2.111.0` | **Fix Persistent Top Navbar Scrolling Bug in New Tab Fullscreen:** Mengubah posisi `.fullscreen-header` dari sticky yang terpengaruh overflow ancestor menjadi `position: fixed` (`top: 0; left: 58px; right: 0; z-index: 100`) dengan backdrop-filter blur transparan dan padding-top 56px pada container konten utama, sehingga navbar atas tetap terpatri diam dan tidak ikut tergulung saat riwayat pesan chat di-scroll ke bawah. | 🟢 STABLE | `./restore.sh v2.111.0` |

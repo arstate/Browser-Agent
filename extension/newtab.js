@@ -180,19 +180,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Subtle & Smooth Background Grid Parallax Effect on Scroll (15% gentle ratio)
-  let parallaxTicking = false;
-  function updateGridParallax() {
+  // Smooth & Natural Background Grid Parallax with Organic Delay / Inertia
+  let currentParallaxY = 0;
+  let targetParallaxY = 0;
+  let parallaxAnimFrame = null;
+
+  function renderGridParallax() {
     const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
-    const parallaxOffset = (scrollY * 0.15).toFixed(2);
-    document.documentElement.style.setProperty('--parallax-grid-y', `${parallaxOffset}px`);
-    parallaxTicking = false;
+    // Same direction as chat (moves up with chat), subtle 10% depth ratio
+    targetParallaxY = -scrollY * 0.10;
+
+    // Organic Lerp easing for silky delay (0.07 dampening factor)
+    currentParallaxY += (targetParallaxY - currentParallaxY) * 0.07;
+    document.documentElement.style.setProperty('--parallax-grid-y', `${currentParallaxY.toFixed(2)}px`);
+
+    if (Math.abs(targetParallaxY - currentParallaxY) > 0.05) {
+      parallaxAnimFrame = window.requestAnimationFrame(renderGridParallax);
+    } else {
+      currentParallaxY = targetParallaxY;
+      document.documentElement.style.setProperty('--parallax-grid-y', `${currentParallaxY.toFixed(2)}px`);
+      parallaxAnimFrame = null;
+    }
   }
 
   window.addEventListener('scroll', () => {
-    if (!parallaxTicking) {
-      window.requestAnimationFrame(updateGridParallax);
-      parallaxTicking = true;
+    if (!parallaxAnimFrame) {
+      parallaxAnimFrame = window.requestAnimationFrame(renderGridParallax);
     }
   }, { passive: true });
 });
