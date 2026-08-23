@@ -399,6 +399,7 @@ body.options-body {
 }
 
 .btn-export-all-db,
+.btn-import-all-db,
 .btn-export-settings,
 .btn-import-settings {
   display: inline-flex;
@@ -406,9 +407,9 @@ body.options-body {
   gap: 6px;
   height: 32px;
   box-sizing: border-box;
-  padding: 0 14px;
+  padding: 0 13px;
   border-radius: 9999px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
@@ -468,130 +469,184 @@ body.options-body {
   box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35);
 }
 
-/* Backup & Restore Dedicated Card */
-.backup-actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
-  margin-top: 14px;
+/* =========================================================================
+   Backup & Restore Dedicated Modern Bento Grid
+   ========================================================================= */
+.backup-icon-box {
+  background: rgba(168, 85, 247, 0.15) !important;
+  color: #C084FC !important;
+  border-color: rgba(168, 85, 247, 0.35) !important;
 }
 
-.backup-action-box {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 12px;
-  padding: 18px 20px;
+.backup-bento-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 820px) {
+  .backup-bento-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.backup-panel {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 14px;
-  transition: all 0.2s ease;
+  gap: 18px;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-.backup-action-box.highlight-box {
-  background: linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(206, 241, 40, 0.04) 100%);
-  border-color: rgba(168, 85, 247, 0.3);
+.backup-panel.database-panel {
+  background: linear-gradient(145deg, rgba(147, 51, 234, 0.07) 0%, rgba(15, 23, 42, 0.65) 100%);
+  border-color: rgba(168, 85, 247, 0.28);
 }
 
-.backup-action-box.highlight-box:hover {
-  border-color: rgba(168, 85, 247, 0.6);
-  box-shadow: 0 4px 20px rgba(147, 51, 234, 0.15);
+.backup-panel.database-panel:hover {
+  border-color: rgba(168, 85, 247, 0.55);
+  box-shadow: 0 6px 24px rgba(147, 51, 234, 0.15);
+  transform: translateY(-1px);
 }
 
-.box-badge-universal {
-  display: inline-block;
-  font-size: 9.5px;
+.backup-panel.settings-panel {
+  background: linear-gradient(145deg, rgba(206, 241, 40, 0.04) 0%, rgba(15, 23, 42, 0.65) 100%);
+  border-color: rgba(206, 241, 40, 0.2);
+}
+
+.backup-panel.settings-panel:hover {
+  border-color: rgba(206, 241, 40, 0.45);
+  box-shadow: 0 6px 24px rgba(206, 241, 40, 0.1);
+  transform: translateY(-1px);
+}
+
+.panel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  background: rgba(168, 85, 247, 0.2);
-  color: #D8B4FE;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  padding: 2px 7px;
-  border-radius: 4px;
-  margin-bottom: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  line-height: 1;
 }
 
-.backup-action-info h4 {
-  font-size: 13.5px;
+.panel-badge.purple-badge {
+  background: rgba(168, 85, 247, 0.18);
+  color: #D8B4FE;
+  border: 1px solid rgba(168, 85, 247, 0.38);
+}
+
+.panel-badge.lime-badge {
+  background: rgba(206, 241, 40, 0.12);
+  color: #E2FFA8;
+  border: 1px solid rgba(206, 241, 40, 0.3);
+}
+
+.backup-panel-header h3 {
+  font-size: 15px;
   font-weight: 700;
   color: #FFFFFF;
-  margin-bottom: 4px;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.01em;
 }
 
-.backup-action-info p {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.4;
+.backup-panel-header p {
+  font-size: 12.5px;
+  color: #94A3B8;
+  line-height: 1.5;
+  margin: 0;
 }
 
-.btn-backup-export-db,
-.btn-backup-export,
-.btn-backup-import {
+.backup-panel-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.btn-backup-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   height: 38px;
-  padding: 0 16px;
+  padding: 0 12px;
   border-radius: 9px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
+  white-space: nowrap;
+  user-select: none;
 }
 
-.btn-backup-export-db {
+.btn-backup-action.primary-purple {
   background: #9333EA;
   border: 1px solid #A855F7;
   color: #FFFFFF;
   box-shadow: 0 2px 10px rgba(147, 51, 234, 0.3);
 }
 
-.btn-backup-export-db:hover {
+.btn-backup-action.primary-purple:hover {
   background: #A855F7;
   box-shadow: 0 4px 16px rgba(168, 85, 247, 0.45);
+  transform: translateY(-1px);
 }
 
-.btn-backup-import-db {
-  background: rgba(168, 85, 247, 0.15);
+.btn-backup-action.secondary-purple {
+  background: rgba(168, 85, 247, 0.12);
   border: 1px solid rgba(168, 85, 247, 0.35);
   color: #E9D5FF;
 }
 
-.btn-backup-import-db:hover {
-  background: rgba(168, 85, 247, 0.25);
+.btn-backup-action.secondary-purple:hover {
+  background: rgba(168, 85, 247, 0.22);
   border-color: #D8B4FE;
   color: #FFFFFF;
+  transform: translateY(-1px);
 }
 
-.btn-backup-export {
+.btn-backup-action.primary-lime {
   background: #CEF128;
   border: 1px solid #CEF128;
   color: #0F172A;
+  box-shadow: 0 2px 10px rgba(206, 241, 40, 0.25);
 }
 
-.btn-backup-export:hover {
+.btn-backup-action.primary-lime:hover {
   background: #D9F92F;
-  box-shadow: 0 2px 12px rgba(206, 241, 40, 0.35);
+  box-shadow: 0 4px 16px rgba(206, 241, 40, 0.4);
+  transform: translateY(-1px);
 }
 
-.btn-backup-import {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #F8FAFC;
+.btn-backup-action.secondary-lime {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38BDF8;
 }
 
-.btn-backup-import:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.3);
+.btn-backup-action.secondary-lime:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #7DD3FC;
+  color: #FFFFFF;
+  transform: translateY(-1px);
 }
 
 .backup-sync-status-row {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .sync-status-item {
@@ -604,6 +659,16 @@ body.options-body {
 
 .sync-status-item strong {
   color: #E2E8F0;
+}
+
+.db-code-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #CBD5E1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sync-dot {

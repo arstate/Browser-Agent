@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.89.0`
-- **Iterasi:** `Iterasi 289`
-- **Tanggal Rilis:** 23 Agustus 2026 (17:31 WIB)
+- **Versi Terkini:** `v2.90.0`
+- **Iterasi:** `Iterasi 290`
+- **Tanggal Rilis:** 23 Agustus 2026 (17:34 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (384.8 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (385.2 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.90.0** | 290 | 23-08-2026 17:34 | `v2.90.0` | **Modern Clean Bento Card Redesign for Backup & Restore:** Memperbarui antarmuka kartu Backup & Restore menjadi layout Bento 2-Panel yang ramping dan simetris (Panel 1: *Full Database & Workspace .tar.gz* dengan tombol aksi ganda Download/Restore, Panel 2: *Settings & Model Priorities .json* dengan tombol aksi ganda Download/Restore). Menghilangkan kesan bertumpuk yang kaku, merapikan tipografi, menambahkan hover glow lembut, badge status yang elegan, dan menyelaraskan bilah status sinkronisasi SQLite lokal. | 🟢 STABLE | `./restore.sh v2.90.0` |
 | **v2.89.0** | 289 | 23-08-2026 17:31 | `v2.89.0` | **Dedicated Import All Database Button & Complete TAR.GZ All-Data Universal Backup/Restore Engine:** Menambahkan tombol **`Import All Database`** secara eksplisit di Header LLM Providers, kartu khusus **Backup & Restore**, dan modal **Riwayat Chat**. Mengembangkan engine ekspor & impor arsip `.tar.gz` yang mem-bundle 100% seluruh database SQLite (`chat_history.db`), seluruh sesi chat, skills SOP, custom agents, memories, seluruh aset gambar AI (`generated_images`), screenshots, dan konfigurasi extension (`storage_settings.json`) ke dalam 1 file `.tar.gz` yang terkompresi dan kompatibel lintas Windows, Mac, dan Linux. | 🟢 STABLE | `./restore.sh v2.89.0` |
 | **v2.88.0** | 288 | 23-08-2026 17:26 | `v2.88.0` | **Universal Full Database & Settings Export/Import across Windows, Mac, and Linux:** Menambahkan tombol **`Export All Database`** di header opsi, kartu backup, dan modal Riwayat Chat SQLite. Mengekspor 100% database percakapan SQLite (`sessions`), konfigurasi settings (`settings`), daftar prioritas model (`model_configs`), serta seluruh berkas markdown custom multi-agent (`agents/*.md`), skills SOP (`skills/*.md`), dan memory rules (`memories/*.md`) ke format Universal JSON. Mendukung pemulihan data (Restore/Import) otomatis lintas sistem operasi (Windows `%USERPROFILE%\.browser-agent`, macOS, dan Linux). | 🟢 STABLE | `./restore.sh v2.88.0` |
 | **v2.87.0** | 287 | 23-08-2026 17:20 | `v2.87.0` | **SQLite Database Persistence for Models & Settings with Complete Export/Import Backup:** Menambahkan tabel SQLite terpisah `model_configs` (untuk prioritas model AI) dan `settings` (untuk seluruh konfigurasi global) di `native_host.py` (`~/.browser-agent/chat_history.db`). Menambahkan tombol **Export Settings** (`.json`) dan **Import Settings** pada header dan kartu khusus pengaturan untuk mem-backup & me-restore 100% data konfigurasi (API keys, model prioritas, multi-agent, skills, memori, dan UI preferences) secara instan dan aman. | 🟢 STABLE | `./restore.sh v2.87.0` |

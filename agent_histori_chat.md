@@ -2557,6 +2557,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.89.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 290: Modern Clean Bento Card Redesign for Backup & Restore
+- **Kebutuhan Pengguna**:
+  - Memperbaiki dan mempercantik tampilan kartu Backup & Restore yang sebelumnya terlihat bertumpuk dan kaku menjadi desain yang bersih, minimalis, dan modern.
+- **Solusi & Peningkatan**:
+  1. **Bento 2-Panel Symmetrical Layout (`options.html`, `options.css`)**:
+     - Mengubah 4 kotak vertikal kaku menjadi 2 Bento Panel elegan yang berdampingan:
+       - **Panel 1 (Database SQLite & Workspace .tar.gz)**: Berisi badge ungu, judul, deskripsi jelas, dan 2 tombol aksi simetris (`Download .tar.gz` & `Restore .tar.gz / .json`).
+       - **Panel 2 (Pengaturan & Model Priorities .json)**: Berisi badge neon lime, judul, deskripsi jelas, dan 2 tombol aksi simetris (`Download JSON` & `Restore JSON`).
+  2. **Modern Dark Glass & Hover Aesthetics**:
+     - Gradien halus `linear-gradient(145deg, ...)`, rounded border 14px, glowing hover micro-interactions, dan visual hierarchy yang jelas.
+     - Status footer sinkronisasi SQLite lokal di bawahnya dipercantik dengan glowing dot hijau neon dan code-pill minimalis.
+  3. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - CSS layout render clean & responsive pada semua breakpoint.
+     - Restore Point: `v2.90.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2564,7 +2581,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
-- **Universal TAR.GZ & JSON Backup:** Tombol `[Export All Database (.tar.gz)]` dan `[Import All Database]` di `options.html` dan `sidepanel.html` untuk mem-backup & me-restore 100% database, sesi chat, skills SOP, custom agents, memori, dan aset gambar ke arsip `.tar.gz` (Windows/Mac/Linux).
+- **Modern Bento Backup UI:** 2 panel simetris untuk *Full Database (.tar.gz)* dan *Settings (.json)* dengan tombol aksi ganda Download/Restore di `options.html`.
 - **Direct Instant Toggle Buttons:** 
   - `Accept`: Neon Lime Fill (`#CEF128`).
   - `Planning`: Blue Fill (`#0284C7`).
@@ -2577,7 +2594,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.89.0` (Iterasi 289).
+  - **Versi Terkini:** `v2.90.0` (Iterasi 290).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
