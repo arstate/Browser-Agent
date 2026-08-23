@@ -4884,13 +4884,13 @@ function scrollToBottom(smooth = false) {
       document.documentElement.scrollHeight,
       chatMessages ? chatMessages.scrollHeight : 0
     );
-    const extraOffset = isStickman ? 360 : 200;
+    const extraOffset = isStickman ? 220 : 160;
     window.scrollTo({
       top: scrollTarget + extraOffset,
       behavior: smooth ? 'smooth' : 'auto'
     });
   } catch (e) {
-    window.scrollTo(0, (document.body.scrollHeight || 0) + (document.body.classList.contains('stickman-active') ? 360 : 200));
+    window.scrollTo(0, (document.body.scrollHeight || 0) + (document.body.classList.contains('stickman-active') ? 220 : 160));
   }
 }
 

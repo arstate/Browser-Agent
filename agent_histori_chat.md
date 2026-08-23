@@ -2748,6 +2748,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 312: Optimized Balanced Chat Clearance Spacing Above Stickman Stage
+- **Kebutuhan Pengguna**:
+  - Mengurangi jarak renggang vertikal yang terlalu jauh antara teks/card agent terbawah dengan panggung animasi stickman agar tampak proporsional dan tidak ada void kosong besar.
+- **Solusi & Peningkatan**:
+  1. **Balanced Padding-Bottom (`newtab.css`, `sidepanel.js`)**:
+     - Menyesuaikan `padding-bottom` pada `.fullscreen-chat-main` saat `stickman-active` dari `340px` menjadi `225px !important` dan `.chat-messages` menjadi `14px`.
+     - Mengubah offset tambahan `scrollToBottom` saat stickman aktif dari `+360px` menjadi `+220px`.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.112.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 311: Fix Persistent Top Navbar Scrolling Bug in New Tab Fullscreen
 - **Kebutuhan Pengguna**:
   - Memperbaiki bug di mana navbar atas (pemilih model, agent persona, status chip) ikut tergulung saat chat di-scroll ke bawah. Navbar harus selalu diam/terpatri di atas.

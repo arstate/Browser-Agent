@@ -696,7 +696,7 @@ body.has-messages .fullscreen-chat-main {
 }
 
 body.has-messages.stickman-active .fullscreen-chat-main {
-  padding-bottom: 340px !important;
+  padding-bottom: 225px !important;
 }
 
 body.has-messages .chat-input-container {
@@ -726,7 +726,7 @@ body.has-messages .chat-messages {
 }
 
 body.has-messages.stickman-active .chat-messages {
-  padding-bottom: 40px;
+  padding-bottom: 14px;
 }
 
 /* Smooth Dissolve Out for Hero Elements */
