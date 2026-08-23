@@ -2748,6 +2748,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 326: Full Rounded Pill Styling for Switch Tab & Execution Mode Triggers
+- **Kebutuhan Pengguna**:
+  - Memperbaiki UI pada area kanan atas input prompt (tombol `Switch Tab: ON` dan `Accept`) agar bentuknya serasi dan seirama dengan tombol `Agent Mode` di sisi kiri.
+- **Root Cause & Solusi Teknis**:
+  - Sebelumnya tombol `Switch Tab` dan `Accept` dirancang sebagai dua potongan kapsul gabungan (setengah kapsul kiri dan setengah kapsul kanan).
+  - Diperbarui menjadi tombol kapsul bulat penuh mandiri (`border-radius: 9999px`) dengan `height: 28px` (New Tab) / `22px` (Sidepanel), `background: #27272A`, dan border `1px solid rgba(255, 255, 255, 0.12)`.
+  - Memberikan jarak `gap: 6px` yang rapi dan estetis antar elemen pada `.chat-input-header-right`.
+- **Verifikasi**:
+  - JS & CSS Syntax check lulus 100%.
+  - Restore Point: `v2.126.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 325: Live AI Image Rendering & Clean Standalone Search Engine Pill
 - **Kebutuhan Pengguna**:
   - Mengatasi bug di mana gambar AI (`generate_image`) tidak muncul langsung di bubble chat saat eksekusi berlangsung, namun baru muncul ketika histori chat di-reopen.

@@ -2017,54 +2017,54 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
   transform: translate(-1px, -1px);
 }
 
-/* Switch Tab & Execution Mode Combined Segmented Capsule */
+/* Switch Tab & Execution Mode Standalone Full Rounded Capsule Pills */
 .switch-tab-mode-wrapper,
 .execution-mode-wrapper {
   position: relative;
   display: inline-flex;
   align-items: center;
-  height: 100%;
   box-sizing: border-box;
   background: transparent;
-  border: none;
   padding: 0;
-  border-radius: 0;
+  border: none;
 }
 
-/* Left Segment: Switch Tab Direct Toggle */
+/* Switch Tab Direct Toggle */
 .btn-switch-tab-mode-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 100%;
+  gap: 6px;
+  height: 28px;
   box-sizing: border-box;
-  padding: 0 10px;
-  border-top-left-radius: 9999px;
-  border-bottom-left-radius: 9999px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  font-size: 11px;
-  font-weight: 700;
+  padding: 0 12px;
+  border-radius: 9999px;
+  background: #27272A;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
-  border: none;
+}
+
+.btn-switch-tab-mode-trigger:hover {
+  background: #323238;
+  border-color: rgba(206, 241, 40, 0.35);
 }
 
 .btn-switch-tab-mode-trigger .switch-tab-mode-icon {
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
-/* Switch Tab ON -> Left Active Pill */
+/* Switch Tab ON */
 .btn-switch-tab-mode-trigger.is-on {
   background: #27272A;
+  border-color: rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.btn-switch-tab-mode-trigger.is-on:hover {
-  background: #323238;
 }
 
 .btn-switch-tab-mode-trigger.is-on .switch-tab-mode-icon {
@@ -2073,59 +2073,61 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
 
 .btn-switch-tab-mode-trigger.is-on .switch-tab-mode-label {
   color: #FFFFFF;
-  font-weight: 600;
 }
 
-/* Switch Tab OFF -> Clean Muted Inner State */
+/* Switch Tab OFF */
 .btn-switch-tab-mode-trigger.is-off {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
   color: var(--text-muted);
 }
 
 .btn-switch-tab-mode-trigger.is-off:hover {
-  color: #E2E8F0;
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
 }
 
 .btn-switch-tab-mode-trigger.is-off .switch-tab-mode-icon,
 .btn-switch-tab-mode-trigger.is-off .switch-tab-mode-label {
   color: var(--text-muted);
-  font-weight: 600;
 }
 
-/* Right Segment: Execution Mode Direct Toggle */
+/* Execution Mode Direct Toggle */
 .btn-execution-mode-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 100%;
+  gap: 6px;
+  height: 28px;
   box-sizing: border-box;
-  padding: 0 10px;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-top-right-radius: 9999px;
-  border-bottom-right-radius: 9999px;
-  font-size: 11px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  background: #27272A;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-size: 11.5px;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
-  border: none;
+}
+
+.btn-execution-mode-trigger:hover {
+  background: #323238;
+  border-color: rgba(206, 241, 40, 0.35);
 }
 
 .btn-execution-mode-trigger .execution-mode-icon {
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
-/* Accept Mode -> Right Active Pill */
+/* Accept Mode */
 .btn-execution-mode-trigger.mode-accept {
   background: #27272A;
+  border-color: rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.btn-execution-mode-trigger.mode-accept:hover {
-  background: #323238;
 }
 
 .btn-execution-mode-trigger.mode-accept .execution-mode-icon {
@@ -2134,24 +2136,23 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
 
 .btn-execution-mode-trigger.mode-accept .execution-mode-label {
   color: #FFFFFF;
-  font-weight: 600;
 }
 
-/* Planning Mode -> Right Active Blue Pill */
+/* Planning Mode */
 .btn-execution-mode-trigger.mode-planning {
   background: #27272A;
+  border-color: rgba(56, 189, 248, 0.4);
   color: #38BDF8;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-execution-mode-trigger.mode-planning:hover {
   background: #323238;
+  border-color: #38BDF8;
 }
 
 .btn-execution-mode-trigger.mode-planning .execution-mode-icon,
 .btn-execution-mode-trigger.mode-planning .execution-mode-label {
   color: #38BDF8;
-  font-weight: 700;
 }
 
 /* Web Search Engine Dropup Selector - Dark Luxury Pill */
