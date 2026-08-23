@@ -556,94 +556,93 @@
 
               <div id="test-connection-result" class="test-result-box" style="display: none;"></div>
             </div>
+          </div>
+        </div>
 
-            <!-- Dedicated Backup & Restore Settings Card -->
-            <!-- Dedicated Backup & Restore Settings Card -->
-            <div class="bento-card" id="card-backup-restore">
-              <div class="card-header">
-                <div class="header-icon-box backup-icon-box">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                    <polyline points="17 21 17 13 7 13 7 21"/>
-                    <polyline points="7 3 7 8 15 8"/>
+        <!-- Dedicated Backup & Restore Settings Card (Full Width Span) -->
+        <div class="bento-card full-width-card" id="card-backup-restore" style="margin-top: 20px;">
+          <div class="card-header">
+            <div class="header-icon-box backup-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+              </svg>
+            </div>
+            <div>
+              <h2>Backup &amp; Restore Data</h2>
+              <p>Cadangkan atau pulihkan database percakapan SQLite, skills SOP, custom agents, memori, dan konfigurasi pengaturan.</p>
+            </div>
+          </div>
+
+          <div class="backup-bento-grid">
+            <!-- Panel 1: Full Database & Assets -->
+            <div class="backup-panel database-panel">
+              <div class="backup-panel-header">
+                <div class="panel-badge purple-badge">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                  <span>FULL DATABASE &amp; ASSETS (.TAR.GZ)</span>
+                </div>
+                <h3>Database SQLite &amp; Workspace</h3>
+                <p>Mencakup 100% riwayat percakapan SQLite (`chat_history.db`), custom agents, skills SOP, memori rules, gambar AI, screenshots, &amp; pengaturan.</p>
+              </div>
+              
+              <div class="backup-panel-actions">
+                <button type="button" class="btn-backup-action primary-purple" id="btn-export-all-db-card" title="Download seluruh database dalam format .tar.gz">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
                   </svg>
-                </div>
-                <div>
-                  <h2>Backup &amp; Restore Data</h2>
-                  <p>Cadangkan atau pulihkan database percakapan SQLite, skills SOP, custom agents, memori, dan konfigurasi pengaturan.</p>
-                </div>
+                  <span>Download .tar.gz</span>
+                </button>
+                <button type="button" class="btn-backup-action secondary-purple" id="btn-import-all-db-card" title="Pulihkan database dari file .tar.gz atau .json">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <span>Restore .tar.gz / .json</span>
+                </button>
               </div>
+            </div>
 
-              <div class="backup-bento-grid">
-                <!-- Panel 1: Full Database & Assets -->
-                <div class="backup-panel database-panel">
-                  <div class="backup-panel-header">
-                    <div class="panel-badge purple-badge">
-                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-                      <span>FULL DATABASE &amp; ASSETS (.TAR.GZ)</span>
-                    </div>
-                    <h3>Database SQLite &amp; Workspace</h3>
-                    <p>Mencakup 100% riwayat percakapan SQLite (`chat_history.db`), custom agents, skills SOP, memori rules, gambar AI, screenshots, &amp; pengaturan.</p>
-                  </div>
-                  
-                  <div class="backup-panel-actions">
-                    <button type="button" class="btn-backup-action primary-purple" id="btn-export-all-db-card" title="Download seluruh database dalam format .tar.gz">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                      </svg>
-                      <span>Download .tar.gz</span>
-                    </button>
-                    <button type="button" class="btn-backup-action secondary-purple" id="btn-import-all-db-card" title="Pulihkan database dari file .tar.gz atau .json">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                      </svg>
-                      <span>Restore .tar.gz / .json</span>
-                    </button>
-                  </div>
+            <!-- Panel 2: Settings & Model Priorities -->
+            <div class="backup-panel settings-panel">
+              <div class="backup-panel-header">
+                <div class="panel-badge lime-badge">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  <span>SETTINGS &amp; MODELS (.JSON)</span>
                 </div>
-
-                <!-- Panel 2: Settings & Model Priorities -->
-                <div class="backup-panel settings-panel">
-                  <div class="backup-panel-header">
-                    <div class="panel-badge lime-badge">
-                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                      <span>SETTINGS &amp; MODELS (.JSON)</span>
-                    </div>
-                    <h3>Pengaturan &amp; Prioritas Model</h3>
-                    <p>Cadangan ringan khusus konfigurasi API key, endpoint provider, urutan prioritas model AI, dan preferensi UI tanpa riwayat chat.</p>
-                  </div>
-                  
-                  <div class="backup-panel-actions">
-                    <button type="button" class="btn-backup-action primary-lime" id="btn-export-backup-card" title="Download pengaturan dalam format .json">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                      </svg>
-                      <span>Download JSON</span>
-                    </button>
-                    <button type="button" class="btn-backup-action secondary-lime" id="btn-import-backup-card" title="Pulihkan pengaturan dari file .json">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                      </svg>
-                      <span>Restore JSON</span>
-                    </button>
-                  </div>
-                </div>
+                <h3>Pengaturan &amp; Prioritas Model</h3>
+                <p>Cadangan ringan khusus konfigurasi API key, endpoint provider, urutan prioritas model AI, dan preferensi UI tanpa riwayat chat.</p>
               </div>
-
-              <div class="backup-sync-status-row">
-                <div class="sync-status-item">
-                  <span class="sync-dot active"></span>
-                  <span>Database SQLite: <strong>Tersinkronisasi Lokal</strong> (<code class="db-code-pill">~/.browser-agent/chat_history.db</code>)</span>
-                </div>
+              
+              <div class="backup-panel-actions">
+                <button type="button" class="btn-backup-action primary-lime" id="btn-export-backup-card" title="Download pengaturan dalam format .json">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  <span>Download JSON</span>
+                </button>
+                <button type="button" class="btn-backup-action secondary-lime" id="btn-import-backup-card" title="Pulihkan pengaturan dari file .json">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <span>Restore JSON</span>
+                </button>
               </div>
+            </div>
+          </div>
+
+          <div class="backup-sync-status-row">
+            <div class="sync-status-item">
+              <span class="sync-dot active"></span>
+              <span>Database SQLite: <strong>Tersinkronisasi Lokal</strong> (<code class="db-code-pill">~/.browser-agent/chat_history.db</code>)</span>
             </div>
           </div>
         </div>

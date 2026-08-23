@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.93.0`
-- **Iterasi:** `Iterasi 293`
-- **Tanggal Rilis:** 23 Agustus 2026 (17:43 WIB)
+- **Versi Terkini:** `v2.94.0`
+- **Iterasi:** `Iterasi 294`
+- **Tanggal Rilis:** 23 Agustus 2026 (17:46 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (386.2 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (386.4 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.94.0** | 294 | 23-08-2026 17:46 | `v2.94.0` | **Fix Settings Layout Balance & Full-Width Span for Backup & Restore Card:** Memperbaiki bug layout kolom pengaturan yang sebelumnya timpang karena kartu Backup & Restore berada di dalam kolom kanan (`.options-col`). Memindahkan `#card-backup-restore` keluar dari grid 2 kolom menjadi kartu Full-Width lebar penuh di bagian bawah sehingga kedua kolom di atasnya seimbang dan panel Bento Backup & Restore memiliki ruang horizontal 100% yang luas dan proporsional. | 🟢 STABLE | `./restore.sh v2.94.0` |
 | **v2.93.0** | 293 | 23-08-2026 17:43 | `v2.93.0` | **Unified Segmented Capsule with Flat Seamless Center Join for Switch Tab & Accept/Planning Buttons:** Menggabungkan tombol `[Switch Tab]` dan `[Accept/Planning]` ke dalam satu wadah kapsul track luar tunggal (`.chat-input-header-right` dengan border `rgba(255,255,255,0.06)`, background `rgba(0,0,0,0.4)`, padding 2px). Menghilangkan rounded corner di pertemuan tengah (`border-radius: 9999px 0 0 9999px` pada segmen kiri dan `0 9999px 9999px 0` pada segmen kanan) sehingga membentuk satu unit segmented pill kontrol yang menyatu presisi dan elegan. | 🟢 STABLE | `./restore.sh v2.93.0` |
 | **v2.92.0** | 292 | 23-08-2026 17:40 | `v2.92.0` | **Segmented Track & Inner Pill Button Design for Switch Tab and Execution Mode (Accept/Planning):** Menyelaraskan struktur tombol `Switch Tab` dan `Accept/Planning` agar menggunakan wadah track luar (`.switch-tab-mode-wrapper` & `.execution-mode-wrapper` dengan background `rgba(0,0,0,0.4)` dan border `rgba(255,255,255,0.06)`) serta tombol pill aktif di dalamnya (`#27272A`, fill neon lime text `#CEF128`) persis seperti struktur group `[Agent Mode]` pada sisi kiri header chat prompt. | 🟢 STABLE | `./restore.sh v2.92.0` |
 | **v2.91.0** | 291 | 23-08-2026 17:36 | `v2.91.0` | **Refined Dark Slate Pill Aesthetic with Neon Glow for Accept & Switch Tab Buttons:** Menyelaraskan gaya visual tombol `[Accept]` dan `[Switch Tab: ON]` agar identik dengan desain pill gelap `[Agent Mode]` (background dark slate `#27272A`, inset shadow, subtle border neon lime `rgba(206, 241, 40, 0.35)`, teks dan ikon neon lime `#CEF128`, serta hover glow lembut). Menggantikan warna solid flat sebelumnya agar tidak mencolok/terlalu polos dan menyatu elegan dengan tema Dark SaaS. | 🟢 STABLE | `./restore.sh v2.91.0` |

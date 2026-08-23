@@ -2617,6 +2617,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.93.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 294: Fix Settings Layout Balance & Full-Width Span for Backup & Restore Card
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug tampilan pengaturan di mana kartu Backup & Restore Data terjepit di dalam kolom kanan (`.options-col`), menyebabkan kolom kanan sangat panjang dan timpang sementara kolom kiri kosong di bawahnya.
+- **Solusi & Peningkatan**:
+  1. **Full-Width Hero Layout for Backup & Restore (`options.html`)**:
+     - Memindahkan `#card-backup-restore` keluar dari `.options-grid-2col` menjadi kartu full width di bagian bawah.
+     - Kolom kiri dan kolom kanan di atasnya menjadi seimbang dan simetris (Kiri: AI Connection & Key + Model Priorities; Kanan: Parameter Generasi + AI Image Generation + PC Native Bridge).
+     - Kartu Backup & Restore Data di bawahnya mendapatkan lebar horizontal 100% penuh sehingga 2 panel Bento (Database `.tar.gz` dan Settings `.json`) tampil sangat leluasa, proporsional, dan estetik.
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.94.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2624,7 +2637,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
-- **Modern Bento Backup UI:** 2 panel simetris untuk *Full Database (.tar.gz)* dan *Settings (.json)* dengan tombol aksi ganda Download/Restore di `options.html`.
+- **Balanced Settings Grid & Full-Width Bento Backup:** 2 kolom seimbang di atas, kartu Backup & Restore Full-Width 100% di bawah dengan 2 Bento Panels (Database `.tar.gz` & Settings `.json`).
 - **Unified Segmented Header Capsule:**
   - Outer Well: Single capsule container track `rgba(0, 0, 0, 0.4)` dengan `border-radius: 9999px`.
   - Left Segment (`Switch Tab`): `border-radius: 9999px 0 0 9999px` (flat di kanan).
@@ -2636,7 +2649,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.93.0` (Iterasi 293).
+  - **Versi Terkini:** `v2.94.0` (Iterasi 294).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
