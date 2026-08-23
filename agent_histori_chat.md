@@ -2748,6 +2748,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 325: Live AI Image Rendering & Clean Standalone Search Engine Pill
+- **Kebutuhan Pengguna**:
+  - Mengatasi bug di mana gambar AI (`generate_image`) tidak muncul langsung di bubble chat saat eksekusi berlangsung, namun baru muncul ketika histori chat di-reopen.
+  - Memastikan tombol search engine benar-benar bersih dan bebas dari border/container ganda.
+- **Root Cause & Solusi Teknis**:
+  1. **Mengapa Gambar Hanya Muncul Saat Reopen Histori?**:
+     - Saat sesi berjalan live, proses sintesis laporan akhir Master Agent (`synthesisMessages`) membuat bubble chat melakukan render ulang teks laporan dan menghapus elemen DOM gambar sebelumnya. Sementara itu, `conversationHistory` tetap menyimpan pesan gambar dan laporan sebagai dua entri terpisah sehingga saat `loadHistoryItem()` dijalankan, kedua pesan tersebut di-loop dan ditampilkan secara terpisah.
+     - **Solusi Tuntas**:
+       - Menggabungkan gambar ke dalam teks balasan secara langsung menggunakan `ensureGeneratedImagesInText()` saat streaming sintesis maupun finalisasi.
+       - Memanggil `hydrateLocalImages(assistantBubble)` secara langsung pada bubble aktif seketika setelah tool selesai dan saat streaming berjalan, sehingga gambar beresolusi tinggi langsung tampil di layar secara live tanpa perlu me-reopen histori chat.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.125.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 324: Fix AI Image Generation Chat Display Bug & Clean Double-Border on Search Engine Trigger
 - **Kebutuhan Pengguna**:
   1. Memperbaiki bug di mana hasil gambar `generate_image` sukses dibuat dan tersimpan di folder lokal, tetapi tidak muncul/dikirim di bubble chat.

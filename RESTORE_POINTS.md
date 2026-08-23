@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.124.0`
-- **Iterasi:** `Iterasi 324`
-- **Tanggal Rilis:** 24 Agustus 2026 (01:39 WIB)
+- **Versi Terkini:** `v2.125.0`
+- **Iterasi:** `Iterasi 325`
+- **Tanggal Rilis:** 24 Agustus 2026 (01:42 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.6 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.125.0** | 325 | 24-08-2026 01:42 | `v2.125.0` | **Live AI Image Rendering & Clean Standalone Search Engine Pill:** Menghilangkan penyebab gambar AI `generate_image` hanya muncul di histori chat dengan mempertahankan markdown gambar langsung di bubble chat aktif secara live (melalui array session tracker dan streaming hydration seketika), serta memastikan tombol search engine bersih tanpa background/border ganda. | 🟢 STABLE | `./restore.sh v2.125.0` |
 | **v2.124.0** | 324 | 24-08-2026 01:39 | `v2.124.0` | **Fix AI Image Generation Chat Display Bug & Clean Double-Border on Search Engine Trigger:** (1) Memperbaiki bug di mana hasil gambar `generate_image` tidak muncul di bubble chat setelah sintesis laporan teks Master Agent dengan menambahkan `sessionGeneratedImages` tracker dan auto-injection markdown `![prompt](local-img://id)`; (2) Menghilangkan outer background/border/padding ganda pada `.chat-input-header-right` sehingga tombol search engine tampil bersih, standalone, dan rapi di sisi kanan. | 🟢 STABLE | `./restore.sh v2.124.0` |
 | **v2.123.0** | 323 | 24-08-2026 01:33 | `v2.123.0` | **Full Rounded Pill Styling & Frosted Glass Blur for Search Engine Selector:** Menyamakan desain tombol trigger search engine (`.btn-search-engine-trigger`) dan menu dropup (`.search-engine-dropup`) menjadi full rounded capsule pill presisi `28px`, kontainer frosted glassmorphism blur `36px` dengan shadow lembut, serta circular item icons dan checkmark hijau lime elegan serasi dengan mode switcher. | 🟢 STABLE | `./restore.sh v2.123.0` |
 | **v2.122.0** | 322 | 24-08-2026 01:28 | `v2.122.0` | **Exact Height & Proportions Match for Mode Switcher Dropup Items:** Menyamakan tinggi fisik dan geometri seluruh item opsi pada menu dropup (`.chat-mode-option`) menjadi presisi `28px` (sama persis dengan tombol trigger pill di bawahnya), padding `0 10px 0 5px`, ikon lingkaran `18px`, dan tipografi `11.5px` sehingga desain tampak sangat simetris, serasi, dan clean. | 🟢 STABLE | `./restore.sh v2.122.0` |
