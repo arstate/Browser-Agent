@@ -2574,6 +2574,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.90.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 291: Refined Dark Slate Pill Aesthetic for Accept & Switch Tab
+- **Kebutuhan Pengguna**:
+  - Mengubah tampilan tombol `[Accept]` dan `[Switch Tab]` yang sebelumnya berwarna solid polos mencolok agar memiliki style yang serasi dan elegan seperti tombol `[Agent Mode]` (Image 2).
+- **Solusi & Peningkatan**:
+  1. **Refined Dark Pill Aesthetic (`newtab.css`, `sidepanel.css`)**:
+     - `.btn-execution-mode-trigger.mode-accept`: Background dark slate `#27272A`, inset highlight `inset 0 1px 0 rgba(255, 255, 255, 0.06)`, subtle border neon lime `rgba(206, 241, 40, 0.35)`, teks dan ikon neon lime `#CEF128`, serta hover glow lembut.
+     - `.btn-switch-tab-mode-trigger.is-on`: Background dark slate `#27272A`, subtle border neon lime `rgba(206, 241, 40, 0.35)`, teks dan ikon neon lime `#CEF128`.
+     - `.btn-switch-tab-mode-trigger.is-off`: Background transparan dark `rgba(0, 0, 0, 0.35)`, subtle border `rgba(255, 255, 255, 0.08)`, teks muted `#94A3B8`.
+     - `.btn-execution-mode-trigger.mode-planning`: Background dark slate `#27272A`, subtle border cyan `rgba(56, 189, 248, 0.4)`, teks dan ikon cyan sky blue `#38BDF8`.
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.91.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2582,11 +2596,11 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
 - **Modern Bento Backup UI:** 2 panel simetris untuk *Full Database (.tar.gz)* dan *Settings (.json)* dengan tombol aksi ganda Download/Restore di `options.html`.
-- **Direct Instant Toggle Buttons:** 
-  - `Accept`: Neon Lime Fill (`#CEF128`).
-  - `Planning`: Blue Fill (`#0284C7`).
-  - `Switch Tab ON`: Neon Lime Fill (`#CEF128`).
-  - `Switch Tab OFF`: Default Dark/Black (`rgba(0, 0, 0, 0.4)`).
+- **Refined Dark Pill Mode Buttons:**
+  - `Accept`: Dark Slate `#27272A` with Neon Lime Border & Text `#CEF128` (matching Image 2).
+  - `Planning`: Dark Slate `#27272A` with Cyan Border & Text `#38BDF8`.
+  - `Switch Tab ON`: Dark Slate `#27272A` with Neon Lime Border & Text `#CEF128`.
+  - `Switch Tab OFF`: Dark Translucent `rgba(0, 0, 0, 0.35)` with Muted Slate Text `#94A3B8`.
 - **Modular Stickman Animation Structure:** Located in `extension/stickman-animation/` (`stickman-config.js`, `stickman-physics.js`, `stickman-scenery.js`, `stickman-engine.js`, `stickman-styles.css`, `index.html`).
 - **Stickman Swarm Proportions:** 64px / 58px height, zero bottom gap (`margin-bottom: 0`, `FLOOR_Y: 61`), generous 11px top headroom clearance, edge-to-edge full width docked directly atop the chat input container.
 - **AI Stickman Swarm Working Animation:** 60fps canvas animation docked above the prompt container displaying busy runner stickmen, cable technicians, and blinking server racks during generation.
@@ -2594,7 +2608,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.90.0` (Iterasi 290).
+  - **Versi Terkini:** `v2.91.0` (Iterasi 291).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
