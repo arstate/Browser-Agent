@@ -14,6 +14,7 @@ import io
 import base64
 import datetime
 import shutil
+import uuid
 
 LOG_FILE = "/tmp/browser_agent_host.log"
 if sys.platform == "win32":
@@ -129,6 +130,19 @@ AGENTS_DIR = os.path.join(DB_DIR, "agents")
 SKILLS_DIR = os.path.join(DB_DIR, "skills")
 MEMORIES_DIR = os.path.join(DB_DIR, "memories")
 
+# Project & Persistent Memory Root Directories
+HOST_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(HOST_DIR)
+PROJECT_PERSISTENT_MEMORY_DIR = os.path.join(PROJECT_DIR, "PERSISTENT MEMORY")
+LOCAL_PERSISTENT_MEMORY_DIR = os.path.join(DB_DIR, "persistent_memory")
+
+PERSISTENT_MEMORY_ROOT = PROJECT_PERSISTENT_MEMORY_DIR if os.path.exists(PROJECT_PERSISTENT_MEMORY_DIR) else LOCAL_PERSISTENT_MEMORY_DIR
+PM_USER_PROFILE_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "user_profile")
+PM_EXPERIENCE_LEDGER_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "experience_ledger")
+PM_ANTI_PATTERNS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "anti_patterns")
+PM_AUTONOMOUS_SKILLS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "autonomous_skills")
+PM_AUTONOMOUS_AGENTS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "autonomous_agents")
+
 import base64
 import urllib.request
 import datetime
@@ -141,7 +155,17 @@ def init_db():
         os.makedirs(AGENTS_DIR, exist_ok=True)
         os.makedirs(SKILLS_DIR, exist_ok=True)
         os.makedirs(MEMORIES_DIR, exist_ok=True)
-        with sqlite3.connect(DB_PATH) as conn:
+        
+        # Ensure Persistent Memory directories exist
+        os.makedirs(PERSISTENT_MEMORY_ROOT, exist_ok=True)
+        os.makedirs(PM_USER_PROFILE_DIR, exist_ok=True)
+        os.makedirs(PM_EXPERIENCE_LEDGER_DIR, exist_ok=True)
+        os.makedirs(PM_ANTI_PATTERNS_DIR, exist_ok=True)
+        os.makedirs(PM_AUTONOMOUS_SKILLS_DIR, exist_ok=True)
+        os.makedirs(PM_AUTONOMOUS_AGENTS_DIR, exist_ok=True)
+
+        conn = sqlite3.connect(DB_PATH)
+        try:
             cursor = conn.cursor()
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS sessions (
@@ -166,7 +190,7 @@ def init_db():
                 )
             """)
 
-            # Dedicated Model Configurations Table (Separated from general settings)
+            # Dedicated Model Configurations Table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS model_configs (
                     id TEXT PRIMARY KEY,
@@ -179,10 +203,93 @@ def init_db():
                 )
             """)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_priority ON model_configs(priority_order ASC)")
+
+            # 1. User Personal Memories (Profile, Rules, Preferences)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS user_memories (
+                    id TEXT PRIMARY KEY,
+                    category TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    source TEXT DEFAULT 'autonomous_ai',
+                    reason TEXT DEFAULT '',
+                    confidence REAL DEFAULT 1.0,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_memories_cat ON user_memories(category)")
+
+            # 2. Experience Ledger (Distilled Knowledge Markdown per Session)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS experience_ledger (
+                    id TEXT PRIMARY KEY,
+                    session_id TEXT DEFAULT '',
+                    title TEXT NOT NULL,
+                    distilled_markdown TEXT NOT NULL,
+                    key_learnings_json TEXT DEFAULT '[]',
+                    tags TEXT DEFAULT '',
+                    created_at INTEGER NOT NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_exp_ledger_created ON experience_ledger(created_at DESC)")
+
+            # 3. Anti-Patterns & Failure Learnings Vault
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS anti_patterns (
+                    id TEXT PRIMARY KEY,
+                    target_domain TEXT NOT NULL,
+                    mistake_description TEXT NOT NULL,
+                    root_cause TEXT DEFAULT '',
+                    winning_fix TEXT NOT NULL,
+                    prevention_rule TEXT NOT NULL,
+                    created_at INTEGER NOT NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_anti_patterns_domain ON anti_patterns(target_domain)")
+
+            # 4. Autonomous Skills (Self-Created & Self-Refactored Workflows)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS autonomous_skills (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    workflow_markdown TEXT NOT NULL,
+                    version TEXT DEFAULT 'v1.0.0',
+                    source TEXT DEFAULT 'autonomous_ai',
+                    success_count INTEGER DEFAULT 1,
+                    failure_count INTEGER DEFAULT 0,
+                    changelog TEXT DEFAULT '',
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+
+            # 5. Autonomous Agents (Self-Created Specialist Personas)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS autonomous_agents (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    role_description TEXT NOT NULL,
+                    system_prompt TEXT NOT NULL,
+                    assigned_skills_json TEXT DEFAULT '[]',
+                    source TEXT DEFAULT 'autonomous_ai',
+                    reason TEXT DEFAULT '',
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+
             conn.commit()
-        log(f"SQLite database initialized at {DB_PATH}, tables & directories ready")
+            cursor.close()
+        finally:
+            conn.close()
+        
+        # Populate initial seeds from markdown if empty
+        sync_persistent_memory_on_startup()
+        
+        log(f"SQLite database initialized at {DB_PATH}, persistent memory tables & directories ready")
     except Exception as e:
-        log(f"Failed to initialize SQLite database: {e}")
+        log(f"Failed to initialize SQLite database: {e}\n{traceback.format_exc()}")
 
 init_db()
 
@@ -1179,6 +1286,640 @@ def db_import_chunk_finish():
         return {"status": "error", "error": str(e)}
 
 # ==========================================
+# Persistent Memory & Knowledge Ledger Engine
+# ==========================================
+
+def sync_personal_facts_markdown():
+    """Rebuilds personal_facts.md from SQLite user_memories table"""
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM user_memories ORDER BY category ASC, updated_at DESC")
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        conn = None
+
+        os.makedirs(PM_USER_PROFILE_DIR, exist_ok=True)
+        fpath = os.path.join(PM_USER_PROFILE_DIR, "personal_facts.md")
+
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M WIB")
+        lines = [
+            "# 👤 Profil Pengguna & Aturan Personal (Personal Facts)",
+            f"*Terakhir Diperbarui: {now_str} | Source: Autonomous AI & User Directives*\n",
+            "---",
+            "\n## 📌 Fakta & Preferensi Utama Pengguna"
+        ]
+
+        facts = [r for r in rows if r["category"] in ("profile", "preference", "knowledge")]
+        rules = [r for r in rows if r["category"] in ("rule", "guideline")]
+
+        if facts:
+            for r in facts:
+                src_badge = "[🤖 AI]" if r["source"] == "autonomous_ai" else "[👤 User]"
+                reason_str = f" *(Alasan: {r['reason']})*" if r["reason"] else ""
+                lines.append(f"- **{src_badge} {r['content']}**{reason_str}")
+        else:
+            lines.append("- *(Belum ada preferensi khusus tercatat)*")
+
+        lines.append("\n---\n\n## 🔒 Aturan Kerja & Protokol Baku (Permanent Guidelines)")
+        if rules:
+            for idx, r in enumerate(rules, 1):
+                src_badge = "[🤖 AI Rule]" if r["source"] == "autonomous_ai" else "[👤 User Rule]"
+                reason_str = f" *(Alasan: {r['reason']})*" if r["reason"] else ""
+                lines.append(f"{idx}. **{src_badge} {r['content']}**{reason_str}")
+        else:
+            lines.append("1. *(Belum ada aturan baku khusus tercatat)*")
+
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+        return True
+    except Exception as e:
+        log(f"Error syncing personal facts markdown: {e}")
+        return False
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def sync_failure_learnings_markdown():
+    """Rebuilds failure_learnings.md from SQLite anti_patterns table"""
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM anti_patterns ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        conn = None
+
+        os.makedirs(PM_ANTI_PATTERNS_DIR, exist_ok=True)
+        fpath = os.path.join(PM_ANTI_PATTERNS_DIR, "failure_learnings.md")
+
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M WIB")
+        lines = [
+            "# 🛡️ Anti-Pattern Vault & Failure Learnings (Pelajaran dari Kesalahan)",
+            f"*Kumpulan catatan kesalahan masa lalu, diagnosa akar masalah, dan solusi permanen yang dipelajari secara otonom oleh AI.*",
+            f"*Terakhir Diperbarui: {now_str} | Total Learned: {len(rows)} Anti-Patterns*\n",
+            "---"
+        ]
+
+        for idx, r in enumerate(rows, 1):
+            lines.extend([
+                f"\n### ⚠️ [AP-{idx:03d}] {r['mistake_description']}",
+                f"- **Target / Konteks:** {r['target_domain']}",
+                f"- **Gejala Kesalahan:** {r['mistake_description']}",
+                f"- **Root Cause (Akar Masalah):** {r['root_cause'] or 'N/A'}",
+                f"- **Solusi Permanen (Winning Fix):** {r['winning_fix']}",
+                f"- **Aturan Pencegahan:** {r['prevention_rule']}",
+                "\n---"
+            ])
+
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+        return True
+    except Exception as e:
+        log(f"Error syncing failure learnings markdown: {e}")
+        return False
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def sync_persistent_memory_on_startup():
+    """Scans PERSISTENT MEMORY folders on startup and ensures SQLite is populated"""
+    conn = None
+    try:
+        now = int(time.time() * 1000)
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        # 1. Sync Autonomous Skills from markdown files
+        if os.path.exists(PM_AUTONOMOUS_SKILLS_DIR):
+            for f in os.listdir(PM_AUTONOMOUS_SKILLS_DIR):
+                if f.endswith(".md"):
+                    fpath = os.path.join(PM_AUTONOMOUS_SKILLS_DIR, f)
+                    parsed = parse_md_file(fpath)
+                    if parsed and parsed.get("meta"):
+                        meta = parsed["meta"]
+                        skid = meta.get("id") or f.replace(".md", "")
+                        name = meta.get("name") or skid
+                        desc = meta.get("description") or ""
+                        ver = meta.get("version") or "v1.0.0"
+                        src = meta.get("source") or "autonomous_ai"
+                        succ = int(meta.get("success_count") or 1)
+                        fail = int(meta.get("failure_count") or 0)
+                        clog = str(meta.get("changelog") or "")
+                        cat = int(meta.get("created_at") or now)
+                        uat = int(meta.get("updated_at") or now)
+                        body = parsed.get("content") or ""
+
+                        cursor.execute("""
+                            INSERT INTO autonomous_skills (id, name, description, workflow_markdown, version, source, success_count, failure_count, changelog, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(id) DO UPDATE SET
+                                name=excluded.name,
+                                description=excluded.description,
+                                workflow_markdown=excluded.workflow_markdown,
+                                version=excluded.version
+                        """, (skid, name, desc, body, ver, src, succ, fail, clog, cat, uat))
+
+        # 2. Sync Autonomous Agents from markdown files
+        if os.path.exists(PM_AUTONOMOUS_AGENTS_DIR):
+            for f in os.listdir(PM_AUTONOMOUS_AGENTS_DIR):
+                if f.endswith(".md"):
+                    fpath = os.path.join(PM_AUTONOMOUS_AGENTS_DIR, f)
+                    parsed = parse_md_file(fpath)
+                    if parsed and parsed.get("meta"):
+                        meta = parsed["meta"]
+                        agid = meta.get("id") or f.replace(".md", "")
+                        name = meta.get("name") or agid
+                        desc = meta.get("description") or ""
+                        prompt = parsed.get("content") or ""
+                        skills_list = meta.get("assigned_skills") or []
+                        skills_json = json.dumps(skills_list) if isinstance(skills_list, list) else str(skills_list)
+                        src = meta.get("source") or "autonomous_ai"
+                        reason = meta.get("reason") or ""
+                        cat = int(meta.get("created_at") or now)
+                        uat = int(meta.get("updated_at") or now)
+
+                        cursor.execute("""
+                            INSERT INTO autonomous_agents (id, name, role_description, system_prompt, assigned_skills_json, source, reason, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(id) DO UPDATE SET
+                                name=excluded.name,
+                                role_description=excluded.role_description,
+                                system_prompt=excluded.system_prompt,
+                                assigned_skills_json=excluded.assigned_skills_json
+                        """, (agid, name, desc, prompt, skills_json, src, reason, cat, uat))
+
+        # 3. Seed personal memories if table empty
+        cursor.execute("SELECT COUNT(*) FROM user_memories")
+        if cursor.fetchone()[0] == 0:
+            seed_memories = [
+                ("mem_user_name", "profile", "Nama panggilan user adalah Arya / Bro.", "user", "Identitas pengguna", 1.0),
+                ("mem_biz_role", "profile", "Developer & Marketer Properti Tiar Property Surabaya-Sidoarjo dan Software Architect.", "user", "Domain bisnis pengguna", 1.0),
+                ("mem_comms_style", "preference", "Gaya respon: Santai, akrab ('Bro/Kak'), to the point, padat informasi (high signal), zero AI slop.", "user", "Preferensi komunikasi", 1.0),
+                ("mem_backup_format", "rule", "Format backup percakapan wajib selalu .zip (bukan .tar.gz) lengkap dengan folder brain dan seluruh aset gambar paste/upload user.", "user", "Aturan permanen backup", 1.0),
+                ("mem_tiar_confidentiality", "rule", "Kerahasiaan Properti: Dilarang sebut kata BLT/komisi internal marketing ke calon pembeli, gunakan Information Gap Protocol untuk booking survei.", "user", "Protokol bisnis Tiar Property", 1.0)
+            ]
+            for mid, cat, content, src, reason, conf in seed_memories:
+                cursor.execute("""
+                    INSERT INTO user_memories (id, category, content, source, reason, confidence, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (mid, cat, content, src, reason, conf, now, now))
+
+        # 4. Seed anti-patterns if table empty
+        cursor.execute("SELECT COUNT(*) FROM anti_patterns")
+        if cursor.fetchone()[0] == 0:
+            seed_aps = [
+                ("ap_gitignore_zip", "GitHub Backup", "File arsip .zip sesi percakapan terabaikan oleh git.", "Aturan *.zip tanpa whitelist", "Tambahkan !antigravity_session/*.zip di .gitignore", "Periksa git status sebelum konfirmasi push"),
+                ("ap_image_persistence", "Chat History", "Thumbnail gambar upload/paste user rusak saat resume session.", "Gambar user tidak disimpan ke IndexedDB dan terpotong di storage", "Gunakan saveAttachmentsToIndexedDB dengan key att_img_... dan auto-hydration di hydrateLocalImages", "Jangan hanya andalkan base64 inline untuk media besar")
+            ]
+            for apid, domain, mistake, cause, fix, rule in seed_aps:
+                cursor.execute("""
+                    INSERT INTO anti_patterns (id, target_domain, mistake_description, root_cause, winning_fix, prevention_rule, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (apid, domain, mistake, cause, fix, rule, now))
+
+        conn.commit()
+    except Exception as e:
+        log(f"Error in sync_persistent_memory_on_startup: {e}\n{traceback.format_exc()}")
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def db_get_persistent_memory(search=""):
+    conn = None
+    try:
+        q = f"%{search.strip().lower()}%" if search and search.strip() else None
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # 1. User Memories
+        if q:
+            cursor.execute("SELECT * FROM user_memories WHERE LOWER(content) LIKE ? OR LOWER(category) LIKE ? ORDER BY updated_at DESC", (q, q))
+        else:
+            cursor.execute("SELECT * FROM user_memories ORDER BY updated_at DESC")
+        user_memories = [dict(r) for r in cursor.fetchall()]
+
+        # 2. Experience Ledger
+        if q:
+            cursor.execute("SELECT * FROM experience_ledger WHERE LOWER(title) LIKE ? OR LOWER(distilled_markdown) LIKE ? ORDER BY created_at DESC", (q, q))
+        else:
+            cursor.execute("SELECT * FROM experience_ledger ORDER BY created_at DESC")
+        experience_ledger = []
+        for r in cursor.fetchall():
+            item = dict(r)
+            try:
+                item["key_learnings"] = json.loads(item.get("key_learnings_json") or "[]")
+            except Exception:
+                item["key_learnings"] = []
+            experience_ledger.append(item)
+
+        # 3. Anti Patterns
+        if q:
+            cursor.execute("SELECT * FROM anti_patterns WHERE LOWER(target_domain) LIKE ? OR LOWER(mistake_description) LIKE ? OR LOWER(winning_fix) LIKE ? ORDER BY created_at DESC", (q, q, q))
+        else:
+            cursor.execute("SELECT * FROM anti_patterns ORDER BY created_at DESC")
+        anti_patterns = [dict(r) for r in cursor.fetchall()]
+
+        # 4. Autonomous Skills
+        if q:
+            cursor.execute("SELECT * FROM autonomous_skills WHERE LOWER(name) LIKE ? OR LOWER(description) LIKE ? OR LOWER(workflow_markdown) LIKE ? ORDER BY updated_at DESC", (q, q, q))
+        else:
+            cursor.execute("SELECT * FROM autonomous_skills ORDER BY updated_at DESC")
+        autonomous_skills = [dict(r) for r in cursor.fetchall()]
+
+        # 5. Autonomous Agents
+        if q:
+            cursor.execute("SELECT * FROM autonomous_agents WHERE LOWER(name) LIKE ? OR LOWER(role_description) LIKE ? ORDER BY updated_at DESC", (q, q))
+        else:
+            cursor.execute("SELECT * FROM autonomous_agents ORDER BY updated_at DESC")
+        autonomous_agents = []
+        for r in cursor.fetchall():
+            item = dict(r)
+            try:
+                item["assigned_skills"] = json.loads(item.get("assigned_skills_json") or "[]")
+            except Exception:
+                item["assigned_skills"] = []
+            autonomous_agents.append(item)
+
+        cursor.close()
+        return {
+            "status": "ok",
+            "user_memories": user_memories,
+            "experience_ledger": experience_ledger,
+            "anti_patterns": anti_patterns,
+            "autonomous_skills": autonomous_skills,
+            "autonomous_agents": autonomous_agents,
+            "counts": {
+                "user_memories": len(user_memories),
+                "experience_ledger": len(experience_ledger),
+                "anti_patterns": len(anti_patterns),
+                "autonomous_skills": len(autonomous_skills),
+                "autonomous_agents": len(autonomous_agents)
+            }
+        }
+    except Exception as e:
+        log(f"Error in db_get_persistent_memory: {e}\n{traceback.format_exc()}")
+        return {"status": "error", "error": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def db_save_personal_memory(mem):
+    conn = None
+    try:
+        if not isinstance(mem, dict):
+            return {"status": "error", "error": "Invalid memory item"}
+        
+        now = int(time.time() * 1000)
+        mid = str(mem.get("id") or f"mem_{now}_{uuid.uuid4().hex[:6]}")
+        category = str(mem.get("category") or "preference")
+        content = str(mem.get("content") or "").strip()
+        source = str(mem.get("source") or "autonomous_ai")
+        reason = str(mem.get("reason") or "")
+        confidence = float(mem.get("confidence") or 1.0)
+        created_at = int(mem.get("created_at") or now)
+        updated_at = now
+
+        if not content:
+            return {"status": "error", "error": "Memory content cannot be empty"}
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO user_memories (id, category, content, source, reason, confidence, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                category=excluded.category,
+                content=excluded.content,
+                source=excluded.source,
+                reason=excluded.reason,
+                confidence=excluded.confidence,
+                updated_at=excluded.updated_at
+        """, (mid, category, content, source, reason, confidence, created_at, updated_at))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        conn = None
+
+        # Dual-sync to personal_facts.md
+        sync_personal_facts_markdown()
+
+        return {"status": "ok", "id": mid, "category": category, "content": content}
+    except Exception as e:
+        log(f"Error in db_save_personal_memory: {e}")
+        return {"status": "error", "error": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def db_save_experience_distillation(dist):
+    conn = None
+    try:
+        if not isinstance(dist, dict):
+            return {"status": "error", "error": "Invalid distillation item"}
+        
+        now = int(time.time() * 1000)
+        eid = str(dist.get("id") or f"exp_{now}_{uuid.uuid4().hex[:6]}")
+        session_id = str(dist.get("session_id") or "")
+        title = str(dist.get("title") or "Session Experience").strip()
+        distilled_markdown = str(dist.get("distilled_markdown") or "").strip()
+        key_learnings = dist.get("key_learnings") or []
+        key_learnings_json = json.dumps(key_learnings) if not isinstance(key_learnings, str) else key_learnings
+        tags = str(dist.get("tags") or "")
+        created_at = int(dist.get("created_at") or now)
+
+        if not distilled_markdown:
+            return {"status": "error", "error": "Distilled markdown cannot be empty"}
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO experience_ledger (id, session_id, title, distilled_markdown, key_learnings_json, tags, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                session_id=excluded.session_id,
+                title=excluded.title,
+                distilled_markdown=excluded.distilled_markdown,
+                key_learnings_json=excluded.key_learnings_json,
+                tags=excluded.tags
+        """, (eid, session_id, title, distilled_markdown, key_learnings_json, tags, created_at))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        conn = None
+
+        # Write markdown file
+        clean_title = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in title.lower())[:40].strip("_")
+        fname = f"sess_{clean_title}_{eid[:8]}.md"
+        fpath = os.path.join(PM_EXPERIENCE_LEDGER_DIR, fname)
+        os.makedirs(PM_EXPERIENCE_LEDGER_DIR, exist_ok=True)
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write(f"# 🧠 Experience Ledger: {title}\n*Created: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M WIB')} | Session: {session_id}*\n\n{distilled_markdown}\n")
+
+        return {"status": "ok", "id": eid, "title": title, "file": fname}
+    except Exception as e:
+        log(f"Error in db_save_experience_distillation: {e}")
+        return {"status": "error", "error": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def db_save_anti_pattern(ap):
+    conn = None
+    try:
+        if not isinstance(ap, dict):
+            return {"status": "error", "error": "Invalid anti-pattern item"}
+        
+        now = int(time.time() * 1000)
+        apid = str(ap.get("id") or f"ap_{now}_{uuid.uuid4().hex[:6]}")
+        target_domain = str(ap.get("target_domain") or "General").strip()
+        mistake_description = str(ap.get("mistake_description") or "").strip()
+        root_cause = str(ap.get("root_cause") or "").strip()
+        winning_fix = str(ap.get("winning_fix") or "").strip()
+        prevention_rule = str(ap.get("prevention_rule") or "").strip()
+        created_at = int(ap.get("created_at") or now)
+
+        if not mistake_description or not winning_fix:
+            return {"status": "error", "error": "Mistake description and winning fix are required"}
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO anti_patterns (id, target_domain, mistake_description, root_cause, winning_fix, prevention_rule, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                target_domain=excluded.target_domain,
+                mistake_description=excluded.mistake_description,
+                root_cause=excluded.root_cause,
+                winning_fix=excluded.winning_fix,
+                prevention_rule=excluded.prevention_rule
+        """, (apid, target_domain, mistake_description, root_cause, winning_fix, prevention_rule, created_at))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        conn = None
+
+        # Dual-sync to failure_learnings.md
+        sync_failure_learnings_markdown()
+
+        return {"status": "ok", "id": apid, "target_domain": target_domain}
+    except Exception as e:
+        log(f"Error in db_save_anti_pattern: {e}")
+        return {"status": "error", "error": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def db_save_autonomous_skill(sk):
+    conn = None
+    try:
+        if not isinstance(sk, dict):
+            return {"status": "error", "error": "Invalid skill item"}
+        
+        now = int(time.time() * 1000)
+        skid = str(sk.get("id") or f"skill_auto_{now}_{uuid.uuid4().hex[:6]}")
+        name = str(sk.get("name") or "Autonomous Skill").strip()
+        description = str(sk.get("description") or "").strip()
+        workflow_markdown = str(sk.get("workflow_markdown") or "").strip()
+        version = str(sk.get("version") or "v1.0.0")
+        source = str(sk.get("source") or "autonomous_ai")
+        success_count = int(sk.get("success_count") or 1)
+        failure_count = int(sk.get("failure_count") or 0)
+        changelog = str(sk.get("changelog") or "")
+        created_at = int(sk.get("created_at") or now)
+        updated_at = now
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO autonomous_skills (id, name, description, workflow_markdown, version, source, success_count, failure_count, changelog, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                name=excluded.name,
+                description=excluded.description,
+                workflow_markdown=excluded.workflow_markdown,
+                version=excluded.version,
+                source=excluded.source,
+                success_count=excluded.success_count,
+                failure_count=excluded.failure_count,
+                changelog=excluded.changelog,
+                updated_at=excluded.updated_at
+        """, (skid, name, description, workflow_markdown, version, source, success_count, failure_count, changelog, created_at, updated_at))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        conn = None
+
+        # Write markdown file
+        fname = f"{skid}.md"
+        fpath = os.path.join(PM_AUTONOMOUS_SKILLS_DIR, fname)
+        os.makedirs(PM_AUTONOMOUS_SKILLS_DIR, exist_ok=True)
+        md_content = f"""---
+id: {skid}
+name: "{name}"
+description: "{description}"
+version: "{version}"
+source: "{source}"
+success_count: {success_count}
+failure_count: {failure_count}
+changelog: "{changelog}"
+created_at: {created_at}
+updated_at: {updated_at}
+---
+
+# ⚡ {name} ({version})
+
+## 🎯 Trigger & Deskripsi:
+{description}
+
+## 📋 Alur Kerja (Workflow):
+{workflow_markdown}
+"""
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write(md_content)
+
+        return {"status": "ok", "id": skid, "name": name, "version": version}
+    except Exception as e:
+        log(f"Error in db_save_autonomous_skill: {e}")
+        return {"status": "error", "error": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def db_save_autonomous_agent(ag):
+    conn = None
+    try:
+        if not isinstance(ag, dict):
+            return {"status": "error", "error": "Invalid agent item"}
+        
+        now = int(time.time() * 1000)
+        agid = str(ag.get("id") or f"agent_auto_{now}_{uuid.uuid4().hex[:6]}")
+        name = str(ag.get("name") or "Autonomous Agent").strip()
+        role_description = str(ag.get("role_description") or "").strip()
+        system_prompt = str(ag.get("system_prompt") or "").strip()
+        assigned_skills = ag.get("assigned_skills") or []
+        assigned_skills_json = json.dumps(assigned_skills) if not isinstance(assigned_skills, str) else assigned_skills
+        source = str(ag.get("source") or "autonomous_ai")
+        reason = str(ag.get("reason") or "")
+        created_at = int(ag.get("created_at") or now)
+        updated_at = now
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO autonomous_agents (id, name, role_description, system_prompt, assigned_skills_json, source, reason, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                name=excluded.name,
+                role_description=excluded.role_description,
+                system_prompt=excluded.system_prompt,
+                assigned_skills_json=excluded.assigned_skills_json,
+                source=excluded.source,
+                reason=excluded.reason,
+                updated_at=excluded.updated_at
+        """, (agid, name, role_description, system_prompt, assigned_skills_json, source, reason, created_at, updated_at))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        conn = None
+
+        # Write markdown file
+        fname = f"{agid}.md"
+        fpath = os.path.join(PM_AUTONOMOUS_AGENTS_DIR, fname)
+        os.makedirs(PM_AUTONOMOUS_AGENTS_DIR, exist_ok=True)
+        md_content = f"""---
+id: {agid}
+name: "{name}"
+description: "{role_description}"
+source: "{source}"
+reason: "{reason}"
+assigned_skills: {assigned_skills_json}
+created_at: {created_at}
+updated_at: {updated_at}
+---
+
+# 🤖 {name} (Autonomous Agent)
+
+## 🎭 Persona & Role:
+{role_description}
+
+## 📜 System Prompt & Instruksi:
+{system_prompt}
+"""
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write(md_content)
+
+        return {"status": "ok", "id": agid, "name": name}
+    except Exception as e:
+        log(f"Error in db_save_autonomous_agent: {e}")
+        return {"status": "error", "error": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def db_delete_persistent_item(item_type, item_id):
+    conn = None
+    try:
+        table_map = {
+            "memory": ("user_memories", "id"),
+            "experience": ("experience_ledger", "id"),
+            "anti_pattern": ("anti_patterns", "id"),
+            "skill": ("autonomous_skills", "id"),
+            "agent": ("autonomous_agents", "id")
+        }
+        if item_type not in table_map:
+            return {"status": "error", "error": f"Unknown item type: {item_type}"}
+
+        table_name, id_col = table_map[item_type]
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute(f"DELETE FROM {table_name} WHERE {id_col} = ?", (str(item_id),))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        conn = None
+
+        if item_type == "memory":
+            sync_personal_facts_markdown()
+        elif item_type == "anti_pattern":
+            sync_failure_learnings_markdown()
+        elif item_type == "skill":
+            fpath = os.path.join(PM_AUTONOMOUS_SKILLS_DIR, f"{item_id}.md")
+            if os.path.exists(fpath):
+                try: os.remove(fpath)
+                except Exception: pass
+        elif item_type == "agent":
+            fpath = os.path.join(PM_AUTONOMOUS_AGENTS_DIR, f"{item_id}.md")
+            if os.path.exists(fpath):
+                try: os.remove(fpath)
+                except Exception: pass
+
+        return {"status": "ok", "deleted_id": item_id, "type": item_type}
+    except Exception as e:
+        log(f"Error in db_delete_persistent_item: {e}")
+        return {"status": "error", "error": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+# ==========================================
 # Local PC RPC Handlers (File & Command Access & SQLite)
 # ==========================================
 def handle_local_rpc(msg):
@@ -1195,6 +1936,50 @@ def handle_local_rpc(msg):
             "cwd": os.getcwd(),
             "db_path": DB_PATH
         }
+
+    # Persistent Memory RPC Actions
+    elif action == "db_get_persistent_memory":
+        res = db_get_persistent_memory(msg.get("search", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_save_personal_memory":
+        res = db_save_personal_memory(msg.get("memory", {}))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_save_experience_distillation":
+        res = db_save_experience_distillation(msg.get("distillation", {}))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_save_anti_pattern":
+        res = db_save_anti_pattern(msg.get("anti_pattern", {}))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_save_autonomous_skill":
+        res = db_save_autonomous_skill(msg.get("skill", {}))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_save_autonomous_agent":
+        res = db_save_autonomous_agent(msg.get("agent", {}))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_delete_persistent_item":
+        res = db_delete_persistent_item(msg.get("item_type", ""), msg.get("item_id", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_sync_persistent_memory_files":
+        sync_persistent_memory_on_startup()
+        sync_personal_facts_markdown()
+        sync_failure_learnings_markdown()
+        res = {"status": "ok", "synced": True}
+        res["id"] = req_id
+        return res
 
     # SQLite RPC Actions
     elif action == "db_save_session":

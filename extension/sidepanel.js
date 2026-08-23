@@ -39,6 +39,38 @@ let customAgents = [];
 let customSkills = [];
 let customMemories = [];
 
+// Persistent Memory & Autonomous Brain State (Hermes-Surpassing)
+let cachedPersistentMemory = {
+  user_memories: [],
+  experience_ledger: [],
+  anti_patterns: [],
+  autonomous_skills: [],
+  autonomous_agents: [],
+  counts: { user_memories: 0, experience_ledger: 0, anti_patterns: 0, autonomous_skills: 0, autonomous_agents: 0 }
+};
+
+async function loadPersistentMemoryFromHost() {
+  try {
+    const res = await sendNativeRpc("db_get_persistent_memory", { search: "" });
+    if (res && res.status === "ok") {
+      cachedPersistentMemory = {
+        user_memories: res.user_memories || [],
+        experience_ledger: res.experience_ledger || [],
+        anti_patterns: res.anti_patterns || [],
+        autonomous_skills: res.autonomous_skills || [],
+        autonomous_agents: res.autonomous_agents || [],
+        counts: res.counts || {}
+      };
+      console.log("[Brain] Persistent Memory Loaded:", cachedPersistentMemory.counts);
+      if (typeof updateBrainDrawerBadge === "function") {
+        updateBrainDrawerBadge();
+      }
+    }
+  } catch (err) {
+    console.warn("[Brain] Could not load persistent memory from host:", err);
+  }
+}
+
 // Maintain long-lived port connection to background for visibility synchronization across tabs
 let sidepanelBackgroundPort = null;
 try {
@@ -467,7 +499,46 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
     }
   }
 
-  // 5. Inject Dynamic AI Cognitive / Thinking Level Directive (Hacked Client-Side without API dependency)
+  // 5. Inject Autonomous Brain & Persistent Memory Directives (Hermes-Surpassing Intelligence)
+  prompt += `\n\n=== 🧠 HERMES-SURPASSING PERSISTENT MEMORY & AUTONOMOUS BRAIN ENGINE ===\n`;
+  prompt += `Anda memiliki otak otonom tingkat tinggi (Autonomous Brain) dengan persistent memory permanen yang melampaui Hermes Agent.\n`;
+  prompt += `Anda mampu secara otomatis membuat skill baru (\`create_autonomous_skill\`), mengedit/memperbaiki skill Anda sendiri (\`update_autonomous_skill\`), membuat multi-agent spesialis (\`create_autonomous_agent\`), mencatat memori/aturan user (\`manage_personal_memory\`), menyaring intisari pengalaman (\`distill_session_experience\`), dan mempelajari kesalahan agar tidak pernah diulangi lagi (\`record_anti_pattern\`).\n`;
+
+  // Inject User Profile & Rules
+  const mems = cachedPersistentMemory.user_memories || [];
+  if (mems.length > 0) {
+    prompt += `\n📌 FAKTA PERSONAL & ATURAN PENGGUNA TERVERIFIKASI (PERSISTENT FACTS):\n`;
+    mems.forEach((m, idx) => {
+      const srcBadge = m.source === 'autonomous_ai' ? '[🤖 AI Learned]' : '[👤 User Rule]';
+      prompt += `${idx + 1}. ${srcBadge} [${(m.category || 'fact').toUpperCase()}] ${m.content}${m.reason ? ` (Alasan: ${m.reason})` : ''}\n`;
+    });
+  }
+
+  // Inject Anti-Patterns (Pre-Flight Failure Checklist)
+  const aps = cachedPersistentMemory.anti_patterns || [];
+  if (aps.length > 0) {
+    prompt += `\n🛡️ ANTI-PATTERN VAULT (PELAJARAN DARI KESALAHAN MASA LALU - JANGAN PERNAH DIULANGI):\n`;
+    aps.slice(0, 10).forEach((ap, idx) => {
+      prompt += `[AP-${String(idx + 1).padStart(3, '0')}] Konteks: ${ap.target_domain} | Gejala: ${ap.mistake_description} | Solusi Permanen: ${ap.winning_fix} | Aturan Pencegahan: ${ap.prevention_rule}\n`;
+    });
+  }
+
+  // Inject Autonomous Skills
+  const autoSkills = cachedPersistentMemory.autonomous_skills || [];
+  if (autoSkills.length > 0) {
+    prompt += `\n⚡ AUTONOMOUS SKILLS VAULT (SKILL YANG DICIPTAKAN & DISEMPURNAKAN SENDIRI OLEH AI):\n`;
+    autoSkills.forEach(sk => {
+      prompt += `\n### [🤖 Autonomous Skill ${sk.version || 'v1.0.0'}] ${sk.name}\n- Deskripsi: ${sk.description}\n- Alur Kerja:\n${sk.workflow_markdown}\n`;
+    });
+  }
+
+  // Anti-AI Slop Directive
+  prompt += `\n🚫 STANDAR ANTI-AI-SLOP (MAKSIMUM SIGNAL-TO-NOISE RATIO):
+- DILARANG memproduksi teks basa-basi klise, pembukaan mengulur waktu ("Tentu saja!", "Sebagai asisten AI...", "Berikut adalah langkah-langkah...").
+- Sajikan analisis empiris, berbasis data dan fakta nyata di layar browser atau file sistem.
+- Jika terjadi kegagalan atau error pada tools/eksekusi: DILARANG menyembunyikan error atau mengembalikan respons kosong! AI WAJIB segera mendiagnosa root cause, mencari solusi alternatif yang benar, dan mencatatnya ke \`record_anti_pattern\`.\n`;
+
+  // 6. Inject Dynamic AI Cognitive / Thinking Level Directive (Hacked Client-Side without API dependency)
   prompt += getThinkingDirective(currentThinkingLevel);
 
   return prompt;
@@ -849,6 +920,126 @@ const AGENT_TOOLS = [
           cwd: { type: "string", description: "Working directory (optional)" }
         },
         required: ["command"]
+      }
+    }
+  },
+  // ==========================================
+  // Autonomous Brain & Persistent Memory Tools (Hermes-Surpassing)
+  // ==========================================
+  {
+    type: "function",
+    function: {
+      name: "manage_personal_memory",
+      description: "Manage persistent personal facts, rules, and preferences of the user. Use when user expresses a preference, rule, identity detail, or asks to remember/forget something.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: { type: "string", enum: ["save", "delete", "list"], description: "Action to perform: 'save', 'delete', or 'list'" },
+          category: { type: "string", enum: ["profile", "preference", "rule", "knowledge", "guideline"], description: "Category of the memory item" },
+          content: { type: "string", description: "The core fact, rule, or preference to remember permanently" },
+          reason: { type: "string", description: "Why this memory was recorded or updated" },
+          confidence: { type: "number", description: "Confidence score between 0.1 and 1.0 (default 1.0)" },
+          memory_id: { type: "string", description: "Target memory ID (required for 'delete')" },
+          query: { type: "string", description: "Search query string (optional for 'list')" }
+        },
+        required: ["action"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "distill_session_experience",
+      description: "Distill the current interaction session into high-signal key learnings, patterns, and empirical takeaways into the persistent experience ledger.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Concise title of the distilled experience (e.g., 'Fix Image Persistence', 'Meta Ads CPR Optimization')" },
+          distilled_markdown: { type: "string", description: "Markdown summary of key learnings, workflow discoveries, and solutions." },
+          key_learnings: {
+            type: "array",
+            items: { type: "string" },
+            description: "Array of bullet-point takeaways"
+          },
+          tags: { type: "string", description: "Comma-separated tags (e.g., 'indexeddb,images,fix')" }
+        },
+        required: ["title", "distilled_markdown"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "record_anti_pattern",
+      description: "Record a mistake, failed attempt, or sub-optimal pattern into the anti-pattern vault to ensure AI NEVER repeats the same error.",
+      parameters: {
+        type: "object",
+        properties: {
+          target_domain: { type: "string", description: "Context domain (e.g., 'Git Backup', 'WhatsApp CS', 'DOM Scraping', 'CSS Dark Theme')" },
+          mistake_description: { type: "string", description: "What failed or went wrong" },
+          root_cause: { type: "string", description: "Technical or logical root cause of the error" },
+          winning_fix: { type: "string", description: "The verified, permanent winning solution" },
+          prevention_rule: { type: "string", description: "Actionable guardrail rule to avoid this error in future runs" }
+        },
+        required: ["target_domain", "mistake_description", "winning_fix", "prevention_rule"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_autonomous_skill",
+      description: "Autonomously create a brand-new reusable workflow skill and persist it to the autonomous skills vault and file system.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Skill name (e.g., 'Autonomous Meta Ads Auditor', 'Dynamic Carousel Generator')" },
+          description: { type: "string", description: "When and why this skill triggers" },
+          workflow_markdown: { type: "string", description: "Step-by-step markdown workflow and action directives" },
+          version: { type: "string", description: "Initial semantic version, default 'v1.0.0'" }
+        },
+        required: ["name", "description", "workflow_markdown"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_autonomous_skill",
+      description: "Self-improve, refactor, or increment the version of an existing autonomous skill based on empirical execution results.",
+      parameters: {
+        type: "object",
+        properties: {
+          skill_id: { type: "string", description: "ID of the autonomous skill to update" },
+          name: { type: "string", description: "Updated skill name" },
+          description: { type: "string", description: "Updated description" },
+          workflow_markdown: { type: "string", description: "Updated workflow markdown" },
+          version: { type: "string", description: "Updated version string (e.g., 'v1.1.0')" },
+          changelog: { type: "string", description: "Explanation of what was improved or fixed" }
+        },
+        required: ["skill_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_autonomous_agent",
+      description: "Autonomously spawn and persist a new domain specialist multi-agent persona complete with custom system prompt and assigned skills.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Agent persona name (e.g., 'Lead Qualification Specialist', 'Dark Luxury Art Director')" },
+          role_description: { type: "string", description: "Brief role definition and specialty" },
+          system_prompt: { type: "string", description: "Full system prompt directives for this agent" },
+          assigned_skills: {
+            type: "array",
+            items: { type: "string" },
+            description: "List of skill IDs or skill names assigned to this agent"
+          },
+          reason: { type: "string", description: "Why the AI autonomously decided to create this agent" }
+        },
+        required: ["name", "role_description", "system_prompt"]
       }
     }
   }
@@ -2460,6 +2651,104 @@ async function executeTool(name, args, assistantBubble = null) {
         stdout: res.stdout,
         stderr: res.stderr
       };
+    }
+
+    // ==========================================
+    // Autonomous Brain & Persistent Memory Tool Dispatchers
+    // ==========================================
+    case "manage_personal_memory": {
+      const action = args.action || "save";
+      if (action === "save") {
+        const res = await sendNativeRpc("db_save_personal_memory", {
+          memory: {
+            category: args.category || "preference",
+            content: args.content,
+            reason: args.reason || "Autonomous AI observation",
+            confidence: args.confidence !== undefined ? args.confidence : 1.0,
+            source: "autonomous_ai"
+          }
+        });
+        return { success: true, message: "Personal memory recorded successfully in SQLite and synced to personal_facts.md", memory_id: res.id, content: res.content };
+      } else if (action === "delete") {
+        const res = await sendNativeRpc("db_delete_persistent_item", {
+          item_type: "memory",
+          item_id: args.memory_id
+        });
+        return { success: true, message: "Personal memory deleted", deleted_id: res.deleted_id };
+      } else if (action === "list") {
+        const res = await sendNativeRpc("db_get_persistent_memory", { search: args.query || "" });
+        return { success: true, user_memories: res.user_memories || [] };
+      }
+      return { error: `Unsupported action: ${action}` };
+    }
+
+    case "distill_session_experience": {
+      const currentSid = currentSessionId || (chatHistory[0]?.id) || `sess_${Date.now()}`;
+      const res = await sendNativeRpc("db_save_experience_distillation", {
+        distillation: {
+          session_id: currentSid,
+          title: args.title,
+          distilled_markdown: args.distilled_markdown,
+          key_learnings: args.key_learnings || [],
+          tags: args.tags || ""
+        }
+      });
+      return { success: true, message: "Session experience distilled and stored in SQLite & experience ledger file", id: res.id, title: res.title, file: res.file };
+    }
+
+    case "record_anti_pattern": {
+      const res = await sendNativeRpc("db_save_anti_pattern", {
+        anti_pattern: {
+          target_domain: args.target_domain,
+          mistake_description: args.mistake_description,
+          root_cause: args.root_cause || "",
+          winning_fix: args.winning_fix,
+          prevention_rule: args.prevention_rule
+        }
+      });
+      return { success: true, message: "Anti-pattern recorded permanently. AI will not repeat this error.", id: res.id, domain: res.target_domain };
+    }
+
+    case "create_autonomous_skill": {
+      const res = await sendNativeRpc("db_save_autonomous_skill", {
+        skill: {
+          name: args.name,
+          description: args.description,
+          workflow_markdown: args.workflow_markdown,
+          version: args.version || "v1.0.0",
+          source: "autonomous_ai"
+        }
+      });
+      return { success: true, message: "Autonomous skill created and ready for immediate execution", id: res.id, name: res.name, version: res.version };
+    }
+
+    case "update_autonomous_skill": {
+      const res = await sendNativeRpc("db_save_autonomous_skill", {
+        skill: {
+          id: args.skill_id,
+          name: args.name,
+          description: args.description,
+          workflow_markdown: args.workflow_markdown,
+          version: args.version,
+          changelog: args.changelog,
+          source: "autonomous_ai"
+        }
+      });
+      return { success: true, message: "Autonomous skill updated and refactored", id: res.id, name: res.name, version: res.version };
+    }
+
+    case "create_autonomous_agent": {
+      const res = await sendNativeRpc("db_save_autonomous_agent", {
+        agent: {
+          name: args.name,
+          role_description: args.role_description,
+          system_prompt: args.system_prompt,
+          assigned_skills: args.assigned_skills || [],
+          reason: args.reason || "Autonomous task specialization",
+          source: "autonomous_ai"
+        }
+      });
+      return { success: true, message: "Autonomous specialist agent spawned and registered in agent vault", id: res.id, name: res.name };
     }
 
     case "generate_image": {
@@ -6070,6 +6359,43 @@ async function loadAgentsAndSkills() {
     customSkills.unshift(walkthroughSkillObj);
   }
 
+  // Load Autonomous Brain & Persistent Memory from Host
+  await loadPersistentMemoryFromHost();
+  if (cachedPersistentMemory.autonomous_agents && cachedPersistentMemory.autonomous_agents.length > 0) {
+    cachedPersistentMemory.autonomous_agents.forEach(ag => {
+      if (!customAgents.some(a => a.id === ag.id)) {
+        customAgents.push({
+          id: ag.id,
+          name: ag.name,
+          description: ag.role_description,
+          content: ag.system_prompt,
+          skills: ag.assigned_skills || [],
+          is_autonomous: true,
+          source: ag.source || "autonomous_ai"
+        });
+      }
+    });
+  }
+
+  if (cachedPersistentMemory.autonomous_skills && cachedPersistentMemory.autonomous_skills.length > 0) {
+    cachedPersistentMemory.autonomous_skills.forEach(sk => {
+      const existingIdx = customSkills.findIndex(s => s.id === sk.id);
+      const skillObj = {
+        id: sk.id,
+        name: sk.name,
+        description: sk.description,
+        content: `# ${sk.name} (${sk.version})\n\n## Trigger & Deskripsi:\n${sk.description}\n\n## Alur Kerja:\n${sk.workflow_markdown}`,
+        version: sk.version,
+        is_autonomous: true
+      };
+      if (existingIdx >= 0) {
+        customSkills[existingIdx] = skillObj;
+      } else {
+        customSkills.push(skillObj);
+      }
+    });
+  }
+
   activeAgentId = res.active_agent_id || AUTO_AGENT_ID;
   activeAgent = (activeAgentId === AUTO_AGENT_ID) ? null : (customAgents.find(a => a.id === activeAgentId) || customAgents[0]);
 
@@ -6349,6 +6675,35 @@ async function openOptionsTab(e) {
   }
 }
 
+function openPersistentBrainTab() {
+  const targetUrl = chrome.runtime.getURL('options.html#tab-persistent-brain');
+  chrome.tabs.query({ url: chrome.runtime.getURL('options.html*') }, (tabs) => {
+    if (tabs && tabs.length > 0) {
+      chrome.tabs.update(tabs[0].id, { url: targetUrl, active: true });
+      if (tabs[0].windowId) chrome.windows.update(tabs[0].windowId, { focused: true });
+    } else {
+      chrome.tabs.create({ url: targetUrl, active: true });
+    }
+  });
+}
+
+function updateBrainDrawerBadge() {
+  const badgeEl = document.getElementById('badge-brain-total-count');
+  if (!badgeEl) return;
+  const total = (cachedPersistentMemory.user_memories?.length || 0) +
+                (cachedPersistentMemory.experience_ledger?.length || 0) +
+                (cachedPersistentMemory.anti_patterns?.length || 0) +
+                (cachedPersistentMemory.autonomous_skills?.length || 0) +
+                (cachedPersistentMemory.autonomous_agents?.length || 0);
+  if (total > 0) {
+    badgeEl.textContent = total > 99 ? '99+' : String(total);
+    badgeEl.style.display = 'inline-block';
+  } else {
+    badgeEl.style.display = 'none';
+  }
+}
+
+document.getElementById('btn-open-brain-drawer')?.addEventListener('click', openPersistentBrainTab);
 document.getElementById('btn-open-settings')?.addEventListener('click', openOptionsTab);
 document.getElementById('btn-close-settings')?.addEventListener('click', hideSettingsModal);
 document.getElementById('btn-cancel-settings')?.addEventListener('click', hideSettingsModal);
@@ -6476,6 +6831,8 @@ async function saveCurrentSessionToDB() {
   try {
     if (nativePort) {
       await sendNativeRpc("db_save_session", { session: sessionData });
+      // Non-blocking auto-refresh of persistent memory
+      loadPersistentMemoryFromHost();
     }
   } catch (e) {
     console.warn("SQLite save notice (cached locally):", e);

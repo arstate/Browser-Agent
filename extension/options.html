@@ -85,6 +85,17 @@
             <span class="tab-btn-label">Memory &amp; Aturan</span>
             <span class="tab-btn-badge" id="badge-count-memories">0</span>
           </button>
+
+          <button type="button" class="sidebar-tab-btn" data-tab="persistent-brain" id="tab-btn-persistent-brain">
+            <div class="tab-btn-icon" style="color: #60a5fa;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>
+                <path d="M9 21h6"/>
+              </svg>
+            </div>
+            <span class="tab-btn-label">🧠 Persistent Brain</span>
+            <span class="tab-btn-badge" id="badge-count-brain" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4);">0</span>
+          </button>
         </nav>
       </div>
     </aside>
@@ -771,6 +782,76 @@
         </div>
 
         <div class="items-cards-grid" id="memories-cards-grid">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- TAB 5: Persistent Brain & Self-Improving Vault (Hermes-Surpassing) -->
+      <div class="options-view" id="tab-view-persistent-brain" style="display: none;">
+        <!-- Hero Header -->
+        <div class="bento-card bento-hero-provider-card" style="margin-bottom: 20px; border-color: rgba(59, 130, 246, 0.3);">
+          <div class="hero-provider-top-row">
+            <div class="hero-provider-brand">
+              <div class="hero-provider-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>
+                  <path d="M9 21h6"/>
+                </svg>
+              </div>
+              <div>
+                <h1 class="hero-provider-title" style="color: #60a5fa;">🧠 Persistent Memory &amp; Self-Improving Brain</h1>
+                <p class="hero-provider-desc">Otak mandiri AI yang terus belajar dari setiap percakapan, mengekstrak pengalaman, mencegah kesalahan berulang (Anti-Patterns), dan menciptakan skill/agent baru secara otonom.</p>
+              </div>
+            </div>
+            <div class="hero-provider-actions">
+              <button type="button" class="btn-export-all-db" id="btn-sync-brain-files" style="border-color: rgba(59, 130, 246, 0.4); color: #93c5fd;" title="Sinkronisasi SQLite dengan file Markdown di folder PERSISTENT MEMORY/">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+                <span>Sync with Disk (.md)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Metrics Bento Grid -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px;">
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 14px;">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Personal Facts</div>
+              <div id="stat-brain-facts" style="font-size: 22px; font-weight: 700; color: #38bdf8; margin-top: 4px;">0</div>
+            </div>
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 14px;">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Experience Ledger</div>
+              <div id="stat-brain-experiences" style="font-size: 22px; font-weight: 700; color: #a78bfa; margin-top: 4px;">0</div>
+            </div>
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 14px;">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Anti-Patterns Vault</div>
+              <div id="stat-brain-antipatterns" style="font-size: 22px; font-weight: 700; color: #f87171; margin-top: 4px;">0</div>
+            </div>
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 14px;">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Autonomous Skills &amp; Agents</div>
+              <div id="stat-brain-autoskills" style="font-size: 22px; font-weight: 700; color: #34d399; margin-top: 4px;">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Brain Category Sub-Nav Pills -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; flex-wrap: wrap;">
+          <button type="button" class="btn-mode-pill active" data-subtab="facts" id="brain-subtab-facts">📌 User Profile &amp; Rules</button>
+          <button type="button" class="btn-mode-pill" data-subtab="experiences" id="brain-subtab-experiences">🧠 Experience Ledger</button>
+          <button type="button" class="btn-mode-pill" data-subtab="antipatterns" id="brain-subtab-antipatterns">🛡️ Anti-Patterns (Pelajaran Kesalahan)</button>
+          <button type="button" class="btn-mode-pill" data-subtab="autonomous" id="brain-subtab-autonomous">🤖 Autonomous Skills &amp; Agents</button>
+        </div>
+
+        <!-- Search Bar Brain -->
+        <div class="catalog-search-wrapper" style="margin-bottom: 16px;">
+          <div class="search-input-box">
+            <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="search-brain-input" class="catalog-search-input" placeholder="Cari dalam Persistent Memory &amp; Brain vault (nama, domain, kesalahan, fakta, skill)..." spellcheck="false">
+          </div>
+        </div>
+
+        <!-- Cards Container -->
+        <div class="items-cards-grid" id="brain-cards-grid">
           <!-- Rendered via JS -->
         </div>
       </div>

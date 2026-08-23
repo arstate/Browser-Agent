@@ -176,7 +176,8 @@ const tabViews = {
   ai: document.getElementById('tab-view-ai'),
   agents: document.getElementById('tab-view-agents'),
   skills: document.getElementById('tab-view-skills'),
-  memories: document.getElementById('tab-view-memories')
+  memories: document.getElementById('tab-view-memories'),
+  'persistent-brain': document.getElementById('tab-view-persistent-brain')
 };
 
 // Elements - Modals
@@ -1180,7 +1181,7 @@ const DEFAULT_MEMORIES = [
 ];
 
 async function loadAllData() {
-  await Promise.all([loadAgents(), loadSkills(), loadMemories()]);
+  await Promise.all([loadAgents(), loadSkills(), loadMemories(), loadPersistentBrainData()]);
 }
 
 async function loadAgents() {
@@ -2675,6 +2676,252 @@ function escapeHtml(str) {
   }
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
+
+// =========================================================================
+// Persistent Brain & Self-Improving Vault Management
+// =========================================================================
+let brainData = {
+  user_memories: [],
+  experience_ledger: [],
+  anti_patterns: [],
+  autonomous_skills: [],
+  autonomous_agents: [],
+  counts: {}
+};
+let activeBrainSubtab = "facts";
+
+async function loadPersistentBrainData() {
+  try {
+    const res = await sendNativeRpc("db_get_persistent_memory", { search: "" });
+    if (res && res.status === "ok") {
+      brainData = {
+        user_memories: res.user_memories || [],
+        experience_ledger: res.experience_ledger || [],
+        anti_patterns: res.anti_patterns || [],
+        autonomous_skills: res.autonomous_skills || [],
+        autonomous_agents: res.autonomous_agents || [],
+        counts: res.counts || {}
+      };
+
+      // Update counters
+      const statFacts = document.getElementById('stat-brain-facts');
+      const statExp = document.getElementById('stat-brain-experiences');
+      const statAP = document.getElementById('stat-brain-antipatterns');
+      const statAuto = document.getElementById('stat-brain-autoskills');
+      const badgeBrain = document.getElementById('badge-count-brain');
+
+      const totalItems = (brainData.user_memories.length || 0) +
+                         (brainData.experience_ledger.length || 0) +
+                         (brainData.anti_patterns.length || 0) +
+                         (brainData.autonomous_skills.length || 0) +
+                         (brainData.autonomous_agents.length || 0);
+
+      if (statFacts) statFacts.textContent = brainData.user_memories.length || 0;
+      if (statExp) statExp.textContent = brainData.experience_ledger.length || 0;
+      if (statAP) statAP.textContent = brainData.anti_patterns.length || 0;
+      if (statAuto) statAuto.textContent = ((brainData.autonomous_skills.length || 0) + (brainData.autonomous_agents.length || 0));
+      if (badgeBrain) badgeBrain.textContent = totalItems;
+
+      renderPersistentBrain();
+    }
+  } catch (err) {
+    console.warn("Could not load persistent brain data:", err);
+  }
+}
+
+function renderPersistentBrain(searchQuery = "") {
+  const container = document.getElementById('brain-cards-grid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const q = searchQuery.toLowerCase().trim();
+
+  if (activeBrainSubtab === "facts") {
+    let items = brainData.user_memories || [];
+    if (q) {
+      items = items.filter(m => (m.content || "").toLowerCase().includes(q) || (m.category || "").toLowerCase().includes(q));
+    }
+    if (items.length === 0) {
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;"><p>Belum ada fakta atau aturan pengguna tercatat.</p></div>';
+      return;
+    }
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'custom-item-card';
+      const isAI = item.source === 'autonomous_ai';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <span class="item-tag-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">${escapeHtml((item.category || 'fact').toUpperCase())}</span>
+            <span class="item-tag-badge" style="background: ${isAI ? 'rgba(59, 130, 246, 0.15)' : 'rgba(168, 85, 247, 0.15)'}; color: ${isAI ? '#60a5fa' : '#c084fc'}; border: 1px solid ${isAI ? 'rgba(59, 130, 246, 0.3)' : 'rgba(168, 85, 247, 0.3)'}; font-weight: 700;">${isAI ? '🤖 Autonomous AI' : '👤 User Direct'}</span>
+          </div>
+          <button type="button" class="btn-card-action btn-delete-brain-item" data-type="memory" data-id="${item.id}" title="Hapus Memory">&times;</button>
+        </div>
+        <div style="font-size: 14px; font-weight: 600; color: #f1f5f9; margin-top: 10px; line-height: 1.5;">${escapeHtml(item.content)}</div>
+        ${item.reason ? `<div style="font-size: 12px; color: #94a3b8; margin-top: 8px; font-style: italic;">Alasan: ${escapeHtml(item.reason)}</div>` : ''}
+      `;
+      container.appendChild(card);
+    });
+  } else if (activeBrainSubtab === "experiences") {
+    let items = brainData.experience_ledger || [];
+    if (q) {
+      items = items.filter(e => (e.title || "").toLowerCase().includes(q) || (e.distilled_markdown || "").toLowerCase().includes(q));
+    }
+    if (items.length === 0) {
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;"><p>Belum ada pengalaman terdistilasi tercatat.</p></div>';
+      return;
+    }
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'custom-item-card';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <span class="item-tag-badge" style="background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.3);">🧠 EXPERIENCE LEDGER</span>
+          <button type="button" class="btn-card-action btn-delete-brain-item" data-type="experience" data-id="${item.id}" title="Hapus Exp">&times;</button>
+        </div>
+        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 10px;">${escapeHtml(item.title)}</div>
+        <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px; line-height: 1.5; white-space: pre-wrap; max-height: 140px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 8px; border-radius: 6px;">${escapeHtml(item.distilled_markdown)}</div>
+      `;
+      container.appendChild(card);
+    });
+  } else if (activeBrainSubtab === "antipatterns") {
+    let items = brainData.anti_patterns || [];
+    if (q) {
+      items = items.filter(ap => (ap.target_domain || "").toLowerCase().includes(q) || (ap.mistake_description || "").toLowerCase().includes(q) || (ap.winning_fix || "").toLowerCase().includes(q));
+    }
+    if (items.length === 0) {
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;"><p>Belum ada catatan anti-pattern / kesalahan.</p></div>';
+      return;
+    }
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'custom-item-card';
+      card.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <span class="item-tag-badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">🛡️ [${escapeHtml(item.target_domain)}]</span>
+          <button type="button" class="btn-card-action btn-delete-brain-item" data-type="anti_pattern" data-id="${item.id}" title="Hapus Anti-Pattern">&times;</button>
+        </div>
+        <div style="font-size: 14px; font-weight: 700; color: #fca5a5; margin-top: 10px;">⚠️ ${escapeHtml(item.mistake_description)}</div>
+        <div style="font-size: 12px; color: #86efac; margin-top: 8px; line-height: 1.4; background: rgba(34, 197, 94, 0.1); padding: 8px; border-radius: 6px; border: 1px solid rgba(34, 197, 94, 0.2);">
+          <strong>✅ Solusi Permanen:</strong> ${escapeHtml(item.winning_fix)}
+        </div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 6px;">
+          <strong>🔒 Aturan Pencegahan:</strong> ${escapeHtml(item.prevention_rule)}
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  } else if (activeBrainSubtab === "autonomous") {
+    let skills = brainData.autonomous_skills || [];
+    let agents = brainData.autonomous_agents || [];
+
+    if (q) {
+      skills = skills.filter(s => (s.name || "").toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q));
+      agents = agents.filter(a => (a.name || "").toLowerCase().includes(q) || (a.role_description || "").toLowerCase().includes(q));
+    }
+
+    if (skills.length === 0 && agents.length === 0) {
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;"><p>Belum ada Autonomous Skill / Agent yang dibuat oleh AI.</p></div>';
+      return;
+    }
+
+    skills.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'custom-item-card';
+      card.style.borderColor = 'rgba(52, 211, 153, 0.3)';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <span class="item-tag-badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3);">⚡ SKILL ${escapeHtml(item.version || 'v1.0.0')}</span>
+            <span class="item-tag-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700;">🤖 Autonomous AI</span>
+          </div>
+          <button type="button" class="btn-card-action btn-delete-brain-item" data-type="skill" data-id="${item.id}" title="Hapus Skill">&times;</button>
+        </div>
+        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 10px;">${escapeHtml(item.name)}</div>
+        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">${escapeHtml(item.description)}</div>
+      `;
+      container.appendChild(card);
+    });
+
+    agents.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'custom-item-card';
+      card.style.borderColor = 'rgba(168, 85, 247, 0.3)';
+      card.innerHTML = `
+        <div class="item-card-header">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <span class="item-tag-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">🎭 AGENT</span>
+            <span class="item-tag-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700;">🤖 Autonomous AI</span>
+          </div>
+          <button type="button" class="btn-card-action btn-delete-brain-item" data-type="agent" data-id="${item.id}" title="Hapus Agent">&times;</button>
+        </div>
+        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 10px;">${escapeHtml(item.name)}</div>
+        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">${escapeHtml(item.role_description)}</div>
+      `;
+      container.appendChild(card);
+    });
+  }
+}
+
+// Subtab buttons event listeners
+document.addEventListener('click', async (e) => {
+  const subtabBtn = e.target.closest('#tab-view-persistent-brain .btn-mode-pill');
+  if (subtabBtn) {
+    const subtab = subtabBtn.getAttribute('data-subtab');
+    if (subtab) {
+      activeBrainSubtab = subtab;
+      document.querySelectorAll('#tab-view-persistent-brain .btn-mode-pill').forEach(b => b.classList.remove('active'));
+      subtabBtn.classList.add('active');
+      const searchInput = document.getElementById('search-brain-input');
+      renderPersistentBrain(searchInput ? searchInput.value : "");
+    }
+  }
+
+  // Delete persistent item
+  const delBtn = e.target.closest('.btn-delete-brain-item');
+  if (delBtn) {
+    const itemType = delBtn.getAttribute('data-type');
+    const itemId = delBtn.getAttribute('data-id');
+    if (confirm(`Apakah Anda yakin ingin menghapus item ${itemType} ini dari Persistent Memory?`)) {
+      try {
+        const res = await sendNativeRpc("db_delete_persistent_item", { item_type: itemType, item_id: itemId });
+        if (res && res.status === "ok") {
+          showSaveToast("Item berhasil dihapus dari Persistent Memory");
+          await loadPersistentBrainData();
+        } else {
+          alert("Gagal menghapus: " + (res?.error || "Unknown error"));
+        }
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    }
+  }
+});
+
+// Search input listener
+document.getElementById('search-brain-input')?.addEventListener('input', (e) => {
+  renderPersistentBrain(e.target.value);
+});
+
+// Sync brain files button
+document.getElementById('btn-sync-brain-files')?.addEventListener('click', async () => {
+  const syncBtn = document.getElementById('btn-sync-brain-files');
+  if (syncBtn) syncBtn.disabled = true;
+  try {
+    const res = await sendNativeRpc("db_sync_persistent_memory_files");
+    if (res && res.status === "ok") {
+      showSaveToast("Sinkronisasi SQLite & File Markdown Berhasil!");
+      await loadPersistentBrainData();
+    } else {
+      alert("Gagal sinkronisasi: " + (res?.error || "Unknown error"));
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  } finally {
+    if (syncBtn) syncBtn.disabled = false;
+  }
+});
 
 document.addEventListener('DOMContentLoaded', init);
 

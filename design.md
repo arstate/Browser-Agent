@@ -28,3 +28,8 @@ Dokumen ini mendefinisikan standar visual **Clean, Elegant, Rounded Bento UI** b
 - **High-Performance Local Image Storage & Hydration (`local-img://`)**:
   - File fisik `.png` di disk lokal (`~/.browser-agent/generated_images/{image_id}.png`) via Native Host dan IndexedDB (`BrowserAgentImagesDB`).
   - SQLite database hanya menyimpan `![prompt](local-img://img_xxx)`.
+- **🧠 Persistent Brain & Autonomous AI Badges (`.item-tag-badge`)**:
+  - Neon Blue (`rgba(59, 130, 246, 0.15)` / `#60a5fa`) untuk badge `🤖 Autonomous AI` pada skill dan agent yang diciptakan atau dimodifikasi sendiri oleh AI.
+  - Emerald Green (`rgba(34, 197, 94, 0.1)` / `#86efac`) untuk solusi permanen pada kartu Anti-Pattern.
+  - Red Rose (`rgba(239, 68, 68, 0.15)` / `#f87171`) untuk peringatan kesalahan masa lalu pada kartu Anti-Pattern.
+  - Quick-access drawer button di header Side Panel dengan counter badge real-time (`#badge-brain-total-count`).

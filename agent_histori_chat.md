@@ -3238,9 +3238,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.66.0` (Iterasi 266).
+  - **Versi Terkini:** `v2.132.0` (Iterasi 332).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
+
+---
+
+### 🚀 Iterasi 332: Hermes-Surpassing Persistent Memory & Self-Improving Autonomous Brain
+- **Fitur & Arsitektur Utama (5-Phase Rollout)**:
+  1. **Phase 1: Persistent Memory Engine & Dual-Sync (`native_host.py` & `PERSISTENT MEMORY/`)**:
+     - 5 Tabel SQLite baru: `user_memories`, `experience_ledger`, `anti_patterns`, `autonomous_skills`, `autonomous_agents`.
+     - Dual-Sync dua arah antara SQLite database dan direktori disk lokal human-readable (`PERSISTENT MEMORY/01_USER_PROFILE/personal_facts.md`, `02_EXPERIENCE_LEDGER/`, `03_ANTI_PATTERNS/failure_learnings.md`, `04_AUTONOMOUS_SKILLS/`, `05_AUTONOMOUS_AGENTS/`).
+     - Unit test suite `test_phase1_memory.py` (7/7 tests passed).
+  2. **Phase 2: 6 Autonomous Brain Tool Calling Schemas (`sidepanel.js`)**:
+     - `manage_personal_memory` (save/delete/list user facts & rules).
+     - `distill_session_experience` (extract markdown learnings from session).
+     - `record_anti_pattern` (never repeat mistakes - root cause & winning fix).
+     - `create_autonomous_skill` (AI creates new skills).
+     - `update_autonomous_skill` (AI refactors & edits its own skills).
+     - `create_autonomous_agent` (AI spawns specialized sub-agents).
+  3. **Phase 3: Dynamic Retrieval Engine & Zero-AI-Slop Directives (`sidepanel.js`)**:
+     - `buildDynamicSystemPrompt` otomatis menyuntikkan fakta personal user, checklist kegagalan masa lalu (Anti-Patterns), dan daftar autonomous skills.
+     - Standar Anti-AI-Slop: Respon berbasis empiris/fakta riil tanpa basa-basi klise.
+  4. **Phase 4: Background Reflexion Interceptor**:
+     - Auto-refresh memory cache pasca-penyimpanan sesi ke SQLite.
+  5. **Phase 5: Dark Luxury UI (`options.html`, `options.js`, `sidepanel.html`)**:
+     - Tab `🧠 Persistent Brain` di halaman Options dengan filter 4 sub-kategori, search bar, sync button, dan counter metrics bento.
+     - Badge `[🤖 Autonomous AI]` neon blue.
+     - Quick-access drawer button di header Side Panel dengan counter badge real-time.
 
 
 

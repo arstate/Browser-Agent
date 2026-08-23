@@ -85,12 +85,29 @@ graph TD
 
 ---
 
-## 🛡️ 5. Protokol Versioning & Restore Points
+## 🧠 5. Hermes-Surpassing Persistent Memory & Self-Improving Autonomous Brain
 
-- **Versi Terkini:** `v2.15.0`
+Browser Agent dilengkapi sistem memori otonom dan pembelajaran mandiri (Self-Learning & Reflexion Engine) dengan mekanisme **Dual-Sync** (SQLite Database + Git-Tracked Markdown Files di folder `PERSISTENT MEMORY/`):
+
+1. **User Profile & Working Rules (`user_memories` / `personal_facts.md`):**
+   - Menyimpan fakta personal, preferensi user, dan aturan kerja permanen yang diekstrak AI atau diinput user.
+2. **Experience Ledger (`experience_ledger` / `02_EXPERIENCE_LEDGER/`):**
+   - Distilasi intisari pengalaman tiap sesi percakapan ke dalam format Markdown poin-poin terstruktur.
+3. **Anti-Patterns & Failure Learnings (`anti_patterns` / `failure_learnings.md`):**
+   - Mencatat deskripsi kesalahan, root cause, winning fix, dan aturan pencegahan agar AI tidak pernah mengulangi kesalahan masa lalu.
+4. **Autonomous Skills & Agents Vault (`autonomous_skills` & `autonomous_agents`):**
+   - AI mampu secara mandiri menciptakan skill baru (`create_autonomous_skill`), mengedit/memperbaiki skill miliknya sendiri (`update_autonomous_skill`), serta melahirkan sub-agent spesialis (`create_autonomous_agent`).
+5. **Dynamic Prompt Retrieval Engine:**
+   - Menyuntikkan fakta personal, checklist anti-pattern, dan daftar autonomous skills langsung ke dalam `buildDynamicSystemPrompt` dengan standar Anti-AI-Slop tingkat tinggi.
+
+---
+
+## 🛡️ 6. Protokol Versioning & Restore Points
+
+- **Versi Terkini:** `v2.132.0`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
-  - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, dan snapshot fisik.
+  - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
   - `./restore.sh list`: Menampilkan seluruh daftar versi dan restore point yang tersedia.
   - `./restore.sh <VERSION_TAG>`: Rollback instan 1-klik ke versi stabil pilihan.
 - **Mandat Agent:** Selalu menyebutkan versi terbaru yang aktif di setiap balasan akhir.
