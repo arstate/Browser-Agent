@@ -3238,7 +3238,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.133.0` (Iterasi 333).
+  - **Versi Terkini:** `v2.134.0` (Iterasi 334).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
 
@@ -3285,6 +3285,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. **Zero Emoji Protocol Enforcement**:
      - Seluruh ikon diganti dengan Vector SVG murni.
   5. **CRX Build & Backup**:
+     - Re-pack `extension.crx` (431.2 KB), sync ke Downloads, dan auto-push ke GitHub.
+
+---
+
+### 🚀 Iterasi 334: Fix ReferenceError showSaveToast in Persistent Brain Options UI
+- **Problem**:
+  - Saat mengklik tombol hapus item Persistent Brain atau tombol Sync disk, muncul alert error: `Error: showSaveToast is not defined`.
+- **Penyebab & Solusi**:
+  1. **Function Name Unification (`options.js`)**:
+     - Mengganti pemanggilan `showSaveToast` dengan fungsi `showToast` yang sudah ada di codebase.
+     - Mendefinisikan alias `function showSaveToast(customMsg = null) { showToast(customMsg); }` untuk menjamin kompatibilitas 100%.
+  2. **CRX Build & Sync**:
      - Re-pack `extension.crx` (431.2 KB), sync ke Downloads, dan auto-push ke GitHub.
 
 

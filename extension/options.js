@@ -523,6 +523,10 @@ function showToast(customMsg = null) {
   setTimeout(() => { saveToast.style.display = 'none'; }, 3500);
 }
 
+function showSaveToast(customMsg = null) {
+  showToast(customMsg);
+}
+
 // =========================================================================
 // Export & Import All Settings (Complete Backup & Restore)
 // =========================================================================
@@ -2932,7 +2936,7 @@ document.addEventListener('click', async (e) => {
       try {
         const res = await sendNativeRpc("db_delete_persistent_item", { item_type: itemType, item_id: itemId });
         if (res && res.status === "ok") {
-          showSaveToast("Item berhasil dihapus dari Persistent Memory");
+          showToast("Item berhasil dihapus dari Persistent Memory");
           await loadPersistentBrainData();
         } else {
           alert("Gagal menghapus: " + (res?.error || "Unknown error"));
@@ -2956,7 +2960,7 @@ document.getElementById('btn-sync-brain-files')?.addEventListener('click', async
   try {
     const res = await sendNativeRpc("db_sync_persistent_memory_files");
     if (res && res.status === "ok") {
-      showSaveToast("Sinkronisasi SQLite & File Markdown Berhasil!");
+      showToast("Sinkronisasi SQLite & File Markdown Berhasil!");
       await loadPersistentBrainData();
     } else {
       alert("Gagal sinkronisasi: " + (res?.error || "Unknown error"));
