@@ -2218,15 +2218,35 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.68.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 269: Alis Dinamis & 4 Siklus Ekspresi Wajah AI (Mikir, Stres, Nemu Ide, Nemu Jawaban)
+- **Kebutuhan Pengguna**:
+  - Menambahkan alis di atas mata pada tombol generate.
+  - Memberikan animasi pergantian ekspresi wajah AI secara dinamis:
+    1. **Mikir (Thinking)**: Alis terangkat penasaran & mata melirik atas-kiri.
+    2. **Stres (Overwhelmed / Heavy Search)**: Alis berkerut tajam ke dalam & mata menyipit tegang bergetar cepat (*micro-jitter*).
+    3. **Nemu Ide (Eureka / Lightbulb Moment)**: Alis melonjak tinggi terkejut senang & mata membelalak lebar memantul ceria.
+    4. **Nemu Jawaban (Confident & Solving)**: Alis tenang rileks & mata mengedip percaya diri saat solusi selesai dirumuskan.
+- **Solusi & Peningkatan**:
+  1. **HTML & DOM (`newtab.html` & `sidepanel.html`)**:
+     - Menambahkan container `.gen-face-wrapper` dengan sub-elemen `.gen-eyebrows-wrapper` (`.gen-eyebrow.gen-brow-left` dan `.gen-brow-right`) dan `.gen-eyes-wrapper` (`.gen-eye-slit.gen-eye-left` dan `.gen-eye-right`).
+  2. **Styling & Keyframe Animasi 8 Detik (`newtab.css` & `sidepanel.css`)**:
+     - Menata dimensi alis 5px x 1.5px dan mata 3.5px x 10px warna Dark Slate di atas background bundar Neon Lime.
+     - Menyusun 4 set keyframes terkoordinasi: `@keyframes faceExpressionCycle`, `@keyframes browLeftCycle`, `@keyframes browRightCycle`, dan `@keyframes eyesSlitCycle` yang bertransisi halus secara berulang.
+     - Mengatur interaksi hover pada `.btn-send.loading:hover` agar wajah mengecil halus dan memunculkan ikon stop.
+  3. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.69.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **Generating Button:** 100% Circular Round Shape, Solid Neon Lime Fill (`#CEF128`), and scanning dark eye slits (`eyesScanGlance`).
+- **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.68.0` (Iterasi 268).
+  - **Versi Terkini:** `v2.69.0` (Iterasi 269).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
