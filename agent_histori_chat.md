@@ -2748,6 +2748,17 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 309: Remove Redundant In-Box Shortcut Tip Text from Sidepanel Input Bar
+- **Kebutuhan Pengguna**:
+  - Menghapus teks shortcut tip `↵ to run · ⇧↵ new line` yang berada di dalam bar input prompt Sidepanel agar tampilan bersih dan tidak redundan dengan panduan footer.
+- **Solusi & Peningkatan**:
+  1. **Remove Shortcut Tip (`sidepanel.html`)**:
+     - Menghapus elemen `.shortcut-tip` dari `sidepanel.html` sehingga bagian bawah textarea hanya memuat tombol attachment `+` dan input file tersembunyi.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.109.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 308: Clean White Active Pill Typography with Neon Lime Icon Accents
 - **Kebutuhan Pengguna**:
   - Mengubah seluruh warna teks pada pill tombol mode aktif (`Agent Mode`, `Chat Mode`, `Web Search`, `Switch Tab`, `Accept`) menjadi warna putih bersih (`#FFFFFF`) agar tampilan UI lebih bersih, tajam, dan elegan.
