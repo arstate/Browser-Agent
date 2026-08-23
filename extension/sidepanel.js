@@ -6632,14 +6632,75 @@ async function confirmDeleteSession() {
 document.getElementById('btn-open-history')?.addEventListener('click', openHistoryModal);
 document.getElementById('btn-close-history')?.addEventListener('click', hideHistoryModal);
 document.getElementById('btn-history-export-db')?.addEventListener('click', exportFullDatabaseFromSidepanel);
+
+const btnHistoryImportDb = document.getElementById('btn-history-import-db');
+const inputHistoryImportFile = document.getElementById('input-history-import-file');
+
+btnHistoryImportDb?.addEventListener('click', () => {
+  inputHistoryImportFile?.click();
+});
+
+inputHistoryImportFile?.addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  if (file) {
+    importFullDatabaseFromSidepanel(file);
+    inputHistoryImportFile.value = '';
+  }
+});
+
 document.getElementById('btn-history-new-chat')?.addEventListener('click', startNewChat);
 document.getElementById('btn-header-new-chat')?.addEventListener('click', startNewChat);
 document.getElementById('btn-clear-all-history')?.addEventListener('click', openClearAllConfirmModal);
 
 async function exportFullDatabaseFromSidepanel() {
   try {
-    updateFooterStatus("Mengekspor database SQLite...");
+    updateFooterStatus("Mengompres seluruh database ke tar.gz...");
     const allStorage = await chrome.storage.local.get(null);
+
+    // Try tar.gz export first
+    try {
+      const dbRes = await sendNativeRpc("db_export_targz_backup", {
+        storage: {
+          browser_agent_config: config,
+          active_agent_id: activeAgentId,
+          custom_agents: customAgents,
+          browser_agent_exec_mode: allStorage.browser_agent_exec_mode || 'accept',
+          browser_agent_auto_switch_tab: allStorage.browser_agent_auto_switch_tab ?? true,
+          browser_agent_search_engine: allStorage.browser_agent_search_engine || 'google',
+          browser_agent_mode: allStorage.browser_agent_mode || 'agent',
+          show_floating_button: allStorage.show_floating_button ?? true
+        }
+      });
+
+      if (dbRes && dbRes.status === "ok" && dbRes.tar_gz_b64) {
+        const binaryStr = atob(dbRes.tar_gz_b64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+
+        const blob = new Blob([bytes], { type: "application/gzip" });
+        const url = URL.createObjectURL(blob);
+        const filename = dbRes.filename || `browser-agent-full-database-${Date.now()}.tar.gz`;
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 1000);
+
+        const sizeMb = (dbRes.size_bytes / (1024 * 1024)).toFixed(1);
+        updateFooterStatus(`Database Berhasil Diekspor (${sizeMb} MB)`);
+        setTimeout(() => updateFooterStatus("Agent Ready"), 2000);
+        return;
+      }
+    } catch (e) {}
+
+    // Fallback JSON
     let nativeDbData = { sessions: [], settings: {}, models: [] };
     let nativeFiles = { agents: [], skills: [], memories: [] };
 
@@ -6699,6 +6760,80 @@ async function exportFullDatabaseFromSidepanel() {
   } catch (err) {
     console.error("Sidepanel export DB error:", err);
     alert("Gagal mengekspor database: " + err.message);
+  }
+}
+
+async function importFullDatabaseFromSidepanel(file) {
+  if (!file) return;
+  try {
+    updateFooterStatus("Memulihkan database...");
+    const fileName = file.name.toLowerCase();
+
+    if (fileName.endsWith('.tar.gz') || fileName.endsWith('.tgz') || fileName.endsWith('.gz')) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target.result;
+          const bytes = new Uint8Array(arrayBuffer);
+          let binary = '';
+          const len = bytes.byteLength;
+          for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64Str = btoa(binary);
+
+          const res = await sendNativeRpc("db_import_targz_backup", {
+            tar_gz_b64: base64Str
+          });
+
+          if (res && res.status === "ok") {
+            if (res.storage && typeof res.storage === "object") {
+              await chrome.storage.local.set(res.storage);
+              if (res.storage.browser_agent_config) config = { ...config, ...res.storage.browser_agent_config };
+              if (res.storage.active_agent_id) activeAgentId = res.storage.active_agent_id;
+              if (res.storage.custom_agents) customAgents = res.storage.custom_agents;
+            }
+
+            await loadHistoryList();
+            await populateAgentSelect();
+            updateFooterStatus("Database Sukses Dipulihkan!");
+            setTimeout(() => updateFooterStatus("Agent Ready"), 2000);
+          } else {
+            throw new Error(res.error || "Gagal memulihkan tar.gz");
+          }
+        } catch (tarErr) {
+          console.error("tar.gz import error in sidepanel:", tarErr);
+          alert("Gagal memulihkan dari tar.gz: " + tarErr.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
+
+    // JSON Handler
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const database = parsed.database;
+    const files = parsed.files;
+    const storage = parsed.storage || parsed.settings || parsed;
+
+    if (database || files) {
+      await sendNativeRpc("db_import_full_database", {
+        payload: { database: database || {}, files: files || {} }
+      });
+    }
+
+    if (storage && typeof storage === "object") {
+      await chrome.storage.local.set(storage);
+    }
+
+    await loadHistoryList();
+    await populateAgentSelect();
+    updateFooterStatus("Database Sukses Dipulihkan!");
+    setTimeout(() => updateFooterStatus("Agent Ready"), 2000);
+  } catch (err) {
+    console.error("Sidepanel import DB error:", err);
+    alert("Gagal memulihkan database: " + err.message);
   }
 }
 

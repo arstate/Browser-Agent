@@ -9,6 +9,10 @@ import traceback
 import subprocess
 import signal
 import time
+import tarfile
+import io
+import base64
+import datetime
 
 LOG_FILE = "/tmp/browser_agent_host.log"
 if sys.platform == "win32":
@@ -942,6 +946,106 @@ def db_import_full_database(payload):
         log(f"Error in db_import_full_database: {e}\n{traceback.format_exc()}")
         return {"status": "error", "error": str(e)}
 
+def db_export_targz_backup(chrome_storage_dict=None):
+    try:
+        now = int(time.time() * 1000)
+        date_str = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        filename = f"browser-agent-full-database-{date_str}.tar.gz"
+        
+        # Write to user's Downloads directory directly
+        downloads_dir = os.path.expanduser("~/Downloads")
+        saved_file_path = None
+        
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+            # 1. Add storage_settings.json
+            if chrome_storage_dict:
+                settings_bytes = json.dumps(chrome_storage_dict, indent=2).encode('utf-8')
+                ti = tarfile.TarInfo(name="storage_settings.json")
+                ti.size = len(settings_bytes)
+                ti.mtime = int(time.time())
+                tar.addfile(ti, io.BytesIO(settings_bytes))
+
+            # 2. Add chat_history.db
+            if os.path.exists(DB_PATH):
+                tar.add(DB_PATH, arcname="chat_history.db")
+
+            # 3. Add agents, skills, memories, generated_images, walkthrough_screenshots
+            for d in ["agents", "skills", "memories", "generated_images", "walkthrough_screenshots"]:
+                dp = os.path.join(DB_DIR, d)
+                if os.path.exists(dp):
+                    tar.add(dp, arcname=d)
+
+        buf.seek(0)
+        raw_bytes = buf.read()
+        b64_data = base64.b64encode(raw_bytes).decode('ascii')
+        
+        if os.path.exists(downloads_dir):
+            try:
+                dest_path = os.path.join(downloads_dir, filename)
+                with open(dest_path, "wb") as f_out:
+                    f_out.write(raw_bytes)
+                saved_file_path = dest_path
+                log(f"Exported full tar.gz backup directly to: {dest_path}")
+            except Exception as d_err:
+                log(f"Warning writing to Downloads: {d_err}")
+
+        return {
+            "status": "ok",
+            "tar_gz_b64": b64_data,
+            "filename": filename,
+            "saved_file_path": saved_file_path,
+            "size_bytes": len(raw_bytes)
+        }
+    except Exception as e:
+        log(f"Error in db_export_targz_backup: {e}\n{traceback.format_exc()}")
+        return {"status": "error", "error": str(e)}
+
+def db_import_targz_backup(tar_gz_b64):
+    try:
+        raw_bytes = base64.b64decode(tar_gz_b64)
+        buf = io.BytesIO(raw_bytes)
+        restored_storage = {}
+        extracted_count = 0
+        with tarfile.open(fileobj=buf, mode="r:gz") as tar:
+            # Check for storage_settings.json
+            try:
+                member = tar.getmember("storage_settings.json")
+                f = tar.extractfile(member)
+                if f:
+                    restored_storage = json.loads(f.read().decode('utf-8'))
+            except Exception:
+                pass
+
+            for member in tar.getmembers():
+                if member.name == "storage_settings.json":
+                    continue
+                # Safe path resolution (prevent path traversal)
+                target_path = os.path.abspath(os.path.join(DB_DIR, member.name))
+                if not target_path.startswith(os.path.abspath(DB_DIR)):
+                    continue
+
+                if member.isdir():
+                    os.makedirs(target_path, exist_ok=True)
+                elif member.isfile():
+                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                    with open(target_path, "wb") as out_f:
+                        f = tar.extractfile(member)
+                        if f:
+                            out_f.write(f.read())
+                    extracted_count += 1
+
+        init_db()
+        log(f"Imported tar.gz successfully into {DB_DIR} ({extracted_count} files extracted)")
+        return {
+            "status": "ok",
+            "extracted_count": extracted_count,
+            "storage": restored_storage
+        }
+    except Exception as e:
+        log(f"Error in db_import_targz_backup: {e}\n{traceback.format_exc()}")
+        return {"status": "error", "error": str(e)}
+
 # ==========================================
 # Local PC RPC Handlers (File & Command Access & SQLite)
 # ==========================================
@@ -1023,6 +1127,16 @@ def handle_local_rpc(msg):
 
     elif action == "db_import_full_database":
         res = db_import_full_database(msg.get("payload", {}))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_export_targz_backup":
+        res = db_export_targz_backup(msg.get("storage", {}))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_import_targz_backup":
+        res = db_import_targz_backup(msg.get("tar_gz_b64", ""))
         res["id"] = req_id
         return res
 

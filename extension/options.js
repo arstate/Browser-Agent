@@ -528,34 +528,78 @@ function showToast(customMsg = null) {
 // Export & Import All Settings (Complete Backup & Restore)
 // =========================================================================
 // =========================================================================
-// Universal Export & Import (Database SQLite & Settings)
+// Universal Export & Import (Database SQLite .tar.gz & Settings)
 // =========================================================================
 async function exportAllDatabase() {
   try {
     setAutoSaveStatus('saving');
-    showToast("Mengumpulkan seluruh database SQLite & pengaturan...");
+    showToast("Mengompres seluruh database SQLite, skills, memori & gambar ke tar.gz...");
 
     // 1. Fetch complete storage from Chrome
     const allStorage = await chrome.storage.local.get(null);
 
-    // 2. Fetch full SQLite database & markdown files from Native Host
+    // 2. Request Native Host to create .tar.gz bundle
+    try {
+      const dbRes = await sendNativeRpc("db_export_targz_backup", {
+        storage: {
+          browser_agent_config: config,
+          active_agent_id: activeAgentId,
+          custom_agents: agentsList,
+          custom_skills: skillsList,
+          custom_memories: memoriesList,
+          browser_agent_exec_mode: allStorage.browser_agent_exec_mode || 'accept',
+          browser_agent_auto_switch_tab: allStorage.browser_agent_auto_switch_tab ?? true,
+          browser_agent_search_engine: allStorage.browser_agent_search_engine || 'google',
+          browser_agent_mode: allStorage.browser_agent_mode || 'agent',
+          show_floating_button: allStorage.show_floating_button ?? true
+        }
+      });
+
+      if (dbRes && dbRes.status === "ok" && dbRes.tar_gz_b64) {
+        // Convert base64 to binary blob
+        const binaryStr = atob(dbRes.tar_gz_b64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+
+        const blob = new Blob([bytes], { type: "application/gzip" });
+        const url = URL.createObjectURL(blob);
+        const filename = dbRes.filename || `browser-agent-full-database-${Date.now()}.tar.gz`;
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 1000);
+
+        setAutoSaveStatus('saved');
+        const sizeMb = (dbRes.size_bytes / (1024 * 1024)).toFixed(1);
+        showToast(`Semua database & aset berhasil diekspor (${filename}, ${sizeMb} MB)!`);
+        return;
+      }
+    } catch (targzErr) {
+      console.warn("tar.gz RPC error, fallback to JSON export:", targzErr);
+    }
+
+    // Fallback: JSON Full DB export if Native Host cannot pack tar.gz
     let nativeDbData = { sessions: [], settings: {}, models: [] };
     let nativeFiles = { agents: [], skills: [], memories: [] };
-
     try {
       const dbRes = await sendNativeRpc("db_export_full_database");
       if (dbRes && dbRes.status === "ok" && dbRes.data) {
         nativeDbData = dbRes.data.database || nativeDbData;
         nativeFiles = dbRes.data.files || nativeFiles;
       }
-    } catch (dbErr) {
-      console.warn("Could not fetch native SQLite DB export:", dbErr);
-    }
+    } catch (e) {}
 
     const d = new Date();
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
 
-    // Construct Universal Full Database & Settings Backup
     const fullBackupPayload = {
       meta: {
         app: "Browser Agent",
@@ -661,6 +705,74 @@ async function exportAllSettings() {
   } catch (err) {
     console.error("Export settings error:", err);
     alert("Gagal mengekspor pengaturan: " + err.message);
+  }
+}
+
+async function importAllDatabase(file) {
+  if (!file) return;
+  try {
+    setAutoSaveStatus('saving');
+    showToast("Mengekstrak dan memulihkan seluruh database...");
+
+    const fileName = file.name.toLowerCase();
+
+    // Check if tar.gz / tgz / gz archive
+    if (fileName.endsWith('.tar.gz') || fileName.endsWith('.tgz') || fileName.endsWith('.gz')) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target.result;
+          const bytes = new Uint8Array(arrayBuffer);
+          let binary = '';
+          const len = bytes.byteLength;
+          for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64Str = btoa(binary);
+
+          const res = await sendNativeRpc("db_import_targz_backup", {
+            tar_gz_b64: base64Str
+          });
+
+          if (res && res.status === "ok") {
+            if (res.storage && typeof res.storage === "object" && Object.keys(res.storage).length > 0) {
+              if (res.storage.browser_agent_config) config = { ...config, ...res.storage.browser_agent_config };
+              if (res.storage.active_agent_id) activeAgentId = res.storage.active_agent_id;
+              if (res.storage.custom_agents) agentsList = res.storage.custom_agents;
+              if (res.storage.custom_skills) skillsList = res.storage.custom_skills;
+              if (res.storage.custom_memories) memoriesList = res.storage.custom_memories;
+
+              await chrome.storage.local.set(res.storage);
+            }
+
+            // Refresh UI
+            applyConfigToUI();
+            renderModelsRows();
+            renderBossAgentHero();
+            renderAgentsList();
+            renderSkillsList();
+            renderMemoriesList();
+            updateBadges();
+
+            setAutoSaveStatus('saved');
+            showToast(`Sukses! ${res.extracted_count || 'Semua'} file database, sesi chat, skills & memori berhasil dipulihkan dari tar.gz!`);
+          } else {
+            throw new Error(res.error || "Gagal mengekstrak arsip tar.gz");
+          }
+        } catch (tarErr) {
+          console.error("tar.gz import error:", tarErr);
+          alert("Gagal memulihkan dari tar.gz: " + tarErr.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
+
+    // Otherwise handle JSON format
+    await importAllSettings(file);
+  } catch (err) {
+    console.error("Import database error:", err);
+    alert("Gagal mengimpor database: " + err.message);
   }
 }
 
@@ -2484,34 +2596,51 @@ function setupEventListeners() {
   // Export & Import Buttons (Header & Backup Card)
   const btnExportDbHeader = document.getElementById('btn-export-all-database');
   const btnExportDbCard = document.getElementById('btn-export-all-db-card');
+  const btnImportDbHeader = document.getElementById('btn-import-all-database');
+  const btnImportDbCard = document.getElementById('btn-import-all-db-card');
+  const inputImportDbFile = document.getElementById('input-import-database-file');
+
   const btnExportSettingsHeader = document.getElementById('btn-export-all-settings');
   const btnExportSettingsCard = document.getElementById('btn-export-backup-card');
-  const btnImportHeader = document.getElementById('btn-import-all-settings');
-  const btnImportCard = document.getElementById('btn-import-backup-card');
-  const inputImportFile = document.getElementById('input-import-settings-file');
+  const btnImportSettingsHeader = document.getElementById('btn-import-all-settings');
+  const btnImportSettingsCard = document.getElementById('btn-import-backup-card');
+  const inputImportSettingsFile = document.getElementById('input-import-settings-file');
 
-  // Export Complete Universal Database
+  // Export Complete Universal Database (.tar.gz)
   btnExportDbHeader?.addEventListener('click', exportAllDatabase);
   btnExportDbCard?.addEventListener('click', exportAllDatabase);
 
-  // Export Settings Only
+  // Import Complete Database (.tar.gz / .json)
+  btnImportDbHeader?.addEventListener('click', () => {
+    inputImportDbFile?.click();
+  });
+  btnImportDbCard?.addEventListener('click', () => {
+    inputImportDbFile?.click();
+  });
+  inputImportDbFile?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      importAllDatabase(file);
+      inputImportDbFile.value = '';
+    }
+  });
+
+  // Export Settings Only (.json)
   btnExportSettingsHeader?.addEventListener('click', exportAllSettings);
   btnExportSettingsCard?.addEventListener('click', exportAllSettings);
 
-  // Import Trigger
-  btnImportHeader?.addEventListener('click', () => {
-    inputImportFile?.click();
+  // Import Settings Only (.json)
+  btnImportSettingsHeader?.addEventListener('click', () => {
+    inputImportSettingsFile?.click();
   });
-
-  btnImportCard?.addEventListener('click', () => {
-    inputImportFile?.click();
+  btnImportSettingsCard?.addEventListener('click', () => {
+    inputImportSettingsFile?.click();
   });
-
-  inputImportFile?.addEventListener('change', (e) => {
+  inputImportSettingsFile?.addEventListener('change', (e) => {
     const file = e.target.files?.[0];
     if (file) {
       importAllSettings(file);
-      inputImportFile.value = '';
+      inputImportSettingsFile.value = '';
     }
   });
 }

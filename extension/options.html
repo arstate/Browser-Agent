@@ -108,16 +108,26 @@
               </div>
             </div>
             <div class="hero-provider-actions">
-              <button type="button" class="btn-export-all-db" id="btn-export-all-database" title="Ekspor Seluruh Database Percakapan SQLite & Pengaturan (Universal Multiplatform Windows/Mac/Linux)">
+              <button type="button" class="btn-export-all-db" id="btn-export-all-database" title="Ekspor Seluruh Database Percakapan SQLite, Skills, Memori & Pengaturan ke format .tar.gz / JSON">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <ellipse cx="12" cy="5" rx="9" ry="3"/>
                   <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
                   <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
                 </svg>
-                <span>Export All Database</span>
+                <span>Export All Database (.tar.gz)</span>
               </button>
 
-              <button type="button" class="btn-export-settings" id="btn-export-all-settings" title="Ekspor dan Backup Seluruh Pengaturan ke File JSON">
+              <button type="button" class="btn-import-all-db" id="btn-import-all-database" title="Impor & Pulihkan Seluruh Database Percakapan, Skills, Memori & Pengaturan dari File .tar.gz atau JSON">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span>Import All Database</span>
+              </button>
+              <input type="file" id="input-import-database-file" accept=".tar.gz,.tgz,.gz,.json" style="display: none;">
+
+              <button type="button" class="btn-export-settings" id="btn-export-all-settings" title="Ekspor dan Backup Pengaturan Saja ke File JSON">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/>
@@ -126,13 +136,13 @@
                 <span>Export Settings</span>
               </button>
 
-              <button type="button" class="btn-import-settings" id="btn-import-all-settings" title="Impor & Pulihkan Database / Pengaturan dari File Backup JSON">
+              <button type="button" class="btn-import-settings" id="btn-import-all-settings" title="Impor & Pulihkan Pengaturan dari File JSON">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="17 8 12 3 7 8"/>
                   <line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
-                <span>Import Backup</span>
+                <span>Import Settings</span>
               </button>
               <input type="file" id="input-import-settings-file" accept=".json" style="display: none;">
 
@@ -558,17 +568,17 @@
                   </svg>
                 </div>
                 <div>
-                  <h2>Backup &amp; Restore Universal (Database SQLite &amp; Settings)</h2>
-                  <p>Cadangkan seluruh database percakapan SQLite, setting model, persona agent, skills, dan memory ke format Universal JSON (kompatibel lintas Windows, Mac, Linux).</p>
+                  <h2>Backup &amp; Restore Universal (Database SQLite .tar.gz &amp; Settings)</h2>
+                  <p>Cadangkan seluruh database percakapan SQLite, setting model, persona agent, skills, memory, dan gambar ke format .tar.gz / JSON (kompatibel lintas Windows, Mac, Linux).</p>
                 </div>
               </div>
 
               <div class="backup-actions-grid">
                 <div class="backup-action-box highlight-box">
                   <div class="backup-action-info">
-                    <div class="box-badge-universal">UNIVERSAL BACKUP</div>
+                    <div class="box-badge-universal">UNIVERSAL TAR.GZ</div>
                     <h4>Ekspor Semua Database</h4>
-                    <p>Unduh 100% database percakapan SQLite, sesi chat, daftar prioritas model AI, custom agent, skills SOP, dan memory.</p>
+                    <p>Unduh 100% database SQLite (`chat_history.db`), seluruh sesi chat, skills SOP, custom agents, memori, dan gambar dalam arsip .tar.gz.</p>
                   </div>
                   <button type="button" class="btn-backup-export-db" id="btn-export-all-db-card">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -576,7 +586,23 @@
                       <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
                       <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
                     </svg>
-                    <span>Export All Database (.json)</span>
+                    <span>Download Full Backup (.tar.gz)</span>
+                  </button>
+                </div>
+
+                <div class="backup-action-box highlight-box">
+                  <div class="backup-action-info">
+                    <div class="box-badge-universal">RESTORE ALL</div>
+                    <h4>Impor Semua Database</h4>
+                    <p>Pilih file cadangan .tar.gz atau JSON lengkap untuk memulihkan seluruh database percakapan, skills, memori, dan pengaturan secara instan.</p>
+                  </div>
+                  <button type="button" class="btn-backup-import-db" id="btn-import-all-db-card">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span>Pilih File Backup Database (.tar.gz / .json)</span>
                   </button>
                 </div>
 
@@ -597,8 +623,8 @@
 
                 <div class="backup-action-box">
                   <div class="backup-action-info">
-                    <h4>Impor &amp; Pulihkan Backup</h4>
-                    <p>Pilih file cadangan (.json) untuk memulihkan seluruh database percakapan SQLite dan/atau pengaturan secara otomatis.</p>
+                    <h4>Impor Pengaturan Saja</h4>
+                    <p>Pilih file cadangan pengaturan (.json) untuk memulihkan API key, model prioritas, dan preferensi UI.</p>
                   </div>
                   <button type="button" class="btn-backup-import" id="btn-import-backup-card">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -606,7 +632,7 @@
                       <polyline points="17 8 12 3 7 8"/>
                       <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
-                    <span>Pilih File Backup JSON</span>
+                    <span>Pilih File Pengaturan JSON</span>
                   </button>
                 </div>
               </div>

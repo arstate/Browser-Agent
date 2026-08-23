@@ -2536,6 +2536,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.88.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 289: Dedicated Import All Database & Full TAR.GZ All-Data Universal Backup/Restore
+- **Kebutuhan Pengguna**:
+  - Menyediakan tombol eksplisit **`Import All Database`** agar sangat jelas untuk memulihkan seluruh data (sesi percakapan, skills, memori, model, settings).
+  - Ekspor seluruh data yang ada di `~/.browser-agent` ke dalam format **`.tar.gz`** terkompresi tanpa ada data yang tertinggal.
+- **Solusi & Peningkatan**:
+  1. **Native RPC `.tar.gz` Backup Engine (`host/native_host.py`)**:
+     - Menambahkan handler `db_export_targz_backup` yang mengompres `chat_history.db` (SQLite), `agents/`, `skills/`, `memories/`, `generated_images/`, `walkthrough_screenshots/`, dan `storage_settings.json` ke dalam format `.tar.gz`.
+     - File `.tar.gz` otomatis dikirim via Base64 binary download dan di-save langsung ke `~/Downloads/`.
+     - Menambahkan handler `db_import_targz_backup` yang mengekstrak seluruh arsip `.tar.gz` ke `~/.browser-agent/` secara aman (anti path traversal) dan mengembalikan konfigurasi Chrome storage.
+  2. **Dedicated UI Buttons for Database & Settings (`options.html`, `options.css`, `sidepanel.html`, `sidepanel.css`)**:
+     - Header Options: **`[Export All Database (.tar.gz)]`**, **`[Import All Database]`**, **`[Export Settings]`**, **`[Import Settings]`**.
+     - Backup & Restore Card: 4 Action Boxes yang terpisah jelas (Ekspor Semua Database .tar.gz, Impor Semua Database, Ekspor Pengaturan .json, Impor Pengaturan .json).
+     - Modal Riwayat Chat: Tombol **`[Ekspor DB]`** & **`[Impor DB]`** terhubung langsung ke `.tar.gz`.
+  3. **Universal Importer Engine (`options.js`, `sidepanel.js`)**:
+     - Fungsi `importAllDatabase(file)` membaca binary ArrayBuffer dari `.tar.gz` atau JSON, menjalankan `db_import_targz_backup` RPC, merestorasi seluruh tabel SQLite & berkas disk, mengupdate `chrome.storage.local`, dan me-refresh UI secara realtime.
+  4. **Verifikasi**:
+     - Test Python export `.tar.gz` (159 files, 25MB) dan import `.tar.gz` sukses 100%.
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.89.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2543,7 +2564,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
-- **Universal Export/Import:** Tombol `[Export All Database]` dan `[Export Settings]` di `options.html` dan `sidepanel.html` untuk mem-backup & me-restore 100% database dan konfigurasi ke format Universal JSON (Windows/Mac/Linux).
+- **Universal TAR.GZ & JSON Backup:** Tombol `[Export All Database (.tar.gz)]` dan `[Import All Database]` di `options.html` dan `sidepanel.html` untuk mem-backup & me-restore 100% database, sesi chat, skills SOP, custom agents, memori, dan aset gambar ke arsip `.tar.gz` (Windows/Mac/Linux).
 - **Direct Instant Toggle Buttons:** 
   - `Accept`: Neon Lime Fill (`#CEF128`).
   - `Planning`: Blue Fill (`#0284C7`).
@@ -2556,7 +2577,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.88.0` (Iterasi 288).
+  - **Versi Terkini:** `v2.89.0` (Iterasi 289).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
