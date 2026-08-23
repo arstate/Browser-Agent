@@ -2058,16 +2058,25 @@ body.options-body {
 }
 
 .btn-modal-close {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 24px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
   cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
 }
 
 .btn-modal-close:hover {
-  color: #FFFFFF;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #F87171;
+  transform: scale(1.05);
 }
 
 .modal-mode-tabs {

@@ -1,6 +1,6 @@
 # 🛡️ Anti-Pattern Vault & Failure Learnings (Pelajaran dari Kesalahan)
 *Kumpulan catatan kesalahan masa lalu, diagnosa akar masalah, dan solusi permanen yang dipelajari secara otonom oleh AI.*
-*Terakhir Diperbarui: 2026-08-24 03:50 WIB | Total Learned: 3 Anti-Patterns*
+*Terakhir Diperbarui: 2026-08-24 03:59 WIB | Total Learned: 4 Anti-Patterns*
 
 ---
 
@@ -22,7 +22,16 @@
 
 ---
 
-### ⚠️ [AP-003] Thumbnail gambar upload/paste user rusak saat resume session.
+### ⚠️ [AP-003] File arsip .zip sesi percakapan terabaikan oleh git.
+- **Target / Konteks:** GitHub Backup
+- **Gejala Kesalahan:** File arsip .zip sesi percakapan terabaikan oleh git.
+- **Root Cause (Akar Masalah):** Aturan *.zip tanpa whitelist
+- **Solusi Permanen (Winning Fix):** Tambahkan !antigravity_session/*.zip di .gitignore
+- **Aturan Pencegahan:** Periksa git status sebelum konfirmasi push
+
+---
+
+### ⚠️ [AP-004] Thumbnail gambar upload/paste user rusak saat resume session.
 - **Target / Konteks:** Chat History
 - **Gejala Kesalahan:** Thumbnail gambar upload/paste user rusak saat resume session.
 - **Root Cause (Akar Masalah):** Gambar user tidak disimpan ke IndexedDB dan terpotong di storage

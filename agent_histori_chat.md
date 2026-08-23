@@ -3238,9 +3238,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.138.0` (Iterasi 338).
+  - **Versi Terkini:** `v2.139.0` (Iterasi 339).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
+
+---
+
+### 🚀 Iterasi 339: Fix Modal Close Button UI Glitch & Vector SVG Protocol Enforcement
+- **Problem**:
+  - Tombol close modal detail Markdown di tab Persistent Brain tampil sebagai kotak putih default HTML yang jelek (berisi karakter `x` unstyled).
+- **Penyebab & Solusi**:
+  1. **Button Class & SVG Upgrade (`options.html` & `sidepanel.html`)**:
+     - Mengganti class `btn-card-action` yang unstyled dengan `.btn-modal-close`.
+     - Mengganti karakter raw `&times;` pada seluruh modal dengan vector SVG murni (`<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>`).
+  2. **Dark Luxury Modal Close Styling (`options.css`)**:
+     - Menambahkan styling `.btn-modal-close` dengan dark glass container (`rgba(255, 255, 255, 0.05)` & border halus), ukuran proporsional 32x32px, dan hover glow red (`#F87171` & scale 1.05).
+  3. **Verification & Build**:
+     - Re-pack `extension.crx` (434.0 KB), sync ke Downloads, dan auto-push ke GitHub.
 
 ---
 
