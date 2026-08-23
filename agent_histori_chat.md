@@ -2748,6 +2748,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 320: Full Rounded Pill Styling for Mode Switcher Dropup Items
+- **Kebutuhan Pengguna**:
+  - Mengubah bentuk item opsi di dalam menu dropup mode menjadi full rounded (kapsul pill) agar lebih bersih, ramping, dan tidak memakan tempat.
+- **Solusi & Peningkatan**:
+  1. **Full Rounded Capsule Items (`newtab.css` & `sidepanel.css`)**:
+     - Menerapkan `border-radius: 9999px` pada `.chat-mode-option`.
+     - Mengubah `.mode-option-icon` menjadi lingkaran bulat presisi (`border-radius: 50%`).
+     - Mengoptimalkan padding menjadi ramping (`5px 12px 5px 7px`) dan kontainer dropup menjadi `border-radius: 18px` dengan lebar minimum `150px` yang hemat ruang dan proporsional.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.120.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 319: Fixed Chromium Backdrop Root Isolation for True Frosted Glass Blur Dropup
 - **Kebutuhan Pengguna**:
   - Mengatasi kendala di mana elemen teks background di belakang dropup menu belum terlihat buram (blur) secara nyata.
