@@ -2748,6 +2748,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 330: Fix User Uploaded Images & Files Database Persistence & History Rehydration
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug gambar/file yang dikirim user ke AI yang tidak tersimpan atau menjadi rusak (*broken image thumbnail*) saat histori chat dibuka kembali.
+- **Root Cause & Solusi Teknis**:
+  1. **Kurangnya Penyimpanan Gambar User ke IndexedDB**:
+     - Sebelumnya hanya video dan AI generated images yang disimpan ke IndexedDB. Lampiran gambar user (`att.isImage`) hanya bergantung pada `dataUrl` memory transient dan terpotong saat disimpan ke storage jika berukuran besar.
+  2. **Hydration Gambar User (`sidepanel.js`)**:
+     - Menambahkan fungsi `saveAttachmentsToIndexedDB` saat gambar diunggah/di-paste atau saat pesan dikirim (`runAgentLoop` dan `runChatModeLoop`).
+     - Menyematkan atribut `data-image-id="att_img_..."` pada `.user-attached-thumb`.
+     - Menambahkan auto-rehydration di `hydrateLocalImages` untuk membaca gambar lampiran user dari IndexedDB secara otomatis ketika sesi percakapan di-resume.
+     - Memperbaiki handler lightbox sehingga saat thumbnail diklik, gambar resolusi penuh dari IndexedDB langsung terbuka di modal preview.
+- **Verifikasi**:
+  - JS & CSS Syntax check lulus 100%.
+  - Restore Point: `v2.130.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 329: Frosted Glass Backdrop Blur on All AI Chat Containers
 - **Kebutuhan Pengguna**:
   - Mengupdate seluruh elemen container AI di chat (kotak daftar bernomor rekomendasi/langkah kerja, code cards, tabel data, tool badges, blockquotes, file cards) agar memiliki efek blur latar belakang (*backdrop-filter blur*) sehingga grid background layar tidak mengganggu keterbacaan teks dan pembacaan menjadi jauh lebih jelas, nyaman, dan kontras.

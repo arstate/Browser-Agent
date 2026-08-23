@@ -981,15 +981,24 @@ async function saveVideoToIndexedDB(id, dataUrl, name = "", duration = 0) {
   }
 }
 
-async function saveVideoAttachmentsToIndexedDB(attachments) {
+async function saveAttachmentsToIndexedDB(attachments) {
   if (!Array.isArray(attachments)) return;
   for (const att of attachments) {
-    if (att.isVideo && att.dataUrl) {
-      const vidId = att.id || ('att_vid_' + Date.now());
+    if (att.isImage && att.dataUrl) {
+      const imgId = att.id || ('att_img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
+      att.id = imgId;
+      if (!att.thumbnailUrl) att.thumbnailUrl = att.dataUrl;
+      await saveImageToIndexedDB(imgId, att.dataUrl, att.name || 'image.png');
+    } else if (att.isVideo && att.dataUrl) {
+      const vidId = att.id || ('att_vid_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
+      att.id = vidId;
       await saveVideoToIndexedDB(vidId, att.dataUrl, att.name || 'video.mp4', att.duration || 0);
     }
   }
 }
+
+// Backward compatibility alias
+const saveVideoAttachmentsToIndexedDB = saveAttachmentsToIndexedDB;
 
 async function getVideoFromIndexedDB(id) {
   try {
@@ -1071,6 +1080,29 @@ async function hydrateLocalImages(container = chatMessages) {
             </svg>
           </button>
         `;
+      }
+    }
+  }
+
+  // 3. Hydrate User Attached Images from IndexedDB (Fix Broken Image History)
+  const userThumbs = container.querySelectorAll('.user-attached-thumb[data-image-id]');
+  for (const thumb of userThumbs) {
+    const imgId = thumb.getAttribute('data-image-id');
+    if (!imgId || thumb.dataset.hydrated === 'true') continue;
+
+    const imgEl = thumb.querySelector('img');
+    if (imgEl && imgEl.src && imgEl.src.startsWith('data:image/') && !imgEl.src.startsWith('data:image/gif;base64')) {
+      imgEl.style.opacity = '1';
+      thumb.dataset.hydrated = 'true';
+      continue;
+    }
+
+    const cachedImg = await getImageFromIndexedDB(imgId);
+    if (cachedImg && cachedImg.dataUrl) {
+      thumb.dataset.hydrated = 'true';
+      if (imgEl) {
+        imgEl.src = cachedImg.dataUrl;
+        imgEl.style.opacity = '1';
       }
     }
   }
@@ -2759,6 +2791,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     attachments: attachments
   });
   appendUserMessage(userMessage, attachments);
+  saveAttachmentsToIndexedDB(attachments);
 
   const isAutoMode = (activeAgentId === AUTO_AGENT_ID || !activeAgentId);
   const resolvedAgents = isAutoMode ? resolveAutoAgents(userMessage, explicitMentions) : [activeAgent || customAgents[0]].filter(Boolean);
@@ -4490,10 +4523,11 @@ function appendUserMessage(text, attachments = []) {
     attachmentsHtml = `<div class="user-msg-attachments">`;
     attachments.forEach(att => {
       if (att.isImage) {
+        const imgId = att.id || ('att_img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
         const imgSrc = att.dataUrl || att.thumbnailUrl || "";
         attachmentsHtml += `
-          <div class="user-attached-thumb" title="${escapeHtml(att.name || 'Image')}">
-            <img src="${imgSrc}" alt="${escapeHtml(att.name || 'Image')}">
+          <div class="user-attached-thumb" data-image-id="${escapeHtml(imgId)}" title="${escapeHtml(att.name || 'Image')}">
+            <img src="${imgSrc || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}" alt="${escapeHtml(att.name || 'Image')}" ${!imgSrc ? 'style="opacity: 0; transition: opacity 0.2s;"' : ''}>
           </div>
         `;
       } else if (att.isVideo) {
@@ -6382,7 +6416,9 @@ function sanitizeHistoryForStorage(history) {
         isImage: !!att.isImage,
         isVideo: !!att.isVideo,
         duration: att.duration || 0,
-        thumbnailUrl: att.thumbnailUrl || (att.isImage && att.dataUrl && att.dataUrl.length < 500000 ? att.dataUrl : "") || "",
+        thumbnailUrl: att.thumbnailUrl || (att.isImage && att.dataUrl ? att.dataUrl : "") || "",
+        dataUrl: (att.isImage && att.dataUrl) ? att.dataUrl : (att.thumbnailUrl || ""),
+        textContent: att.textContent || "",
         width: att.width || 0,
         height: att.height || 0
       }));
@@ -7265,14 +7301,19 @@ async function handleFileSelection(files) {
 
     if (isImg) {
       const dataUrl = await readFileAsDataURL(file);
+      const attId = 'att_img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      // Persist full image dataUrl into IndexedDB asynchronously
+      saveImageToIndexedDB(attId, dataUrl, file.name || 'image.png');
+
       pendingAttachments.push({
-        id: 'att_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        id: attId,
         name: file.name || 'image.png',
         type: file.type || 'image/png',
         size: file.size,
         isImage: true,
         isVideo: false,
-        dataUrl
+        dataUrl,
+        thumbnailUrl: dataUrl
       });
     } else if (isVid) {
       const dataUrl = await readFileAsDataURL(file);
@@ -8138,11 +8179,25 @@ document.addEventListener('click', (e) => {
   // 4. User attached image thumbnail
   const userThumb = e.target.closest('.user-attached-thumb');
   if (userThumb) {
-    const src = userThumb.querySelector('img')?.src;
-    if (src) {
-      openMediaLightbox(src, false, userThumb.getAttribute('title') || 'image.png');
-      return;
-    }
+    const imgEl = userThumb.querySelector('img');
+    const imgId = userThumb.getAttribute('data-image-id');
+    (async () => {
+      let src = imgEl?.src;
+      if ((!src || src.startsWith('data:image/gif;base64')) && imgId) {
+        const cached = await getImageFromIndexedDB(imgId);
+        if (cached?.dataUrl) {
+          src = cached.dataUrl;
+          if (imgEl) {
+            imgEl.src = src;
+            imgEl.style.opacity = '1';
+          }
+        }
+      }
+      if (src && !src.startsWith('data:image/gif;base64')) {
+        openMediaLightbox(src, false, userThumb.getAttribute('title') || 'image.png');
+      }
+    })();
+    return;
   }
 
   // 5. User attached video card fullscreen button

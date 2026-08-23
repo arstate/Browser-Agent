@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.129.0`
-- **Iterasi:** `Iterasi 329`
-- **Tanggal Rilis:** 24 Agustus 2026 (02:00 WIB)
+- **Versi Terkini:** `v2.130.0`
+- **Iterasi:** `Iterasi 330`
+- **Tanggal Rilis:** 24 Agustus 2026 (02:05 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.6 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.130.0** | 330 | 24-08-2026 02:05 | `v2.130.0` | **Fix User Uploaded Images & Files Database Persistence & History Rehydration:** Memperbaiki bug gambar/file lampiran user yang rusak (*broken icon*) saat histori chat dibuka kembali. Kini seluruh file/gambar yang diunggah atau di-paste oleh user langsung disimpan secara permanen ke IndexedDB (`att_img_...`) dan SQLite JSON, dilengkapi mekanisme auto-rehydration dan preview lightbox saat histori chat di-resume. | 🟢 STABLE | `./restore.sh v2.130.0` |
 | **v2.129.0** | 329 | 24-08-2026 02:00 | `v2.129.0` | **Frosted Glass Backdrop Blur on All AI Chat Containers:** Menambahkan `backdrop-filter: blur(28px) saturate(180%)`, peningkatan kontras latar belakang, dan border lembut pada seluruh elemen container AI chat (kotak daftar bernomor rekomendasi/action steps, code cards, tabel data, tool badges, blockquotes, file cards) sehingga background grid / ornamen layar ter-blur sempurna dan teks menjadi sangat jernih dan nyaman dibaca. | 🟢 STABLE | `./restore.sh v2.129.0` |
 | **v2.128.0** | 328 | 24-08-2026 01:53 | `v2.128.0` | **Update AI Thinking Level Label to Extreme:** Mengubah teks label opsi penalaran tingkat tertinggi dari `Max (10x)` menjadi `Extreme` pada trigger button, menu dropup, dan meta-cognitive directive di New Tab dan Sidepanel. | 🟢 STABLE | `./restore.sh v2.128.0` |
 | **v2.127.0** | 327 | 24-08-2026 01:51 | `v2.127.0` | **Hacked Client-Side AI Thinking Level Selector (Low, Medium, High, Xhigh, Max 10x):** Menambahkan tombol dropup tingkat penalaran AI `[ Thinking: High ⌵ ]` di sebelah kanan `Agent Mode` (Clean minimal text tanpa icon) yang diakali langsung pada level meta-prompting sistem tanpa bergantung pada API model, memaksa agen berpikir bertahap hingga 10x lipat lebih keras pada level Max. | 🟢 STABLE | `./restore.sh v2.127.0` |
