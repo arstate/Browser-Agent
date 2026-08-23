@@ -3238,9 +3238,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.136.0` (Iterasi 336).
+  - **Versi Terkini:** `v2.137.0` (Iterasi 337).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
+
+---
+
+### 🚀 Iterasi 337: Real-time Auto-Training Distillation & Permanent Brain Memory Retention on Chat Deletion
+- **Fitur & Arsitektur Utama**:
+  1. **Real-time Automatic Background Distillation (`db_save_session` in `native_host.py`)**:
+     - Setiap kali sesi chat disimpan atau diperbarui dari UI (`sidepanel.js`), host secara otomatis mengekstrak poin-poin training Markdown ber-akurasi tinggi (User Core Intent, Tool Workflows, dan Solusi Empiris Akhir).
+     - Otomatis meng-update tabel `chat_training_corpus` dan memperbarui file `.md` di `PERSISTENT MEMORY/training_corpus/{session_id}.md` secara real-time tanpa perlu klik manual.
+  2. **Permanent Knowledge Retention on Chat Deletion (`db_delete_session` & `db_clear_all`)**:
+     - Penghapusan sesi atau pembersihan seluruh riwayat chat (`DELETE FROM sessions`) HANYA menghapus log chat mentah dari tabel `sessions`.
+     - Seluruh ingatan AI di `chat_training_corpus`, `user_memories`, `experience_ledger`, `anti_patterns`, `autonomous_skills`, dan `autonomous_agents` (baik di SQLite maupun file `.md` di disk) **TETAP 100% UTUH DAN TERJAGA**.
+  3. **UI Training Corpus Markdown Modal (`options.js`)**:
+     - Tombol **"Lihat Full Training MD"** pada setiap kartu Training Corpus di subtab 6 yang membuka `#modal-brain-detail` lengkap dengan tombol salin.
+  4. **Automated Verification**:
+     - Menambahkan `test_04_session_deletion_keeps_training_intact` pada `test_training_corpus.py` (4/4 tests passed).
 
 ---
 

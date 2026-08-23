@@ -85,5 +85,45 @@ class TestTrainingCorpus(unittest.TestCase):
         fpath = os.path.join(PM_TRAINING_CORPUS_DIR, "test_sess_training_corpus_01.md")
         self.assertFalse(os.path.exists(fpath), "File should be removed upon delete")
 
+    def test_04_session_deletion_keeps_training_intact(self):
+        from native_host import db_save_session, db_delete_session, db_get_session
+        
+        # Save a new session - auto-distillation should happen in real-time
+        test_sid = "test_sess_auto_retained_999"
+        save_res = db_save_session({
+            "id": test_sid,
+            "title": "Optimasi Meta Ads CPR Murah",
+            "model": "auto",
+            "messages": [
+                {"role": "user", "content": "Tolong audit Meta Ads campaign Tiar Property budget 100rb CPR dibawah 10rb."},
+                {"role": "assistant", "content": "Siap bro, gunakan Advantage+ CBO dan filter junk leads dari luar Surabaya Sidoarjo."}
+            ]
+        })
+        self.assertEqual(save_res.get("status"), "ok")
+
+        # Verify training corpus was created automatically
+        mem_before = db_get_persistent_memory()
+        corpus_before = mem_before.get("training_corpus", [])
+        found_before = any(t.get("session_id") == test_sid for t in corpus_before)
+        self.assertTrue(found_before, "Session should be automatically distilled on save")
+
+        # Now DELETE raw chat session
+        del_sess_res = db_delete_session(test_sid)
+        self.assertEqual(del_sess_res.get("status"), "ok")
+        get_sess = db_get_session(test_sid)
+        self.assertEqual(get_sess.get("status"), "error", "Raw session must be deleted")
+
+        # Verify training corpus and disk file STILL EXIST and were NOT deleted!
+        mem_after = db_get_persistent_memory()
+        corpus_after = mem_after.get("training_corpus", [])
+        found_after = any(t.get("session_id") == test_sid for t in corpus_after)
+        self.assertTrue(found_after, "Distilled training corpus MUST remain retained even after raw chat deletion!")
+
+        fpath = os.path.join(PM_TRAINING_CORPUS_DIR, f"{test_sid}.md")
+        self.assertTrue(os.path.exists(fpath), "Markdown training file on disk MUST remain intact!")
+
+        # Clean up
+        db_delete_persistent_item("training", f"train_{test_sid}")
+
 if __name__ == '__main__':
     unittest.main()

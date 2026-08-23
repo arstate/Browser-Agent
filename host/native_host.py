@@ -616,6 +616,48 @@ def db_save_session(session_data):
             """, (sid, title, model, int(msg_count), str(preview), str(messages_json), int(created_at), int(updated_at)))
             conn.commit()
 
+        # Real-time Autonomous Training Distillation (Knowledge Persistence Independent of Raw Chat)
+        if msg_count >= 1:
+            try:
+                item = distill_session_to_training_md({
+                    "id": sid,
+                    "title": title,
+                    "model": model,
+                    "messages_json": messages_json,
+                    "created_at": created_at,
+                    "updated_at": updated_at
+                })
+                if item:
+                    with sqlite3.connect(DB_PATH) as conn:
+                        c = conn.cursor()
+                        c.execute("""
+                            INSERT INTO chat_training_corpus (id, session_id, title, model, distilled_points_md, key_intents_json, tool_workflows_json, learnings_json, token_saved_estimate, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(id) DO UPDATE SET
+                                title=excluded.title,
+                                model=excluded.model,
+                                distilled_points_md=excluded.distilled_points_md,
+                                key_intents_json=excluded.key_intents_json,
+                                tool_workflows_json=excluded.tool_workflows_json,
+                                learnings_json=excluded.learnings_json,
+                                token_saved_estimate=excluded.token_saved_estimate,
+                                updated_at=excluded.updated_at
+                        """, (
+                            item["id"], item["session_id"], item["title"], item["model"],
+                            item["distilled_points_md"], json.dumps(item["key_intents"]),
+                            json.dumps(item["tool_workflows"]), json.dumps(item["learnings"]),
+                            item["token_saved_estimate"], item["created_at"], updated_at
+                        ))
+                        conn.commit()
+
+                    safe_sid = re.sub(r'[^a-zA-Z0-9_-]', '_', sid)
+                    fpath = os.path.join(PM_TRAINING_CORPUS_DIR, f"{safe_sid}.md")
+                    os.makedirs(PM_TRAINING_CORPUS_DIR, exist_ok=True)
+                    with open(fpath, "w", encoding="utf-8") as f:
+                        f.write(item["distilled_points_md"])
+            except Exception as e_dist:
+                log(f"Auto-distill in db_save_session ignored error: {e_dist}")
+
         return {"status": "ok", "id": sid, "title": title, "updated_at": updated_at}
     except Exception as e:
         log(f"Error in db_save_session: {e}\n{traceback.format_exc()}")

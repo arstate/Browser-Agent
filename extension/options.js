@@ -2975,6 +2975,12 @@ function renderPersistentBrain(searchQuery = "") {
         <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 4px;">${escapeHtml(item.title)}</div>
         <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">Model: <code>${escapeHtml(item.model || 'Unknown')}</code> | Session ID: <code>${escapeHtml(item.session_id)}</code></div>
         <div class="brain-exp-markdown">${escapeHtml(item.distilled_points_md)}</div>
+        <div style="margin-top: 12px;">
+          <button type="button" class="btn-export-all-db btn-view-brain-detail" data-type="training" data-id="${item.id}" style="font-size: 11.5px; padding: 6px 12px; border-color: rgba(251, 191, 36, 0.4); color: #fbbf24;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span>Lihat Full Training MD</span>
+          </button>
+        </div>
       `;
       container.appendChild(card);
     });
@@ -3065,6 +3071,19 @@ ${skillsListMd}
 
 ## 📜 System Prompt & Instruksi Operasional:
 ${item.system_prompt || '(Tidak ada custom system prompt)'}`;
+          modal.style.display = 'flex';
+        }
+      } else if (itemType === "training") {
+        const item = (brainData.training_corpus || []).find(t => t.id === itemId);
+        if (item) {
+          titleEl.textContent = item.title || "Training Corpus";
+          badgeEl.className = "brain-badge";
+          badgeEl.style.background = "rgba(251, 191, 36, 0.15)";
+          badgeEl.style.color = "#fbbf24";
+          badgeEl.style.border = "1px solid rgba(251, 191, 36, 0.3)";
+          badgeEl.textContent = "TRAINING CORPUS";
+          if (metaEl) metaEl.textContent = `Session ID: ${item.session_id} | Model: ${item.model} | Saved ~${item.token_saved_estimate || 0} tokens`;
+          codeEl.textContent = item.distilled_points_md || "(Tidak ada data markdown)";
           modal.style.display = 'flex';
         }
       }
