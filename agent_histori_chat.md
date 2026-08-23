@@ -2254,16 +2254,30 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.70.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 271: Reposisi Glow Neon ke Bawah (Ambient Bottom Underglow) & Jernihkan Area Input
+- **Kebutuhan Pengguna**:
+  - Glow neon sebelumnya terlalu menumpuk di tengah kotak dan membuat area teks di dalam textarea berkabut/terlalu kuning.
+  - Memposisikan pendar glow neon organik di bagian bawah / lantai terluar kotak input prompt (`bottom underglow`) agar tidak monoton dan tidak membungkus presisi kaku.
+- **Solusi & Peningkatan**:
+  1. **Styling Bottom Floor Underglow (`newtab.css` & `sidepanel.css`)**:
+     - Memindahkan titik pancar glow ke bagian bawah paling luar (`top: auto; bottom: -18px; left: -20px; right: -20px; height: 50px;`) dengan `border-radius: 0 0 40px 40px`.
+     - Mengatur gradien `radial-gradient(ellipse 70% 100% at 50% 100%, rgba(206, 241, 40, 0.28) 0%, rgba(163, 230, 53, 0.14) 45%, rgba(34, 197, 94, 0.04) 75%, transparent 100%)` sehingga memancar ke bawah-luar secara anggun.
+     - Mengunci background container menjadi dark frosted glass pekat (`rgba(22, 22, 26, 0.94)`) agar area teks tetap bersih, tajam, dan kontras sempurna.
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.71.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **Ambient Neon Frosted Glass Glow:** Smooth breathing neon gradient aura (`smoothNeonAuraGlow`) behind & surrounding the input prompt container during AI generation.
+- **Ambient Neon Bottom Underglow:** Soft breathing neon floor aura emanating from the bottom edge (`bottom: -18px; height: 50px`) during AI generation with clean, dark, high-contrast textarea.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.70.0` (Iterasi 270).
+  - **Versi Terkini:** `v2.71.0` (Iterasi 271).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

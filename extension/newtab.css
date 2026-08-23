@@ -699,18 +699,18 @@ body.has-messages .chat-input-container:focus-within {
 }
 
 /* ========================================================= */
-/* AI THINKING / GENERATING AMBIENT NEON FROSTED GLASS GLOW */
+/* AI THINKING / GENERATING AMBIENT NEON UNDERGLOW AT BOTTOM */
 /* ========================================================= */
 .chat-input-container.ai-thinking,
 .chat-input-container:has(#btn-send.loading),
 body.has-messages .chat-input-container.ai-thinking,
 body.has-messages .chat-input-container:has(#btn-send.loading),
 body.ai-is-generating .chat-input-container {
-  border-color: rgba(206, 241, 40, 0.45) !important;
+  background: rgba(22, 22, 26, 0.94) !important;
+  border-color: rgba(206, 241, 40, 0.3) !important;
   box-shadow: 0 16px 44px -4px rgba(0, 0, 0, 0.75),
-              0 0 35px -2px rgba(206, 241, 40, 0.28),
-              0 0 12px 1px rgba(206, 241, 40, 0.22),
-              inset 0 0 20px rgba(206, 241, 40, 0.04) !important;
+              0 12px 28px -6px rgba(206, 241, 40, 0.18),
+              inset 0 0 10px rgba(206, 241, 40, 0.03) !important;
 }
 
 .chat-input-container.ai-thinking::before,
@@ -718,26 +718,38 @@ body.ai-is-generating .chat-input-container {
 body.has-messages .chat-input-container.ai-thinking::before,
 body.has-messages .chat-input-container:has(#btn-send.loading)::before,
 body.ai-is-generating .chat-input-container::before {
+  content: '' !important;
   display: block !important;
-  opacity: 0.95 !important;
+  position: absolute !important;
+  top: auto !important;
+  bottom: -18px !important;
+  left: -20px !important;
+  right: -20px !important;
+  height: 50px !important;
+  border-radius: 0 0 40px 40px !important;
+  background: radial-gradient(ellipse 70% 100% at 50% 100%, rgba(206, 241, 40, 0.28) 0%, rgba(163, 230, 53, 0.14) 45%, rgba(34, 197, 94, 0.04) 75%, transparent 100%) !important;
+  filter: blur(22px) !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+  opacity: 0.88 !important;
   animation: smoothNeonAuraGlow 4s ease-in-out infinite alternate !important;
 }
 
 @keyframes smoothNeonAuraGlow {
   0% {
-    opacity: 0.72;
-    filter: blur(20px);
-    transform: scale(0.99);
+    opacity: 0.65;
+    filter: blur(18px);
+    transform: scaleX(0.96) scaleY(0.95);
   }
   50% {
-    opacity: 1;
-    filter: blur(28px);
-    transform: scale(1.015);
+    opacity: 0.9;
+    filter: blur(24px);
+    transform: scaleX(1.03) scaleY(1.05);
   }
   100% {
-    opacity: 0.78;
-    filter: blur(22px);
-    transform: scale(1);
+    opacity: 0.7;
+    filter: blur(20px);
+    transform: scaleX(0.98) scaleY(0.98);
   }
 }
 
