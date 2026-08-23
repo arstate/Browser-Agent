@@ -2268,16 +2268,30 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.71.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 272: Animasi Gelombang Bergeser (Floor Wave) & Peningkatan Intensitas Glow Neon Bawah
+- **Kebutuhan Pengguna**:
+  - Menambahkan animasi dinamis pada glow bawah agar tidak diam / statis saat AI sedang berpikir.
+  - Meningkatkan intensitas pendar glow neon secukupnya agar lebih hidup dan berkarakter namun tetap elegan.
+- **Solusi & Peningkatan**:
+  1. **Animasi `neonFloorWave` & Multi-Layer Gradient (`newtab.css` & `sidepanel.css`)**:
+     - Menerapkan dua radial-gradient elips ganda dengan `background-size: 160% 100%` yang bergerak bergeser secara halus (`@keyframes neonFloorWave` 3.8 detik bolak-balik).
+     - Meningkatkan sedikit intensitas pendar neon lime ke `rgba(206, 241, 40, 0.42)` dan memperluas ketinggian underglow (`height: 56px`, `bottom: -20px`).
+     - Mempertahankan ketegasan border iluminasi (`border-color: rgba(206, 241, 40, 0.38)`) dan bayangan ambient glow bawah (`box-shadow: 0 14px 34px -4px rgba(206, 241, 40, 0.24)`).
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.72.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **Ambient Neon Bottom Underglow:** Soft breathing neon floor aura emanating from the bottom edge (`bottom: -18px; height: 50px`) during AI generation with clean, dark, high-contrast textarea.
+- **Ambient Neon Bottom Underglow:** Dynamic waving floor aura (`neonFloorWave` 3.8s) shifting along the bottom edge (`bottom: -20px; height: 56px`) with enhanced lime luminance during AI generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.71.0` (Iterasi 271).
+  - **Versi Terkini:** `v2.72.0` (Iterasi 272).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
