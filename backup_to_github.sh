@@ -20,18 +20,26 @@ else
   git remote add origin "$GITHUB_REPO"
 fi
 
-# 2. Update Antigravity Conversation Transcripts
-echo "[+] Menyinkronkan riwayat percakapan Antigravity..."
-mkdir -p "$DIR/antigravity_session/brain/$CONV_ID/.system_generated/logs"
+# 2. Update Antigravity Conversation Transcripts into .tar.gz
+echo "[+] Mengompres riwayat percakapan Antigravity ke .tar.gz..."
+TEMP_BRAIN="/tmp/temp_brain_${CONV_ID}"
+rm -rf "$TEMP_BRAIN"
+mkdir -p "$TEMP_BRAIN/brain/$CONV_ID/.system_generated/logs"
+
 if [ -f "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/.system_generated/logs/transcript.jsonl" ]; then
-  cp "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/.system_generated/logs/transcript.jsonl" "$DIR/antigravity_session/brain/$CONV_ID/.system_generated/logs/"
+  cp "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/.system_generated/logs/transcript.jsonl" "$TEMP_BRAIN/brain/$CONV_ID/.system_generated/logs/"
 fi
 if [ -f "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/.system_generated/logs/transcript_full.jsonl" ]; then
-  cp "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/.system_generated/logs/transcript_full.jsonl" "$DIR/antigravity_session/brain/$CONV_ID/.system_generated/logs/"
+  cp "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/.system_generated/logs/transcript_full.jsonl" "$TEMP_BRAIN/brain/$CONV_ID/.system_generated/logs/"
 fi
 if [ -d "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/scratch" ]; then
-  cp -r "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/scratch" "$DIR/antigravity_session/brain/$CONV_ID/"
+  cp -r "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/scratch" "$TEMP_BRAIN/brain/$CONV_ID/"
 fi
+
+mkdir -p "$DIR/antigravity_session"
+tar -czf "$DIR/antigravity_session/session_${CONV_ID}.tar.gz" -C "$TEMP_BRAIN" .
+rm -rf "$TEMP_BRAIN"
+rm -rf "$DIR/antigravity_session/brain"
 
 # 3. Stage All Project Code, Extensions, Skills, Agents, Transcripts
 echo "[+] Menyiapkan file untuk commit..."
