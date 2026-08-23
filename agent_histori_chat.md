@@ -3238,9 +3238,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.139.0` (Iterasi 339).
+  - **Versi Terkini:** `v2.140.0` (Iterasi 340).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
+
+---
+
+### 🚀 Iterasi 340: Unified Persistent Memory in ~/.browser-agent & Complete Tar.gz Database Export
+- **Fitur & Arsitektur Utama**:
+  1. **Unified Single-Location Database Architecture (`native_host.py`)**:
+     - `PERSISTENT MEMORY` kini disimpan dan dikelola langsung di dalam `/home/arya/.browser-agent/PERSISTENT MEMORY/` (menjadi satu kesatuan dengan database SQLite `chat_history.db`, screenshot, gambar, dan agents/skills).
+  2. **100% Comprehensive Export All Database (.tar.gz) (`db_export_targz_backup`)**:
+     - Saat user mengklik tombol export all database atau menjalankan backup `.tar.gz`, seluruh folder `PERSISTENT MEMORY` (termasuk `user_profile`, `experience_ledger`, `anti_patterns`, `autonomous_skills`, `autonomous_agents`, dan `training_corpus`) otomatis terkompresi ke dalam `browser-agent-full-database-*.tar.gz`.
+  3. **Verification**:
+     - Pengujian unit test dan simulasi export menghasilkan backup `.tar.gz` lengkap dengan 225+ file database & 45 file Persistent Memory.
 
 ---
 

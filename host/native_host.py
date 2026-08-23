@@ -135,9 +135,10 @@ MEMORIES_DIR = os.path.join(DB_DIR, "memories")
 HOST_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(HOST_DIR)
 PROJECT_PERSISTENT_MEMORY_DIR = os.path.join(PROJECT_DIR, "PERSISTENT MEMORY")
-LOCAL_PERSISTENT_MEMORY_DIR = os.path.join(DB_DIR, "persistent_memory")
+DB_PERSISTENT_MEMORY_DIR = os.path.join(DB_DIR, "PERSISTENT MEMORY")
 
-PERSISTENT_MEMORY_ROOT = PROJECT_PERSISTENT_MEMORY_DIR if os.path.exists(PROJECT_PERSISTENT_MEMORY_DIR) else LOCAL_PERSISTENT_MEMORY_DIR
+# Unified Single-Database Directory: PERSISTENT MEMORY is stored inside ~/.browser-agent/
+PERSISTENT_MEMORY_ROOT = DB_PERSISTENT_MEMORY_DIR
 PM_USER_PROFILE_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "user_profile")
 PM_EXPERIENCE_LEDGER_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "experience_ledger")
 PM_ANTI_PATTERNS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "anti_patterns")
