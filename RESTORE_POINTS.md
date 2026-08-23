@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.79.0`
-- **Iterasi:** `Iterasi 279`
-- **Tanggal Rilis:** 23 Agustus 2026 (11:21 WIB)
+- **Versi Terkini:** `v2.80.0`
+- **Iterasi:** `Iterasi 280`
+- **Tanggal Rilis:** 23 Agustus 2026 (12:00 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (374.2 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (381.5 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.80.0** | 280 | 23-08-2026 12:00 | `v2.80.0` | **Integration of AI Stickman Swarm Dynamic Working Animation Docked Above Prompt Input:** Mengintegrasikan sistem animasi kanvas 2D modular `stickman-animation.js` yang menampilkan swarm stickman biomekanik (pelari sprint, teknisi kabel, mekanik obeng, dan server rack berkedip) tepat di atas kotak input prompt saat AI sedang generate respon / mengeksekusi tugas. Berjalan dengan 60fps canvas render loop otomatis saat aktif dan berhenti total (0% CPU idle) saat selesai. | 🟢 STABLE | `./restore.sh v2.80.0` |
 | **v2.79.0** | 279 | 23-08-2026 11:21 | `v2.79.0` | **Fix Oversized User-Attached Images in Fullscreen New Tab Chat Bubbles:** Menambahkan aturan styling lengkap `.user-msg-attachments`, `.user-attached-thumb` (84px x 84px dengan object-fit cover & hover zoom), `.user-attached-video-card`, dan batas maksimal gambar bubble chat `.message-content img` pada `newtab.css`. Mengunci ukuran thumbnail gambar yang dikirim user agar tetap rapi, kompak, dan proporsional serta tetap dapat diperbesar layar penuh via klik Lightbox modal. | 🟢 STABLE | `./restore.sh v2.79.0` |
 | **v2.78.0** | 278 | 23-08-2026 11:11 | `v2.78.0` | **Remove AI Generating Glow & Orb Animations on Input Prompt (Clean Minimalist Frosted Glass):** Menghapus seluruh efek glow neon tambahan, orb bergerak, dan pseudo-elements blur pada kotak input prompt (`.chat-input-container` & `.chat-input-bar`) saat AI sedang generate respon. Mengembalikan tampilan input bar ke gaya minimalis frosted glass gelap yang elegan, bersih, jernih, dan berorientasi fokus pengetikan. | 🟢 STABLE | `./restore.sh v2.78.0` |
 | **v2.77.0** | 277 | 23-08-2026 11:08 | `v2.77.0` | **Hardware-Accelerated Translate3d Orb Sweep with Unpinned Right Bound & Smooth Multi-Stop Fade:** Mengatasi bug posisi terganjal (`inset` right bound override) dengan mendefinisikan `right: auto !important; transition: none !important;` dan menggerakkan orb 250px menggunakan GPU hardware-accelerated `translate3d(20px, 0, 0)` ke `translate3d(360px, 0, 0)` (4.8s cubic-bezier). Memberikan pergerakan meluncur bolak-balik yang 100% nyata, halus 60fps, serta berefek bernapas *fade in / fade out* lembut tanpa mengorbankan kontras gelap input. | 🟢 STABLE | `./restore.sh v2.77.0` |

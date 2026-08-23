@@ -3548,6 +3548,48 @@ body {
   box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
 
+/* AI Stickman Swarm Animation Docked Banner in Sidepanel */
+.ai-stickman-swarm-container {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #141417;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 20px -2px rgba(0, 0, 0, 0.5);
+  animation: stickmanFadeIn 0.25s ease-out forwards;
+}
+
+@keyframes stickmanFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-stickman-stage {
+  position: relative;
+  width: 100%;
+  height: 90px;
+  background: #141417;
+  overflow: hidden;
+  border-radius: 11px;
+}
+
+#physicsCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .chat-input-main-col {
   flex: 1;
   display: flex;

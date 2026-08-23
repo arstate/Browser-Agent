@@ -4795,9 +4795,15 @@ function updateSendButtonState(loading) {
   if (loading) {
     btnSend.classList.add('loading');
     btnSend.title = "Batalkan eksekusi (Cancel)";
+    if (typeof window.startStickmanSwarmAnimation === 'function') {
+      window.startStickmanSwarmAnimation();
+    }
   } else {
     btnSend.classList.remove('loading');
     btnSend.title = "Kirim perintah (Enter)";
+    if (typeof window.stopStickmanSwarmAnimation === 'function') {
+      window.stopStickmanSwarmAnimation();
+    }
   }
 }
 

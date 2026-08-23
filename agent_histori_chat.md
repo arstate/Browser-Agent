@@ -2378,17 +2378,32 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.79.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 280: Integrasi Animasi Swarm Stickman Biomekanik AI Bekerja Tepat di Atas Input Prompt
+- **Kebutuhan Pengguna**:
+  - Mengintegrasikan codingan animasi stickman swarm dari `/home/arya/browser-agent/extension/ai-stickman-animation/` agar muncul aktif di atas kotak input prompt saat AI sedang generate respon / mengeksekusi perintah.
+- **Solusi & Peningkatan**:
+  1. **Modul Animasi Canvas 2D Modular (`stickman-animation.js`)**:
+     - Membuat modul mesin animasi canvas berkinerja tinggi 60fps dengan pelari stickman biomekanik 3 tier gait (sprint, jog, walk, fatigue cargo), teknisi obeng, teknisi kabel berkedip, dan server rack neon.
+     - Menyediakan kontrol siklus hidup hemat daya `startStickmanSwarmAnimation()` dan `stopStickmanSwarmAnimation()` (0% CPU saat idle).
+     - Menambahkan container `#ai-stickman-swarm-container` dan `#physicsCanvas` di New Tab dan Sidepanel tepat di atas dock input prompt.
+     - Menghubungkan trigger animasi secara otomatis dengan state `updateSendButtonState(loading)` di `sidepanel.js`.
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.80.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
+- **AI Stickman Swarm Working Animation:** 60fps canvas animation (`stickman-animation.js`) docked above the prompt container displaying busy runner stickmen, cable technicians, and blinking server racks during generation.
 - **User Attached Media Thumbnails:** Constrained 84x84px compact square thumbnails (`.user-attached-thumb`) with Lightbox fullscreen click zoom.
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.79.0` (Iterasi 279).
+  - **Versi Terkini:** `v2.80.0` (Iterasi 280).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

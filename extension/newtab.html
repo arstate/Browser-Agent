@@ -133,6 +133,13 @@
 
       <!-- Bento Prompt Input Bar Container (Glides smoothly from center to bottom) -->
       <div class="chat-input-container" id="chat-input-container">
+        <!-- Docked AI Stickman Swarm Animation (Active while AI is generating) -->
+        <div class="ai-stickman-swarm-container" id="ai-stickman-swarm-container" style="display: none;">
+          <div class="ai-stickman-stage" id="stageContainer">
+            <canvas id="physicsCanvas"></canvas>
+          </div>
+        </div>
+
         <!-- Docked Clarification / Confirmation Card -->
         <div class="clarification-dock-container" id="clarification-dock-container" style="display: none;"></div>
 
@@ -530,6 +537,7 @@
   <!-- Core Scripts -->
   <script src="xterm.js"></script>
   <script src="xterm-addon-fit.js"></script>
+  <script src="stickman-animation.js"></script>
   <script src="sidepanel.js"></script>
   <script src="newtab.js"></script>
 </body>
