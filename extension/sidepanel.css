@@ -2684,11 +2684,22 @@ body {
   padding: 0 2px;
 }
 
-.chat-input-header-left,
-.chat-input-header-right {
+.chat-input-header-left {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.chat-input-header-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  height: 28px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 9999px;
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .chat-mode-switch-group {
@@ -2753,27 +2764,32 @@ body {
   display: none !important;
 }
 
-/* Switch Tab Direct Toggle Button in Sidepanel */
-.switch-tab-mode-wrapper {
+/* Switch Tab & Execution Mode Combined Segmented Capsule in Sidepanel */
+.switch-tab-mode-wrapper,
+.execution-mode-wrapper {
   position: relative;
   display: inline-flex;
   align-items: center;
-  height: 28px;
+  height: 100%;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 9999px;
-  padding: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
 }
 
+/* Left Segment: Switch Tab Direct Toggle */
 .btn-switch-tab-mode-trigger {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   height: 100%;
   box-sizing: border-box;
-  padding: 0 10px;
-  border-radius: 9999px;
+  padding: 0 9px;
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
@@ -2787,7 +2803,7 @@ body {
   align-items: center;
 }
 
-/* Switch Tab ON -> Inner Active Pill (matching Agent Mode in Image 1) */
+/* Switch Tab ON -> Left Active Pill */
 .btn-switch-tab-mode-trigger.is-on {
   background: #27272A;
   color: var(--accent-lime);
@@ -2820,27 +2836,18 @@ body {
   font-weight: 600;
 }
 
-/* Execution Mode Direct Toggle Button in Sidepanel */
-.execution-mode-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 9999px;
-  padding: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
+/* Right Segment: Execution Mode Direct Toggle in Sidepanel */
 .btn-execution-mode-trigger {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   height: 100%;
   box-sizing: border-box;
-  padding: 0 10px;
-  border-radius: 9999px;
+  padding: 0 9px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
@@ -2854,7 +2861,7 @@ body {
   align-items: center;
 }
 
-/* Accept Mode -> Inner Active Pill (matching Agent Mode in Image 1) */
+/* Accept Mode -> Right Active Pill */
 .btn-execution-mode-trigger.mode-accept {
   background: #27272A;
   color: var(--accent-lime);
@@ -2871,7 +2878,7 @@ body {
   font-weight: 700;
 }
 
-/* Planning Mode -> Inner Active Blue Pill */
+/* Planning Mode -> Right Active Blue Pill */
 .btn-execution-mode-trigger.mode-planning {
   background: #27272A;
   color: #38BDF8;

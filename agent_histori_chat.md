@@ -2603,6 +2603,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.92.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 293: Unified Segmented Capsule with Flat Seamless Center Join for Switch Tab & Accept/Planning
+- **Kebutuhan Pengguna**:
+  - Menggabungkan tombol `Switch Tab` dan `Accept/Planning` menjadi 1 kapsul utuh yang menyatu, di mana sudut pertemuan di tengah tidak rounded (flat) sehingga terlihat seperti 1 segmented control capsule yang presisi.
+- **Solusi & Peningkatan**:
+  1. **Unified Segmented Capsule (`newtab.css`, `sidepanel.css`)**:
+     - `.chat-input-header-right`: Dijadikan outer capsule well track (`background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 9999px; padding: 2px; height: 28px; gap: 0;`).
+     - Segmen kiri (`.btn-switch-tab-mode-trigger`): `border-top-left-radius: 9999px; border-bottom-left-radius: 9999px; border-top-right-radius: 0; border-bottom-right-radius: 0;`.
+     - Segmen kanan (`.btn-execution-mode-trigger`): `border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 9999px; border-bottom-right-radius: 9999px;`.
+     - Sudut tengah flat menyatu tanpa celah (`gap: 0`), transisi hover mulus, dan state warna aktif/pasif tetap presisi.
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.93.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2611,11 +2625,10 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
 - **Modern Bento Backup UI:** 2 panel simetris untuk *Full Database (.tar.gz)* dan *Settings (.json)* dengan tombol aksi ganda Download/Restore di `options.html`.
-- **Segmented Well & Inner Pill Buttons:**
-  - `Accept`: Track well `rgba(0,0,0,0.4)` + Inner Pill `#27272A` with Neon Lime Text `#CEF128` (100% identik dengan `Agent Mode`).
-  - `Planning`: Track well `rgba(0,0,0,0.4)` + Inner Pill `#27272A` with Cyan Blue Text `#38BDF8`.
-  - `Switch Tab ON`: Track well `rgba(0,0,0,0.4)` + Inner Pill `#27272A` with Neon Lime Text `#CEF128`.
-  - `Switch Tab OFF`: Track well `rgba(0,0,0,0.4)` + Inner Pill Transparan with Muted Slate Text.
+- **Unified Segmented Header Capsule:**
+  - Outer Well: Single capsule container track `rgba(0, 0, 0, 0.4)` dengan `border-radius: 9999px`.
+  - Left Segment (`Switch Tab`): `border-radius: 9999px 0 0 9999px` (flat di kanan).
+  - Right Segment (`Accept/Planning`): `border-radius: 0 9999px 9999px 0` (flat di kiri).
 - **Modular Stickman Animation Structure:** Located in `extension/stickman-animation/` (`stickman-config.js`, `stickman-physics.js`, `stickman-scenery.js`, `stickman-engine.js`, `stickman-styles.css`, `index.html`).
 - **Stickman Swarm Proportions:** 64px / 58px height, zero bottom gap (`margin-bottom: 0`, `FLOOR_Y: 61`), generous 11px top headroom clearance, edge-to-edge full width docked directly atop the chat input container.
 - **AI Stickman Swarm Working Animation:** 60fps canvas animation docked above the prompt container displaying busy runner stickmen, cable technicians, and blinking server racks during generation.
@@ -2623,7 +2636,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.92.0` (Iterasi 292).
+  - **Versi Terkini:** `v2.93.0` (Iterasi 293).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
