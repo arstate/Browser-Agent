@@ -2200,15 +2200,33 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.67.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 268: Bentuk Bundar 100% Tetap & Fill Neon Solid pada Tombol Generating (Hapus Stroke Muter Luar)
+- **Kebutuhan Pengguna**:
+  - Tombol send prompt tetap berbentuk bundar sempurna (`border-radius: 50%`) dan tidak berubah menjadi persegi panjang / kapsul.
+  - Warna tombol tetap solid Neon Lime fill (`#CEF128`).
+  - Menghapus lingkaran stroke berputar di luar tombol (*zero rotating outer stroke*).
+  - Di dalam tombol bundar neon, dua garis vertikal gelap (`||`) tetap bergerak melirik/memindai ke kiri dan ke kanan secara halus saat status generating aktif.
+- **Solusi & Peningkatan**:
+  1. **HTML & DOM (`newtab.html` & `sidepanel.html`)**:
+     - Menghapus elemen `.gen-radar-ring`.
+  2. **Styling & Animasi (`newtab.css` & `sidepanel.css`)**:
+     - Mengunci dimensi tombol `.btn-send` dan `.btn-send.loading` menjadi `36px` bundar penuh (`border-radius: 50% !important;`) di New Tab dan `32px` di Sidepanel.
+     - Mempertahankan background solid Neon Lime `linear-gradient(135deg, var(--accent-lime-hover) 0%, var(--accent-lime) 100%) !important;` pada semua kondisi (idle maupun loading).
+     - Menata dua slit kapsul vertikal `.gen-eye-slit` dengan warna kontras Dark Slate (`var(--accent-dark)` / `var(--slate-dark)`), yang melirik/memindai kiri-kanan secara halus (`eyesScanGlance`).
+  3. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.68.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **Stop / Generating Morphing Button:** Morphing dark capsule (`#18181B`), rotating radar orbit ring (`#CEF128`), and glancing eye-slits (`eyesScanGlance`), hover-to-stop in `#EF4444`.
+- **Generating Button:** 100% Circular Round Shape, Solid Neon Lime Fill (`#CEF128`), and scanning dark eye slits (`eyesScanGlance`).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.67.0` (Iterasi 267).
+  - **Versi Terkini:** `v2.68.0` (Iterasi 268).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

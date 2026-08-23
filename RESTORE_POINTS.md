@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.67.0`
-- **Iterasi:** `Iterasi 267`
-- **Tanggal Rilis:** 23 Agustus 2026 (10:44 WIB)
+- **Versi Terkini:** `v2.68.0`
+- **Iterasi:** `Iterasi 268`
+- **Tanggal Rilis:** 23 Agustus 2026 (10:48 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (370.3 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (372.0 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.68.0** | 268 | 23-08-2026 10:48 | `v2.68.0` | **100% Circular Round Shape & Solid Neon Lime Fill on Generating Pause Button (Removed Outer Stroke):** Mengunci bentuk tombol Send / Pause agar selalu 100% bundar sempurna (`border-radius: 50%`) dan tetap menggunakan fill warna Neon Lime solid (`#CEF128`), menghapus lingkaran ring stroke berputar di luar tombol, serta menampilkan animasi dua slit garis kapsul gelap (`||`) yang melirik/memindai ke kiri-kanan secara halus di dalam tombol saat AI sedang generate respon. | 🟢 STABLE | `./restore.sh v2.68.0` |
 | **v2.67.0** | 267 | 23-08-2026 10:44 | `v2.67.0` | **Cybernetic Morphing Stop/Pause Generating Button with Radar Orbit Ring & Scanning Eye-Slit Animation:** Mengubah transisi tombol Send prompt menjadi animasi morphing elastis saat generasi aktif: tombol memanjang menjadi kapsul dark charcoal (`#18181B`) dengan border neon lime (`#CEF128`), ring radar orbit berputar 360° di sekeliling tombol (`radarOrbitSpin`), serta dua garis mata kapsul (`gen-eye-slit`) melirik/memindai kiri-kanan secara halus (`eyesScanGlance`) sesuai referensi video. Saat di-hover, tombol bermutasi menjadi ikon Stop merah (`#EF4444`) untuk membatalkan eksekusi. | 🟢 STABLE | `./restore.sh v2.67.0` |
 | **v2.66.0** | 266 | 23-08-2026 01:55 | `v2.66.0` | **Fix AI Image Fullscreen Modal Lightbox & Resolve Content Script Animation TypeError on Standalone SVG/XML Tabs:** (1) Menambahkan container modal `#image-lightbox-modal` pada `newtab.html`, styling `.image-lightbox-modal` di `newtab.css`, serta memperbarui delegasi klik dan helper dinamis `openMediaLightbox()` di `sidepanel.js` agar tombol "Lihat Penuh" (`.btn-gen-img-zoom`), kartu gambar AI, maupun gambar markdown di bubble chat dapat diperbesar layar penuh secara instan dan mulus. (2) Mengatasi error `Uncaught TypeError: Cannot use 'in' operator to search for 'animation' in undefined` di `content-scripts/content.js` dengan guard pengecekan elemen non-HTML/SVG di level atas dan defensive fallback `ad = (document.createElement('div').style || {})` saat `fl(t)` dijalankan. | 🟢 STABLE | `./restore.sh v2.66.0` |
 | **v2.65.0** | 265 | 23-08-2026 01:44 | `v2.65.0` | **Update 9Router Official Brand SVG Logo in Provider Templates:** Mengganti ikon 9Router dengan logo SVG resmi 9Router yang baru (`9router-local.svg` & `9router.svg`) dengan gradasi oranye dan tipografi 9R putih elegan di `extension/icons/providers/`. | 🟢 STABLE | `./restore.sh v2.65.0` |
