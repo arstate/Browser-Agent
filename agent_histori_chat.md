@@ -2748,6 +2748,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 311: Fix Persistent Top Navbar Scrolling Bug in New Tab Fullscreen
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug di mana navbar atas (pemilih model, agent persona, status chip) ikut tergulung saat chat di-scroll ke bawah. Navbar harus selalu diam/terpatri di atas.
+- **Solusi & Peningkatan**:
+  1. **Fixed Header Architecture (`newtab.css`)**:
+     - Mengubah `.fullscreen-header` menjadi `position: fixed; top: 0; left: 58px; right: 0; z-index: 100` dengan backdrop blur `24px` dan background semi-transparan `rgba(14, 14, 17, 0.92)`.
+     - Memberikan offset `padding-top: 56px` pada `.fullscreen-agent-app` agar konten awal chat tidak tertutup oleh header tetap.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.111.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 310: Subtle Luxury Grid Stroke Background Ornament for Welcome Screen
 - **Kebutuhan Pengguna**:
   - Menambahkan ornamen background stroke kotak-kotak tipis pada welcome screen Newtab agar bertekstur elegan, modern, dan tidak terlalu polos.

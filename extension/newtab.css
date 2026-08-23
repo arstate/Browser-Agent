@@ -115,6 +115,8 @@ body.newtab-body {
   min-height: 100vh;
   width: calc(100% - 58px);
   margin-left: 58px;
+  padding-top: 56px;
+  box-sizing: border-box;
   flex: 1;
   transition: margin-left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -255,17 +257,21 @@ body.newtab-body {
 
 /* Header */
 .fullscreen-header {
+  position: fixed;
+  top: 0;
+  left: 58px;
+  right: 0;
   height: 56px;
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(18, 18, 20, 0.88);
-  backdrop-filter: blur(16px);
-  position: sticky;
-  top: 0;
+  background: rgba(14, 14, 17, 0.92);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   z-index: 100;
+  box-sizing: border-box;
 }
 
 .header-left {
