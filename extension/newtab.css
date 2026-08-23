@@ -699,7 +699,7 @@ body.has-messages .chat-input-container:focus-within {
 }
 
 /* ========================================================= */
-/* AI THINKING / GENERATING AMBIENT NEON UNDERGLOW AT BOTTOM */
+/* AI THINKING / GENERATING PANORAMIC NEON WAVE UNDERGLOW */
 /* ========================================================= */
 .chat-input-container.ai-thinking,
 .chat-input-container:has(#btn-send.loading),
@@ -723,39 +723,41 @@ body.ai-is-generating .chat-input-container::before {
   display: block !important;
   position: absolute !important;
   top: auto !important;
-  bottom: -20px !important;
-  left: -24px !important;
-  right: -24px !important;
-  height: 56px !important;
-  border-radius: 0 0 44px 44px !important;
-  background: radial-gradient(ellipse 60% 100% at 35% 100%, rgba(206, 241, 40, 0.42) 0%, rgba(163, 230, 53, 0.22) 40%, rgba(34, 197, 94, 0.06) 70%, transparent 100%),
-              radial-gradient(ellipse 60% 100% at 65% 100%, rgba(163, 230, 53, 0.38) 0%, rgba(206, 241, 40, 0.2) 45%, rgba(52, 211, 153, 0.05) 75%, transparent 100%) !important;
-  background-size: 160% 100% !important;
-  filter: blur(22px) !important;
+  bottom: -35px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(96vw, 1280px) !important;
+  height: 130px !important;
+  border-radius: 50% 50% 30% 30% !important;
+  background: radial-gradient(ellipse 45% 85% at 20% 100%, rgba(206, 241, 40, 0.4) 0%, rgba(163, 230, 53, 0.2) 35%, transparent 75%),
+              radial-gradient(ellipse 45% 85% at 80% 100%, rgba(163, 230, 53, 0.35) 0%, rgba(206, 241, 40, 0.18) 35%, transparent 75%),
+              radial-gradient(ellipse 65% 90% at 50% 100%, rgba(206, 241, 40, 0.3) 0%, rgba(163, 230, 53, 0.14) 45%, transparent 85%) !important;
+  background-size: 180% 100% !important;
+  filter: blur(34px) !important;
   z-index: -1 !important;
   pointer-events: none !important;
-  opacity: 0.92 !important;
-  animation: neonFloorWave 3.8s ease-in-out infinite alternate !important;
+  opacity: 0.9 !important;
+  animation: neonPanoramicWave 5s ease-in-out infinite alternate !important;
 }
 
-@keyframes neonFloorWave {
+@keyframes neonPanoramicWave {
   0% {
-    opacity: 0.76;
-    filter: blur(18px);
+    opacity: 0.68;
+    filter: blur(28px);
     background-position: 0% 100%;
-    transform: scaleX(0.95) scaleY(0.92);
+    transform: translateX(-50%) scaleX(0.92) scaleY(0.88);
   }
   50% {
-    opacity: 1;
-    filter: blur(25px);
+    opacity: 0.95;
+    filter: blur(40px);
     background-position: 50% 100%;
-    transform: scaleX(1.04) scaleY(1.08);
+    transform: translateX(-50%) scaleX(1.05) scaleY(1.1);
   }
   100% {
-    opacity: 0.85;
-    filter: blur(21px);
+    opacity: 0.72;
+    filter: blur(32px);
     background-position: 100% 100%;
-    transform: scaleX(0.98) scaleY(1.0);
+    transform: translateX(-50%) scaleX(0.96) scaleY(0.92);
   }
 }
 
