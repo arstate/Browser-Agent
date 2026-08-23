@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.118.0`
-- **Iterasi:** `Iterasi 318`
-- **Tanggal Rilis:** 24 Agustus 2026 (01:23 WIB)
+- **Versi Terkini:** `v2.119.0`
+- **Iterasi:** `Iterasi 319`
+- **Tanggal Rilis:** 24 Agustus 2026 (01:26 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.6 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.119.0** | 319 | 24-08-2026 01:26 | `v2.119.0` | **Fixed Chromium Backdrop Root Isolation for True Frosted Glass Blur Dropup:** Memindahkan `backdrop-filter` parent `.chat-input-container` ke pseudo-element `::after` terisolasi sehingga Chromium tidak membatasi backdrop root; dengan demikian menu dropup `.chat-mode-dropup-menu` dapat melakukan sampling filter blur langsung ke teks hero dan elemen document di belakangnya secara penuh dan nyata (`backdrop-filter: blur(36px) saturate(200%)`). | 🟢 STABLE | `./restore.sh v2.119.0` |
 | **v2.118.0** | 318 | 24-08-2026 01:23 | `v2.118.0` | **Minimalist Frosted Glass Blur Dropup for Mode Switcher:** Menghapus teks sub-deskripsi pada menu pilihan mode sehingga desain menjadi sangat bersih dan compact, serta menerapkan efek frosted glass translucent blur kuat (`backdrop-filter: blur(32px) saturate(190%)`, border halus `rgba(255,255,255,0.12)`) yang memburamkan elemen di belakang secara elegan dan modern. | 🟢 STABLE | `./restore.sh v2.118.0` |
 | **v2.117.0** | 317 | 24-08-2026 01:21 | `v2.117.0` | **Consolidated Single Pill Button with Dropup Menu for Mode Switcher:** Mengonsolidasi 3 tombol mode yang berjajar di pojok kiri atas input prompt (`Agent Mode`, `Chat Mode`, `Web Search`) menjadi 1 tombol pill tunggal yang bersih dan ringkas dengan menu dropup interaktif yang menampilkan status aktif, ikon SVG, judul mode, dan deskripsi fungsi. | 🟢 STABLE | `./restore.sh v2.117.0` |
 | **v2.116.0** | 316 | 24-08-2026 01:07 | `v2.116.0` | **Modern Frosted Glassmorphism Container for Chat History Modal:** Menghapus efek background overlay gelap dan blur yang menutupi layar penuh, lalu mentransformasi card modal Riwayat Percakapan (`.modal-history-content`) menjadi gaya translucent frosted glassmorphism (`backdrop-filter: blur(36px) saturate(200%)`, border `rgba(255,255,255,0.13)`, dan glass cards untuk item sesi chat) sehingga tampilan dialog histori sangat modern, elegan, dan estetik. | 🟢 STABLE | `./restore.sh v2.116.0` |

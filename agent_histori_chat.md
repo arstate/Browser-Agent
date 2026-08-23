@@ -2748,6 +2748,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 319: Fixed Chromium Backdrop Root Isolation for True Frosted Glass Blur Dropup
+- **Kebutuhan Pengguna**:
+  - Mengatasi kendala di mana elemen teks background di belakang dropup menu belum terlihat buram (blur) secara nyata.
+- **Root Cause Analysis & Solusi**:
+  1. **Chromium Backdrop Root Isolation Fix (`newtab.css`)**:
+     - Di engine Chromium/Blink, elemen parent yang memiliki `backdrop-filter` langsung (yaitu `.chat-input-container`) akan membentuk *backdrop root* terisolasi. Akibatnya, elemen anak (`.chat-mode-dropup-menu`) yang meluap (*overflow*) ke atas keluar batas kontainer tidak dapat melakukan sampling piksel dokumen halaman di belakangnya.
+     - **Solusi**: Memindahkan `backdrop-filter` dari `.chat-input-container` ke pseudo-element `.chat-input-container::after` dengan `z-index: -1`.
+     - Hasilnya, `.chat-mode-dropup-menu` kini berhasil menyerap dan memburamkan teks hero *"What should your agent work on next"* dan latar belakang di belakangnya secara penuh dan estetik (`backdrop-filter: blur(36px) saturate(200%)`).
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.119.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 318: Minimalist Frosted Glass Blur Dropup for Mode Switcher
 - **Kebutuhan Pengguna**:
   - Menghapus teks deskripsi di bawah judul mode agar tampilan dropup lebih bersih, minimalis, dan ringkas.
