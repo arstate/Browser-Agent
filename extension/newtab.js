@@ -179,4 +179,20 @@ document.addEventListener('DOMContentLoaded', () => {
       closeFullscreenSettings();
     }
   });
+
+  // Subtle & Smooth Background Grid Parallax Effect on Scroll (15% gentle ratio)
+  let parallaxTicking = false;
+  function updateGridParallax() {
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+    const parallaxOffset = (scrollY * 0.15).toFixed(2);
+    document.documentElement.style.setProperty('--parallax-grid-y', `${parallaxOffset}px`);
+    parallaxTicking = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!parallaxTicking) {
+      window.requestAnimationFrame(updateGridParallax);
+      parallaxTicking = true;
+    }
+  }, { passive: true });
 });

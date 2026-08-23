@@ -2748,6 +2748,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 313: Subtle & Gentle Parallax Scroll Effect for Background Grid Stroke
+- **Kebutuhan Pengguna**:
+  - Menambahkan efek paralaks lembut dan nyaman pada ornamen background garis kotak-kotak tipis saat chat di-scroll agar visual terasa hidup dan memiliki kedalaman ruang, tanpa berlebihan/membuat pusing.
+- **Solusi & Peningkatan**:
+  1. **Lightweight GPU Parallax Scroll (`newtab.js`, `newtab.css`)**:
+     - Mengimplementasikan listener scroll pasif berbasis `requestAnimationFrame` di `newtab.js` yang menghitung pergeseran koordinat halus (rasio 15% dari scroll offset: `scrollY * 0.15`).
+     - Mengupdate CSS custom variable `--parallax-grid-y` secara realtime pada `.fullscreen-layout::before` dengan `will-change: background-position` untuk rendering 60FPS yang mulus.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.113.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 312: Optimized Balanced Chat Clearance Spacing Above Stickman Stage
 - **Kebutuhan Pengguna**:
   - Mengurangi jarak renggang vertikal yang terlalu jauh antara teks/card agent terbawah dengan panggung animasi stickman agar tampak proporsional dan tidak ada void kosong besar.
