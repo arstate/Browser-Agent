@@ -2895,6 +2895,124 @@ body {
   font-weight: 700;
 }
 
+/* Web Search Engine Dropup Selector - Dark Luxury Pill */
+.search-engine-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  box-sizing: border-box;
+}
+
+.btn-search-engine-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 12px 0 10px;
+  border-radius: 9999px;
+  background: #27272A;
+  border: 1px solid rgba(206, 241, 40, 0.35);
+  color: var(--accent-lime);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  user-select: none;
+}
+
+.btn-search-engine-trigger:hover {
+  background: #323238;
+  border-color: rgba(206, 241, 40, 0.65);
+  box-shadow: 0 0 12px rgba(206, 241, 40, 0.25);
+}
+
+.btn-search-engine-trigger .search-engine-icon {
+  display: flex;
+  align-items: center;
+  color: var(--accent-lime);
+}
+
+.btn-search-engine-trigger .search-engine-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent-lime);
+  letter-spacing: 0.01em;
+}
+
+.btn-search-engine-trigger .search-engine-chevron {
+  width: 9px;
+  height: 9px;
+  stroke: var(--accent-lime);
+  transition: transform 0.2s ease;
+}
+
+.btn-search-engine-trigger.open .search-engine-chevron {
+  transform: rotate(180deg);
+}
+
+.search-engine-dropup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  width: 175px;
+  background: #18181B;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 5px;
+  box-shadow: 0 20px 48px -4px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 1000;
+  animation: dropupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.engine-dropup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+  color: #CBD5E1;
+}
+
+.engine-dropup-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+}
+
+.engine-dropup-item.active {
+  background: rgba(206, 241, 40, 0.12);
+  color: var(--accent-lime);
+}
+
+.engine-dropup-item .engine-item-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+}
+
+.engine-dropup-item .engine-item-check {
+  display: none;
+  color: var(--accent-lime);
+}
+
+.engine-dropup-item.active .engine-item-check {
+  display: block;
+}
+
 /* Plan Approval Card & Docked Container Mode (Replaces input prompt during plan confirmation) */
 .chat-input-container.plan-approval-mode .chat-input-top-bar,
 .chat-input-container.plan-approval-mode .chat-input-bar,

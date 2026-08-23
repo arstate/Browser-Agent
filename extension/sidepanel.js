@@ -6121,6 +6121,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (changes.browser_agent_exec_mode !== undefined && typeof setExecutionMode === 'function') {
       setExecutionMode(changes.browser_agent_exec_mode.newValue);
     }
+    if (changes.browser_agent_search_engine !== undefined && typeof setSearchEngine === 'function') {
+      setSearchEngine(changes.browser_agent_search_engine.newValue);
+    }
   }
 });
 

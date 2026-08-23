@@ -2681,6 +2681,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.97.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 298: Dark Luxury Pill Redesign for Web Search Engine Selector
+- **Kebutuhan Pengguna**:
+  - Memperbarui antarmuka tombol pemilih mesin pencari (search engine selector dropdown) agar tidak polos, melainkan menggunakan gaya pill Dark Luxury dengan icon Globe neon lime, label bold berkarakter, dan dropup menu berlatar transparan blur.
+- **Solusi & Peningkatan**:
+  1. **Dark Luxury Search Engine Pill Button (`newtab.html`, `sidepanel.html`, `newtab.css`, `sidepanel.css`)**:
+     - Memperbarui `#btn-search-engine-trigger` dengan icon Globe SVG neon lime (`#CEF128`), label mesin pencari aktif (`#search-engine-label`), chevron neon lime berputar saat open, background dark slate `#27272A`, dan border neon halus `rgba(206, 241, 40, 0.35)` dengan hover glow.
+  2. **Refined Translucent Dropup Menu**:
+     - Menu dropup `#search-engine-dropup` menggunakan background `#18181B`, blur 20px, border subtle, item padding proporsional, serta indikator centang checkmark hijau aktif pada mesin pencari yang dipilih.
+  3. **Cross-Tab Realtime Sync (`sidepanel.js`)**:
+     - Pilihan mesin pencari disimpan ke `chrome.storage.local` dan disinkronkan real-time ke semua tab melalui listener `storage.onChanged`.
+  4. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.98.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2688,6 +2703,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
+- **Search Engine Selector Pill:** `#btn-search-engine-trigger` dengan ikon Globe neon lime (`#CEF128`), background `#27272A`, border `rgba(206, 241, 40, 0.35)`, chevron dropup, dan realtime storage sync.
 - **AI Generator Modal Layout:** Tab 'Buat dengan AI' pada modal Agent, Skill, dan Memory menggunakan container vertikal kolumnar 100% lebar penuh dengan dropdown model, textarea lapang, dan tombol generate neon lime.
 - **Switch Tab Toggle (ON / OFF):**
   - `ON`: Otomatis berpindah tab dan memfokuskan jendela saat agent beraksi.
@@ -2705,7 +2721,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.97.0` (Iterasi 297).
+  - **Versi Terkini:** `v2.98.0` (Iterasi 298).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
