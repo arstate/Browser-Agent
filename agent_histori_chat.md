@@ -2710,6 +2710,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.99.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 300: Seamless Track Well & Borderless Fill Aesthetic for Search Engine Selector Pill
+- **Kebutuhan Pengguna**:
+  - Menghilangkan garis stroke/border outline neon yang mencolok pada tombol pemilih mesin pencari (`#btn-search-engine-trigger`), dan menyelaraskan tampilannya menjadi seamless pill tanpa border (`border: none`) yang duduk manis di dalam track well (`.search-engine-wrapper`) persis seperti tombol toggle Agent Mode & Web Search.
+- **Solusi & Peningkatan**:
+  1. **Borderless Fill Pill & Outer Track Well (`newtab.css`, `sidepanel.css`)**:
+     - Menghapus outline neon (`border: none`) pada `.btn-search-engine-trigger`.
+     - Mengubah `.search-engine-wrapper` menjadi wadah track semi-transparan `rgba(0, 0, 0, 0.4)` dengan padding 2px, border halus `rgba(255, 255, 255, 0.06)`, dan `border-radius: 9999px`.
+     - Tombol di dalamnya memiliki fill dark slate `#27272A`, icon Globe + teks neon lime `#CEF128`, dan bayangan halus `0 1px 2px rgba(0,0,0,0.3)`.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.100.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2717,8 +2730,8 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
+- **Search Engine Selector Seamless Pill:** `#btn-search-engine-trigger` di dalam track well `.search-engine-wrapper` (`rgba(0,0,0,0.4)` + 2px padding), tanpa border stroke luar (`border: none`), latar `#27272A`, icon Globe + teks neon lime `#CEF128`.
 - **Stickman Swarm Compact Proportions:** 50px height (Newtab) / 44px (Sidepanel), `FLOOR_Y: 47`, 4.8px head radius, zero bottom gap, docked directly atop the chat input prompt.
-- **Search Engine Selector Pill:** `#btn-search-engine-trigger` dengan ikon Globe neon lime (`#CEF128`), background `#27272A`, border `rgba(206, 241, 40, 0.35)`, chevron dropup, dan realtime storage sync.
 - **AI Generator Modal Layout:** Tab 'Buat dengan AI' pada modal Agent, Skill, dan Memory menggunakan container vertikal kolumnar 100% lebar penuh dengan dropdown model, textarea lapang, dan tombol generate neon lime.
 - **Switch Tab Toggle (ON / OFF):**
   - `ON`: Otomatis berpindah tab dan memfokuskan jendela saat agent beraksi.

@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.99.0`
-- **Iterasi:** `Iterasi 299`
-- **Tanggal Rilis:** 24 Agustus 2026 (00:29 WIB)
+- **Versi Terkini:** `v2.100.0`
+- **Iterasi:** `Iterasi 300`
+- **Tanggal Rilis:** 24 Agustus 2026 (00:30 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (386.9 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.0 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.100.0** | 300 | 24-08-2026 00:30 | `v2.100.0` | **Seamless Track Well & Borderless Fill Aesthetic for Search Engine Selector Pill:** Menggantikan border/stroke outline neon yang sebelumnya mencolok pada tombol `#btn-search-engine-trigger` dengan gaya seamless pill persis seperti toggle tab Agent Mode & Web Search. Tombol duduk rapi di dalam track well semi-transparan (`rgba(0,0,0,0.4)` dengan padding 2px) dengan fill dark slate `#27272A`, tanpa border stroke luar (`border: none`), dan icon Globe + teks neon lime `#CEF128` yang tajam dan elegan. | 🟢 STABLE | `./restore.sh v2.100.0` |
 | **v2.99.0** | 299 | 24-08-2026 00:29 | `v2.99.0` | **Compact Sleek Height Optimization for Docked Stickman Swarm Animation:** Merampingkan tinggi panggung kanvas animasi stickman swarm (`.ai-stickman-stage`) dari 64px menjadi 50px (dan 44px pada mode compact/sidepanel). Menyelaraskan koordinat lantai `FLOOR_Y` (47px) dan `FLOOR_Y_COMPACT` (41px), radius kepala avatar (4.8px), dan dimensi rak server (30px dengan 4 slot LED proporsional) sehingga tampil lebih ramping, compact, proporsional, dan tidak memakan ruang vertikal area chat. | 🟢 STABLE | `./restore.sh v2.99.0` |
 | **v2.98.0** | 298 | 24-08-2026 00:27 | `v2.98.0` | **Dark Luxury Pill Redesign for Web Search Engine Selector:** Memperbarui antarmuka dropdown pemilih mesin pencari (`#btn-search-engine-trigger`) menjadi tombol pill Dark Luxury yang presisi dan senada dengan pill Agent Mode & Web Search. Dilengkapi icon Globe neon lime (`#CEF128`), label nama mesin pencari yang bold dan berkarakter, chevron neon lime, latar dark slate (`#27272A`), subtle border neon, serta dropup menu berlatar blur transparan dengan indikator checkmark hijau aktif. | 🟢 STABLE | `./restore.sh v2.98.0` |
 | **v2.97.0** | 297 | 23-08-2026 18:39 | `v2.97.0` | **Fix AI Generator Modal Layout & Responsive Form Controls for Agents, Skills, and Memories:** Memperbaiki bug tampilan UI pada tab modal 'Buat dengan AI' yang sebelumnya bertumpuk horizontal tak beraturan dan membuat textarea terjepit sempit. Menambahkan layout flex-column vertikal dengan kartu berlatar gelap transparan (`rgba(0,0,0,0.35)`), border neon lembut, styling input dropdown `<select>` dan `<textarea>` yang lapang dan elegan, tombol 'Generate' bergradien neon lime yang lebar penuh, serta visual status response interaktif. | 🟢 STABLE | `./restore.sh v2.97.0` |
