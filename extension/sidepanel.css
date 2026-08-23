@@ -2737,6 +2737,160 @@ body {
   stroke: #CEF128;
 }
 
+/* Switch Tab Dropup Menu (ON / OFF Auto Switch Tab) in Sidepanel */
+.switch-tab-mode-wrapper {
+  position: relative;
+  display: inline-flex;
+  height: 28px;
+}
+
+.btn-switch-tab-mode-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-switch-tab-mode-trigger:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+}
+
+.btn-switch-tab-mode-trigger .switch-tab-mode-icon {
+  display: flex;
+  align-items: center;
+  color: #CEF128;
+}
+
+.btn-switch-tab-mode-trigger.switch-off .switch-tab-mode-icon {
+  color: #94A3B8;
+}
+
+.btn-switch-tab-mode-trigger .switch-tab-mode-label {
+  font-weight: 600;
+  color: #E2E8F0;
+}
+
+.btn-switch-tab-mode-trigger .switch-tab-mode-chevron {
+  transition: transform 0.2s ease;
+  color: #94A3B8;
+}
+
+.btn-switch-tab-mode-trigger.open .switch-tab-mode-chevron {
+  transform: rotate(180deg);
+}
+
+.switch-tab-mode-dropup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  width: 250px;
+  background: #18181B;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 5px;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 1000;
+  animation: dropupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.switch-tab-dropup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.switch-tab-dropup-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.switch-tab-dropup-item.active {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.switch-tab-dropup-item .dropup-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.switch-tab-dropup-item .dropup-item-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  color: #94A3B8;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.switch-tab-dropup-item.active .dropup-item-icon-box.switch-on {
+  background: rgba(206, 241, 40, 0.12);
+  color: #CEF128;
+}
+
+.switch-tab-dropup-item.active .dropup-item-icon-box.switch-off {
+  background: rgba(148, 163, 184, 0.12);
+  color: #CBD5E1;
+}
+
+.switch-tab-dropup-item .dropup-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.switch-tab-dropup-item .dropup-item-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.switch-tab-dropup-item .dropup-item-desc {
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+.switch-tab-dropup-item .dropup-item-check {
+  display: none;
+  color: #CEF128;
+  flex-shrink: 0;
+}
+
+.switch-tab-dropup-item.active .dropup-item-check {
+  display: flex;
+}
+
 /* Execution Mode Dropup Selector (Accept vs Planning) in Sidepanel */
 .execution-mode-wrapper {
   position: relative;

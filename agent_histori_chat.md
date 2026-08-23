@@ -2440,12 +2440,31 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.83.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 284: Penambahan Menu Dropup Switch Tab (ON / OFF Auto Switch Tab)
+- **Kebutuhan Pengguna**:
+  - Menambahkan tombol switch tab dropup pilihan menu ON/OFF di samping kanan kotak input prompt.
+  - Jika **ON**: otomatis beralih fokus tab ke halaman yang dikontrol browser agent (seperti sekarang).
+  - Jika **OFF**: tidak auto switch tab (eksekusi browser agent berjalan di latar belakang tanpa menginterupsi tab pengguna).
+- **Solusi & Peningkatan**:
+  1. **Komponen UI Dropup (`newtab.html`, `sidepanel.html`, `newtab.css`, `sidepanel.css`)**:
+     - Menambahkan `.switch-tab-mode-wrapper` dengan trigger pill `#btn-switch-tab-mode-trigger`, ikon status, dan dropup menu `#switch-tab-mode-dropup` (opsi ON & OFF dengan deskripsi dan checkmark).
+  2. **Logika Kontrol & Integrasi Alat (`sidepanel.js`)**:
+     - Menambahkan variabel `autoSwitchTabEnabled` dan listener `initSwitchTabDropdown()`.
+     - Menyimpan preferensi ke `chrome.storage.local` (`browser_agent_auto_switch_tab`).
+     - Menghubungkan fungsi `isAutoSwitchTabEnabled()` ke `selectTab(tabId, forceFocus)`, `browser_create_tab`, `browser_navigate`, dan `browser_switch_tab`.
+     - Saat mode **OFF**, `chrome.tabs.create` dan `chrome.tabs.update` dijalankan dengan `active: false`, dan debugger tetap terhubung tanpa mengalihkan tab aktif pengguna.
+  3. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.84.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
+- **Auto Switch Tab Dropup Controller:** Toggle ON / OFF dropdown menu on input prompt top bar to control whether agent automatically switches active tabs or runs in background (`#switch-tab-mode-wrapper`).
 - **Modular Stickman Animation Structure:** Located in `extension/stickman-animation/` (`stickman-config.js`, `stickman-physics.js`, `stickman-scenery.js`, `stickman-engine.js`, `stickman-styles.css`, `index.html`).
 - **Stickman Swarm Proportions:** 64px / 58px height, zero bottom gap (`margin-bottom: 0`, `FLOOR_Y: 61`), generous 11px top headroom clearance, edge-to-edge full width docked directly atop the chat input container.
 - **AI Stickman Swarm Working Animation:** 60fps canvas animation docked above the prompt container displaying busy runner stickmen, cable technicians, and blinking server racks during generation.
@@ -2453,7 +2472,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.83.0` (Iterasi 283).
+  - **Versi Terkini:** `v2.84.0` (Iterasi 284).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

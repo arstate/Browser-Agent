@@ -1354,7 +1354,7 @@ async function attachDebugger(tabId) {
   } catch (err) {}
 }
 
-async function selectTab(tabId) {
+async function selectTab(tabId, forceFocus = false) {
   if (!tabId) return;
   if (activeTabId && activeTabId !== tabId) {
     try {
@@ -1364,13 +1364,16 @@ async function selectTab(tabId) {
   activeTabId = tabId;
   consoleLogs = [];
   try {
-    // Automatically switch Chrome focus to the controlled tab so user sees live automation
-    await chrome.tabs.update(tabId, { active: true });
-    const tab = await chrome.tabs.get(tabId);
-    if (tab && tab.windowId) {
-      await chrome.windows.update(tab.windowId, { focused: true }).catch(() => {});
+    const shouldFocus = (typeof isAutoSwitchTabEnabled === 'function' ? isAutoSwitchTabEnabled() : true) || forceFocus;
+    if (shouldFocus) {
+      await chrome.tabs.update(tabId, { active: true });
+      const tab = await chrome.tabs.get(tabId);
+      if (tab && tab.windowId) {
+        await chrome.windows.update(tab.windowId, { focused: true }).catch(() => {});
+      }
     }
-    if (isNormalUrl(tab.url)) {
+    const tab = await chrome.tabs.get(tabId);
+    if (tab && isNormalUrl(tab.url)) {
       await attachDebugger(tabId);
     }
     updateMcpStatus();
@@ -1731,7 +1734,8 @@ async function executeTool(name, args, assistantBubble = null) {
         }
 
         if (matchedUrl) {
-          const newTab = await chrome.tabs.create({ url: matchedUrl, active: true });
+          const shouldSwitch = (typeof isAutoSwitchTabEnabled === 'function' ? isAutoSwitchTabEnabled() : true);
+          const newTab = await chrome.tabs.create({ url: matchedUrl, active: shouldSwitch });
           await selectTab(newTab.id);
           await new Promise(r => setTimeout(r, 1500));
           return {
@@ -1754,7 +1758,8 @@ async function executeTool(name, args, assistantBubble = null) {
         if (queryTerm && /^https?:\/\//i.test(queryTerm)) {
           fallbackUrl = queryTerm;
         }
-        const newTab = await chrome.tabs.create({ url: fallbackUrl, active: true });
+        const shouldSwitch = (typeof isAutoSwitchTabEnabled === 'function' ? isAutoSwitchTabEnabled() : true);
+        const newTab = await chrome.tabs.create({ url: fallbackUrl, active: shouldSwitch });
         targetTab = newTab;
       }
 
@@ -1777,7 +1782,8 @@ async function executeTool(name, args, assistantBubble = null) {
         targetUrl = "https://" + targetUrl;
       }
       
-      const newTab = await chrome.tabs.create({ url: targetUrl, active: true });
+      const shouldSwitch = (typeof isAutoSwitchTabEnabled === 'function' ? isAutoSwitchTabEnabled() : true);
+      const newTab = await chrome.tabs.create({ url: targetUrl, active: shouldSwitch });
       await selectTab(newTab.id);
       
       await new Promise(r => setTimeout(r, 1500));
@@ -1797,14 +1803,15 @@ async function executeTool(name, args, assistantBubble = null) {
 
       const ownTab = await chrome.tabs.getCurrent().catch(() => null);
       let targetTabId = activeTabId;
+      const shouldSwitch = (typeof isAutoSwitchTabEnabled === 'function' ? isAutoSwitchTabEnabled() : true);
 
       // If activeTabId is null, or belongs to our own full newtab extension page, open in a new active tab!
       if (!targetTabId || (ownTab && targetTabId === ownTab.id)) {
-        const newTab = await chrome.tabs.create({ url: targetUrl, active: true });
+        const newTab = await chrome.tabs.create({ url: targetUrl, active: shouldSwitch });
         await selectTab(newTab.id);
         targetTabId = newTab.id;
       } else {
-        await chrome.tabs.update(targetTabId, { url: targetUrl, active: true });
+        await chrome.tabs.update(targetTabId, { url: targetUrl, active: shouldSwitch });
         await selectTab(targetTabId);
       }
 
@@ -3503,6 +3510,99 @@ function initExecutionModeDropdown() {
     chrome.storage.local.get(['browser_agent_exec_mode'], (res) => {
       if (res && res.browser_agent_exec_mode) {
         setExecutionMode(res.browser_agent_exec_mode);
+      }
+    });
+  } catch (e) {}
+}
+
+let autoSwitchTabEnabled = true;
+
+function isAutoSwitchTabEnabled() {
+  return autoSwitchTabEnabled !== false;
+}
+
+function setAutoSwitchTab(mode) {
+  autoSwitchTabEnabled = (mode === 'on' || mode === true);
+  const label = document.getElementById('switch-tab-mode-label');
+  const iconContainer = document.getElementById('switch-tab-mode-icon');
+  const dropup = document.getElementById('switch-tab-mode-dropup');
+  const trigger = document.getElementById('btn-switch-tab-mode-trigger');
+  const items = document.querySelectorAll('.switch-tab-dropup-item');
+
+  if (label) {
+    label.textContent = autoSwitchTabEnabled ? 'Switch Tab: ON' : 'Switch Tab: OFF';
+  }
+
+  if (iconContainer) {
+    if (autoSwitchTabEnabled) {
+      iconContainer.innerHTML = `
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      `;
+    } else {
+      iconContainer.innerHTML = `
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <line x1="9" y1="3" x2="9" y2="21"/>
+        </svg>
+      `;
+    }
+  }
+
+  items.forEach(item => {
+    const itemMode = item.getAttribute('data-switch-tab');
+    if ((itemMode === 'on' && autoSwitchTabEnabled) || (itemMode === 'off' && !autoSwitchTabEnabled)) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+
+  if (dropup) dropup.style.display = 'none';
+  if (trigger) {
+    trigger.classList.remove('open');
+    trigger.classList.toggle('switch-off', !autoSwitchTabEnabled);
+  }
+
+  try {
+    chrome.storage.local.set({ browser_agent_auto_switch_tab: autoSwitchTabEnabled });
+  } catch (e) {}
+}
+
+function initSwitchTabDropdown() {
+  const trigger = document.getElementById('btn-switch-tab-mode-trigger');
+  const dropup = document.getElementById('switch-tab-mode-dropup');
+
+  trigger?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!dropup) return;
+    const isHidden = (dropup.style.display === 'none' || !dropup.style.display);
+    dropup.style.display = isHidden ? 'flex' : 'none';
+    trigger.classList.toggle('open', isHidden);
+  });
+
+  document.querySelectorAll('.switch-tab-dropup-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const mode = item.getAttribute('data-switch-tab');
+      if (mode) setAutoSwitchTab(mode);
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (dropup && !dropup.contains(e.target) && !trigger?.contains(e.target)) {
+      dropup.style.display = 'none';
+      trigger?.classList.remove('open');
+    }
+  });
+
+  try {
+    chrome.storage.local.get(['browser_agent_auto_switch_tab'], (res) => {
+      if (res && res.browser_agent_auto_switch_tab !== undefined) {
+        setAutoSwitchTab(res.browser_agent_auto_switch_tab);
       }
     });
   } catch (e) {}
@@ -7354,6 +7454,7 @@ try {
 
 try {
   initExecutionModeDropdown();
+  initSwitchTabDropdown();
   initSearchEngineDropdown();
 } catch (e) {}
 
