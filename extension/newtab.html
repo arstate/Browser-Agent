@@ -179,11 +179,11 @@
             </button>
           </div>
 
-          <!-- Right Actions Container (Switch Tab & Execution Mode grouped side by side) -->
+          <!-- Right Actions Container (Switch Tab & Execution Mode direct instant toggles) -->
           <div class="chat-input-header-right">
-            <!-- Switch Tab Dropup Menu (ON / OFF Auto Switch Tab) -->
+            <!-- Switch Tab Direct Toggle Button (ON / OFF) -->
             <div class="switch-tab-mode-wrapper" id="switch-tab-mode-wrapper">
-              <button type="button" class="btn-switch-tab-mode-trigger" id="btn-switch-tab-mode-trigger" title="Pengaturan Auto Switch Tab (ON / OFF)">
+              <button type="button" class="btn-switch-tab-mode-trigger is-on" id="btn-switch-tab-mode-trigger" title="Auto Switch Tab: ON (Klik untuk beralih ON / OFF)">
                 <span class="switch-tab-mode-icon" id="switch-tab-mode-icon">
                   <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -192,110 +192,19 @@
                   </svg>
                 </span>
                 <span class="switch-tab-mode-label" id="switch-tab-mode-label">Switch Tab: ON</span>
-                <svg class="switch-tab-mode-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
               </button>
-
-              <div class="switch-tab-mode-dropup" id="switch-tab-mode-dropup" style="display: none;">
-                <button type="button" class="switch-tab-dropup-item active" data-switch-tab="on">
-                  <div class="dropup-item-left">
-                    <div class="dropup-item-icon-box switch-on">
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                        <polyline points="15 3 21 3 21 9"/>
-                        <line x1="10" y1="14" x2="21" y2="3"/>
-                      </svg>
-                    </div>
-                    <div class="dropup-item-info">
-                      <span class="dropup-item-title">Switch Tab: ON</span>
-                      <span class="dropup-item-desc">Otomatis pindah ke tab aksi agent</span>
-                    </div>
-                  </div>
-                  <div class="dropup-item-check">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
-                </button>
-
-                <button type="button" class="switch-tab-dropup-item" data-switch-tab="off">
-                  <div class="dropup-item-left">
-                    <div class="dropup-item-icon-box switch-off">
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="9" y1="3" x2="9" y2="21"/>
-                      </svg>
-                    </div>
-                    <div class="dropup-item-info">
-                      <span class="dropup-item-title">Switch Tab: OFF</span>
-                      <span class="dropup-item-desc">Tetap di tab saat ini (Background)</span>
-                    </div>
-                  </div>
-                  <div class="dropup-item-check">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
-                </button>
-              </div>
             </div>
 
-            <!-- Execution Workflow Mode Dropup (Accept vs Planning) on Right Side -->
+            <!-- Execution Workflow Mode Direct Toggle Button (Accept vs Planning) -->
             <div class="execution-mode-wrapper" id="execution-mode-wrapper">
-              <button type="button" class="btn-execution-mode-trigger" id="btn-execution-mode-trigger" title="Pilih Alur Kerja Eksekusi (Accept / Planning)">
+              <button type="button" class="btn-execution-mode-trigger mode-accept" id="btn-execution-mode-trigger" title="Mode Eksekusi: Accept (Klik untuk beralih ke Planning)">
                 <span class="execution-mode-icon" id="execution-mode-icon">
                   <svg class="mode-icon-accept" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </span>
                 <span class="execution-mode-label" id="execution-mode-label">Accept</span>
-                <svg class="execution-mode-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
               </button>
-
-              <div class="execution-mode-dropup" id="execution-mode-dropup" style="display: none;">
-                <button type="button" class="execution-dropup-item active" data-exec-mode="accept">
-                  <div class="dropup-item-left">
-                    <div class="dropup-item-icon-box accept">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                      </svg>
-                    </div>
-                    <div class="dropup-item-info">
-                      <span class="dropup-item-title">Accept</span>
-                      <span class="dropup-item-desc">Langsung eksekusi aksi otomatis</span>
-                    </div>
-                  </div>
-                  <div class="dropup-item-check">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
-                </button>
-
-                <button type="button" class="execution-dropup-item" data-exec-mode="planning">
-                  <div class="dropup-item-left">
-                    <div class="dropup-item-icon-box planning">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                        <path d="M9 14l2 2 4-4"/>
-                      </svg>
-                    </div>
-                    <div class="dropup-item-info">
-                      <span class="dropup-item-title">Planning</span>
-                      <span class="dropup-item-desc">Review & setujui rencana dulu</span>
-                    </div>
-                  </div>
-                  <div class="dropup-item-check">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
-                </button>
-              </div>
             </div>
 
             <!-- Web Search Engine Dropup Selector (Clean Minimalist Text) -->

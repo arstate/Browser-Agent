@@ -2753,7 +2753,7 @@ body {
   display: none !important;
 }
 
-/* Switch Tab Dropup Menu (ON / OFF Auto Switch Tab) in Sidepanel */
+/* Switch Tab Direct Toggle Button in Sidepanel */
 .switch-tab-mode-wrapper {
   position: relative;
   display: inline-flex;
@@ -2763,151 +2763,62 @@ body {
 .btn-switch-tab-mode-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   height: 28px;
   box-sizing: border-box;
   padding: 0 10px;
   border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-switch-tab-mode-trigger:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #FFFFFF;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
 }
 
 .btn-switch-tab-mode-trigger .switch-tab-mode-icon {
   display: flex;
   align-items: center;
-  color: #CEF128;
 }
 
-.btn-switch-tab-mode-trigger.switch-off .switch-tab-mode-icon {
+/* Switch Tab ON -> Neon Lime Fill */
+.btn-switch-tab-mode-trigger.is-on {
+  background: #CEF128;
+  border: 1px solid #CEF128;
+  color: #0F172A;
+  box-shadow: 0 1px 4px rgba(206, 241, 40, 0.25);
+}
+
+.btn-switch-tab-mode-trigger.is-on:hover {
+  background: #D9F92F;
+  border-color: #D9F92F;
+}
+
+.btn-switch-tab-mode-trigger.is-on .switch-tab-mode-icon,
+.btn-switch-tab-mode-trigger.is-on .switch-tab-mode-label {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+/* Switch Tab OFF -> Default Black / Dark */
+.btn-switch-tab-mode-trigger.is-off {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: #94A3B8;
 }
 
-.btn-switch-tab-mode-trigger .switch-tab-mode-label {
-  font-weight: 600;
+.btn-switch-tab-mode-trigger.is-off:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
   color: #E2E8F0;
 }
 
-.btn-switch-tab-mode-trigger .switch-tab-mode-chevron {
-  transition: transform 0.2s ease;
+.btn-switch-tab-mode-trigger.is-off .switch-tab-mode-icon,
+.btn-switch-tab-mode-trigger.is-off .switch-tab-mode-label {
   color: #94A3B8;
-}
-
-.btn-switch-tab-mode-trigger.open .switch-tab-mode-chevron {
-  transform: rotate(180deg);
-}
-
-.switch-tab-mode-dropup {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  right: 0;
-  left: auto;
-  width: 250px;
-  background: #18181B;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 5px;
-  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(16px);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  z-index: 1000;
-  animation: dropupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.switch-tab-dropup-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 7px 9px;
-  border-radius: 8px;
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.switch-tab-dropup-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.switch-tab-dropup-item.active {
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.switch-tab-dropup-item .dropup-item-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-
-.switch-tab-dropup-item .dropup-item-icon-box {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  color: #94A3B8;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-
-.switch-tab-dropup-item.active .dropup-item-icon-box.switch-on {
-  background: rgba(206, 241, 40, 0.12);
-  color: #CEF128;
-}
-
-.switch-tab-dropup-item.active .dropup-item-icon-box.switch-off {
-  background: rgba(148, 163, 184, 0.12);
-  color: #CBD5E1;
-}
-
-.switch-tab-dropup-item .dropup-item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.switch-tab-dropup-item .dropup-item-title {
-  font-size: 12px;
   font-weight: 600;
-  color: #FFFFFF;
 }
 
-.switch-tab-dropup-item .dropup-item-desc {
-  font-size: 10px;
-  color: #94A3B8;
-}
-
-.switch-tab-dropup-item .dropup-item-check {
-  display: none;
-  color: #CEF128;
-  flex-shrink: 0;
-}
-
-.switch-tab-dropup-item.active .dropup-item-check {
-  display: flex;
-}
-
-/* Execution Mode Dropup Selector (Accept vs Planning) in Sidepanel */
+/* Execution Mode Direct Toggle Button in Sidepanel */
 .execution-mode-wrapper {
   position: relative;
   display: inline-flex;
@@ -2917,164 +2828,59 @@ body {
 .btn-execution-mode-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   height: 28px;
   box-sizing: border-box;
-  padding: 0 12px;
+  padding: 0 10px;
   border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-execution-mode-trigger:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #FFFFFF;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
 }
 
 .btn-execution-mode-trigger .execution-mode-icon {
   display: flex;
   align-items: center;
-  color: #CEF128;
 }
 
-.btn-execution-mode-trigger .execution-mode-label {
-  font-weight: 600;
-  color: #E2E8F0;
+/* Accept Mode -> Neon Lime Fill */
+.btn-execution-mode-trigger.mode-accept {
+  background: #CEF128;
+  border: 1px solid #CEF128;
+  color: #0F172A;
+  box-shadow: 0 1px 4px rgba(206, 241, 40, 0.25);
 }
 
-.btn-execution-mode-trigger .execution-mode-chevron {
-  transition: transform 0.2s ease;
-  color: #94A3B8;
+.btn-execution-mode-trigger.mode-accept:hover {
+  background: #D9F92F;
+  border-color: #D9F92F;
 }
 
-.btn-execution-mode-trigger.open .execution-mode-chevron {
-  transform: rotate(180deg);
+.btn-execution-mode-trigger.mode-accept .execution-mode-icon,
+.btn-execution-mode-trigger.mode-accept .execution-mode-label {
+  color: #0F172A;
+  font-weight: 700;
 }
 
-.execution-mode-dropup {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  right: 0;
-  left: auto;
-  width: 270px;
-  background: #111827;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 5px;
-  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(16px);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  z-index: 1000;
-  animation: dropupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes dropupFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.execution-dropup-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 7px 9px;
-  border-radius: 8px;
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.execution-dropup-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.execution-dropup-item.active {
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.execution-dropup-item .dropup-item-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-
-.execution-dropup-item .dropup-item-icon-box {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  color: #94A3B8;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-
-.execution-dropup-item.active .dropup-item-icon-box.accept {
-  background: rgba(206, 241, 40, 0.12);
-  color: #CEF128;
-}
-
-.execution-dropup-item.active .dropup-item-icon-box.planning {
-  background: rgba(56, 189, 248, 0.12);
-  color: #38BDF8;
-}
-
-.execution-dropup-item .dropup-item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.execution-dropup-item .dropup-item-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #F1F5F9;
-}
-
-.execution-dropup-item.active .dropup-item-title {
+/* Planning Mode -> Blue Fill */
+.btn-execution-mode-trigger.mode-planning {
+  background: #0284C7;
+  border: 1px solid #38BDF8;
   color: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.35);
 }
 
-.execution-dropup-item .dropup-item-desc {
-  font-size: 10.5px;
-  color: #94A3B8;
-  line-height: 1.3;
+.btn-execution-mode-trigger.mode-planning:hover {
+  background: #0369A1;
+  border-color: #7DD3FC;
 }
 
-.execution-dropup-item .dropup-item-check {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #CEF128;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  flex-shrink: 0;
-}
-
-.execution-dropup-item.active .dropup-item-check {
-  opacity: 1;
+.btn-execution-mode-trigger.mode-planning .execution-mode-icon,
+.btn-execution-mode-trigger.mode-planning .execution-mode-label {
+  color: #FFFFFF;
+  font-weight: 700;
 }
 
 /* Plan Approval Card & Docked Container Mode (Replaces input prompt during plan confirmation) */

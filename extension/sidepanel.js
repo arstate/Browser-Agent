@@ -3436,9 +3436,7 @@ function setExecutionMode(mode) {
 
   const label = document.getElementById('execution-mode-label');
   const iconContainer = document.getElementById('execution-mode-icon');
-  const dropup = document.getElementById('execution-mode-dropup');
   const trigger = document.getElementById('btn-execution-mode-trigger');
-  const items = document.querySelectorAll('.execution-dropup-item');
 
   if (label) {
     label.textContent = (mode === 'planning') ? 'Planning' : 'Accept';
@@ -3463,16 +3461,13 @@ function setExecutionMode(mode) {
     }
   }
 
-  items.forEach(item => {
-    if (item.getAttribute('data-exec-mode') === mode) {
-      item.classList.add('active');
-    } else {
-      item.classList.remove('active');
-    }
-  });
-
-  if (dropup) dropup.style.display = 'none';
-  if (trigger) trigger.classList.remove('open');
+  if (trigger) {
+    trigger.classList.toggle('mode-accept', mode === 'accept');
+    trigger.classList.toggle('mode-planning', mode === 'planning');
+    trigger.title = (mode === 'accept') 
+      ? 'Mode Eksekusi: Accept (Klik untuk beralih ke Planning)' 
+      : 'Mode Eksekusi: Planning (Klik untuk beralih ke Accept)';
+  }
 
   try {
     chrome.storage.local.set({ browser_agent_exec_mode: mode });
@@ -3481,35 +3476,19 @@ function setExecutionMode(mode) {
 
 function initExecutionModeDropdown() {
   const trigger = document.getElementById('btn-execution-mode-trigger');
-  const dropup = document.getElementById('execution-mode-dropup');
 
   trigger?.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (!dropup) return;
-    const isHidden = (dropup.style.display === 'none' || !dropup.style.display);
-    dropup.style.display = isHidden ? 'flex' : 'none';
-    trigger.classList.toggle('open', isHidden);
-  });
-
-  document.querySelectorAll('.execution-dropup-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const mode = item.getAttribute('data-exec-mode');
-      if (mode) setExecutionMode(mode);
-    });
-  });
-
-  document.addEventListener('click', (e) => {
-    if (dropup && !dropup.contains(e.target) && !trigger?.contains(e.target)) {
-      dropup.style.display = 'none';
-      trigger?.classList.remove('open');
-    }
+    const nextMode = (currentExecutionMode === 'planning') ? 'accept' : 'planning';
+    setExecutionMode(nextMode);
   });
 
   try {
     chrome.storage.local.get(['browser_agent_exec_mode'], (res) => {
       if (res && res.browser_agent_exec_mode) {
         setExecutionMode(res.browser_agent_exec_mode);
+      } else {
+        setExecutionMode('accept');
       }
     });
   } catch (e) {}
@@ -3525,9 +3504,7 @@ function setAutoSwitchTab(mode) {
   autoSwitchTabEnabled = (mode === 'on' || mode === true);
   const label = document.getElementById('switch-tab-mode-label');
   const iconContainer = document.getElementById('switch-tab-mode-icon');
-  const dropup = document.getElementById('switch-tab-mode-dropup');
   const trigger = document.getElementById('btn-switch-tab-mode-trigger');
-  const items = document.querySelectorAll('.switch-tab-dropup-item');
 
   if (label) {
     label.textContent = autoSwitchTabEnabled ? 'Switch Tab: ON' : 'Switch Tab: OFF';
@@ -3552,19 +3529,12 @@ function setAutoSwitchTab(mode) {
     }
   }
 
-  items.forEach(item => {
-    const itemMode = item.getAttribute('data-switch-tab');
-    if ((itemMode === 'on' && autoSwitchTabEnabled) || (itemMode === 'off' && !autoSwitchTabEnabled)) {
-      item.classList.add('active');
-    } else {
-      item.classList.remove('active');
-    }
-  });
-
-  if (dropup) dropup.style.display = 'none';
   if (trigger) {
-    trigger.classList.remove('open');
-    trigger.classList.toggle('switch-off', !autoSwitchTabEnabled);
+    trigger.classList.toggle('is-on', autoSwitchTabEnabled);
+    trigger.classList.toggle('is-off', !autoSwitchTabEnabled);
+    trigger.title = autoSwitchTabEnabled 
+      ? 'Auto Switch Tab: ON (Klik untuk mematikan ke OFF)' 
+      : 'Auto Switch Tab: OFF (Klik untuk menyalakan ke ON)';
   }
 
   try {
@@ -3574,35 +3544,18 @@ function setAutoSwitchTab(mode) {
 
 function initSwitchTabDropdown() {
   const trigger = document.getElementById('btn-switch-tab-mode-trigger');
-  const dropup = document.getElementById('switch-tab-mode-dropup');
 
   trigger?.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (!dropup) return;
-    const isHidden = (dropup.style.display === 'none' || !dropup.style.display);
-    dropup.style.display = isHidden ? 'flex' : 'none';
-    trigger.classList.toggle('open', isHidden);
-  });
-
-  document.querySelectorAll('.switch-tab-dropup-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const mode = item.getAttribute('data-switch-tab');
-      if (mode) setAutoSwitchTab(mode);
-    });
-  });
-
-  document.addEventListener('click', (e) => {
-    if (dropup && !dropup.contains(e.target) && !trigger?.contains(e.target)) {
-      dropup.style.display = 'none';
-      trigger?.classList.remove('open');
-    }
+    setAutoSwitchTab(!autoSwitchTabEnabled);
   });
 
   try {
     chrome.storage.local.get(['browser_agent_auto_switch_tab'], (res) => {
       if (res && res.browser_agent_auto_switch_tab !== undefined) {
         setAutoSwitchTab(res.browser_agent_auto_switch_tab);
+      } else {
+        setAutoSwitchTab(true);
       }
     });
   } catch (e) {}

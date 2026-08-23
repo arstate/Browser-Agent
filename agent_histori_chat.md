@@ -2474,13 +2474,39 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.85.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 286: Tombol Toggle Langsung Switch Tab (ON/OFF) & Mode Eksekusi (Accept/Planning) Berwarna
+- **Kebutuhan Pengguna**:
+  - Menghilangkan menu dropup popup dan mengubah tombol Switch Tab serta Accept/Planning menjadi tombol toggle langsung (sekali klik ganti status).
+  - Tampilan warna:
+    - **Accept**: Fill Neon Lime (`#CEF128`) dengan teks gelap kontras (`#0F172A`).
+    - **Planning**: Fill Biru (`#0284C7`) dengan teks putih (`#FFFFFF`).
+    - **Switch Tab ON**: Fill Neon Lime (`#CEF128`) dengan teks gelap kontras (`#0F172A`).
+    - **Switch Tab OFF**: Fill Hitam / Gelap default (`rgba(0, 0, 0, 0.4)`).
+- **Solusi & Peningkatan**:
+  1. **Penyederhanaan DOM (`newtab.html`, `sidepanel.html`)**:
+     - Menghapus elemen `.switch-tab-mode-dropup`, `.execution-mode-dropup`, dan ikon panah chevron `v`.
+     - Mengubah kedua elemen menjadi tombol toggle instan (`#btn-switch-tab-mode-trigger` & `#btn-execution-mode-trigger`).
+  2. **Styling Warna Dinamis (`newtab.css`, `sidepanel.css`)**:
+     - Menambahkan aturan styling `.btn-execution-mode-trigger.mode-accept` (Neon Lime Fill `#CEF128` + Dark Text) dan `.btn-execution-mode-trigger.mode-planning` (Sky Blue Fill `#0284C7` + White Text).
+     - Menambahkan aturan styling `.btn-switch-tab-mode-trigger.is-on` (Neon Lime Fill `#CEF128` + Dark Text) dan `.btn-switch-tab-mode-trigger.is-off` (Default Dark/Black + Muted Text).
+  3. **Logika Toggle Instan (`sidepanel.js`)**:
+     - Mengupdate listener `initExecutionModeDropdown` dan `initSwitchTabDropdown` sehingga sekali klik langsung mengubah state (`currentExecutionMode` & `autoSwitchTabEnabled`) dan menyimpannya ke `chrome.storage.local`.
+  4. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.86.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **Auto Switch Tab Dropup Controller:** Right-aligned side-by-side with Accept (`.chat-input-header-right`), auto-hidden in Web Search mode (`#switch-tab-mode-wrapper`).
+- **Direct Instant Toggle Buttons:** 
+  - `Accept`: Neon Lime Fill (`#CEF128`).
+  - `Planning`: Blue Fill (`#0284C7`).
+  - `Switch Tab ON`: Neon Lime Fill (`#CEF128`).
+  - `Switch Tab OFF`: Default Dark/Black (`rgba(0, 0, 0, 0.4)`).
 - **Modular Stickman Animation Structure:** Located in `extension/stickman-animation/` (`stickman-config.js`, `stickman-physics.js`, `stickman-scenery.js`, `stickman-engine.js`, `stickman-styles.css`, `index.html`).
 - **Stickman Swarm Proportions:** 64px / 58px height, zero bottom gap (`margin-bottom: 0`, `FLOOR_Y: 61`), generous 11px top headroom clearance, edge-to-edge full width docked directly atop the chat input container.
 - **AI Stickman Swarm Working Animation:** 60fps canvas animation docked above the prompt container displaying busy runner stickmen, cable technicians, and blinking server racks during generation.
@@ -2488,7 +2514,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.85.0` (Iterasi 285).
+  - **Versi Terkini:** `v2.86.0` (Iterasi 286).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
