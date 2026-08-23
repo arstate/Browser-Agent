@@ -2179,12 +2179,37 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.66.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 267: Animasi Morphing Cybernetic Tombol Pause/Stop Generasi (Radar Orbit Ring & Glancing Eye Slits)
+- **Kebutuhan Pengguna**:
+  - Mengubah animasi tombol pause/stop saat AI sedang menghasilkan respon (`loading` state) sesuai video screencast `/home/arya/Videos/Screencasts/Screencast_20260823_104019.mp4`.
+  - Tombol Send bermutasi secara elastis (*smooth morphing*) dari lingkaran tombol kirim menjadi kapsul status generasi.
+  - Terdapat radar orbit ring melingkar yang berputar 360° mengelilingi tombol, dan dua garis mata vertikal (`||`) yang melirik/memindai kiri-kanan secara dinamis dan halus.
+  - Warna tetap selaras dengan desain ekstensi (Dark Charcoal `#18181B` + Neon Lime `#CEF128` + Hover Stop Crimson `#EF4444`).
+- **Solusi & Peningkatan**:
+  1. **HTML Struktur Tombol (`newtab.html` & `sidepanel.html`)**:
+     - Memperbarui markup `#btn-send` dengan menyertakan `.gen-morph-container`, `.gen-radar-ring`, `.gen-eyes-wrapper` (dengan dua `.gen-eye-slit`), dan `.stop-icon`.
+  2. **Animasi Morphing & Keyframes CSS (`newtab.css` & `sidepanel.css`)**:
+     - Menambahkan transisi elastis `cubic-bezier(0.34, 1.56, 0.64, 1)` pada perubahan dimensi tombol saat berganti status (`width: 44px; border-radius: 12px`).
+     - Mengimplementasikan `@keyframes radarOrbitSpin` untuk putaran halus ring radar orbit neon lime di sekeliling tombol.
+     - Mengimplementasikan `@keyframes eyesScanGlance` untuk gerakan pemindaian melirik kiri dan kanan pada dua slit mata kapsul.
+     - Mengatur interaksi hover pada state `.loading` sehingga bertransformasi secara mulus menjadi tombol stop merah (`#EF4444`) dengan ikon stop putih (`.stop-icon`).
+  3. **Refactor Helper `updateSendButtonState` (`sidepanel.js`)**:
+     - Menghapus manipulasi inline `style.display` langsung pada icon anak agar tidak menginterupsi animasi transisi opacity & transform CSS.
+  4. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.67.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
+- **Stop / Generating Morphing Button:** Morphing dark capsule (`#18181B`), rotating radar orbit ring (`#CEF128`), and glancing eye-slits (`eyesScanGlance`), hover-to-stop in `#EF4444`.
+- **Versioning & Restore Point Mandate:**
+  - **Versi Terkini:** `v2.67.0` (Iterasi 267).
+  - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
 - **Model Priority Ranking:** Top-to-bottom priority ordering with move up (🔼) / move down (🔽) controls in Options & Sidepanel Modal Settings.

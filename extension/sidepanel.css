@@ -3861,12 +3861,16 @@ body {
   color: var(--text-muted);
 }
 
+/* Send / Generate Button Base with Smooth Cybernetic Morphing */
 .btn-send {
+  position: relative;
   width: 32px;
   height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 50%;
-  background: var(--accent-lime);
-  border: none;
+  background: linear-gradient(135deg, var(--accent-lime-hover) 0%, var(--accent-lime) 100%);
+  border: 1.5px solid transparent;
   color: var(--slate-dark);
   cursor: pointer;
   display: flex;
@@ -3874,50 +3878,187 @@ body {
   justify-content: center;
   flex-shrink: 0;
   align-self: flex-end;
-  transition: all 0.15s ease;
+  padding: 0;
   box-shadow: var(--shadow-btn-lime);
+  transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              height 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-radius 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 0.3s ease,
+              border-color 0.3s ease,
+              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease;
+  overflow: visible;
 }
 
 .btn-send:hover {
-  background: var(--accent-lime-hover);
-  transform: scale(1.05);
-}
-
-.btn-send .send-icon {
-  width: 14px;
-  height: 14px;
-}
-
-.btn-send .spinner-icon {
-  display: none;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--slate-dark);
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-.btn-send.loading {
-  background: #EF4444 !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4) !important;
-}
-
-.btn-send.loading:hover {
-  background: #DC2626 !important;
   transform: scale(1.06);
 }
 
-.btn-send.loading .send-icon {
-  display: none !important;
+.btn-send:active {
+  transform: scale(0.95);
 }
 
-.btn-send.loading .stop-icon {
-  display: block !important;
-  width: 15px;
-  height: 15px;
-  color: #FFFFFF;
+.btn-send svg {
+  position: absolute;
+  width: 14px !important;
+  height: 14px !important;
+  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-send .send-icon {
+  stroke: var(--slate-dark);
+  stroke-width: 2.5;
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+/* Morphing Container (Hidden by default in Idle state) */
+.btn-send .gen-morph-container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.4) rotate(-30deg);
+  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+/* Radar Orbit Ring spinning smoothly around the button */
+.btn-send .gen-radar-ring {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 1.8px solid transparent;
+  border-top: 2px solid var(--accent-lime);
+  border-right: 1.8px solid rgba(206, 241, 40, 0.3);
+  opacity: 0;
+  filter: drop-shadow(0 0 4px rgba(206, 241, 40, 0.85));
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* Scanning Eyes Capsule / Pause Slits */
+.btn-send .gen-eyes-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.btn-send .gen-eye-slit {
+  width: 3.5px;
+  height: 11px;
+  border-radius: 2.5px;
+  background: var(--accent-lime);
+  box-shadow: 0 0 6px rgba(206, 241, 40, 0.8);
+  transition: all 0.2s ease;
+}
+
+/* Stop Icon (Inside Morph Container, shown on hover in loading mode) */
+.btn-send .stop-icon {
+  position: absolute;
+  width: 12px !important;
+  height: 12px !important;
+  fill: #FFFFFF;
+  opacity: 0;
+  transform: scale(0.4) rotate(45deg);
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+/* ========================================================= */
+/* ACTIVE LOADING / GENERATING STATE MORPH */
+/* ========================================================= */
+.btn-send.loading {
+  width: 38px;
+  height: 32px;
+  min-width: 38px;
+  border-radius: 10px;
+  background: #18181B !important;
+  border: 1.5px solid rgba(206, 241, 40, 0.6) !important;
+  box-shadow: 0 0 14px rgba(206, 241, 40, 0.25), inset 0 0 6px rgba(206, 241, 40, 0.1) !important;
+}
+
+.btn-send.loading .send-icon {
+  opacity: 0 !important;
+  transform: scale(0.2) rotate(120deg) !important;
+  pointer-events: none !important;
+}
+
+.btn-send.loading .gen-morph-container {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  pointer-events: auto;
+}
+
+.btn-send.loading .gen-radar-ring {
+  opacity: 1;
+  animation: radarOrbitSpin 1.2s linear infinite;
+}
+
+.btn-send.loading .gen-eyes-wrapper {
+  animation: eyesScanGlance 1.6s ease-in-out infinite;
+}
+
+/* Keyframes for Radar Orbit Ring */
+@keyframes radarOrbitSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Keyframes for Scanning Eyes Glancing Left & Right */
+@keyframes eyesScanGlance {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* Hover on Loading State -> Turn into Stop Button */
+.btn-send.loading:hover {
+  background: #EF4444 !important;
+  border-color: #EF4444 !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.55), inset 0 0 6px rgba(255, 255, 255, 0.2) !important;
+  transform: scale(1.08);
+}
+
+.btn-send.loading:hover .gen-radar-ring {
+  border-top-color: #FFFFFF;
+  border-right-color: rgba(255, 255, 255, 0.4);
+  filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.9));
+}
+
+.btn-send.loading:hover .gen-eyes-wrapper {
+  opacity: 0;
+  transform: scale(0.3);
+}
+
+.btn-send.loading:hover .stop-icon {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
 }
 
 /* Attachments Rendered in User Chat Bubble */

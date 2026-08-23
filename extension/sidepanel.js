@@ -4791,18 +4791,13 @@ function getToolIcon(name) {
 }
 
 function updateSendButtonState(loading) {
-  const sendIcon = btnSend.querySelector('.send-icon');
-  const stopIcon = btnSend.querySelector('.stop-icon');
+  if (!btnSend) return;
   if (loading) {
     btnSend.classList.add('loading');
     btnSend.title = "Batalkan eksekusi (Cancel)";
-    if (sendIcon) sendIcon.style.display = 'none';
-    if (stopIcon) stopIcon.style.display = 'block';
   } else {
     btnSend.classList.remove('loading');
     btnSend.title = "Kirim perintah (Enter)";
-    if (sendIcon) sendIcon.style.display = 'block';
-    if (stopIcon) stopIcon.style.display = 'none';
   }
 }
 
