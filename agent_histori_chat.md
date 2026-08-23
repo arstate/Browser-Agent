@@ -2748,6 +2748,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 327: Hacked Client-Side AI Thinking Level Selector (Low, Medium, High, Xhigh, Max 10x)
+- **Kebutuhan Pengguna**:
+  - Menambahkan tombol dropup tingkat berpikir AI di sebelah tombol `Agent Mode` (Clean text only, tanpa icon) dengan 5 tingkatan logika: Low, Medium, High, Xhigh, dan Max (10x lipat mikir keras).
+  - Diakali langsung di level sistem ekstensi tanpa perlu mengirim parameter khusus ke model API, sehingga kompatibel 100% dengan semua model (Gemini, Claude, GPT-4o, DeepSeek, Qwen, Ollama, LMStudio).
+- **Root Cause & Solusi Teknis**:
+  1. **Markup & UI Dropup (`newtab.html`, `sidepanel.html`, `newtab.css`, `sidepanel.css`)**:
+     - Menambahkan `.thinking-level-dropup-wrapper` dengan trigger `[ Thinking: High ⌵ ]` bergaya Dark Luxury capsule pill (`border-radius: 9999px`, `background: #27272A`, `border: 1px solid rgba(255,255,255,0.12)`).
+     - Menu dropup frosted glass blur dengan 5 opsi teks murni tanpa icon: `Low`, `Medium`, `High`, `Xhigh`, dan `Max (10x)`.
+  2. **Engine Meta-Cognitive Directive (`sidepanel.js`)**:
+     - Mengimplementasikan `getThinkingDirective(currentThinkingLevel)` yang diinjeksi secara dinamis ke dalam prompt sistem:
+       - **Low**: Zero-Reflection, linear pattern matching instan.
+       - **Medium**: 1-pass sanity check & validation draft.
+       - **High**: Multi-branch Tree-of-Thought & edge-case cross-check.
+       - **Xhigh**: Adversarial Red-Teaming (Devil's Advocate) kritik diri mencari 3 kelemahan draf sendiri.
+       - **Max (10x)**: First Principles Deconstruction, Worst-Case Failure Modes Simulation, full backtracking, dan optimasi mikroskopis 10x lipat.
+     - Menyimpan pilihan ke `chrome.storage.local` dan memperbarui status bar saat agen beroperasi.
+- **Verifikasi**:
+  - JS & CSS Syntax check lulus 100%.
+  - Restore Point: `v2.127.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 326: Full Rounded Pill Styling for Switch Tab & Execution Mode Triggers
 - **Kebutuhan Pengguna**:
   - Memperbaiki UI pada area kanan atas input prompt (tombol `Switch Tab: ON` dan `Accept`) agar bentuknya serasi dan seirama dengan tombol `Agent Mode` di sisi kiri.

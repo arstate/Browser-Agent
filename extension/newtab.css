@@ -1888,6 +1888,117 @@ body.has-messages .chat-messages {
   color: var(--accent-lime);
 }
 
+/* Thinking Level Dropup Trigger & Menu (Clean Minimal Text - Dark Luxury) */
+.thinking-level-dropup-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-thinking-level-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 9999px;
+  background: #27272A;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.18s ease;
+}
+
+.btn-thinking-level-trigger:hover {
+  background: #323238;
+  border-color: rgba(206, 241, 40, 0.35);
+}
+
+.btn-thinking-level-trigger.open {
+  border-color: var(--accent-lime);
+  box-shadow: 0 0 12px rgba(206, 241, 40, 0.15);
+}
+
+.thinking-level-label {
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+.thinking-level-chevron {
+  width: 9px !important;
+  height: 9px !important;
+  color: #FFFFFF;
+  margin-left: 1px;
+  transition: transform 0.18s ease;
+}
+
+.btn-thinking-level-trigger.open .thinking-level-chevron {
+  transform: rotate(180deg);
+}
+
+.thinking-level-dropup-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 130px;
+  background: rgba(18, 18, 22, 0.72) !important;
+  backdrop-filter: blur(36px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 18px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35);
+  z-index: 500;
+  animation: dropupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.thinking-level-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.thinking-level-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.thinking-level-option.active {
+  background: #27272A;
+  border-color: rgba(206, 241, 40, 0.4);
+}
+
+.thinking-option-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #E2E8F0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.thinking-level-option:hover .thinking-option-title {
+  color: #FFFFFF;
+}
+
+.thinking-level-option.active .thinking-option-title {
+  color: var(--accent-lime);
+}
+
 body.has-messages .chat-mode-option[data-mode="websearch"] {
   display: none !important;
 }

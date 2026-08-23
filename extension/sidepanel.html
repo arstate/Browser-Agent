@@ -160,58 +160,90 @@
       <div class="chat-input-container">
         <!-- Top Action Bar with Mode Switcher (Chat | Agent) & Execution Mode Dropup -->
         <div class="chat-input-top-bar">
-          <!-- Single Clean Pill Button with Dropup Menu for Mode Switching -->
-          <div class="chat-mode-dropup-wrapper" id="chat-mode-dropup-wrapper">
-            <button type="button" class="btn-chat-mode-trigger" id="btn-chat-mode-trigger" title="Pilih Mode Interaksi (Agent, Chat, Web Search)">
-              <span class="chat-mode-trigger-icon" id="chat-mode-trigger-icon">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="10" rx="2"/>
-                  <circle cx="12" cy="5" r="2"/>
-                  <path d="M12 7v4"/>
-                  <line x1="8" y1="16" x2="8.01" y2="16"/>
-                  <line x1="16" y1="16" x2="16.01" y2="16"/>
-                </svg>
-              </span>
-              <span class="chat-mode-trigger-label" id="chat-mode-trigger-label">Agent Mode</span>
-              <svg class="chat-mode-trigger-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-
-            <!-- Mode Dropup Menu -->
-            <div class="chat-mode-dropup-menu" id="chat-mode-dropup-menu" style="display: none;">
-              <button type="button" class="chat-mode-option active" data-mode="agent">
-                <div class="mode-option-icon">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Left Actions Container (Mode Switcher & Thinking Level Dropup) -->
+          <div class="chat-input-header-left">
+            <!-- Single Clean Pill Button with Dropup Menu for Mode Switching -->
+            <div class="chat-mode-dropup-wrapper" id="chat-mode-dropup-wrapper">
+              <button type="button" class="btn-chat-mode-trigger" id="btn-chat-mode-trigger" title="Pilih Mode Interaksi (Agent, Chat, Web Search)">
+                <span class="chat-mode-trigger-icon" id="chat-mode-trigger-icon">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="11" width="18" height="10" rx="2"/>
                     <circle cx="12" cy="5" r="2"/>
                     <path d="M12 7v4"/>
                     <line x1="8" y1="16" x2="8.01" y2="16"/>
                     <line x1="16" y1="16" x2="16.01" y2="16"/>
                   </svg>
-                </div>
-                <span class="mode-option-title">Agent Mode</span>
+                </span>
+                <span class="chat-mode-trigger-label" id="chat-mode-trigger-label">Agent Mode</span>
+                <svg class="chat-mode-trigger-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
               </button>
 
-              <button type="button" class="chat-mode-option" data-mode="chat">
-                <div class="mode-option-icon">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </div>
-                <span class="mode-option-title">Chat Mode</span>
+              <!-- Mode Dropup Menu -->
+              <div class="chat-mode-dropup-menu" id="chat-mode-dropup-menu" style="display: none;">
+                <button type="button" class="chat-mode-option active" data-mode="agent">
+                  <div class="mode-option-icon">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="10" rx="2"/>
+                      <circle cx="12" cy="5" r="2"/>
+                      <path d="M12 7v4"/>
+                      <line x1="8" y1="16" x2="8.01" y2="16"/>
+                      <line x1="16" y1="16" x2="16.01" y2="16"/>
+                    </svg>
+                  </div>
+                  <span class="mode-option-title">Agent Mode</span>
+                </button>
+
+                <button type="button" class="chat-mode-option" data-mode="chat">
+                  <div class="mode-option-icon">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <span class="mode-option-title">Chat Mode</span>
+                </button>
+
+                <button type="button" class="chat-mode-option" data-mode="websearch">
+                  <div class="mode-option-icon">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="2" y1="12" x2="22" y2="12"/>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                  </div>
+                  <span class="mode-option-title">Web Search</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Thinking Level Dropup Trigger (Clean Text Only) -->
+            <div class="thinking-level-dropup-wrapper" id="thinking-level-dropup-wrapper">
+              <button type="button" class="btn-thinking-level-trigger" id="btn-thinking-level-trigger" title="Pilih Intensitas Penalaran AI">
+                <span class="thinking-level-label" id="thinking-level-label">Thinking: High</span>
+                <svg class="thinking-level-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
               </button>
 
-              <button type="button" class="chat-mode-option" data-mode="websearch">
-                <div class="mode-option-icon">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="2" y1="12" x2="22" y2="12"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                  </svg>
-                </div>
-                <span class="mode-option-title">Web Search</span>
-              </button>
+              <!-- Thinking Level Dropup Menu (Clean Text Only) -->
+              <div class="thinking-level-dropup-menu" id="thinking-level-dropup-menu" style="display: none;">
+                <button type="button" class="thinking-level-option" data-level="low" title="Instan & Linier — Tanpa Koreksi Diri">
+                  <span class="thinking-option-title">Low</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="medium" title="Standar — 1x Sanity Check">
+                  <span class="thinking-option-title">Medium</span>
+                </button>
+                <button type="button" class="thinking-level-option active" data-level="high" title="Mendalam — Multi-Branch Tree-of-Thought">
+                  <span class="thinking-option-title">High</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="xhigh" title="Kritik Diri Ketat — Adversarial Red-Teaming">
+                  <span class="thinking-option-title">Xhigh</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="max" title="Eksplorasi Penuh — 10x Lipat Mikir Keras">
+                  <span class="thinking-option-title">Max (10x)</span>
+                </button>
+              </div>
             </div>
           </div>
 

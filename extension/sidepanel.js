@@ -467,7 +467,43 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
     }
   }
 
+  // 5. Inject Dynamic AI Cognitive / Thinking Level Directive (Hacked Client-Side without API dependency)
+  prompt += getThinkingDirective(currentThinkingLevel);
+
   return prompt;
+}
+
+let currentThinkingLevel = "high";
+
+function getThinkingDirective(level) {
+  switch (level) {
+    case "low":
+      return `\n\n=== [AI THINKING LEVEL: LOW (Instan & Cepat — 0x Koreksi Diri)] ===
+- DILARANG membuat rantai penalaran panjang atau draf bertahap.
+- Langsung lakukan pattern-matching dan hasilkan jawaban linier tercepat, ringkas, akurat, dan to-the-point tanpa self-correction.`;
+    case "medium":
+      return `\n\n=== [AI THINKING LEVEL: MEDIUM (Standar — 1x Sanity Check)] ===
+- Buat draf penalaran singkat dan lakukan 1 kali verifikasi validitas logika sebelum menyimpulkan jawaban.
+- Perbaiki kesalahan logika sederhana jika ditemukan.`;
+    case "high":
+      return `\n\n=== [AI THINKING LEVEL: HIGH (Mendalam — Multi-Branch Tree-of-Thought)] ===
+- Eksplorasi 2-3 jalur penalaran paralel di dalam pikiran Anda.
+- Uji kasus ekstrem (edge cases) dan verifikasi konvergensi hasil sebelum menyajikan jawaban terbaik.`;
+    case "xhigh":
+      return `\n\n=== [AI THINKING LEVEL: XHIGH (Kritik Diri Ketat — Adversarial Red-Teaming)] ===
+- Bertindaklah sebagai pengkritik paling tajam terhadap draf Anda sendiri (Devil's Advocate).
+- Cari minimal 3 potensi celah, bug, asumsi keliru, atau kontradiksi logis pada draf Anda, perbaiki seluruh kelemahan tersebut, lalu sajikan solusi yang kokoh tanpa celah.`;
+    case "max":
+      return `\n\n=== [AI THINKING LEVEL: MAX (10x LIPAT MIKIR KERAS — First Principles & Exhaustive Stress-Testing)] ===
+- KERAHKAN KAPASITAS PENALARAN MAKSIMAL (10x LIPAT LEBIH MIKIR KERAS).
+- Dekonstruksi seluruh masalah dari prinsip paling mendasar (First Principles).
+- Simulasikan skenario kegagalan sistem terburuk (Worst-Case Failure Modes & Edge Case Stress-Testing).
+- Lakukan backtracking penuh jika ada hipotesis atau langkah yang suboptimal.
+- Optimalkan setiap baris kode/analisis hingga tingkat presisi mikroskopis mutlak sebelum menyajikan solusi akhir.`;
+    default:
+      return `\n\n=== [AI THINKING LEVEL: HIGH (Mendalam — Multi-Branch Tree-of-Thought)] ===
+- Eksplorasi alternatif solusi, uji edge cases, dan berikan penalaran terstruktur.`;
+  }
 }
 
 // Tool Definitions for OpenAI-compatible Function Calling
@@ -2767,14 +2803,15 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   try {
     while (currentStep < maxSteps && isExecuting) {
       currentStep++;
+      const thinkTag = currentThinkingLevel === 'max' ? ' (Max 10x)' : (currentThinkingLevel === 'xhigh' ? ' (Xhigh)' : (currentThinkingLevel === 'low' ? ' (Fast)' : ''));
       if (hasBoss) {
-        updateFooterStatus(`👑 Master Agent (Step ${currentStep})...`);
-        notifyActiveTabExecutionState(true, currentStep, maxSteps, `Master Agent: Step ${currentStep}/${maxSteps}`);
-        updateAssistantActiveAgent(assistantBubble, "Master Agent", `Mengarahkan tim eksekutor (Step ${currentStep})...`, true, false);
+        updateFooterStatus(`👑 Master Agent${thinkTag} (Step ${currentStep})...`);
+        notifyActiveTabExecutionState(true, currentStep, maxSteps, `Master Agent${thinkTag}: Step ${currentStep}/${maxSteps}`);
+        updateAssistantActiveAgent(assistantBubble, "Master Agent", `Mengarahkan tim eksekutor${thinkTag} (Step ${currentStep})...`, true, false);
       } else {
-        updateFooterStatus(`${initialAgentName} (Step ${currentStep})...`);
-        notifyActiveTabExecutionState(true, currentStep, maxSteps, `${initialAgentName}: Step ${currentStep}/${maxSteps}`);
-        updateAssistantActiveAgent(assistantBubble, initialAgentName, `Memproses (Step ${currentStep})...`, false, false);
+        updateFooterStatus(`${initialAgentName}${thinkTag} (Step ${currentStep})...`);
+        notifyActiveTabExecutionState(true, currentStep, maxSteps, `${initialAgentName}${thinkTag}: Step ${currentStep}/${maxSteps}`);
+        updateAssistantActiveAgent(assistantBubble, initialAgentName, `Memproses${thinkTag} (Step ${currentStep})...`, false, false);
       }
 
       // Prepare sanitized payload for API with dynamic agent persona & skills
@@ -3706,6 +3743,87 @@ function initSearchEngineDropdown() {
     });
   } catch (e) {
     setSearchEngine('google');
+  }
+}
+
+function setThinkingLevel(level) {
+  if (!['low', 'medium', 'high', 'xhigh', 'max'].includes(level)) level = 'high';
+  currentThinkingLevel = level;
+
+  const labels = {
+    low: "Thinking: Low",
+    medium: "Thinking: Medium",
+    high: "Thinking: High",
+    xhigh: "Thinking: Xhigh",
+    max: "Thinking: Max (10x)"
+  };
+
+  const labelEl = document.getElementById('thinking-level-label');
+  if (labelEl) labelEl.textContent = labels[level] || "Thinking: High";
+
+  document.querySelectorAll('.thinking-level-option').forEach(opt => {
+    if (opt.getAttribute('data-level') === level) {
+      opt.classList.add('active');
+    } else {
+      opt.classList.remove('active');
+    }
+  });
+
+  try {
+    chrome.storage.local.set({ browser_agent_thinking_level: level });
+  } catch (e) {}
+}
+
+function initThinkingLevelDropdown() {
+  const trigger = document.getElementById('btn-thinking-level-trigger');
+  const dropup = document.getElementById('thinking-level-dropup-menu');
+
+  trigger?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!dropup) return;
+    const isHidden = (dropup.style.display === 'none' || !dropup.style.display);
+    
+    // Close other dropups if open
+    const modeDropup = document.getElementById('chat-mode-dropup-menu');
+    const searchDropup = document.getElementById('search-engine-dropup');
+    if (modeDropup) modeDropup.style.display = 'none';
+    document.getElementById('btn-chat-mode-trigger')?.classList.remove('open');
+    if (searchDropup) searchDropup.style.display = 'none';
+    document.getElementById('btn-search-engine-trigger')?.classList.remove('open');
+
+    dropup.style.display = isHidden ? 'flex' : 'none';
+    trigger.classList.toggle('open', isHidden);
+  });
+
+  document.querySelectorAll('.thinking-level-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const selectedLevel = opt.getAttribute('data-level');
+      if (selectedLevel) {
+        setThinkingLevel(selectedLevel);
+      }
+      if (dropup) dropup.style.display = 'none';
+      trigger?.classList.remove('open');
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (dropup && !dropup.contains(e.target) && !trigger?.contains(e.target)) {
+      dropup.style.display = 'none';
+      trigger?.classList.remove('open');
+    }
+  });
+
+  try {
+    chrome.storage.local.get(['browser_agent_thinking_level'], (res) => {
+      if (res && res.browser_agent_thinking_level) {
+        setThinkingLevel(res.browser_agent_thinking_level);
+      } else {
+        setThinkingLevel('high');
+      }
+    });
+  } catch (e) {
+    setThinkingLevel('high');
   }
 }
 
@@ -7721,6 +7839,7 @@ document.addEventListener('click', (e) => {
 // Mode Switcher Dropdown & Persistence (Default: Agent Mode)
 try {
   initChatModeDropdown();
+  initThinkingLevelDropdown();
   initExecutionModeDropdown();
   initSwitchTabDropdown();
   initSearchEngineDropdown();

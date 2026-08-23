@@ -2855,6 +2855,112 @@ body.stickman-active .chat-messages {
   color: #CEF128;
 }
 
+/* Thinking Level Dropup Trigger & Menu in Sidepanel (Clean Minimal Text - Dark Luxury) */
+.thinking-level-dropup-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-thinking-level-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-thinking-level-trigger:hover {
+  background: #1E293B;
+  border-color: rgba(206, 241, 40, 0.35);
+}
+
+.btn-thinking-level-trigger.open {
+  border-color: #CEF128;
+  box-shadow: 0 0 12px rgba(206, 241, 40, 0.15);
+}
+
+.thinking-level-label {
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+.thinking-level-chevron {
+  width: 9px !important;
+  height: 9px !important;
+  color: #FFFFFF;
+  margin-left: 1px;
+  transition: transform 0.18s ease;
+}
+
+.btn-thinking-level-trigger.open .thinking-level-chevron {
+  transform: rotate(180deg);
+}
+
+.thinking-level-dropup-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 125px;
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 18px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.28);
+  z-index: 500;
+  animation: dropupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.thinking-level-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.thinking-level-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.thinking-level-option.active {
+  background: rgba(206, 241, 40, 0.14);
+  border-color: rgba(206, 241, 40, 0.4);
+}
+
+.thinking-level-option .thinking-option-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #FFFFFF;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.thinking-level-option.active .thinking-option-title {
+  color: #CEF128;
+}
+
 /* Web Search Mode in Sidepanel */
 .chat-input-container.mode-websearch #btn-attach-file,
 .chat-input-container.mode-websearch #execution-mode-wrapper,
