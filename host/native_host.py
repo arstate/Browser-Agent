@@ -1549,6 +1549,39 @@ def sync_persistent_memory_on_startup():
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (apid, domain, mistake, cause, fix, rule, now))
 
+        # 5. Full Autonomous Auto-Distillation: Distill any undrained sessions on startup
+        try:
+            cursor.execute("SELECT id, title, model, messages_json, created_at, updated_at FROM sessions")
+            all_sess = cursor.fetchall()
+            for s in all_sess:
+                s_id, s_title, s_model, s_msg_json, s_created, s_updated = s
+                cursor.execute("SELECT id FROM chat_training_corpus WHERE session_id = ?", (s_id,))
+                if not cursor.fetchone():
+                    d_item = distill_session_to_training_md({
+                        "id": s_id, "title": s_title, "model": s_model,
+                        "messages_json": s_msg_json, "created_at": s_created, "updated_at": s_updated
+                    })
+                    if d_item:
+                        cursor.execute("""
+                            INSERT INTO chat_training_corpus (id, session_id, title, model, distilled_points_md, key_intents_json, tool_workflows_json, learnings_json, token_saved_estimate, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(id) DO UPDATE SET
+                                distilled_points_md=excluded.distilled_points_md,
+                                updated_at=excluded.updated_at
+                        """, (
+                            d_item["id"], d_item["session_id"], d_item["title"], d_item["model"],
+                            d_item["distilled_points_md"], json.dumps(d_item["key_intents"]),
+                            json.dumps(d_item["tool_workflows"]), json.dumps(d_item["learnings"]),
+                            d_item["token_saved_estimate"], d_item["created_at"], s_updated
+                        ))
+                        safe_sid = re.sub(r'[^a-zA-Z0-9_-]', '_', s_id)
+                        fpath = os.path.join(PM_TRAINING_CORPUS_DIR, f"{safe_sid}.md")
+                        os.makedirs(PM_TRAINING_CORPUS_DIR, exist_ok=True)
+                        with open(fpath, "w", encoding="utf-8") as f:
+                            f.write(d_item["distilled_points_md"])
+        except Exception as e_dist:
+            log(f"Auto-distill on startup error: {e_dist}")
+
         conn.commit()
     except Exception as e:
         log(f"Error in sync_persistent_memory_on_startup: {e}\n{traceback.format_exc()}")

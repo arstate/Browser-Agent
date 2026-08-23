@@ -3131,44 +3131,7 @@ document.getElementById('search-brain-input')?.addEventListener('input', (e) => 
   renderPersistentBrain(e.target.value);
 });
 
-// Auto-distill all chat history button
-document.getElementById('btn-auto-distill-history')?.addEventListener('click', async () => {
-  const btn = document.getElementById('btn-auto-distill-history');
-  if (btn) btn.disabled = true;
-  try {
-    showToast("Memulai ekstraksi dan distilasi seluruh histori chat ke format Markdown training...");
-    const res = await sendNativeRpc("db_auto_distill_all_sessions");
-    if (res && res.status === "ok") {
-      showToast(`✅ Berhasil mendistilasi ${res.distilled_count || 0} sesi chat! Hemat ~${res.total_tokens_saved || 0} tokens.`);
-      await loadPersistentBrainData();
-    } else {
-      alert("Gagal distilasi: " + (res?.error || "Unknown error"));
-    }
-  } catch (err) {
-    alert("Error: " + err.message);
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-});
 
-// Sync brain files button
-document.getElementById('btn-sync-brain-files')?.addEventListener('click', async () => {
-  const syncBtn = document.getElementById('btn-sync-brain-files');
-  if (syncBtn) syncBtn.disabled = true;
-  try {
-    const res = await sendNativeRpc("db_sync_persistent_memory_files");
-    if (res && res.status === "ok") {
-      showToast("Sinkronisasi SQLite & File Markdown Berhasil!");
-      await loadPersistentBrainData();
-    } else {
-      alert("Gagal sinkronisasi: " + (res?.error || "Unknown error"));
-    }
-  } catch (err) {
-    alert("Error: " + err.message);
-  } finally {
-    if (syncBtn) syncBtn.disabled = false;
-  }
-});
 
 document.addEventListener('DOMContentLoaded', init);
 
