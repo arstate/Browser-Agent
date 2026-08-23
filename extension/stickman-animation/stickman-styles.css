@@ -1,0 +1,61 @@
+/**
+ * ============================================================================
+ * 🎨 STICKMAN ANIMATION STYLESHEET
+ * Styling khusus panggung kanvas stickman swarm tepat di atas input prompt.
+ * ============================================================================
+ */
+
+.ai-stickman-swarm-container {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 8px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #141417;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  animation: stickmanFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-sizing: border-box;
+}
+
+@keyframes stickmanFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ai-stickman-stage {
+  position: relative;
+  width: 100%;
+  height: 100px;
+  background: #141417;
+  overflow: hidden;
+  border-radius: 13px;
+}
+
+#physicsCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Sidepanel Compact Adaptation */
+@media (max-width: 480px) {
+  .ai-stickman-swarm-container {
+    margin-bottom: 6px;
+    border-radius: 12px;
+  }
+  
+  .ai-stickman-stage {
+    height: 90px;
+    border-radius: 11px;
+  }
+}

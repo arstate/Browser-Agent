@@ -2392,18 +2392,37 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.80.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 281: Pemisahan Modular File Kodingan Animasi Stickman untuk Kemudahan Edit
+- **Kebutuhan Pengguna**:
+  - Memisahkan file-file kodingan animasi stickman ke dalam folder terorganisir agar sangat mudah diedit, dikonfigurasi, dan dikembangkan di masa mendatang.
+- **Solusi & Peningkatan**:
+  1. **Struktur Direktori Khusus (`extension/stickman-animation/`)**:
+     - `stickman-config.js`: Pusat konfigurasi warna (`#CEF128`), kecepatan, tinggi lantai, dan daftar pelari.
+     - `stickman-physics.js`: Model matematika kinematika pelari, kurva bezier, dan ekspresi muka.
+     - `stickman-scenery.js`: Desain server rack, LED alert/blink, teknisi obeng, dan teknisi kabel.
+     - `stickman-engine.js`: Mesin utama 60fps render loop, DPR auto-scaling, dan kontrol siklus hidup start/stop.
+     - `stickman-styles.css`: Stylesheet terpisah khusus tata letak container & panggung kanvas.
+     - `index.html`: Live sandbox playground mandiri untuk preview dan pengujian cepat di browser.
+  2. **Integrasi Bersih**:
+     - `newtab.html` dan `sidepanel.html` memuat file-file modular ini secara bersih tanpa duplikasi kode CSS.
+  3. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.81.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **AI Stickman Swarm Working Animation:** 60fps canvas animation (`stickman-animation.js`) docked above the prompt container displaying busy runner stickmen, cable technicians, and blinking server racks during generation.
+- **Modular Stickman Animation Structure:** Located in `extension/stickman-animation/` (`stickman-config.js`, `stickman-physics.js`, `stickman-scenery.js`, `stickman-engine.js`, `stickman-styles.css`, `index.html`).
+- **AI Stickman Swarm Working Animation:** 60fps canvas animation docked above the prompt container displaying busy runner stickmen, cable technicians, and blinking server racks during generation.
 - **User Attached Media Thumbnails:** Constrained 84x84px compact square thumbnails (`.user-attached-thumb`) with Lightbox fullscreen click zoom.
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.80.0` (Iterasi 280).
+  - **Versi Terkini:** `v2.81.0` (Iterasi 281).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

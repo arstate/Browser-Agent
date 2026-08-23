@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 AI Stickman Swarm Animation - Sandbox Editor & Live Preview</title>
+  <link rel="stylesheet" href="stickman-styles.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0B0B0E;
+      color: #F8FAFC;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .preview-card {
+      width: 100%;
+      max-width: 860px;
+      background: #18181D;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .preview-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #CEF128;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preview-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-preview {
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 12.5px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-start {
+      background: #CEF128;
+      color: #0F172A;
+    }
+    .btn-start:hover {
+      background: #D9F92F;
+      transform: translateY(-1px);
+    }
+
+    .btn-stop {
+      background: rgba(255, 255, 255, 0.1);
+      color: #E2E8F0;
+    }
+    .btn-stop:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .simulated-prompt-dock {
+      margin-top: 14px;
+      background: rgba(22, 22, 26, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      padding: 14px 18px;
+      color: #94A3B8;
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dock-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #CEF128;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0F172A;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="preview-card">
+    <div class="preview-header">
+      <div class="preview-title">
+        <span>⚡ AI Stickman Swarm - Live Sandbox Preview</span>
+      </div>
+      <div class="preview-controls">
+        <button type="button" class="btn-preview btn-start" onclick="window.startStickmanSwarmAnimation()">▶ Play (AI Bekerja)</button>
+        <button type="button" class="btn-preview btn-stop" onclick="window.stopStickmanSwarmAnimation()">⏹ Stop (AI Selesai)</button>
+      </div>
+    </div>
+
+    <!-- Panggung Animasi Stickman Swarm -->
+    <div class="ai-stickman-swarm-container" id="ai-stickman-swarm-container">
+      <div class="ai-stickman-stage" id="stageContainer">
+        <canvas id="physicsCanvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Simulasi Kotak Input Prompt di Bawahnya -->
+    <div class="simulated-prompt-dock">
+      <span>Ketik perintah atau instruksi di sini...</span>
+      <div class="dock-btn">↑</div>
+    </div>
+  </div>
+
+  <!-- Modular Scripts -->
+  <script src="stickman-config.js"></script>
+  <script src="stickman-physics.js"></script>
+  <script src="stickman-scenery.js"></script>
+  <script src="stickman-engine.js"></script>
+
+  <script>
+    // Auto start on load in sandbox preview
+    window.addEventListener('load', () => {
+      if (typeof window.startStickmanSwarmAnimation === 'function') {
+        window.startStickmanSwarmAnimation();
+      }
+    });
+  </script>
+</body>
+</html>

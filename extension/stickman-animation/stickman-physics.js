@@ -1,24 +1,18 @@
 /**
- * AI Stickman Swarm Animation Engine
- * Realistic Biomechanical Runners, Technicians & Server Racks in Dark Luxury Neon Bento Style
- * Active while AI is generating responses / executing tasks.
+ * ============================================================================
+ * 🏃 STICKMAN PHYSICS & BIOMECHANICAL KINEMATICS ENGINE
+ * Berisi model matematika pergerakan tubuh, kurva bezier, dan ekspresi wajah.
+ * ============================================================================
  */
 (() => {
-  let isRunning = false;
-  let animFrameId = null;
-  let canvas = null;
-  let ctx = null;
-  let container = null;
-  let wrapper = null;
-  let width = 0;
-  let height = 0;
-  let dpr = window.devicePixelRatio || 1;
-  let lastTime = 0;
+  const cfg = window.STICKMAN_CONFIG || {};
+  const C = cfg.COLORS || {
+    NEON_MAIN: '#CEF128',
+    NEON_SECONDARY: 'rgba(206, 241, 40, 0.38)'
+  };
+  const L = cfg.LAYOUT || { FLOOR_Y: 84, HEAD_RADIUS: 8.0, LIMB_THICKNESS: 3.0 };
 
-  const NEON_COLOR = '#CEF128';
-  const NEON_BACK = 'rgba(206, 241, 40, 0.38)';
-  const floorY = 84;
-
+  // Interpolasi linear & eksponensial halus
   function numLerp(a, b, t) {
     const clampedT = Math.max(0, Math.min(1, t));
     return a + (b - a) * clampedT;
@@ -30,8 +24,8 @@
     return current + (target - current) * factor;
   }
 
-  // === SEAMLESS UNIFIED SPINE-TO-LEG BEZIER ENGINE ===
-  function drawUnifiedSpineAndLeg(neck, chest, pelvis, knee, foot, thickness, color) {
+  // Kurva bezier tulang belakang menyatu dengan kaki depan
+  function drawUnifiedSpineAndLeg(ctx, neck, chest, pelvis, knee, foot, thickness, color) {
     if (!ctx) return;
     ctx.beginPath();
     ctx.moveTo(neck.x, neck.y);
@@ -48,7 +42,7 @@
     ctx.stroke();
   }
 
-  function drawBranchLeg(pelvis, knee, foot, thickness, color) {
+  function drawBranchLeg(ctx, pelvis, knee, foot, thickness, color) {
     if (!ctx) return;
     const cpX = 2 * knee.x - 0.5 * pelvis.x - 0.5 * foot.x;
     const cpY = 2 * knee.y - 0.5 * pelvis.y - 0.5 * foot.y;
@@ -63,7 +57,7 @@
     ctx.stroke();
   }
 
-  function drawSeamlessArm(shoulder, elbow, hand, thickness, color) {
+  function drawSeamlessArm(ctx, shoulder, elbow, hand, thickness, color) {
     if (!ctx) return;
     const cpX = 2 * elbow.x - 0.5 * shoulder.x - 0.5 * hand.x;
     const cpY = 2 * elbow.y - 0.5 * shoulder.y - 0.5 * hand.y;
@@ -78,7 +72,7 @@
     ctx.stroke();
   }
 
-  function drawFace(headX, headY, angleY, exprBlend, time) {
+  function drawFace(ctx, headX, headY, angleY, exprBlend, time) {
     if (!ctx) return;
     const cosY = Math.cos(angleY);
     if (Math.abs(cosY) < 0.12) return;
@@ -112,16 +106,11 @@
     ctx.restore();
   }
 
-  const serverWorkers = {
-    left: { reachOut: 0 },
-    right: { reachOut: 0 }
-  };
-
-  // === BIOMECHANICALLY REALISTIC GAIT ENGINE ===
+  // Kelas Pelari Biomekanik (BiomechanicalRunner)
   class BiomechanicalRunner {
-    constructor(cfg) {
-      this.startX = cfg.startX || 92;
-      this.gaitType = cfg.gaitType || 'sprint'; // 'slow_walk', 'jog', 'sprint', 'fatigue_cargo'
+    constructor(cfgRunner) {
+      this.startX = cfgRunner.startX || 92;
+      this.gaitType = cfgRunner.gaitType || 'sprint';
       
       if (this.gaitType === 'slow_walk') this.maxSpeed = 1.15;
       else if (this.gaitType === 'jog') this.maxSpeed = 1.95;
@@ -130,7 +119,7 @@
 
       this.x = this.startX;
       this.vx = this.maxSpeed;
-      this.facing = cfg.facing || 1;
+      this.facing = cfgRunner.facing || 1;
       this.angleY = (this.facing === 1) ? 0 : Math.PI;
       this.gaitPhase = Math.random() * Math.PI * 2;
 
@@ -138,7 +127,7 @@
       this.interactionTimer = 0;
       this.restTimer = 0;
       this.hasRested = false;
-      this.hasBox = cfg.hasBox !== false;
+      this.hasBox = cfgRunner.hasBox !== false;
 
       this.pose = {
         speedFactor: 1.0,
@@ -154,9 +143,10 @@
       this.sweatParticles = [];
     }
 
-    update(dt, t) {
-      const leftServerBound = (width < 460) ? 62 : 92;
-      const rightServerBound = Math.max(140, width - ((width < 460) ? 75 : 110));
+    update(dt, t, width, floorY, serverWorkers) {
+      const isNarrow = width < 460;
+      const leftServerBound = isNarrow ? 62 : 92;
+      const rightServerBound = Math.max(140, width - (isNarrow ? 75 : 110));
       const restTargetX = (leftServerBound + rightServerBound) * 0.48;
 
       let targetSpeed = this.maxSpeed;
@@ -212,8 +202,11 @@
         targetHandoverReach = 1.0;
         this.interactionTimer -= dt;
 
-        if (this.facing === 1) serverWorkers.right.reachOut = expLerp(serverWorkers.right.reachOut, 1.0, 6, dt);
-        else serverWorkers.left.reachOut = expLerp(serverWorkers.left.reachOut, 1.0, 6, dt);
+        if (this.facing === 1 && serverWorkers && serverWorkers.right) {
+          serverWorkers.right.reachOut = expLerp(serverWorkers.right.reachOut, 1.0, 6, dt);
+        } else if (serverWorkers && serverWorkers.left) {
+          serverWorkers.left.reachOut = expLerp(serverWorkers.left.reachOut, 1.0, 6, dt);
+        }
 
         if (this.interactionTimer <= 0) {
           this.state = 'pivot_turn';
@@ -224,8 +217,8 @@
         targetSpeed = 0.0;
         targetHandoverReach = 0.0;
 
-        serverWorkers.left.reachOut = expLerp(serverWorkers.left.reachOut, 0.0, 4, dt);
-        serverWorkers.right.reachOut = expLerp(serverWorkers.right.reachOut, 0.0, 4, dt);
+        if (serverWorkers && serverWorkers.left) serverWorkers.left.reachOut = expLerp(serverWorkers.left.reachOut, 0.0, 4, dt);
+        if (serverWorkers && serverWorkers.right) serverWorkers.right.reachOut = expLerp(serverWorkers.right.reachOut, 0.0, 4, dt);
 
         this.turnProgress += dt * 3.4;
         if (this.facing === 1) {
@@ -250,22 +243,15 @@
       this.vx = expLerp(this.vx, targetSpeed, (targetSpeed === 0 ? 5.0 : 2.5), dt);
 
       const speedNorm = Math.max(0, Math.min(1.2, this.vx / 3.3));
-
-      // 1. FORWARD LEAN
       const realLean = (targetHunched > 0.5) 
         ? 0.72 
         : (0.06 + Math.pow(speedNorm, 1.35) * 0.62);
-
-      // 2. HEIGHT DROP
       const realHeightDrop = (targetHunched > 0.5) 
         ? 14.0 
         : (Math.pow(speedNorm, 1.25) * 12.0);
-
-      // 3. ARM KINEMATICS
       const realElbowLock = (targetHunched > 0.5)
         ? 0.4
         : (0.15 + Math.pow(speedNorm, 1.2) * 0.85);
-
       const realArmDrive = (targetHunched > 0.5)
         ? 0.0
         : (0.35 + Math.pow(speedNorm, 1.1) * 0.95);
@@ -296,7 +282,7 @@
       }
     }
 
-    draw(time) {
+    draw(ctx, time, floorY) {
       if (!ctx) return;
       const cosY = Math.cos(this.angleY);
       const flightStretch = Math.max(0, Math.cos(this.gaitPhase * 2)) * 3.2 * this.pose.speedFactor;
@@ -323,7 +309,7 @@
         y: neck.y - 7 + pantOffset
       };
 
-      // Kaki
+      // Kaki Kinematik
       const legStride = Math.sin(this.gaitPhase) * (0.3 + this.pose.speedFactor * 0.75);
       const kneeDriveL = Math.max(0, Math.cos(this.gaitPhase)) * (0.2 + this.pose.speedFactor * 1.0);
       const kneeDriveR = Math.max(0, -Math.cos(this.gaitPhase)) * (0.2 + this.pose.speedFactor * 1.0);
@@ -366,20 +352,20 @@
         y: numLerp(footR_Run.y, footR_Rest.y, this.pose.hunchedTired)
       };
 
-      const strokeThickness = 3.0;
+      const strokeThickness = L.LIMB_THICKNESS || 3.0;
 
       // 1. Kaki Belakang
-      if (cosY >= 0) drawBranchLeg(pelvis, kneePosL, footPosL, strokeThickness * 0.85, NEON_BACK);
-      else drawBranchLeg(pelvis, kneePosR, footPosR, strokeThickness * 0.85, NEON_BACK);
+      if (cosY >= 0) drawBranchLeg(ctx, pelvis, kneePosL, footPosL, strokeThickness * 0.85, C.NEON_SECONDARY);
+      else drawBranchLeg(ctx, pelvis, kneePosR, footPosR, strokeThickness * 0.85, C.NEON_SECONDARY);
 
       // 2. Tulang Punggung Menyatu Mulus dengan Kaki Depan
-      if (cosY >= 0) drawUnifiedSpineAndLeg(neck, chest, pelvis, kneePosR, footPosR, strokeThickness, NEON_COLOR);
-      else drawUnifiedSpineAndLeg(neck, chest, pelvis, kneePosL, footPosL, strokeThickness, NEON_COLOR);
+      if (cosY >= 0) drawUnifiedSpineAndLeg(ctx, neck, chest, pelvis, kneePosR, footPosR, strokeThickness, C.NEON_MAIN);
+      else drawUnifiedSpineAndLeg(ctx, neck, chest, pelvis, kneePosL, footPosL, strokeThickness, C.NEON_MAIN);
 
       // Kepala Avatar Neon Solid
       ctx.beginPath();
-      ctx.arc(head.x, head.y, 8.0, 0, Math.PI * 2);
-      ctx.fillStyle = NEON_COLOR;
+      ctx.arc(head.x, head.y, L.HEAD_RADIUS || 8.0, 0, Math.PI * 2);
+      ctx.fillStyle = C.NEON_MAIN;
       ctx.fill();
 
       // === LENGAN BIOMEKANIK ===
@@ -388,7 +374,6 @@
       const pumpAmp = this.pose.armDriveAmp * 1.15;
       const elbowLock = this.pose.elbowLockAngle;
 
-      // Lengan Kiri (Back Arm)
       const armSwingL = Math.sin(armCycle) * pumpAmp;
       const elbowL_Sprint = {
         x: shoulder.x - Math.sin(armSwingL) * 11 * cosY,
@@ -417,7 +402,6 @@
         y: numLerp(handL_Walk.y, handL_Sprint.y, elbowLock)
       };
 
-      // Lengan Kanan (Front Arm)
       const armSwingR = Math.sin(-armCycle) * pumpAmp;
       const elbowR_Sprint = {
         x: shoulder.x - Math.sin(armSwingR) * 11 * cosY + 3 * cosY,
@@ -477,11 +461,11 @@
       handPosR.x = numLerp(handPosR.x, handR_Handover.x, this.pose.handoverReach);
       handPosR.y = numLerp(handPosR.y, handR_Handover.y, this.pose.handoverReach);
 
-      drawSeamlessArm(shoulder, elbowPosL, handPosL, strokeThickness * 0.85, this.pose.hunchedTired > 0.5 ? NEON_COLOR : NEON_BACK);
-      drawSeamlessArm(shoulder, elbowPosR, handPosR, strokeThickness, NEON_COLOR);
+      drawSeamlessArm(ctx, shoulder, elbowPosL, handPosL, strokeThickness * 0.85, this.pose.hunchedTired > 0.5 ? C.NEON_MAIN : C.NEON_SECONDARY);
+      drawSeamlessArm(ctx, shoulder, elbowPosR, handPosR, strokeThickness, C.NEON_MAIN);
 
       if (this.pose.hunchedTired > 0.3) {
-        ctx.fillStyle = NEON_COLOR;
+        ctx.fillStyle = C.NEON_MAIN;
         this.sweatParticles.forEach(p => {
           ctx.globalAlpha = p.alpha * this.pose.hunchedTired;
           ctx.fillRect(p.x, p.y, 2, 4);
@@ -492,7 +476,7 @@
       if (this.hasBox) {
         ctx.save();
         ctx.fillStyle = '#222222';
-        ctx.strokeStyle = NEON_COLOR;
+        ctx.strokeStyle = C.NEON_MAIN;
         ctx.lineWidth = 1.5;
         const boxW = 10 * Math.abs(cosY), boxH = 9;
         const boxAlpha = Math.max(0.2, (1 - this.pose.hunchedTired * 0.6));
@@ -502,249 +486,17 @@
         ctx.restore();
       }
 
-      drawFace(head.x, head.y, this.angleY, this.pose.hunchedTired, time);
+      drawFace(ctx, head.x, head.y, this.angleY, this.pose.hunchedTired, time);
     }
   }
 
-  // === WORKERS DI SERVER KIRI & KANAN ===
-  function drawMechanic(time) {
-    if (!ctx) return;
-    const x = (width < 460) ? 38 : 52;
-    const reach = serverWorkers.left.reachOut;
-    const bodyLean = Math.sin(time * 2.5) * 0.08 * (1 - reach) + (reach * 0.15);
-    const pelvis = { x: x, y: floorY - 35 };
-    const chest = { x: x - Math.sin(bodyLean) * 12 + (reach * 4), y: pelvis.y - 15 };
-    const neck = { x: chest.x - 4, y: chest.y - 6 };
-    const head = { x: neck.x - 1, y: neck.y - 7 };
-
-    drawBranchLeg(pelvis, { x: x - 6, y: floorY - 15 }, { x: x - 10, y: floorY }, 2.8, NEON_COLOR);
-    drawUnifiedSpineAndLeg(neck, chest, pelvis, { x: x + 6, y: floorY - 15 }, { x: x + 10, y: floorY }, 2.8, NEON_COLOR);
-
-    ctx.beginPath();
-    ctx.arc(head.x, head.y, 8.0, 0, Math.PI * 2);
-    ctx.fillStyle = NEON_COLOR;
-    ctx.fill();
-
-    const pull = Math.sin(time * 3.5);
-    const elbow_Work = { x: chest.x - 10 + pull * 3.5, y: chest.y + 6 + pull * 2 };
-    const hand_Work = { x: elbow_Work.x - 8, y: elbow_Work.y - 4 };
-
-    const elbow_Reach = { x: chest.x + 8, y: chest.y + 4 };
-    const hand_Reach = { x: chest.x + 20, y: chest.y + 2 };
-
-    const elbow = {
-      x: numLerp(elbow_Work.x, elbow_Reach.x, reach),
-      y: numLerp(elbow_Work.y, elbow_Reach.y, reach)
-    };
-    const hand = {
-      x: numLerp(hand_Work.x, hand_Reach.x, reach),
-      y: numLerp(hand_Work.y, hand_Reach.y, reach)
-    };
-
-    drawSeamlessArm(chest, elbow, hand, 2.8, NEON_COLOR);
-
-    if (reach < 0.3) {
-      ctx.strokeStyle = NEON_COLOR;
-      ctx.lineWidth = 1.8;
-      ctx.strokeRect(hand.x - 4, hand.y - 4, 4, 4);
-
-      if (pull > 0.45) {
-        ctx.fillStyle = NEON_COLOR;
-        ctx.fillRect(hand.x - 6 + Math.random() * 4, hand.y - 6 + Math.random() * 4, 2, 2);
-      }
-    }
-
-    drawFace(head.x, head.y, (reach > 0.3 ? Math.PI : 0), 0, time);
-  }
-
-  function drawCableTech(time) {
-    if (!ctx) return;
-    const x = width - ((width < 460) ? 38 : 52);
-    const reach = serverWorkers.right.reachOut;
-    const bodyLean = Math.sin(time * 2) * 0.05 * (1 - reach) - (reach * 0.15);
-    const pelvis = { x: x, y: floorY - 35 };
-    const chest = { x: x + Math.sin(bodyLean) * 10 - (reach * 4), y: pelvis.y - 15 };
-    const neck = { x: chest.x + 3, y: chest.y - 6 };
-    const head = { x: neck.x + 1, y: neck.y - 7 };
-
-    drawBranchLeg(pelvis, { x: x - 5, y: floorY - 15 }, { x: x - 8, y: floorY }, 2.8, NEON_COLOR);
-    drawUnifiedSpineAndLeg(neck, chest, pelvis, { x: x + 6, y: floorY - 15 }, { x: x + 8, y: floorY }, 2.8, NEON_COLOR);
-
-    ctx.beginPath();
-    ctx.arc(head.x, head.y, 8.0, 0, Math.PI * 2);
-    ctx.fillStyle = NEON_COLOR;
-    ctx.fill();
-
-    const elbow_Work = { x: chest.x + 8, y: chest.y + 5 };
-    const hand_Work = { x: elbow_Work.x + 6, y: elbow_Work.y + (Math.sin(time * 3) * 3) };
-
-    const elbow_Reach = { x: chest.x - 8, y: chest.y + 4 };
-    const hand_Reach = { x: chest.x - 20, y: chest.y + 2 };
-
-    const elbow = {
-      x: numLerp(elbow_Work.x, elbow_Reach.x, reach),
-      y: numLerp(elbow_Work.y, elbow_Reach.y, reach)
-    };
-    const hand = {
-      x: numLerp(hand_Work.x, hand_Reach.x, reach),
-      y: numLerp(hand_Work.y, hand_Reach.y, reach)
-    };
-
-    drawSeamlessArm(chest, elbow, hand, 2.8, NEON_COLOR);
-
-    if (reach < 0.3) {
-      ctx.beginPath();
-      ctx.moveTo(hand.x, hand.y);
-      ctx.quadraticCurveTo(hand.x + 8, hand.y + 8, width - 20, floorY - 26);
-      ctx.strokeStyle = '#777777';
-      ctx.lineWidth = 1.4;
-      ctx.setLineDash([2, 2]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    drawFace(head.x, head.y, (reach > 0.3 ? 0 : Math.PI), 0, time);
-  }
-
-  function drawEnvironment(time) {
-    if (!ctx) return;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(0, floorY);
-    ctx.lineTo(width, floorY);
-    ctx.stroke();
-
-    const rackW = (width < 460) ? 28 : 34;
-    drawServerRack(8, floorY - 56, rackW, 56, time, 0);
-    drawServerRack(width - (rackW + 8), floorY - 56, rackW, 56, time, 1.5);
-  }
-
-  function drawServerRack(x, y, rw, rh, time, offset) {
-    if (!ctx) return;
-    ctx.fillStyle = '#101014';
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-    ctx.lineWidth = 1.2;
-    ctx.fillRect(x, y, rw, rh);
-    ctx.strokeRect(x, y, rw, rh);
-
-    const slotCount = 4;
-    for (let i = 0; i < slotCount; i++) {
-      const slotY = y + 4 + i * 12.5;
-      ctx.fillStyle = '#1A1A22';
-      ctx.fillRect(x + 2, slotY, rw - 4, 9);
-
-      const blink = Math.sin(time * 4 + i + offset) > 0;
-      ctx.fillStyle = blink ? (i === 0 ? '#E11D48' : NEON_COLOR) : '#444444';
-      ctx.beginPath();
-      ctx.arc(x + 6, slotY + 4.5, 1.4, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = !blink ? NEON_COLOR : '#444444';
-      ctx.beginPath();
-      ctx.arc(x + rw - 6, slotY + 4.5, 1.4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  let runners = [];
-
-  function initRunners() {
-    if (width < 460) {
-      runners = [
-        new BiomechanicalRunner({ startX: 68, gaitType: 'sprint', facing: 1 }),
-        new BiomechanicalRunner({ startX: Math.max(120, width - 85), gaitType: 'jog', facing: -1 })
-      ];
-    } else {
-      runners = [
-        new BiomechanicalRunner({ startX: 95, gaitType: 'fatigue_cargo', facing: 1 }),
-        new BiomechanicalRunner({ startX: 140, gaitType: 'sprint', facing: 1 }),
-        new BiomechanicalRunner({ startX: Math.max(220, width - 130), gaitType: 'jog', facing: -1 }),
-        new BiomechanicalRunner({ startX: 220, gaitType: 'slow_walk', facing: 1, hasBox: false })
-      ];
-    }
-  }
-
-  function resize() {
-    if (!container || !canvas) return;
-    width = container.clientWidth || 720;
-    height = container.clientHeight || 100;
-    dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    if (ctx) {
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(dpr, dpr);
-    }
-  }
-
-  function renderLoop(now) {
-    if (!isRunning) return;
-    const dt = Math.min(0.05, (now - lastTime) / 1000);
-    lastTime = now;
-    const time = now / 1000;
-
-    if (ctx) {
-      ctx.clearRect(0, 0, width, height);
-      drawEnvironment(time);
-      drawMechanic(time);
-      drawCableTech(time);
-
-      runners.forEach(runner => {
-        runner.update(dt, time);
-        runner.draw(time);
-      });
-    }
-
-    animFrameId = requestAnimationFrame(renderLoop);
-  }
-
-  function setupElements() {
-    wrapper = document.getElementById('ai-stickman-swarm-container');
-    container = document.getElementById('stageContainer') || wrapper;
-    canvas = document.getElementById('physicsCanvas');
-    if (canvas) {
-      ctx = canvas.getContext('2d');
-    }
-  }
-
-  window.startStickmanSwarmAnimation = () => {
-    setupElements();
-    if (!wrapper || !canvas) return;
-    
-    wrapper.style.display = 'block';
-    resize();
-    initRunners();
-    
-    if (!isRunning) {
-      isRunning = true;
-      lastTime = performance.now();
-      if (animFrameId) cancelAnimationFrame(animFrameId);
-      animFrameId = requestAnimationFrame(renderLoop);
-    }
+  window.StickmanPhysics = {
+    numLerp,
+    expLerp,
+    drawUnifiedSpineAndLeg,
+    drawBranchLeg,
+    drawSeamlessArm,
+    drawFace,
+    BiomechanicalRunner
   };
-
-  window.stopStickmanSwarmAnimation = () => {
-    isRunning = false;
-    if (animFrameId) {
-      cancelAnimationFrame(animFrameId);
-      animFrameId = null;
-    }
-    if (wrapper) {
-      wrapper.style.display = 'none';
-    }
-    if (ctx && canvas) {
-      ctx.clearRect(0, 0, width, height);
-    }
-  };
-
-  window.addEventListener('resize', () => {
-    if (isRunning) {
-      resize();
-    }
-  });
-
-  document.addEventListener('DOMContentLoaded', () => {
-    setupElements();
-  });
 })();
