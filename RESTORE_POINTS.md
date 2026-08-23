@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.73.0`
-- **Iterasi:** `Iterasi 273`
-- **Tanggal Rilis:** 23 Agustus 2026 (11:00 WIB)
+- **Versi Terkini:** `v2.74.0`
+- **Iterasi:** `Iterasi 274`
+- **Tanggal Rilis:** 23 Agustus 2026 (11:02 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (374.5 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (374.8 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.74.0** | 274 | 23-08-2026 11:02 | `v2.74.0` | **Velvety Smooth Left-to-Right Sweeping Neon Aura Glow Around Prompt Container (Matching Reference Style):** Mengembalikan bentuk pendar neon agar membungkus rapi sekeliling perimeter kotak input prompt (`inset: -4px; border-radius: 24px; filter: blur(20px);`) persis seperti gaya visual referensi, dilengkapi dengan animasi sapuan berkas cahaya neon gradien yang bergerak halus dari kiri ke kanan dan sebaliknya (`@keyframes glowSweepLeftRight` 4s cubic-bezier). Memberikan pendaran cybernetic yang hidup, elegan, dan jernih tanpa mengotori area teks. | 🟢 STABLE | `./restore.sh v2.74.0` |
 | **v2.73.0** | 273 | 23-08-2026 11:00 | `v2.73.0` | **Expansive Panoramic Horizon Wave Neon Glow Across Full Bottom Screen Area:** Memperluas radius dan jangkauan pendar glow neon menjadi gelombang panorama luas (`width: min(96vw, 1280px); height: 130px;`) yang membentang di sepanjang zona bawah layar sesuai bounding box pengguna. Mengimplementasikan `@keyframes neonPanoramicWave` (5s loop) dengan multi-lobe radial gradient yang mengalir lembut ke kiri dan ke kanan seperti gelombang aura cybernetic. | 🟢 STABLE | `./restore.sh v2.73.0` |
 | **v2.72.0** | 272 | 23-08-2026 10:58 | `v2.72.0` | **Dynamic Waving Ambient Neon Floor Aura with Enhanced Luminance:** Menambahkan animasi gelombang bergeser dinamis (`neonFloorWave` 3.8s) pada pendar glow neon di lantai bawah kotak input prompt, serta meningkatkan sedikit intensitas dan sebaran radiasi gradien neon lime (`rgba(206, 241, 40, 0.42)`) agar aura terlihat hidup, organik, dan elegan tanpa terasa diam/statis. | 🟢 STABLE | `./restore.sh v2.72.0` |
 | **v2.71.0** | 271 | 23-08-2026 10:57 | `v2.71.0` | **Refine AI Thinking Ambient Neon Underglow to Soft Bottom-Edge Floor Aura:** Menggeser sumber pendar glow neon agar memancar lembut dari bagian paling bawah / lantai kotak input prompt (`bottom: -18px; left: -20px; right: -20px;`) alih-alih bertumpuk di tengah textarea. Mempertahankan warna dark frosted glass murni di area teks agar tidak keruh, serta memberikan efek pendar underglow gradien lembut yang bernapas alami. | 🟢 STABLE | `./restore.sh v2.71.0` |

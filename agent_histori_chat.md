@@ -2296,16 +2296,30 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.73.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 274: Pendar Neon Halus Membungkus Kotak Input Sesuai Style Referensi dengan Animasi Gerak Kiri-Kanan
+- **Kebutuhan Pengguna**:
+  - Mengembalikan bentuk pendaran neon agar membungkus rapi sekeliling perimeter kotak input prompt persis seperti style visual referensi (border neon lembut & aura halus merata di sekeliling container).
+  - Menerapkan animasi berkas cahaya neon gradien yang bergerak halus bolak-balik dari kiri ke kanan.
+- **Solusi & Peningkatan**:
+  1. **Styling Aura Presisi & Sapuan Kiri-Kanan (`newtab.css` & `sidepanel.css`)**:
+     - Mengatur `inset: -4px; border-radius: 24px; filter: blur(20px);` dengan border halus `1px solid rgba(206, 241, 40, 0.48)`.
+     - Menerapkan linear-gradient multi-stop 90° dengan `background-size: 200% 100%`.
+     - Mengimplementasikan `@keyframes glowSweepLeftRight` (4 detik `cubic-bezier(0.45, 0.05, 0.55, 0.95)`) yang mengalirkan hotspot cahaya neon lime secara lembut bolak-balik dari kiri ke kanan.
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.74.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **Panoramic Neon Wave Horizon Glow:** Expansive 1280px-wide sweeping multi-lobe ambient underglow wave (`neonPanoramicWave` 5s) across the full lower screen viewport.
+- **Left-to-Right Sweeping Neon Aura Glow:** Smooth perimeter aura glow (`glowSweepLeftRight` 4s) gliding continuously left-to-right around the prompt container during AI generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.73.0` (Iterasi 273).
+  - **Versi Terkini:** `v2.74.0` (Iterasi 274).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
