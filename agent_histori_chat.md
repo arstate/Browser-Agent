@@ -2748,6 +2748,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 323: Full Rounded Pill Styling & Frosted Glass Blur for Search Engine Selector
+- **Kebutuhan Pengguna**:
+  - Menyamakan desain tombol search engine dan menu dropup-nya dengan style tombol Agent Mode selection: full rounded capsule pill, tinggi presisi, frosted glass blur, dan minimalis clean.
+- **Solusi & Peningkatan**:
+  1. **Matching Search Engine Trigger Button (`newtab.css` & `sidepanel.css`)**:
+     - Mengubah `.btn-search-engine-trigger` menjadi full rounded capsule pill `border-radius: 9999px`, tinggi `28px` di New Tab (dan `22px` di Sidepanel), background `#27272A`, border `rgba(255,255,255,0.12)`, font `11.5px` weight `600`.
+     - Chevron rotasi smooth 180deg saat menu dibuka (`.btn-search-engine-trigger.open`).
+  2. **Frosted Glass Blur Dropup & Full Rounded Items**:
+     - `.search-engine-dropup` menggunakan frosted glassmorphism blur `36px`, border radius `18px`, dan subtle shadow `0 8px 24px -4px rgba(0,0,0,0.35)`.
+     - `.engine-dropup-item` diubah menjadi full rounded capsule pill `border-radius: 9999px` dengan tinggi presisi `28px`, circular icon `18px` (`border-radius: 50%`), dan checkmark lime aktif yang serasi.
+  3. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.123.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 322: Exact Height & Proportions Match for Mode Switcher Dropup Items
 - **Kebutuhan Pengguna**:
   - Menyamakan tinggi item menu opsi di dalam container dropup agar tingginya presisi sama seperti tombol trigger pill di bawahnya.

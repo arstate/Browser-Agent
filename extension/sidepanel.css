@@ -2949,15 +2949,44 @@ body.stickman-active .chat-messages {
   font-weight: 600;
 }
 
+.search-engine-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  background: transparent;
+  padding: 0;
+  border: none;
+}
+
 /* Web Search Engine Dropup Selector in Sidepanel */
 .btn-search-engine-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border-radius: 9999px;
   background: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
 }
 
 .btn-search-engine-trigger:hover {
   background: #1E293B;
+  border-color: rgba(206, 241, 40, 0.35);
+}
+
+.btn-search-engine-trigger.open {
+  border-color: var(--accent-lime);
+  box-shadow: 0 0 10px rgba(206, 241, 40, 0.15);
 }
 
 .btn-search-engine-trigger .search-engine-icon {
@@ -2970,8 +2999,8 @@ body.stickman-active .chat-messages {
 }
 
 .btn-search-engine-trigger .engine-trigger-logo {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   object-fit: contain;
   display: block;
 }
@@ -2984,10 +3013,11 @@ body.stickman-active .chat-messages {
 }
 
 .btn-search-engine-trigger .search-engine-chevron {
-  width: 9px;
-  height: 9px;
+  width: 9px !important;
+  height: 9px !important;
   stroke: #FFFFFF;
-  transition: transform 0.2s ease;
+  color: #FFFFFF;
+  transition: transform 0.18s ease;
   margin-left: 1px;
 }
 
@@ -2995,21 +3025,23 @@ body.stickman-active .chat-messages {
   transform: rotate(180deg);
 }
 
+/* Search Engine Dropup Menu in Sidepanel (Frosted Translucent Glassmorphism Blur) */
 .search-engine-dropup {
   position: absolute;
   bottom: calc(100% + 8px);
   right: 0;
   left: auto;
-  width: 185px;
-  background: #18181B;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  min-width: 145px;
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 18px;
   padding: 5px;
-  box-shadow: 0 20px 48px -4px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.28);
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   z-index: 1000;
   animation: dropupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -3018,65 +3050,84 @@ body.stickman-active .chat-messages {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 8px;
+  gap: 6px;
+  height: 22px;
+  box-sizing: border-box;
+  padding: 0 9px 0 4px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
   background: transparent;
-  border: none;
   cursor: pointer;
   text-align: left;
   transition: all 0.15s ease;
   width: 100%;
-  box-sizing: border-box;
-  color: #CBD5E1;
+  color: #E2E8F0;
 }
 
 .engine-dropup-item:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF;
 }
 
 .engine-dropup-item.active {
-  background: rgba(206, 241, 40, 0.12);
+  background: rgba(206, 241, 40, 0.14);
+  border-color: rgba(206, 241, 40, 0.4);
   color: var(--accent-lime);
-}
-
-.engine-dropup-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 7px 10px;
-  border-radius: 8px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-  width: 100%;
-  box-sizing: border-box;
-  color: #CBD5E1;
 }
 
 .engine-dropup-item .engine-item-left {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 6px;
   min-width: 0;
 }
 
-.engine-dropup-item .engine-item-logo {
+.engine-dropup-item .engine-item-icon-wrapper {
   width: 15px;
   height: 15px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.engine-dropup-item.active .engine-item-icon-wrapper {
+  background: rgba(206, 241, 40, 0.22);
+}
+
+.engine-dropup-item .engine-item-logo {
+  width: 10px;
+  height: 10px;
   object-fit: contain;
   display: block;
   flex-shrink: 0;
-  border-radius: 2px;
 }
 
 .engine-dropup-item .engine-item-name {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
-  color: inherit;
+  color: #FFFFFF;
+  line-height: 1;
   white-space: nowrap;
+}
+
+.engine-dropup-item.active .engine-item-name {
+  color: #CEF128;
+}
+
+.engine-dropup-item .engine-item-check {
+  color: #CEF128;
+  opacity: 0;
+  width: 10px !important;
+  height: 10px !important;
+  stroke: #CEF128;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.engine-dropup-item.active .engine-item-check {
+  opacity: 1;
 }
 
 /* Plan Approval Card & Docked Container Mode (Replaces input prompt during plan confirmation) */
