@@ -3565,37 +3565,37 @@ function initSwitchTabDropdown() {
 const SEARCH_ENGINES = {
   google: {
     name: 'Google',
-    icon: '🔍',
+    logo: 'icons/search-engines/google.svg',
     placeholder: 'Cari di Google atau ketik URL web...',
     searchUrl: (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`
   },
   duckduckgo: {
     name: 'DuckDuckGo',
-    icon: '🦆',
+    logo: 'icons/search-engines/duckduckgo.svg',
     placeholder: 'Cari di DuckDuckGo atau ketik URL web...',
     searchUrl: (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`
   },
   bing: {
     name: 'Bing',
-    icon: '🌐',
+    logo: 'icons/search-engines/bing.svg',
     placeholder: 'Cari di Bing atau ketik URL web...',
     searchUrl: (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
   },
   brave: {
     name: 'Brave Search',
-    icon: '🦁',
+    logo: 'icons/search-engines/brave.svg',
     placeholder: 'Cari di Brave Search atau ketik URL web...',
     searchUrl: (q) => `https://search.brave.com/search?q=${encodeURIComponent(q)}`
   },
   ecosia: {
     name: 'Ecosia',
-    icon: '🌲',
+    logo: 'icons/search-engines/ecosia.svg',
     placeholder: 'Cari di Ecosia atau ketik URL web...',
     searchUrl: (q) => `https://www.ecosia.org/search?q=${encodeURIComponent(q)}`
   },
   yandex: {
     name: 'Yandex',
-    icon: '🔴',
+    logo: 'icons/search-engines/yandex.svg',
     placeholder: 'Cari di Yandex atau ketik URL web...',
     searchUrl: (q) => `https://yandex.com/search/?text=${encodeURIComponent(q)}`
   }
@@ -3607,6 +3607,11 @@ function setSearchEngine(engineKey) {
   if (!SEARCH_ENGINES[engineKey]) engineKey = 'google';
   currentSearchEngine = engineKey;
   const info = SEARCH_ENGINES[engineKey];
+
+  const iconEl = document.getElementById('search-engine-icon');
+  if (iconEl && info.logo) {
+    iconEl.innerHTML = `<img class="engine-trigger-logo" src="${info.logo}" alt="${escapeHtml(info.name)}" width="13" height="13">`;
+  }
 
   const labelEl = document.getElementById('search-engine-label');
   if (labelEl) labelEl.textContent = info.name;

@@ -2748,6 +2748,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 304: Official Vector SVG Brand Logos & Folder Organization for Search Engines
+- **Kebutuhan Pengguna**:
+  - Mengorganisir logo mesin pencari ke dalam folder rapi di project dan memperbarui tampilan icon logo mesin pencari pada menu dropdown dan trigger button menggunakan SVG resmi dari `/home/arya/Downloads/search-engine-logos`.
+- **Solusi & Peningkatan**:
+  1. **Folder Organization (`extension/icons/search-engines/`)**:
+     - Memindahkan dan merapikan seluruh file SVG resmi (`google.svg`, `duckduckgo.svg`, `bing.svg`, `brave.svg`, `ecosia.svg`, `yandex.svg`) ke dalam subfolder khusus `extension/icons/search-engines/`.
+  2. **UI Integration (`newtab.html`, `sidepanel.html`, `sidepanel.js`, CSS)**:
+     - Memperbarui `SEARCH_ENGINES` config dengan path logo SVG untuk setiap mesin pencari.
+     - Mengubah item menu dropup dan tombol trigger `#btn-search-engine-trigger` agar menampilkan logo brand vektor berwarna tajam dan presisi.
+  3. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.104.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 303: Smooth Morphing Animation & Dynamic Chat Clearance Spacing for Stickman Swarm
 - **Kebutuhan Pengguna**:
   - Memberikan jarak otomatis di atas container stickman ketika animasi aktif agar pesan/kartu aksi agent tidak tertutup atau menempel rapat di atas panggung stickman, dengan transisi kembalinya yang smooth/tidak patah saat selesai.

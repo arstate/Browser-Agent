@@ -2037,7 +2037,16 @@ body.has-messages #btn-mode-websearch {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-lime);
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.btn-search-engine-trigger .engine-trigger-logo {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+  display: block;
 }
 
 .btn-search-engine-trigger .search-engine-label {
@@ -2064,7 +2073,7 @@ body.has-messages #btn-mode-websearch {
   bottom: calc(100% + 8px);
   right: 0;
   left: auto;
-  width: 175px;
+  width: 185px;
   background: #18181B;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
@@ -2082,7 +2091,7 @@ body.has-messages #btn-mode-websearch {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-radius: 8px;
   background: transparent;
   border: none;
@@ -2104,19 +2113,27 @@ body.has-messages #btn-mode-websearch {
   color: var(--accent-lime);
 }
 
+.engine-dropup-item .engine-item-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.engine-dropup-item .engine-item-logo {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+
 .engine-dropup-item .engine-item-name {
   font-size: 12px;
   font-weight: 600;
   color: inherit;
-}
-
-.engine-dropup-item .engine-item-check {
-  display: none;
-  color: var(--accent-lime);
-}
-
-.engine-dropup-item.active .engine-item-check {
-  display: block;
+  white-space: nowrap;
 }
 
 .engine-dropup-item .engine-item-check {

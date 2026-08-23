@@ -2940,7 +2940,16 @@ body.stickman-active .chat-messages {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-lime);
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.btn-search-engine-trigger .engine-trigger-logo {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+  display: block;
 }
 
 .btn-search-engine-trigger .search-engine-label {
@@ -2967,7 +2976,7 @@ body.stickman-active .chat-messages {
   bottom: calc(100% + 8px);
   right: 0;
   left: auto;
-  width: 175px;
+  width: 185px;
   background: #18181B;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
@@ -3007,19 +3016,43 @@ body.stickman-active .chat-messages {
   color: var(--accent-lime);
 }
 
+.engine-dropup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+  color: #CBD5E1;
+}
+
+.engine-dropup-item .engine-item-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.engine-dropup-item .engine-item-logo {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+
 .engine-dropup-item .engine-item-name {
   font-size: 12px;
   font-weight: 600;
   color: inherit;
-}
-
-.engine-dropup-item .engine-item-check {
-  display: none;
-  color: var(--accent-lime);
-}
-
-.engine-dropup-item.active .engine-item-check {
-  display: block;
+  white-space: nowrap;
 }
 
 /* Plan Approval Card & Docked Container Mode (Replaces input prompt during plan confirmation) */

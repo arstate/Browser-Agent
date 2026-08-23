@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.103.0`
-- **Iterasi:** `Iterasi 303`
-- **Tanggal Rilis:** 24 Agustus 2026 (00:37 WIB)
+- **Versi Terkini:** `v2.104.0`
+- **Iterasi:** `Iterasi 304`
+- **Tanggal Rilis:** 24 Agustus 2026 (00:41 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.2 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.3 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.104.0** | 304 | 24-08-2026 00:41 | `v2.104.0` | **Official Vector SVG Brand Logos & Folder Organization for Search Engines:** Mengorganisir aset logo vektor SVG resmi untuk seluruh mesin pencari (`google.svg`, `duckduckgo.svg`, `bing.svg`, `brave.svg`, `ecosia.svg`, `yandex.svg`) ke dalam folder khusus `extension/icons/search-engines/`. Mengintegrasikan logo asli tersebut pada dropup menu item selector dan tombol trigger `#btn-search-engine-trigger` sehingga tampil tajam, autentik, profesional, dan kaya warna. | 🟢 STABLE | `./restore.sh v2.104.0` |
 | **v2.103.0** | 303 | 24-08-2026 00:37 | `v2.103.0` | **Smooth Morphing Animation & Dynamic Chat Clearance Spacing for Stickman Swarm:** Mengimplementasikan transisi morphing mulus (`max-height: 0` ➔ `50px`, `transform: translateY` + `scaleY`, `opacity`) pada kemunculan dan kolaps panggung animasi stickman swarm (`.ai-stickman-swarm-container`) sehingga tidak patah/abrupt saat mulai maupun selesai. Menambahkan jarak dinamis otomatis dengan transisi cubic-bezier pada area chat bawah (`.fullscreen-chat-main` padding-bottom: 235px & `.chat-messages` padding-bottom) saat animasi aktif, sehingga pesan/kartu aksi agent tidak tertutup atau menempel rapat di atas kanvas stickman. | 🟢 STABLE | `./restore.sh v2.103.0` |
 | **v2.102.0** | 302 | 24-08-2026 00:33 | `v2.102.0` | **Fix Add Model Row Bug in Options & Settings:** Memperbaiki bug di mana tombol `+ Tambah Model Baru` tidak menambahkan baris model karena fungsi `saveAllConfig` sebelumnya menyaring/mengabaikan baris dengan string ID kosong saat auto-save dipicu, sehingga event `storage.onChanged` merender ulang dan menghapus baris baru sebelum pengguna sempat mengetik. Menjaga baris draft model tetap ada di array konfigurasi dan mencegah render ulang menimpa fokus input saat pengguna sedang mengetik. | 🟢 STABLE | `./restore.sh v2.102.0` |
 | **v2.101.0** | 301 | 24-08-2026 00:31 | `v2.101.0` | **Fix Double-Track Nesting & Perfectly Flush Symmetrical Pill Alignment:** Menghilangkan double-border dan double-background gelap yang terjadi karena `#search-engine-wrapper` sebelumnya didefinisikan sebagai track well di dalam `.chat-input-header-right` yang sudah memiliki track tersendiri. Mengubah `#search-engine-wrapper` menjadi transparan (`background: transparent; border: none; padding: 0`) dan menata `#btn-search-engine-trigger` menjadi satu pill tunggal yang duduk flush presisi di dalam track header, dengan icon-text-chevron baseline `line-height: 1` yang rapi dan simetris 100% dengan toggle kiri. | 🟢 STABLE | `./restore.sh v2.101.0` |
