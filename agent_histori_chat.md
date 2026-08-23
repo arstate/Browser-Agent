@@ -2748,6 +2748,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 318: Minimalist Frosted Glass Blur Dropup for Mode Switcher
+- **Kebutuhan Pengguna**:
+  - Menghapus teks deskripsi di bawah judul mode agar tampilan dropup lebih bersih, minimalis, dan ringkas.
+  - Menerapkan efek frosted glass blur yang kuat pada container dropup sehingga elemen background di belakangnya menjadi blur dan estetik.
+- **Solusi & Peningkatan**:
+  1. **Minimalist Clean Item Markup (`newtab.html` & `sidepanel.html`)**:
+     - Menghapus elemen `.mode-option-desc` pada seluruh tombol mode dropup.
+     - Menyisakan ikon representatif dan judul mode ringkas (`Agent Mode`, `Chat Mode`, `Web Search`).
+  2. **Frosted Glassmorphism Blur Container (`newtab.css` & `sidepanel.css`)**:
+     - Mengatur container `.chat-mode-dropup-menu` dengan `background: rgba(18, 18, 22, 0.72)`, `backdrop-filter: blur(32px) saturate(190%)`, border `rgba(255, 255, 255, 0.12)`, radius 14px, dan bayangan lembut.
+     - Mengatur ukuran item lebih compact dan presisi (`min-width: 165px`).
+  3. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.118.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 317: Consolidated Single Pill Button with Dropup Menu for Mode Switcher
 - **Kebutuhan Pengguna**:
   - Mengubah 3 tombol mode yang berjajar di atas input chat (`Agent Mode`, `Chat Mode`, `Web Search`) menjadi 1 tombol pill tunggal yang bersih dan rapi, di mana saat diklik akan memunculkan menu dropup pilihan mode.
