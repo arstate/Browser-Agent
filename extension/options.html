@@ -108,9 +108,28 @@
               </div>
             </div>
             <div class="hero-provider-actions">
-              <div class="auto-save-status-badge" id="auto-save-status-badge" title="Semua perubahan konfigurasi langsung tersimpan otomatis secara realtime ke database">
+              <button type="button" class="btn-export-settings" id="btn-export-all-settings" title="Ekspor dan Backup Seluruh Pengaturan ke File JSON">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Export Settings</span>
+              </button>
+
+              <button type="button" class="btn-import-settings" id="btn-import-all-settings" title="Impor & Pulihkan Pengaturan dari File Backup JSON">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span>Import Settings</span>
+              </button>
+              <input type="file" id="input-import-settings-file" accept=".json" style="display: none;">
+
+              <div class="auto-save-status-badge" id="auto-save-status-badge" title="Semua perubahan konfigurasi langsung tersimpan otomatis secara realtime ke database SQLite dan Local Storage">
                 <span class="save-status-dot"></span>
-                <span id="auto-save-status-text">Tersimpan otomatis</span>
+                <span id="auto-save-status-text">Tersimpan otomatis (SQLite & Storage)</span>
               </div>
             </div>
           </div>
@@ -517,6 +536,62 @@
               </div>
 
               <div id="test-connection-result" class="test-result-box" style="display: none;"></div>
+            </div>
+
+            <!-- Dedicated Backup & Restore Settings Card -->
+            <div class="bento-card" id="card-backup-restore">
+              <div class="card-header">
+                <div class="header-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2>Backup &amp; Restore Pengaturan (SQLite &amp; JSON)</h2>
+                  <p>Cadangkan seluruh konfigurasi model, API key, multi-agent, skills, dan memory ke file JSON atau sinkronkan ke database SQLite lokal.</p>
+                </div>
+              </div>
+
+              <div class="backup-actions-grid">
+                <div class="backup-action-box">
+                  <div class="backup-action-info">
+                    <h4>Ekspor Semua Pengaturan</h4>
+                    <p>Unduh berkas cadangan lengkap (.json) untuk dipindahkan ke laptop lain atau sebagai arsip aman.</p>
+                  </div>
+                  <button type="button" class="btn-backup-export" id="btn-export-backup-card">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span>Download Backup (.json)</span>
+                  </button>
+                </div>
+
+                <div class="backup-action-box">
+                  <div class="backup-action-info">
+                    <h4>Impor &amp; Pulihkan Pengaturan</h4>
+                    <p>Pilih file cadangan (.json) untuk memulihkan seluruh pengaturan, model prioritas, skills, dan memori secara instan.</p>
+                  </div>
+                  <button type="button" class="btn-backup-import" id="btn-import-backup-card">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span>Pilih File Backup JSON</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="backup-sync-status-row">
+                <div class="sync-status-item">
+                  <span class="sync-dot active"></span>
+                  <span>Database SQLite: <strong>Tersinkronisasi (~/.browser-agent/chat_history.db)</strong></span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -151,8 +151,31 @@ def init_db():
                 )
             """)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_updated_at ON sessions(updated_at DESC)")
+
+            # Dedicated Settings Table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS settings (
+                    key TEXT PRIMARY KEY,
+                    value_json TEXT NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+
+            # Dedicated Model Configurations Table (Separated from general settings)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS model_configs (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    model_id TEXT NOT NULL,
+                    priority_order INTEGER DEFAULT 0,
+                    is_primary INTEGER DEFAULT 0,
+                    config_json TEXT DEFAULT '{}',
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_priority ON model_configs(priority_order ASC)")
             conn.commit()
-        log(f"SQLite database initialized at {DB_PATH}, directories ready")
+        log(f"SQLite database initialized at {DB_PATH}, tables & directories ready")
     except Exception as e:
         log(f"Failed to initialize SQLite database: {e}")
 
@@ -577,6 +600,153 @@ def db_clear_all():
         return {"status": "error", "error": str(e)}
 
 # ==========================================
+# Dedicated Settings & Model Configs SQLite Handlers
+# ==========================================
+def db_save_setting(key, value):
+    try:
+        now = int(time.time() * 1000)
+        val_json = json.dumps(value) if not isinstance(value, str) else value
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO settings (key, value_json, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET
+                    value_json=excluded.value_json,
+                    updated_at=excluded.updated_at
+            """, (str(key), str(val_json), int(now)))
+            conn.commit()
+        return {"status": "ok", "key": key, "updated_at": now}
+    except Exception as e:
+        log(f"Error in db_save_setting: {e}")
+        return {"status": "error", "error": str(e)}
+
+def db_get_setting(key):
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM settings WHERE key = ?", (str(key),))
+            row = cursor.fetchone()
+            if not row:
+                return {"status": "error", "error": "Setting not found"}
+            res = dict(row)
+            try:
+                res["value"] = json.loads(res["value_json"])
+            except Exception:
+                res["value"] = res["value_json"]
+            del res["value_json"]
+            return {"status": "ok", "setting": res}
+    except Exception as e:
+        log(f"Error in db_get_setting: {e}")
+        return {"status": "error", "error": str(e)}
+
+def db_get_all_settings():
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM settings ORDER BY key ASC")
+            rows = cursor.fetchall()
+            settings = {}
+            for r in rows:
+                k = r["key"]
+                try:
+                    settings[k] = json.loads(r["value_json"])
+                except Exception:
+                    settings[k] = r["value_json"]
+            
+            cursor.execute("SELECT * FROM model_configs ORDER BY priority_order ASC")
+            m_rows = cursor.fetchall()
+            models = []
+            for mr in m_rows:
+                m_dict = dict(mr)
+                try:
+                    m_dict["config"] = json.loads(m_dict.get("config_json", "{}"))
+                except Exception:
+                    m_dict["config"] = {}
+                models.append({
+                    "id": m_dict["model_id"],
+                    "name": m_dict["name"],
+                    "priority_order": m_dict["priority_order"],
+                    "is_primary": bool(m_dict["is_primary"])
+                })
+
+            return {"status": "ok", "settings": settings, "models": models}
+    except Exception as e:
+        log(f"Error in db_get_all_settings: {e}")
+        return {"status": "error", "error": str(e)}
+
+def db_save_all_settings(settings_dict):
+    try:
+        now = int(time.time() * 1000)
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            if isinstance(settings_dict, dict):
+                for k, v in settings_dict.items():
+                    val_json = json.dumps(v) if not isinstance(v, str) else v
+                    cursor.execute("""
+                        INSERT INTO settings (key, value_json, updated_at)
+                        VALUES (?, ?, ?)
+                        ON CONFLICT(key) DO UPDATE SET
+                            value_json=excluded.value_json,
+                            updated_at=excluded.updated_at
+                    """, (str(k), str(val_json), int(now)))
+            conn.commit()
+        return {"status": "ok", "updated_at": now}
+    except Exception as e:
+        log(f"Error in db_save_all_settings: {e}")
+        return {"status": "error", "error": str(e)}
+
+def db_save_models(models_list):
+    try:
+        now = int(time.time() * 1000)
+        if not isinstance(models_list, list):
+            models_list = []
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM model_configs")
+            for idx, m in enumerate(models_list):
+                if not isinstance(m, dict):
+                    continue
+                m_id = m.get("id") or m.get("model_id") or f"model_{idx}"
+                name = m.get("name") or m_id
+                model_id_val = m.get("id") or m.get("model_id") or m_id
+                is_primary = 1 if idx == 0 else 0
+                config_json = json.dumps(m)
+                cursor.execute("""
+                    INSERT INTO model_configs (id, name, model_id, priority_order, is_primary, config_json, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (f"{m_id}_{idx}", str(name), str(model_id_val), int(idx), int(is_primary), str(config_json), int(now)))
+            conn.commit()
+        log(f"Saved {len(models_list)} models to SQLite model_configs table")
+        return {"status": "ok", "count": len(models_list)}
+    except Exception as e:
+        log(f"Error in db_save_models: {e}")
+        return {"status": "error", "error": str(e)}
+
+def db_get_models():
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM model_configs ORDER BY priority_order ASC")
+            rows = cursor.fetchall()
+            models = []
+            for r in rows:
+                m_dict = dict(r)
+                models.append({
+                    "id": m_dict["model_id"],
+                    "name": m_dict["name"],
+                    "priority_order": m_dict["priority_order"],
+                    "is_primary": bool(m_dict["is_primary"])
+                })
+            return {"status": "ok", "models": models}
+    except Exception as e:
+        log(f"Error in db_get_models: {e}")
+        return {"status": "error", "error": str(e)}
+
+# ==========================================
 # Local PC RPC Handlers (File & Command Access & SQLite)
 # ==========================================
 def handle_local_rpc(msg):
@@ -602,6 +772,51 @@ def handle_local_rpc(msg):
 
     elif action == "db_get_sessions":
         res = db_get_sessions(msg.get("search", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_get_session":
+        res = db_get_session(msg.get("session_id", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_delete_session":
+        res = db_delete_session(msg.get("session_id", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_clear_all":
+        res = db_clear_all()
+        res["id"] = req_id
+        return res
+
+    elif action == "db_save_setting":
+        res = db_save_setting(msg.get("key"), msg.get("value"))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_get_setting":
+        res = db_get_setting(msg.get("key"))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_get_all_settings":
+        res = db_get_all_settings()
+        res["id"] = req_id
+        return res
+
+    elif action == "db_save_all_settings":
+        res = db_save_all_settings(msg.get("settings", {}))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_save_models":
+        res = db_save_models(msg.get("models", []))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_get_models":
+        res = db_get_models()
         res["id"] = req_id
         return res
 

@@ -485,18 +485,194 @@ async function saveAllConfig(silent = false) {
     config.autoRotateModel = true;
   }
 
+  // 1. Persist to Chrome Local Storage
   await chrome.storage.local.set({ browser_agent_config: config, active_agent_id: activeAgentId });
+
+  // 2. Persist to SQLite Database via Native Host (Separate Model Table + Settings Table)
+  try {
+    sendNativeRpc('db_save_models', { models: config.models }).catch(() => {});
+    sendNativeRpc('db_save_all_settings', {
+      settings: {
+        browser_agent_config: config,
+        active_agent_id: activeAgentId,
+        endpoint: config.endpoint,
+        apiKey: config.apiKey,
+        preset: config.preset,
+        model: config.model,
+        imageModel: config.imageModel,
+        temperature: config.temperature,
+        maxTokens: config.maxTokens,
+        autoRotateModel: config.autoRotateModel
+      }
+    }).catch(() => {});
+  } catch (e) {}
+
   setAutoSaveStatus('saved');
 
   if (!silent) {
-    showToast();
+    showToast("Pengaturan berhasil disimpan dan disinkronkan ke SQLite!");
   }
 }
 
-function showToast() {
+function showToast(customMsg = null) {
   if (!saveToast) return;
+  if (customMsg) {
+    const textSpan = saveToast.querySelector('span');
+    if (textSpan) textSpan.textContent = customMsg;
+  }
   saveToast.style.display = 'flex';
-  setTimeout(() => { saveToast.style.display = 'none'; }, 3000);
+  setTimeout(() => { saveToast.style.display = 'none'; }, 3500);
+}
+
+// =========================================================================
+// Export & Import All Settings (Complete Backup & Restore)
+// =========================================================================
+async function exportAllSettings() {
+  try {
+    setAutoSaveStatus('saving');
+    // Fetch all current storage items
+    const allStorage = await chrome.storage.local.get(null);
+    
+    // Construct clean, comprehensive export payload
+    const exportData = {
+      meta: {
+        app: "Browser Agent",
+        version: "v2.86.0",
+        export_date: new Date().toISOString(),
+        timestamp: Date.now(),
+        type: "browser_agent_all_settings_backup",
+        description: "Backup lengkap seluruh konfigurasi AI, prioritas model, persona agent, skills, memory, dan preferensi UI"
+      },
+      settings: {
+        browser_agent_config: config,
+        active_agent_id: activeAgentId,
+        custom_agents: agentsList,
+        custom_skills: skillsList,
+        custom_memories: memoriesList,
+        browser_agent_exec_mode: allStorage.browser_agent_exec_mode || 'accept',
+        browser_agent_auto_switch_tab: allStorage.browser_agent_auto_switch_tab ?? true,
+        browser_agent_search_engine: allStorage.browser_agent_search_engine || 'google',
+        browser_agent_mode: allStorage.browser_agent_mode || 'agent',
+        show_floating_button: allStorage.show_floating_button ?? true
+      }
+    };
+
+    // Convert to JSON blob
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    // Format date string for filename: YYYY-MM-DD_HHmm
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+    const filename = `browser-agent-settings-backup-${dateStr}.json`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+
+    setAutoSaveStatus('saved');
+    showToast("Seluruh pengaturan berhasil diekspor ke file JSON!");
+  } catch (err) {
+    console.error("Export settings error:", err);
+    alert("Gagal mengekspor pengaturan: " + err.message);
+  }
+}
+
+async function importAllSettings(file) {
+  if (!file) return;
+  try {
+    setAutoSaveStatus('saving');
+    const text = await file.text();
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (e) {
+      alert("File bukan format JSON yang valid!");
+      return;
+    }
+
+    // Support both direct settings dict or wrapped { meta, settings }
+    const settings = parsed.settings || parsed.data || parsed;
+    if (!settings || typeof settings !== 'object') {
+      alert("Format berkas backup pengaturan tidak dikenali!");
+      return;
+    }
+
+    const storageToSet = {};
+
+    // 1. Config & Priority Models
+    if (settings.browser_agent_config) {
+      config = { ...config, ...settings.browser_agent_config };
+      storageToSet.browser_agent_config = config;
+    } else if (settings.endpoint !== undefined || settings.models !== undefined) {
+      config = { ...config, ...settings };
+      storageToSet.browser_agent_config = config;
+    }
+
+    // 2. Multi-Agents
+    if (Array.isArray(settings.custom_agents)) {
+      agentsList = settings.custom_agents;
+      storageToSet.custom_agents = agentsList;
+    }
+
+    // 3. Skills
+    if (Array.isArray(settings.custom_skills)) {
+      skillsList = settings.custom_skills;
+      storageToSet.custom_skills = skillsList;
+    }
+
+    // 4. Memories
+    if (Array.isArray(settings.custom_memories)) {
+      memoriesList = settings.custom_memories;
+      storageToSet.custom_memories = memoriesList;
+    }
+
+    // 5. Active Agent ID
+    if (settings.active_agent_id) {
+      activeAgentId = settings.active_agent_id;
+      storageToSet.active_agent_id = activeAgentId;
+    }
+
+    // 6. UI Preferences
+    if (settings.browser_agent_exec_mode) storageToSet.browser_agent_exec_mode = settings.browser_agent_exec_mode;
+    if (settings.browser_agent_auto_switch_tab !== undefined) storageToSet.browser_agent_auto_switch_tab = settings.browser_agent_auto_switch_tab;
+    if (settings.browser_agent_search_engine) storageToSet.browser_agent_search_engine = settings.browser_agent_search_engine;
+    if (settings.browser_agent_mode) storageToSet.browser_agent_mode = settings.browser_agent_mode;
+    if (settings.show_floating_button !== undefined) storageToSet.show_floating_button = settings.show_floating_button;
+
+    // Save to Chrome Storage
+    await chrome.storage.local.set(storageToSet);
+
+    // Sync to SQLite Native DB
+    try {
+      if (config.models && Array.isArray(config.models)) {
+        sendNativeRpc('db_save_models', { models: config.models }).catch(() => {});
+      }
+      sendNativeRpc('db_save_all_settings', { settings: storageToSet }).catch(() => {});
+    } catch (e) {}
+
+    // Refresh UI elements in real time
+    applyConfigToUI();
+    renderModelsRows();
+    renderBossAgentHero();
+    renderAgentsList();
+    renderSkillsList();
+    renderMemoriesList();
+    updateBadges();
+
+    setAutoSaveStatus('saved');
+    showToast("Seluruh pengaturan berhasil diimpor dan dipulihkan!");
+  } catch (err) {
+    console.error("Import settings error:", err);
+    alert("Gagal mengimpor pengaturan: " + err.message);
+  }
 }
 
 // =========================================================================
@@ -2199,6 +2375,32 @@ function setupEventListeners() {
 
   // Test connection button
   document.getElementById('btn-test-connection')?.addEventListener('click', checkPCBridgeStatus);
+
+  // Export & Import Settings Buttons (Header & Backup Card)
+  const btnExportAll = document.getElementById('btn-export-all-settings');
+  const btnImportAll = document.getElementById('btn-import-all-settings');
+  const btnExportCard = document.getElementById('btn-export-backup-card');
+  const btnImportCard = document.getElementById('btn-import-backup-card');
+  const inputImportFile = document.getElementById('input-import-settings-file');
+
+  btnExportAll?.addEventListener('click', exportAllSettings);
+  btnExportCard?.addEventListener('click', exportAllSettings);
+
+  btnImportAll?.addEventListener('click', () => {
+    inputImportFile?.click();
+  });
+
+  btnImportCard?.addEventListener('click', () => {
+    inputImportFile?.click();
+  });
+
+  inputImportFile?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      importAllSettings(file);
+      inputImportFile.value = '';
+    }
+  });
 }
 
 // =========================================================================

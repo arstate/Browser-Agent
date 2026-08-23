@@ -5430,12 +5430,30 @@ function saveSettings() {
     config.autoRotateModel = true;
   }
 
+  // 1. Persist to Chrome Local Storage
   chrome.storage.local.set({ browser_agent_config: config }, () => {
     applyConfigToUI();
     renderModelDropdown();
     renderSettingsModelRows();
     hideSettingsModal();
   });
+
+  // 2. Persist distinct models and settings to SQLite
+  try {
+    sendNativeRpc('db_save_models', { models: config.models }).catch(() => {});
+    sendNativeRpc('db_save_all_settings', {
+      settings: {
+        browser_agent_config: config,
+        endpoint: config.endpoint,
+        apiKey: config.apiKey,
+        preset: config.preset,
+        model: config.model,
+        temperature: config.temperature,
+        maxTokens: config.maxTokens,
+        autoRotateModel: config.autoRotateModel
+      }
+    }).catch(() => {});
+  } catch (e) {}
 }
 
 function selectModelChoice(choice) {

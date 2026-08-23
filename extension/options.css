@@ -391,6 +391,162 @@ body.options-body {
   box-shadow: none;
 }
 
+.hero-provider-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-export-settings,
+.btn-import-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  font-family: inherit;
+}
+
+.btn-export-settings {
+  background: rgba(206, 241, 40, 0.12);
+  border: 1px solid rgba(206, 241, 40, 0.35);
+  color: var(--accent-lime);
+}
+
+.btn-export-settings:hover {
+  background: var(--accent-lime);
+  border-color: var(--accent-lime);
+  color: #0F172A;
+  box-shadow: 0 2px 10px rgba(206, 241, 40, 0.3);
+}
+
+.btn-import-settings {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38BDF8;
+}
+
+.btn-import-settings:hover {
+  background: #0284C7;
+  border-color: #38BDF8;
+  color: #FFFFFF;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35);
+}
+
+/* Backup & Restore Dedicated Card */
+.backup-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+@media (max-width: 768px) {
+  .backup-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.backup-action-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.backup-action-info h4 {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+}
+
+.backup-action-info p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.btn-backup-export,
+.btn-backup-import {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.btn-backup-export {
+  background: #CEF128;
+  border: 1px solid #CEF128;
+  color: #0F172A;
+}
+
+.btn-backup-export:hover {
+  background: #D9F92F;
+  box-shadow: 0 2px 12px rgba(206, 241, 40, 0.35);
+}
+
+.btn-backup-import {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #F8FAFC;
+}
+
+.btn-backup-import:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.backup-sync-status-row {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sync-status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.sync-status-item strong {
+  color: #E2E8F0;
+}
+
+.sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94A3B8;
+}
+
+.sync-dot.active {
+  background: var(--accent-lime);
+  box-shadow: 0 0 6px var(--accent-lime);
+}
+
 .btn-save-header {
   background: var(--accent-lime);
   color: #0F172A;

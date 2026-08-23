@@ -2496,12 +2496,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.86.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 287: Penyimpanan Pengaturan & Model List ke SQLite Terpisah Serta Fitur Export/Import All Settings
+- **Kebutuhan Pengguna**:
+  - Menyimpan pengaturan daftar model prioritas ke database SQLite lokal namun dibedakan strukturnya (tabel terpisah).
+  - Menambahkan tombol **Export All Settings** dan **Import Settings** di halaman pengaturan untuk backup & restore seluruh konfigurasi secara instan (100% pengaturan ikut tercadangkan).
+- **Solusi & Peningkatan**:
+  1. **Struktur Database SQLite Dedicated (`host/native_host.py`)**:
+     - Menambahkan tabel `model_configs` (`id`, `name`, `model_id`, `priority_order`, `is_primary`, `config_json`, `updated_at`) khusus untuk urutan dan metadata prioritas model AI.
+     - Menambahkan tabel `settings` (`key`, `value_json`, `updated_at`) untuk seluruh konfigurasi global ekosistem Browser Agent.
+     - Menyediakan handler RPC `db_save_models`, `db_get_models`, `db_save_all_settings`, dan `db_get_all_settings`.
+  2. **Tombol & UI Export/Import (`options.html`, `options.css`)**:
+     - Menambahkan tombol `[Export Settings]` dan `[Import Settings]` pada baris header LLM Providers dan kartu khusus **Backup & Restore Pengaturan (SQLite & JSON)**.
+  3. **Engine Backup & Restore (`options.js`, `sidepanel.js`)**:
+     - `exportAllSettings()`: Mengemas seluruh API keys, provider base URL, daftar prioritas model, custom multi-agent persona, skills SOP, memory rules, dan preferensi UI ke file JSON terstruktur (`browser-agent-settings-backup-YYYY-MM-DD.json`).
+     - `importAllSettings(file)`: Membaca file JSON backup, memvalidasi schema, menyimpannya ke `chrome.storage.local` dan database SQLite lokal, serta merender ulang seluruh komponen form dan kartu persona secara realtime tanpa perlu reload manual.
+  4. **Verifikasi**:
+     - Unit test Python RPC database SQLite lulus 100%.
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.87.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
+- **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
+- **Export/Import Settings:** Tersedia di `options.html` (header & dedicated card) untuk mem-backup & me-restore 100% konfigurasi ke file `.json`.
 - **Direct Instant Toggle Buttons:** 
   - `Accept`: Neon Lime Fill (`#CEF128`).
   - `Planning`: Blue Fill (`#0284C7`).
@@ -2514,7 +2536,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.86.0` (Iterasi 286).
+  - **Versi Terkini:** `v2.87.0` (Iterasi 287).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
