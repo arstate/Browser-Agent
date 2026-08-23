@@ -2748,6 +2748,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 307: 100% Pixel-Perfect Height & Baseline Alignment for Sidepanel Top Bar Controls
+- **Kebutuhan Pengguna**:
+  - Menyamakan ketinggian dan dimensi kapsul kontrol kanan (`Switch Tab: ON`, `Accept`) agar 100% sejajar dan presisi dengan tombol `Chat | Agent` di sebelah kiri pada Sidepanel.
+- **Solusi & Peningkatan**:
+  1. **Pixel-Perfect Dimension Matching (`sidepanel.css`)**:
+     - Menggabungkan aturan container `.chat-mode-switch-group` dan `.chat-input-header-right` dengan `height: 29px`, `padding: 2.5px`, dan `box-sizing: border-box`.
+     - Menyatukan aturan tombol `.btn-chat-mode-toggle`, `.btn-switch-tab-mode-trigger`, `.btn-execution-mode-trigger`, dan `.btn-search-engine-trigger` dengan `height: 22px`, `padding: 0 11px`, `font-size: 11.5px`, `font-weight: 600`, `line-height: 1`, dan icon svg `12px x 12px`.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.107.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 306: White Search Engine Trigger Text, Sidepanel Stickman Removal, & Harmonized Sidepanel Pill Controls
 - **Kebutuhan Pengguna**:
   - Mengubah warna teks dan chevron pada tombol search engine menjadi putih bersih (`#FFFFFF`).

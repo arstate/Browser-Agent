@@ -2702,20 +2702,12 @@ body.stickman-active .chat-messages {
   gap: 6px;
 }
 
+.chat-mode-switch-group,
 .chat-input-header-right {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  background: #F1F5F9;
-  border: 1px solid #E2E8F0;
-  border-radius: 9999px;
-  padding: 2.5px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.chat-mode-switch-group {
-  display: inline-flex;
-  align-items: center;
+  height: 29px;
+  box-sizing: border-box;
   background: #F1F5F9;
   border: 1px solid #E2E8F0;
   border-radius: 9999px;
@@ -2724,29 +2716,41 @@ body.stickman-active .chat-messages {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.btn-chat-mode-toggle {
+.btn-chat-mode-toggle,
+.btn-switch-tab-mode-trigger,
+.btn-execution-mode-trigger,
+.btn-search-engine-trigger {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
+  height: 22px;
+  box-sizing: border-box;
+  padding: 0 11px;
+  border-radius: 9999px;
   border: none;
   background: transparent;
   color: #64748B;
   font-family: inherit;
   font-size: 11.5px;
   font-weight: 600;
-  padding: 3.5px 11px;
-  border-radius: 9999px;
+  line-height: 1;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
 
-.btn-chat-mode-toggle svg {
+.btn-chat-mode-toggle svg,
+.btn-switch-tab-mode-trigger .switch-tab-mode-icon svg,
+.btn-execution-mode-trigger .execution-mode-icon svg {
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
   transition: transform 0.15s ease;
 }
 
-.btn-chat-mode-toggle:hover:not(.active) {
+.btn-chat-mode-toggle:hover:not(.active),
+.btn-switch-tab-mode-trigger.is-off:hover {
   color: #0F172A;
   background: rgba(255, 255, 255, 0.7);
 }
@@ -2777,7 +2781,8 @@ body.stickman-active .chat-messages {
 
 /* Switch Tab & Execution Mode Combined Segmented Capsule in Sidepanel */
 .switch-tab-mode-wrapper,
-.execution-mode-wrapper {
+.execution-mode-wrapper,
+.search-engine-wrapper {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -2786,33 +2791,11 @@ body.stickman-active .chat-messages {
   background: transparent;
   border: none;
   padding: 0;
+  margin: 0;
   border-radius: 0;
 }
 
 /* Left Segment: Switch Tab Direct Toggle */
-.btn-switch-tab-mode-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  box-sizing: border-box;
-  padding: 3.5px 10px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  user-select: none;
-  border: none;
-  background: transparent;
-  color: #64748B;
-}
-
-.btn-switch-tab-mode-trigger .switch-tab-mode-icon {
-  display: flex;
-  align-items: center;
-}
-
-/* Switch Tab ON -> Left Active Pill */
 .btn-switch-tab-mode-trigger.is-on {
   background: #0F172A;
   color: #CEF128;
@@ -2826,18 +2809,12 @@ body.stickman-active .chat-messages {
 .btn-switch-tab-mode-trigger.is-on .switch-tab-mode-icon,
 .btn-switch-tab-mode-trigger.is-on .switch-tab-mode-label {
   color: #CEF128;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-/* Switch Tab OFF -> Clean Muted State */
 .btn-switch-tab-mode-trigger.is-off {
   background: transparent;
   color: #64748B;
-}
-
-.btn-switch-tab-mode-trigger.is-off:hover {
-  color: #0F172A;
-  background: rgba(255, 255, 255, 0.7);
 }
 
 .btn-switch-tab-mode-trigger.is-off .switch-tab-mode-icon,
@@ -2847,33 +2824,10 @@ body.stickman-active .chat-messages {
 }
 
 /* Right Segment: Execution Mode Direct Toggle in Sidepanel */
-.btn-execution-mode-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  box-sizing: border-box;
-  padding: 3.5px 10px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  user-select: none;
-  border: none;
-  background: #0F172A;
-  color: #CEF128;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
-}
-
-.btn-execution-mode-trigger .execution-mode-icon {
-  display: flex;
-  align-items: center;
-}
-
-/* Accept Mode -> Right Active Pill */
 .btn-execution-mode-trigger.mode-accept {
   background: #0F172A;
   color: #CEF128;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
 }
 
 .btn-execution-mode-trigger.mode-accept:hover {
@@ -2883,13 +2837,13 @@ body.stickman-active .chat-messages {
 .btn-execution-mode-trigger.mode-accept .execution-mode-icon,
 .btn-execution-mode-trigger.mode-accept .execution-mode-label {
   color: #CEF128;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-/* Planning Mode -> Right Active Blue Pill */
 .btn-execution-mode-trigger.mode-planning {
   background: #0F172A;
   color: #38BDF8;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
 }
 
 .btn-execution-mode-trigger.mode-planning:hover {
@@ -2899,38 +2853,14 @@ body.stickman-active .chat-messages {
 .btn-execution-mode-trigger.mode-planning .execution-mode-icon,
 .btn-execution-mode-trigger.mode-planning .execution-mode-label {
   color: #38BDF8;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-/* Web Search Engine Dropup Selector - Dark Luxury Pill */
-.search-engine-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  height: 100%;
-  box-sizing: border-box;
-  background: transparent;
-  padding: 0;
-  border: none;
-}
-
+/* Web Search Engine Dropup Selector in Sidepanel */
 .btn-search-engine-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  box-sizing: border-box;
-  padding: 3.5px 10px;
-  border-radius: 9999px;
   background: #0F172A;
-  border: none;
   color: #FFFFFF;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
-  user-select: none;
 }
 
 .btn-search-engine-trigger:hover {
@@ -2954,8 +2884,8 @@ body.stickman-active .chat-messages {
 }
 
 .btn-search-engine-trigger .search-engine-label {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 600;
   color: #FFFFFF;
   line-height: 1;
 }
