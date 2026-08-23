@@ -2338,16 +2338,29 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.76.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 277: Perbaikan Gliding Orb dengan Hardware-Accelerated translate3d & Pelepasan Properti Inset
+- **Kebutuhan Pengguna**:
+  - Berdasarkan rekaman video `Screencast_20260823_110647.mp4`, orb neon sebelumnya diam di sisi kiri dan tidak bergerak nyata meluncur ke kanan.
+  - Memastikan animasi pergerakan meluncur ke kanan-kiri berjalan 100% mulus (60fps) dengan efek *fade in / fade out*.
+- **Solusi & Peningkatan**:
+  1. **Root Cause Analysis & Fix (`newtab.css` & `sidepanel.css`)**:
+     - *Root Cause*: Properti `inset` dari selector induk menahan `right: -12px` secara simultan, sehingga mengubah nilai `left` hanya meregangkan lebar elemen tanpa menggeser posisinya secara fisik, ditambah transisi CSS yang memblokir keyframe.
+     - *Perbaikan*: Mendefinisikan `right: auto !important; transition: none !important; left: 0 !important;` dan menggerakkan orb menggunakan GPU `translate3d(20px, 0, 0)` ke `translate3d(360px, 0, 0)` (4.8s `cubic-bezier(0.45, 0.05, 0.55, 0.95)`).
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.77.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **Smooth Fading Neon Orb:** 250px neon light orb (`smoothOrbSweepFade` 5.5s) gliding smoothly between 6%–54% margins with elegant fade in/out transitions.
+- **Hardware-Accelerated Translating Orb:** 250px neon light orb using `translate3d(20px, 0, 0)` to `translate3d(360px, 0, 0)` (4.8s loop) with unpinned `right: auto` ensuring 100% visible left-to-right gliding motion.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.76.0` (Iterasi 276).
+  - **Versi Terkini:** `v2.77.0` (Iterasi 277).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.76.0`
-- **Iterasi:** `Iterasi 276`
-- **Tanggal Rilis:** 23 Agustus 2026 (11:06 WIB)
+- **Versi Terkini:** `v2.77.0`
+- **Iterasi:** `Iterasi 277`
+- **Tanggal Rilis:** 23 Agustus 2026 (11:08 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (375.2 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (375.5 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.77.0** | 277 | 23-08-2026 11:08 | `v2.77.0` | **Hardware-Accelerated Translate3d Orb Sweep with Unpinned Right Bound & Smooth Multi-Stop Fade:** Mengatasi bug posisi terganjal (`inset` right bound override) dengan mendefinisikan `right: auto !important; transition: none !important;` dan menggerakkan orb 250px menggunakan GPU hardware-accelerated `translate3d(20px, 0, 0)` ke `translate3d(360px, 0, 0)` (4.8s cubic-bezier). Memberikan pergerakan meluncur bolak-balik yang 100% nyata, halus 60fps, serta berefek bernapas *fade in / fade out* lembut tanpa mengorbankan kontras gelap input. | 🟢 STABLE | `./restore.sh v2.77.0` |
 | **v2.76.0** | 276 | 23-08-2026 11:06 | `v2.76.0` | **Enlarged 250px Neon Orb with Smooth In-Bounds Sweep & Fade In / Fade Out Breathing:** Memperbesar ukuran orb neon menjadi 250px (`width: 250px; top: -16px; bottom: -16px; filter: blur(24px);`) serta membatasi jangkauan pergerakan di dalam margin aman (`left: 6%` ke `left: 54%`) tanpa menabrak ujung kiri/kanan. Mengimplementasikan animasi transisi halus `@keyframes smoothOrbSweepFade` (5.5s cubic-bezier) dengan efek bernapas *fade in* dan *fade out* lembut saat berpindah arah. | 🟢 STABLE | `./restore.sh v2.76.0` |
 | **v2.75.0** | 275 | 23-08-2026 11:04 | `v2.75.0` | **Physical Travelling Neon Light Orb Gliding Left-to-Right & Pure Opaque Dark Interior:** Mengganti pendaran statis dengan berkas spotlight orb neon elips berdimensi 140px (`sweepOrbLeftRight` 3.2s) yang benar-benar bergerak fisik meluncur dari ujung kiri ke ujung kanan melintasi bingkai input prompt. Mengunci background container `#141417` pekat agar tidak terjadi kebocoran filter blur kuning/hijau di dalam area textarea, menghasilkan tampilan gelap bersih dengan kilau neon bergerak nyata di perimeter. | 🟢 STABLE | `./restore.sh v2.75.0` |
 | **v2.74.0** | 274 | 23-08-2026 11:02 | `v2.74.0` | **Velvety Smooth Left-to-Right Sweeping Neon Aura Glow Around Prompt Container (Matching Reference Style):** Mengembalikan bentuk pendar neon agar membungkus rapi sekeliling perimeter kotak input prompt (`inset: -4px; border-radius: 24px; filter: blur(20px);`) persis seperti gaya visual referensi, dilengkapi dengan animasi sapuan berkas cahaya neon gradien yang bergerak halus dari kiri ke kanan dan sebaliknya (`@keyframes glowSweepLeftRight` 4s cubic-bezier). Memberikan pendaran cybernetic yang hidup, elegan, dan jernih tanpa mengotori area teks. | 🟢 STABLE | `./restore.sh v2.74.0` |

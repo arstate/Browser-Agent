@@ -679,7 +679,7 @@ body.has-messages .chat-input-container {
   box-shadow: 0 16px 44px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
-body.has-messages .chat-input-container::before {
+body.has-messages .chat-input-container:not(.ai-thinking)::before {
   content: '';
   position: absolute;
   inset: -6px -12px -8px -12px;
@@ -720,47 +720,46 @@ body.ai-is-generating .chat-input-container::before {
   content: '' !important;
   display: block !important;
   position: absolute !important;
-  top: -16px !important;
-  bottom: -16px !important;
-  left: 6% !important;
+  top: -14px !important;
+  bottom: -14px !important;
+  left: 0 !important;
+  right: auto !important;
   width: 250px !important;
   border-radius: 40px !important;
-  background: radial-gradient(ellipse 70% 70% at center, rgba(206, 241, 40, 0.52) 0%, rgba(163, 230, 53, 0.22) 45%, rgba(34, 197, 94, 0.05) 70%, transparent 85%) !important;
+  background: radial-gradient(ellipse 70% 70% at center, rgba(206, 241, 40, 0.55) 0%, rgba(163, 230, 53, 0.25) 45%, rgba(34, 197, 94, 0.06) 70%, transparent 85%) !important;
   filter: blur(24px) !important;
   z-index: -1 !important;
   pointer-events: none !important;
-  opacity: 0.9 !important;
-  animation: smoothOrbSweepFade 5.5s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+  opacity: 1 !important;
+  transition: none !important;
+  animation: smoothOrbSweepFade 4.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite !important;
 }
 
 @keyframes smoothOrbSweepFade {
   0% {
-    left: 6%;
-    opacity: 0.15;
+    transform: translate3d(20px, 0, 0) scale(0.92);
+    opacity: 0.2;
     filter: blur(18px);
-    transform: scaleX(0.9) scaleY(0.88);
   }
   25% {
     opacity: 0.95;
     filter: blur(26px);
-    transform: scaleX(1.05) scaleY(1.04);
+    transform: translate3d(180px, 0, 0) scale(1.05);
   }
   50% {
-    left: 54%;
+    transform: translate3d(360px, 0, 0) scale(0.95);
     opacity: 0.85;
-    filter: blur(24px);
-    transform: scaleX(1) scaleY(1);
+    filter: blur(22px);
   }
   75% {
     opacity: 0.95;
     filter: blur(26px);
-    transform: scaleX(1.05) scaleY(1.04);
+    transform: translate3d(180px, 0, 0) scale(1.05);
   }
   100% {
-    left: 6%;
-    opacity: 0.15;
+    transform: translate3d(20px, 0, 0) scale(0.92);
+    opacity: 0.2;
     filter: blur(18px);
-    transform: scaleX(0.9) scaleY(0.88);
   }
 }
 
