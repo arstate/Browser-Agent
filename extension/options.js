@@ -328,7 +328,7 @@ function renderModelsRows() {
   const models = getModelsList(true);
   models.forEach((mObj, index) => {
     const isPrimary = (index === 0);
-    const priorityBadgeText = isPrimary ? '#1 (Utama)' : `#${index + 1} (Cadangan ${index})`;
+    const priorityBadgeText = `${index + 1}`;
 
     const row = document.createElement('div');
     row.className = `model-row-card ${isPrimary ? 'is-primary' : ''}`;

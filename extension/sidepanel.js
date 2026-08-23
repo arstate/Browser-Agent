@@ -4878,17 +4878,19 @@ function scrollToBottom(smooth = false) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
   try {
+    const isStickman = document.body.classList.contains('stickman-active');
     const scrollTarget = Math.max(
       document.body.scrollHeight,
       document.documentElement.scrollHeight,
       chatMessages ? chatMessages.scrollHeight : 0
     );
+    const extraOffset = isStickman ? 360 : 200;
     window.scrollTo({
-      top: scrollTarget + 200,
+      top: scrollTarget + extraOffset,
       behavior: smooth ? 'smooth' : 'auto'
     });
   } catch (e) {
-    window.scrollTo(0, (document.body.scrollHeight || 0) + 200);
+    window.scrollTo(0, (document.body.scrollHeight || 0) + (document.body.classList.contains('stickman-active') ? 360 : 200));
   }
 }
 
@@ -5603,7 +5605,7 @@ function renderSettingsModelRows() {
 
   models.forEach((mObj, idx) => {
     const isPrimary = (idx === 0);
-    const badgeText = isPrimary ? '#1 (Utama)' : `#${idx + 1} (Cadangan ${idx})`;
+    const badgeText = `${idx + 1}`;
 
     const row = document.createElement('div');
     row.className = `model-row-item ${isPrimary ? 'is-primary' : ''}`;

@@ -2748,6 +2748,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 305: Clean 1 2 3 Priority Numbering & Generous Stickman Clearance Spacing
+- **Kebutuhan Pengguna**:
+  - Memberikan jarak lega di atas panggung stickman agar teks atau elemen card agent terbawah tidak menempel/ketumpuk saat animasi berjalan.
+  - Memperbarui tampilan badge urutan prioritas model di menu Pengaturan dan Sidepanel menjadi angka bersih `1`, `2`, `3` yang clean dan minimalis.
+- **Solusi & Peningkatan**:
+  1. **Clean 1 2 3 Priority Number Badges (`options.js`, `sidepanel.js`, CSS)**:
+     - Mengubah teks badge `#1 (UTAMA)` dan `#2 (CADANGAN 1)` menjadi nomor bersih `${index + 1}` (`1`, `2`, `3`).
+     - Mendesain ulang `.model-priority-badge` menjadi badge nomor kotak/rounded kompak (`38px x 38px` di Options & `28px x 28px` di Sidepanel) dengan font weight 800 dan border neon lime pada model #1.
+  2. **Ample Breathing Room & Clearance Spacing (`newtab.css`, `sidepanel.css`, `sidepanel.js`)**:
+     - Meningkatkan `padding-bottom` pada `.fullscreen-chat-main` saat `stickman-active` menjadi `340px !important` dan `.chat-messages` menjadi `40px` (serta `120px` di Sidepanel).
+     - Menyesuaikan fungsi `scrollToBottom` dengan offset `+360px` saat stickman aktif sehingga stream pesan dan badge tool selalu terlihat bersih tanpa terpotong atau bertabrakan dengan input prompt.
+  3. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.105.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 304: Official Vector SVG Brand Logos & Folder Organization for Search Engines
 - **Kebutuhan Pengguna**:
   - Mengorganisir logo mesin pencari ke dalam folder rapi di project dan memperbarui tampilan icon logo mesin pencari pada menu dropdown dan trigger button menggunakan SVG resmi dari `/home/arya/Downloads/search-engine-logos`.

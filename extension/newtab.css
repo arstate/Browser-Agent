@@ -664,12 +664,12 @@ body:not(.has-messages) .hero-input-placeholder {
 /* 2. ACTIVE CHAT STATE: Translucent Frosted Glass Blur Input (No Neon Glow) */
 body.has-messages .fullscreen-chat-main {
   justify-content: flex-start;
-  padding: 24px 20px 160px 20px !important;
+  padding: 24px 20px 170px 20px !important;
   transition: padding-bottom 0.38s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body.has-messages.stickman-active .fullscreen-chat-main {
-  padding-bottom: 235px !important;
+  padding-bottom: 340px !important;
 }
 
 body.has-messages .chat-input-container {
@@ -699,7 +699,7 @@ body.has-messages .chat-messages {
 }
 
 body.has-messages.stickman-active .chat-messages {
-  padding-bottom: 28px;
+  padding-bottom: 40px;
 }
 
 /* Smooth Dissolve Out for Hero Elements */
