@@ -2748,6 +2748,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 324: Fix AI Image Generation Chat Display Bug & Clean Double-Border on Search Engine Trigger
+- **Kebutuhan Pengguna**:
+  1. Memperbaiki bug di mana hasil gambar `generate_image` sukses dibuat dan tersimpan di folder lokal, tetapi tidak muncul/dikirim di bubble chat.
+  2. Memperbaiki tampilan pinggir kanan-kiri tombol search engine yang terlihat tidak rapi (terdapat container wrapper ganda dengan celah padding hitam).
+- **Root Cause & Solusi Teknis**:
+  1. **AI Image Generation Chat Display Fix (`sidepanel.js`)**:
+     - *Root Cause*: Setelah tool `generate_image` selesai, tahapan sintesis laporan Master Agent menimpa konten teks bubble chat dengan teks ringkasan tanpa menyertakan kembali markdown `![prompt](local-img://id)`.
+     - *Solusi*: Menambahkan array tracker `sessionGeneratedImages` dan fungsi `ensureGeneratedImagesInText()`. Setiap gambar yang dihasilkan oleh tool AI akan otomatis diinjeksi dan dipertahankan di bagian atas teks laporan akhir (baik saat streaming maupun finalisasi).
+     - Menambahkan pemanggilan `hydrateLocalImages()` saat streaming agar gambar lokal dari IndexedDB langsung ter-render seketika.
+  2. **Clean Search Engine Header Right Container (`newtab.css` & `sidepanel.css`)**:
+     - Menghapus background `rgba(0,0,0,0.4)` / `#F1F5F9`, border, dan padding ganda pada `.chat-input-header-right`.
+     - Tombol search engine `.btn-search-engine-trigger` kini berdiri secara standalone, presisi, bersih, dan simetris dengan tombol mode di sisi kiri.
+  3. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.124.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 323: Full Rounded Pill Styling & Frosted Glass Blur for Search Engine Selector
 - **Kebutuhan Pengguna**:
   - Menyamakan desain tombol search engine dan menu dropup-nya dengan style tombol Agent Mode selection: full rounded capsule pill, tinggi presisi, frosted glass blur, dan minimalis clean.

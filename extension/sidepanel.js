@@ -2746,6 +2746,18 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   const assistantBubble = appendAssistantMessage(null, true, agentInfo);
   let maxSteps = 30;
   let currentStep = 0;
+  const sessionGeneratedImages = [];
+
+  function ensureGeneratedImagesInText(text, images) {
+    if (!images || images.length === 0) return text;
+    let result = text || "";
+    const missingImages = images.filter(img => img && img.image_url && !result.includes(img.image_url) && !result.includes(img.image_id));
+    if (missingImages.length > 0) {
+      const imgMd = missingImages.map(img => `![${img.prompt || 'AI Generated Image'}](${img.image_url})`).join('\n\n');
+      result = result ? `${imgMd}\n\n${result}`.trim() : imgMd;
+    }
+    return result;
+  }
 
   if (hasBoss && workerAgents.length > 0) {
     updateFooterStatus(`👑 Master Agent: Menugaskan ${workerAgents.length} agen spesialis...`);
@@ -2916,7 +2928,7 @@ Tugas Anda:
                 if (delta) {
                   if (delta.content) {
                     accumulatedContent += delta.content;
-                    updateAssistantText(assistantBubble, accumulatedContent, true);
+                    updateAssistantText(assistantBubble, ensureGeneratedImagesInText(accumulatedContent, sessionGeneratedImages), true);
                   }
                   if (delta.tool_calls) {
                     for (const tc of delta.tool_calls) {
@@ -2938,7 +2950,7 @@ Tugas Anda:
         const toolCalls = Object.values(toolCallsMap);
         message = {
           role: "assistant",
-          content: accumulatedContent || null,
+          content: accumulatedContent ? ensureGeneratedImagesInText(accumulatedContent, sessionGeneratedImages) : null,
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
           agentInfo: agentInfo
         };
@@ -2951,6 +2963,9 @@ Tugas Anda:
           throw new Error("Invalid response format from AI endpoint.");
         }
         message = choice.message;
+        if (message.content) {
+          message.content = ensureGeneratedImagesInText(message.content, sessionGeneratedImages);
+        }
         message.agentInfo = agentInfo;
       }
 
@@ -2962,7 +2977,7 @@ Tugas Anda:
 
       // Finalize assistant text only if there are NO tool calls in this turn
       if (message.content && (!message.tool_calls || message.tool_calls.length === 0)) {
-        updateAssistantText(assistantBubble, message.content, false);
+        updateAssistantText(assistantBubble, ensureGeneratedImagesInText(message.content, sessionGeneratedImages), false);
       }
 
       let shouldStopTurn = false;
@@ -3043,9 +3058,19 @@ Tugas Anda:
             const toolResult = await executeTool(toolName, toolArgs, assistantBubble);
             if (isImageGen && toolResult?.image_url) {
               genImgResult = toolResult;
+              if (!sessionGeneratedImages.some(img => img.image_id === toolResult.image_id)) {
+                sessionGeneratedImages.push(toolResult);
+              }
               const imgMarkdown = `![${toolResult.prompt || 'AI Image'}](${toolResult.image_url})`;
-              updateAssistantText(assistantBubble, imgMarkdown);
-              toolOutput = JSON.stringify({ status: "success", message: "Image generated and displayed successfully." });
+              updateAssistantText(assistantBubble, ensureGeneratedImagesInText("", sessionGeneratedImages));
+              toolOutput = JSON.stringify({
+                status: "success",
+                image_id: toolResult.image_id,
+                image_url: toolResult.image_url,
+                display_url: toolResult.display_url,
+                markdown: imgMarkdown,
+                instruction: "WAJIB: Tampilkan gambar ini kepada pengguna dalam balasanmu dengan menyertakan markdown persis: " + imgMarkdown
+              });
             } else {
               toolOutput = JSON.stringify(toolResult);
             }
@@ -3065,16 +3090,6 @@ Tugas Anda:
 
           // If clarification requested, stop loop and wait for user's interactive bubble choice
           if (toolName === "ask_clarification") {
-            shouldStopTurn = true;
-            break;
-          }
-
-          // If image was generated, save assistant markdown message & finish turn cleanly
-          if (isImageGen && genImgResult?.image_url) {
-            conversationHistory.push({
-              role: "assistant",
-              content: `![${genImgResult.prompt || 'AI Image'}](${genImgResult.image_url})`
-            });
             shouldStopTurn = true;
             break;
           }
@@ -3236,7 +3251,7 @@ Tugas Anda:
                   const delta = chunk.choices?.[0]?.delta?.content || "";
                   if (delta) {
                     synthContent += delta;
-                    updateAssistantText(assistantBubble, synthContent, true);
+                    updateAssistantText(assistantBubble, ensureGeneratedImagesInText(synthContent, sessionGeneratedImages), true);
                   }
                 } catch (e) {}
               }
@@ -3244,10 +3259,11 @@ Tugas Anda:
           }
 
           if (synthContent.trim().length > 0) {
-            updateAssistantText(assistantBubble, synthContent, false);
+            const finalSynth = ensureGeneratedImagesInText(synthContent, sessionGeneratedImages);
+            updateAssistantText(assistantBubble, finalSynth, false);
             conversationHistory.push({
               role: "assistant",
-              content: synthContent,
+              content: finalSynth,
               agentInfo: agentInfo
             });
           }
@@ -3277,7 +3293,7 @@ Tugas Anda:
               fallbackMd += `${idx + 1}. **${fn.replace(/\.pdf$/i, '').replace(/_/g, ' ')}**\n   - Path: \`/home/arya/Downloads/${fn}\`\n`;
             });
             fallbackMd += `\nAnda dapat langsung membuka file-file di atas pada folder **Downloads** komputer Anda.`;
-            updateAssistantText(assistantBubble, fallbackMd, false);
+            updateAssistantText(assistantBubble, ensureGeneratedImagesInText(fallbackMd, sessionGeneratedImages), false);
           }
         }
       } catch (synthErr) {
@@ -3285,11 +3301,28 @@ Tugas Anda:
       }
     }
 
+    if (sessionGeneratedImages.length > 0) {
+      const lastMsg = conversationHistory[conversationHistory.length - 1];
+      if (lastMsg && lastMsg.role === 'assistant' && typeof lastMsg.content === 'string') {
+        lastMsg.content = ensureGeneratedImagesInText(lastMsg.content, sessionGeneratedImages);
+        updateAssistantText(assistantBubble, lastMsg.content, false);
+      } else if (!lastMsg || lastMsg.role !== 'assistant') {
+        const finalImgMd = sessionGeneratedImages.map(img => `![${img.prompt || 'AI Generated Image'}](${img.image_url})`).join('\n\n');
+        updateAssistantText(assistantBubble, finalImgMd, false);
+        conversationHistory.push({
+          role: "assistant",
+          content: finalImgMd,
+          agentInfo: agentInfo
+        });
+      }
+      hydrateLocalImages(assistantBubble);
+    }
+
     if (contentEl) {
       const spinner = contentEl.querySelector('.tool-spinner');
       if (spinner) spinner.remove();
       const finalText = (contentEl.innerText || contentEl.textContent || "").trim();
-      if (!finalText) {
+      if (!finalText && sessionGeneratedImages.length === 0) {
         contentEl.style.display = 'none';
       }
     }
@@ -4733,13 +4766,14 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
 }
 
 function updateAssistantText(bubble, text, isStreaming = false) {
-  const contentEl = bubble.querySelector('.message-content');
-  const actionsEl = bubble.querySelector('.message-actions');
+  const contentEl = bubble?.querySelector('.message-content');
+  const actionsEl = bubble?.querySelector('.message-actions');
   if (contentEl) {
     contentEl.style.display = 'block';
     const formatted = formatMarkdown(text);
     if (isStreaming) {
       contentEl.innerHTML = formatted + '<span class="streaming-cursor"></span>';
+      hydrateLocalImages(bubble);
     } else {
       contentEl.innerHTML = formatted;
       hydrateLocalImages(bubble);

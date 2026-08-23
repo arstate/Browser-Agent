@@ -1718,13 +1718,11 @@ body.has-messages .chat-messages {
 .chat-input-header-right {
   display: inline-flex;
   align-items: center;
-  gap: 0;
-  height: 28px;
+  gap: 8px;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 9999px;
-  padding: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: transparent;
+  padding: 0;
+  border: none;
 }
 
 /* Mode Switcher Single Pill Dropup (Clean Dark Luxury) */
