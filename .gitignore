@@ -5,3 +5,4 @@ __pycache__/
 .restore_points/
 *.tar.gz
 *.zip
+!antigravity_session/*.zip

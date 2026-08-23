@@ -20,25 +20,15 @@ else
   git remote add origin "$GITHUB_REPO"
 fi
 
-# 2. Update Antigravity Conversation Transcripts into .tar.gz
-echo "[+] Mengompres riwayat percakapan Antigravity ke .tar.gz..."
-TEMP_BRAIN="/tmp/temp_brain_${CONV_ID}"
-rm -rf "$TEMP_BRAIN"
-mkdir -p "$TEMP_BRAIN/brain/$CONV_ID/.system_generated/logs"
-
-if [ -f "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/.system_generated/logs/transcript.jsonl" ]; then
-  cp "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/.system_generated/logs/transcript.jsonl" "$TEMP_BRAIN/brain/$CONV_ID/.system_generated/logs/"
-fi
-if [ -f "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/.system_generated/logs/transcript_full.jsonl" ]; then
-  cp "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/.system_generated/logs/transcript_full.jsonl" "$TEMP_BRAIN/brain/$CONV_ID/.system_generated/logs/"
-fi
-if [ -d "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/scratch" ]; then
-  cp -r "$HOME/.gemini/antigravity-cli/brain/$CONV_ID/scratch" "$TEMP_BRAIN/brain/$CONV_ID/"
-fi
-
+# 2. Update Antigravity Conversation Transcripts into .zip (Full Brain, Logs, & Media Assets)
+echo "[+] Mengompres seluruh riwayat percakapan Antigravity (Brain & Media) ke .zip..."
 mkdir -p "$DIR/antigravity_session"
-tar -czf "$DIR/antigravity_session/session_${CONV_ID}.tar.gz" -C "$TEMP_BRAIN" .
-rm -rf "$TEMP_BRAIN"
+if [ -d "$HOME/.gemini/antigravity-cli/brain/$CONV_ID" ]; then
+  cd "$HOME/.gemini/antigravity-cli/brain"
+  zip -r "$DIR/antigravity_session/session_${CONV_ID}.zip" "$CONV_ID/" -x "*/.system_generated/tasks/*" > /dev/null 2>&1 || true
+  cd "$DIR"
+fi
+rm -f "$DIR/antigravity_session/"*.tar.gz
 rm -rf "$DIR/antigravity_session/brain"
 
 # 3. Stage All Project Code, Extensions, Skills, Agents, Transcripts
