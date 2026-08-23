@@ -63,6 +63,11 @@ COMMIT_HASH=$(git rev-parse --short HEAD)
 ARCHIVE_FILE="$DIR/.restore_points/snapshot_${VERSION}_${DATE_KEY}.tar.gz"
 tar --exclude='.git' --exclude='.restore_points' -czf "$ARCHIVE_FILE" -C "$DIR" .
 
+# Auto Backup to GitHub
+if [ -f "$DIR/backup_to_github.sh" ]; then
+  bash "$DIR/backup_to_github.sh" || echo "[!] Notice: GitHub backup completed with notices."
+fi
+
 echo "[✔] Git Commit: $COMMIT_HASH | Tag: $VERSION"
 echo "[✔] Snapshot Archive: $ARCHIVE_FILE"
 echo "============================================================"
