@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.130.0`
-- **Iterasi:** `Iterasi 330`
-- **Tanggal Rilis:** 24 Agustus 2026 (02:05 WIB)
+- **Versi Terkini:** `v2.131.0`
+- **Iterasi:** `Iterasi 331`
+- **Tanggal Rilis:** 24 Agustus 2026 (03:04 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.6 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.131.0** | 331 | 24-08-2026 03:04 | `v2.131.0` | **Full Antigravity Session ZIP Archive with Uploaded Media on GitHub:** Mengompres seluruh folder brain percakapan Antigravity (lengkap dengan log transkrip, chunk percakapan, aset gambar paste/upload user, dan skrip) menjadi `session_7a60fcd3-8146-43e4-bc2a-fa745d9d5241.zip` (55 MB) dan mengunggahnya ke repositori GitHub. | 🟢 STABLE | `./restore.sh v2.131.0` |
 | **v2.130.0** | 330 | 24-08-2026 02:05 | `v2.130.0` | **Fix User Uploaded Images & Files Database Persistence & History Rehydration:** Memperbaiki bug gambar/file lampiran user yang rusak (*broken icon*) saat histori chat dibuka kembali. Kini seluruh file/gambar yang diunggah atau di-paste oleh user langsung disimpan secara permanen ke IndexedDB (`att_img_...`) dan SQLite JSON, dilengkapi mekanisme auto-rehydration dan preview lightbox saat histori chat di-resume. | 🟢 STABLE | `./restore.sh v2.130.0` |
 | **v2.129.0** | 329 | 24-08-2026 02:00 | `v2.129.0` | **Frosted Glass Backdrop Blur on All AI Chat Containers:** Menambahkan `backdrop-filter: blur(28px) saturate(180%)`, peningkatan kontras latar belakang, dan border lembut pada seluruh elemen container AI chat (kotak daftar bernomor rekomendasi/action steps, code cards, tabel data, tool badges, blockquotes, file cards) sehingga background grid / ornamen layar ter-blur sempurna dan teks menjadi sangat jernih dan nyaman dibaca. | 🟢 STABLE | `./restore.sh v2.129.0` |
 | **v2.128.0** | 328 | 24-08-2026 01:53 | `v2.128.0` | **Update AI Thinking Level Label to Extreme:** Mengubah teks label opsi penalaran tingkat tertinggi dari `Max (10x)` menjadi `Extreme` pada trigger button, menu dropup, dan meta-cognitive directive di New Tab dan Sidepanel. | 🟢 STABLE | `./restore.sh v2.128.0` |

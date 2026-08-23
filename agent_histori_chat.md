@@ -2748,6 +2748,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 331: Full Antigravity Session ZIP Archive with Uploaded Media on GitHub
+- **Kebutuhan Pengguna**:
+  - Mengubah arsip sesi percakapan Antigravity menjadi format `.zip` lengkap yang memuat seluruh folder brain, termasuk transkrip, log pesan, dan seluruh berkas/gambar paste yang diunggah pengguna (`.user_uploaded/` dan `.tempmediaStorage/`), lalu di-push ke GitHub.
+- **Root Cause & Solusi Teknis**:
+  1. Sebelumnya ekstensi `.zip` terabaikan di `.gitignore`. Menambahkan pengecualian `!antigravity_session/*.zip` agar file zip sesi terlacak dan di-commit oleh Git.
+  2. Mengompres seluruh folder `~/.gemini/antigravity-cli/brain/7a60fcd3-8146-43e4-bc2a-fa745d9d5241/` menjadi `antigravity_session/session_7a60fcd3-8146-43e4-bc2a-fa745d9d5241.zip` (55 MB).
+  3. Memperbarui `restore_session.sh` untuk otomatis mengekstrak arsip zip tersebut secara 1-klik ke laptop/komputer lain.
+  4. Berhasil mengunggah file zip ke GitHub repository: `https://github.com/arstate/Browser-Agent`.
+- **Verifikasi**:
+  - Git Push berhasil 100%.
+  - Restore Point: `v2.131.0`.
+  - Sinkronisasi ke `/home/arya/Downloads/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 330: Fix User Uploaded Images & Files Database Persistence & History Rehydration
 - **Kebutuhan Pengguna**:
   - Memperbaiki bug gambar/file yang dikirim user ke AI yang tidak tersimpan atau menjadi rusak (*broken image thumbnail*) saat histori chat dibuka kembali.
