@@ -3238,9 +3238,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.141.0` (Iterasi 341).
+  - **Versi Terkini:** `v2.142.0` (Iterasi 342).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
+
+---
+
+### 🚀 Iterasi 342: Manual Memory, Skill & Agent Editing with Automatic Pre-Edit Rollback Snapshots & Tar.gz Database Archive
+- **Fitur & Arsitektur Utama**:
+  1. **Pre-Edit Snapshot Backup Engine (`native_host.py`)**:
+     - Setiap kali AI agent memperbaiki, menyempurnakan, atau mengedit manual memory, skill, atau agent persona (termasuk yang diset manual oleh user), sistem otomatis mengambil snapshot versi sebelumnya ke `PERSISTENT MEMORY/.history/{type}/{id}_{timestamp}.bak.md` dan tabel `persistent_item_history`.
+  2. **Zero-Risk Rollback System (`db_rollback_item` & `rollback_brain_item`)**:
+     - Pengguna atau AI dapat sewaktu-waktu me-rollback perubahan skill, agent, atau memory ke versi sebelum diedit AI secara instan.
+  3. **Full Database Tar.gz Backup & Repository Whitelist**:
+     - Membuat arsip `.tar.gz` lengkap dari `/home/arya/.browser-agent` (`browser-agent-full-database.tar.gz`) yang mencakup database SQLite, screens, generated images, dan seluruh folder Persistent Memory.
+  4. **Verification**:
+     - Unit test passed 100% (2/2 rollback tests, 7/7 phase 1 memory tests, 4/4 training corpus tests).
 
 ---
 

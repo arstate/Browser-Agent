@@ -145,6 +145,7 @@ PM_ANTI_PATTERNS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "anti_patterns")
 PM_AUTONOMOUS_SKILLS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "autonomous_skills")
 PM_AUTONOMOUS_AGENTS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "autonomous_agents")
 PM_TRAINING_CORPUS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "training_corpus")
+PM_HISTORY_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, ".history")
 
 import base64
 import urllib.request
@@ -167,6 +168,7 @@ def init_db():
         os.makedirs(PM_AUTONOMOUS_SKILLS_DIR, exist_ok=True)
         os.makedirs(PM_AUTONOMOUS_AGENTS_DIR, exist_ok=True)
         os.makedirs(PM_TRAINING_CORPUS_DIR, exist_ok=True)
+        os.makedirs(PM_HISTORY_DIR, exist_ok=True)
 
         conn = sqlite3.connect(DB_PATH)
         try:
@@ -301,6 +303,23 @@ def init_db():
             """)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_training_corpus_updated ON chat_training_corpus(updated_at DESC)")
 
+            # 7. Persistent Item Edit History & Rollback Snapshots
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS persistent_item_history (
+                    id TEXT PRIMARY KEY,
+                    item_type TEXT NOT NULL,
+                    item_id TEXT NOT NULL,
+                    item_name TEXT DEFAULT '',
+                    previous_meta_json TEXT NOT NULL,
+                    previous_content TEXT NOT NULL,
+                    backup_file_path TEXT,
+                    edited_by TEXT DEFAULT 'autonomous_ai',
+                    change_summary TEXT DEFAULT '',
+                    created_at INTEGER NOT NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_item ON persistent_item_history(item_type, item_id, created_at DESC)")
+
             conn.commit()
             cursor.close()
         finally:
@@ -309,7 +328,7 @@ def init_db():
         # Populate initial seeds from markdown if empty
         sync_persistent_memory_on_startup()
         
-        log(f"SQLite database initialized at {DB_PATH}, persistent memory tables & directories ready")
+        log(f"SQLite database initialized at {DB_PATH}, persistent memory & rollback history tables ready")
     except Exception as e:
         log(f"Failed to initialize SQLite database: {e}\n{traceback.format_exc()}")
 
@@ -395,6 +414,137 @@ def list_md_items(target_dir):
         log(f"Error listing {target_dir}: {e}")
         return {"status": "error", "error": str(e)}
 
+def backup_item_before_mutation(item_type, item_id, item_name, current_meta, current_content, edited_by="autonomous_ai", change_summary=""):
+    """
+    Creates a snapshot backup in PERSISTENT MEMORY/.history/ and SQLite before an item is edited/improved.
+    """
+    try:
+        now = int(time.time() * 1000)
+        hist_id = f"hist_{item_type}_{item_id}_{now}"
+        hist_dir = os.path.join(PM_HISTORY_DIR, item_type)
+        os.makedirs(hist_dir, exist_ok=True)
+        
+        safe_id = re.sub(r'[^a-zA-Z0-9_]', '_', str(item_id))
+        backup_fname = f"{safe_id}_{now}.bak.md"
+        backup_fpath = os.path.join(hist_dir, backup_fname)
+        
+        # Write markdown snapshot
+        with open(backup_fpath, "w", encoding="utf-8") as f:
+            f.write(f"""---
+history_id: {hist_id}
+item_type: {item_type}
+item_id: {item_id}
+item_name: "{item_name}"
+edited_by: "{edited_by}"
+change_summary: "{change_summary}"
+timestamp: {now}
+meta_json: {json.dumps(current_meta)}
+---
+
+# 🕒 Backup Snapshot: {item_name} ({item_id})
+*Backed up at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S WIB')} | Editor: {edited_by}*
+
+{current_content}
+""")
+        
+        # Insert into SQLite
+        conn = sqlite3.connect(DB_PATH)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO persistent_item_history (id, item_type, item_id, item_name, previous_meta_json, previous_content, backup_file_path, edited_by, change_summary, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (hist_id, item_type, str(item_id), str(item_name), json.dumps(current_meta), str(current_content), backup_fpath, edited_by, change_summary, now))
+            conn.commit()
+            cursor.close()
+        finally:
+            conn.close()
+        log(f"Snapshot backup created for {item_type} {item_id} at {backup_fpath}")
+        return hist_id
+    except Exception as e:
+        log(f"Warning: Failed to create snapshot backup for {item_type} {item_id}: {e}")
+        return None
+
+def db_list_item_history(item_type, item_id):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, item_type, item_id, item_name, previous_meta_json, previous_content, backup_file_path, edited_by, change_summary, created_at
+            FROM persistent_item_history
+            WHERE item_type = ? AND item_id = ?
+            ORDER BY created_at DESC
+        """, (item_type, str(item_id)))
+        rows = [dict(r) for r in cursor.fetchall()]
+        cursor.close()
+        conn.close()
+        return {"status": "ok", "history": rows}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+def db_rollback_item(item_type, item_id, history_id=None):
+    """
+    Restores the specified item to its previous version from history.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        if history_id:
+            cursor.execute("SELECT * FROM persistent_item_history WHERE id = ?", (history_id,))
+        else:
+            cursor.execute("SELECT * FROM persistent_item_history WHERE item_type = ? AND item_id = ? ORDER BY created_at DESC LIMIT 1", (item_type, str(item_id)))
+        
+        hist = cursor.fetchone()
+        if not hist:
+            cursor.close()
+            conn.close()
+            return {"status": "error", "error": "No backup history found for rollback"}
+        
+        hist_dict = dict(hist)
+        prev_meta = json.loads(hist_dict["previous_meta_json"] or "{}")
+        prev_content = hist_dict["previous_content"]
+        cursor.close()
+        conn.close()
+        
+        # Apply restore based on item_type
+        if item_type in ("skill", "agent", "memory"):
+            target_dir = SKILLS_DIR if item_type == "skill" else (AGENTS_DIR if item_type == "agent" else MEMORIES_DIR)
+            save_md_item(target_dir, {**prev_meta, "content": prev_content})
+        elif item_type == "autonomous_skill":
+            db_save_autonomous_skill({
+                "id": str(item_id),
+                "name": prev_meta.get("name") or hist_dict.get("item_name"),
+                "description": prev_meta.get("description") or "",
+                "workflow_markdown": prev_content,
+                "version": prev_meta.get("version") or "v1.0.0",
+                "source": "rollback_restore"
+            })
+        elif item_type == "autonomous_agent":
+            db_save_autonomous_agent({
+                "id": str(item_id),
+                "name": prev_meta.get("name") or hist_dict.get("item_name"),
+                "role_description": prev_meta.get("role_description") or "",
+                "system_prompt": prev_content,
+                "assigned_skills": prev_meta.get("assigned_skills") or [],
+                "source": "rollback_restore"
+            })
+        elif item_type == "user_memory":
+            db_save_personal_memory({
+                "id": str(item_id),
+                "category": prev_meta.get("category") or "rule",
+                "content": prev_content,
+                "source": "rollback_restore",
+                "reason": "Restored from history backup"
+            })
+            
+        log(f"Rollback successful for {item_type} {item_id} using history {hist_dict['id']}")
+        return {"status": "ok", "message": f"Successfully rolled back {item_type} {item_id} to previous version", "restored_meta": prev_meta}
+    except Exception as e:
+        log(f"Error in db_rollback_item: {e}\n{traceback.format_exc()}")
+        return {"status": "error", "error": str(e)}
+
 def save_md_item(target_dir, item_data):
     try:
         item_id = item_data.get("id")
@@ -405,6 +555,22 @@ def save_md_item(target_dir, item_data):
         file_path = os.path.join(target_dir, f"{item_id}.md")
         content = item_data.get("content") or item_data.get("system_prompt") or item_data.get("instructions") or ""
         
+        # Pre-edit snapshot backup if file already exists
+        if os.path.exists(file_path):
+            existing = parse_md_file(file_path)
+            if existing:
+                existing_meta = existing.get("meta", {})
+                item_type = "skill" if target_dir == SKILLS_DIR else ("agent" if target_dir == AGENTS_DIR else "memory")
+                backup_item_before_mutation(
+                    item_type=item_type,
+                    item_id=item_id,
+                    item_name=existing_meta.get("name") or item_id,
+                    current_meta=existing_meta,
+                    current_content=existing.get("content") or "",
+                    edited_by=item_data.get("edited_by", "user" if "user" in str(item_data.get("source", "")) else "autonomous_ai"),
+                    change_summary=item_data.get("change_summary", "Updated configuration")
+                )
+
         meta = {
             "id": item_id,
             "name": item_data.get("name") or "Untitled",
@@ -1795,6 +1961,21 @@ def db_save_personal_memory(mem):
 
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+        
+        # Snapshot backup before updating existing memory
+        cursor.execute("SELECT category, content, reason FROM user_memories WHERE id = ?", (mid,))
+        existing_mem = cursor.fetchone()
+        if existing_mem:
+            backup_item_before_mutation(
+                item_type="user_memory",
+                item_id=mid,
+                item_name=mid,
+                current_meta={"category": existing_mem[0], "reason": existing_mem[2]},
+                current_content=existing_mem[1],
+                edited_by=source,
+                change_summary="Memory update"
+            )
+
         cursor.execute("""
             INSERT INTO user_memories (id, category, content, source, reason, confidence, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -1944,6 +2125,21 @@ def db_save_autonomous_skill(sk):
 
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+        
+        # Snapshot backup before updating existing autonomous skill
+        cursor.execute("SELECT name, description, workflow_markdown, version FROM autonomous_skills WHERE id = ?", (skid,))
+        existing_sk = cursor.fetchone()
+        if existing_sk:
+            backup_item_before_mutation(
+                item_type="autonomous_skill",
+                item_id=skid,
+                item_name=existing_sk[0],
+                current_meta={"name": existing_sk[0], "description": existing_sk[1], "version": existing_sk[3]},
+                current_content=existing_sk[2],
+                edited_by=source,
+                change_summary=changelog or "Autonomous skill refinement"
+            )
+
         cursor.execute("""
             INSERT INTO autonomous_skills (id, name, description, workflow_markdown, version, source, success_count, failure_count, changelog, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -2025,6 +2221,22 @@ def db_save_autonomous_agent(ag):
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
+
+        # Snapshot backup before updating existing agent
+        cursor.execute("SELECT name, role_description, system_prompt, assigned_skills_json FROM autonomous_agents WHERE id = ?", (agid,))
+        existing_ag = cursor.fetchone()
+        if existing_ag:
+            try: existing_assigned = json.loads(existing_ag[3] or "[]")
+            except Exception: existing_assigned = []
+            backup_item_before_mutation(
+                item_type="autonomous_agent",
+                item_id=agid,
+                item_name=existing_ag[0],
+                current_meta={"name": existing_ag[0], "role_description": existing_ag[1], "assigned_skills": existing_assigned},
+                current_content=existing_ag[2],
+                edited_by=str(ag.get("source") or "autonomous_ai"),
+                change_summary=str(ag.get("reason") or "Autonomous agent update")
+            )
 
         # Intelligent Auto-Routing & Dedicated Skill Synthesis: Never leave an agent with empty skills
         if not assigned_skills:
@@ -2446,6 +2658,16 @@ def handle_local_rpc(msg):
 
     elif action == "db_delete_persistent_item":
         res = db_delete_persistent_item(msg.get("item_type", ""), msg.get("item_id", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_list_item_history":
+        res = db_list_item_history(msg.get("item_type", ""), msg.get("item_id", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_rollback_item":
+        res = db_rollback_item(msg.get("item_type", ""), msg.get("item_id", ""), msg.get("history_id"))
         res["id"] = req_id
         return res
 

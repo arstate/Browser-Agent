@@ -1064,6 +1064,59 @@ const AGENT_TOOLS = [
         required: ["name", "role_description", "system_prompt"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "edit_manual_skill",
+      description: "Edit, refine, or improve a skill created manually by the user or preset skill. Automatically creates a rollback backup before applying modifications.",
+      parameters: {
+        type: "object",
+        properties: {
+          skill_id: { type: "string", description: "ID of the manual skill to edit" },
+          name: { type: "string", description: "Updated skill name" },
+          description: { type: "string", description: "Updated description" },
+          content: { type: "string", description: "Updated markdown instruction content for the skill" },
+          change_summary: { type: "string", description: "Summary of changes made to improve the skill" }
+        },
+        required: ["skill_id", "content"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "edit_manual_agent",
+      description: "Edit, refine, or improve an agent persona created manually by the user. Automatically creates a rollback backup before applying modifications.",
+      parameters: {
+        type: "object",
+        properties: {
+          agent_id: { type: "string", description: "ID of the manual agent to edit" },
+          name: { type: "string", description: "Updated agent name" },
+          description: { type: "string", description: "Updated role description" },
+          system_prompt: { type: "string", description: "Updated system prompt / instruction directives" },
+          skills: { type: "array", items: { type: "string" }, description: "Updated list of attached skill IDs" },
+          change_summary: { type: "string", description: "Summary of changes made to improve the agent" }
+        },
+        required: ["agent_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "rollback_brain_item",
+      description: "Rollback any skill, agent persona, or memory to its previous version before it was modified by the AI.",
+      parameters: {
+        type: "object",
+        properties: {
+          item_type: { type: "string", enum: ["skill", "agent", "memory", "autonomous_skill", "autonomous_agent", "user_memory"], description: "Type of item to rollback" },
+          item_id: { type: "string", description: "ID of the item to rollback" },
+          history_id: { type: "string", description: "Optional specific history snapshot ID to restore" }
+        },
+        required: ["item_type", "item_id"]
+      }
+    }
   }
 ];
 
@@ -2771,6 +2824,44 @@ async function executeTool(name, args, assistantBubble = null) {
         }
       });
       return { success: true, message: "Autonomous specialist agent spawned and registered in agent vault", id: res.id, name: res.name };
+    }
+
+    case "edit_manual_skill": {
+      const res = await sendNativeRpc("save_skill", {
+        skill: {
+          id: args.skill_id,
+          name: args.name,
+          description: args.description,
+          content: args.content,
+          edited_by: "autonomous_ai",
+          change_summary: args.change_summary || "Skill improvement by AI agent"
+        }
+      });
+      return { success: true, message: "Manual skill updated with rollback backup created", id: args.skill_id, res };
+    }
+
+    case "edit_manual_agent": {
+      const res = await sendNativeRpc("save_agent", {
+        agent: {
+          id: args.agent_id,
+          name: args.name,
+          description: args.description,
+          system_prompt: args.system_prompt,
+          skills: args.skills,
+          edited_by: "autonomous_ai",
+          change_summary: args.change_summary || "Agent persona improvement by AI agent"
+        }
+      });
+      return { success: true, message: "Manual agent updated with rollback backup created", id: args.agent_id, res };
+    }
+
+    case "rollback_brain_item": {
+      const res = await sendNativeRpc("db_rollback_item", {
+        item_type: args.item_type,
+        item_id: args.item_id,
+        history_id: args.history_id
+      });
+      return { success: res.status === "ok", message: res.message || res.error, res };
     }
 
     case "generate_image": {

@@ -4,5 +4,6 @@ __pycache__/
 .DS_Store
 .restore_points/
 *.tar.gz
+!browser-agent-full-database.tar.gz
 *.zip
 !antigravity_session/*.zip
