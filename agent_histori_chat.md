@@ -2665,6 +2665,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.96.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 297: Fix AI Generator Modal Layout & Responsive Form Controls for Agents, Skills, and Memories
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug layout antarmuka pada modal pembuatan Sub-Agent, Skills, dan Memories ketika beralih ke tab 'Buat dengan AI' yang sebelumnya bertumpuk horizontal tak beraturan dan membuat input prompt terjepit sempit.
+- **Solusi & Peningkatan**:
+  1. **Vertical Flex Column Layout for AI Generator (`options.css`)**:
+     - Mengubah container `.ai-generator-box` menjadi `display: flex; flex-direction: column; gap: 12px;` dengan latar belakang semi-transparan `rgba(0, 0, 0, 0.35)` dan border neon halus `rgba(206, 241, 40, 0.2)`.
+  2. **Dedicated Responsive Form Controls**:
+     - Menata `.ai-model-select-row` dengan label header uppercase yang jelas dan dropdown `<select class="ai-model-select">` berwarna gelap beraksen neon saat aktif (focus).
+     - Menata `.ai-generator-box textarea` menjadi lebar 100% penuh (`min-height: 72px`), padding lapang, font bersih, dan placeholder abu-abu netral.
+     - Merancang tombol `.btn-generate-ai` menjadi tombol full-width neon lime mencolok dengan hover glow dan loading state.
+     - Menambahkan styling box status respons `.ai-status-msg` untuk notifikasi info dan error.
+  3. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.97.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2672,6 +2688,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
+- **AI Generator Modal Layout:** Tab 'Buat dengan AI' pada modal Agent, Skill, dan Memory menggunakan container vertikal kolumnar 100% lebar penuh dengan dropdown model, textarea lapang, dan tombol generate neon lime.
 - **Switch Tab Toggle (ON / OFF):**
   - `ON`: Otomatis berpindah tab dan memfokuskan jendela saat agent beraksi.
   - `OFF`: Aksi browser dieksekusi hening di latar belakang (background) via CDP tanpa mengganggu tab aktif pengguna, memungkinkan multitasking 100%.
@@ -2688,7 +2705,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.96.0` (Iterasi 296).
+  - **Versi Terkini:** `v2.97.0` (Iterasi 297).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
