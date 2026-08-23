@@ -2310,16 +2310,29 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.74.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 275: Berkas Spotlight Orb Neon Bergerak Fisik Kiri-Kanan & Proteksi Interior Gelap Bersih
+- **Kebutuhan Pengguna**:
+  - Menghilangkan warna kuning/hijau keruh yang menembus ke dalam textarea (terlalu over).
+  - Menampilkan animasi gerak kiri-kanan yang nyata dan terlihat jelas (*physical moving spotlight glow*).
+- **Solusi & Peningkatan**:
+  1. **Spotlight Orb Bergerak Fisik (`newtab.css` & `sidepanel.css`)**:
+     - Mengubah pseudo-element `::before` menjadi spotlight orb neon berukuran 140px (`width: 140px; top: -8px; bottom: -8px; border-radius: 30px;`) yang bergerak secara fisik melintasi lebar input dari `left: -10px` hingga `left: calc(100% - 130px)` via `@keyframes sweepOrbLeftRight` (3.2s).
+     - Mengunci background container prompt menjadi `#141417` pekat agar blur filter tidak memantulkan warna kuning ke dalam area teks, menjaga interior tetap bersih dan tajam.
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.75.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
-- **Left-to-Right Sweeping Neon Aura Glow:** Smooth perimeter aura glow (`glowSweepLeftRight` 4s) gliding continuously left-to-right around the prompt container during AI generation.
+- **Travelling Neon Light Orb:** 140px physical neon light orb (`sweepOrbLeftRight` 3.2s) smoothly travelling left-to-right along the perimeter with clean dark opaque interior.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.74.0` (Iterasi 274).
+  - **Versi Terkini:** `v2.75.0` (Iterasi 275).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
