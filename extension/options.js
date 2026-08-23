@@ -2908,9 +2908,14 @@ function renderPersistentBrain(searchQuery = "") {
       card.style.borderColor = 'rgba(168, 85, 247, 0.3)';
       
       const assigned = Array.isArray(item.assigned_skills) ? item.assigned_skills : [];
+      const allSkills = brainData.autonomous_skills || [];
       const skillsHtml = assigned.length > 0
-        ? assigned.map(skId => `<span class="brain-badge skill" style="font-size: 10px; padding: 2px 7px; background: rgba(52, 211, 153, 0.1); border-color: rgba(52, 211, 153, 0.25); color: #6ee7b7;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/> ${escapeHtml(skId)}</span>`).join(' ')
-        : '<span style="font-size: 11px; color: #64748b; font-style: italic;">Auto-Routed to General Skills</span>';
+        ? assigned.map(skId => {
+            const matchedSkill = allSkills.find(s => s.id === skId);
+            const label = matchedSkill ? matchedSkill.name : skId;
+            return `<span class="brain-badge skill" style="font-size: 10px; padding: 3px 8px; background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.3); color: #6ee7b7; display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> ${escapeHtml(label)}</span>`;
+          }).join(' ')
+        : '<span class="brain-badge skill" style="font-size: 10px; padding: 3px 8px; background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.3); color: #6ee7b7; display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Dedicated Self-Evolved Skill</span>';
 
       card.innerHTML = `
         <div class="brain-card-header">

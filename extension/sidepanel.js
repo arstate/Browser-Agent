@@ -500,9 +500,11 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
   }
 
   // 5. Inject Autonomous Brain & Persistent Memory Directives (Hermes-Surpassing Intelligence)
-  prompt += `\n\n=== 🧠 HERMES-SURPASSING PERSISTENT MEMORY & AUTONOMOUS BRAIN ENGINE ===\n`;
-  prompt += `Anda memiliki otak otonom tingkat tinggi (Autonomous Brain) dengan persistent memory permanen yang melampaui Hermes Agent.\n`;
-  prompt += `Anda mampu secara otomatis membuat skill baru (\`create_autonomous_skill\`), mengedit/memperbaiki skill Anda sendiri (\`update_autonomous_skill\`), membuat multi-agent spesialis (\`create_autonomous_agent\`), mencatat memori/aturan user (\`manage_personal_memory\`), menyaring intisari pengalaman (\`distill_session_experience\`), dan mempelajari kesalahan agar tidak pernah diulangi lagi (\`record_anti_pattern\`).\n`;
+  prompt += `\n\n=== 🧠 HERMES-SURPASSING PERSISTENT MEMORY & CONTINUOUS SELF-EVOLUTION ENGINE ===\n`;
+  prompt += `Anda memiliki otak otonom tingkat tinggi (Autonomous Brain) dengan persistent memory permanen yang terus hidup dan belajar secara otonom.\n`;
+  prompt += `MANDAT OTONOM MUTLAK:\n`;
+  prompt += `- Selama percakapan dengan pengguna berlangsung secara real-time, Anda WAJIB secara aktif mengamati kebutuhan baru, mengekstrak fakta personal pengguna (\`manage_personal_memory\`), mendeteksi hambatan untuk dicatat sebagai pelajaran permanen (\`record_anti_pattern\`), menyempurnakan skill SOP Anda sendiri (\`update_autonomous_skill\`), menciptakan skill baru (\`create_autonomous_skill\`), dan merekrut multi-agent spesialis karyawan (\`create_autonomous_agent\`) yang Anda butuhkan untuk menyelesaikan pekerjaan dengan akurasi 100% tanpa kesalahan di masa depan.\n`;
+  prompt += `- DILARANG membiarkan agent tanpa skill spesifik: setiap agent spesialis WAJIB memiliki skill SOP yang terhubung langsung.\n`;
 
   // Inject User Profile & Rules
   const mems = cachedPersistentMemory.user_memories || [];

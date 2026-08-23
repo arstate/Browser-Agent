@@ -3238,9 +3238,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.140.0` (Iterasi 340).
+  - **Versi Terkini:** `v2.141.0` (Iterasi 341).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
+
+---
+
+### 🚀 Iterasi 341: Continuous Real-Time In-Conversation Self-Learning & Auto-Synthesizing Specialist Skills
+- **Fitur & Arsitektur Utama**:
+  1. **Autonomous Dedicated Skill Synthesis (`db_save_autonomous_agent` in `native_host.py`)**:
+     - Menghapus fallback pasif "Auto-Routed to General Skills".
+     - Setiap Specialist Agent otomatis dibuatkan skill SOP presisi mandiri dan terhubung ke skill pool (`skill_auto_wa_qualification_sop`, `skill_auto_survey_booking_closer`, dll.).
+  2. **Real-time In-Conversation Self-Evolution Directive (`sidepanel.js`)**:
+     - Menyematkan mandat otonom mutlak di system prompt: AI secara real-time mengekstrak fakta personal (`manage_personal_memory`), mencatat anti-patterns dari kesalahan agar tidak pernah diulang (`record_anti_pattern`), menyempurnakan skill SOP sendiri (`update_autonomous_skill`), dan merekrut multi-agent spesialis karyawan baru (`create_autonomous_agent`).
+  3. **UI Enhancements (`options.js`)**:
+     - Merender badge skill terhubung dengan nama asli skill dan ikon SVG lightning/polygon yang elegan.
 
 ---
 

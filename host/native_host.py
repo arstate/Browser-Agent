@@ -1521,6 +1521,88 @@ def sync_persistent_memory_on_startup():
                                 assigned_skills_json=excluded.assigned_skills_json
                         """, (agid, name, desc, prompt, skills_json, src, reason, cat, uat))
 
+        # Seed Core High-Precision Autonomous Skills
+        seed_skills = [
+            (
+                "skill_auto_wa_qualification_sop",
+                "WhatsApp 5-Minute Lead Qualification SOP",
+                "Standar operasional kualifikasi prospek chat WhatsApp 5 menit: budget, lokasi minat Surabaya/Sidoarjo, kesiapan berkas KPR, dan locking survei.",
+                """### 1. Sapaan Ramah & Value Hook (Balon 1 & 2):
+- Sapa nama prospek secara ramah dan personal.
+- Paparkan Hero Offer: DP 0%, Cicilan ringan 1-2 Jt-an, dan All-In Free (BPHTB, AJB, Notaris, Subsidi KPR).
+
+### 2. Kualifikasi Cepat (5 Menit):
+- Tanyakan lokasi kerja & preferensi area (Surabaya Timur/Selatan atau Sidoarjo Juanda/Sukodono).
+- Tanyakan estimasi cicilan yang nyaman & kesiapan berkas KPR (Karyawan/Wiraswasta).
+
+### 3. Micro-CTA Kunci Survei Lokasi (Balon 3):
+- Berikan 2 opsi waktu luang: *"Mau saya temenin cek lokasinya Sabtu sore atau Minggu pagi kak?"*
+- Dampingi langsung saat survei unit di lokasi."""
+            ),
+            (
+                "skill_auto_survey_booking_closer",
+                "Survey Booking & Objection Handling Closer",
+                "Strategi psikologi closing anti-price shock untuk memecah cicilan bulanan jadi harian setara ngopi dan penguncian jadwal survei unit properti.",
+                """### 1. Handling Keberatan Harga (Anti-Price Shock):
+- Pecah nominal cicilan rumah ratusan juta menjadi hitungan harian super ringan setara ngopi (Rp 40rb-60rb/hari).
+- Bandingkan uang hangus sewa/kontrakan vs cicilan rumah milik sendiri yang menjadi aset masa depan.
+
+### 2. Information Gap Protocol:
+- Jaga rasa penasaran prospek, simpan nama persis cluster untuk diinformasikan saat penjemputan survei di titik temu."""
+            )
+        ]
+        for skid, skname, skdesc, skflow in seed_skills:
+            cursor.execute("""
+                INSERT INTO autonomous_skills (id, name, description, workflow_markdown, version, source, success_count, failure_count, changelog, created_at, updated_at)
+                VALUES (?, ?, ?, ?, 'v1.0.0', 'autonomous_ai', 1, 0, 'Core autonomous skill', ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name=excluded.name,
+                    description=excluded.description,
+                    workflow_markdown=excluded.workflow_markdown
+            """, (skid, skname, skdesc, skflow, now, now))
+            
+            sk_fname = f"{skid}.md"
+            sk_fpath = os.path.join(PM_AUTONOMOUS_SKILLS_DIR, sk_fname)
+            os.makedirs(PM_AUTONOMOUS_SKILLS_DIR, exist_ok=True)
+            with open(sk_fpath, "w", encoding="utf-8") as sk_f:
+                sk_f.write(f"""---
+id: {skid}
+name: "{skname}"
+type: autonomous_skill
+version: "v1.0.0"
+description: "{skdesc}"
+source: "autonomous_ai"
+success_count: 1
+failure_count: 0
+created_at: {now}
+updated_at: {now}
+---
+
+# ⚡ {skname} (v1.0.0)
+
+## 🎯 Deskripsi & Trigger:
+{skdesc}
+
+## 📋 Prosedur Langkah demi Langkah (SOP / Workflow):
+{skflow}
+""")
+
+        # Ensure all existing agents are connected to dedicated skills
+        cursor.execute("SELECT id, name, role_description, assigned_skills_json FROM autonomous_agents")
+        existing_agents = cursor.fetchall()
+        for ag_row in existing_agents:
+            ag_id, ag_name, ag_desc, ag_skills_json = ag_row
+            try: ag_skills = json.loads(ag_skills_json) if ag_skills_json else []
+            except Exception: ag_skills = []
+            
+            if not ag_skills:
+                if "lead" in ag_name.lower() or "qualif" in ag_name.lower() or "sales" in ag_name.lower():
+                    ag_skills = ["skill_auto_wa_qualification_sop", "skill_auto_survey_booking_closer"]
+                else:
+                    ag_skills = ["skill_auto_meta_ads_auditor", "skill_auto_wa_qualification_sop"]
+                
+                cursor.execute("UPDATE autonomous_agents SET assigned_skills_json = ? WHERE id = ?", (json.dumps(ag_skills), ag_id))
+
         # 3. Seed personal memories if table empty
         cursor.execute("SELECT COUNT(*) FROM user_memories")
         if cursor.fetchone()[0] == 0:
@@ -1944,7 +2026,7 @@ def db_save_autonomous_agent(ag):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        # Intelligent Auto-Routing: If assigned_skills is empty, search existing autonomous_skills for relevant keywords
+        # Intelligent Auto-Routing & Dedicated Skill Synthesis: Never leave an agent with empty skills
         if not assigned_skills:
             cursor.execute("SELECT id, name, description FROM autonomous_skills")
             all_skills = [dict(r) for r in cursor.fetchall()]
@@ -1952,16 +2034,61 @@ def db_save_autonomous_agent(ag):
                 sk_name = (sk.get("name") or "").lower()
                 sk_desc = (sk.get("description") or "").lower()
                 agent_text = (name + " " + role_description).lower()
-                
-                # Check keyword matches
                 tokens = [t for t in sk_name.split() if len(t) > 3]
                 if any(tok in agent_text for tok in tokens) or (sk.get("id") in agent_text):
                     if sk["id"] not in assigned_skills:
                         assigned_skills.append(sk["id"])
             
-            # If still empty but skills exist, attach top skill by default
-            if not assigned_skills and all_skills:
-                assigned_skills.append(all_skills[0]["id"])
+            # If still empty, synthesize dedicated custom skills for this specialist agent
+            if not assigned_skills:
+                safe_prefix = re.sub(r'[^a-zA-Z0-9_]', '_', name.lower().replace(" ", "_"))
+                synth_skill_id = f"skill_auto_{safe_prefix}_{uuid.uuid4().hex[:4]}"
+                synth_skill_name = f"SOP & Alur Kerja: {name}"
+                synth_skill_desc = f"Standar operasional prosedur terstruktur dan alur eksekusi presisi untuk sub-agent {name}."
+                synth_skill_workflow = f"""### 1. 🎯 Identifikasi Kebutuhan & Intent:
+- Analisis permintaan pengguna secara spesifik sesuai peran {name}.
+- Lakukan validasi parameter input sebelum menjalankan tool apa pun.
+
+### 2. ⚡ Prosedur Eksekusi Terukur:
+- Jalankan strategi optimal berdasarkan persona: {role_description}.
+- Jika terjadi hambatan/error, lakukan diagnosa mandiri dan catat solusi permanen ke anti-patterns.
+
+### 3. 🛡️ Verifikasi Output & Zero Error:
+- Sajikan hasil akhir dengan akurasi 100%, ringkas, to the point, dan bebas dari halusinasi."""
+                
+                cursor.execute("""
+                    INSERT INTO autonomous_skills (id, name, description, workflow_markdown, version, source, success_count, failure_count, changelog, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, 1, 0, 'Auto-synthesized for specialist agent', ?, ?)
+                    ON CONFLICT(id) DO NOTHING
+                """, (synth_skill_id, synth_skill_name, synth_skill_desc, synth_skill_workflow, 'v1.0.0', 'autonomous_ai', now, now))
+                
+                # Write skill markdown to disk
+                sk_fname = f"{synth_skill_id}.md"
+                sk_fpath = os.path.join(PM_AUTONOMOUS_SKILLS_DIR, sk_fname)
+                os.makedirs(PM_AUTONOMOUS_SKILLS_DIR, exist_ok=True)
+                with open(sk_fpath, "w", encoding="utf-8") as sk_f:
+                    sk_f.write(f"""---
+id: {synth_skill_id}
+name: "{synth_skill_name}"
+type: autonomous_skill
+version: "v1.0.0"
+description: "{synth_skill_desc}"
+source: "autonomous_ai"
+success_count: 1
+failure_count: 0
+created_at: {now}
+updated_at: {now}
+---
+
+# ⚡ {synth_skill_name} (v1.0.0)
+
+## 🎯 Deskripsi & Trigger:
+{synth_skill_desc}
+
+## 📋 Prosedur Langkah demi Langkah (SOP / Workflow):
+{synth_skill_workflow}
+""")
+                assigned_skills.append(synth_skill_id)
 
         assigned_skills_json = json.dumps(assigned_skills)
         source = str(ag.get("source") or "autonomous_ai")
