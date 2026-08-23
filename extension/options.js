@@ -527,6 +527,85 @@ function showToast(customMsg = null) {
 // =========================================================================
 // Export & Import All Settings (Complete Backup & Restore)
 // =========================================================================
+// =========================================================================
+// Universal Export & Import (Database SQLite & Settings)
+// =========================================================================
+async function exportAllDatabase() {
+  try {
+    setAutoSaveStatus('saving');
+    showToast("Mengumpulkan seluruh database SQLite & pengaturan...");
+
+    // 1. Fetch complete storage from Chrome
+    const allStorage = await chrome.storage.local.get(null);
+
+    // 2. Fetch full SQLite database & markdown files from Native Host
+    let nativeDbData = { sessions: [], settings: {}, models: [] };
+    let nativeFiles = { agents: [], skills: [], memories: [] };
+
+    try {
+      const dbRes = await sendNativeRpc("db_export_full_database");
+      if (dbRes && dbRes.status === "ok" && dbRes.data) {
+        nativeDbData = dbRes.data.database || nativeDbData;
+        nativeFiles = dbRes.data.files || nativeFiles;
+      }
+    } catch (dbErr) {
+      console.warn("Could not fetch native SQLite DB export:", dbErr);
+    }
+
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+
+    // Construct Universal Full Database & Settings Backup
+    const fullBackupPayload = {
+      meta: {
+        app: "Browser Agent",
+        version: "v2.88.0",
+        export_type: "universal_full_database_backup",
+        platform_origin: navigator.platform || "Universal",
+        exported_at: new Date().toISOString(),
+        timestamp: Date.now(),
+        description: "Universal Full Backup: SQLite sessions, settings, model priority, custom agents, skills SOP, memories, and storage."
+      },
+      storage: {
+        browser_agent_config: config,
+        active_agent_id: activeAgentId,
+        custom_agents: agentsList,
+        custom_skills: skillsList,
+        custom_memories: memoriesList,
+        browser_agent_exec_mode: allStorage.browser_agent_exec_mode || 'accept',
+        browser_agent_auto_switch_tab: allStorage.browser_agent_auto_switch_tab ?? true,
+        browser_agent_search_engine: allStorage.browser_agent_search_engine || 'google',
+        browser_agent_mode: allStorage.browser_agent_mode || 'agent',
+        show_floating_button: allStorage.show_floating_button ?? true
+      },
+      database: nativeDbData,
+      files: nativeFiles
+    };
+
+    const jsonStr = JSON.stringify(fullBackupPayload, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const filename = `browser-agent-full-database-universal-${dateStr}.json`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+
+    setAutoSaveStatus('saved');
+    const sessionCount = (nativeDbData.sessions || []).length;
+    showToast(`Semua database berhasil diekspor (${sessionCount} sesi chat & seluruh pengaturan)!`);
+  } catch (err) {
+    console.error("Export all database error:", err);
+    alert("Gagal mengekspor database: " + err.message);
+  }
+}
+
 async function exportAllSettings() {
   try {
     setAutoSaveStatus('saving');
@@ -537,7 +616,7 @@ async function exportAllSettings() {
     const exportData = {
       meta: {
         app: "Browser Agent",
-        version: "v2.86.0",
+        version: "v2.88.0",
         export_date: new Date().toISOString(),
         timestamp: Date.now(),
         type: "browser_agent_all_settings_backup",
@@ -589,6 +668,7 @@ async function importAllSettings(file) {
   if (!file) return;
   try {
     setAutoSaveStatus('saving');
+    showToast("Menganalisis file backup...");
     const text = await file.text();
     let parsed;
     try {
@@ -598,16 +678,34 @@ async function importAllSettings(file) {
       return;
     }
 
-    // Support both direct settings dict or wrapped { meta, settings }
-    const settings = parsed.settings || parsed.data || parsed;
-    if (!settings || typeof settings !== 'object') {
-      alert("Format berkas backup pengaturan tidak dikenali!");
-      return;
+    const isFullDb = parsed.meta?.export_type === "universal_full_database_backup" || parsed.database !== undefined;
+    const settings = parsed.storage || parsed.settings || parsed.data || parsed;
+    const database = parsed.database;
+    const files = parsed.files;
+
+    let importedDbResult = null;
+
+    // 1. If Full Database Payload is present, restore to Native SQLite DB & Disk
+    if (isFullDb || database) {
+      try {
+        const importRes = await sendNativeRpc("db_import_full_database", {
+          payload: {
+            database: database || {},
+            files: files || {}
+          }
+        });
+        if (importRes && importRes.status === "ok") {
+          importedDbResult = importRes.imported;
+        }
+      } catch (nativeErr) {
+        console.warn("Native DB import RPC warning:", nativeErr);
+      }
     }
 
+    // 2. Restore Chrome Local Storage
     const storageToSet = {};
 
-    // 1. Config & Priority Models
+    // Config & Priority Models
     if (settings.browser_agent_config) {
       config = { ...config, ...settings.browser_agent_config };
       storageToSet.browser_agent_config = config;
@@ -616,47 +714,50 @@ async function importAllSettings(file) {
       storageToSet.browser_agent_config = config;
     }
 
-    // 2. Multi-Agents
+    // Multi-Agents
     if (Array.isArray(settings.custom_agents)) {
       agentsList = settings.custom_agents;
       storageToSet.custom_agents = agentsList;
     }
 
-    // 3. Skills
+    // Skills
     if (Array.isArray(settings.custom_skills)) {
       skillsList = settings.custom_skills;
       storageToSet.custom_skills = skillsList;
     }
 
-    // 4. Memories
+    // Memories
     if (Array.isArray(settings.custom_memories)) {
       memoriesList = settings.custom_memories;
       storageToSet.custom_memories = memoriesList;
     }
 
-    // 5. Active Agent ID
+    // Active Agent ID
     if (settings.active_agent_id) {
       activeAgentId = settings.active_agent_id;
       storageToSet.active_agent_id = activeAgentId;
     }
 
-    // 6. UI Preferences
+    // UI Preferences
     if (settings.browser_agent_exec_mode) storageToSet.browser_agent_exec_mode = settings.browser_agent_exec_mode;
     if (settings.browser_agent_auto_switch_tab !== undefined) storageToSet.browser_agent_auto_switch_tab = settings.browser_agent_auto_switch_tab;
     if (settings.browser_agent_search_engine) storageToSet.browser_agent_search_engine = settings.browser_agent_search_engine;
     if (settings.browser_agent_mode) storageToSet.browser_agent_mode = settings.browser_agent_mode;
     if (settings.show_floating_button !== undefined) storageToSet.show_floating_button = settings.show_floating_button;
 
-    // Save to Chrome Storage
-    await chrome.storage.local.set(storageToSet);
+    if (Object.keys(storageToSet).length > 0) {
+      await chrome.storage.local.set(storageToSet);
+    }
 
-    // Sync to SQLite Native DB
-    try {
-      if (config.models && Array.isArray(config.models)) {
-        sendNativeRpc('db_save_models', { models: config.models }).catch(() => {});
-      }
-      sendNativeRpc('db_save_all_settings', { settings: storageToSet }).catch(() => {});
-    } catch (e) {}
+    // 3. Fallback sync models and settings to SQLite if not done via db_import_full_database
+    if (!isFullDb) {
+      try {
+        if (config.models && Array.isArray(config.models)) {
+          sendNativeRpc('db_save_models', { models: config.models }).catch(() => {});
+        }
+        sendNativeRpc('db_save_all_settings', { settings: storageToSet }).catch(() => {});
+      } catch (e) {}
+    }
 
     // Refresh UI elements in real time
     applyConfigToUI();
@@ -668,10 +769,14 @@ async function importAllSettings(file) {
     updateBadges();
 
     setAutoSaveStatus('saved');
-    showToast("Seluruh pengaturan berhasil diimpor dan dipulihkan!");
+    if (importedDbResult) {
+      showToast(`Sukses! ${importedDbResult.sessions} sesi chat, ${importedDbResult.models} model, & seluruh pengaturan berhasil dipulihkan!`);
+    } else {
+      showToast("Seluruh pengaturan berhasil diimpor dan dipulihkan!");
+    }
   } catch (err) {
-    console.error("Import settings error:", err);
-    alert("Gagal mengimpor pengaturan: " + err.message);
+    console.error("Import error:", err);
+    alert("Gagal mengimpor: " + err.message);
   }
 }
 
@@ -2376,17 +2481,25 @@ function setupEventListeners() {
   // Test connection button
   document.getElementById('btn-test-connection')?.addEventListener('click', checkPCBridgeStatus);
 
-  // Export & Import Settings Buttons (Header & Backup Card)
-  const btnExportAll = document.getElementById('btn-export-all-settings');
-  const btnImportAll = document.getElementById('btn-import-all-settings');
-  const btnExportCard = document.getElementById('btn-export-backup-card');
+  // Export & Import Buttons (Header & Backup Card)
+  const btnExportDbHeader = document.getElementById('btn-export-all-database');
+  const btnExportDbCard = document.getElementById('btn-export-all-db-card');
+  const btnExportSettingsHeader = document.getElementById('btn-export-all-settings');
+  const btnExportSettingsCard = document.getElementById('btn-export-backup-card');
+  const btnImportHeader = document.getElementById('btn-import-all-settings');
   const btnImportCard = document.getElementById('btn-import-backup-card');
   const inputImportFile = document.getElementById('input-import-settings-file');
 
-  btnExportAll?.addEventListener('click', exportAllSettings);
-  btnExportCard?.addEventListener('click', exportAllSettings);
+  // Export Complete Universal Database
+  btnExportDbHeader?.addEventListener('click', exportAllDatabase);
+  btnExportDbCard?.addEventListener('click', exportAllDatabase);
 
-  btnImportAll?.addEventListener('click', () => {
+  // Export Settings Only
+  btnExportSettingsHeader?.addEventListener('click', exportAllSettings);
+  btnExportSettingsCard?.addEventListener('click', exportAllSettings);
+
+  // Import Trigger
+  btnImportHeader?.addEventListener('click', () => {
     inputImportFile?.click();
   });
 

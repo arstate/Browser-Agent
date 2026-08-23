@@ -4883,6 +4883,31 @@ body {
   flex-shrink: 0;
 }
 
+.btn-export-db-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  background: rgba(168, 85, 247, 0.12);
+  color: #9333EA;
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btn-export-db-pill:hover {
+  background: #9333EA;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
+}
+
 .btn-clear-all-history {
   display: inline-flex;
   align-items: center;
@@ -4907,7 +4932,8 @@ body {
   transform: translateY(-1px);
 }
 
-.btn-clear-all-history svg {
+.btn-clear-all-history svg,
+.btn-export-db-pill svg {
   width: 11px;
   height: 11px;
   flex-shrink: 0;

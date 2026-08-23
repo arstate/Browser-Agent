@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.87.0`
-- **Iterasi:** `Iterasi 287`
-- **Tanggal Rilis:** 23 Agustus 2026 (17:20 WIB)
+- **Versi Terkini:** `v2.88.0`
+- **Iterasi:** `Iterasi 288`
+- **Tanggal Rilis:** 23 Agustus 2026 (17:26 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (382.4 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (383.6 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.88.0** | 288 | 23-08-2026 17:26 | `v2.88.0` | **Universal Full Database & Settings Export/Import across Windows, Mac, and Linux:** Menambahkan tombol **`Export All Database`** di header opsi, kartu backup, dan modal Riwayat Chat SQLite. Mengekspor 100% database percakapan SQLite (`sessions`), konfigurasi settings (`settings`), daftar prioritas model (`model_configs`), serta seluruh berkas markdown custom multi-agent (`agents/*.md`), skills SOP (`skills/*.md`), dan memory rules (`memories/*.md`) ke format Universal JSON. Mendukung pemulihan data (Restore/Import) otomatis lintas sistem operasi (Windows `%USERPROFILE%\.browser-agent`, macOS, dan Linux). | 🟢 STABLE | `./restore.sh v2.88.0` |
 | **v2.87.0** | 287 | 23-08-2026 17:20 | `v2.87.0` | **SQLite Database Persistence for Models & Settings with Complete Export/Import Backup:** Menambahkan tabel SQLite terpisah `model_configs` (untuk prioritas model AI) dan `settings` (untuk seluruh konfigurasi global) di `native_host.py` (`~/.browser-agent/chat_history.db`). Menambahkan tombol **Export Settings** (`.json`) dan **Import Settings** pada header dan kartu khusus pengaturan untuk mem-backup & me-restore 100% data konfigurasi (API keys, model prioritas, multi-agent, skills, memori, dan UI preferences) secara instan dan aman. | 🟢 STABLE | `./restore.sh v2.87.0` |
 | **v2.86.0** | 286 | 23-08-2026 12:20 | `v2.86.0` | **Direct Instant Toggle Buttons for Switch Tab (ON/OFF) and Execution Mode (Accept/Planning) with Color Fills:** Menghilangkan seluruh menu dropup popup dan mengubah tombol `[Switch Tab]` serta `[Accept / Planning]` menjadi tombol toggle langsung (sekali klik). Mode **Accept**: fill Neon Lime (`#CEF128`) dengan teks hitam pekat (`#0F172A`). Mode **Planning**: fill Biru (`#0284C7`) dengan teks putih. Mode **Switch Tab ON**: fill Neon Lime (`#CEF128`). Mode **Switch Tab OFF**: fill Hitam / Gelap default (`rgba(0, 0, 0, 0.4)`). | 🟢 STABLE | `./restore.sh v2.86.0` |
 | **v2.85.0** | 285 | 23-08-2026 12:15 | `v2.85.0` | **Right-Aligned Header Flex Grouping for Switch Tab & Auto-Hide in Websearch Mode:** Mengelompokkan tombol `Switch Tab` dan `Accept` berdampingan di sisi kanan bilah atas prompt (`.chat-input-header-right` dengan gap 8px/6px) sehingga posisi Switch Tab duduk pas di samping kiri Accept tanpa celah kosong di tengah. Menambahkan aturan CSS `.chat-input-container.mode-websearch #switch-tab-mode-wrapper { display: none !important; }` agar tombol Switch Tab otomatis tersembunyi saat mode Web Search aktif. | 🟢 STABLE | `./restore.sh v2.85.0` |

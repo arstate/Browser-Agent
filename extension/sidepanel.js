@@ -6631,9 +6631,76 @@ async function confirmDeleteSession() {
 // History & Delete Event Listeners
 document.getElementById('btn-open-history')?.addEventListener('click', openHistoryModal);
 document.getElementById('btn-close-history')?.addEventListener('click', hideHistoryModal);
+document.getElementById('btn-history-export-db')?.addEventListener('click', exportFullDatabaseFromSidepanel);
 document.getElementById('btn-history-new-chat')?.addEventListener('click', startNewChat);
 document.getElementById('btn-header-new-chat')?.addEventListener('click', startNewChat);
 document.getElementById('btn-clear-all-history')?.addEventListener('click', openClearAllConfirmModal);
+
+async function exportFullDatabaseFromSidepanel() {
+  try {
+    updateFooterStatus("Mengekspor database SQLite...");
+    const allStorage = await chrome.storage.local.get(null);
+    let nativeDbData = { sessions: [], settings: {}, models: [] };
+    let nativeFiles = { agents: [], skills: [], memories: [] };
+
+    try {
+      const dbRes = await sendNativeRpc("db_export_full_database");
+      if (dbRes && dbRes.status === "ok" && dbRes.data) {
+        nativeDbData = dbRes.data.database || nativeDbData;
+        nativeFiles = dbRes.data.files || nativeFiles;
+      }
+    } catch (e) {}
+
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+
+    const fullBackupPayload = {
+      meta: {
+        app: "Browser Agent",
+        version: "v2.88.0",
+        export_type: "universal_full_database_backup",
+        platform_origin: navigator.platform || "Universal",
+        exported_at: new Date().toISOString(),
+        timestamp: Date.now(),
+        description: "Universal Full Backup: SQLite sessions, settings, model priority, custom agents, skills SOP, memories, and storage."
+      },
+      storage: {
+        browser_agent_config: config,
+        active_agent_id: activeAgentId,
+        custom_agents: customAgents,
+        browser_agent_exec_mode: allStorage.browser_agent_exec_mode || 'accept',
+        browser_agent_auto_switch_tab: allStorage.browser_agent_auto_switch_tab ?? true,
+        browser_agent_search_engine: allStorage.browser_agent_search_engine || 'google',
+        browser_agent_mode: allStorage.browser_agent_mode || 'agent',
+        show_floating_button: allStorage.show_floating_button ?? true
+      },
+      database: nativeDbData,
+      files: nativeFiles
+    };
+
+    const jsonStr = JSON.stringify(fullBackupPayload, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const filename = `browser-agent-full-database-universal-${dateStr}.json`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+
+    const count = (nativeDbData.sessions || []).length;
+    updateFooterStatus(`Database Berhasil Diekspor (${count} Sesi)`);
+    setTimeout(() => updateFooterStatus("Agent Ready"), 2000);
+  } catch (err) {
+    console.error("Sidepanel export DB error:", err);
+    alert("Gagal mengekspor database: " + err.message);
+  }
+}
 
 document.getElementById('btn-cancel-delete')?.addEventListener('click', hideDeleteConfirmModal);
 document.getElementById('btn-confirm-delete')?.addEventListener('click', confirmDeleteSession);

@@ -2516,6 +2516,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.87.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 288: Universal Full Database & Settings Export/Import (Lintas Windows, Mac, Linux)
+- **Kebutuhan Pengguna**:
+  - Ekspor seluruh database SQLite yang ada di folder `~/.browser-agent` (`chat_history.db`, sesi chat, settings, model list) beserta custom markdown files (`agents`, `skills`, `memories`).
+  - Menjadikan backup universal sehingga dapat diimpor tanpa masalah di OS Windows, macOS, maupun Linux.
+  - Menambahkan tombol **Export All Database** pada UI pengaturan dan modal riwayat chat.
+- **Solusi & Peningkatan**:
+  1. **Native RPC Universal DB Exporter (`host/native_host.py`)**:
+     - Menambahkan handler `db_export_full_database` yang mengekstrak seluruh tabel SQLite (`sessions`, `settings`, `model_configs`) dan membaca seluruh berkas markdown di direktori `AGENTS_DIR`, `SKILLS_DIR`, dan `MEMORIES_DIR`.
+     - Menambahkan handler `db_import_full_database` yang merestorasi seluruh data ke SQLite dengan `INSERT ON CONFLICT DO UPDATE` dan menulis ulang berkas markdown menggunakan relative path cross-platform.
+  2. **Tombol & UI Universal Backup (`options.html`, `options.css`, `sidepanel.html`, `sidepanel.css`)**:
+     - Menambahkan tombol **`Export All Database`** pada header LLM Providers, kartu khusus **Backup & Restore Universal**, dan modal **Riwayat Chat SQLite** (`#btn-history-export-db`).
+  3. **Universal Importer Engine (`options.js`, `sidepanel.js`)**:
+     - Fungsi `importAllSettings(file)` secara cerdas mendeteksi apakah file JSON adalah backup pengaturan saja atau full database backup (`universal_full_database_backup`).
+     - Mengimpor seluruh sesi percakapan SQLite dan pengaturan secara simultan serta merender ulang seluruh komponen UI secara realtime.
+  4. **Verifikasi**:
+     - Test Python simulasi full export (13 sessions, 3 models, 2 settings, 84 files) dan full import berhasil 100%.
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.88.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2523,7 +2543,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
-- **Export/Import Settings:** Tersedia di `options.html` (header & dedicated card) untuk mem-backup & me-restore 100% konfigurasi ke file `.json`.
+- **Universal Export/Import:** Tombol `[Export All Database]` dan `[Export Settings]` di `options.html` dan `sidepanel.html` untuk mem-backup & me-restore 100% database dan konfigurasi ke format Universal JSON (Windows/Mac/Linux).
 - **Direct Instant Toggle Buttons:** 
   - `Accept`: Neon Lime Fill (`#CEF128`).
   - `Planning`: Blue Fill (`#0284C7`).
@@ -2536,7 +2556,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.87.0` (Iterasi 287).
+  - **Versi Terkini:** `v2.88.0` (Iterasi 288).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

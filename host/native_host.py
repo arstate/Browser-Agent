@@ -744,6 +744,202 @@ def db_get_models():
             return {"status": "ok", "models": models}
     except Exception as e:
         log(f"Error in db_get_models: {e}")
+def db_export_full_database():
+    try:
+        now = int(time.time() * 1000)
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            # 1. Sessions
+            cursor.execute("SELECT id, title, model, message_count, preview, messages_json, created_at, updated_at FROM sessions ORDER BY updated_at DESC")
+            s_rows = cursor.fetchall()
+            sessions = [dict(r) for r in s_rows]
+            
+            # 2. Settings
+            cursor.execute("SELECT key, value_json, updated_at FROM settings ORDER BY key ASC")
+            st_rows = cursor.fetchall()
+            settings = {}
+            for r in st_rows:
+                k = r["key"]
+                try:
+                    settings[k] = json.loads(r["value_json"])
+                except Exception:
+                    settings[k] = r["value_json"]
+            
+            # 3. Models
+            cursor.execute("SELECT id, name, model_id, priority_order, is_primary, config_json, updated_at FROM model_configs ORDER BY priority_order ASC")
+            m_rows = cursor.fetchall()
+            models = []
+            for r in m_rows:
+                md = dict(r)
+                try:
+                    md["config"] = json.loads(md.get("config_json", "{}"))
+                except Exception:
+                    md["config"] = {}
+                models.append(md)
+
+        # 4. Custom agents, skills, memories files
+        agents = []
+        skills = []
+        memories = []
+        
+        for dir_path, arr in [(AGENTS_DIR, agents), (SKILLS_DIR, skills), (MEMORIES_DIR, memories)]:
+            if os.path.exists(dir_path):
+                for f in os.listdir(dir_path):
+                    if f.endswith(".md"):
+                        full_f = os.path.join(dir_path, f)
+                        try:
+                            with open(full_f, "r", encoding="utf-8") as file_obj:
+                                arr.append({"filename": f, "content": file_obj.read()})
+                        except Exception as fe:
+                            log(f"Error reading file {full_f}: {fe}")
+
+        export_payload = {
+            "meta": {
+                "app": "Browser Agent",
+                "version": "v2.88.0",
+                "export_type": "universal_full_database_backup",
+                "platform_origin": sys.platform,
+                "exported_at": datetime.datetime.utcnow().isoformat() + "Z",
+                "timestamp": now,
+                "counts": {
+                    "sessions": len(sessions),
+                    "settings": len(settings),
+                    "models": len(models),
+                    "agents": len(agents),
+                    "skills": len(skills),
+                    "memories": len(memories)
+                }
+            },
+            "database": {
+                "sessions": sessions,
+                "settings": settings,
+                "models": models
+            },
+            "files": {
+                "agents": agents,
+                "skills": skills,
+                "memories": memories
+            }
+        }
+        return {"status": "ok", "data": export_payload}
+    except Exception as e:
+        log(f"Error in db_export_full_database: {e}\n{traceback.format_exc()}")
+        return {"status": "error", "error": str(e)}
+
+def db_import_full_database(payload):
+    try:
+        if not isinstance(payload, dict):
+            return {"status": "error", "error": "Invalid payload"}
+        
+        db_data = payload.get("database") or payload
+        sessions = db_data.get("sessions") or []
+        settings = db_data.get("settings") or {}
+        models = db_data.get("models") or []
+        files = payload.get("files") or {}
+
+        now = int(time.time() * 1000)
+        imported_sessions = 0
+        imported_settings = 0
+        imported_models = 0
+        imported_files = 0
+
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+
+            # 1. Restore Sessions
+            if isinstance(sessions, list):
+                for s in sessions:
+                    if not isinstance(s, dict) or not s.get("id"):
+                        continue
+                    sid = s.get("id")
+                    title = s.get("title") or "Untitled Session"
+                    model = s.get("model") or "auto"
+                    msg_count = s.get("message_count") or 0
+                    preview = s.get("preview") or ""
+                    messages_json = s.get("messages_json")
+                    if messages_json is None:
+                        messages_json = json.dumps(s.get("messages") or [])
+                    elif not isinstance(messages_json, str):
+                        messages_json = json.dumps(messages_json)
+                    c_at = s.get("created_at") or now
+                    u_at = s.get("updated_at") or now
+
+                    cursor.execute("""
+                        INSERT INTO sessions (id, title, model, message_count, preview, messages_json, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(id) DO UPDATE SET
+                            title=excluded.title,
+                            model=excluded.model,
+                            message_count=excluded.message_count,
+                            preview=excluded.preview,
+                            messages_json=excluded.messages_json,
+                            updated_at=excluded.updated_at
+                    """, (str(sid), str(title), str(model), int(msg_count), str(preview), str(messages_json), int(c_at), int(u_at)))
+                    imported_sessions += 1
+
+            # 2. Restore Settings
+            if isinstance(settings, dict):
+                for k, v in settings.items():
+                    val_json = json.dumps(v) if not isinstance(v, str) else v
+                    cursor.execute("""
+                        INSERT INTO settings (key, value_json, updated_at)
+                        VALUES (?, ?, ?)
+                        ON CONFLICT(key) DO UPDATE SET
+                            value_json=excluded.value_json,
+                            updated_at=excluded.updated_at
+                    """, (str(k), str(val_json), int(now)))
+                    imported_settings += 1
+
+            # 3. Restore Models
+            if isinstance(models, list) and len(models) > 0:
+                cursor.execute("DELETE FROM model_configs")
+                for idx, m in enumerate(models):
+                    if not isinstance(m, dict):
+                        continue
+                    m_id = m.get("id") or m.get("model_id") or f"model_{idx}"
+                    name = m.get("name") or m_id
+                    model_id_val = m.get("model_id") or m.get("id") or m_id
+                    is_primary = m.get("is_primary", 1 if idx == 0 else 0)
+                    p_order = m.get("priority_order", idx)
+                    config_json = json.dumps(m.get("config") or m)
+                    cursor.execute("""
+                        INSERT INTO model_configs (id, name, model_id, priority_order, is_primary, config_json, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, (f"{m_id}_{idx}", str(name), str(model_id_val), int(p_order), int(is_primary), str(config_json), int(now)))
+                    imported_models += 1
+
+            conn.commit()
+
+        # 4. Restore files (Agents, Skills, Memories)
+        for dir_path, key in [(AGENTS_DIR, "agents"), (SKILLS_DIR, "skills"), (MEMORIES_DIR, "memories")]:
+            arr = files.get(key) or []
+            if isinstance(arr, list):
+                os.makedirs(dir_path, exist_ok=True)
+                for item in arr:
+                    if isinstance(item, dict) and item.get("filename") and item.get("content"):
+                        clean_fname = os.path.basename(item["filename"])
+                        target_f = os.path.join(dir_path, clean_fname)
+                        try:
+                            with open(target_f, "w", encoding="utf-8") as fo:
+                                fo.write(item["content"])
+                            imported_files += 1
+                        except Exception as werr:
+                            log(f"Error writing imported file {target_f}: {werr}")
+
+        log(f"Universal DB Import Success: {imported_sessions} sessions, {imported_settings} settings, {imported_models} models, {imported_files} files")
+        return {
+            "status": "ok",
+            "imported": {
+                "sessions": imported_sessions,
+                "settings": imported_settings,
+                "models": imported_models,
+                "files": imported_files
+            }
+        }
+    except Exception as e:
+        log(f"Error in db_import_full_database: {e}\n{traceback.format_exc()}")
         return {"status": "error", "error": str(e)}
 
 # ==========================================
@@ -817,6 +1013,16 @@ def handle_local_rpc(msg):
 
     elif action == "db_get_models":
         res = db_get_models()
+        res["id"] = req_id
+        return res
+
+    elif action == "db_export_full_database":
+        res = db_export_full_database()
+        res["id"] = req_id
+        return res
+
+    elif action == "db_import_full_database":
+        res = db_import_full_database(msg.get("payload", {}))
         res["id"] = req_id
         return res
 
