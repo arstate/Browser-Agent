@@ -2748,6 +2748,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 310: Subtle Luxury Grid Stroke Background Ornament for Welcome Screen
+- **Kebutuhan Pengguna**:
+  - Menambahkan ornamen background stroke kotak-kotak tipis pada welcome screen Newtab agar bertekstur elegan, modern, dan tidak terlalu polos.
+- **Solusi & Peningkatan**:
+  1. **Subtle Technical Grid Stroke Pattern (`newtab.css`)**:
+     - Mengimplementasikan pseudo-element `.fullscreen-layout::before` dengan linear-gradient kotak-kotak `40px x 40px` (stroke 1px ultra-halus `rgba(255, 255, 255, 0.04)`).
+     - Menerapkan `mask-image: radial-gradient(...)` halus berbentuk elips agar pola kisi memudar anggun ke arah tepi layar.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.110.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 309: Remove Redundant In-Box Shortcut Tip Text from Sidepanel Input Bar
 - **Kebutuhan Pengguna**:
   - Menghapus teks shortcut tip `↵ to run · ⇧↵ new line` yang berada di dalam bar input prompt Sidepanel agar tampilan bersih dan tidak redundan dengan panduan footer.
