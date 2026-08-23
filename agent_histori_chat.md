@@ -2364,16 +2364,31 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.78.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
 
+### Iterasi 279: Perbaikan Ukuran Gambar Lampiran User yang Terlalu Besar di Fullscreen Chat
+- **Kebutuhan Pengguna**:
+  - Mengatasi bug gambar yang diunggah/dikirim oleh pengguna yang melebar raksasa di fullscreen New Tab.
+  - Membatasi ukuran thumbnail gambar lampiran menjadi format thumbnail kompak yang rapi dan elegan.
+- **Solusi & Peningkatan**:
+  1. **Styling Lampiran User (`newtab.css`)**:
+     - Menambahkan aturan lengkap `.user-msg-attachments`, `.user-attached-thumb` (dikunci ke `width: 84px; height: 84px; border-radius: 14px; object-fit: cover;` dengan efek hover zoom), `.user-attached-video-card`, dan `.user-attached-file-pill`.
+     - Menambahkan defensive rule `.message .message-content img` (`max-width: min(420px, 100%); max-height: 340px; border-radius: 12px; object-fit: contain;`) agar gambar di bubble chat tidak pernah meluap keluar layar.
+     - Pengguna tetap dapat memperbesar gambar ukuran penuh melalui klik Lightbox modal instan.
+  2. **Verifikasi**:
+     - JS Syntax check `node -c` lulus 100%.
+     - Restore Point: `v2.79.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
 - **Engine Path:** `/home/arya/browser-agent`
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
+- **User Attached Media Thumbnails:** Constrained 84x84px compact square thumbnails (`.user-attached-thumb`) with Lightbox fullscreen click zoom.
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.78.0` (Iterasi 278).
+  - **Versi Terkini:** `v2.79.0` (Iterasi 279).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
