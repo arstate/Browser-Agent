@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.120.0`
-- **Iterasi:** `Iterasi 320`
-- **Tanggal Rilis:** 24 Agustus 2026 (01:26 WIB)
+- **Versi Terkini:** `v2.121.0`
+- **Iterasi:** `Iterasi 321`
+- **Tanggal Rilis:** 24 Agustus 2026 (01:27 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.6 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.121.0** | 321 | 24-08-2026 01:27 | `v2.121.0` | **Subtle Minimalist Drop Shadow for Mode Switcher Dropup Menu:** Memangkas dan memperhalus efek box-shadow bayangan gelap pada container menu dropup mode (`box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35)`) sehingga tidak pekat / over dan menghasilkan estetika visual yang sangat bersih dan elegan. | 🟢 STABLE | `./restore.sh v2.121.0` |
 | **v2.120.0** | 320 | 24-08-2026 01:26 | `v2.120.0` | **Full Rounded Pill Styling for Mode Switcher Dropup Items:** Mengubah bentuk seluruh item opsi pada menu dropup (`.chat-mode-option`) menjadi full rounded capsule pill (`border-radius: 9999px`), ikon circular (`border-radius: 50%`), dan padding ramping (`5px 12px 5px 7px`) sehingga tampilan dropup menjadi sangat compact, clean, estetik, dan hemat ruang. | 🟢 STABLE | `./restore.sh v2.120.0` |
 | **v2.119.0** | 319 | 24-08-2026 01:26 | `v2.119.0` | **Fixed Chromium Backdrop Root Isolation for True Frosted Glass Blur Dropup:** Memindahkan `backdrop-filter` parent `.chat-input-container` ke pseudo-element `::after` terisolasi sehingga Chromium tidak membatasi backdrop root; dengan demikian menu dropup `.chat-mode-dropup-menu` dapat melakukan sampling filter blur langsung ke teks hero dan elemen document di belakangnya secara penuh dan nyata (`backdrop-filter: blur(36px) saturate(200%)`). | 🟢 STABLE | `./restore.sh v2.119.0` |
 | **v2.118.0** | 318 | 24-08-2026 01:23 | `v2.118.0` | **Minimalist Frosted Glass Blur Dropup for Mode Switcher:** Menghapus teks sub-deskripsi pada menu pilihan mode sehingga desain menjadi sangat bersih dan compact, serta menerapkan efek frosted glass translucent blur kuat (`backdrop-filter: blur(32px) saturate(190%)`, border halus `rgba(255,255,255,0.12)`) yang memburamkan elemen di belakang secara elegan dan modern. | 🟢 STABLE | `./restore.sh v2.118.0` |

@@ -2748,6 +2748,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 321: Subtle Minimalist Drop Shadow for Mode Switcher Dropup Menu
+- **Kebutuhan Pengguna**:
+  - Mengurangi efek drop shadow pada container dropup yang sebelumnya terlihat terlalu tebal/over agar tampilannya lebih bersih dan estetik.
+- **Solusi & Peningkatan**:
+  1. **Subtle Box Shadow (`newtab.css` & `sidepanel.css`)**:
+     - Mengubah bayangan gelap `0 20px 48px rgba(0,0,0,0.65)` menjadi bayangan halus dan tipis `0 8px 24px -4px rgba(0, 0, 0, 0.35)`.
+     - Menghilangkan halo gelap pekat di sekitar container dropup sehingga terlihat menyatu secara natural dengan background.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.121.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 320: Full Rounded Pill Styling for Mode Switcher Dropup Items
 - **Kebutuhan Pengguna**:
   - Mengubah bentuk item opsi di dalam menu dropup mode menjadi full rounded (kapsul pill) agar lebih bersih, ramping, dan tidak memakan tempat.

@@ -2790,7 +2790,7 @@ body.stickman-active .chat-messages {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.28);
   z-index: 500;
   animation: dropupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
