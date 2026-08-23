@@ -2748,6 +2748,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 322: Exact Height & Proportions Match for Mode Switcher Dropup Items
+- **Kebutuhan Pengguna**:
+  - Menyamakan tinggi item menu opsi di dalam container dropup agar tingginya presisi sama seperti tombol trigger pill di bawahnya.
+- **Solusi & Peningkatan**:
+  1. **Exact 28px Height Matching (`newtab.css` & `sidepanel.css`)**:
+     - Mengatur tinggi item `.chat-mode-option` menjadi `height: 28px; box-sizing: border-box;` di New Tab (dan `height: 22px;` di Sidepanel) persis sama dengan tombol trigger `#btn-chat-mode-trigger`.
+     - Menyesuaikan proporsi circular icon (`18px`) dan font size (`11.5px`) sehingga seluruh elemen opsi tampil simetris, serasi, dan sangat compact.
+  2. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.122.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 321: Subtle Minimalist Drop Shadow for Mode Switcher Dropup Menu
 - **Kebutuhan Pengguna**:
   - Mengurangi efek drop shadow pada container dropup yang sebelumnya terlihat terlalu tebal/over agar tampilannya lebih bersih dan estetik.

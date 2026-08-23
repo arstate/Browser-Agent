@@ -2798,8 +2798,10 @@ body.stickman-active .chat-messages {
 .chat-mode-option {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 11px 5px 6px;
+  gap: 6px;
+  height: 22px;
+  box-sizing: border-box;
+  padding: 0 9px 0 4px;
   border-radius: 9999px;
   border: 1px solid transparent;
   background: transparent;
@@ -2818,8 +2820,8 @@ body.stickman-active .chat-messages {
 }
 
 .mode-option-icon {
-  width: 22px;
-  height: 22px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   display: flex;
@@ -2830,8 +2832,8 @@ body.stickman-active .chat-messages {
 }
 
 .mode-option-icon svg {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
 .chat-mode-option:hover .mode-option-icon {
