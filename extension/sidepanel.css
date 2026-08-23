@@ -2757,14 +2757,20 @@ body {
 .switch-tab-mode-wrapper {
   position: relative;
   display: inline-flex;
+  align-items: center;
   height: 28px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 9999px;
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .btn-switch-tab-mode-trigger {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 28px;
+  height: 100%;
   box-sizing: border-box;
   padding: 0 10px;
   border-radius: 9999px;
@@ -2773,6 +2779,7 @@ body {
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
+  border: none;
 }
 
 .btn-switch-tab-mode-trigger .switch-tab-mode-icon {
@@ -2780,45 +2787,36 @@ body {
   align-items: center;
 }
 
-/* Switch Tab ON -> Dark Pill with Neon Lime Accent (matching Image 2) */
+/* Switch Tab ON -> Inner Active Pill (matching Agent Mode in Image 1) */
 .btn-switch-tab-mode-trigger.is-on {
   background: #27272A;
-  border: 1px solid rgba(206, 241, 40, 0.35);
-  color: #CEF128;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 3px rgba(0, 0, 0, 0.4);
+  color: var(--accent-lime);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-switch-tab-mode-trigger.is-on:hover {
   background: #323238;
-  border-color: #CEF128;
-  box-shadow: 0 0 12px rgba(206, 241, 40, 0.22);
-  transform: translateY(-1px);
 }
 
 .btn-switch-tab-mode-trigger.is-on .switch-tab-mode-icon,
 .btn-switch-tab-mode-trigger.is-on .switch-tab-mode-label {
-  color: #CEF128;
+  color: var(--accent-lime);
   font-weight: 700;
 }
 
-/* Switch Tab OFF -> Clean Dark Pill with Muted Accent */
+/* Switch Tab OFF -> Clean Muted Inner State */
 .btn-switch-tab-mode-trigger.is-off {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: transparent;
+  color: var(--text-muted);
 }
 
 .btn-switch-tab-mode-trigger.is-off:hover {
-  background: #27272A;
-  border-color: rgba(255, 255, 255, 0.2);
   color: #E2E8F0;
-  transform: translateY(-1px);
 }
 
 .btn-switch-tab-mode-trigger.is-off .switch-tab-mode-icon,
 .btn-switch-tab-mode-trigger.is-off .switch-tab-mode-label {
-  color: #94A3B8;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -2826,14 +2824,20 @@ body {
 .execution-mode-wrapper {
   position: relative;
   display: inline-flex;
+  align-items: center;
   height: 28px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 9999px;
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .btn-execution-mode-trigger {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 28px;
+  height: 100%;
   box-sizing: border-box;
   padding: 0 10px;
   border-radius: 9999px;
@@ -2842,6 +2846,7 @@ body {
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
+  border: none;
 }
 
 .btn-execution-mode-trigger .execution-mode-icon {
@@ -2849,40 +2854,32 @@ body {
   align-items: center;
 }
 
-/* Accept Mode -> Dark Pill with Neon Lime Accent (matching Image 2) */
+/* Accept Mode -> Inner Active Pill (matching Agent Mode in Image 1) */
 .btn-execution-mode-trigger.mode-accept {
   background: #27272A;
-  border: 1px solid rgba(206, 241, 40, 0.35);
-  color: #CEF128;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 3px rgba(0, 0, 0, 0.4);
+  color: var(--accent-lime);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-execution-mode-trigger.mode-accept:hover {
   background: #323238;
-  border-color: #CEF128;
-  box-shadow: 0 0 12px rgba(206, 241, 40, 0.22);
-  transform: translateY(-1px);
 }
 
 .btn-execution-mode-trigger.mode-accept .execution-mode-icon,
 .btn-execution-mode-trigger.mode-accept .execution-mode-label {
-  color: #CEF128;
+  color: var(--accent-lime);
   font-weight: 700;
 }
 
-/* Planning Mode -> Dark Pill with Cyan Blue Accent */
+/* Planning Mode -> Inner Active Blue Pill */
 .btn-execution-mode-trigger.mode-planning {
   background: #27272A;
-  border: 1px solid rgba(56, 189, 248, 0.4);
   color: #38BDF8;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 3px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-execution-mode-trigger.mode-planning:hover {
   background: #323238;
-  border-color: #38BDF8;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.22);
-  transform: translateY(-1px);
 }
 
 .btn-execution-mode-trigger.mode-planning .execution-mode-icon,
