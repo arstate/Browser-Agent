@@ -2748,6 +2748,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 316: Modern Frosted Glassmorphism Container for Chat History Modal
+- **Kebutuhan Pengguna**:
+  - Menghapus background overlay gelap pekat dan blur yang menutupi layar penuh saat membuka riwayat chat, dan mengubah container modal histori menjadi style frosted glass blur modern yang estetik.
+- **Solusi & Peningkatan**:
+  1. **Clean Transparent Overlay (`newtab.css`)**:
+     - Mengubah `#history-modal.modal-overlay` menjadi transparan (`background: rgba(0,0,0,0.15)` tanpa backdrop-filter gelap penuh).
+  2. **Frosted Glassmorphism Container & Items (`newtab.css`)**:
+     - Menerapkan `background: rgba(18, 18, 22, 0.76)`, `backdrop-filter: blur(36px) saturate(200%)`, border `rgba(255, 255, 255, 0.13)`, dan radius 24px pada `.modal-history-content`.
+     - Memberikan styling search input dan item kartu sesi chat berbasis frosted translucent glass (`rgba(28, 28, 33, 0.52)` dengan blur 16px).
+  3. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.116.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 315: Proportional Headroom Clearance for Stickman Characters & Technicians
 - **Kebutuhan Pengguna**:
   - Memberikan jarak napas (headroom) di atas kepala karakter stickman agar tidak menyentuh garis batas border atas container, dengan tetap mempertahankan tinggi kanvas panggung 50px yang ramping.
