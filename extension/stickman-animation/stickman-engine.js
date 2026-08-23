@@ -93,6 +93,7 @@
   let hideTimeout = null;
 
   window.startStickmanSwarmAnimation = () => {
+    if (window.location.pathname.includes('sidepanel.html')) return;
     setupElements();
     if (!wrapper || !canvas) return;
     

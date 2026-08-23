@@ -2705,13 +2705,12 @@ body.stickman-active .chat-messages {
 .chat-input-header-right {
   display: inline-flex;
   align-items: center;
-  gap: 0;
-  height: 28px;
-  box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.4);
+  gap: 2px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
   border-radius: 9999px;
-  padding: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 2.5px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .chat-mode-switch-group {
@@ -2795,19 +2794,17 @@ body.stickman-active .chat-messages {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 100%;
   box-sizing: border-box;
-  padding: 0 9px;
-  border-top-left-radius: 9999px;
-  border-bottom-left-radius: 9999px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+  padding: 3.5px 10px;
+  border-radius: 9999px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   border: none;
+  background: transparent;
+  color: #64748B;
 }
 
 .btn-switch-tab-mode-trigger .switch-tab-mode-icon {
@@ -2817,34 +2814,35 @@ body.stickman-active .chat-messages {
 
 /* Switch Tab ON -> Left Active Pill */
 .btn-switch-tab-mode-trigger.is-on {
-  background: #27272A;
-  color: var(--accent-lime);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: #0F172A;
+  color: #CEF128;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
 }
 
 .btn-switch-tab-mode-trigger.is-on:hover {
-  background: #323238;
+  background: #1E293B;
 }
 
 .btn-switch-tab-mode-trigger.is-on .switch-tab-mode-icon,
 .btn-switch-tab-mode-trigger.is-on .switch-tab-mode-label {
-  color: var(--accent-lime);
+  color: #CEF128;
   font-weight: 700;
 }
 
-/* Switch Tab OFF -> Clean Muted Inner State */
+/* Switch Tab OFF -> Clean Muted State */
 .btn-switch-tab-mode-trigger.is-off {
   background: transparent;
-  color: var(--text-muted);
+  color: #64748B;
 }
 
 .btn-switch-tab-mode-trigger.is-off:hover {
-  color: #E2E8F0;
+  color: #0F172A;
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .btn-switch-tab-mode-trigger.is-off .switch-tab-mode-icon,
 .btn-switch-tab-mode-trigger.is-off .switch-tab-mode-label {
-  color: var(--text-muted);
+  color: #64748B;
   font-weight: 600;
 }
 
@@ -2853,19 +2851,18 @@ body.stickman-active .chat-messages {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 100%;
   box-sizing: border-box;
-  padding: 0 9px;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-top-right-radius: 9999px;
-  border-bottom-right-radius: 9999px;
+  padding: 3.5px 10px;
+  border-radius: 9999px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   border: none;
+  background: #0F172A;
+  color: #CEF128;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
 }
 
 .btn-execution-mode-trigger .execution-mode-icon {
@@ -2875,30 +2872,28 @@ body.stickman-active .chat-messages {
 
 /* Accept Mode -> Right Active Pill */
 .btn-execution-mode-trigger.mode-accept {
-  background: #27272A;
-  color: var(--accent-lime);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: #0F172A;
+  color: #CEF128;
 }
 
 .btn-execution-mode-trigger.mode-accept:hover {
-  background: #323238;
+  background: #1E293B;
 }
 
 .btn-execution-mode-trigger.mode-accept .execution-mode-icon,
 .btn-execution-mode-trigger.mode-accept .execution-mode-label {
-  color: var(--accent-lime);
+  color: #CEF128;
   font-weight: 700;
 }
 
 /* Planning Mode -> Right Active Blue Pill */
 .btn-execution-mode-trigger.mode-planning {
-  background: #27272A;
+  background: #0F172A;
   color: #38BDF8;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-execution-mode-trigger.mode-planning:hover {
-  background: #323238;
+  background: #1E293B;
 }
 
 .btn-execution-mode-trigger.mode-planning .execution-mode-icon,
@@ -2923,24 +2918,23 @@ body.stickman-active .chat-messages {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 100%;
   box-sizing: border-box;
-  padding: 0 10px;
+  padding: 3.5px 10px;
   border-radius: 9999px;
-  background: #27272A;
+  background: #0F172A;
   border: none;
-  color: var(--accent-lime);
+  color: #FFFFFF;
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
   user-select: none;
 }
 
 .btn-search-engine-trigger:hover {
-  background: #323238;
+  background: #1E293B;
 }
 
 .btn-search-engine-trigger .search-engine-icon {
@@ -2962,14 +2956,14 @@ body.stickman-active .chat-messages {
 .btn-search-engine-trigger .search-engine-label {
   font-size: 11px;
   font-weight: 700;
-  color: var(--accent-lime);
+  color: #FFFFFF;
   line-height: 1;
 }
 
 .btn-search-engine-trigger .search-engine-chevron {
   width: 9px;
   height: 9px;
-  stroke: var(--accent-lime);
+  stroke: #FFFFFF;
   transition: transform 0.2s ease;
   margin-left: 1px;
 }

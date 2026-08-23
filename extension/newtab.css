@@ -2052,14 +2052,14 @@ body.has-messages #btn-mode-websearch {
 .btn-search-engine-trigger .search-engine-label {
   font-size: 11px;
   font-weight: 700;
-  color: var(--accent-lime);
+  color: #FFFFFF;
   line-height: 1;
 }
 
 .btn-search-engine-trigger .search-engine-chevron {
   width: 9px;
   height: 9px;
-  stroke: var(--accent-lime);
+  stroke: #FFFFFF;
   transition: transform 0.2s ease;
   margin-left: 1px;
 }

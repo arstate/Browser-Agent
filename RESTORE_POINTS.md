@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.105.0`
-- **Iterasi:** `Iterasi 305`
-- **Tanggal Rilis:** 24 Agustus 2026 (00:43 WIB)
+- **Versi Terkini:** `v2.106.0`
+- **Iterasi:** `Iterasi 306`
+- **Tanggal Rilis:** 24 Agustus 2026 (00:44 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.4 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (387.5 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.106.0** | 306 | 24-08-2026 00:44 | `v2.106.0` | **White Search Engine Trigger Text, Sidepanel Stickman Removal, & Harmonized Sidepanel Pill Controls:** Mengubah teks dan chevron tombol trigger `#btn-search-engine-trigger` menjadi putih bersih (`#FFFFFF`) agar bersih dan kontras. Menghilangkan animasi stickman secara total pada Sidepanel agar tampilan sidepanel compact dan ringan. Menyelaraskan styling kapsul kontrol kanan Sidepanel (`Switch Tab: ON`, `Accept/Planning`, dan `Search Engine`) dengan latar track `#F1F5F9` dan border `#E2E8F0` agar 100% konsisten dan simetris dengan tombol pill kiri `Chat | Agent`. | 🟢 STABLE | `./restore.sh v2.106.0` |
 | **v2.105.0** | 305 | 24-08-2026 00:43 | `v2.105.0` | **Clean 1 2 3 Priority Numbering & Generous Stickman Clearance Spacing:** Memperbarui label badge prioritas model pada Pengaturan dan Modal Sidepanel menjadi nomor bersih `1`, `2`, `3` yang kompak dan modern (menggantikan `#1 (UTAMA)`, `#2 (CADANGAN 1)`). Meningkatkan padding clearance bawah saat animasi stickman aktif (`padding-bottom: 340px !important` di Newtab & `120px` di Sidepanel) serta offset `scrollToBottom (+360px)` sehingga teks dan elemen card tindakan agent terbawah memiliki ruang napas luas dan tidak bertabrakan dengan panggung stickman. | 🟢 STABLE | `./restore.sh v2.105.0` |
 | **v2.104.0** | 304 | 24-08-2026 00:41 | `v2.104.0` | **Official Vector SVG Brand Logos & Folder Organization for Search Engines:** Mengorganisir aset logo vektor SVG resmi untuk seluruh mesin pencari (`google.svg`, `duckduckgo.svg`, `bing.svg`, `brave.svg`, `ecosia.svg`, `yandex.svg`) ke dalam folder khusus `extension/icons/search-engines/`. Mengintegrasikan logo asli tersebut pada dropup menu item selector dan tombol trigger `#btn-search-engine-trigger` sehingga tampil tajam, autentik, profesional, dan kaya warna. | 🟢 STABLE | `./restore.sh v2.104.0` |
 | **v2.103.0** | 303 | 24-08-2026 00:37 | `v2.103.0` | **Smooth Morphing Animation & Dynamic Chat Clearance Spacing for Stickman Swarm:** Mengimplementasikan transisi morphing mulus (`max-height: 0` ➔ `50px`, `transform: translateY` + `scaleY`, `opacity`) pada kemunculan dan kolaps panggung animasi stickman swarm (`.ai-stickman-swarm-container`) sehingga tidak patah/abrupt saat mulai maupun selesai. Menambahkan jarak dinamis otomatis dengan transisi cubic-bezier pada area chat bawah (`.fullscreen-chat-main` padding-bottom: 235px & `.chat-messages` padding-bottom) saat animasi aktif, sehingga pesan/kartu aksi agent tidak tertutup atau menempel rapat di atas kanvas stickman. | 🟢 STABLE | `./restore.sh v2.103.0` |

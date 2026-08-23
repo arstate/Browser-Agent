@@ -4854,7 +4854,7 @@ function updateSendButtonState(loading) {
   if (loading) {
     btnSend.classList.add('loading');
     btnSend.title = "Batalkan eksekusi (Cancel)";
-    if (typeof window.startStickmanSwarmAnimation === 'function') {
+    if (!window.location.pathname.includes('sidepanel.html') && typeof window.startStickmanSwarmAnimation === 'function') {
       window.startStickmanSwarmAnimation();
     }
   } else {

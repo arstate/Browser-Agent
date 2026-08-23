@@ -2748,6 +2748,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.102.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 306: White Search Engine Trigger Text, Sidepanel Stickman Removal, & Harmonized Sidepanel Pill Controls
+- **Kebutuhan Pengguna**:
+  - Mengubah warna teks dan chevron pada tombol search engine menjadi putih bersih (`#FFFFFF`).
+  - Menghilangkan animasi stickman secara total pada Sidepanel agar tampilan sidepanel compact dan ringan.
+  - Memperbaiki style UI kontrol kanan pada Sidepanel (`Switch Tab: ON`, `Accept/Planning`, dan `Search Engine`) agar selaras dengan tombol pill kiri `Chat | Agent`.
+- **Solusi & Peningkatan**:
+  1. **Clean White Search Engine Trigger Pill (`newtab.css`, `sidepanel.css`)**:
+     - Mengubah `.search-engine-label` dan `.search-engine-chevron` menjadi warna putih `#FFFFFF`.
+  2. **Remove Stickman from Sidepanel (`sidepanel.html`, `stickman-engine.js`, `sidepanel.js`)**:
+     - Menghapus container stickman dari `sidepanel.html` dan menambahkan guard proteksi di `stickman-engine.js` & `sidepanel.js` agar animasi hanya berjalan di New Tab fullscreen.
+  3. **Harmonized Sidepanel Header Controls (`sidepanel.css`)**:
+     - Menyelaraskan `.chat-input-header-right` dan seluruh tombol kontrol kanan pada Sidepanel menggunakan track `#F1F5F9`, border `#E2E8F0`, pill aktif `#0F172A`, dan font typography yang 100% konsisten dengan `.chat-mode-switch-group` di sebelah kiri.
+  4. **Verifikasi**:
+     - JS & CSS Syntax check lulus 100%.
+     - Restore Point: `v2.106.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ### Iterasi 305: Clean 1 2 3 Priority Numbering & Generous Stickman Clearance Spacing
 - **Kebutuhan Pengguna**:
   - Memberikan jarak lega di atas panggung stickman agar teks atau elemen card agent terbawah tidak menempel/ketumpuk saat animasi berjalan.
