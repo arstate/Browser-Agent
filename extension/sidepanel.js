@@ -1492,9 +1492,10 @@ async function executeTool(name, args, assistantBubble = null) {
     }
   }
 
-  // Ensure active tab is focused on any browser interaction so the user sees live action
+  // Ensure active tab is focused on any browser interaction ONLY IF auto switch tab is enabled
   if (name.startsWith("browser_") && name !== "browser_list_tabs") {
-    if (activeTabId) {
+    const shouldFocus = typeof isAutoSwitchTabEnabled === 'function' ? isAutoSwitchTabEnabled() : true;
+    if (shouldFocus && activeTabId) {
       try {
         await chrome.tabs.update(activeTabId, { active: true });
         const tab = await chrome.tabs.get(activeTabId).catch(() => null);
@@ -6102,16 +6103,24 @@ document.getElementById('btn-save-settings')?.addEventListener('click', saveSett
 
 // Realtime sync config from full-screen options tab
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.browser_agent_config) {
-    config = { ...config, ...changes.browser_agent_config.newValue };
-    if (Array.isArray(config.models)) {
-      // Keep exact models array
-    } else if (Array.isArray(config.customModels)) {
-      config.models = [...config.customModels];
+  if (area === 'local') {
+    if (changes.browser_agent_config) {
+      config = { ...config, ...changes.browser_agent_config.newValue };
+      if (Array.isArray(config.models)) {
+        // Keep exact models array
+      } else if (Array.isArray(config.customModels)) {
+        config.models = [...config.customModels];
+      }
+      applyConfigToUI();
+      renderModelDropdown();
+      renderSettingsModelRows();
     }
-    applyConfigToUI();
-    renderModelDropdown();
-    renderSettingsModelRows();
+    if (changes.browser_agent_auto_switch_tab !== undefined) {
+      setAutoSwitchTab(changes.browser_agent_auto_switch_tab.newValue);
+    }
+    if (changes.browser_agent_exec_mode !== undefined && typeof setExecutionMode === 'function') {
+      setExecutionMode(changes.browser_agent_exec_mode.newValue);
+    }
   }
 });
 

@@ -2649,6 +2649,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.95.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 296: Fix Switch Tab OFF Multitasking Non-Intrusive Background Execution
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug di mana ketika `Switch Tab` berada pada mode `OFF`, browser tetap berpindah tab atau memfokuskan jendela secara paksa saat agent menjalankan instruksi browser.
+- **Solusi & Peningkatan**:
+  1. **Strict Guard on Tool Execution Dispatcher (`sidepanel.js`)**:
+     - Memperbaiki `executeTool` (line 1496) yang sebelumnya memanggil `chrome.tabs.update(activeTabId, { active: true })` tanpa mengecek `isAutoSwitchTabEnabled()`.
+     - Sekarang `executeTool` memeriksa `const shouldFocus = isAutoSwitchTabEnabled();` sebelum mengaktifkan tab atau memfokuskan jendela Chrome.
+  2. **Non-Intrusive Background Execution (`sidepanel.js`)**:
+     - Pada mode `Switch Tab: OFF`, CDP debugger tetap terhubung dan dapat mengklik, mengetik, menavigasi, mengekstrak data, dan mengambil screenshot di tab target secara hening di latar belakang tanpa mengubah fokus tab pengguna yang sedang aktif bekerja (multitasking 100% mulus).
+  3. **Storage Cross-Tab Synchronization (`sidepanel.js`)**:
+     - Menambahkan listener `browser_agent_auto_switch_tab` dan `browser_agent_exec_mode` pada `chrome.storage.onChanged` sehingga perubahan tombol di Newtab, Sidepanel, maupun Options langsung tersinkronisasi secara real-time di semua tab.
+  4. **Verifikasi**:
+     - JS & Python Syntax check lulus 100%.
+     - Restore Point: `v2.96.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2656,6 +2672,9 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
+- **Switch Tab Toggle (ON / OFF):**
+  - `ON`: Otomatis berpindah tab dan memfokuskan jendela saat agent beraksi.
+  - `OFF`: Aksi browser dieksekusi hening di latar belakang (background) via CDP tanpa mengganggu tab aktif pengguna, memungkinkan multitasking 100%.
 - **All-Data Universal .tar.gz Engine:** 100% full workspace backup (`chat_history.db` 75MB, `walkthrough_screenshots/`, `generated_images/`, `skills/`, `memories/`, `agents/`, `storage_settings.json`) dengan chunked streaming import (512KB/chunk) dan direct download save.
 - **Balanced Settings Grid & Full-Width Bento Backup:** 2 kolom seimbang di atas, kartu Backup & Restore Full-Width 100% di bawah dengan 2 Bento Panels (Database `.tar.gz` & Settings `.json`).
 - **Unified Segmented Header Capsule:**
@@ -2669,7 +2688,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.95.0` (Iterasi 295).
+  - **Versi Terkini:** `v2.96.0` (Iterasi 296).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).
