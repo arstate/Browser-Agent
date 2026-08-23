@@ -533,83 +533,13 @@ function showToast(customMsg = null) {
 async function exportAllDatabase() {
   try {
     setAutoSaveStatus('saving');
-    showToast("Mengompres seluruh database SQLite, skills, memori & gambar ke tar.gz...");
+    showToast("Mengompres seluruh database SQLite, skills, memori, screenshot & gambar ke tar.gz...");
 
     // 1. Fetch complete storage from Chrome
     const allStorage = await chrome.storage.local.get(null);
 
     // 2. Request Native Host to create .tar.gz bundle
-    try {
-      const dbRes = await sendNativeRpc("db_export_targz_backup", {
-        storage: {
-          browser_agent_config: config,
-          active_agent_id: activeAgentId,
-          custom_agents: agentsList,
-          custom_skills: skillsList,
-          custom_memories: memoriesList,
-          browser_agent_exec_mode: allStorage.browser_agent_exec_mode || 'accept',
-          browser_agent_auto_switch_tab: allStorage.browser_agent_auto_switch_tab ?? true,
-          browser_agent_search_engine: allStorage.browser_agent_search_engine || 'google',
-          browser_agent_mode: allStorage.browser_agent_mode || 'agent',
-          show_floating_button: allStorage.show_floating_button ?? true
-        }
-      });
-
-      if (dbRes && dbRes.status === "ok" && dbRes.tar_gz_b64) {
-        // Convert base64 to binary blob
-        const binaryStr = atob(dbRes.tar_gz_b64);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) {
-          bytes[i] = binaryStr.charCodeAt(i);
-        }
-
-        const blob = new Blob([bytes], { type: "application/gzip" });
-        const url = URL.createObjectURL(blob);
-        const filename = dbRes.filename || `browser-agent-full-database-${Date.now()}.tar.gz`;
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 1000);
-
-        setAutoSaveStatus('saved');
-        const sizeMb = (dbRes.size_bytes / (1024 * 1024)).toFixed(1);
-        showToast(`Semua database & aset berhasil diekspor (${filename}, ${sizeMb} MB)!`);
-        return;
-      }
-    } catch (targzErr) {
-      console.warn("tar.gz RPC error, fallback to JSON export:", targzErr);
-    }
-
-    // Fallback: JSON Full DB export if Native Host cannot pack tar.gz
-    let nativeDbData = { sessions: [], settings: {}, models: [] };
-    let nativeFiles = { agents: [], skills: [], memories: [] };
-    try {
-      const dbRes = await sendNativeRpc("db_export_full_database");
-      if (dbRes && dbRes.status === "ok" && dbRes.data) {
-        nativeDbData = dbRes.data.database || nativeDbData;
-        nativeFiles = dbRes.data.files || nativeFiles;
-      }
-    } catch (e) {}
-
-    const d = new Date();
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
-
-    const fullBackupPayload = {
-      meta: {
-        app: "Browser Agent",
-        version: "v2.88.0",
-        export_type: "universal_full_database_backup",
-        platform_origin: navigator.platform || "Universal",
-        exported_at: new Date().toISOString(),
-        timestamp: Date.now(),
-        description: "Universal Full Backup: SQLite sessions, settings, model priority, custom agents, skills SOP, memories, and storage."
-      },
+    const dbRes = await sendNativeRpc("db_export_targz_backup", {
       storage: {
         browser_agent_config: config,
         active_agent_id: activeAgentId,
@@ -621,32 +551,45 @@ async function exportAllDatabase() {
         browser_agent_search_engine: allStorage.browser_agent_search_engine || 'google',
         browser_agent_mode: allStorage.browser_agent_mode || 'agent',
         show_floating_button: allStorage.show_floating_button ?? true
-      },
-      database: nativeDbData,
-      files: nativeFiles
-    };
+      }
+    });
 
-    const jsonStr = JSON.stringify(fullBackupPayload, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+    if (dbRes && dbRes.status === "ok") {
+      const sizeMb = (dbRes.size_bytes / (1024 * 1024)).toFixed(1);
+      const filename = dbRes.filename || `browser-agent-full-database-${Date.now()}.tar.gz`;
 
-    const filename = `browser-agent-full-database-universal-${dateStr}.json`;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 1000);
+      if (dbRes.tar_gz_b64) {
+        // In-memory download trigger for smaller backups
+        const binaryStr = atob(dbRes.tar_gz_b64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
 
-    setAutoSaveStatus('saved');
-    const sessionCount = (nativeDbData.sessions || []).length;
-    showToast(`Semua database berhasil diekspor (${sessionCount} sesi chat & seluruh pengaturan)!`);
+        const blob = new Blob([bytes], { type: "application/gzip" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 1000);
+      }
+
+      setAutoSaveStatus('saved');
+      const destInfo = dbRes.saved_file_path ? ` (Tersimpan di ${dbRes.saved_file_path})` : '';
+      showToast(`✅ Seluruh Database SQLite, Skills, Memori, Gambar & Screenshot (${sizeMb} MB) berhasil diekspor!${destInfo}`);
+      return;
+    } else {
+      throw new Error(dbRes?.error || "Gagal membuat tar.gz backup");
+    }
   } catch (err) {
     console.error("Export all database error:", err);
-    alert("Gagal mengekspor database: " + err.message);
+    alert("Gagal mengekspor database tar.gz: " + err.message);
   }
 }
 
@@ -712,7 +655,7 @@ async function importAllDatabase(file) {
   if (!file) return;
   try {
     setAutoSaveStatus('saving');
-    showToast("Mengekstrak dan memulihkan seluruh database...");
+    showToast("Mempersiapkan pemulihan seluruh database...");
 
     const fileName = file.name.toLowerCase();
 
@@ -722,17 +665,56 @@ async function importAllDatabase(file) {
       reader.onload = async (e) => {
         try {
           const arrayBuffer = e.target.result;
-          const bytes = new Uint8Array(arrayBuffer);
-          let binary = '';
-          const len = bytes.byteLength;
-          for (let i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i]);
-          }
-          const base64Str = btoa(binary);
+          const CHUNK_SIZE = 512 * 1024; // 512 KB per chunk
+          const totalBytes = arrayBuffer.byteLength;
+          const totalChunks = Math.ceil(totalBytes / CHUNK_SIZE);
 
-          const res = await sendNativeRpc("db_import_targz_backup", {
-            tar_gz_b64: base64Str
-          });
+          let res = null;
+
+          if (totalChunks <= 1) {
+            // Small file: Direct transfer
+            const bytes = new Uint8Array(arrayBuffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+            const base64Str = btoa(binary);
+            showToast("Mengekstrak dan memulihkan seluruh database...");
+            res = await sendNativeRpc("db_import_targz_backup", {
+              tar_gz_b64: base64Str
+            });
+          } else {
+            // Large file (> 512 KB): Streaming chunked transfer
+            showToast(`Memulai upload arsip (${(totalBytes / (1024*1024)).toFixed(1)} MB, ${totalChunks} chunks)...`);
+            await sendNativeRpc("db_import_chunk_start", {
+              filename: file.name,
+              total_chunks: totalChunks,
+              total_bytes: totalBytes
+            });
+
+            for (let i = 0; i < totalChunks; i++) {
+              const start = i * CHUNK_SIZE;
+              const end = Math.min(start + CHUNK_SIZE, totalBytes);
+              const slice = arrayBuffer.slice(start, end);
+              const sliceBytes = new Uint8Array(slice);
+              let sliceBinary = '';
+              for (let j = 0; j < sliceBytes.byteLength; j++) {
+                sliceBinary += String.fromCharCode(sliceBytes[j]);
+              }
+              const chunkB64 = btoa(sliceBinary);
+
+              const percent = Math.round(((i + 1) / totalChunks) * 100);
+              showToast(`Mentransfer arsip ke database: ${percent}% (Chunk ${i + 1}/${totalChunks})...`);
+
+              await sendNativeRpc("db_import_chunk_data", {
+                chunk_index: i,
+                chunk_b64: chunkB64
+              });
+            }
+
+            showToast("Mengekstrak seluruh database SQLite, skills, memori, screenshot & gambar...");
+            res = await sendNativeRpc("db_import_chunk_finish", {});
+          }
 
           if (res && res.status === "ok") {
             if (res.storage && typeof res.storage === "object" && Object.keys(res.storage).length > 0) {
@@ -755,9 +737,9 @@ async function importAllDatabase(file) {
             updateBadges();
 
             setAutoSaveStatus('saved');
-            showToast(`Sukses! ${res.extracted_count || 'Semua'} file database, sesi chat, skills & memori berhasil dipulihkan dari tar.gz!`);
+            showToast(`✅ Sukses! ${res.extracted_count || 'Semua'} file database, sesi chat, skills, memori, screenshot & gambar AI berhasil dipulihkan!`);
           } else {
-            throw new Error(res.error || "Gagal mengekstrak arsip tar.gz");
+            throw new Error(res?.error || "Gagal mengekstrak arsip tar.gz");
           }
         } catch (tarErr) {
           console.error("tar.gz import error:", tarErr);

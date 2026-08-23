@@ -13,6 +13,7 @@ import tarfile
 import io
 import base64
 import datetime
+import shutil
 
 LOG_FILE = "/tmp/browser_agent_host.log"
 if sys.platform == "win32":
@@ -946,6 +947,15 @@ def db_import_full_database(payload):
         log(f"Error in db_import_full_database: {e}\n{traceback.format_exc()}")
         return {"status": "error", "error": str(e)}
 
+# Chunked upload buffer in memory
+_chunked_upload_buffer = {
+    "filename": "",
+    "total_chunks": 0,
+    "total_bytes": 0,
+    "chunks": {},
+    "started_at": 0
+}
+
 def db_export_targz_backup(chrome_storage_dict=None):
     try:
         now = int(time.time() * 1000)
@@ -956,8 +966,25 @@ def db_export_targz_backup(chrome_storage_dict=None):
         downloads_dir = os.path.expanduser("~/Downloads")
         saved_file_path = None
         
-        buf = io.BytesIO()
-        with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        # Ensure DB_DIR exists
+        if not os.path.exists(DB_DIR):
+            os.makedirs(DB_DIR, exist_ok=True)
+            init_db()
+
+        # Temporary tar archive file on disk to avoid memory spikes
+        temp_tar_path = os.path.join(DB_DIR, f".tmp_export_{now}.tar.gz")
+        
+        counts = {
+            "sessions": 0,
+            "skills": 0,
+            "memories": 0,
+            "agents": 0,
+            "images": 0,
+            "screenshots": 0,
+            "total_items": 0
+        }
+        
+        with tarfile.open(temp_tar_path, mode="w:gz") as tar:
             # 1. Add storage_settings.json
             if chrome_storage_dict:
                 settings_bytes = json.dumps(chrome_storage_dict, indent=2).encode('utf-8')
@@ -966,76 +993,112 @@ def db_export_targz_backup(chrome_storage_dict=None):
                 ti.mtime = int(time.time())
                 tar.addfile(ti, io.BytesIO(settings_bytes))
 
-            # 2. Add chat_history.db
+            # 2. Add chat_history.db explicitly
             if os.path.exists(DB_PATH):
                 tar.add(DB_PATH, arcname="chat_history.db")
+                counts["sessions"] = 1
 
-            # 3. Add agents, skills, memories, generated_images, walkthrough_screenshots
-            for d in ["agents", "skills", "memories", "generated_images", "walkthrough_screenshots"]:
-                dp = os.path.join(DB_DIR, d)
-                if os.path.exists(dp):
-                    tar.add(dp, arcname=d)
+            # 3. Add ALL files and subdirectories from ~/.browser-agent
+            for item in os.listdir(DB_DIR):
+                if item in ["storage_settings.json", "chat_history.db", f".tmp_export_{now}.tar.gz"]:
+                    continue
+                full_item_path = os.path.join(DB_DIR, item)
+                if os.path.exists(full_item_path):
+                    tar.add(full_item_path, arcname=item)
+                    counts["total_items"] += 1
+                    if item == "skills" and os.path.isdir(full_item_path):
+                        counts["skills"] = len(os.listdir(full_item_path))
+                    elif item == "memories" and os.path.isdir(full_item_path):
+                        counts["memories"] = len(os.listdir(full_item_path))
+                    elif item == "agents" and os.path.isdir(full_item_path):
+                        counts["agents"] = len(os.listdir(full_item_path))
+                    elif item == "generated_images" and os.path.isdir(full_item_path):
+                        counts["images"] = len(os.listdir(full_item_path))
+                    elif item == "walkthrough_screenshots" and os.path.isdir(full_item_path):
+                        counts["screenshots"] = len(os.listdir(full_item_path))
 
-        buf.seek(0)
-        raw_bytes = buf.read()
-        b64_data = base64.b64encode(raw_bytes).decode('ascii')
-        
+        file_size_bytes = os.path.getsize(temp_tar_path)
+
+        # Copy to Downloads directory
         if os.path.exists(downloads_dir):
+            dest_path = os.path.join(downloads_dir, filename)
             try:
-                dest_path = os.path.join(downloads_dir, filename)
-                with open(dest_path, "wb") as f_out:
-                    f_out.write(raw_bytes)
+                shutil.copy2(temp_tar_path, dest_path)
                 saved_file_path = dest_path
-                log(f"Exported full tar.gz backup directly to: {dest_path}")
+                log(f"Exported full tar.gz backup directly to Downloads: {dest_path} ({file_size_bytes} bytes)")
             except Exception as d_err:
-                log(f"Warning writing to Downloads: {d_err}")
+                log(f"Warning copying to Downloads: {d_err}")
+                saved_file_path = temp_tar_path
+        else:
+            saved_file_path = temp_tar_path
+
+        # If file is small (< 700KB), return base64 for browser in-memory download.
+        # If file is large (>= 700KB), omit base64 to respect Chrome Native Messaging 1MB limit.
+        b64_data = None
+        if file_size_bytes < 700 * 1024:
+            with open(temp_tar_path, "rb") as f_in:
+                b64_data = base64.b64encode(f_in.read()).decode('ascii')
+
+        # Clean up temp file if copied to downloads
+        if saved_file_path != temp_tar_path and os.path.exists(temp_tar_path):
+            try:
+                os.remove(temp_tar_path)
+            except Exception:
+                pass
 
         return {
             "status": "ok",
             "tar_gz_b64": b64_data,
             "filename": filename,
             "saved_file_path": saved_file_path,
-            "size_bytes": len(raw_bytes)
+            "size_bytes": file_size_bytes,
+            "counts": counts
         }
     except Exception as e:
         log(f"Error in db_export_targz_backup: {e}\n{traceback.format_exc()}")
         return {"status": "error", "error": str(e)}
 
+def _extract_tar_archive(tar_obj):
+    restored_storage = {}
+    extracted_count = 0
+    
+    # Extract storage_settings.json
+    try:
+        member = tar_obj.getmember("storage_settings.json")
+        f = tar_obj.extractfile(member)
+        if f:
+            restored_storage = json.loads(f.read().decode('utf-8'))
+    except Exception:
+        pass
+
+    for member in tar_obj.getmembers():
+        if member.name == "storage_settings.json":
+            continue
+        # Safe path resolution (prevent path traversal)
+        target_path = os.path.abspath(os.path.join(DB_DIR, member.name))
+        if not target_path.startswith(os.path.abspath(DB_DIR)):
+            continue
+
+        if member.isdir():
+            os.makedirs(target_path, exist_ok=True)
+        elif member.isfile():
+            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+            with open(target_path, "wb") as out_f:
+                f = tar_obj.extractfile(member)
+                if f:
+                    out_f.write(f.read())
+            extracted_count += 1
+
+    init_db()
+    return restored_storage, extracted_count
+
 def db_import_targz_backup(tar_gz_b64):
     try:
         raw_bytes = base64.b64decode(tar_gz_b64)
         buf = io.BytesIO(raw_bytes)
-        restored_storage = {}
-        extracted_count = 0
         with tarfile.open(fileobj=buf, mode="r:gz") as tar:
-            # Check for storage_settings.json
-            try:
-                member = tar.getmember("storage_settings.json")
-                f = tar.extractfile(member)
-                if f:
-                    restored_storage = json.loads(f.read().decode('utf-8'))
-            except Exception:
-                pass
+            restored_storage, extracted_count = _extract_tar_archive(tar)
 
-            for member in tar.getmembers():
-                if member.name == "storage_settings.json":
-                    continue
-                # Safe path resolution (prevent path traversal)
-                target_path = os.path.abspath(os.path.join(DB_DIR, member.name))
-                if not target_path.startswith(os.path.abspath(DB_DIR)):
-                    continue
-
-                if member.isdir():
-                    os.makedirs(target_path, exist_ok=True)
-                elif member.isfile():
-                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                    with open(target_path, "wb") as out_f:
-                        f = tar.extractfile(member)
-                        if f:
-                            out_f.write(f.read())
-                    extracted_count += 1
-
-        init_db()
         log(f"Imported tar.gz successfully into {DB_DIR} ({extracted_count} files extracted)")
         return {
             "status": "ok",
@@ -1044,6 +1107,75 @@ def db_import_targz_backup(tar_gz_b64):
         }
     except Exception as e:
         log(f"Error in db_import_targz_backup: {e}\n{traceback.format_exc()}")
+        return {"status": "error", "error": str(e)}
+
+def db_import_targz_from_path(file_path):
+    try:
+        expanded_path = os.path.expanduser(file_path)
+        if not os.path.exists(expanded_path):
+            return {"status": "error", "error": f"File not found: {file_path}"}
+        
+        with tarfile.open(expanded_path, mode="r:gz") as tar:
+            restored_storage, extracted_count = _extract_tar_archive(tar)
+
+        log(f"Imported tar.gz from {file_path} successfully into {DB_DIR} ({extracted_count} files extracted)")
+        return {
+            "status": "ok",
+            "extracted_count": extracted_count,
+            "storage": restored_storage
+        }
+    except Exception as e:
+        log(f"Error in db_import_targz_from_path: {e}\n{traceback.format_exc()}")
+        return {"status": "error", "error": str(e)}
+
+def db_import_chunk_start(filename, total_chunks, total_bytes):
+    global _chunked_upload_buffer
+    _chunked_upload_buffer = {
+        "filename": filename or "backup.tar.gz",
+        "total_chunks": int(total_chunks or 1),
+        "total_bytes": int(total_bytes or 0),
+        "chunks": {},
+        "started_at": time.time()
+    }
+    log(f"Started chunked upload: {filename} ({total_chunks} chunks, {total_bytes} bytes)")
+    return {"status": "ok", "message": "Chunk upload session started"}
+
+def db_import_chunk_data(chunk_index, chunk_b64):
+    global _chunked_upload_buffer
+    idx = int(chunk_index)
+    _chunked_upload_buffer["chunks"][idx] = chunk_b64
+    received = len(_chunked_upload_buffer["chunks"])
+    total = _chunked_upload_buffer["total_chunks"]
+    return {"status": "ok", "received_chunks": received, "total_chunks": total}
+
+def db_import_chunk_finish():
+    global _chunked_upload_buffer
+    try:
+        total = _chunked_upload_buffer["total_chunks"]
+        chunks_map = _chunked_upload_buffer["chunks"]
+        if len(chunks_map) < total:
+            return {"status": "error", "error": f"Incomplete chunks: received {len(chunks_map)} of {total}"}
+
+        # Reassemble byte chunks
+        full_bytes = bytearray()
+        for i in range(total):
+            b64_part = chunks_map.get(i, "")
+            part_bytes = base64.b64decode(b64_part)
+            full_bytes.extend(part_bytes)
+
+        buf = io.BytesIO(full_bytes)
+        with tarfile.open(fileobj=buf, mode="r:gz") as tar:
+            restored_storage, extracted_count = _extract_tar_archive(tar)
+
+        _chunked_upload_buffer = {"filename": "", "total_chunks": 0, "total_bytes": 0, "chunks": {}, "started_at": 0}
+        log(f"Reassembled and restored chunked tar.gz: {extracted_count} files extracted")
+        return {
+            "status": "ok",
+            "extracted_count": extracted_count,
+            "storage": restored_storage
+        }
+    except Exception as e:
+        log(f"Error in db_import_chunk_finish: {e}\n{traceback.format_exc()}")
         return {"status": "error", "error": str(e)}
 
 # ==========================================
@@ -1137,6 +1269,26 @@ def handle_local_rpc(msg):
 
     elif action == "db_import_targz_backup":
         res = db_import_targz_backup(msg.get("tar_gz_b64", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_import_targz_from_path":
+        res = db_import_targz_from_path(msg.get("file_path", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_import_chunk_start":
+        res = db_import_chunk_start(msg.get("filename"), msg.get("total_chunks"), msg.get("total_bytes"))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_import_chunk_data":
+        res = db_import_chunk_data(msg.get("chunk_index"), msg.get("chunk_b64"))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_import_chunk_finish":
+        res = db_import_chunk_finish()
         res["id"] = req_id
         return res
 

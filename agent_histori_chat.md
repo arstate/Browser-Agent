@@ -2630,6 +2630,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Restore Point: `v2.94.0`.
      - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
 
+### Iterasi 295: Universal All-Data .TAR.GZ Engine with Streaming Chunked Protocol & Direct Save
+- **Kebutuhan Pengguna**:
+  - Memastikan seluruh data yang ada di `~/.browser-agent` (termasuk SQLite `chat_history.db` sebesar 75MB, seluruh 72 screenshots `walkthrough_screenshots/`, gambar AI `generated_images/`, 46 skills SOP `skills/`, 28 memori `memories/`, 10 agents `agents/`, `README_TIAR_PROPERTY.md`, dan konfigurasi ekstensi) 100% lengkap diekspor ke `.tar.gz` dan dapat diimpor kembali secara mulus tanpa terpotong atau fallback ke JSON.
+- **Solusi & Peningkatan**:
+  1. **Root Cause Analysis**:
+     - Chrome Native Messaging memiliki batasan keras payload sebesar 1 MB (1,048,576 bytes).
+     - Ketika database `.tar.gz` berukuran 25MB - 100MB+ diubah menjadi base64 dan dikirim via stdout native host, Chrome langsung memutus koneksi sehingga antarmuka JS melakukan fallback ke ekspor JSON kecil.
+  2. **Direct Downloads Save & Omission of Massive Base64 Payload (`native_host.py`)**:
+     - Menulis arsip `.tar.gz` langsung ke direktori `~/Downloads/` (atau `%USERPROFILE%\Downloads`) dengan kompresi disk stream.
+     - Hanya mengirim base64 jika ukuran file < 700 KB. Jika >= 700 KB, native host mengembalikan path file dan metadata status (`saved_file_path`, `size_bytes`, `counts`), menjaga payload response < 1 KB (100% aman dari limit 1 MB Chrome).
+  3. **Streaming Chunked Import Protocol (`options.js`, `native_host.py`)**:
+     - Mengembangkan protokol chunking 512 KB/chunk (`db_import_chunk_start`, `db_import_chunk_data`, `db_import_chunk_finish`) untuk mengimpor arsip `.tar.gz` berukuran tak terbatas (tested 25MB+ / 50 chunks) dari browser ke native host dengan progress bar interaktif.
+  4. **Verifikasi**:
+     - Berhasil mengekspor 24.82 MB `.tar.gz` berisi 160 file lengkap ke `~/Downloads/`.
+     - Berhasil menguji pemulihan (restore) 26 MB chunked import (160 files extracted).
+     - JS & Python Syntax check lulus 100%.
+     - Restore Point: `v2.95.0`.
+     - Sinkronisasi ke `/home/arya/Downloads/browser-agent/` dan `/home/arya/Downloads/BACKUP_BROWSER_AGENT_DAN_CHAT/`.
+
 ---
 
 ## ⚡ 3. Ringkasan Cepat untuk Agent Selanjutnya
@@ -2637,6 +2656,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Downloads Export:** `/home/arya/Downloads/browser-agent/` & `/home/arya/Downloads/Browser-Agent-Universal-Installer.zip`
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx`
 - **SQLite Database Tables:** `sessions`, `settings`, `model_configs` di `~/.browser-agent/chat_history.db`.
+- **All-Data Universal .tar.gz Engine:** 100% full workspace backup (`chat_history.db` 75MB, `walkthrough_screenshots/`, `generated_images/`, `skills/`, `memories/`, `agents/`, `storage_settings.json`) dengan chunked streaming import (512KB/chunk) dan direct download save.
 - **Balanced Settings Grid & Full-Width Bento Backup:** 2 kolom seimbang di atas, kartu Backup & Restore Full-Width 100% di bawah dengan 2 Bento Panels (Database `.tar.gz` & Settings `.json`).
 - **Unified Segmented Header Capsule:**
   - Outer Well: Single capsule container track `rgba(0, 0, 0, 0.4)` dengan `border-radius: 9999px`.
@@ -2649,7 +2669,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Clean Frosted Glass Input Container:** Minimalist, high-contrast dark frosted glass input prompt without distracting ambient glow/orbs during generation.
 - **AI Face Expressions Generating Button:** 100% Round Neon Lime Button with animated Eyebrows & 4 Emotion States (`faceExpressionCycle`: Mikir ➔ Stres ➔ Nemu Ide ➔ Nemu Jawaban).
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.94.0` (Iterasi 294).
+  - **Versi Terkini:** `v2.95.0` (Iterasi 295).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
 - **User Bubble Styling:** Vibrant Bento Lime Chartreuse (`#D9F92F` to `#CEF128`) with bold Dark Slate text (`#0F172A`), matching the `#btn-send` prompt button.
 - **Auto Rotating Model & Failover:** Auto-failover on HTTP 429 / rate limits across prioritized candidate models (#1 -> #2 -> #3 ...).

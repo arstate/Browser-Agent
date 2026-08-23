@@ -5,11 +5,11 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.94.0`
-- **Iterasi:** `Iterasi 294`
-- **Tanggal Rilis:** 23 Agustus 2026 (17:46 WIB)
+- **Versi Terkini:** `v2.95.0`
+- **Iterasi:** `Iterasi 295`
+- **Tanggal Rilis:** 23 Agustus 2026 (17:53 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
-- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (386.4 KB)
+- **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (386.5 KB)
 
 ---
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.95.0** | 295 | 23-08-2026 17:53 | `v2.95.0` | **Universal All-Data .TAR.GZ Engine with Streaming Chunked Protocol & Direct Save:** Memperbaiki bug ekspor fallback JSON yang disebabkan oleh batas pesan Chrome Native Messaging (1 MB) pada database berukuran besar (~25 MB - 100 MB+). Mengimplementasikan ekspor langsung ke direktori Downloads dengan paket lengkap 100% data (`chat_history.db` SQLite, seluruh subfolder `agents/`, `skills/` SOP, `memories/`, `generated_images/`, `walkthrough_screenshots/`, dan `storage_settings.json`). Menambahkan protokol streaming chunked upload (512 KB/chunk) untuk impor arsip `.tar.gz` berukuran tak terbatas tanpa batasan memori. | 🟢 STABLE | `./restore.sh v2.95.0` |
 | **v2.94.0** | 294 | 23-08-2026 17:46 | `v2.94.0` | **Fix Settings Layout Balance & Full-Width Span for Backup & Restore Card:** Memperbaiki bug layout kolom pengaturan yang sebelumnya timpang karena kartu Backup & Restore berada di dalam kolom kanan (`.options-col`). Memindahkan `#card-backup-restore` keluar dari grid 2 kolom menjadi kartu Full-Width lebar penuh di bagian bawah sehingga kedua kolom di atasnya seimbang dan panel Bento Backup & Restore memiliki ruang horizontal 100% yang luas dan proporsional. | 🟢 STABLE | `./restore.sh v2.94.0` |
 | **v2.93.0** | 293 | 23-08-2026 17:43 | `v2.93.0` | **Unified Segmented Capsule with Flat Seamless Center Join for Switch Tab & Accept/Planning Buttons:** Menggabungkan tombol `[Switch Tab]` dan `[Accept/Planning]` ke dalam satu wadah kapsul track luar tunggal (`.chat-input-header-right` dengan border `rgba(255,255,255,0.06)`, background `rgba(0,0,0,0.4)`, padding 2px). Menghilangkan rounded corner di pertemuan tengah (`border-radius: 9999px 0 0 9999px` pada segmen kiri dan `0 9999px 9999px 0` pada segmen kanan) sehingga membentuk satu unit segmented pill kontrol yang menyatu presisi dan elegan. | 🟢 STABLE | `./restore.sh v2.93.0` |
 | **v2.92.0** | 292 | 23-08-2026 17:40 | `v2.92.0` | **Segmented Track & Inner Pill Button Design for Switch Tab and Execution Mode (Accept/Planning):** Menyelaraskan struktur tombol `Switch Tab` dan `Accept/Planning` agar menggunakan wadah track luar (`.switch-tab-mode-wrapper` & `.execution-mode-wrapper` dengan background `rgba(0,0,0,0.4)` dan border `rgba(255,255,255,0.06)`) serta tombol pill aktif di dalamnya (`#27272A`, fill neon lime text `#CEF128`) persis seperti struktur group `[Agent Mode]` pada sisi kiri header chat prompt. | 🟢 STABLE | `./restore.sh v2.92.0` |
