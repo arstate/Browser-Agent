@@ -803,7 +803,13 @@
                 <p class="hero-provider-desc">Otak otonom mandiri yang terus belajar dari setiap percakapan, mengekstrak intisari pengalaman, mencegah kesalahan berulang (Anti-Patterns), dan melahirkan skill/agent baru.</p>
               </div>
             </div>
-            <div class="hero-provider-actions">
+            <div class="hero-provider-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn-export-all-db" id="btn-auto-distill-history" style="border-color: rgba(245, 158, 11, 0.4); color: #fcd34d;" title="Ekstrak dan ubah seluruh riwayat chat menjadi ringkasan poin training Markdown padat (Zero Slop)">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+                <span>Auto-Distill Training MD</span>
+              </button>
               <button type="button" class="btn-export-all-db" id="btn-sync-brain-files" style="border-color: rgba(59, 130, 246, 0.4); color: #93c5fd;" title="Sinkronisasi SQLite dengan file Markdown di folder PERSISTENT MEMORY/">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
@@ -814,7 +820,7 @@
           </div>
 
           <!-- Quick Metrics Bento Grid -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 18px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 18px;">
             <div class="brain-metric-tile">
               <div class="brain-metric-label">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -843,6 +849,13 @@
               </div>
               <div id="stat-brain-autoskills" class="brain-metric-value" style="color: #34d399;">0</div>
             </div>
+            <div class="brain-metric-tile">
+              <div class="brain-metric-label">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                <span>Training Corpus (MD)</span>
+              </div>
+              <div id="stat-brain-training" class="brain-metric-value" style="color: #fbbf24;">0</div>
+            </div>
           </div>
         </div>
 
@@ -863,6 +876,10 @@
           <button type="button" class="brain-subnav-btn" data-subtab="autonomous" id="brain-subtab-autonomous">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             <span>Autonomous Skills &amp; Agents</span>
+          </button>
+          <button type="button" class="brain-subnav-btn" data-subtab="training" id="brain-subtab-training">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            <span>Training Corpus (MD)</span>
           </button>
         </div>
 

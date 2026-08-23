@@ -3238,7 +3238,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.134.0` (Iterasi 334).
+  - **Versi Terkini:** `v2.135.0` (Iterasi 335).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
 
@@ -3298,6 +3298,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Mendefinisikan alias `function showSaveToast(customMsg = null) { showToast(customMsg); }` untuk menjamin kompatibilitas 100%.
   2. **CRX Build & Sync**:
      - Re-pack `extension.crx` (431.2 KB), sync ke Downloads, dan auto-push ke GitHub.
+
+---
+
+### 🚀 Iterasi 335: Chat History Markdown Distillation & Auto-Training Corpus Engine
+- **Fitur & Arsitektur Utama**:
+  1. **Dual-Sync Training Corpus (`native_host.py` & `PERSISTENT MEMORY/training_corpus/`)**:
+     - Tabel SQLite baru: `chat_training_corpus` dengan schema `id`, `session_id`, `title`, `model`, `distilled_points_md`, `key_intents_json`, `tool_workflows_json`, `learnings_json`, `token_saved_estimate`, `created_at`, `updated_at`.
+     - Output Markdown terkompresi poin demi poin (Core User Intent, Tool Execution Workflow, Solusi Akhir & Key Takeaway) tanpa raw chat bloat ke `PERSISTENT MEMORY/training_corpus/{session_id}.md`.
+  2. **Automated Batch Distiller Engine (`db_auto_distill_all_sessions`)**:
+     - Mengubah 26+ riwayat chat menjadi data pelatihan terdistilasi dalam 1 klik, menghemat ~459.000+ token context window.
+  3. **UI Persistent Brain - Subtab 5: Training Corpus (MD)**:
+     - Subnav pill `🎯 Training Corpus (MD)`, Quick Metric Bento Counter, dan action button `⚡ Auto-Distill Training MD`.
+     - Render kartu training padat lengkap dengan badge token savings dan delete icon.
+  4. **Automated Unit Testing & Validation**:
+     - `test_training_corpus.py` (3/3 tests passed).
 
 
 

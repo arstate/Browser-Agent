@@ -15,6 +15,7 @@ import base64
 import datetime
 import shutil
 import uuid
+import re
 
 LOG_FILE = "/tmp/browser_agent_host.log"
 if sys.platform == "win32":
@@ -142,6 +143,7 @@ PM_EXPERIENCE_LEDGER_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "experience_ledg
 PM_ANTI_PATTERNS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "anti_patterns")
 PM_AUTONOMOUS_SKILLS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "autonomous_skills")
 PM_AUTONOMOUS_AGENTS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "autonomous_agents")
+PM_TRAINING_CORPUS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "training_corpus")
 
 import base64
 import urllib.request
@@ -163,6 +165,7 @@ def init_db():
         os.makedirs(PM_ANTI_PATTERNS_DIR, exist_ok=True)
         os.makedirs(PM_AUTONOMOUS_SKILLS_DIR, exist_ok=True)
         os.makedirs(PM_AUTONOMOUS_AGENTS_DIR, exist_ok=True)
+        os.makedirs(PM_TRAINING_CORPUS_DIR, exist_ok=True)
 
         conn = sqlite3.connect(DB_PATH)
         try:
@@ -278,6 +281,24 @@ def init_db():
                     updated_at INTEGER NOT NULL
                 )
             """)
+
+            # 6. Chat History Distilled Markdown Training Corpus (Auto-Training & Fine-Tuning)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS chat_training_corpus (
+                    id TEXT PRIMARY KEY,
+                    session_id TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    model TEXT DEFAULT '',
+                    distilled_points_md TEXT NOT NULL,
+                    key_intents_json TEXT DEFAULT '[]',
+                    tool_workflows_json TEXT DEFAULT '[]',
+                    learnings_json TEXT DEFAULT '[]',
+                    token_saved_estimate INTEGER DEFAULT 0,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_training_corpus_updated ON chat_training_corpus(updated_at DESC)")
 
             conn.commit()
             cursor.close()
@@ -1551,6 +1572,24 @@ def db_get_persistent_memory(search=""):
                 item["assigned_skills"] = []
             autonomous_agents.append(item)
 
+        # 6. Chat History Distilled Training Corpus
+        if q:
+            cursor.execute("SELECT * FROM chat_training_corpus WHERE LOWER(title) LIKE ? OR LOWER(distilled_points_md) LIKE ? ORDER BY updated_at DESC", (q, q))
+        else:
+            cursor.execute("SELECT * FROM chat_training_corpus ORDER BY updated_at DESC")
+        training_corpus = []
+        for r in cursor.fetchall():
+            item = dict(r)
+            try:
+                item["key_intents"] = json.loads(item.get("key_intents_json") or "[]")
+                item["tool_workflows"] = json.loads(item.get("tool_workflows_json") or "[]")
+                item["learnings"] = json.loads(item.get("learnings_json") or "[]")
+            except Exception:
+                item["key_intents"] = []
+                item["tool_workflows"] = []
+                item["learnings"] = []
+            training_corpus.append(item)
+
         cursor.close()
         return {
             "status": "ok",
@@ -1559,12 +1598,14 @@ def db_get_persistent_memory(search=""):
             "anti_patterns": anti_patterns,
             "autonomous_skills": autonomous_skills,
             "autonomous_agents": autonomous_agents,
+            "training_corpus": training_corpus,
             "counts": {
                 "user_memories": len(user_memories),
                 "experience_ledger": len(experience_ledger),
                 "anti_patterns": len(anti_patterns),
                 "autonomous_skills": len(autonomous_skills),
-                "autonomous_agents": len(autonomous_agents)
+                "autonomous_agents": len(autonomous_agents),
+                "training_corpus": len(training_corpus)
             }
         }
     except Exception as e:
@@ -1873,6 +1914,178 @@ updated_at: {updated_at}
             try: conn.close()
             except Exception: pass
 
+def distill_session_to_training_md(session_dict):
+    """
+    Distills raw session messages into token-efficient point-by-point training markdown.
+    Strips noise, conversational bloat, raw html dumps, while preserving high-signal intent,
+    tool workflows, commands, and empirical conclusions.
+    """
+    try:
+        sid = str(session_dict.get("id") or "")
+        title = str(session_dict.get("title") or "Session Training").strip()
+        model = str(session_dict.get("model") or "Default Model")
+        created_at = int(session_dict.get("created_at") or int(time.time() * 1000))
+        date_str = datetime.datetime.fromtimestamp(created_at / 1000.0).strftime('%Y-%m-%d %H:%M:%S')
+
+        raw_messages = []
+        msg_json = session_dict.get("messages_json")
+        if isinstance(msg_json, str):
+            try: raw_messages = json.loads(msg_json)
+            except Exception: raw_messages = []
+        elif isinstance(session_dict.get("messages"), list):
+            raw_messages = session_dict.get("messages")
+
+        if not raw_messages:
+            return None
+
+        # 1. Extract intents, tools, and conclusions
+        user_intents = []
+        tool_workflows = []
+        assistant_conclusions = []
+
+        for m in raw_messages:
+            role = m.get("role")
+            content = m.get("content") or ""
+            
+            if role == "user":
+                clean_u = content.strip()
+                if clean_u and len(clean_u) > 2:
+                    clean_u = clean_u.split("[IMAGE_DATA:")[0].split("<SYSTEM_MESSAGE>")[0].strip()
+                    if clean_u and clean_u not in user_intents:
+                        user_intents.append(clean_u)
+            
+            elif role == "assistant":
+                tool_calls = m.get("tool_calls") or []
+                if tool_calls:
+                    for tc in tool_calls:
+                        fn = tc.get("function") or {}
+                        fname = fn.get("name") or "unknown_tool"
+                        fargs_raw = fn.get("arguments") or "{}"
+                        try:
+                            fargs = json.loads(fargs_raw) if isinstance(fargs_raw, str) else fargs_raw
+                        except Exception:
+                            fargs = {}
+                        
+                        if fname == "local_run_command":
+                            cmd_str = str(fargs.get('command') or '')[:100]
+                            tool_workflows.append(f"`local_run_command({cmd_str})`")
+                        elif fname.startswith("browser_"):
+                            t_arg = str(fargs.get('url') or fargs.get('backendNodeId') or '')[:80]
+                            tool_workflows.append(f"`{fname}({t_arg})`")
+                        elif fname.startswith("db_") or fname.startswith("create_") or fname.startswith("manage_"):
+                            t_arg = str(fargs.get('name') or fargs.get('category') or fargs.get('title') or '')[:80]
+                            tool_workflows.append(f"`{fname}({t_arg})`")
+                        else:
+                            tool_workflows.append(f"`{fname}()`")
+
+                if content and isinstance(content, str):
+                    clean_a = content.strip()
+                    if len(clean_a) > 20 and not clean_a.startswith("Task task-") and not clean_a.startswith("Error:"):
+                        lines = [l.strip() for l in clean_a.split("\n") if l.strip() and not l.startswith("```") and not l.startswith("<")]
+                        if lines:
+                            first_p = lines[0][:160]
+                            if first_p and first_p not in assistant_conclusions:
+                                assistant_conclusions.append(first_p)
+
+        intents_md = "\n".join([f"- {u}" for u in user_intents[:6]]) or "- Percakapan dan instruksi umum."
+        workflows_md = "\n".join([f"- {tw}" for tw in tool_workflows[:10]]) or "- Eksekusi respons langsung tanpa tool eksternal."
+        conclusions_md = "\n".join([f"- {c}" for c in assistant_conclusions[:4]]) or "- Solusi dan jawaban tuntas disajikan."
+
+        raw_size = len(json.dumps(raw_messages))
+        distilled_md = f"""# 🎯 Training Point: {title}
+- **Session ID**: `{sid}`
+- **Model Target**: `{model}`
+- **Waktu Eksekusi**: `{date_str}`
+
+## 📌 User Core Intent & Directives:
+{intents_md}
+
+## 🛠️ Execution Strategy & Tool Workflow:
+{workflows_md}
+
+## 💡 Key Learnings & Solusi Akhir:
+{conclusions_md}
+"""
+        distilled_size = len(distilled_md)
+        tokens_saved = max(0, (raw_size - distilled_size) // 4)
+
+        return {
+            "id": f"train_{sid}",
+            "session_id": sid,
+            "title": title,
+            "model": model,
+            "distilled_points_md": distilled_md,
+            "key_intents": user_intents[:6],
+            "tool_workflows": tool_workflows[:10],
+            "learnings": assistant_conclusions[:4],
+            "token_saved_estimate": tokens_saved,
+            "created_at": created_at,
+            "updated_at": int(time.time() * 1000)
+        }
+    except Exception as e:
+        log(f"Error in distill_session_to_training_md: {e}")
+        return None
+
+def db_auto_distill_all_sessions():
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM sessions ORDER BY updated_at DESC")
+        sessions = [dict(r) for r in cursor.fetchall()]
+        
+        os.makedirs(PM_TRAINING_CORPUS_DIR, exist_ok=True)
+        
+        distilled_count = 0
+        total_tokens_saved = 0
+        now = int(time.time() * 1000)
+
+        for s in sessions:
+            item = distill_session_to_training_md(s)
+            if item:
+                cursor.execute("""
+                    INSERT INTO chat_training_corpus (id, session_id, title, model, distilled_points_md, key_intents_json, tool_workflows_json, learnings_json, token_saved_estimate, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        title=excluded.title,
+                        model=excluded.model,
+                        distilled_points_md=excluded.distilled_points_md,
+                        key_intents_json=excluded.key_intents_json,
+                        tool_workflows_json=excluded.tool_workflows_json,
+                        learnings_json=excluded.learnings_json,
+                        token_saved_estimate=excluded.token_saved_estimate,
+                        updated_at=excluded.updated_at
+                """, (
+                    item["id"], item["session_id"], item["title"], item["model"],
+                    item["distilled_points_md"], json.dumps(item["key_intents"]),
+                    json.dumps(item["tool_workflows"]), json.dumps(item["learnings"]),
+                    item["token_saved_estimate"], item["created_at"], now
+                ))
+
+                safe_sid = re.sub(r'[^a-zA-Z0-9_-]', '_', item["session_id"])
+                fpath = os.path.join(PM_TRAINING_CORPUS_DIR, f"{safe_sid}.md")
+                with open(fpath, "w", encoding="utf-8") as f:
+                    f.write(item["distilled_points_md"])
+
+                distilled_count += 1
+                total_tokens_saved += item["token_saved_estimate"]
+
+        conn.commit()
+        cursor.close()
+        return {
+            "status": "ok",
+            "distilled_count": distilled_count,
+            "total_tokens_saved": total_tokens_saved
+        }
+    except Exception as e:
+        log(f"Error in db_auto_distill_all_sessions: {e}\n{traceback.format_exc()}")
+        return {"status": "error", "error": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
 def db_delete_persistent_item(item_type, item_id):
     conn = None
     try:
@@ -1881,7 +2094,8 @@ def db_delete_persistent_item(item_type, item_id):
             "experience": ("experience_ledger", "id"),
             "anti_pattern": ("anti_patterns", "id"),
             "skill": ("autonomous_skills", "id"),
-            "agent": ("autonomous_agents", "id")
+            "agent": ("autonomous_agents", "id"),
+            "training": ("chat_training_corpus", "id")
         }
         if item_type not in table_map:
             return {"status": "error", "error": f"Unknown item type: {item_type}"}
@@ -1906,6 +2120,12 @@ def db_delete_persistent_item(item_type, item_id):
                 except Exception: pass
         elif item_type == "agent":
             fpath = os.path.join(PM_AUTONOMOUS_AGENTS_DIR, f"{item_id}.md")
+            if os.path.exists(fpath):
+                try: os.remove(fpath)
+                except Exception: pass
+        elif item_type == "training":
+            safe_id = re.sub(r'[^a-zA-Z0-9_-]', '_', str(item_id).replace("train_", ""))
+            fpath = os.path.join(PM_TRAINING_CORPUS_DIR, f"{safe_id}.md")
             if os.path.exists(fpath):
                 try: os.remove(fpath)
                 except Exception: pass
@@ -1940,6 +2160,11 @@ def handle_local_rpc(msg):
     # Persistent Memory RPC Actions
     elif action == "db_get_persistent_memory":
         res = db_get_persistent_memory(msg.get("search", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_auto_distill_all_sessions":
+        res = db_auto_distill_all_sessions()
         res["id"] = req_id
         return res
 

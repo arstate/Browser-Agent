@@ -2704,6 +2704,7 @@ async function loadPersistentBrainData() {
         anti_patterns: res.anti_patterns || [],
         autonomous_skills: res.autonomous_skills || [],
         autonomous_agents: res.autonomous_agents || [],
+        training_corpus: res.training_corpus || [],
         counts: res.counts || {}
       };
 
@@ -2712,18 +2713,21 @@ async function loadPersistentBrainData() {
       const statExp = document.getElementById('stat-brain-experiences');
       const statAP = document.getElementById('stat-brain-antipatterns');
       const statAuto = document.getElementById('stat-brain-autoskills');
+      const statTrain = document.getElementById('stat-brain-training');
       const badgeBrain = document.getElementById('badge-count-brain');
 
       const totalItems = (brainData.user_memories.length || 0) +
                          (brainData.experience_ledger.length || 0) +
                          (brainData.anti_patterns.length || 0) +
                          (brainData.autonomous_skills.length || 0) +
-                         (brainData.autonomous_agents.length || 0);
+                         (brainData.autonomous_agents.length || 0) +
+                         (brainData.training_corpus.length || 0);
 
       if (statFacts) statFacts.textContent = brainData.user_memories.length || 0;
       if (statExp) statExp.textContent = brainData.experience_ledger.length || 0;
       if (statAP) statAP.textContent = brainData.anti_patterns.length || 0;
       if (statAuto) statAuto.textContent = ((brainData.autonomous_skills.length || 0) + (brainData.autonomous_agents.length || 0));
+      if (statTrain) statTrain.textContent = brainData.training_corpus.length || 0;
       if (badgeBrain) badgeBrain.textContent = totalItems;
 
       renderPersistentBrain();
@@ -2910,6 +2914,43 @@ function renderPersistentBrain(searchQuery = "") {
       `;
       container.appendChild(card);
     });
+  } else if (activeBrainSubtab === "training") {
+    let items = brainData.training_corpus || [];
+    if (q) {
+      items = items.filter(t => (t.title || "").toLowerCase().includes(q) || (t.distilled_points_md || "").toLowerCase().includes(q) || (t.model || "").toLowerCase().includes(q));
+    }
+    if (items.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;">
+          <p style="margin-bottom: 12px;">Belum ada korpus data training chat terdistilasi.</p>
+          <p style="font-size: 12px; color: #94a3b8;">Klik tombol <strong>"Auto-Distill Training MD"</strong> di atas untuk mengekstrak seluruh histori percakapan menjadi poin-poin training Markdown!</p>
+        </div>
+      `;
+      return;
+    }
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'brain-card';
+      card.style.borderColor = 'rgba(251, 191, 36, 0.25)';
+      card.innerHTML = `
+        <div class="brain-card-header">
+          <div class="brain-badge-group">
+            <span class="brain-badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3);">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              TRAINING CORPUS
+            </span>
+            <span class="brain-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
+              ⚡ Saved ~${item.token_saved_estimate || 0} tokens
+            </span>
+          </div>
+          ${makeDeleteBtn("training", item.id, "Hapus Data Training")}
+        </div>
+        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9; margin-top: 4px;">${escapeHtml(item.title)}</div>
+        <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">Model: <code>${escapeHtml(item.model || 'Unknown')}</code> | Session ID: <code>${escapeHtml(item.session_id)}</code></div>
+        <div class="brain-exp-markdown">${escapeHtml(item.distilled_points_md)}</div>
+      `;
+      container.appendChild(card);
+    });
   }
 }
 
@@ -2951,6 +2992,26 @@ document.addEventListener('click', async (e) => {
 // Search input listener
 document.getElementById('search-brain-input')?.addEventListener('input', (e) => {
   renderPersistentBrain(e.target.value);
+});
+
+// Auto-distill all chat history button
+document.getElementById('btn-auto-distill-history')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btn-auto-distill-history');
+  if (btn) btn.disabled = true;
+  try {
+    showToast("Memulai ekstraksi dan distilasi seluruh histori chat ke format Markdown training...");
+    const res = await sendNativeRpc("db_auto_distill_all_sessions");
+    if (res && res.status === "ok") {
+      showToast(`✅ Berhasil mendistilasi ${res.distilled_count || 0} sesi chat! Hemat ~${res.total_tokens_saved || 0} tokens.`);
+      await loadPersistentBrainData();
+    } else {
+      alert("Gagal distilasi: " + (res?.error || "Unknown error"));
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 });
 
 // Sync brain files button
