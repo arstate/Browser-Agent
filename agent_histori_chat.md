@@ -3418,8 +3418,31 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Pemisahan subtab `⚡ Autonomous Skills (SOP)` dan `🎭 Specialist Agents & Routing`.
      - Tombol interaktif **"Lihat Detail SOP (MD)"** dan **"Lihat Persona & Routing (MD)"** pada kartu.
      - Modal viewer elegan (`#modal-brain-detail`) dengan copy-to-clipboard button.
-  4. **Testing & Verification**:
-     - `test_phase1_memory.py` & `test_training_corpus.py` (10/10 tests passed).
+---
+
+### 🚀 Iterasi 344: Dual-Process Cognitive Architecture — Epistemic Knowledge Graph, MCTS Lookahead Engine & JIT Micro-Tools (v2.144.0)
+- **Fitur & Arsitektur Utama**:
+  1. **Dynamic Epistemic Knowledge Hypergraph (`native_host.py` & `PERSISTENT MEMORY/knowledge_graph/triplets.md`)**:
+     - Tabel SQLite: `graph_epistemic_triplets` dengan schema `(id, subject, predicate, object, confidence, decay_tau, source_kappa, negative_constraint, status, created_at, updated_at)`.
+     - Rumus Peluruhan Waktu Matematis: $c(t) = c_0 \cdot \exp\left(-\frac{\ln(2)}{\tau} \cdot \Delta t\right)$ dengan default half-life $\tau = 30\text{ hari}$ ($2.592.000\text{s}$).
+     - Dynamic Conflict Resolution ($\Delta c > 0.15 \to \text{Prune old edge}$) & Negative Constraints tagging (`negative_constraint = 1`).
+     - Multi-hop traversal engine `db_traverse_knowledge_graph` dengan deteksi loop & pencegahan traversal mundur.
+     - Dual-sync ke `PERSISTENT MEMORY/knowledge_graph/triplets.md`.
+  2. **System 2 Meta-Executive MCTS Engine & JIT Self-Coding (`sidepanel.js`)**:
+     - `MCTSNode` class dengan Upper Confidence Bound scoring $UCT(s,a) = Q(s,a) + c \cdot \sqrt{\ln N / n}$.
+     - Autonomous Brain Tools: `save_epistemic_triplet`, `query_epistemic_graph`, dan `execute_jit_microtool`.
+     - Dukungan eksekusi sandbox on-the-fly JavaScript & Python untuk komputasi instan.
+  3. **Live Working Memory Scratchpad UI (`sidepanel.html`, `sidepanel.css`, `sidepanel.js`)**:
+     - Dynamic Sub-Goal DAG checklist widget docked di atas input prompt dengan status real-time (`[✓] Done`, `[⟳] MCTS Run`, `[🛡️] Critic`, `[ ] Pending`).
+  4. **Neural Brain Graph Dynamic Epistemic Visualizer (`brain-graph.js` & `options.html`)**:
+     - Section 10 render Triplet dengan ukuran glow dinamis proporsional terhadap confidence live.
+     - Link Negative Constraint di-render dengan garis putus-putus merah menyala (`red-dashed line`).
+     - Modal viewer rincian Triplet lengkap dengan metadata peluruhan dan provenance.
+  5. **Automated Unit Testing & Zero Bug Pass**:
+     - `test_cognitive_epistemic_engine.py` (4/4 tests passed).
+     - Full test suite: `test_phase1_memory.py`, `test_training_corpus.py`, `test_rollback_backup.py`, `test_cognitive_epistemic_engine.py` (17/17 tests passed, 100% OK).
+  6. **Release & Packaging**:
+     - Bump manifest to `v2.144.0`, re-pack `extension.crx` (456.5 KB).
 
 
 

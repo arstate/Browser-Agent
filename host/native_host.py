@@ -146,10 +146,12 @@ PM_AUTONOMOUS_SKILLS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "autonomous_skil
 PM_AUTONOMOUS_AGENTS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "autonomous_agents")
 PM_TRAINING_CORPUS_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "training_corpus")
 PM_HISTORY_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, ".history")
+PM_KNOWLEDGE_GRAPH_DIR = os.path.join(PERSISTENT_MEMORY_ROOT, "knowledge_graph")
 
 import base64
 import urllib.request
 import datetime
+import math
 
 def init_db():
     try:
@@ -169,6 +171,7 @@ def init_db():
         os.makedirs(PM_AUTONOMOUS_AGENTS_DIR, exist_ok=True)
         os.makedirs(PM_TRAINING_CORPUS_DIR, exist_ok=True)
         os.makedirs(PM_HISTORY_DIR, exist_ok=True)
+        os.makedirs(PM_KNOWLEDGE_GRAPH_DIR, exist_ok=True)
 
         conn = sqlite3.connect(DB_PATH)
         try:
@@ -320,12 +323,32 @@ def init_db():
             """)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_item ON persistent_item_history(item_type, item_id, created_at DESC)")
 
+            # 8. Epistemic Knowledge Hypergraph Triplets (Mathematical Decay & Conflict Resolution)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS graph_epistemic_triplets (
+                    id TEXT PRIMARY KEY,
+                    subject TEXT NOT NULL,
+                    predicate TEXT NOT NULL,
+                    object TEXT NOT NULL,
+                    confidence REAL DEFAULT 1.0,
+                    decay_tau REAL DEFAULT 2592000.0,
+                    source_kappa TEXT DEFAULT 'user_chat',
+                    negative_constraint INTEGER DEFAULT 0,
+                    status TEXT DEFAULT 'active',
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_epistemic_sub_pred ON graph_epistemic_triplets(subject, predicate)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_epistemic_status_neg ON graph_epistemic_triplets(status, negative_constraint)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_epistemic_updated ON graph_epistemic_triplets(updated_at DESC)")
+
             conn.commit()
             cursor.close()
         finally:
             conn.close()
         
-        log(f"SQLite database initialized at {DB_PATH}, persistent memory & rollback history tables ready")
+        log(f"SQLite database initialized at {DB_PATH}, persistent memory, epistemic graph & rollback history tables ready")
     except Exception as e:
         log(f"Failed to initialize SQLite database: {e}\n{traceback.format_exc()}")
 
@@ -2020,6 +2043,22 @@ updated_at: {now}
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (apid, domain, mistake, cause, fix, rule, now))
 
+        # Seed epistemic triplets if table empty
+        cursor.execute("SELECT COUNT(*) FROM graph_epistemic_triplets")
+        if cursor.fetchone()[0] == 0:
+            seed_triplets = [
+                ("trip_user_identity", "Arya", "is_role", "Developer & Software Architect", 1.0, "user_direct", 0),
+                ("trip_tiar_dp", "Tiar Property", "offers", "DP 0% (Tanpa DP)", 1.0, "user_direct", 0),
+                ("trip_tiar_kpr", "Tiar Property", "supported_by", "5 Bank Rekanan BUMN & Swasta", 1.0, "user_direct", 0),
+                ("trip_tiar_blt", "BLT Marketing Commission", "is_forbidden_to_mention_to", "Konsumen Calon Pembeli", 1.0, "user_direct", 1),
+                ("trip_backup_format", "Conversation Backup", "must_use_format", ".zip with full brain media", 1.0, "user_direct", 0)
+            ]
+            for tid, sub, pred, obj, conf, src, is_neg in seed_triplets:
+                cursor.execute("""
+                    INSERT INTO graph_epistemic_triplets (id, subject, predicate, object, confidence, decay_tau, source_kappa, negative_constraint, status, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, 2592000.0, ?, ?, 'active', ?, ?)
+                """, (tid, sub, pred, obj, conf, src, is_neg, now, now))
+
         # 5. Full Autonomous Auto-Distillation in background thread so startup is instant (<10ms)
         def _background_startup_distill():
             try:
@@ -2155,6 +2194,17 @@ def db_get_persistent_memory(search=""):
                 item["learnings"] = []
             training_corpus.append(item)
 
+        # 7. Epistemic Knowledge Triplets (Live Time-Decayed)
+        if q:
+            cursor.execute("SELECT * FROM graph_epistemic_triplets WHERE (LOWER(subject) LIKE ? OR LOWER(predicate) LIKE ? OR LOWER(object) LIKE ?) AND status = 'active' ORDER BY negative_constraint ASC, updated_at DESC", (q, q, q))
+        else:
+            cursor.execute("SELECT * FROM graph_epistemic_triplets WHERE status = 'active' ORDER BY negative_constraint ASC, updated_at DESC")
+        epistemic_triplets = []
+        for r in cursor.fetchall():
+            t = dict(r)
+            t["decayed_confidence"] = calculate_epistemic_decay(t["confidence"], t["updated_at"], t.get("decay_tau", 2592000.0))
+            epistemic_triplets.append(t)
+
         cursor.close()
         return {
             "status": "ok",
@@ -2164,13 +2214,15 @@ def db_get_persistent_memory(search=""):
             "autonomous_skills": autonomous_skills,
             "autonomous_agents": autonomous_agents,
             "training_corpus": training_corpus,
+            "epistemic_triplets": epistemic_triplets,
             "counts": {
                 "user_memories": len(user_memories),
                 "experience_ledger": len(experience_ledger),
                 "anti_patterns": len(anti_patterns),
                 "autonomous_skills": len(autonomous_skills),
                 "autonomous_agents": len(autonomous_agents),
-                "training_corpus": len(training_corpus)
+                "training_corpus": len(training_corpus),
+                "epistemic_triplets": len(epistemic_triplets)
             }
         }
     except Exception as e:
@@ -2687,7 +2739,8 @@ def db_delete_persistent_item(item_type, item_id):
             "anti_pattern": ("anti_patterns", "id"),
             "skill": ("autonomous_skills", "id"),
             "agent": ("autonomous_agents", "id"),
-            "training": ("chat_training_corpus", "id")
+            "training": ("chat_training_corpus", "id"),
+            "epistemic": ("graph_epistemic_triplets", "id")
         }
         if item_type not in table_map:
             return {"status": "error", "error": f"Unknown item type: {item_type}"}
@@ -2705,6 +2758,8 @@ def db_delete_persistent_item(item_type, item_id):
             sync_personal_facts_markdown()
         elif item_type == "anti_pattern":
             sync_failure_learnings_markdown()
+        elif item_type == "epistemic":
+            sync_epistemic_graph_markdown()
         elif item_type == "skill":
             fpath = os.path.join(PM_AUTONOMOUS_SKILLS_DIR, f"{item_id}.md")
             if os.path.exists(fpath):
@@ -2726,6 +2781,271 @@ def db_delete_persistent_item(item_type, item_id):
     except Exception as e:
         log(f"Error in db_delete_persistent_item: {e}")
         return {"status": "error", "error": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+# ==========================================
+# Epistemic Knowledge Hypergraph & Dynamic Conflict Resolution Engine
+# ==========================================
+def calculate_epistemic_decay(confidence, last_updated_ms, decay_tau=2592000.0):
+    """
+    Calculates time-decayed epistemic confidence:
+    c(t) = c_0 * exp(-ln(2)/tau * delta_t_seconds)
+    decay_tau: half-life in seconds (default: 30 days = 2,592,000s)
+    """
+    try:
+        now_ms = int(time.time() * 1000)
+        delta_sec = max(0.0, (now_ms - int(last_updated_ms)) / 1000.0)
+        decay_tau = max(60.0, float(decay_tau or 2592000.0))
+        decay_factor = math.exp(-(math.log(2.0) / decay_tau) * delta_sec)
+        decayed_c = float(confidence) * decay_factor
+        return max(0.01, min(1.0, round(decayed_c, 4)))
+    except Exception as e:
+        log(f"Error calculating epistemic decay: {e}")
+        return float(confidence)
+
+PROVENANCE_WEIGHT_MAP = {
+    "bash": 1.00,
+    "bash_verified": 1.00,
+    "user_chat": 1.00,
+    "user_direct": 1.00,
+    "web": 0.95,
+    "web_search": 0.95,
+    "agent_inference": 0.85,
+    "speculative": 0.70
+}
+
+def db_upsert_epistemic_triplet(triplet):
+    """
+    Upserts an epistemic knowledge triplet into graph_epistemic_triplets with dynamic conflict resolution.
+    """
+    conn = None
+    try:
+        if not isinstance(triplet, dict):
+            return {"status": "error", "error": "Invalid triplet payload"}
+        
+        subject = str(triplet.get("subject") or "").strip()
+        predicate = str(triplet.get("predicate") or "").strip()
+        obj = str(triplet.get("object") or "").strip()
+        
+        if not subject or not predicate or not obj:
+            return {"status": "error", "error": "Subject, predicate, and object are required"}
+        
+        now = int(time.time() * 1000)
+        source_kappa = str(triplet.get("source_kappa") or triplet.get("source") or "user_chat").strip()
+        prov_mult = PROVENANCE_WEIGHT_MAP.get(source_kappa, 0.90)
+        raw_conf = float(triplet.get("confidence") if triplet.get("confidence") is not None else 1.0)
+        confidence = round(max(0.05, min(1.0, raw_conf * prov_mult)), 4)
+        decay_tau = float(triplet.get("decay_tau") or 2592000.0)
+        negative_constraint = 1 if (triplet.get("negative_constraint") or triplet.get("is_negative")) else 0
+        tid = str(triplet.get("id") or f"trip_{uuid.uuid4().hex[:8]}")
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Dynamic Conflict Resolution: Check if active contradictory triplet exists
+        cursor.execute("""
+            SELECT id, object, confidence, updated_at, decay_tau, status 
+            FROM graph_epistemic_triplets 
+            WHERE subject = ? AND predicate = ? AND status = 'active' AND negative_constraint = ?
+        """, (subject, predicate, negative_constraint))
+        existing_rows = cursor.fetchall()
+        
+        for e_id, e_obj, e_conf, e_upd, e_tau, e_status in existing_rows:
+            if e_obj.strip().lower() != obj.lower():
+                # Conflict detected! Calculate decayed confidence of old fact
+                decayed_old_c = calculate_epistemic_decay(e_conf, e_upd, e_tau)
+                delta_c = confidence - decayed_old_c
+                if delta_c > 0.15:
+                    # New evidence supersedes old evidence -> Prune old edge
+                    cursor.execute("UPDATE graph_epistemic_triplets SET status = 'pruned', updated_at = ? WHERE id = ?", (now, e_id))
+                    log(f"Dynamic Epistemic Conflict: Pruned old triplet {e_id} ('{subject}' '{predicate}' '{e_obj}') in favor of new object '{obj}' (Delta c={delta_c:.3f})")
+            else:
+                # Same fact reiterated -> reinforce confidence and refresh timestamp
+                tid = e_id
+                confidence = min(1.0, round(max(confidence, e_conf) + 0.05, 4))
+                break
+
+        cursor.execute("""
+            INSERT INTO graph_epistemic_triplets (id, subject, predicate, object, confidence, decay_tau, source_kappa, negative_constraint, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                subject=excluded.subject,
+                predicate=excluded.predicate,
+                object=excluded.object,
+                confidence=excluded.confidence,
+                decay_tau=excluded.decay_tau,
+                source_kappa=excluded.source_kappa,
+                negative_constraint=excluded.negative_constraint,
+                status='active',
+                updated_at=excluded.updated_at
+        """, (tid, subject, predicate, obj, confidence, decay_tau, source_kappa, negative_constraint, now, now))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        conn = None
+
+        # Dual-sync to markdown
+        sync_epistemic_graph_markdown()
+
+        return {
+            "status": "ok",
+            "id": tid,
+            "subject": subject,
+            "predicate": predicate,
+            "object": obj,
+            "confidence": confidence,
+            "negative_constraint": negative_constraint
+        }
+    except Exception as e:
+        log(f"Error in db_upsert_epistemic_triplet: {e}\n{traceback.format_exc()}")
+        return {"status": "error", "error": str(e)}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def db_get_epistemic_graph(search="", include_pruned=False):
+    """
+    Retrieves knowledge triplets from SQLite, calculating real-time time decay.
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        query = "SELECT * FROM graph_epistemic_triplets WHERE 1=1"
+        params = []
+        if not include_pruned:
+            query += " AND status = 'active'"
+        
+        if search and search.strip():
+            q = f"%{search.strip().lower()}%"
+            query += " AND (LOWER(subject) LIKE ? OR LOWER(predicate) LIKE ? OR LOWER(object) LIKE ? OR LOWER(source_kappa) LIKE ?)"
+            params.extend([q, q, q, q])
+            
+        query += " ORDER BY updated_at DESC"
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        triplets = []
+        for r in rows:
+            t = dict(r)
+            t["decayed_confidence"] = calculate_epistemic_decay(t["confidence"], t["updated_at"], t.get("decay_tau", 2592000.0))
+            triplets.append(t)
+            
+        return {"status": "ok", "count": len(triplets), "triplets": triplets}
+    except Exception as e:
+        log(f"Error in db_get_epistemic_graph: {e}")
+        return {"status": "error", "error": str(e), "triplets": []}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def db_traverse_knowledge_graph(root_entity, max_depth=2):
+    """
+    Performs multi-hop graph traversal starting from a root entity.
+    Returns connected entities, relation paths, and aggregated confidence.
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        visited_nodes = set()
+        visited_edges = set()
+        queue = [(root_entity.strip().lower(), 0, 1.0, [root_entity])]
+        results = []
+        
+        while queue:
+            curr_entity, depth, agg_conf, path = queue.pop(0)
+            if depth >= max_depth:
+                continue
+            visited_nodes.add(curr_entity)
+            
+            cursor.execute("""
+                SELECT * FROM graph_epistemic_triplets 
+                WHERE (LOWER(subject) = ? OR LOWER(object) = ?) AND status = 'active'
+            """, (curr_entity, curr_entity))
+            neighbors = cursor.fetchall()
+            
+            for n in neighbors:
+                e_id = n["id"]
+                if e_id in visited_edges:
+                    continue
+                visited_edges.add(e_id)
+                
+                sub = n["subject"]
+                pred = n["predicate"]
+                obj = n["object"]
+                is_neg = n["negative_constraint"]
+                live_c = calculate_epistemic_decay(n["confidence"], n["updated_at"], n["decay_tau"])
+                next_entity = obj.lower() if sub.lower() == curr_entity else sub.lower()
+                next_agg_conf = round(agg_conf * live_c, 4)
+                
+                traversal_item = {
+                    "id": e_id,
+                    "from": sub,
+                    "relation": pred,
+                    "to": obj,
+                    "confidence": live_c,
+                    "aggregated_confidence": next_agg_conf,
+                    "negative_constraint": is_neg,
+                    "depth": depth + 1,
+                    "path": path + [f"--[{pred}]-->", obj if sub.lower() == curr_entity else sub]
+                }
+                results.append(traversal_item)
+                
+                if next_entity not in visited_nodes and (depth + 1) < max_depth:
+                    queue.append((next_entity, depth + 1, next_agg_conf, path + [f"--[{pred}]-->", obj if sub.lower() == curr_entity else sub]))
+                    
+        return {"status": "ok", "root_entity": root_entity, "depth": max_depth, "traversal_count": len(results), "graph": results}
+    except Exception as e:
+        log(f"Error in db_traverse_knowledge_graph: {e}")
+        return {"status": "error", "error": str(e), "graph": []}
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
+
+def sync_epistemic_graph_markdown():
+    """
+    Dual-syncs all active epistemic triplets to a readable Markdown document.
+    """
+    conn = None
+    try:
+        os.makedirs(PM_KNOWLEDGE_GRAPH_DIR, exist_ok=True)
+        out_path = os.path.join(PM_KNOWLEDGE_GRAPH_DIR, "triplets.md")
+        
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM graph_epistemic_triplets WHERE status = 'active' ORDER BY negative_constraint ASC, confidence DESC")
+        triplets = [dict(r) for r in cursor.fetchall()]
+        
+        md = f"# 🕸️ Dynamic Epistemic Knowledge Graph\n"
+        md += f"*Auto-synced from SQLite: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M WIB')} | Total Active Triplets: {len(triplets)}*\n\n"
+        md += "| Subjek (Source) | Predikat (Relasi) | Objek (Target) | Confidence | Decay State | Provenance | Negative Constraint |\n"
+        md += "| :--- | :--- | :--- | :---: | :---: | :--- | :---: |\n"
+        
+        for t in triplets:
+            live_c = calculate_epistemic_decay(t["confidence"], t["updated_at"], t.get("decay_tau", 2592000.0))
+            is_neg = "🚨 Terlarang (Negative)" if t["negative_constraint"] else "✅ Valid"
+            decay_pct = f"{int(live_c * 100)}%"
+            md += f"| **{t['subject']}** | `{t['predicate']}` | **{t['object']}** | {t['confidence']} | {decay_pct} | `{t['source_kappa']}` | {is_neg} |\n"
+            
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(md)
+        return True
+    except Exception as e:
+        log(f"Error in sync_epistemic_graph_markdown: {e}")
+        return False
     finally:
         if conn:
             try: conn.close()
@@ -2800,10 +3120,32 @@ def handle_local_rpc(msg):
         res["id"] = req_id
         return res
 
+    # Epistemic Knowledge Hypergraph RPC Actions
+    elif action == "db_save_epistemic_triplet":
+        res = db_upsert_epistemic_triplet(msg.get("triplet", {}))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_get_epistemic_graph":
+        res = db_get_epistemic_graph(msg.get("search", ""), msg.get("include_pruned", False))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_resolve_epistemic_conflicts":
+        res = db_upsert_epistemic_triplet(msg.get("triplet", {}))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_traverse_knowledge_graph":
+        res = db_traverse_knowledge_graph(msg.get("root_entity", ""), msg.get("max_depth", 2))
+        res["id"] = req_id
+        return res
+
     elif action == "db_sync_persistent_memory_files":
         sync_persistent_memory_on_startup()
         sync_personal_facts_markdown()
         sync_failure_learnings_markdown()
+        sync_epistemic_graph_markdown()
         res = {"status": "ok", "synced": True}
         res["id"] = req_id
         return res

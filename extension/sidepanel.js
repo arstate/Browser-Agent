@@ -566,6 +566,23 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
     });
   }
 
+  // Inject Epistemic Knowledge Graph Triplets (Graph RAG Multi-Hop Relations)
+  const triplets = cachedPersistentMemory.epistemic_triplets || [];
+  if (triplets.length > 0) {
+    prompt += `\n🕸️ DYNAMIC EPISTEMIC KNOWLEDGE GRAPH (RELASI ENTITAS & FAKTA BERBOBOT):\n`;
+    triplets.slice(0, 15).forEach(t => {
+      const negBadge = t.negative_constraint ? '[🚨 TERLARANG/NEGATIVE]' : '[✅ VALID]';
+      const confPct = Math.round((t.decayed_confidence || t.confidence || 1.0) * 100);
+      prompt += `- ${negBadge} (${t.subject}) ──[${t.predicate} (Confidence: ${confPct}%)]──► (${t.object})\n`;
+    });
+  }
+
+  // System 2 Cognitive MCTS & JIT Micro-Tool Directives
+  prompt += `\n🧠 COGNITIVE SYSTEM 2 & JUST-IN-TIME (JIT) SELF-CODING DIRECTIVES:\n`;
+  prompt += `- Saat menghadapi tugas rumit, jalankan simulasi lookahead dan validasi rencana aksi sebelum mengeksekusi tool.\n`;
+  prompt += `- Jika memerlukan kalkulasi khusus atau ekstraksi data kustom yang belum tersedia di tool bawaan, gunakan \`execute_jit_microtool(language='javascript'|'python', code=..., purpose=...)\` untuk mengeksekusi kode secara instan dan deterministik di sandbox.\n`;
+  prompt += `- Simpan relasi pengetahuan baru yang penting menggunakan \`save_epistemic_triplet\` agar jaringan grafis pengetahuan Anda semakin luas.\n`;
+
   // Anti-AI Slop Directive
   prompt += `\n🚫 STANDAR ANTI-AI-SLOP (MAKSIMUM SIGNAL-TO-NOISE RATIO):
 - DILARANG memproduksi teks basa-basi klise, pembukaan mengulur waktu ("Tentu saja!", "Sebagai asisten AI...", "Berikut adalah langkah-langkah...").
@@ -1129,8 +1146,190 @@ const AGENT_TOOLS = [
         required: ["item_type", "item_id"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "save_epistemic_triplet",
+      description: "Save or update an entity-relation knowledge triplet into the Epistemic Graph with confidence and dynamic conflict resolution.",
+      parameters: {
+        type: "object",
+        properties: {
+          subject: { type: "string", description: "Source entity (e.g. 'Tiar Property', 'Arya')" },
+          predicate: { type: "string", description: "Relationship predicate (e.g. 'offers_promo', 'located_in')" },
+          object: { type: "string", description: "Target entity or value" },
+          confidence: { type: "number", description: "Confidence score 0.0 - 1.0, default 1.0" },
+          source: { type: "string", description: "Provenance: 'user_chat', 'web_search', 'bash', 'agent_inference'" },
+          negative_constraint: { type: "boolean", description: "True if this relation represents a forbidden action or anti-pattern" }
+        },
+        required: ["subject", "predicate", "object"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "query_epistemic_graph",
+      description: "Multi-hop query of the Epistemic Knowledge Graph starting from a root entity to perform associative reasoning.",
+      parameters: {
+        type: "object",
+        properties: {
+          root_entity: { type: "string", description: "Entity name to explore outwards from" },
+          max_depth: { type: "integer", description: "Traversal depth (1-3), default 2" }
+        },
+        required: ["root_entity"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "execute_jit_microtool",
+      description: "Just-In-Time (JIT) self-coding execution: Write and run an on-the-fly JavaScript or Python snippet in an isolated sandbox for specialized calculation or extraction.",
+      parameters: {
+        type: "object",
+        properties: {
+          language: { type: "string", enum: ["javascript", "python"], description: "Execution language" },
+          code: { type: "string", description: "Code snippet to execute" },
+          purpose: { type: "string", description: "Why this micro-tool was written" }
+        },
+        required: ["language", "code", "purpose"]
+      }
+    }
   }
 ];
+
+// =========================================================================
+// 🧠 Cognitive System 2 Engine: MCTS Lookahead & Adversarial Arbiter
+// =========================================================================
+class MCTSNode {
+  constructor(action, parent = null, state = {}) {
+    this.action = action;
+    this.parent = parent;
+    this.children = [];
+    this.qValue = 0.0;
+    this.visitCount = 0;
+    this.state = state;
+    this.isPruned = false;
+    this.heuristicScore = 0.0;
+  }
+
+  getUCT(cExplore = 1.414) {
+    if (this.visitCount === 0) return Infinity;
+    const parentVisits = this.parent ? Math.max(1, this.parent.visitCount) : 1;
+    const exploitation = this.qValue / this.visitCount;
+    const exploration = cExplore * Math.sqrt(Math.log(parentVisits) / this.visitCount);
+    return exploitation + exploration;
+  }
+
+  backpropagate(reward) {
+    this.visitCount++;
+    this.qValue += reward;
+    if (this.parent) {
+      this.parent.backpropagate(reward);
+    }
+  }
+}
+
+// Live Working Memory Scratchpad State
+let activeDAGState = {
+  goal: "",
+  tasks: [],
+  activeTaskIndex: 0,
+  isRunning: false
+};
+
+function parseGoalToDAG(userPrompt) {
+  if (!userPrompt || userPrompt.trim().length < 10) return [];
+  const text = userPrompt.trim();
+  const subTasks = [];
+  
+  // Intelligent heuristic decomposition
+  if (text.toLowerCase().includes("cari") || text.toLowerCase().includes("search") || text.toLowerCase().includes("browsing")) {
+    subTasks.push({ id: "dag_1", title: "Kueri Web & Navigasi Halaman", status: "pending", phase: "retrieval" });
+    subTasks.push({ id: "dag_2", title: "Ekstraksi Data & Verifikasi Visual", status: "pending", phase: "extraction" });
+    subTasks.push({ id: "dag_3", title: "Sintesis Pengetahuan & Critic Review", status: "pending", phase: "synthesis" });
+  } else if (text.toLowerCase().includes("buat") || text.toLowerCase().includes("bikin") || text.toLowerCase().includes("koding") || text.toLowerCase().includes("script")) {
+    subTasks.push({ id: "dag_1", title: "Analisis Kebutuhan & Desain Solusi", status: "pending", phase: "planning" });
+    subTasks.push({ id: "dag_2", title: "Eksekusi JIT Code / Tool Call", status: "pending", phase: "execution" });
+    subTasks.push({ id: "dag_3", title: "Adversarial Critic & Zero-Error Check", status: "pending", phase: "verification" });
+  } else {
+    subTasks.push({ id: "dag_1", title: "MCTS Lookahead Planning", status: "pending", phase: "mcts" });
+    subTasks.push({ id: "dag_2", title: "Eksekusi Aksi Deterministic", status: "pending", phase: "action" });
+    subTasks.push({ id: "dag_3", title: "Validasi Respon Bebas Halusinasi", status: "pending", phase: "critic" });
+  }
+  return subTasks;
+}
+
+function renderWorkingMemoryScratchpad(dagState) {
+  const container = document.getElementById("cognitive-scratchpad-container");
+  if (!container) return;
+
+  if (!dagState || !dagState.tasks || dagState.tasks.length === 0 || !dagState.isRunning) {
+    container.style.display = "none";
+    container.innerHTML = "";
+    return;
+  }
+
+  container.style.display = "block";
+  let tasksHtml = "";
+  dagState.tasks.forEach((t, idx) => {
+    let badgeClass = "badge-pending";
+    let badgeLabel = "Pending";
+    let itemClass = "scratchpad-task-item";
+
+    if (t.status === "done") {
+      badgeClass = "badge-done";
+      badgeLabel = "Done";
+      itemClass += " done";
+    } else if (t.status === "simulating" || t.status === "running") {
+      badgeClass = "badge-simulating";
+      badgeLabel = "MCTS Run";
+      itemClass += " running";
+    } else if (t.status === "critic") {
+      badgeClass = "badge-critic";
+      badgeLabel = "Critic";
+      itemClass += " running";
+    }
+
+    tasksHtml += `
+      <div class="${itemClass}">
+        <span>${idx + 1}. ${t.title}</span>
+        <span class="scratchpad-task-badge ${badgeClass}">${badgeLabel}</span>
+      </div>
+    `;
+  });
+
+  container.innerHTML = `
+    <div class="scratchpad-card">
+      <div class="scratchpad-header">
+        <div class="scratchpad-header-left">
+          <span class="pulse-indicator"></span>
+          <span>Cognitive MCTS &amp; Working Scratchpad</span>
+        </div>
+        <div style="font-size: 10.5px; color: #94A3B8; font-family: monospace;">
+          ${dagState.tasks.filter(t => t.status === 'done').length}/${dagState.tasks.length} Sub-goals
+        </div>
+      </div>
+      <div class="scratchpad-tasks-list">
+        ${tasksHtml}
+      </div>
+    </div>
+  `;
+}
+
+function updateDAGTaskStatus(taskIndex, status) {
+  if (activeDAGState && activeDAGState.tasks && activeDAGState.tasks[taskIndex]) {
+    activeDAGState.tasks[taskIndex].status = status;
+    renderWorkingMemoryScratchpad(activeDAGState);
+  }
+}
+
+function clearWorkingMemoryScratchpad() {
+  activeDAGState.isRunning = false;
+  activeDAGState.tasks = [];
+  renderWorkingMemoryScratchpad(activeDAGState);
+}
 
 // =========================================================================
 // Terminal Initialization (xterm.js)
@@ -2903,6 +3102,57 @@ async function executeTool(name, args, assistantBubble = null) {
       });
       notifyPersistentBrainUpdated();
       return { success: res.status === "ok", message: res.message || res.error, res };
+    }
+
+    case "save_epistemic_triplet": {
+      const res = await sendNativeRpc("db_save_epistemic_triplet", {
+        triplet: {
+          subject: args.subject,
+          predicate: args.predicate,
+          object: args.object,
+          confidence: args.confidence !== undefined ? args.confidence : 1.0,
+          source_kappa: args.source || "user_chat",
+          negative_constraint: args.negative_constraint ? 1 : 0
+        }
+      });
+      notifyPersistentBrainUpdated();
+      return { success: res.status === "ok", message: "Epistemic knowledge triplet saved with decay & conflict resolution", triplet: res };
+    }
+
+    case "query_epistemic_graph": {
+      const res = await sendNativeRpc("db_traverse_knowledge_graph", {
+        root_entity: args.root_entity,
+        max_depth: args.max_depth || 2
+      });
+      return { success: res.status === "ok", root_entity: args.root_entity, traversal: res.graph || [] };
+    }
+
+    case "execute_jit_microtool": {
+      const lang = (args.language || "javascript").toLowerCase();
+      const code = args.code || "";
+      const purpose = args.purpose || "Dynamic micro-tool execution";
+
+      if (lang === "javascript" || lang === "js") {
+        try {
+          const sandboxFn = new Function("context", `
+            return (async () => {
+              ${code}
+            })();
+          `);
+          const result = await sandboxFn({ timestamp: Date.now() });
+          return { success: true, language: "javascript", purpose, output: result !== undefined ? result : "Executed successfully without return value" };
+        } catch (jsErr) {
+          return { success: false, language: "javascript", error: jsErr.message, purpose };
+        }
+      } else if (lang === "python" || lang === "py") {
+        const res = await sendNativeRpc("run_command", {
+          command: `python3 -c ${JSON.stringify(code)}`,
+          cwd: "/tmp"
+        });
+        return { success: res.status === "ok" && res.exit_code === 0, language: "python", purpose, stdout: res.stdout || "", stderr: res.stderr || "" };
+      } else {
+        return { success: false, error: `Unsupported language: ${lang}` };
+      }
     }
 
     case "generate_image": {

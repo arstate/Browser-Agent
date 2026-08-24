@@ -539,6 +539,42 @@ class BrainGraphEngine {
       }
     });
 
+    // =========================================================================
+    // 🕸️ 10. DYNAMIC EPISTEMIC KNOWLEDGE GRAPH (Left Hemisphere Semantic Network)
+    // =========================================================================
+    const tripletsArr = brain?.epistemic_triplets || [];
+    tripletsArr.forEach((t, i) => {
+      const isNeg = t.negative_constraint === 1;
+      const conf = t.decayed_confidence || t.confidence || 1.0;
+      const tAngle = Math.PI * 0.85 + (Math.random() - 0.5) * 1.1;
+      const tDist = 105 + Math.random() * 45;
+
+      const subNodeId = 'epistemic_' + (t.id || i);
+      const tripNode = addNode({
+        id: subNodeId,
+        rawId: t.id || i,
+        label: formatGraphLabel(t.subject + ' → ' + t.object, 'Epistemic'),
+        fullTitle: `Epistemic Triplet: (${t.subject}) ──[${t.predicate}]──► (${t.object})`,
+        type: 'epistemic',
+        color: isNeg ? '#EF4444' : '#06B6D4',
+        baseRadius: Math.max(3.5, Math.min(8.0, 3.5 + conf * 4.0)),
+        radius: Math.max(3.5, Math.min(8.0, 3.5 + conf * 4.0)),
+        isNegative: isNeg,
+        confidence: conf,
+        data: t,
+        x: (cx - 110) + tDist * Math.cos(tAngle),
+        y: cy + tDist * Math.sin(tAngle),
+        vx: 0, vy: 0
+      });
+
+      addLink('core_brain', tripNode.id, 90, 0.05);
+
+      const relAgent = findSubAgent(t.subject || '', t.predicate + ' ' + t.object);
+      if (relAgent) {
+        addLink(relAgent.id, tripNode.id, 80, 0.04);
+      }
+    });
+
     // Degree-based Dynamic Sizing
     nodes.forEach(n => {
       const deg = degreeMap.get(n.id) || 1;
@@ -791,6 +827,14 @@ class BrainGraphEngine {
       badgeEl.className = "brain-badge agent";
       metaEl.textContent = `Provider: ${m.provider || 'API'} | Model ID: ${m.id}`;
       codeEl.textContent = JSON.stringify(m, null, 2);
+    } else if (node.type === 'epistemic') {
+      const t = node.data;
+      titleEl.textContent = `Triplet: ${t.subject} ➔ ${t.object}`;
+      badgeEl.textContent = t.negative_constraint ? "🚨 Negative Constraint" : "✅ Epistemic Triplet";
+      badgeEl.className = t.negative_constraint ? "brain-badge anti-pattern" : "brain-badge category";
+      const liveC = t.decayed_confidence !== undefined ? t.decayed_confidence : t.confidence;
+      metaEl.textContent = `Confidence: ${(liveC * 100).toFixed(1)}% | Provenance: ${t.source_kappa || 'user_chat'} | Updated: ${new Date(t.updated_at || Date.now()).toLocaleString('id-ID')}`;
+      codeEl.textContent = `## Epistemic Knowledge Fact\n- **Subjek:** ${t.subject}\n- **Predikat / Relasi:** ${t.predicate}\n- **Objek:** ${t.object}\n\n## Status & Metadata\n- **Confidence Base:** ${t.confidence}\n- **Decayed Live Score:** ${liveC}\n- **Half-Life (Tau):** ${t.decay_tau || 2592000} detik (~30 hari)\n- **Negative / Forbidden:** ${t.negative_constraint ? 'Ya (Anti-Pattern / Constraint)' : 'Tidak'}\n- **Provenance / Source:** ${t.source_kappa || 'user_chat'}`;
     }
 
     modal.style.display = 'flex';
@@ -930,21 +974,32 @@ class BrainGraphEngine {
       this.ctx.moveTo(l.source.x, l.source.y);
       this.ctx.lineTo(l.target.x, l.target.y);
 
-      if (isConnected) {
+      const isNegativeLink = (l.source.isNegative || l.target.isNegative);
+
+      if (isNegativeLink) {
+        this.ctx.strokeStyle = '#EF4444';
+        this.ctx.lineWidth = 1.6;
+        this.ctx.setLineDash([4, 4]);
+        this.ctx.globalAlpha = hovered ? 0.4 : 0.85;
+      } else if (isConnected) {
         this.ctx.strokeStyle = hovered.color || '#38BDF8';
         this.ctx.lineWidth = 2.2;
+        this.ctx.setLineDash([]);
         this.ctx.globalAlpha = 1.0;
       } else if (isCorpusCallosum) {
         // Glowing bridge between Left & Right Hemispheres
         this.ctx.strokeStyle = '#F472B6';
         this.ctx.lineWidth = 1.8;
+        this.ctx.setLineDash([]);
         this.ctx.globalAlpha = hovered ? 0.35 : 0.85;
       } else {
         this.ctx.strokeStyle = 'rgba(148, 163, 184, 0.32)';
         this.ctx.lineWidth = 0.9;
+        this.ctx.setLineDash([]);
         this.ctx.globalAlpha = hovered ? 0.08 : 0.65;
       }
       this.ctx.stroke();
+      this.ctx.setLineDash([]);
     }
     this.ctx.globalAlpha = 1;
 

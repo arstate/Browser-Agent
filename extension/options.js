@@ -2810,6 +2810,8 @@ let brainData = {
   anti_patterns: [],
   autonomous_skills: [],
   autonomous_agents: [],
+  training_corpus: [],
+  epistemic_triplets: [],
   counts: {}
 };
 let activeBrainSubtab = "facts";
@@ -2823,6 +2825,7 @@ function updateBrainCounters() {
   const statSkills = document.getElementById('stat-brain-skills');
   const statAgents = document.getElementById('stat-brain-agents');
   const statTrain = document.getElementById('stat-brain-training');
+  const statEpistemic = document.getElementById('stat-brain-epistemic');
   const badgeBrain = document.getElementById('badge-count-brain');
 
   const totalItems = (brainData.user_memories?.length || 0) +
@@ -2830,7 +2833,8 @@ function updateBrainCounters() {
                      (brainData.anti_patterns?.length || 0) +
                      (brainData.autonomous_skills?.length || 0) +
                      (brainData.autonomous_agents?.length || 0) +
-                     (brainData.training_corpus?.length || 0);
+                     (brainData.training_corpus?.length || 0) +
+                     (brainData.epistemic_triplets?.length || 0);
 
   if (statFacts) statFacts.textContent = brainData.user_memories?.length || 0;
   if (statExp) statExp.textContent = brainData.experience_ledger?.length || 0;
@@ -2838,6 +2842,7 @@ function updateBrainCounters() {
   if (statSkills) statSkills.textContent = brainData.autonomous_skills?.length || 0;
   if (statAgents) statAgents.textContent = brainData.autonomous_agents?.length || 0;
   if (statTrain) statTrain.textContent = brainData.training_corpus?.length || 0;
+  if (statEpistemic) statEpistemic.textContent = brainData.epistemic_triplets?.length || 0;
   if (badgeBrain) badgeBrain.textContent = totalItems;
 }
 
@@ -2852,6 +2857,7 @@ async function loadPersistentBrainData() {
         autonomous_skills: res.autonomous_skills || [],
         autonomous_agents: res.autonomous_agents || [],
         training_corpus: res.training_corpus || [],
+        epistemic_triplets: res.epistemic_triplets || [],
         counts: res.counts || {}
       };
 
@@ -3125,6 +3131,44 @@ function renderPersistentBrain(searchQuery = "") {
             <span>Lihat Full Training MD</span>
           </button>
         </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  if (activeBrainSubtab === "epistemic") {
+    let items = brainData.epistemic_triplets || [];
+    if (q) {
+      items = items.filter(t => (t.subject || "").toLowerCase().includes(q) || (t.predicate || "").toLowerCase().includes(q) || (t.object || "").toLowerCase().includes(q));
+    }
+    if (items.length === 0) {
+      container.innerHTML = '<div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;"><p>Belum ada relasi grafis pengetahuan (Epistemic Triplet) tercatat.</p></div>';
+      return;
+    }
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'brain-card';
+      const isNeg = item.negative_constraint === 1;
+      const liveC = item.decayed_confidence !== undefined ? item.decayed_confidence : item.confidence;
+      card.style.borderColor = isNeg ? 'rgba(239, 68, 68, 0.35)' : 'rgba(6, 182, 212, 0.35)';
+      card.innerHTML = `
+        <div class="brain-card-header">
+          <div class="brain-badge-group">
+            <span class="brain-badge" style="background: ${isNeg ? 'rgba(239, 68, 68, 0.15)' : 'rgba(6, 182, 212, 0.15)'}; color: ${isNeg ? '#ef4444' : '#06b6d4'}; border: 1px solid ${isNeg ? 'rgba(239, 68, 68, 0.3)' : 'rgba(6, 182, 212, 0.3)'};">
+              ${isNeg ? '🚨 NEGATIVE CONSTRAINT' : '🕸️ EPISTEMIC TRIPLET'}
+            </span>
+            <span class="brain-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
+              Confidence: ${(liveC * 100).toFixed(0)}%
+            </span>
+          </div>
+          ${makeDeleteBtn("epistemic", item.id, "Hapus Triplet")}
+        </div>
+        <div style="font-size: 14px; font-weight: 700; color: #f1f5f9; margin-top: 6px;">
+          <span>${escapeHtml(item.subject)}</span>
+          <span style="color: ${isNeg ? '#ef4444' : '#38bdf8'}; font-weight: 500; font-family: monospace; font-size: 12px; margin: 0 6px;">──[${escapeHtml(item.predicate)}]──►</span>
+          <span>${escapeHtml(item.object)}</span>
+        </div>
+        <div style="font-size: 11.5px; color: #94a3b8; margin-top: 4px;">Provenance: <code>${escapeHtml(item.source_kappa || 'user_chat')}</code> | Decay Tau: <code>${item.decay_tau || 2592000}s</code></div>
       `;
       container.appendChild(card);
     });
