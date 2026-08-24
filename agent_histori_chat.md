@@ -3864,6 +3864,28 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.11`, build `extension.crx` (471.7 KB).
 
+---
+
+### 🚀 Iterasi 366: Persistent Memory & Brain Vault Glasses Blur & Full-Rounded UI (v2.147.12)
+- **Kebutuhan Pengguna**:
+  - Merombak total tampilan kartu item pada halaman Persistent Memory & Brain Vault (`options.html` / Memory Drawer) agar tampil super clean, berestetika *liquid frosted glasses blur*, menghilangkan scrollbar internal yang kaku dan sempit, merapikan penataan tombol detail SOP serta ID badge agar tidak bertumpuk/tumpang-tindih.
+- **Implementasi & Peningkatan UI**:
+  1. **Liquid Frosted Glasses Card Architecture (`.brain-card`)**:
+     - Mengubah background menjadi `rgba(22, 22, 29, 0.65)` dengan `backdrop-filter: blur(24px) saturate(180%)`, border stroke `1px solid rgba(255, 255, 255, 0.08)`, `border-radius: 20px`, dan `box-shadow: 0 10px 30px -6px rgba(0, 0, 0, 0.4)`.
+     - Mengubah dimensi tinggi dari kaku (`max-height: 260px; overflow: hidden`) menjadi dinamis dan nyaman (`min-height: 250px; height: 100%`).
+  2. **Full Rounded Badges & Circular Delete Buttons**:
+     - Mengubah seluruh badge kelompok (`.brain-badge`) menjadi kapsul bulat penuh (`border-radius: 9999px`) dengan padding seimbang `4px 10px` dan font size `11px`.
+     - Mengubah tombol hapus (`.brain-delete-btn`) menjadi lingkaran simetris `28px x 28px` (`border-radius: 50%`) dengan hover glow merah elegan.
+  3. **Body Multi-Line Ellipsis (Anti-Scrollbar Kaku)**:
+     - Menggantikan scrollbar sempit dengan `display: -webkit-box; -webkit-line-clamp: 4; overflow: hidden;` dan line-height `1.55` yang lapang dan nyaman dibaca.
+  4. **Harmonious Footer with Action Pill & Monospace ID**:
+     - Membuat container `.brain-card-footer` ber-border halus di atasnya.
+     - Merancang tombol aksi kapsul `.brain-card-action-btn` (`Detail SOP`, `Detail Persona`, `Detail Training`) dengan `border-radius: 9999px` dan border glow yang sesuai kategori item.
+     - Menyematkan `.brain-card-id` sebagai kapsul monospace ramping berlatar gelap transparan (`max-width: 140px; text-overflow: ellipsis`) tanpa bertumpuk dengan tombol aksi.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.12`, build `extension.crx` (471.7 KB).
+
 
 
 
