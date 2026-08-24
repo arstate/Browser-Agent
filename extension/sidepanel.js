@@ -3554,8 +3554,8 @@ try {
 
 async function runAgentLoop(userMessage, attachments = [], explicitMentions = []) {
   if (!config.apiKey && config.preset !== "ollama" && config.preset !== "9router") {
-    showSettingsModal();
-    appendAssistantMessage("Silakan masukkan API Key dan atur Endpoint AI Anda di menu Setup untuk memulai.");
+    openSettingsPage();
+    appendAssistantMessage("⚠️ API Key belum diatur. Membuka halaman Pengaturan di tab baru untuk mengatur Provider AI Anda.");
     return;
   }
 
@@ -5104,8 +5104,8 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
   } catch (e) {}
 
   if (!config.apiKey && config.preset !== "ollama" && config.preset !== "9router") {
-    showSettingsModal();
-    appendAssistantMessage("Silakan masukkan API Key dan atur Endpoint AI Anda di menu Setup untuk memulai.");
+    openSettingsPage();
+    appendAssistantMessage("⚠️ API Key belum diatur. Membuka halaman Pengaturan di tab baru untuk mengatur Provider AI Anda.");
     return;
   }
 
@@ -9925,13 +9925,6 @@ async function bootstrap() {
     console.warn("Bootstrap active tab query warning:", e);
   }
   updateMcpStatus();
-
-  // If no API key configured on initial launch, prompt settings
-  chrome.storage.local.get(['browser_agent_config'], (res) => {
-    if (!res.browser_agent_config || (!res.browser_agent_config.apiKey && res.browser_agent_config.preset !== 'ollama' && res.browser_agent_config.preset !== '9router')) {
-      showSettingsModal();
-    }
-  });
 }
 
 bootstrap();

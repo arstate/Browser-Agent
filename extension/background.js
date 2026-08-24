@@ -9,7 +9,14 @@ const enableSidePanelOnAction = async () => {
   }
 };
 
-chrome.runtime.onInstalled.addListener(enableSidePanelOnAction);
+chrome.runtime.onInstalled.addListener(async (details) => {
+  await enableSidePanelOnAction();
+  if (details && details.reason === "install") {
+    try {
+      chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+    } catch (e) {}
+  }
+});
 chrome.runtime.onStartup.addListener(enableSidePanelOnAction);
 enableSidePanelOnAction();
 

@@ -3817,6 +3817,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.8`, build `extension.crx` (471.8 KB).
 
+---
+
+### 🚀 Iterasi 363: Direct New-Tab Options Onboarding & Zero-Modal Initial Experience (v2.147.9)
+- **Kebutuhan Pengguna**:
+  - Saat baru pertama kali menginstal ekstensi, hilangkan popup modal setup yang mengganggu di sidepanel, dan ganti dengan onboarding langsung membuka tab baru ke halaman Pengaturan (`options.html`).
+- **Implementasi & Peningkatan Sistem**:
+  1. **Background `onInstalled` Auto-Tab Onboarding**:
+     - Memperbarui listener `chrome.runtime.onInstalled` di `background.js` agar saat `details.reason === "install"`, ekstensi secara otomatis membuka halaman Pengaturan lengkap di tab baru (`options.html`).
+  2. **Eliminasi Popup Modal pada Sidepanel Bootstrap**:
+     - Menghapus pemanggilan `showSettingsModal()` otomatis pada inisialisasi awal sidepanel (`bootstrap()`), sehingga panel samping tetap bersih dan tenang.
+  3. **Seamless Redirect saat API Key Belum Diatur**:
+     - Jika pengguna mencoba mengirim pesan saat API Key belum ada, sistem menampilkan pesan panduan bersahabat dan otomatis membuka halaman Pengaturan di tab baru (`openSettingsPage()`), tanpa modal popup yang memblokir layar.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.9`, build `extension.crx` (471.8 KB).
+
 
 
 
