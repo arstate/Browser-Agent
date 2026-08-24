@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Browser Agent",
-  "version": "2.146.1",
+  "version": "2.146.2",
   "description": "Chrome Side Panel integration with Browser Agent and Antigravity CLI",
   "permissions": [
     "sidePanel",

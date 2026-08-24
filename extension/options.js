@@ -1381,7 +1381,10 @@ async function loadAgents() {
     agentsList = [...DEFAULT_AGENTS];
   }
 
-  await chrome.storage.local.set({ custom_agents: agentsList });
+  const storedAgentsRes = await chrome.storage.local.get(['custom_agents']);
+  if (JSON.stringify(storedAgentsRes.custom_agents) !== JSON.stringify(agentsList)) {
+    await chrome.storage.local.set({ custom_agents: agentsList });
+  }
   updateBadgeCount('badge-count-agents', agentsList.length);
   renderAgentsCards();
 }
@@ -1432,7 +1435,10 @@ async function loadSkills() {
     if (skillsList.length === 0) skillsList = [...DEFAULT_SKILLS];
   }
 
-  await chrome.storage.local.set({ custom_skills: skillsList });
+  const storedSkillsRes = await chrome.storage.local.get(['custom_skills']);
+  if (JSON.stringify(storedSkillsRes.custom_skills) !== JSON.stringify(skillsList)) {
+    await chrome.storage.local.set({ custom_skills: skillsList });
+  }
   updateBadgeCount('badge-count-skills', skillsList.length);
   renderSkillsCards();
 }
@@ -1480,7 +1486,10 @@ async function loadMemories() {
     }
   }
 
-  await chrome.storage.local.set({ custom_memories: memoriesList });
+  const storedMemsRes = await chrome.storage.local.get(['custom_memories']);
+  if (JSON.stringify(storedMemsRes.custom_memories) !== JSON.stringify(memoriesList)) {
+    await chrome.storage.local.set({ custom_memories: memoriesList });
+  }
   updateBadgeCount('badge-count-memories', memoriesList.length);
   renderMemoriesCards();
 }
@@ -2933,7 +2942,11 @@ async function loadPersistentBrainData() {
         });
       }
       if (agentsChanged) {
-        chrome.storage.local.set({ custom_agents: agentsList }).catch(() => {});
+        chrome.storage.local.get(['custom_agents'], (stored) => {
+          if (JSON.stringify(stored.custom_agents) !== JSON.stringify(agentsList)) {
+            chrome.storage.local.set({ custom_agents: agentsList }).catch(() => {});
+          }
+        });
         updateBadgeCount('badge-count-agents', agentsList.length);
         renderAgentsCards();
       }
@@ -2959,7 +2972,11 @@ async function loadPersistentBrainData() {
         });
       }
       if (skillsChanged) {
-        chrome.storage.local.set({ custom_skills: skillsList }).catch(() => {});
+        chrome.storage.local.get(['custom_skills'], (stored) => {
+          if (JSON.stringify(stored.custom_skills) !== JSON.stringify(skillsList)) {
+            chrome.storage.local.set({ custom_skills: skillsList }).catch(() => {});
+          }
+        });
         updateBadgeCount('badge-count-skills', skillsList.length);
         renderSkillsCards();
       }
@@ -3475,14 +3492,43 @@ document.addEventListener('click', (e) => {
 
 document.addEventListener('DOMContentLoaded', init);
 
-// Realtime sync from Sidepanel & Native Host
+// Realtime sync from Sidepanel & Native Host (Clean, Decoupled & Non-recursive)
+let brainUpdateDebounceTimer = null;
+function triggerDebouncedBrainReload() {
+  if (brainUpdateDebounceTimer) clearTimeout(brainUpdateDebounceTimer);
+  brainUpdateDebounceTimer = setTimeout(() => {
+    loadPersistentBrainData();
+  }, 300);
+}
+
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local') {
-    if (changes.persistent_brain_last_updated || changes.custom_agents || changes.custom_skills || changes.custom_memories) {
-      loadPersistentBrainData();
-      loadAgents();
-      loadSkills();
-      loadMemories();
+    if (changes.custom_agents && changes.custom_agents.newValue) {
+      const incomingAgents = changes.custom_agents.newValue;
+      if (JSON.stringify(incomingAgents) !== JSON.stringify(agentsList)) {
+        agentsList = incomingAgents;
+        updateBadgeCount('badge-count-agents', agentsList.length);
+        renderAgentsCards();
+      }
+    }
+    if (changes.custom_skills && changes.custom_skills.newValue) {
+      const incomingSkills = changes.custom_skills.newValue;
+      if (JSON.stringify(incomingSkills) !== JSON.stringify(skillsList)) {
+        skillsList = incomingSkills;
+        updateBadgeCount('badge-count-skills', skillsList.length);
+        renderSkillsCards();
+      }
+    }
+    if (changes.custom_memories && changes.custom_memories.newValue) {
+      const incomingMems = changes.custom_memories.newValue;
+      if (JSON.stringify(incomingMems) !== JSON.stringify(memoriesList)) {
+        memoriesList = incomingMems;
+        updateBadgeCount('badge-count-memories', memoriesList.length);
+        renderMemoriesCards();
+      }
+    }
+    if (changes.persistent_brain_last_updated) {
+      triggerDebouncedBrainReload();
     }
     if (changes.browser_agent_config) {
       config = { ...config, ...changes.browser_agent_config.newValue };
@@ -3498,30 +3544,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-// Realtime runtime message listener
+// Realtime runtime message listener (Debounced)
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg && (msg.type === "PERSISTENT_BRAIN_UPDATED" || msg.action === "PERSISTENT_BRAIN_UPDATED" || msg.type === "SESSION_SAVED")) {
-    loadPersistentBrainData();
-    loadAgents();
-    loadSkills();
-    loadMemories();
-  }
-});
-
-// Window focus & Visibility change listeners for instant fresh data
-window.addEventListener('focus', () => {
-  loadPersistentBrainData();
-  loadAgents();
-  loadSkills();
-  loadMemories();
-});
-
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    loadPersistentBrainData();
-    loadAgents();
-    loadSkills();
-    loadMemories();
+    triggerDebouncedBrainReload();
   }
 });
 

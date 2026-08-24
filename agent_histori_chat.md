@@ -3536,6 +3536,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - 17/17 Unit Tests lulus 100% (Zero Bug).
      - Bump manifest to `v2.146.1`, build `extension.crx` (460.3 KB).
 
+---
+
+### 🚀 Iterasi 350: Circular Storage Trigger Elimination & Zero-Flicker Card Grid (v2.146.2)
+- **Root Cause Problem (Penyebab Glitch "Jedug-Jedug" & Kartu Nambah-Ilang)**:
+  - Pada `options.js`, fungsi `loadAgents()` dan `loadSkills()` menulis ke `chrome.storage.local` tanpa pengecekan perbedaan konten.
+  - Listener `chrome.storage.onChanged` mendeteksi perubahan `custom_agents`/`custom_skills` lalu memanggil ulang `loadAgents()`, `loadSkills()`, `loadMemories()`, dan `loadPersistentBrainData()`.
+  - Hal ini memicu **infinite circular event loop (badai pemicu tanpa henti)**: Storage Change -> Load Functions -> Storage Write -> Storage Change -> Load Functions.
+  - Akibatnya, DOM card grid dihancurkan dan dirender ulang puluhan kali per detik (`innerHTML = ''`), menyebabkan tampilan kartu berkedip ("jedug jedug", "nambah hilang nambah hilang") dan membebani memori browser.
+- **Solusi & Arsitektur Stabil (Zero-Flicker & Decoupled State)**:
+  1. **Strict Diff-Checking Sebelum Storage Write**:
+     - `loadAgents()`, `loadSkills()`, dan `loadMemories()` kini membandingkan `JSON.stringify(stored)` dengan data baru. Jika tidak ada perubahan, tidak ada penulisan ke `chrome.storage.local`.
+  2. **Decoupled Storage Event Handler**:
+     - `chrome.storage.onChanged` kini hanya memperbarui state in-memory secara langsung (`agentsList = incomingAgents`) dan memanggil fungsi render kartu secara presisi tanpa memanggil balik fungsi loader yang menulis ke storage.
+  3. **Debounced Persistent Brain Sync**:
+     - Event `persistent_brain_last_updated` dan pesan runtime kini di-debounce sebesar 300ms dengan timer pembatalan untuk mencegah spam request.
+  4. **Pengujian & Rilis**:
+     - 17/17 Unit Tests lulus 100% (Zero Bug).
+     - Bump manifest to `v2.146.2`, build `extension.crx` (460.5 KB).
+
 
 
 
