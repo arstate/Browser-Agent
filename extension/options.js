@@ -3077,6 +3077,13 @@ function renderPersistentBrain(searchQuery = "") {
           <div class="brain-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
           <div class="brain-exp-markdown">${escapeHtml(item.distilled_markdown)}</div>
         </div>
+        <div class="brain-card-footer">
+          <button type="button" class="brain-card-action-btn btn-view-brain-detail" data-type="experience" data-id="${item.id}" style="border-color: rgba(167, 139, 250, 0.35); color: #c084fc;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span>Detail Pengalaman</span>
+          </button>
+          <span class="brain-card-id" title="${escapeHtml(item.id)}">${escapeHtml(item.id)}</span>
+        </div>
       `;
       container.appendChild(card);
     });

@@ -3886,6 +3886,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.12`, build `extension.crx` (471.7 KB).
 
+---
+
+### 🚀 Iterasi 367: Uniform Card Dimension Bento Grid with Smooth macOS Scrolling (v2.147.13)
+- **Kebutuhan Pengguna**:
+  - Membuat ukuran seluruh kartu container di Persistent Memory & Brain Vault memiliki dimensi tinggi yang seragam dan simetris (sama rata), serta konten teks di dalamnya dapat di-scroll dengan mulus menggunakan scrollbar tipis frosted ala macOS.
+- **Implementasi & Peningkatan UI**:
+  1. **Uniform Card Geometry (Exact 290px Height)**:
+     - Mengatur seluruh `.brain-card` dengan dimensi simetris pasti `height: 290px; min-height: 290px; max-height: 290px;` sehingga seluruh baris kartu dalam grid Bento sejajar sempurna.
+  2. **Flex-Child Smooth Scrolling (`.brain-card-body`)**:
+     - Menetapkan `.brain-card-body` dengan `flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;` agar teks panjang dapat di-scroll dengan leluasa di dalam kartu tanpa merusak proporsi container.
+  3. **macOS Ultra-Thin Frosted Glass Scrollbar**:
+     - Menambahkan custom scrollbar 4px yang elegan, transparan secara default, dan memunculkan thumb rounded kapsul halus (`rgba(255, 255, 255, 0.12)` -> `rgba(255, 255, 255, 0.3)` saat hover).
+  4. **Consistent Header & Footer Pinning**:
+     - Header dan footer kartu dikunci dengan `flex-shrink: 0`, memastikan badge kategori dan tombol aksi/alasan selalu berada di posisi atas dan bawah yang simetris di setiap kartu.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.13`, build `extension.crx` (471.9 KB).
+
 
 
 
