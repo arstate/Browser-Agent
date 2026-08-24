@@ -275,23 +275,23 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
   // 0. Include ONLY the explicit user-selected @mention chips (Exact match by ID)
   if (Array.isArray(explicitMentionAgents) && explicitMentionAgents.length > 0) {
     explicitMentionAgents.forEach(ag => {
-      if (ag && ag.id !== "master_agent" && ag.id !== "boss_agent" && !matchedWorkers.some(m => m.id === ag.id)) {
+      if (ag && String(ag.id || '') !== "master_agent" && String(ag.id || '') !== "boss_agent" && !matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
         matchedWorkers.push(ag);
       }
     });
   } else {
     // 0b. If no chips were selected, check if user manually typed an @mention in userMessage (Match exact full name/ID only)
     const candidates = [...customAgents]
-      .filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss)
-      .sort((a, b) => (b.name?.length || 0) - (a.name?.length || 0));
+      .filter(a => a && String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent" && !a.is_boss)
+      .sort((a, b) => (String(b.name || '').length) - (String(a.name || '').length));
 
     for (const ag of candidates) {
-      const agNameLower = (ag.name || "").toLowerCase();
-      const agIdLower = (ag.id || "").toLowerCase();
-      const dispNameLower = getAgentDisplayName(ag).toLowerCase();
+      const agNameLower = String(ag.name || "").toLowerCase();
+      const agIdLower = String(ag.id || "").toLowerCase();
+      const dispNameLower = String(getAgentDisplayName(ag) || "").toLowerCase();
 
-      if (text.includes(`@${agIdLower}`) || (agNameLower && text.includes(`@${agNameLower}`)) || (dispNameLower && text.includes(`@${dispNameLower}`))) {
-        if (!matchedWorkers.some(m => m.id === ag.id)) {
+      if ((agIdLower && text.includes(`@${agIdLower}`)) || (agNameLower && text.includes(`@${agNameLower}`)) || (dispNameLower && text.includes(`@${dispNameLower}`))) {
+        if (!matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
           matchedWorkers.push(ag);
           break; // Only match the exact single target agent mentioned
         }
@@ -308,8 +308,8 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
   ];
   const isResearch = researchKeywords.some(kw => text.includes(kw));
   if (isResearch) {
-    const researchAgent = customAgents.find(a => a.id === "web_researcher_agent" || a.name?.toLowerCase().includes("research") || a.name?.toLowerCase().includes("riset"));
-    if (researchAgent && !matchedWorkers.some(m => m.id === researchAgent.id)) {
+    const researchAgent = customAgents.find(a => String(a.id || '') === "web_researcher_agent" || String(a.name || '').toLowerCase().includes("research") || String(a.name || '').toLowerCase().includes("riset"));
+    if (researchAgent && !matchedWorkers.some(m => String(m.id || '') === String(researchAgent.id || ''))) {
       matchedWorkers.push(researchAgent);
     }
   }
@@ -320,8 +320,8 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
   ];
   const isGeneral = generalKeywords.some(kw => text.includes(kw));
   if (isGeneral && !isResearch) {
-    const defaultAgent = customAgents.find(a => a.id === "default_agent") || customAgents.find(a => a.id !== "master_agent" && a.id !== "boss_agent");
-    if (defaultAgent && !matchedWorkers.some(m => m.id === defaultAgent.id)) {
+    const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent");
+    if (defaultAgent && !matchedWorkers.some(m => String(m.id || '') === String(defaultAgent.id || ''))) {
       matchedWorkers.push(defaultAgent);
     }
   }
@@ -336,20 +336,22 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
   ];
   const isCoding = codeKeywords.some(kw => text.includes(kw));
   if (isCoding) {
-    const codingAgent = customAgents.find(a => a.id === "coding_engineer_agent" || a.name?.toLowerCase().includes("coding") || a.name?.toLowerCase().includes("engineer"));
-    if (codingAgent && !matchedWorkers.some(m => m.id === codingAgent.id)) {
+    const codingAgent = customAgents.find(a => String(a.id || '') === "coding_engineer_agent" || String(a.name || '').toLowerCase().includes("coding") || String(a.name || '').toLowerCase().includes("engineer"));
+    if (codingAgent && !matchedWorkers.some(m => String(m.id || '') === String(codingAgent.id || ''))) {
       matchedWorkers.push(codingAgent);
     }
   }
 
   // 4. Check custom agents by keyword in description or name
   for (const ag of customAgents) {
-    if (ag.id === "master_agent" || ag.id === "boss_agent" || ag.id === "default_agent" || ag.id === "web_researcher_agent" || ag.id === "coding_engineer_agent") continue;
-    const nameMatch = ag.name && text.includes(ag.name.toLowerCase());
-    const descWords = (ag.description || "").toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    const agIdStr = String(ag.id || '');
+    if (agIdStr === "master_agent" || agIdStr === "boss_agent" || agIdStr === "default_agent" || agIdStr === "web_researcher_agent" || agIdStr === "coding_engineer_agent") continue;
+    const agNameStr = String(ag.name || '');
+    const nameMatch = agNameStr && text.includes(agNameStr.toLowerCase());
+    const descWords = String(ag.description || "").toLowerCase().split(/\s+/).filter(w => w.length > 3);
     const descMatch = descWords.some(w => text.includes(w));
     if (nameMatch || descMatch) {
-      if (!matchedWorkers.some(m => m.id === ag.id)) {
+      if (!matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
         matchedWorkers.push(ag);
       }
     }
@@ -357,7 +359,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
 
   // Fallback worker if none matched
   if (matchedWorkers.length === 0) {
-    const defaultAgent = customAgents.find(a => a.id === "default_agent") || customAgents.find(a => a.id !== "master_agent" && a.id !== "boss_agent") || customAgents[0];
+    const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent") || customAgents[0];
     if (defaultAgent) matchedWorkers.push(defaultAgent);
   }
 
@@ -5543,9 +5545,9 @@ function appendUserMessage(text, attachments = []) {
 }
 
 function getAgentIconSvg(agent) {
-  const id = (agent?.id || '').toLowerCase();
-  const name = (agent?.name || '').toLowerCase();
-  const desc = (agent?.description || '').toLowerCase();
+  const id = String(agent?.id || '').toLowerCase();
+  const name = String(agent?.name || '').toLowerCase();
+  const desc = String(agent?.description || '').toLowerCase();
 
   if (id.includes('research') || name.includes('research') || name.includes('riset') || desc.includes('jurnal')) {
     return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
@@ -5582,13 +5584,13 @@ function updateAssistantActiveAgent(assistantBubble, agentName, statusText = '',
   // Update tree branch items active state & status badges
   const treeContainer = assistantBubble.querySelector('.agent-tree-branch-container');
   const treeItems = assistantBubble.querySelectorAll('.agent-tree-item');
-  const target = (agentName || '').trim().toLowerCase();
+  const target = String(agentName || '').trim().toLowerCase();
 
   treeItems.forEach(item => {
     const nameEl = item.querySelector('.tree-agent-name');
     const badgeEl = item.querySelector('.tree-agent-badge');
-    const itemAgentId = item.dataset.agentId ? item.dataset.agentId.toLowerCase() : '';
-    const itemAgentName = nameEl ? nameEl.textContent.trim().toLowerCase() : '';
+    const itemAgentId = item.dataset.agentId ? String(item.dataset.agentId).toLowerCase() : '';
+    const itemAgentName = nameEl ? String(nameEl.textContent).trim().toLowerCase() : '';
 
     if (isFinished) {
       item.classList.remove('active-working');
@@ -9158,12 +9160,12 @@ function clearMentionAgents() {
 }
 
 function getMentionableAgents(query = "") {
-  const q = (query || "").toLowerCase().trim();
+  const q = String(query || "").toLowerCase().trim();
   // Filter out boss agents and untitled/empty agents
   const list = customAgents.filter(ag => 
     ag && 
-    ag.id !== "master_agent" && 
-    ag.id !== "boss_agent" && 
+    String(ag.id || '') !== "master_agent" && 
+    String(ag.id || '') !== "boss_agent" && 
     !ag.is_boss && 
     ag.name && 
     ag.name !== "Untitled" && 
@@ -9174,9 +9176,9 @@ function getMentionableAgents(query = "") {
   if (!q) return list;
 
   return list.filter(ag => {
-    const nameMatch = (ag.name || "").toLowerCase().includes(q);
-    const idMatch = (ag.id || "").toLowerCase().includes(q);
-    const descMatch = (ag.description || "").toLowerCase().includes(q);
+    const nameMatch = String(ag.name || "").toLowerCase().includes(q);
+    const idMatch = String(ag.id || "").toLowerCase().includes(q);
+    const descMatch = String(ag.description || "").toLowerCase().includes(q);
     return nameMatch || idMatch || descMatch;
   });
 }

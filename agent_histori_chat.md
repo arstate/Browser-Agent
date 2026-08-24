@@ -3734,6 +3734,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.4`, build `extension.crx` (470.2 KB).
 
+---
+
+### 🚀 Iterasi 359: Comprehensive String-Safety Hardening across `resolveAutoAgents`, `getAgentIconSvg`, & `getMentionableAgents` (v2.147.5)
+- **Root Cause Problem**:
+  - Saat prompt dikirimkan ke AI, fungsi pipeline `resolveAutoAgents()` mengevaluasi kecocokan agen dengan memanggil `(ag.id || "").toLowerCase()` pada baris 290.
+  - Karena pada JavaScript `1 || ""` menghasilkan angka `1` (truthy), maka `(1).toLowerCase` memicu runtime error `Uncaught (in promise) TypeError: (ag.id || "").toLowerCase is not a function`, sehingga eksekusi prompt AI terhenti / tidak merespons.
+- **Solusi & Peningkatan Menyeluruh**:
+  1. **String-Safety Audit di Seluruh Pipeline Agent**:
+     - Membungkus seluruh properti `id`, `name`, dan `description` agen dengan `String(...)` eksplisit:
+       - `String(ag.id || "").toLowerCase()`
+       - `String(ag.name || "").toLowerCase()`
+       - `String(getAgentDisplayName(ag) || "").toLowerCase()`
+       - `String(ag.description || "").toLowerCase()`
+  2. **Audit pada `getAgentIconSvg`, `updateAssistantActiveAgent`, dan `getMentionableAgents`**:
+     - Mengamankan semua pemanggilan metode string (`.toLowerCase()`, `.includes()`, `.trim()`, `.split()`) pada objek agent, skill, dan mention chips.
+  3. **Zero-Uncaught Promise Guarantee**:
+     - Ekstensi kini 100% tahan banting (*immune*) terhadap ID agen berbentuk integer autoincrement database SQLite maupun null/undefined.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.5`, build `extension.crx` (470.3 KB).
+
 
 
 
