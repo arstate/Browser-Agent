@@ -3658,6 +3658,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - 17/17 Unit Tests lulus 100% (Zero Bug).
      - Bump manifest to `v2.147.0`, build `extension.crx` (468.4 KB).
 
+---
+
+### 🚀 Iterasi 355: High-Contrast @Mention Badge in User Message Bubbles (v2.147.1)
+- **Root Cause Problem**:
+  - Pada gelembung pesan pengguna berlatar belakang Bento Lime terang (`#CEF128`), badge `@mention` memiliki teks berwarna lime (`#CEF128`) dan latar semi-transparan lime (`rgba(206, 241, 40, 0.12)`).
+  - Hal ini menyebabkan teks mention agent (seperti `@ Bangga Surabaya Art Director & Content Designer`) menjadi tidak terlihat (*invisible/low contrast*).
+- **Solusi & Peningkatan UI**:
+  - Menambahkan aturan CSS spesifik `.message.user .chat-mention-badge` dan `.message.user .message-content .chat-mention-badge`:
+    - Background kapsul hitam arang pekat (`background: #0E0E11 !important;`).
+    - Teks nama agen putih bersih (`color: #FFFFFF !important; font-weight: 700;`).
+    - Simbol `@` berwarna Bento Lime kontras tajam (`color: var(--accent-lime) !important; font-weight: 900;`).
+    - Border tipis dan drop shadow halus (`box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35); border-radius: 8px;`).
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.1`, build `extension.crx` (468.7 KB).
+
 
 
 

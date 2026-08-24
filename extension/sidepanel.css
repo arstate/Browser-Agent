@@ -4143,22 +4143,44 @@ body.stickman-active .chat-messages {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  background: #0F172A;
-  color: #D9F92F;
+  background: rgba(206, 241, 40, 0.15);
+  color: var(--accent-lime);
   font-weight: 700;
   font-size: 0.9em;
-  padding: 1px 7px 2px;
+  padding: 1px 8px 2px;
   border-radius: 6px;
-  border: 1px solid rgba(217, 249, 47, 0.35);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  margin: 0 3px 0 1px;
+  border: 1px solid rgba(206, 241, 40, 0.35);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  margin: 0 4px 0 1px;
   vertical-align: baseline;
 }
 
 .chat-mention-badge .mention-at {
-  color: #D9F92F;
+  color: var(--accent-lime);
   font-weight: 800;
-  opacity: 0.9;
+  opacity: 0.95;
+}
+
+/* Specific High-Contrast Mention Badge on User Bubble (Lime Background) */
+.message.user .chat-mention-badge,
+.message.user .message-content .chat-mention-badge {
+  background: #0E0E11 !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+  font-weight: 700 !important;
+  padding: 2px 8px 3px !important;
+  border-radius: 8px !important;
+  margin-right: 6px !important;
+  letter-spacing: -0.1px !important;
+}
+
+.message.user .chat-mention-badge .mention-at,
+.message.user .message-content .chat-mention-badge .mention-at {
+  color: var(--accent-lime) !important;
+  font-weight: 900 !important;
+  opacity: 1 !important;
+  margin-right: 1px !important;
 }
 
 /* Attachment Previews in Input Bar */
