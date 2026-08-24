@@ -3904,6 +3904,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.13`, build `extension.crx` (471.9 KB).
 
+---
+
+### 🚀 Iterasi 368: Clean Experience Ledger Cards (Removing Redundant Detail Button) (v2.147.14)
+- **Kebutuhan Pengguna**:
+  - Menghapus tombol `[Detail Pengalaman]` yang tidak diperlukan pada kartu tab Experience Ledger agar tampilan footer kartu menjadi lebih clean, minimalis, dan elegan.
+- **Implementasi & Peningkatan UI**:
+  1. **Eliminasi Tombol Redundant**:
+     - Menghapus tombol `<button class="brain-card-action-btn btn-view-brain-detail">` dari kartu Experience Ledger karena teks terdistilasi sudah disajikan lengkap dan dapat di-scroll langsung di dalam kartu.
+  2. **Clean Minimalist Footer**:
+     - Mengganti footer Experience Ledger dengan baris alasan/timestamp minimalis di sebelah kiri dan ID kapsul monospace di sebelah kanan.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.14`, build `extension.crx` (471.9 KB).
+
 
 
 
