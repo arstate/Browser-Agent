@@ -33,3 +33,51 @@ Dokumen ini mendefinisikan standar visual **Clean, Elegant, Rounded Bento UI** b
   - Emerald Green (`rgba(34, 197, 94, 0.1)` / `#86efac`) untuk solusi permanen pada kartu Anti-Pattern.
   - Red Rose (`rgba(239, 68, 68, 0.15)` / `#f87171`) untuk peringatan kesalahan masa lalu pada kartu Anti-Pattern.
   - Quick-access drawer button di header Side Panel dengan counter badge real-time (`#badge-brain-total-count`).
+
+---
+
+## 🍏 2. macOS-Style Full Rounded Glasses UI Specification
+
+Standar visual navigasi dan kontrol antarmuka berbasis **Apple macOS (Big Sur / Sonoma / Sequoia)** dengan estetika *liquid frosted glass* dan bentuk kapsul bulat penuh (*full rounded capsule*):
+
+### A. Full Rounded Capsule Geometry (`border-radius: 9999px`)
+- **Pill Shape Standard**: Seluruh tombol navigasi sidebar (`.sidebar-nav-item`, `.sidebar-tab-btn`), chip mention (`.mention-chip`), dan header selectors (`.header-pill-btn`) wajib menggunakan `border-radius: 9999px !important`.
+- **Slim Minimalist Height**:
+  - Tinggi tombol navigasi: `height: 34px; min-height: 34px;`
+  - Padding internal: `padding: 0 12px;`
+  - Tipografi: `font-size: 12.5px; font-weight: 500; letter-spacing: -0.1px;`
+  - Jarak antar ikon & teks: `gap: 9px;` hingga `gap: 10px;`
+
+### B. Liquid Frosted Glass Translucency & States
+1. **Active State (`.active`)**:
+   - Background: `linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%) !important`
+   - Border Stroke: `1px solid rgba(255, 255, 255, 0.15) !important`
+   - Inner Highlight & Shadow: `box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 2px 10px rgba(0, 0, 0, 0.3) !important`
+   - Blur Filter: `backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);`
+   - Text & Icon: `color: #FFFFFF !important; font-weight: 600;`
+   - Icon Glow: `color: var(--accent-lime); filter: drop-shadow(0 0 6px rgba(206, 241, 40, 0.45));`
+2. **Hover State (`:hover:not(.active)`)**:
+   - Background: `rgba(255, 255, 255, 0.05) !important`
+   - Border Stroke: `1px solid rgba(255, 255, 255, 0.08) !important`
+   - Text & Icon: `color: #F8FAFC !important;`
+   - Shadow: `box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);`
+3. **Idle / Inactive State**:
+   - Background: `transparent;`
+   - Border Stroke: `1px solid transparent;`
+   - Text & Icon: `color: #94A3B8;` (Icon: `#64748B`)
+
+### C. Collapsed Sidebar Centering Architecture (58px Mini Dock)
+- **Container Alignment**: Container `.sidebar-nav` menggunakan `align-items: center; width: 100%; padding: 10px 0 24px;`.
+- **Perfect Circular Buttons**: Dalam posisi tertutup/sembunyi (*collapsed*), tombol navigasi menyusut menjadi lingkaran simetris `36px x 36px` (`border-radius: 50% !important; margin: 0 auto; justify-content: center; padding: 0 !important;`).
+- **Brand Logo Centering**: Header `.sidebar-top` menggunakan `padding: 0 15px` (`(58px - 28px) / 2 = 15px`), sehingga logo "B" dan seluruh ikon di bawahnya tersusun 100% lurus simetris di tengah satu sumbu vertikal.
+- **Smooth Adaptive Morph**: Saat di-hover (`width: 240px`), tombol melebar halus menjadi kapsul panjang dengan transisi `cubic-bezier(0.16, 1, 0.3, 1)`.
+
+### D. Translucent Glass Capsule Badges (`.tab-btn-badge`)
+- **Struktur**: `height: 18px; padding: 0 7px; border-radius: 9999px !important; font-size: 10.5px; font-weight: 700;`
+- **Default Inactive**: `background: rgba(255, 255, 255, 0.07); color: #94A3B8; border: 1px solid rgba(255, 255, 255, 0.09);`
+- **When Active**: `background: rgba(255, 255, 255, 0.16); color: #FFFFFF; border-color: rgba(255, 255, 255, 0.22);`
+- **Persistent Brain Badge**: `background: rgba(59, 130, 246, 0.18) !important; color: #60A5FA !important; border: 1px solid rgba(59, 130, 246, 0.35) !important;`
+
+### E. Section Headers & Dividers
+- **Section Headers (`.sidebar-group-header`)**: `font-size: 9.5px; font-weight: 800; color: rgba(148, 163, 184, 0.5); letter-spacing: 1px; padding: 8px 12px 2px; text-transform: uppercase;`
+- **Dividers (`.sidebar-divider`)**: `height: 1px; background: rgba(255, 255, 255, 0.07); margin: 6px 8px; border-radius: 1px;`

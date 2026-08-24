@@ -3793,6 +3793,7 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Pengujian & Rilis**:
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.7`, build `extension.crx` (470.8 KB).
+  - Dokumentasi spesifikasi lengkap Mac-Style Full Rounded Glasses UI resmi dicatat ke [`design.md`](file:///home/arya/browser-agent/design.md).
 
 
 
