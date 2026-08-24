@@ -71,6 +71,13 @@ async function loadPersistentMemoryFromHost() {
   }
 }
 
+function notifyPersistentBrainUpdated() {
+  try {
+    chrome.storage.local.set({ persistent_brain_last_updated: Date.now() }).catch(() => {});
+    chrome.runtime.sendMessage({ type: "PERSISTENT_BRAIN_UPDATED", timestamp: Date.now() }).catch(() => {});
+  } catch (e) {}
+}
+
 // Maintain long-lived port connection to background for visibility synchronization across tabs
 let sidepanelBackgroundPort = null;
 try {
@@ -502,9 +509,14 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
   // 5. Inject Autonomous Brain & Persistent Memory Directives (Hermes-Surpassing Intelligence)
   prompt += `\n\n=== 🧠 HERMES-SURPASSING PERSISTENT MEMORY & CONTINUOUS SELF-EVOLUTION ENGINE ===\n`;
   prompt += `Anda memiliki otak otonom tingkat tinggi (Autonomous Brain) dengan persistent memory permanen yang terus hidup dan belajar secara otonom.\n`;
-  prompt += `MANDAT OTONOM MUTLAK:\n`;
-  prompt += `- Selama percakapan dengan pengguna berlangsung secara real-time, Anda WAJIB secara aktif mengamati kebutuhan baru, mengekstrak fakta personal pengguna (\`manage_personal_memory\`), mendeteksi hambatan untuk dicatat sebagai pelajaran permanen (\`record_anti_pattern\`), menyempurnakan skill SOP Anda sendiri (\`update_autonomous_skill\`), menciptakan skill baru (\`create_autonomous_skill\`), dan merekrut multi-agent spesialis karyawan (\`create_autonomous_agent\`) yang Anda butuhkan untuk menyelesaikan pekerjaan dengan akurasi 100% tanpa kesalahan di masa depan.\n`;
-  prompt += `- DILARANG membiarkan agent tanpa skill spesifik: setiap agent spesialis WAJIB memiliki skill SOP yang terhubung langsung.\n`;
+  prompt += `MANDAT OTONOM MUTLAK & REFLEKS BELAJAR SEKETIKA (ZERO-PROMPT CONTINUOUS LEARNING):\n`;
+  prompt += `1. 🧠 INSTANT AUTO-MEMORY RECORDING (BELAJAR SEKETIKA TANPA PERLU DISURUH):\n`;
+  prompt += `   - Setiap kali pengguna menyebutkan fakta tentang dirinya (contoh: email seperti 'aryansyah1509@gmail.com', nama/panggilan, nomor WA/telepon, preferensi alur kerja, kredensial, aturan bisnis, dll.), Anda WAJIB LANGSUNG memanggil tool \`manage_personal_memory(action='save', category='profile'|'preference'|'rule', content=..., reason=...)\` pada turn yang sama SECARA OTONOM!\n`;
+  prompt += `   - DILARANG MENUNGGU pengguna menyuruh "tolong ingat ini"! Sistem otak otonom Anda merefleksikan dan menyimpan setiap informasi berharga secara instan.\n`;
+  prompt += `2. 🛡️ REFLEKS MENCATAT ANTI-PATTERN & DISTILASI PENGALAMAN:\n`;
+  prompt += `   - Jika terjadi hambatan atau koreksi pengguna, panggil \`record_anti_pattern\` agar tidak pernah diulangi.\n`;
+  prompt += `   - Sempurnakan skill sendiri (\`update_autonomous_skill\`), buat skill baru (\`create_autonomous_skill\`), atau spawn karyawan baru (\`create_autonomous_agent\`) saat dibutuhkan.\n`;
+  prompt += `   - DILARANG membiarkan agent tanpa skill spesifik: setiap agent spesialis WAJIB memiliki skill SOP yang terhubung langsung.\n`;
 
   // Inject User Profile & Rules
   const mems = cachedPersistentMemory.user_memories || [];
@@ -1547,15 +1559,22 @@ function connectNativeHost() {
       }
 
       // 1. Handle RPC Callbacks
-      if (msg && msg.id && nativeRpcCallbacks.has(msg.id)) {
-        const { resolve, reject } = nativeRpcCallbacks.get(msg.id);
-        nativeRpcCallbacks.delete(msg.id);
-        if (msg.status === 'ok') {
-          resolve(msg);
-        } else {
-          reject(new Error(msg.error || 'Native RPC failed'));
+      if (msg && msg.id !== undefined) {
+        const callbackEntry = nativeRpcCallbacks.get(msg.id) || 
+                              nativeRpcCallbacks.get(String(msg.id)) || 
+                              nativeRpcCallbacks.get(Number(msg.id));
+        if (callbackEntry) {
+          const { resolve, reject } = callbackEntry;
+          nativeRpcCallbacks.delete(msg.id);
+          nativeRpcCallbacks.delete(String(msg.id));
+          nativeRpcCallbacks.delete(Number(msg.id));
+          if (msg.status === 'ok') {
+            resolve(msg);
+          } else {
+            reject(new Error(msg.error || 'Native RPC failed'));
+          }
+          return;
         }
-        return;
       }
 
       // 2. Handle Terminal Data
@@ -1670,30 +1689,43 @@ function isNormalUrl(url) {
   return url && (url.startsWith('http://') || url.startsWith('https://'));
 }
 
+let isDebuggerAttached = false;
+
 async function attachDebugger(tabId) {
+  if (!tabId) return;
   try {
     const tab = await chrome.tabs.get(tabId).catch(() => null);
     if (!tab || !isNormalUrl(tab.url)) {
       return;
     }
     await chrome.debugger.attach({ tabId }, "1.3");
+    isDebuggerAttached = true;
+    await chrome.debugger.sendCommand({ tabId }, "Runtime.enable").catch(() => {});
+    await chrome.debugger.sendCommand({ tabId }, "DOM.enable").catch(() => {});
+    await chrome.debugger.sendCommand({ tabId }, "Accessibility.enable").catch(() => {});
   } catch (err) {
-    if (!err.message.includes("already attached") && !err.message.includes("Cannot access")) {
+    if (err && err.message && err.message.includes("already attached")) {
+      isDebuggerAttached = true;
+    } else {
       console.warn("Debugger attach notice:", err);
     }
   }
+}
+
+async function detachDebugger(tabId) {
+  const targetId = tabId || activeTabId;
+  if (!targetId) return;
   try {
-    await chrome.debugger.sendCommand({ tabId }, "Runtime.enable");
-    await chrome.debugger.sendCommand({ tabId }, "DOM.enable");
-    await chrome.debugger.sendCommand({ tabId }, "Accessibility.enable");
+    await chrome.debugger.detach({ tabId: targetId });
   } catch (err) {}
+  isDebuggerAttached = false;
 }
 
 async function selectTab(tabId, forceFocus = false) {
   if (!tabId) return;
   if (activeTabId && activeTabId !== tabId) {
     try {
-      await chrome.debugger.detach({ tabId: activeTabId });
+      await detachDebugger(activeTabId);
     } catch (err) {}
   }
   activeTabId = tabId;
@@ -1706,10 +1738,6 @@ async function selectTab(tabId, forceFocus = false) {
       if (tab && tab.windowId) {
         await chrome.windows.update(tab.windowId, { focused: true }).catch(() => {});
       }
-    }
-    const tab = await chrome.tabs.get(tabId);
-    if (tab && isNormalUrl(tab.url)) {
-      await attachDebugger(tabId);
     }
     updateMcpStatus();
   } catch (err) {
@@ -1838,6 +1866,9 @@ async function executeTool(name, args, assistantBubble = null) {
           await chrome.windows.update(tab.windowId, { focused: true }).catch(() => {});
         }
       } catch (err) {}
+    }
+    if (activeTabId && name !== "browser_navigate") {
+      await attachDebugger(activeTabId);
     }
   }
 
@@ -2743,12 +2774,14 @@ async function executeTool(name, args, assistantBubble = null) {
             source: "autonomous_ai"
           }
         });
+        notifyPersistentBrainUpdated();
         return { success: true, message: "Personal memory recorded successfully in SQLite and synced to personal_facts.md", memory_id: res.id, content: res.content };
       } else if (action === "delete") {
         const res = await sendNativeRpc("db_delete_persistent_item", {
           item_type: "memory",
           item_id: args.memory_id
         });
+        notifyPersistentBrainUpdated();
         return { success: true, message: "Personal memory deleted", deleted_id: res.deleted_id };
       } else if (action === "list") {
         const res = await sendNativeRpc("db_get_persistent_memory", { search: args.query || "" });
@@ -2768,6 +2801,7 @@ async function executeTool(name, args, assistantBubble = null) {
           tags: args.tags || ""
         }
       });
+      notifyPersistentBrainUpdated();
       return { success: true, message: "Session experience distilled and stored in SQLite & experience ledger file", id: res.id, title: res.title, file: res.file };
     }
 
@@ -2781,6 +2815,7 @@ async function executeTool(name, args, assistantBubble = null) {
           prevention_rule: args.prevention_rule
         }
       });
+      notifyPersistentBrainUpdated();
       return { success: true, message: "Anti-pattern recorded permanently. AI will not repeat this error.", id: res.id, domain: res.target_domain };
     }
 
@@ -2794,6 +2829,7 @@ async function executeTool(name, args, assistantBubble = null) {
           source: "autonomous_ai"
         }
       });
+      notifyPersistentBrainUpdated();
       return { success: true, message: "Autonomous skill created and ready for immediate execution", id: res.id, name: res.name, version: res.version };
     }
 
@@ -2809,6 +2845,7 @@ async function executeTool(name, args, assistantBubble = null) {
           source: "autonomous_ai"
         }
       });
+      notifyPersistentBrainUpdated();
       return { success: true, message: "Autonomous skill updated and refactored", id: res.id, name: res.name, version: res.version };
     }
 
@@ -2823,6 +2860,7 @@ async function executeTool(name, args, assistantBubble = null) {
           source: "autonomous_ai"
         }
       });
+      notifyPersistentBrainUpdated();
       return { success: true, message: "Autonomous specialist agent spawned and registered in agent vault", id: res.id, name: res.name };
     }
 
@@ -2837,6 +2875,7 @@ async function executeTool(name, args, assistantBubble = null) {
           change_summary: args.change_summary || "Skill improvement by AI agent"
         }
       });
+      notifyPersistentBrainUpdated();
       return { success: true, message: "Manual skill updated with rollback backup created", id: args.skill_id, res };
     }
 
@@ -2852,6 +2891,7 @@ async function executeTool(name, args, assistantBubble = null) {
           change_summary: args.change_summary || "Agent persona improvement by AI agent"
         }
       });
+      notifyPersistentBrainUpdated();
       return { success: true, message: "Manual agent updated with rollback backup created", id: args.agent_id, res };
     }
 
@@ -2861,6 +2901,7 @@ async function executeTool(name, args, assistantBubble = null) {
         item_id: args.item_id,
         history_id: args.history_id
       });
+      notifyPersistentBrainUpdated();
       return { success: res.status === "ok", message: res.message || res.error, res };
     }
 
@@ -3839,6 +3880,7 @@ Tugas Anda:
     updateSendButtonState(false);
     notifyActiveTabExecutionState(false);
     saveCurrentSessionToDB();
+    await detachDebugger(activeTabId);
     await focusOwnAgentTab();
     scrollToBottom();
   }
@@ -4063,6 +4105,61 @@ function initSwitchTabDropdown() {
         setAutoSwitchTab(res.browser_agent_auto_switch_tab);
       } else {
         setAutoSwitchTab(true);
+      }
+    });
+  } catch (e) {}
+}
+
+let stickmanAnimationEnabled = true;
+
+function setStickmanAnimation(enabled) {
+  stickmanAnimationEnabled = (enabled === true || enabled === 'on');
+  const label = document.getElementById('stickman-mode-label');
+  const trigger = document.getElementById('btn-stickman-mode-trigger');
+
+  if (label) {
+    label.textContent = stickmanAnimationEnabled ? 'Stickman: ON' : 'Stickman: OFF';
+  }
+
+  if (trigger) {
+    trigger.classList.toggle('is-on', stickmanAnimationEnabled);
+    trigger.classList.toggle('is-off', !stickmanAnimationEnabled);
+    trigger.title = stickmanAnimationEnabled
+      ? 'Animasi Stickman: ON (Klik untuk mematikan ke OFF)'
+      : 'Animasi Stickman: OFF (Klik untuk menyalakan ke ON)';
+  }
+
+  if (!stickmanAnimationEnabled && typeof window.stopStickmanSwarmAnimation === 'function') {
+    window.stopStickmanSwarmAnimation();
+  }
+
+  try {
+    chrome.storage.local.set({ setting_stickman_animation: stickmanAnimationEnabled });
+    chrome.storage.local.get(['browser_agent_config'], (cfgRes) => {
+      if (cfgRes && cfgRes.browser_agent_config) {
+        cfgRes.browser_agent_config.stickmanAnimation = stickmanAnimationEnabled;
+        chrome.storage.local.set({ browser_agent_config: cfgRes.browser_agent_config });
+      }
+    });
+  } catch (e) {}
+}
+
+function initStickmanToggle() {
+  const trigger = document.getElementById('btn-stickman-mode-trigger');
+
+  trigger?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setStickmanAnimation(!stickmanAnimationEnabled);
+  });
+
+  try {
+    chrome.storage.local.get(['setting_stickman_animation', 'browser_agent_config'], (res) => {
+      if (res && res.setting_stickman_animation !== undefined) {
+        setStickmanAnimation(res.setting_stickman_animation);
+      } else if (res && res.browser_agent_config && res.browser_agent_config.stickmanAnimation !== undefined) {
+        setStickmanAnimation(res.browser_agent_config.stickmanAnimation);
+      } else {
+        setStickmanAnimation(true);
       }
     });
   } catch (e) {}
@@ -5502,7 +5599,7 @@ function updateSendButtonState(loading) {
   if (loading) {
     btnSend.classList.add('loading');
     btnSend.title = "Batalkan eksekusi (Cancel)";
-    if (!window.location.pathname.includes('sidepanel.html') && typeof window.startStickmanSwarmAnimation === 'function') {
+    if (!window.location.pathname.includes('sidepanel.html') && stickmanAnimationEnabled && typeof window.startStickmanSwarmAnimation === 'function') {
       window.startStickmanSwarmAnimation();
     }
   } else {
@@ -6946,6 +7043,7 @@ async function saveCurrentSessionToDB() {
       await sendNativeRpc("db_save_session", { session: sessionData });
       // Non-blocking auto-refresh of persistent memory
       loadPersistentMemoryFromHost();
+      notifyPersistentBrainUpdated();
     }
   } catch (e) {
     console.warn("SQLite save notice (cached locally):", e);
@@ -7912,6 +8010,91 @@ window.addEventListener('drop', (e) => {
   }
 });
 
+// Autonomous Brain Continuous Learning Reflex: Silently extract user profile, email, rules, and facts
+async function autoLearnReflexFromUserText(text) {
+  if (!text || typeof text !== 'string' || text.length < 3) return;
+  const clean = text.trim();
+
+  try {
+    // 1. Email Detection
+    let foundEmails = clean.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b/g) || [];
+    const emailIntentMatch = clean.match(/(?:email|mail)\s+(?:saya\s+)?(?:pribadi\s+)?([a-zA-Z0-9_.-]{4,30})/i);
+    if (emailIntentMatch) {
+      const rawVal = emailIntentMatch[1].trim();
+      if (!rawVal.includes('@') && !['pribadi', 'bro', 'aja', 'ya', 'dong'].includes(rawVal.toLowerCase())) {
+        foundEmails.push(`${rawVal}@gmail.com`);
+      }
+    }
+
+    for (const em of new Set(foundEmails)) {
+      const cleanEm = em.trim().replace(/\.$/, '');
+      const alreadySaved = (cachedPersistentMemory.user_memories || []).some(m => (m.content || '').toLowerCase().includes(cleanEm.toLowerCase()));
+      if (!alreadySaved) {
+        console.log(`[Auto-Reflex] Learning new email profile: ${cleanEm}`);
+        await sendNativeRpc("db_save_personal_memory", {
+          memory: {
+            category: "profile",
+            content: `Email pribadi pengguna: ${cleanEm}`,
+            reason: "Otomatis dipelajari dari pesan pengguna saat berinteraksi",
+            confidence: 1.0,
+            source: "autonomous_ai"
+          }
+        });
+        await loadPersistentMemoryFromHost();
+        notifyPersistentBrainUpdated();
+      }
+    }
+
+    // 2. Name / Identity Detection
+    const nameMatch = clean.match(/(?:nama\s+saya|panggil\s+saya(?:\s+aja)?)\s*[:=]?\s*([A-Za-z0-9\s]{2,20})/i);
+    if (nameMatch) {
+      const nameVal = nameMatch[1].trim();
+      if (!['bro', 'kak', 'admin', 'ai', 'kamu', 'anda'].includes(nameVal.toLowerCase())) {
+        const alreadySaved = (cachedPersistentMemory.user_memories || []).some(m => (m.content || '').toLowerCase().includes(nameVal.toLowerCase()));
+        if (!alreadySaved) {
+          console.log(`[Auto-Reflex] Learning user name: ${nameVal}`);
+          await sendNativeRpc("db_save_personal_memory", {
+            memory: {
+              category: "profile",
+              content: `Nama/panggilan pengguna adalah ${nameVal}.`,
+              reason: "Otomatis dipelajari saat pengguna memperkenalkan nama",
+              confidence: 1.0,
+              source: "autonomous_ai"
+            }
+          });
+          await loadPersistentMemoryFromHost();
+          notifyPersistentBrainUpdated();
+        }
+      }
+    }
+
+    // 3. User Rule & Instruction Detection
+    const ruleMatch = clean.match(/(?:selalu\s+gunakan|wajib\s+selalu|aturan(?:\s+baru)?\s*:|jangan\s+pernah)\s+(.+)/i);
+    if (ruleMatch) {
+      const ruleVal = ruleMatch[1].trim();
+      if (ruleVal.length > 10) {
+        const alreadySaved = (cachedPersistentMemory.user_memories || []).some(m => (m.content || '').toLowerCase().includes(ruleVal.substring(0, 20).toLowerCase()));
+        if (!alreadySaved) {
+          console.log(`[Auto-Reflex] Learning user rule: ${ruleVal}`);
+          await sendNativeRpc("db_save_personal_memory", {
+            memory: {
+              category: "rule",
+              content: `Aturan pengguna: ${ruleVal}`,
+              reason: "Otomatis dicatat dari instruksi pengguna",
+              confidence: 1.0,
+              source: "autonomous_ai"
+            }
+          });
+          await loadPersistentMemoryFromHost();
+          notifyPersistentBrainUpdated();
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[Auto-Reflex] Error in autoLearnReflexFromUserText:", err);
+  }
+}
+
 // Send message (Prompt + Attachments)
 function handleSendMessage() {
   if (isExecuting) {
@@ -7921,6 +8104,9 @@ function handleSendMessage() {
 
   const text = chatInput.value.trim();
   if (!text && pendingAttachments.length === 0 && selectedMentionAgents.length === 0) return;
+
+  // Trigger continuous autonomous self-learning reflex in background
+  autoLearnReflexFromUserText(text);
 
   // Web Search mode: Instant Search / Open URL directly without starting AI chat session
   if (currentChatMode === 'websearch') {
@@ -8356,6 +8542,7 @@ try {
   initThinkingLevelDropdown();
   initExecutionModeDropdown();
   initSwitchTabDropdown();
+  initStickmanToggle();
   initSearchEngineDropdown();
 } catch (e) {}
 

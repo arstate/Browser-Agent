@@ -1,11 +1,17 @@
-// Enable opening the side panel when clicking the extension icon
-(async () => {
+// Enable opening the side panel when clicking the extension icon safely
+const enableSidePanelOnAction = async () => {
   try {
-    await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+    if (chrome.sidePanel && typeof chrome.sidePanel.setPanelBehavior === "function") {
+      await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+    }
   } catch (error) {
-    console.error(error);
+    // Silently handle race condition during SW startup/reload
   }
-})();
+};
+
+chrome.runtime.onInstalled.addListener(enableSidePanelOnAction);
+chrome.runtime.onStartup.addListener(enableSidePanelOnAction);
+enableSidePanelOnAction();
 
 // Track Side Panel open state across tabs
 let isSidePanelOpen = false;

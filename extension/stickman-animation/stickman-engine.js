@@ -94,6 +94,10 @@
 
   window.startStickmanSwarmAnimation = () => {
     if (window.location.pathname.includes('sidepanel.html')) return;
+    if (window.stickmanAnimationEnabled === false || (typeof stickmanAnimationEnabled !== 'undefined' && !stickmanAnimationEnabled)) {
+      window.stopStickmanSwarmAnimation(true);
+      return;
+    }
     setupElements();
     if (!wrapper || !canvas) return;
     
@@ -102,10 +106,11 @@
       hideTimeout = null;
     }
 
+    wrapper.classList.remove('is-disabled');
     wrapper.style.display = 'block';
-    // Force layout reflow before triggering smooth CSS expansion transition
     void wrapper.offsetWidth;
     wrapper.classList.add('is-active');
+    document.body.classList.remove('stickman-disabled');
     document.body.classList.add('stickman-active');
     
     resize();
@@ -123,14 +128,20 @@
     }
   };
 
-  window.stopStickmanSwarmAnimation = () => {
-    if (!wrapper) return;
-    
+  window.stopStickmanSwarmAnimation = (immediate = false) => {
+    setupElements();
     document.body.classList.remove('stickman-active');
-    wrapper.classList.remove('is-active');
     
-    if (hideTimeout) clearTimeout(hideTimeout);
-    hideTimeout = setTimeout(() => {
+    if (wrapper) {
+      wrapper.classList.remove('is-active');
+    }
+
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
+    }
+
+    const finalize = () => {
       isRunning = false;
       if (animFrameId) {
         cancelAnimationFrame(animFrameId);
@@ -138,12 +149,48 @@
       }
       if (wrapper && !wrapper.classList.contains('is-active')) {
         wrapper.style.display = 'none';
+        wrapper.classList.add('is-disabled');
       }
       if (ctx && canvas && !isRunning) {
         ctx.clearRect(0, 0, width, height);
       }
-    }, 400); // 400ms matches smooth morph transition
+    };
+
+    if (immediate || window.stickmanAnimationEnabled === false || (typeof stickmanAnimationEnabled !== 'undefined' && !stickmanAnimationEnabled)) {
+      document.body.classList.add('stickman-disabled');
+      finalize();
+    } else {
+      hideTimeout = setTimeout(finalize, 350);
+    }
   };
+
+  window.disableStickmanSwarmAnimation = () => {
+    window.stickmanAnimationEnabled = false;
+    window.stopStickmanSwarmAnimation(true);
+  };
+
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(['setting_stickman_animation', 'browser_agent_config'], (res) => {
+        if (res?.setting_stickman_animation === false || res?.browser_agent_config?.stickmanAnimation === false) {
+          window.stickmanAnimationEnabled = false;
+          window.stopStickmanSwarmAnimation(true);
+        }
+      });
+
+      chrome.storage.onChanged?.addListener((changes, area) => {
+        if (area === 'local') {
+          if (changes.setting_stickman_animation !== undefined) {
+            window.stickmanAnimationEnabled = changes.setting_stickman_animation.newValue !== false;
+            if (!window.stickmanAnimationEnabled) window.stopStickmanSwarmAnimation(true);
+          } else if (changes.browser_agent_config?.newValue?.stickmanAnimation !== undefined) {
+            window.stickmanAnimationEnabled = changes.browser_agent_config.newValue.stickmanAnimation !== false;
+            if (!window.stickmanAnimationEnabled) window.stopStickmanSwarmAnimation(true);
+          }
+        }
+      });
+    }
+  } catch(e) {}
 
   window.addEventListener('resize', () => {
     if (isRunning) {

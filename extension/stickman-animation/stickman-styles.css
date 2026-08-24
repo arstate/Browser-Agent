@@ -44,6 +44,19 @@
   pointer-events: auto;
 }
 
+.ai-stickman-swarm-container.is-disabled,
+body:not(.stickman-active) .ai-stickman-swarm-container,
+body.stickman-disabled .ai-stickman-swarm-container {
+  display: none !important;
+  max-height: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
 .ai-stickman-stage {
   position: relative;
   width: 100%;

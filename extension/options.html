@@ -93,7 +93,7 @@
                 <path d="M9 21h6"/>
               </svg>
             </div>
-            <span class="tab-btn-label">🧠 Persistent Brain</span>
+            <span class="tab-btn-label">Persistent Brain</span>
             <span class="tab-btn-badge" id="badge-count-brain" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4);">0</span>
           </button>
         </nav>
@@ -515,6 +515,36 @@
               </div>
             </div>
 
+            <!-- 🎨 Tampilan & Animasi UI -->
+            <div class="bento-card" id="card-ui-preferences">
+              <div class="card-header">
+                <div class="header-icon-box" style="background: rgba(206, 241, 40, 0.1); color: var(--accent-lime);">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                    <path d="M2 12h20"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2>Tampilan &amp; Animasi UI</h2>
+                  <p>Pengaturan visual antarmuka dan animasi stickman swarm di chat</p>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-card); border-radius: 14px;">
+                  <div>
+                    <strong style="display: block; font-size: 13.5px; color: #FFFFFF; margin-bottom: 3px;">🏃 Animasi Pekerja Stickman (Swarm)</strong>
+                    <span style="font-size: 12px; color: var(--text-muted);">Tampilkan animasi stickman server di atas toolbar saat AI sedang berpikir atau mengeksekusi tools</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="setting-stickman-animation" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <!-- Local PC Native Bridge -->
             <div class="bento-card" id="card-pc-bridge">
               <div class="card-header">
@@ -789,21 +819,21 @@
       <!-- TAB 5: Persistent Brain & Self-Improving Vault (Hermes-Surpassing) -->
       <div class="options-view" id="tab-view-persistent-brain" style="display: none;">
         <!-- Hero Header -->
-        <div class="bento-card bento-hero-provider-card" style="margin-bottom: 20px; border-color: rgba(59, 130, 246, 0.25);">
+        <div class="bento-card bento-hero-provider-card brain-hero-card">
           <div class="hero-provider-top-row">
             <div class="hero-provider-brand">
-              <div class="hero-provider-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">
+              <div class="hero-provider-icon brain-hero-icon">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>
                   <path d="M9 21h6"/>
                 </svg>
               </div>
-              <div>
-                <h1 class="hero-provider-title" style="color: #60a5fa;">Persistent Memory &amp; Autonomous Brain</h1>
-                <p class="hero-provider-desc">Otak otonom mandiri yang terus belajar dari setiap percakapan, mengekstrak intisari pengalaman, mencegah kesalahan berulang (Anti-Patterns), dan melahirkan skill/agent baru.</p>
+              <div class="brain-hero-titles">
+                <h1 class="hero-provider-title brain-hero-title">Persistent Memory &amp; Autonomous Brain</h1>
+                <p class="hero-provider-desc brain-hero-desc">Otak otonom mandiri yang terus belajar dari percakapan dan mencegah kesalahan berulang.</p>
               </div>
             </div>
-            <div class="hero-provider-actions" style="display: flex; align-items: center;">
+            <div class="hero-provider-actions">
               <div class="brain-live-status-pill" title="100% Full Autonomous: Pembelajaran, distilasi Markdown, dan sinkronisasi disk berjalan otomatis tanpa perlu tombol manual.">
                 <span class="live-pulse-dot"></span>
                 <span>Autonomous Self-Learning: Active</span>
@@ -811,92 +841,85 @@
             </div>
           </div>
 
-          <!-- Quick Metrics Bento Grid -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 18px;">
-            <div class="brain-metric-tile">
-              <div class="brain-metric-label">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span>Facts &amp; Rules</span>
-              </div>
-              <div id="stat-brain-facts" class="brain-metric-value" style="color: #38bdf8;">0</div>
-            </div>
-            <div class="brain-metric-tile">
-              <div class="brain-metric-label">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                <span>Experience Ledger</span>
-              </div>
-              <div id="stat-brain-experiences" class="brain-metric-value" style="color: #a78bfa;">0</div>
-            </div>
-            <div class="brain-metric-tile">
-              <div class="brain-metric-label">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Anti-Patterns</span>
-              </div>
-              <div id="stat-brain-antipatterns" class="brain-metric-value" style="color: #f87171;">0</div>
-            </div>
-            <div class="brain-metric-tile">
-              <div class="brain-metric-label">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                <span>Autonomous Skills</span>
-              </div>
-              <div id="stat-brain-skills" class="brain-metric-value" style="color: #34d399;">0</div>
-            </div>
-            <div class="brain-metric-tile">
-              <div class="brain-metric-label">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                <span>Specialist Agents</span>
-              </div>
-              <div id="stat-brain-agents" class="brain-metric-value" style="color: #c084fc;">0</div>
-            </div>
-            <div class="brain-metric-tile">
-              <div class="brain-metric-label">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                <span>Training Corpus</span>
-              </div>
-              <div id="stat-brain-training" class="brain-metric-value" style="color: #fbbf24;">0</div>
-            </div>
+          <!-- Interactive Quick Metrics Bento Grid (Dual Purpose Stat & Tab Switchers) -->
+          <div class="brain-metrics-grid">
+            <button type="button" class="brain-metric-tile active" data-subtab="facts" id="brain-subtab-facts">
+              <span class="brain-metric-label">Facts &amp; Rules</span>
+              <span id="stat-brain-facts" class="brain-metric-value value-sky">0</span>
+            </button>
+            <button type="button" class="brain-metric-tile" data-subtab="experiences" id="brain-subtab-experiences">
+              <span class="brain-metric-label">Experience Ledger</span>
+              <span id="stat-brain-experiences" class="brain-metric-value value-purple">0</span>
+            </button>
+            <button type="button" class="brain-metric-tile" data-subtab="antipatterns" id="brain-subtab-antipatterns">
+              <span class="brain-metric-label">Anti-Patterns</span>
+              <span id="stat-brain-antipatterns" class="brain-metric-value value-rose">0</span>
+            </button>
+            <button type="button" class="brain-metric-tile" data-subtab="skills" id="brain-subtab-skills">
+              <span class="brain-metric-label">Autonomous Skills</span>
+              <span id="stat-brain-skills" class="brain-metric-value value-emerald">0</span>
+            </button>
+            <button type="button" class="brain-metric-tile" data-subtab="agents" id="brain-subtab-agents">
+              <span class="brain-metric-label">Specialist Agents</span>
+              <span id="stat-brain-agents" class="brain-metric-value value-indigo">0</span>
+            </button>
+            <button type="button" class="brain-metric-tile" data-subtab="training" id="brain-subtab-training">
+              <span class="brain-metric-label">Training Corpus</span>
+              <span id="stat-brain-training" class="brain-metric-value value-amber">0</span>
+            </button>
           </div>
         </div>
 
-        <!-- Brain Category Sub-Nav Pills -->
-        <div class="brain-subnav-container">
-          <button type="button" class="brain-subnav-btn active" data-subtab="facts" id="brain-subtab-facts">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span>User Profile &amp; Rules</span>
-          </button>
-          <button type="button" class="brain-subnav-btn" data-subtab="experiences" id="brain-subtab-experiences">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            <span>Experience Ledger</span>
-          </button>
-          <button type="button" class="brain-subnav-btn" data-subtab="antipatterns" id="brain-subtab-antipatterns">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>Anti-Patterns Vault</span>
-          </button>
-          <button type="button" class="brain-subnav-btn" data-subtab="skills" id="brain-subtab-skills">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span>Autonomous Skills (SOP)</span>
-          </button>
-          <button type="button" class="brain-subnav-btn" data-subtab="agents" id="brain-subtab-agents">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span>Specialist Agents &amp; Routing</span>
-          </button>
-          <button type="button" class="brain-subnav-btn" data-subtab="training" id="brain-subtab-training">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-            <span>Training Corpus (MD)</span>
-          </button>
-        </div>
-
-        <!-- Search Bar Brain -->
-        <div class="catalog-search-wrapper" style="margin-bottom: 20px;">
-          <div class="search-input-box">
-            <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="search-brain-input" class="catalog-search-input" placeholder="Cari dalam Persistent Memory &amp; Brain vault (nama, domain, kesalahan, fakta, skill)..." spellcheck="false">
+        <!-- Search Bar & View Mode Toggle (Grid Cards vs Obsidian Neural Graph) -->
+        <div class="brain-toolbar-row">
+          <div class="catalog-search-wrapper" style="flex: 1; margin-bottom: 0;">
+            <div class="search-input-box">
+              <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="search-brain-input" class="catalog-search-input" placeholder="Cari dalam Persistent Memory &amp; Brain vault (nama, domain, kesalahan, fakta, skill)..." spellcheck="false">
+            </div>
+          </div>
+          <div class="brain-view-switcher">
+            <button type="button" class="brain-view-mode-btn active" id="btn-view-mode-cards" data-mode="cards" title="Tampilan Kartu Grid">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span>Grid Cards</span>
+            </button>
+            <button type="button" class="brain-view-mode-btn" id="btn-view-mode-graph" data-mode="graph" title="Tampilan Obsidian Neural Graph View">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="6" cy="18" r="3"/><line x1="8.5" y1="7.5" x2="15.5" y2="16.5"/><line x1="8.5" y1="6" x2="15.5" y2="6"/><line x1="6" y1="8.5" x2="6" y2="15.5"/></svg>
+              <span>Neural Graph</span>
+            </button>
           </div>
         </div>
 
-        <!-- Cards Container -->
+        <!-- 1. Cards Container -->
         <div class="brain-cards-grid" id="brain-cards-grid">
           <!-- Rendered via JS -->
+        </div>
+
+        <!-- 2. Obsidian Neural Graph Canvas Container -->
+        <div id="brain-graph-view" class="brain-graph-container" style="display: none;">
+          <div class="brain-graph-toolbar">
+            <div class="brain-graph-legend">
+              <span class="legend-item active" data-filter="all"><span class="legend-dot" style="background: #3B82F6;"></span> Semua Otak</span>
+              <span class="legend-item" data-filter="agent"><span class="legend-dot" style="background: #C084FC;"></span> Multi-Agent</span>
+              <span class="legend-item" data-filter="skill"><span class="legend-dot" style="background: #34D399;"></span> Skills &amp; Tools</span>
+              <span class="legend-item" data-filter="memory"><span class="legend-dot" style="background: #38BDF8;"></span> Memory &amp; Rules</span>
+              <span class="legend-item" data-filter="experience"><span class="legend-dot" style="background: #A78BFA;"></span> Experience</span>
+              <span class="legend-item" data-filter="antipattern"><span class="legend-dot" style="background: #FB7185;"></span> Anti-Patterns</span>
+              <span class="legend-item" data-filter="training"><span class="legend-dot" style="background: #FBBF24;"></span> Training</span>
+              <span class="legend-item" data-filter="model"><span class="legend-dot" style="background: #818CF8;"></span> AI Models</span>
+            </div>
+            <div class="brain-graph-actions">
+              <button type="button" class="graph-btn graph-btn-pill" id="btn-graph-labels" title="Toggle Tampilkan Label (Smart / Semua)">🏷️ Label: Smart</button>
+              <button type="button" class="graph-btn" id="btn-graph-zoom-in" title="Perbesar (Zoom In)">+</button>
+              <button type="button" class="graph-btn" id="btn-graph-zoom-out" title="Perkecil (Zoom Out)">−</button>
+              <button type="button" class="graph-btn" id="btn-graph-reset" title="Pusatkan Tampilan (Reset View)">⟲</button>
+              <button type="button" class="graph-btn" id="btn-graph-freeze" title="Bekukan / Jalankan Fisika">⏸</button>
+            </div>
+          </div>
+          <div class="brain-canvas-viewport">
+            <canvas id="brain-graph-canvas"></canvas>
+            <div id="brain-graph-tooltip" class="brain-graph-tooltip" style="display: none;"></div>
+          </div>
         </div>
       </div>
     </main>
@@ -1186,6 +1209,7 @@
     </div>
   </div>
 
+  <script src="brain-graph.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

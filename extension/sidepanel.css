@@ -2990,6 +2990,50 @@ body.stickman-active .chat-messages {
   border: none;
 }
 
+/* Stickman Animation Direct Toggle */
+.btn-stickman-mode-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.btn-stickman-mode-trigger:hover {
+  background: #1E293B;
+  border-color: rgba(206, 241, 40, 0.35);
+}
+
+.btn-stickman-mode-trigger.is-on .stickman-mode-icon svg {
+  stroke: #CEF128;
+}
+
+.btn-stickman-mode-trigger.is-off {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
+.btn-stickman-mode-trigger.is-off:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+}
+
+.btn-stickman-mode-trigger.is-off .stickman-mode-icon svg {
+  stroke: var(--text-muted);
+}
+
 /* Switch Tab Direct Toggle */
 .btn-switch-tab-mode-trigger {
   display: inline-flex;

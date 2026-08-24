@@ -325,14 +325,11 @@ def init_db():
         finally:
             conn.close()
         
-        # Populate initial seeds from markdown if empty
-        sync_persistent_memory_on_startup()
-        
         log(f"SQLite database initialized at {DB_PATH}, persistent memory & rollback history tables ready")
     except Exception as e:
         log(f"Failed to initialize SQLite database: {e}\n{traceback.format_exc()}")
 
-init_db()
+# Will be initialized after persistent memory functions are defined
 
 # ==========================================
 # Markdown File Helpers (YAML Frontmatter + Body)
@@ -555,21 +552,24 @@ def save_md_item(target_dir, item_data):
         file_path = os.path.join(target_dir, f"{item_id}.md")
         content = item_data.get("content") or item_data.get("system_prompt") or item_data.get("instructions") or ""
         
-        # Pre-edit snapshot backup if file already exists
+        # Pre-edit snapshot backup if file already exists and content has changed
         if os.path.exists(file_path):
             existing = parse_md_file(file_path)
             if existing:
-                existing_meta = existing.get("meta", {})
-                item_type = "skill" if target_dir == SKILLS_DIR else ("agent" if target_dir == AGENTS_DIR else "memory")
-                backup_item_before_mutation(
-                    item_type=item_type,
-                    item_id=item_id,
-                    item_name=existing_meta.get("name") or item_id,
-                    current_meta=existing_meta,
-                    current_content=existing.get("content") or "",
-                    edited_by=item_data.get("edited_by", "user" if "user" in str(item_data.get("source", "")) else "autonomous_ai"),
-                    change_summary=item_data.get("change_summary", "Updated configuration")
-                )
+                existing_content = (existing.get("content") or "").strip()
+                new_content = content.strip()
+                if existing_content != new_content:
+                    existing_meta = existing.get("meta", {})
+                    item_type = "skill" if target_dir == SKILLS_DIR else ("agent" if target_dir == AGENTS_DIR else "memory")
+                    backup_item_before_mutation(
+                        item_type=item_type,
+                        item_id=item_id,
+                        item_name=existing_meta.get("name") or item_id,
+                        current_meta=existing_meta,
+                        current_content=existing.get("content") or "",
+                        edited_by=item_data.get("edited_by", "user" if "user" in str(item_data.get("source", "")) else "autonomous_ai"),
+                        change_summary=item_data.get("change_summary", "Updated configuration")
+                    )
 
         meta = {
             "id": item_id,
@@ -824,6 +824,19 @@ def db_save_session(session_data):
                         f.write(item["distilled_points_md"])
             except Exception as e_dist:
                 log(f"Auto-distill in db_save_session ignored error: {e_dist}")
+
+            # Real-time Autonomous Self-Learning & Fact Extraction
+            try:
+                auto_extract_facts_and_learnings_from_session({
+                    "id": sid,
+                    "title": title,
+                    "model": model,
+                    "messages_json": messages_json,
+                    "created_at": created_at,
+                    "updated_at": updated_at
+                })
+            except Exception as e_fact:
+                log(f"Auto-extract facts in db_save_session ignored error: {e_fact}")
 
         return {"status": "ok", "id": sid, "title": title, "updated_at": updated_at}
     except Exception as e:
@@ -1620,6 +1633,215 @@ def sync_failure_learnings_markdown():
             try: conn.close()
             except Exception: pass
 
+def distill_session_to_training_md(session_dict):
+    """
+    Distills raw session messages into token-efficient point-by-point training markdown.
+    Strips noise, conversational bloat, raw html dumps, while preserving high-signal intent,
+    tool workflows, commands, and empirical conclusions.
+    """
+    try:
+        sid = str(session_dict.get("id") or "")
+        title = str(session_dict.get("title") or "Session Training").strip()
+        model = str(session_dict.get("model") or "Default Model")
+        created_at = int(session_dict.get("created_at") or int(time.time() * 1000))
+        date_str = datetime.datetime.fromtimestamp(created_at / 1000.0).strftime('%Y-%m-%d %H:%M:%S')
+
+        raw_messages = []
+        msg_json = session_dict.get("messages_json")
+        if isinstance(msg_json, str):
+            try: raw_messages = json.loads(msg_json)
+            except Exception: raw_messages = []
+        elif isinstance(session_dict.get("messages"), list):
+            raw_messages = session_dict.get("messages")
+
+        if not raw_messages:
+            return None
+
+        # 1. Extract intents, tools, and conclusions
+        user_intents = []
+        tool_workflows = []
+        assistant_conclusions = []
+
+        for m in raw_messages:
+            role = m.get("role")
+            content = m.get("content") or ""
+            
+            if role == "user":
+                clean_u = content.strip()
+                if clean_u and len(clean_u) > 2:
+                    clean_u = clean_u.split("[IMAGE_DATA:")[0].split("<SYSTEM_MESSAGE>")[0].strip()
+                    if clean_u and clean_u not in user_intents:
+                        user_intents.append(clean_u)
+            
+            elif role == "assistant":
+                tool_calls = m.get("tool_calls") or []
+                if tool_calls:
+                    for tc in tool_calls:
+                        fn = tc.get("function") or {}
+                        fname = fn.get("name") or "unknown_tool"
+                        fargs_raw = fn.get("arguments") or "{}"
+                        try:
+                            fargs = json.loads(fargs_raw) if isinstance(fargs_raw, str) else fargs_raw
+                        except Exception:
+                            fargs = {}
+                        
+                        if fname == "local_run_command":
+                            cmd_str = str(fargs.get('command') or '')[:100]
+                            tool_workflows.append(f"`local_run_command({cmd_str})`")
+                        elif fname.startswith("browser_"):
+                            t_arg = str(fargs.get('url') or fargs.get('backendNodeId') or '')[:80]
+                            tool_workflows.append(f"`{fname}({t_arg})`")
+                        elif fname.startswith("db_") or fname.startswith("create_") or fname.startswith("manage_"):
+                            t_arg = str(fargs.get('name') or fargs.get('category') or fargs.get('title') or '')[:80]
+                            tool_workflows.append(f"`{fname}({t_arg})`")
+                        else:
+                            tool_workflows.append(f"`{fname}()`")
+
+                if content and isinstance(content, str):
+                    clean_a = content.strip()
+                    if len(clean_a) > 20 and not clean_a.startswith("Task task-") and not clean_a.startswith("Error:"):
+                        lines = [l.strip() for l in clean_a.split("\n") if l.strip() and not l.startswith("```") and not l.startswith("<")]
+                        if lines:
+                            first_p = lines[0][:160]
+                            if first_p and first_p not in assistant_conclusions:
+                                assistant_conclusions.append(first_p)
+
+        intents_md = "\n".join([f"- {u}" for u in user_intents[:6]]) or "- Percakapan dan instruksi umum."
+        workflows_md = "\n".join([f"- {tw}" for tw in tool_workflows[:10]]) or "- Eksekusi respons langsung tanpa tool eksternal."
+        conclusions_md = "\n".join([f"- {c}" for c in assistant_conclusions[:4]]) or "- Solusi dan jawaban tuntas disajikan."
+
+        raw_size = len(json.dumps(raw_messages))
+        distilled_md = f"""# 🎯 Training Point: {title}
+- **Session ID**: `{sid}`
+- **Model Target**: `{model}`
+- **Waktu Eksekusi**: `{date_str}`
+
+## 📌 User Core Intent & Directives:
+{intents_md}
+
+## 🛠️ Execution Strategy & Tool Workflow:
+{workflows_md}
+
+## 💡 Key Learnings & Solusi Akhir:
+{conclusions_md}
+"""
+        distilled_size = len(distilled_md)
+        tokens_saved = max(0, (raw_size - distilled_size) // 4)
+
+        return {
+            "id": f"train_{sid}",
+            "session_id": sid,
+            "title": title,
+            "model": model,
+            "distilled_points_md": distilled_md,
+            "key_intents": user_intents[:6],
+            "tool_workflows": tool_workflows[:10],
+            "learnings": assistant_conclusions[:4],
+            "token_saved_estimate": tokens_saved,
+            "created_at": created_at,
+            "updated_at": int(time.time() * 1000)
+        }
+    except Exception as e:
+        log(f"Error in distill_session_to_training_md: {e}")
+        return None
+
+def auto_extract_facts_and_learnings_from_session(session_dict):
+    """
+    Continuous Autonomous Self-Learning Reflex:
+    Silently extracts personal facts, email addresses, usernames, credentials, rules, preferences,
+    and anti-patterns from the conversation, and commits them to SQLite and persistent markdown files.
+    """
+    try:
+        messages_raw = session_dict.get("messages_json") or session_dict.get("messages") or []
+        if isinstance(messages_raw, str):
+            try: messages_raw = json.loads(messages_raw)
+            except Exception: messages_raw = []
+        if not messages_raw or not isinstance(messages_raw, list):
+            return
+
+        sid = session_dict.get("id") or f"sess_{int(time.time()*1000)}"
+        now = int(time.time() * 1000)
+
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            
+            # Fetch existing memories to avoid duplicates
+            cursor.execute("SELECT LOWER(content) FROM user_memories")
+            existing_contents = [r[0] for r in cursor.fetchall()]
+
+            for idx, msg in enumerate(messages_raw):
+                role = msg.get("role")
+                content = msg.get("content") or ""
+                if not isinstance(content, str):
+                    continue
+
+                if role == "user":
+                    clean_u = content.strip().split("[IMAGE_DATA:")[0].split("<SYSTEM_MESSAGE>")[0].strip()
+                    if not clean_u or len(clean_u) < 3:
+                        continue
+
+                    # 1. Detect Email Mentions (e.g. "buka email saya pribadi aryansyah1509", "email saya xxx@gmail.com", "itu email saya bro")
+                    found_emails = list(re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b', clean_u))
+                    
+                    # Also check for username mentioned with email intent (e.g. "email saya pribadi aryansyah1509" or "buka email saya aryansyah1509")
+                    email_match = re.search(r'(?:email|mail)\s+(?:saya\s+)?(?:pribadi\s+)?([a-zA-Z0-9_.-]{4,30})', clean_u, re.I)
+                    if email_match:
+                        raw_val = email_match.group(1).strip()
+                        if "@" not in raw_val and not raw_val.lower().startswith("pribadi") and not raw_val.lower().startswith("bro") and not raw_val.lower().startswith("aja"):
+                            found_emails.append(f"{raw_val}@gmail.com")
+
+                    for em in set(found_emails):
+                        em_clean = em.strip().rstrip('.')
+                        fact_text = f"Email pribadi pengguna: {em_clean}"
+                        if not any(em_clean.lower() in ec for ec in existing_contents):
+                            mid = f"mem_email_{re.sub(r'[^a-zA-Z0-9]', '_', em_clean.lower())[:30]}"
+                            cursor.execute("""
+                                INSERT INTO user_memories (id, category, content, source, reason, confidence, created_at, updated_at)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                ON CONFLICT(id) DO UPDATE SET content=excluded.content, updated_at=excluded.updated_at
+                            """, (mid, "profile", fact_text, "autonomous_ai", "Otomatis dipelajari dari percakapan saat user menyebutkan email", 1.0, now, now))
+                            existing_contents.append(fact_text.lower())
+                            log(f"[Autonomous Brain] Learned new profile fact: {fact_text}")
+
+                    # 2. Detect Name / Identity (e.g. "nama saya arya", "panggil saya bro arya")
+                    name_match = re.search(r'(?:nama\s+saya|panggil\s+saya(?:\s+aja)?)\s*[:=]?\s*([A-Za-z0-9\s]{2,20})', clean_u, re.I)
+                    if name_match:
+                        name_val = name_match.group(1).strip()
+                        if name_val.lower() not in ["bro", "kak", "admin", "ai"]:
+                            fact_name = f"Nama/panggilan pengguna adalah {name_val}."
+                            if not any(name_val.lower() in ec for ec in existing_contents):
+                                mid = f"mem_name_{re.sub(r'[^a-zA-Z0-9]', '_', name_val.lower())[:20]}"
+                                cursor.execute("""
+                                    INSERT INTO user_memories (id, category, content, source, reason, confidence, created_at, updated_at)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                    ON CONFLICT(id) DO UPDATE SET content=excluded.content, updated_at=excluded.updated_at
+                                """, (mid, "profile", fact_name, "autonomous_ai", "Otomatis dipelajari saat user memperkenalkan nama", 1.0, now, now))
+                                existing_contents.append(fact_name.lower())
+                                log(f"[Autonomous Brain] Learned new profile fact: {fact_name}")
+
+                    # 3. Detect Explicit Rules & Preferences (e.g. "selalu gunakan format...", "aturan permanen:...")
+                    rule_match = re.search(r'(?:selalu\s+gunakan|wajib\s+selalu|aturan(?:\s+baru)?\s*:|jangan\s+pernah)\s+(.+)', clean_u, re.I)
+                    if rule_match:
+                        rule_val = rule_match.group(1).strip()
+                        if len(rule_val) > 10:
+                            fact_rule = f"Aturan pengguna: {rule_val}"
+                            if not any(rule_val[:25].lower() in ec for ec in existing_contents):
+                                mid = f"mem_rule_{int(time.time()*1000)}"
+                                cursor.execute("""
+                                    INSERT INTO user_memories (id, category, content, source, reason, confidence, created_at, updated_at)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                    ON CONFLICT(id) DO UPDATE SET content=excluded.content, updated_at=excluded.updated_at
+                                """, (mid, "rule", fact_rule, "autonomous_ai", "Otomatis dicatat dari instruksi aturan pengguna", 1.0, now, now))
+                                existing_contents.append(fact_rule.lower())
+                                log(f"[Autonomous Brain] Learned new user rule: {fact_rule}")
+
+            conn.commit()
+
+        # Re-sync personal_facts.md file on disk
+        sync_personal_facts_markdown()
+    except Exception as e:
+        log(f"Error in auto_extract_facts_and_learnings_from_session: {e}")
+
 def sync_persistent_memory_on_startup():
     """Scans PERSISTENT MEMORY folders on startup and ensures SQLite is populated"""
     conn = None
@@ -1798,38 +2020,53 @@ updated_at: {now}
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (apid, domain, mistake, cause, fix, rule, now))
 
-        # 5. Full Autonomous Auto-Distillation: Distill any undrained sessions on startup
-        try:
-            cursor.execute("SELECT id, title, model, messages_json, created_at, updated_at FROM sessions")
-            all_sess = cursor.fetchall()
-            for s in all_sess:
-                s_id, s_title, s_model, s_msg_json, s_created, s_updated = s
-                cursor.execute("SELECT id FROM chat_training_corpus WHERE session_id = ?", (s_id,))
-                if not cursor.fetchone():
-                    d_item = distill_session_to_training_md({
-                        "id": s_id, "title": s_title, "model": s_model,
-                        "messages_json": s_msg_json, "created_at": s_created, "updated_at": s_updated
-                    })
-                    if d_item:
-                        cursor.execute("""
-                            INSERT INTO chat_training_corpus (id, session_id, title, model, distilled_points_md, key_intents_json, tool_workflows_json, learnings_json, token_saved_estimate, created_at, updated_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            ON CONFLICT(id) DO UPDATE SET
-                                distilled_points_md=excluded.distilled_points_md,
-                                updated_at=excluded.updated_at
-                        """, (
-                            d_item["id"], d_item["session_id"], d_item["title"], d_item["model"],
-                            d_item["distilled_points_md"], json.dumps(d_item["key_intents"]),
-                            json.dumps(d_item["tool_workflows"]), json.dumps(d_item["learnings"]),
-                            d_item["token_saved_estimate"], d_item["created_at"], s_updated
-                        ))
-                        safe_sid = re.sub(r'[^a-zA-Z0-9_-]', '_', s_id)
-                        fpath = os.path.join(PM_TRAINING_CORPUS_DIR, f"{safe_sid}.md")
-                        os.makedirs(PM_TRAINING_CORPUS_DIR, exist_ok=True)
-                        with open(fpath, "w", encoding="utf-8") as f:
-                            f.write(d_item["distilled_points_md"])
-        except Exception as e_dist:
-            log(f"Auto-distill on startup error: {e_dist}")
+        # 5. Full Autonomous Auto-Distillation in background thread so startup is instant (<10ms)
+        def _background_startup_distill():
+            try:
+                b_conn = sqlite3.connect(DB_PATH)
+                b_cursor = b_conn.cursor()
+                b_cursor.execute("SELECT id, title, model, messages_json, created_at, updated_at FROM sessions ORDER BY updated_at DESC")
+                all_sess = b_cursor.fetchall()
+                for s in all_sess:
+                    s_id, s_title, s_model, s_msg_json, s_created, s_updated = s
+                    try:
+                        auto_extract_facts_and_learnings_from_session({
+                            "id": s_id, "title": s_title, "model": s_model,
+                            "messages_json": s_msg_json, "created_at": s_created, "updated_at": s_updated
+                        })
+                    except Exception:
+                        pass
+
+                    b_cursor.execute("SELECT id FROM chat_training_corpus WHERE session_id = ?", (s_id,))
+                    if not b_cursor.fetchone():
+                        d_item = distill_session_to_training_md({
+                            "id": s_id, "title": s_title, "model": s_model,
+                            "messages_json": s_msg_json, "created_at": s_created, "updated_at": s_updated
+                        })
+                        if d_item:
+                            b_cursor.execute("""
+                                INSERT INTO chat_training_corpus (id, session_id, title, model, distilled_points_md, key_intents_json, tool_workflows_json, learnings_json, token_saved_estimate, created_at, updated_at)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                ON CONFLICT(id) DO UPDATE SET
+                                    distilled_points_md=excluded.distilled_points_md,
+                                    updated_at=excluded.updated_at
+                            """, (
+                                d_item["id"], d_item["session_id"], d_item["title"], d_item["model"],
+                                d_item["distilled_points_md"], json.dumps(d_item["key_intents"]),
+                                json.dumps(d_item["tool_workflows"]), json.dumps(d_item["learnings"]),
+                                d_item["token_saved_estimate"], d_item["created_at"], s_updated
+                            ))
+                            safe_sid = re.sub(r'[^a-zA-Z0-9_-]', '_', s_id)
+                            fpath = os.path.join(PM_TRAINING_CORPUS_DIR, f"{safe_sid}.md")
+                            os.makedirs(PM_TRAINING_CORPUS_DIR, exist_ok=True)
+                            with open(fpath, "w", encoding="utf-8") as f:
+                                f.write(d_item["distilled_points_md"])
+                b_conn.commit()
+                b_conn.close()
+            except Exception as e_dist:
+                log(f"Background startup auto-distill notice: {e_dist}")
+
+        threading.Thread(target=_background_startup_distill, daemon=True).start()
 
         conn.commit()
     except Exception as e:
@@ -1838,6 +2075,10 @@ updated_at: {now}
         if conn:
             try: conn.close()
             except Exception: pass
+
+# Initialize database schema and sync seeds
+init_db()
+sync_persistent_memory_on_startup()
 
 def db_get_persistent_memory(search=""):
     conn = None
@@ -2376,118 +2617,6 @@ updated_at: {updated_at}
         if conn:
             try: conn.close()
             except Exception: pass
-
-def distill_session_to_training_md(session_dict):
-    """
-    Distills raw session messages into token-efficient point-by-point training markdown.
-    Strips noise, conversational bloat, raw html dumps, while preserving high-signal intent,
-    tool workflows, commands, and empirical conclusions.
-    """
-    try:
-        sid = str(session_dict.get("id") or "")
-        title = str(session_dict.get("title") or "Session Training").strip()
-        model = str(session_dict.get("model") or "Default Model")
-        created_at = int(session_dict.get("created_at") or int(time.time() * 1000))
-        date_str = datetime.datetime.fromtimestamp(created_at / 1000.0).strftime('%Y-%m-%d %H:%M:%S')
-
-        raw_messages = []
-        msg_json = session_dict.get("messages_json")
-        if isinstance(msg_json, str):
-            try: raw_messages = json.loads(msg_json)
-            except Exception: raw_messages = []
-        elif isinstance(session_dict.get("messages"), list):
-            raw_messages = session_dict.get("messages")
-
-        if not raw_messages:
-            return None
-
-        # 1. Extract intents, tools, and conclusions
-        user_intents = []
-        tool_workflows = []
-        assistant_conclusions = []
-
-        for m in raw_messages:
-            role = m.get("role")
-            content = m.get("content") or ""
-            
-            if role == "user":
-                clean_u = content.strip()
-                if clean_u and len(clean_u) > 2:
-                    clean_u = clean_u.split("[IMAGE_DATA:")[0].split("<SYSTEM_MESSAGE>")[0].strip()
-                    if clean_u and clean_u not in user_intents:
-                        user_intents.append(clean_u)
-            
-            elif role == "assistant":
-                tool_calls = m.get("tool_calls") or []
-                if tool_calls:
-                    for tc in tool_calls:
-                        fn = tc.get("function") or {}
-                        fname = fn.get("name") or "unknown_tool"
-                        fargs_raw = fn.get("arguments") or "{}"
-                        try:
-                            fargs = json.loads(fargs_raw) if isinstance(fargs_raw, str) else fargs_raw
-                        except Exception:
-                            fargs = {}
-                        
-                        if fname == "local_run_command":
-                            cmd_str = str(fargs.get('command') or '')[:100]
-                            tool_workflows.append(f"`local_run_command({cmd_str})`")
-                        elif fname.startswith("browser_"):
-                            t_arg = str(fargs.get('url') or fargs.get('backendNodeId') or '')[:80]
-                            tool_workflows.append(f"`{fname}({t_arg})`")
-                        elif fname.startswith("db_") or fname.startswith("create_") or fname.startswith("manage_"):
-                            t_arg = str(fargs.get('name') or fargs.get('category') or fargs.get('title') or '')[:80]
-                            tool_workflows.append(f"`{fname}({t_arg})`")
-                        else:
-                            tool_workflows.append(f"`{fname}()`")
-
-                if content and isinstance(content, str):
-                    clean_a = content.strip()
-                    if len(clean_a) > 20 and not clean_a.startswith("Task task-") and not clean_a.startswith("Error:"):
-                        lines = [l.strip() for l in clean_a.split("\n") if l.strip() and not l.startswith("```") and not l.startswith("<")]
-                        if lines:
-                            first_p = lines[0][:160]
-                            if first_p and first_p not in assistant_conclusions:
-                                assistant_conclusions.append(first_p)
-
-        intents_md = "\n".join([f"- {u}" for u in user_intents[:6]]) or "- Percakapan dan instruksi umum."
-        workflows_md = "\n".join([f"- {tw}" for tw in tool_workflows[:10]]) or "- Eksekusi respons langsung tanpa tool eksternal."
-        conclusions_md = "\n".join([f"- {c}" for c in assistant_conclusions[:4]]) or "- Solusi dan jawaban tuntas disajikan."
-
-        raw_size = len(json.dumps(raw_messages))
-        distilled_md = f"""# 🎯 Training Point: {title}
-- **Session ID**: `{sid}`
-- **Model Target**: `{model}`
-- **Waktu Eksekusi**: `{date_str}`
-
-## 📌 User Core Intent & Directives:
-{intents_md}
-
-## 🛠️ Execution Strategy & Tool Workflow:
-{workflows_md}
-
-## 💡 Key Learnings & Solusi Akhir:
-{conclusions_md}
-"""
-        distilled_size = len(distilled_md)
-        tokens_saved = max(0, (raw_size - distilled_size) // 4)
-
-        return {
-            "id": f"train_{sid}",
-            "session_id": sid,
-            "title": title,
-            "model": model,
-            "distilled_points_md": distilled_md,
-            "key_intents": user_intents[:6],
-            "tool_workflows": tool_workflows[:10],
-            "learnings": assistant_conclusions[:4],
-            "token_saved_estimate": tokens_saved,
-            "created_at": created_at,
-            "updated_at": int(time.time() * 1000)
-        }
-    except Exception as e:
-        log(f"Error in distill_session_to_training_md: {e}")
-        return None
 
 def db_auto_distill_all_sessions():
     conn = None

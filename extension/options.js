@@ -189,19 +189,53 @@ const modalMemory = document.getElementById('modal-memory');
 // Native Messaging Host Bridge RPC
 // =========================================================================
 let nativeRpcCallbacks = new Map();
+let rpcChunkBuffers = new Map();
 let nativeReqId = 1;
+let nativeReconnectTimer = null;
 
 function connectNativeHost() {
   try {
     nativePort = chrome.runtime.connectNative('com.antigravity.chrome.agent');
     nativePort.onMessage.addListener((msg) => {
-      if (msg.id && nativeRpcCallbacks.has(msg.id)) {
-        const { resolve, reject } = nativeRpcCallbacks.get(msg.id);
-        nativeRpcCallbacks.delete(msg.id);
-        if (msg.status === 'ok') {
-          resolve(msg);
+      // 0. Handle Chunked RPC Messages (Chunk Reassembly)
+      if (msg && msg.is_chunk && msg.id !== undefined) {
+        let buf = rpcChunkBuffers.get(msg.id) || rpcChunkBuffers.get(String(msg.id));
+        if (!buf) {
+          buf = { chunks: new Array(msg.total_chunks), received: 0 };
+          rpcChunkBuffers.set(msg.id, buf);
+        }
+        buf.chunks[msg.chunk_index] = msg.chunk_data;
+        buf.received++;
+        if (buf.received === msg.total_chunks) {
+          rpcChunkBuffers.delete(msg.id);
+          rpcChunkBuffers.delete(String(msg.id));
+          const fullJsonStr = buf.chunks.join('');
+          try {
+            msg = JSON.parse(fullJsonStr);
+          } catch (e) {
+            console.error("Failed to parse reassembled chunked RPC message:", e);
+            return;
+          }
         } else {
-          reject(new Error(msg.error || 'Native RPC failed'));
+          return; // Still waiting for more chunks
+        }
+      }
+
+      // 1. Handle RPC Callbacks
+      if (msg && msg.id !== undefined) {
+        const callbackEntry = nativeRpcCallbacks.get(msg.id) || 
+                              nativeRpcCallbacks.get(String(msg.id)) || 
+                              nativeRpcCallbacks.get(Number(msg.id));
+        if (callbackEntry) {
+          const { resolve, reject } = callbackEntry;
+          nativeRpcCallbacks.delete(msg.id);
+          nativeRpcCallbacks.delete(String(msg.id));
+          nativeRpcCallbacks.delete(Number(msg.id));
+          if (msg.status === 'ok') {
+            resolve(msg);
+          } else {
+            reject(new Error(msg.error || 'Native RPC failed'));
+          }
         }
       }
     });
@@ -213,30 +247,51 @@ function connectNativeHost() {
         cb.reject(new Error(lastErr?.message || "Native host disconnected"));
       }
       nativeRpcCallbacks.clear();
+      rpcChunkBuffers.clear();
       updateBridgeUI(false, "Terputus", "Native host offline");
+
+      if (!nativeReconnectTimer) {
+        nativeReconnectTimer = setTimeout(() => {
+          nativeReconnectTimer = null;
+          connectNativeHost();
+        }, 1500);
+      }
     });
   } catch (e) {
     nativePort = null;
   }
 }
 
-function sendNativeRpc(action, params = {}) {
+async function sendNativeRpc(action, params = {}) {
+  // If not connected, attempt immediate connection and wait up to 2.5s
+  if (!nativePort) {
+    connectNativeHost();
+    for (let i = 0; i < 25; i++) {
+      await new Promise(r => setTimeout(r, 100));
+      if (nativePort) break;
+    }
+  }
+  if (!nativePort) {
+    throw new Error("Native PC Bridge is offline");
+  }
+
   return new Promise((resolve, reject) => {
-    if (!nativePort) {
-      connectNativeHost();
-    }
-    if (!nativePort) {
-      return reject(new Error("Native PC Bridge is offline"));
-    }
     const id = nativeReqId++;
     nativeRpcCallbacks.set(id, { resolve, reject });
     setTimeout(() => {
-      if (nativeRpcCallbacks.has(id)) {
+      if (nativeRpcCallbacks.has(id) || nativeRpcCallbacks.has(String(id))) {
         nativeRpcCallbacks.delete(id);
+        nativeRpcCallbacks.delete(String(id));
         reject(new Error(`RPC action '${action}' timed out`));
       }
-    }, 15000);
-    nativePort.postMessage({ id, action, ...params });
+    }, 30000);
+    try {
+      nativePort.postMessage({ id, action, ...params });
+    } catch (err) {
+      nativeRpcCallbacks.delete(id);
+      nativeRpcCallbacks.delete(String(id));
+      reject(err);
+    }
   });
 }
 
@@ -246,9 +301,57 @@ function sendNativeRpc(action, params = {}) {
 async function init() {
   connectNativeHost();
   await loadConfig();
-  await loadAllData();
+  // 1. Instant Cache Hydration: Render UI in 0ms without waiting for Native Host IPC
+  await hydrateFromLocalStorage();
   setupEventListeners();
   checkPCBridgeStatus();
+  // 2. Non-blocking Background Sync with Native Host
+  loadAllData().catch(e => console.warn("Background sync notice:", e));
+}
+
+async function hydrateFromLocalStorage() {
+  try {
+    const res = await chrome.storage.local.get([
+      'custom_agents',
+      'custom_skills',
+      'custom_memories',
+      'cached_persistent_brain'
+    ]);
+
+    if (Array.isArray(res.custom_agents) && res.custom_agents.length > 0) {
+      agentsList = res.custom_agents;
+      updateBadgeCount('badge-count-agents', agentsList.length);
+      renderAgentsCards();
+    } else {
+      agentsList = [...DEFAULT_AGENTS];
+      updateBadgeCount('badge-count-agents', agentsList.length);
+      renderAgentsCards();
+    }
+
+    if (Array.isArray(res.custom_skills) && res.custom_skills.length > 0) {
+      skillsList = res.custom_skills;
+      updateBadgeCount('badge-count-skills', skillsList.length);
+      renderSkillsCards();
+    } else {
+      skillsList = [...DEFAULT_SKILLS];
+      updateBadgeCount('badge-count-skills', skillsList.length);
+      renderSkillsCards();
+    }
+
+    if (Array.isArray(res.custom_memories)) {
+      memoriesList = res.custom_memories;
+      updateBadgeCount('badge-count-memories', memoriesList.length);
+      renderMemoriesCards();
+    }
+
+    if (res.cached_persistent_brain) {
+      brainData = res.cached_persistent_brain;
+      updateBrainCounters();
+      renderPersistentBrain(document.getElementById('search-brain-input')?.value || "");
+    }
+  } catch (e) {
+    console.warn("Hydration notice:", e);
+  }
 }
 
 async function loadConfig() {
@@ -320,6 +423,10 @@ function applyConfigToUI() {
     if (tempValDisplay) tempValDisplay.textContent = Number(config.temperature ?? 0.2).toFixed(2);
   }
   if (settingMaxTokens) settingMaxTokens.value = config.maxTokens || 4096;
+  const settingStickman = document.getElementById('setting-stickman-animation');
+  if (settingStickman) {
+    settingStickman.checked = (config.stickmanAnimation !== false);
+  }
 }
 
 function renderModelsRows() {
@@ -472,6 +579,8 @@ async function saveAllConfig(silent = false) {
   config.imageModel = settingImageModel ? settingImageModel.value.trim() : config.imageModel;
   config.temperature = settingTemp ? parseFloat(settingTemp.value) : config.temperature;
   config.maxTokens = settingMaxTokens ? parseInt(settingMaxTokens.value, 10) : config.maxTokens;
+  const settingStickman = document.getElementById('setting-stickman-animation');
+  config.stickmanAnimation = settingStickman ? settingStickman.checked : (config.stickmanAnimation !== false);
   config.models = models.length > 0 ? models : [
     { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" }
   ];
@@ -485,7 +594,11 @@ async function saveAllConfig(silent = false) {
   }
 
   // 1. Persist to Chrome Local Storage
-  await chrome.storage.local.set({ browser_agent_config: config, active_agent_id: activeAgentId });
+  await chrome.storage.local.set({ 
+    browser_agent_config: config, 
+    active_agent_id: activeAgentId,
+    setting_stickman_animation: config.stickmanAnimation
+  });
 
   // 2. Persist to SQLite Database via Native Host (Separate Model Table + Settings Table)
   try {
@@ -1269,7 +1382,6 @@ async function loadAgents() {
   }
 
   await chrome.storage.local.set({ custom_agents: agentsList });
-  await syncDefaultAgentsToDisk();
   updateBadgeCount('badge-count-agents', agentsList.length);
   renderAgentsCards();
 }
@@ -1304,7 +1416,6 @@ async function loadSkills() {
       skillsList = res.custom_skills.filter(s => s.id !== "skill_kpr_simulation" && s.id !== "skill_seo_copywriting");
     } else {
       skillsList = [...DEFAULT_SKILLS];
-      await syncDefaultSkillsToDisk();
     }
   }
 
@@ -1319,7 +1430,6 @@ async function loadSkills() {
 
   if (hasMergedSkills || skillsList.length === 0) {
     if (skillsList.length === 0) skillsList = [...DEFAULT_SKILLS];
-    await syncDefaultSkillsToDisk();
   }
 
   await chrome.storage.local.set({ custom_skills: skillsList });
@@ -1371,7 +1481,6 @@ async function loadMemories() {
   }
 
   await chrome.storage.local.set({ custom_memories: memoriesList });
-  await syncDefaultMemoriesToDisk();
   updateBadgeCount('badge-count-memories', memoriesList.length);
   renderMemoriesCards();
 }
@@ -2472,6 +2581,17 @@ function setupEventListeners() {
   settingApiKey?.addEventListener('input', () => triggerAutoSave(300));
   settingImageModel?.addEventListener('input', () => triggerAutoSave(300));
   settingMaxTokens?.addEventListener('input', () => triggerAutoSave(300));
+  
+  // Stickman Animation Toggle
+  document.getElementById('setting-stickman-animation')?.addEventListener('change', (e) => {
+    const isEnabled = e.target.checked;
+    config.stickmanAnimation = isEnabled;
+    chrome.storage.local.set({ 
+      setting_stickman_animation: isEnabled,
+      browser_agent_config: config 
+    });
+    triggerAutoSave(0);
+  });
 
   // Temperature Slider
   settingTemp?.addEventListener('input', (e) => {
@@ -2694,6 +2814,33 @@ let brainData = {
 };
 let activeBrainSubtab = "facts";
 
+let lastBrainFingerprint = "";
+
+function updateBrainCounters() {
+  const statFacts = document.getElementById('stat-brain-facts');
+  const statExp = document.getElementById('stat-brain-experiences');
+  const statAP = document.getElementById('stat-brain-antipatterns');
+  const statSkills = document.getElementById('stat-brain-skills');
+  const statAgents = document.getElementById('stat-brain-agents');
+  const statTrain = document.getElementById('stat-brain-training');
+  const badgeBrain = document.getElementById('badge-count-brain');
+
+  const totalItems = (brainData.user_memories?.length || 0) +
+                     (brainData.experience_ledger?.length || 0) +
+                     (brainData.anti_patterns?.length || 0) +
+                     (brainData.autonomous_skills?.length || 0) +
+                     (brainData.autonomous_agents?.length || 0) +
+                     (brainData.training_corpus?.length || 0);
+
+  if (statFacts) statFacts.textContent = brainData.user_memories?.length || 0;
+  if (statExp) statExp.textContent = brainData.experience_ledger?.length || 0;
+  if (statAP) statAP.textContent = brainData.anti_patterns?.length || 0;
+  if (statSkills) statSkills.textContent = brainData.autonomous_skills?.length || 0;
+  if (statAgents) statAgents.textContent = brainData.autonomous_agents?.length || 0;
+  if (statTrain) statTrain.textContent = brainData.training_corpus?.length || 0;
+  if (badgeBrain) badgeBrain.textContent = totalItems;
+}
+
 async function loadPersistentBrainData() {
   try {
     const res = await sendNativeRpc("db_get_persistent_memory", { search: "" });
@@ -2708,31 +2855,23 @@ async function loadPersistentBrainData() {
         counts: res.counts || {}
       };
 
-      // Update counters
-      const statFacts = document.getElementById('stat-brain-facts');
-      const statExp = document.getElementById('stat-brain-experiences');
-      const statAP = document.getElementById('stat-brain-antipatterns');
-      const statSkills = document.getElementById('stat-brain-skills');
-      const statAgents = document.getElementById('stat-brain-agents');
-      const statTrain = document.getElementById('stat-brain-training');
-      const badgeBrain = document.getElementById('badge-count-brain');
+      const countsStr = JSON.stringify(res.counts || {});
+      const topMem = res.user_memories?.[0]?.updated_at || "";
+      const topExp = res.experience_ledger?.[0]?.created_at || "";
+      const topAp = res.anti_patterns?.[0]?.created_at || "";
+      const topSk = res.autonomous_skills?.[0]?.updated_at || "";
+      const topAg = res.autonomous_agents?.[0]?.updated_at || "";
+      const topTc = res.training_corpus?.[0]?.updated_at || "";
+      lastBrainFingerprint = `${countsStr}|${topMem}|${topExp}|${topAp}|${topSk}|${topAg}|${topTc}`;
 
-      const totalItems = (brainData.user_memories.length || 0) +
-                         (brainData.experience_ledger.length || 0) +
-                         (brainData.anti_patterns.length || 0) +
-                         (brainData.autonomous_skills.length || 0) +
-                         (brainData.autonomous_agents.length || 0) +
-                         (brainData.training_corpus.length || 0);
+      updateBrainCounters();
+      chrome.storage.local.set({ cached_persistent_brain: brainData }).catch(() => {});
 
-      if (statFacts) statFacts.textContent = brainData.user_memories.length || 0;
-      if (statExp) statExp.textContent = brainData.experience_ledger.length || 0;
-      if (statAP) statAP.textContent = brainData.anti_patterns.length || 0;
-      if (statSkills) statSkills.textContent = brainData.autonomous_skills.length || 0;
-      if (statAgents) statAgents.textContent = brainData.autonomous_agents.length || 0;
-      if (statTrain) statTrain.textContent = brainData.training_corpus.length || 0;
-      if (badgeBrain) badgeBrain.textContent = totalItems;
-
-      renderPersistentBrain();
+      const searchInput = document.getElementById('search-brain-input');
+      renderPersistentBrain(searchInput ? searchInput.value : "");
+      if (currentBrainViewMode === 'graph' && brainGraphEngine) {
+        brainGraphEngine.buildGraphData(brainData, config, agentsList, skillsList, memoriesList);
+      }
     }
   } catch (err) {
     console.warn("Could not load persistent brain data:", err);
@@ -2992,14 +3131,14 @@ function renderPersistentBrain(searchQuery = "") {
   }
 }
 
-// Subtab buttons event listeners
+// Subtab buttons event listeners (Direct click on metric capsules)
 document.addEventListener('click', async (e) => {
-  const subtabBtn = e.target.closest('#tab-view-persistent-brain .brain-subnav-btn');
+  const subtabBtn = e.target.closest('#tab-view-persistent-brain .brain-metric-tile, #tab-view-persistent-brain .brain-subnav-btn');
   if (subtabBtn) {
     const subtab = subtabBtn.getAttribute('data-subtab');
     if (subtab) {
       activeBrainSubtab = subtab;
-      document.querySelectorAll('#tab-view-persistent-brain .brain-subnav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#tab-view-persistent-brain .brain-metric-tile, #tab-view-persistent-brain .brain-subnav-btn').forEach(b => b.classList.remove('active'));
       subtabBtn.classList.add('active');
       const searchInput = document.getElementById('search-brain-input');
       renderPersistentBrain(searchInput ? searchInput.value : "");
@@ -3134,23 +3273,148 @@ ${item.system_prompt || '(Tidak ada custom system prompt)'}`;
 // Search input listener
 document.getElementById('search-brain-input')?.addEventListener('input', (e) => {
   renderPersistentBrain(e.target.value);
+  if (currentBrainViewMode === 'graph' && brainGraphEngine) {
+    brainGraphEngine.alpha = Math.max(brainGraphEngine.alpha, 0.45);
+  }
+});
+
+// =========================================================================
+// 🕸️ Obsidian Neural Brain Graph Visualizer (Loaded from brain-graph.js)
+// =========================================================================
+let currentBrainViewMode = "cards"; // "cards" | "graph"
+let brainGraphEngine = null;
+
+// View Mode Toggle Handler (Cards vs Graph)
+document.addEventListener('click', (e) => {
+  const modeBtn = e.target.closest('.brain-view-mode-btn');
+  if (modeBtn) {
+    const mode = modeBtn.getAttribute('data-mode');
+    if (mode && mode !== currentBrainViewMode) {
+      currentBrainViewMode = mode;
+      document.querySelectorAll('.brain-view-mode-btn').forEach(b => b.classList.remove('active'));
+      modeBtn.classList.add('active');
+
+      const cardsGrid = document.getElementById('brain-cards-grid');
+      const graphView = document.getElementById('brain-graph-view');
+
+      if (mode === 'graph') {
+        if (cardsGrid) cardsGrid.style.display = 'none';
+        if (graphView) graphView.style.display = 'flex';
+
+        if (!brainGraphEngine) {
+          const canvas = document.getElementById('brain-graph-canvas');
+          const container = document.querySelector('.brain-canvas-viewport');
+          const tooltip = document.getElementById('brain-graph-tooltip');
+          if (canvas && container) {
+            brainGraphEngine = new BrainGraphEngine(canvas, container, tooltip);
+          }
+        }
+        if (brainGraphEngine) {
+          brainGraphEngine.buildGraphData(brainData, config, agentsList, skillsList, memoriesList);
+          brainGraphEngine.start();
+        }
+      } else {
+        if (graphView) graphView.style.display = 'none';
+        if (cardsGrid) cardsGrid.style.display = 'grid';
+        if (brainGraphEngine) brainGraphEngine.stop();
+        renderPersistentBrain(document.getElementById('search-brain-input')?.value || "");
+      }
+    }
+  }
 });
 
 
 
 document.addEventListener('DOMContentLoaded', init);
 
-// Realtime sync from Sidepanel
+// Realtime sync from Sidepanel & Native Host
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.browser_agent_config) {
-    config = { ...config, ...changes.browser_agent_config.newValue };
-    applyConfigToUI();
-    const isTypingModel = document.activeElement && (
-      document.activeElement.classList.contains('model-input-name') || 
-      document.activeElement.classList.contains('model-input-id')
-    );
-    if (!isTypingModel) {
-      renderModelsRows();
+  if (area === 'local') {
+    if (changes.persistent_brain_last_updated || changes.custom_agents || changes.custom_skills || changes.custom_memories) {
+      loadPersistentBrainData();
+      loadAgents();
+      loadSkills();
+      loadMemories();
+    }
+    if (changes.browser_agent_config) {
+      config = { ...config, ...changes.browser_agent_config.newValue };
+      applyConfigToUI();
+      const isTypingModel = document.activeElement && (
+        document.activeElement.classList.contains('model-input-name') || 
+        document.activeElement.classList.contains('model-input-id')
+      );
+      if (!isTypingModel) {
+        renderModelsRows();
+      }
     }
   }
 });
+
+// Realtime runtime message listener
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg && (msg.type === "PERSISTENT_BRAIN_UPDATED" || msg.action === "PERSISTENT_BRAIN_UPDATED" || msg.type === "SESSION_SAVED")) {
+    loadPersistentBrainData();
+    loadAgents();
+    loadSkills();
+    loadMemories();
+  }
+});
+
+// Window focus & Visibility change listeners for instant fresh data
+window.addEventListener('focus', () => {
+  loadPersistentBrainData();
+  loadAgents();
+  loadSkills();
+  loadMemories();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    loadPersistentBrainData();
+    loadAgents();
+    loadSkills();
+    loadMemories();
+  }
+});
+
+// Fast lightweight 2.5s Poller Daemon to detect changes in background without page refresh
+async function checkRealtimeBrainUpdates() {
+  if (document.hidden) return; // Sleep when tab is inactive
+  try {
+    const res = await sendNativeRpc("db_get_persistent_memory", { search: "" });
+    if (res && res.status === "ok") {
+      const countsStr = JSON.stringify(res.counts || {});
+      const topMem = res.user_memories?.[0]?.updated_at || "";
+      const topExp = res.experience_ledger?.[0]?.created_at || "";
+      const topAp = res.anti_patterns?.[0]?.created_at || "";
+      const topSk = res.autonomous_skills?.[0]?.updated_at || "";
+      const topAg = res.autonomous_agents?.[0]?.updated_at || "";
+      const topTc = res.training_corpus?.[0]?.updated_at || "";
+      
+      const currentFingerprint = `${countsStr}|${topMem}|${topExp}|${topAp}|${topSk}|${topAg}|${topTc}`;
+      
+      if (lastBrainFingerprint && currentFingerprint !== lastBrainFingerprint) {
+        brainData = {
+          user_memories: res.user_memories || [],
+          experience_ledger: res.experience_ledger || [],
+          anti_patterns: res.anti_patterns || [],
+          autonomous_skills: res.autonomous_skills || [],
+          autonomous_agents: res.autonomous_agents || [],
+          training_corpus: res.training_corpus || [],
+          counts: res.counts || {}
+        };
+        updateBrainCounters();
+        const searchInput = document.getElementById('search-brain-input');
+        renderPersistentBrain(searchInput ? searchInput.value : "");
+        if (currentBrainViewMode === 'graph' && brainGraphEngine) {
+          brainGraphEngine.buildGraphData(brainData, config);
+        }
+      }
+      lastBrainFingerprint = currentFingerprint;
+    }
+  } catch (err) {
+    // Ignore silent poller catch
+  }
+}
+
+setInterval(checkRealtimeBrainUpdates, 2500);
