@@ -45,7 +45,7 @@ with open(path, 'w') as f:
 
 # Build CRX and sync
 python3 "$DIR/build_crx.py"
-rsync -av --delete "$DIR/" "/home/arya/Downloads/browser-agent/" --exclude=".git" --exclude=".restore_points" --exclude="release"
+rsync -av --delete "$DIR/" "/home/arya/Downloads/browser-agent/" --exclude=".git" --exclude=".restore_points" --exclude="release" --exclude="archives" --exclude="backups" --exclude="misc"
 
 # Git stage & commit
 git config user.name "Antigravity AI" 2>/dev/null || true

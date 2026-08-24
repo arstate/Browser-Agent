@@ -37,7 +37,7 @@ if git rev-parse "$TARGET" >/dev/null 2>&1; then
   python3 "$DIR/build_crx.py"
   
   echo "[3/3] Sinkronisasi ke folder Downloads..."
-  rsync -av --delete "$DIR/" "/home/arya/Downloads/browser-agent/" --exclude=".git" --exclude=".restore_points" --exclude="release"
+  rsync -av --delete "$DIR/" "/home/arya/Downloads/browser-agent/" --exclude=".git" --exclude=".restore_points" --exclude="release" --exclude="archives" --exclude="backups" --exclude="misc"
   
   echo "============================================================"
   echo "  ✅ BERHASIL RESTORE KE VERSI: $TARGET"
