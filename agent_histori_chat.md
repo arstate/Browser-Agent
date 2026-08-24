@@ -3848,6 +3848,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.10`, build `extension.crx` (471.7 KB).
 
+---
+
+### 🚀 Iterasi 365: Clean Prompt Queue Card (Removing Emoji & Redundant Agent Tag) (v2.147.11)
+- **Kebutuhan Pengguna**:
+  - Menghapus emoji petir `⚡` dan tag redundant `🤖 Agent` pada kartu antrean prompt (*prompt queue card*) agar tampilan antrean lebih bersih, minimalis, dan elegan.
+- **Implementasi & Peningkatan UI**:
+  1. **Clean Queue Badge Pill**:
+     - Mengubah label badge kartu antrean dari `⚡ Antrean #1 (Berikutnya)` menjadi **`Antrean #1 (Berikutnya)`** dan `Antrean #${index + 1}`.
+  2. **Eliminasi Tag Mode Redundant**:
+     - Menghapus elemen `<span class="queue-mode-tag">...</span>` dari header kartu antrean prompt.
+  3. **Toast Message Simplification**:
+     - Menghapus emoji petir dari notifikasi toast saat prompt ditambahkan ke antrean (`Berhasil dimasukkan ke Antrean #N`).
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.11`, build `extension.crx` (471.7 KB).
+
 
 
 

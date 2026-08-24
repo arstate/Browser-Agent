@@ -8836,7 +8836,7 @@ function addToPromptQueue(text, attachments = [], mentions = [], chatMode = 'age
   };
   promptQueue.push(item);
   renderPromptQueueUI();
-  showQueueToast(`⚡ Berhasil dimasukkan ke Antrean #${promptQueue.length}`);
+  showQueueToast(`Berhasil dimasukkan ke Antrean #${promptQueue.length}`);
 }
 
 function removePromptQueueItem(id) {
@@ -8942,9 +8942,8 @@ function renderPromptQueueUI() {
         <div class="queue-card-header">
           <div class="queue-card-badge-wrap">
             <span class="queue-badge-pill ${isNext ? 'pulse-lime' : ''}">
-              ${isNext ? '⚡ Antrean #1 (Berikutnya)' : `#${index + 1} Antrean`}
+              ${isNext ? 'Antrean #1 (Berikutnya)' : `Antrean #${index + 1}`}
             </span>
-            <span class="queue-mode-tag">${item.chatMode === 'chat' ? '💬 Chat' : '🤖 Agent'}</span>
           </div>
           <div class="queue-card-actions">
             ${index > 0 ? `<button type="button" class="btn-queue-card-action btn-move-up" data-idx="${index}" title="Naikkan Urutan">▲</button>` : ''}
