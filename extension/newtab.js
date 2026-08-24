@@ -74,11 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingsIframe = document.getElementById('settings-embedded-iframe');
   const sidebarItems = document.querySelectorAll('.app-sidebar .sidebar-nav-item');
 
-  // Preload settings iframe in background for instant cut
-  if (settingsIframe && !settingsIframe.src) {
-    settingsIframe.src = 'options.html#ai';
-  }
-
   function updateActiveSidebarTab(tabName) {
     sidebarItems.forEach(item => {
       const itemTab = item.getAttribute('data-tab');

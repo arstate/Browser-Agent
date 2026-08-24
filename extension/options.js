@@ -2967,7 +2967,10 @@ async function loadPersistentBrainData() {
       const searchInput = document.getElementById('search-brain-input');
       renderPersistentBrain(searchInput ? searchInput.value : "");
       if (currentBrainViewMode === 'graph' && brainGraphEngine) {
-        brainGraphEngine.buildGraphData(brainData, config, agentsList, skillsList, memoriesList);
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab && activeTab.id === 'tab-view-persistent-brain') {
+          brainGraphEngine.buildGraphData(brainData, config, agentsList, skillsList, memoriesList);
+        }
       }
     }
   } catch (err) {
