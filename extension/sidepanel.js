@@ -629,19 +629,25 @@ function getThinkingDirective(level) {
     case "high":
       return `\n\n=== [AI THINKING LEVEL: HIGH (Mendalam — Multi-Branch Tree-of-Thought)] ===
 - Eksplorasi 2-3 jalur penalaran paralel di dalam pikiran Anda.
+- Dekomposisi tugas ke langkah-langkah kerja terstruktur (Step 1, Step 2, dst.).
 - Uji kasus ekstrem (edge cases) dan verifikasi konvergensi hasil sebelum menyajikan jawaban terbaik.`;
     case "xhigh":
-      return `\n\n=== [AI THINKING LEVEL: XHIGH (Kritik Diri Ketat — Adversarial Red-Teaming)] ===
-- Bertindaklah sebagai pengkritik paling tajam terhadap draf Anda sendiri (Devil's Advocate).
+      return `\n\n=== [AI THINKING LEVEL: XHIGH (Kritik Diri Ketat — Adversarial Red-Teaming & Step Planning)] ===
+- 🧠 RENCANAKAN RANGKAIAN LANGKAH EKSEKUSI DETAIL: Petakan rencana kerja bertahap dan jalankan secara komprehensif.
+- 🛡️ Bertindaklah sebagai pengkritik paling tajam terhadap draf Anda sendiri (Devil's Advocate).
 - Cari minimal 3 potensi celah, bug, asumsi keliru, atau kontradiksi logis pada draf Anda, perbaiki seluruh kelemahan tersebut, lalu sajikan solusi yang kokoh tanpa celah.`;
     case "extreme":
     case "max":
-      return `\n\n=== [AI THINKING LEVEL: EXTREME (10x LIPAT MIKIR KERAS — First Principles & Exhaustive Stress-Testing)] ===
-- KERAHKAN KAPASITAS PENALARAN MAKSIMAL (10x LIPAT LEBIH MIKIR KERAS).
-- Dekonstruksi seluruh masalah dari prinsip paling mendasar (First Principles).
-- Simulasikan skenario kegagalan sistem terburuk (Worst-Case Failure Modes & Edge Case Stress-Testing).
-- Lakukan backtracking penuh jika ada hipotesis atau langkah yang suboptimal.
-- Optimalkan setiap baris kode/analisis hingga tingkat presisi mikroskopis mutlak sebelum menyajikan solusi akhir.`;
+      return `\n\n=== [AI THINKING LEVEL: EXTREME 10x (MAXIMUM COGNITIVE CAPACITY & HYPER-DETAILED REASONING)] ===
+- 🧠 KERAHKAN KAPASITAS PENALARAN MAKSIMAL (10x LIPAT BERPIKIR SANGAT KERAS, TAJAM, & DETAIL).
+- 📋 DEKOMPOSISI RENCANA MULTI-LANGKAH MENYELURUH (MULTI-STAGE ACTION PLAN):
+  Sebelum mengeksekusi tindakan atau menyimpulkan jawaban, susun pemetaan rencana kerja granular (Step 1, Step 2, Step 3, dst.) yang komprehensif. Jika tugas rumit atau melibatkan banyak data, pecah menjadi sebanyak mungkin sub-langkah yang diperlukan tanpa memotong proses.
+- 🔬 FIRST PRINCIPLES & MULTI-HYPOTHESIS TREE-OF-THOUGHT:
+  Dekonstruksi setiap masalah dari hukum/prinsip paling dasar. Evaluasi minimal 3 hipotesis atau arsitektur solusi yang berbeda, bedah implikasi dan resiko setiap cabang, lalu pilih lintasan eksekusi yang paling sempurna.
+- 🛡️ ADVERSARIAL STRESS-TESTING & DEVIL'S ADVOCATE AUDIT:
+  Uji secara agresif setiap baris argumen, kode, atau query Anda. Cari potensi kegagalan sistem terburuk (worst-case failure modes), edge cases, race conditions, false assumptions, dan bias data. Lakukan backtracking dan perbaikan total seketika.
+- 📊 KEDALAMAN HASIL AKHIR SUPER MIKROSKOPIS (ULTRA-DEEP COMPREHENSIVE OUTPUT):
+  DILARANG membuat ringkasan dangkal atau melewatkan detail krusial. Sajikan analisis, kode, dan solusi dengan kedalaman mikroskopis mutlak, terstruktur, berbasis bukti empiris, dan siap dieksekusi 100%.`;
     default:
       return `\n\n=== [AI THINKING LEVEL: HIGH (Mendalam — Multi-Branch Tree-of-Thought)] ===
 - Eksplorasi alternatif solusi, uji edge cases, dan berikan penalaran terstruktur.`;
@@ -3658,7 +3664,29 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   };
 
   const assistantBubble = appendAssistantMessage(null, true, agentInfo);
-  let maxSteps = 30;
+  
+  // Dynamic Max Steps ceiling based on AI Thinking Level
+  let maxSteps = 35;
+  if (currentThinkingLevel === 'low') maxSteps = 15;
+  else if (currentThinkingLevel === 'medium') maxSteps = 25;
+  else if (currentThinkingLevel === 'high') maxSteps = 40;
+  else if (currentThinkingLevel === 'xhigh') maxSteps = 60;
+  else if (currentThinkingLevel === 'extreme' || currentThinkingLevel === 'max') maxSteps = 100;
+
+  function detectPlannedStepsCount(text) {
+    if (!text || typeof text !== 'string') return null;
+    const matches = text.match(/(?:^|\n)\s*(?:[0-9]+\.|\b(?:Step|Langkah|Tahap)\s+[0-9]+[:\.\)])\s+[^\n]+/gi);
+    if (matches && matches.length >= 2) {
+      return matches.length;
+    }
+    const planTagMatch = text.match(/\[(?:PLAN|TOTAL\s*STEPS|RENCANA):\s*(\d+)\s*(?:STEPS|LANGKAH)?\]/i);
+    if (planTagMatch && parseInt(planTagMatch[1], 10) > 0) {
+      return parseInt(planTagMatch[1], 10);
+    }
+    return null;
+  }
+
+  let plannedStepsTotal = detectPlannedStepsCount(userMessage);
   let currentStep = 0;
   const sessionGeneratedImages = [];
 
@@ -3682,14 +3710,17 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     while (currentStep < maxSteps && isExecuting) {
       currentStep++;
       const thinkTag = (currentThinkingLevel === 'max' || currentThinkingLevel === 'extreme') ? ' (Extreme 10x)' : (currentThinkingLevel === 'xhigh' ? ' (Xhigh)' : (currentThinkingLevel === 'low' ? ' (Fast)' : ''));
+      const displayTotalSteps = plannedStepsTotal ? Math.max(plannedStepsTotal, currentStep) : Math.max(currentStep, 1);
+      const stepStr = plannedStepsTotal ? `Step ${currentStep}/${displayTotalSteps}` : `Step ${currentStep}`;
+
       if (hasBoss) {
-        updateFooterStatus(`👑 Master Agent${thinkTag} (Step ${currentStep})...`);
-        notifyActiveTabExecutionState(true, currentStep, maxSteps, `Master Agent${thinkTag}: Step ${currentStep}/${maxSteps}`);
-        updateAssistantActiveAgent(assistantBubble, "Master Agent", `Mengarahkan tim eksekutor${thinkTag} (Step ${currentStep})...`, true, false);
+        updateFooterStatus(`👑 Master Agent${thinkTag} (${stepStr})...`);
+        notifyActiveTabExecutionState(true, currentStep, displayTotalSteps, `Master Agent${thinkTag}: ${stepStr}`);
+        updateAssistantActiveAgent(assistantBubble, "Master Agent", `Mengarahkan tim eksekutor${thinkTag} (${stepStr})...`, true, false);
       } else {
-        updateFooterStatus(`${initialAgentName}${thinkTag} (Step ${currentStep})...`);
-        notifyActiveTabExecutionState(true, currentStep, maxSteps, `${initialAgentName}${thinkTag}: Step ${currentStep}/${maxSteps}`);
-        updateAssistantActiveAgent(assistantBubble, initialAgentName, `Memproses${thinkTag} (Step ${currentStep})...`, false, false);
+        updateFooterStatus(`${initialAgentName}${thinkTag} (${stepStr})...`);
+        notifyActiveTabExecutionState(true, currentStep, displayTotalSteps, `${initialAgentName}${thinkTag}: ${stepStr}`);
+        updateAssistantActiveAgent(assistantBubble, initialAgentName, `Memproses${thinkTag} (${stepStr})...`, false, false);
       }
 
       // Prepare sanitized payload for API with dynamic agent persona & skills
@@ -3896,6 +3927,11 @@ Tugas Anda:
 
       conversationHistory.push(message);
 
+      const detectedInPlan = detectPlannedStepsCount(accumulatedContent || message.content);
+      if (detectedInPlan && (!plannedStepsTotal || detectedInPlan > plannedStepsTotal)) {
+        plannedStepsTotal = detectedInPlan;
+      }
+
       // Finalize assistant text only if there are NO tool calls in this turn
       if (message.content && (!message.tool_calls || message.tool_calls.length === 0)) {
         updateAssistantText(assistantBubble, ensureGeneratedImagesInText(message.content, sessionGeneratedImages), false);
@@ -3905,6 +3941,10 @@ Tugas Anda:
 
       // Check if model called tools
       if (message.tool_calls && message.tool_calls.length > 0) {
+        if (!plannedStepsTotal || plannedStepsTotal < currentStep + message.tool_calls.length - 1) {
+          plannedStepsTotal = Math.max(plannedStepsTotal || 0, currentStep + message.tool_calls.length - 1);
+        }
+
         // Clear interim pseudo-tool strings from bubble so only clean tool section is shown
         const contentEl = assistantBubble?.querySelector('.message-content');
         if (contentEl) {
@@ -3967,9 +4007,12 @@ Tugas Anda:
             badgeActionName = "Konfirmasi Opsi Pilihan";
           }
           const badge = appendToolBadge(assistantBubble, badgeActionName, toolArgs, workerName);
+          const displayTotalSteps = plannedStepsTotal ? Math.max(plannedStepsTotal, currentStep) : Math.max(currentStep, 1);
+          const stepStr = plannedStepsTotal ? `Step ${currentStep}/${displayTotalSteps}` : `Step ${currentStep}`;
+          
           updateAssistantActiveAgent(assistantBubble, workerName, `Menjalankan ${badgeActionName}...`, isBossWorker, false);
-          updateFooterStatus(`⚡ ${workerName}: ${badgeActionName}...`);
-          notifyActiveTabExecutionState(true, currentStep, maxSteps, `${workerName}: ${badgeActionName}...`);
+          updateFooterStatus(`⚡ ${workerName}: ${badgeActionName} (${stepStr})...`);
+          notifyActiveTabExecutionState(true, currentStep, displayTotalSteps, `${workerName}${thinkTag}: ${stepStr} • ${badgeActionName}`);
 
           let toolOutput = "";
           let isImageGen = (toolName === "generate_image");
@@ -4047,9 +4090,11 @@ Tugas Anda:
 
     if (toolBadges.length > 0 && !isSubstantialFinalAnswer) {
       try {
-        updateAssistantActiveAgent(assistantBubble, "Master Agent", "Menyusun laporan akhir...", true, false);
-        updateFooterStatus("👑 Master Agent: Menyusun laporan akhir...");
-        notifyActiveTabExecutionState(true, currentStep, maxSteps, "Master Agent: Menyusun laporan akhir...");
+        const displayTotalSteps = plannedStepsTotal ? Math.max(plannedStepsTotal, currentStep) : Math.max(currentStep, 1);
+        const stepStr = plannedStepsTotal ? `Step ${currentStep}/${displayTotalSteps}` : `Step ${currentStep}`;
+        updateAssistantActiveAgent(assistantBubble, "Master Agent", `Menyusun laporan akhir (${stepStr})...`, true, false);
+        updateFooterStatus(`👑 Master Agent: Menyusun laporan akhir (${stepStr})...`);
+        notifyActiveTabExecutionState(true, currentStep, displayTotalSteps, `Master Agent: Menyusun laporan akhir (${stepStr})`);
         if (contentEl) {
           contentEl.innerHTML = '';
           contentEl.style.display = 'block';

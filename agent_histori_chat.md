@@ -3795,6 +3795,28 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Bump manifest to `v2.147.7`, build `extension.crx` (470.8 KB).
   - Dokumentasi spesifikasi lengkap Mac-Style Full Rounded Glasses UI resmi dicatat ke [`design.md`](file:///home/arya/browser-agent/design.md).
 
+---
+
+### 🚀 Iterasi 362: Dynamic Action-Plan Step Tracking & 10x Extreme Cognitive Thinking Engine (v2.147.8)
+- **Kebutuhan Pengguna**:
+  - Mengubah penomoran step eksekusi yang sebelumnya statis (`Step X/30`) agar dinamis dan presisi mengikuti apa yang direncanakan oleh agent (`Step X/TotalPlanned` atau `Step X/8 • Nama Sub-Aksi`).
+  - Meningkatkan kapasitas berpikir agent secara drastis (*Extreme 10x Thinking Mode*) agar agent berpikir berkali-kali lipat lebih keras, menggunakan dekomposisi langkah First Principles, eksplorasi multi-cabang (Tree-of-Thought), audit diri Adversarial Red-Teaming (Devil's Advocate), dan menghasilkan laporan super detail tanpa memotong proses.
+- **Implementasi & Peningkatan Sistem**:
+  1. **Dynamic Action-Plan Step Tracking**:
+     - Menghapus pembatasan statis 30 langkah.
+     - Menyediakan limit adaptif sesuai Thinking Level: Low (15), Medium (25), High (40), Xhigh (60), Extreme/Max (100).
+     - Mengimplementasikan `detectPlannedStepsCount(text)` yang secara otomatis memindai rencana langkah kerja (`1.`, `2.`, `Step 1:`, `[PLAN: N STEPS]`, dll.) dari prompt pengguna, draf pemikiran AI, maupun antrian tool calls.
+     - HUD Pill (`content.js`), footer status, dan bubble agent kini menampilkan progress dinamis yang akurat: `Master Agent (Extreme 10x): Step 4/8 • Mengaudit Halaman` atau `AI Visual Designer: Step 3/3 • generate_image`.
+  2. **10x Extreme Cognitive Thinking Directive**:
+     - Memperbarui sistem prompt penalaran pada `getThinkingDirective('extreme')` untuk mewajibkan:
+       - *Multi-Stage Action Plan Decomposition*: Memetakan sub-langkah sebelum eksekusi.
+       - *First Principles & Multi-Hypothesis Tree*: Membedah masalah dari fondasi dasar dan menguji 3+ cabang alternatif solusi.
+       - *Adversarial Stress-Testing & Devil's Advocate Audit*: Menguji celah asumsi, edge cases, failure modes, dan melakukan perbaikan mandiri seketika.
+       - *Ultra-Deep Microscopic Output*: Menolak ringkasan dangkal demi kedalaman analisis dan akurasi teknis tingkat tinggi.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.8`, build `extension.crx` (471.8 KB).
+
 
 
 
