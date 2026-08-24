@@ -3461,6 +3461,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Seluruh 17 unit test lulus 100% (Zero Bug).
      - Bump manifest to `v2.144.1`, re-pack `extension.crx` (457.7 KB).
 
+---
+
+### 🚀 Iterasi 346: Proactive First-Turn Autonomous Executive Action Engine (v2.145.0)
+- **Problem**:
+  - AI bersikap pasif saat pengguna memperkenalkan peran/pekerjaan/domain baru (misal: "saya magang di diskominfo bagian konten ig bangga surabaya"), hanya merespons analisis teks dan baru menyimpan agent/skill ketika disuruh secara eksplisit oleh pengguna ("save agent desainer banggasurabaya").
+- **Solusi & Arsitektur Baru**:
+  1. **Mandat Proaktif Otonom Turn Pertama (`buildDynamicSystemPrompt`)**:
+     - Menghapus bahasa pasif "saat dibutuhkan" dan menggantinya dengan aturan imperatif: Begitu pengguna menyebutkan peran/domain baru, AI **WAJIB MEMANGGIL 4 TOOLS DI TURN PERTAMA** sebelum teks akhir ditulis:
+       1. `manage_personal_memory`: Simpan konteks & peran kerja pengguna ke database persistent.
+       2. `create_autonomous_skill`: Susun SOP operasional komprehensif spesifik domain tersebut.
+       3. `create_autonomous_agent`: Spawn & simpan Sub-Agent spesialis yang terhubung ke skill tersebut.
+       4. `save_epistemic_triplet`: Petakan relasi entitas ke Epistemic Graph.
+  2. **Penegasan Daftar Capabilities**:
+     - Menyematkan kategori 1 `Autonomous Brain & Self-Evolution Tools` di bagian paling atas daftar kapabilitas sistem agar model LLM mengutamakan *tool calling* otonom.
+  3. **Pengujian & Rilis**:
+     - 17/17 Unit Tests lulus 100% (Zero Bug).
+     - Bump manifest to `v2.145.0`, build `extension.crx` (458.2 KB).
+
 
 
 
