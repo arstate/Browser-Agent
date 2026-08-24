@@ -3755,6 +3755,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.5`, build `extension.crx` (470.3 KB).
 
+---
+
+### 🚀 Iterasi 360: Mac-Style Full Rounded Glasses UI for Sidebar Navigation (v2.147.6)
+- **Kebutuhan Pengguna**:
+  - Memperbarui gaya navigasi sidebar di halaman New Tab (Homescreen) dan Pengaturan (Settings) menjadi bentuk **Full Rounded Capsule Glasses ala macOS** yang clean, elegan, dan estetik.
+- **Implementasi & Desain UI**:
+  1. **Full Capsule Pills (`border-radius: 9999px !important`)**:
+     - Mengubah seluruh item navigasi sidebar (`.sidebar-nav-item` & `.sidebar-tab-btn`) menjadi bentuk kapsul bulat penuh.
+  2. **Liquid Frosted Glass Translucency**:
+     - **Active State (`.active`)**: Menggunakan background gradient kaca `linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%)`, border stroke 1px `rgba(255, 255, 255, 0.15)`, inner highlight `box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 2px 10px rgba(0, 0, 0, 0.3)`, dan `backdrop-filter: blur(12px)`.
+     - **Active Icon**: Menyala dengan warna neon lime dan efek glow halus (`filter: drop-shadow(0 0 6px rgba(206, 241, 40, 0.45))`).
+     - **Hover State**: Highlight kaca lembut `rgba(255, 255, 255, 0.05)` dengan border `rgba(255, 255, 255, 0.08)`.
+  3. **Translucent Capsule Badges (`.tab-btn-badge`)**:
+     - Badge hitungan agen, skill, memori, dan persistent brain dibentuk kapsul pill penuh dengan border halus dan warna kontras cerah.
+  4. **Clean Typography & Spacing**:
+     - Header seksi `SETTINGS` dengan uppercase muted contrast (`color: rgba(148, 163, 184, 0.55)`, `letter-spacing: 1px`) dan divider line yang rapi.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.6`, build `extension.crx` (470.6 KB).
+
 
 
 
