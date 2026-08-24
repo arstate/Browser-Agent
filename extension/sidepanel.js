@@ -3565,7 +3565,7 @@ Tugas Anda:
         ...sanitizeMessagesForApi(conversationHistory)
       ];
 
-      const endpointUrl = config.endpoint.replace(/\/+$/, "") + "/chat/completions";
+      const endpointUrl = getNormalizedChatEndpoint(config.endpoint);
       const headers = {
         "Content-Type": "application/json"
       };
@@ -3588,6 +3588,7 @@ Tugas Anda:
 
       let response = null;
       let activeModelChoice = candidateModels[0];
+      let lastErrorMessage = "";
 
       for (let mIdx = 0; mIdx < candidateModels.length; mIdx++) {
         activeModelChoice = candidateModels[mIdx];
@@ -3616,12 +3617,13 @@ Tugas Anda:
             } catch (e) {
               errorMsg = await resp.text();
             }
+            lastErrorMessage = errorMsg;
 
-            if (isRateLimitError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
+            if (isRetryableAIError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
               const nextModel = candidateModels[mIdx + 1];
-              console.warn(`[Auto-Rotate] Model '${activeModelChoice}' rate limited (${resp.status}). Rotating to '${nextModel}'...`);
-              updateFooterStatus(`🔄 Rate limit: Beralih ke ${nextModel}...`);
-              updateAssistantActiveAgent(assistantBubble, hasBoss ? "Master Agent" : initialAgentName, `🔄 Model \`${activeModelChoice}\` terkena rate limit. Otomatis beralih ke \`${nextModel}\`...`, true, false);
+              console.warn(`[Auto-Rotate] Model '${activeModelChoice}' error (${resp.status}: ${errorMsg}). Rotating to '${nextModel}'...`);
+              updateFooterStatus(`🔄 Kendala pada ${activeModelChoice}: Beralih ke ${nextModel}...`);
+              updateAssistantActiveAgent(assistantBubble, hasBoss ? "Master Agent" : initialAgentName, `🔄 Model \`${activeModelChoice}\` mengalami kendala (${resp.status}). Otomatis beralih ke \`${nextModel}\`...`, true, false);
               continue;
             }
 
@@ -3631,6 +3633,8 @@ Tugas Anda:
               throw new Error(`API Key Invalid (401): ${errorMsg || 'API Key salah atau belum diatur di Pengaturan.'}`);
             } else if (resp.status === 400) {
               throw new Error(`Bad Request / Limit (400): ${errorMsg || 'Panjang konteks atau format permintaan melampaui batas model.'}`);
+            } else if (resp.status === 404) {
+              throw new Error(`Model / Endpoint Not Found (404): ${errorMsg || 'Model atau URL endpoint tidak ditemukan.'}`);
             }
             throw new Error(`AI Request Error (${resp.status}): ${errorMsg}`);
           }
@@ -3639,10 +3643,12 @@ Tugas Anda:
           break;
         } catch (fetchErr) {
           if (fetchErr.name === 'AbortError' || !isExecuting) throw fetchErr;
-          if (isRateLimitError(0, fetchErr.message) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
+          lastErrorMessage = fetchErr.message;
+          if (isRetryableAIError(0, fetchErr.message) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
             const nextModel = candidateModels[mIdx + 1];
-            console.warn(`[Auto-Rotate] Exception on '${activeModelChoice}'. Rotating to '${nextModel}'...`, fetchErr);
-            updateFooterStatus(`🔄 Rate limit: Beralih ke ${nextModel}...`);
+            console.warn(`[Auto-Rotate] Network/Connection Exception on '${activeModelChoice}'. Rotating to '${nextModel}'...`, fetchErr);
+            updateFooterStatus(`🔄 Network issue: Beralih ke ${nextModel}...`);
+            updateAssistantActiveAgent(assistantBubble, hasBoss ? "Master Agent" : initialAgentName, `🔄 Model \`${activeModelChoice}\` mengalami kendala koneksi. Otomatis beralih ke \`${nextModel}\`...`, true, false);
             continue;
           }
           throw fetchErr;
@@ -3650,7 +3656,7 @@ Tugas Anda:
       }
 
       if (!response) {
-        throw new Error(`Gagal menghubungi AI dengan model ${candidateModels.join(', ')}.`);
+        throw new Error(lastErrorMessage || `Gagal menghubungi AI dengan model ${candidateModels.join(', ')}.`);
       }
 
       let message = null;
@@ -3940,7 +3946,7 @@ Tugas Anda:
           }
         ];
 
-        const endpointUrl = config.endpoint.replace(/\/+$/, "") + "/chat/completions";
+        const endpointUrl = getNormalizedChatEndpoint(config.endpoint);
         const headers = { "Content-Type": "application/json" };
         if (config.apiKey) headers["Authorization"] = `Bearer ${config.apiKey}`;
 
@@ -4116,13 +4122,14 @@ Tugas Anda:
       updateFooterStatus("Execution Cancelled");
     } else {
       console.error("Agent Loop Error:", err);
+      const friendlyMsg = formatFriendlyErrorMessage(err, config.endpoint, (typeof activeModelChoice !== 'undefined' ? activeModelChoice : ''));
       // Only render error card if there is no image already rendered in bubble
       const contentEl = assistantBubble?.querySelector('.message-content');
       if (!contentEl || !contentEl.querySelector('.generated-image-card')) {
-        renderErrorCard(assistantBubble, err.message, true);
+        renderErrorCard(assistantBubble, friendlyMsg, true);
       }
       updateAssistantActiveAgent(assistantBubble, finalAgentName, "Error", hasBoss, true);
-      updateFooterStatus("AI Error / Limit Reached");
+      updateFooterStatus("AI Error / Network Issue");
     }
   } finally {
     isExecuting = false;
@@ -5010,7 +5017,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
     let accumulatedContent = "";
 
     try {
-      const endpointUrl = config.endpoint.replace(/\/+$/, "") + "/chat/completions";
+      const endpointUrl = getNormalizedChatEndpoint(config.endpoint);
       const headers = {
         "Content-Type": "application/json"
       };
@@ -5040,6 +5047,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 
       let response = null;
       let activeModelChoice = candidateModels[0];
+      let lastErrorMessage = "";
 
       for (let mIdx = 0; mIdx < candidateModels.length; mIdx++) {
         activeModelChoice = candidateModels[mIdx];
@@ -5066,16 +5074,19 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
             } catch (e) {
               errorMsg = await resp.text();
             }
+            lastErrorMessage = errorMsg;
 
-            if (isRateLimitError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
+            if (isRetryableAIError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
               const nextModel = candidateModels[mIdx + 1];
-              console.warn(`[Auto-Rotate Chat] Model '${activeModelChoice}' rate limited (${resp.status}). Rotating to '${nextModel}'...`);
-              updateAssistantText(assistantBubble, `*🔄 Model \`${activeModelChoice}\` terkena rate limit. Otomatis beralih ke \`${nextModel}\`...*\n\n`, true);
+              console.warn(`[Auto-Rotate Chat] Model '${activeModelChoice}' error (${resp.status}: ${errorMsg}). Rotating to '${nextModel}'...`);
+              updateAssistantText(assistantBubble, `*🔄 Model \`${activeModelChoice}\` mengalami kendala. Otomatis beralih ke \`${nextModel}\`...*\n\n`, true);
               continue;
             }
 
             if (resp.status === 429) {
               throw new Error(`Rate Limit Exceeded (429): ${errorMsg || 'Kuota API limit atau rate limit tercapai. Silakan coba beberapa saat lagi.'}`);
+            } else if (resp.status === 401) {
+              throw new Error(`API Key Invalid (401): ${errorMsg || 'API Key salah atau belum diatur di Pengaturan.'}`);
             }
             throw new Error(`AI Request Error (${resp.status}): ${errorMsg}`);
           }
@@ -5084,9 +5095,11 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
           break;
         } catch (fetchErr) {
           if (fetchErr.name === 'AbortError' || !isExecuting) throw fetchErr;
-          if (isRateLimitError(0, fetchErr.message) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
+          lastErrorMessage = fetchErr.message;
+          if (isRetryableAIError(0, fetchErr.message) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
             const nextModel = candidateModels[mIdx + 1];
-            console.warn(`[Auto-Rotate Chat] Exception on '${activeModelChoice}'. Rotating to '${nextModel}'...`, fetchErr);
+            console.warn(`[Auto-Rotate Chat] Connection Exception on '${activeModelChoice}'. Rotating to '${nextModel}'...`, fetchErr);
+            updateAssistantText(assistantBubble, `*🔄 Kendala koneksi pada \`${activeModelChoice}\`. Mencoba \`${nextModel}\`...*\n\n`, true);
             continue;
           }
           throw fetchErr;
@@ -5094,7 +5107,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
       }
 
       if (!response) {
-        throw new Error(`Gagal menghubungi AI dengan model ${candidateModels.join(', ')}.`);
+        throw new Error(lastErrorMessage || `Gagal menghubungi AI dengan model ${candidateModels.join(', ')}.`);
       }
 
       if (response.body && typeof response.body.getReader === 'function') {
@@ -5227,11 +5240,12 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
       } else {
         console.error("Chat Mode Error:", err);
         updateAssistantActiveAgent(assistantBubble, finalAgentName, "Gagal", hasBoss, true);
+        const friendlyMsg = formatFriendlyErrorMessage(err, config.endpoint, (typeof activeModelChoice !== 'undefined' ? activeModelChoice : ''));
         if (contentEl) {
           contentEl.style.display = 'block';
-          contentEl.innerHTML = `<div class="error-msg-box" style="color: #EF4444; font-size: 13px; font-weight: 500; line-height: 1.5; padding: 10px 14px; background: rgba(239, 68, 68, 0.08); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.25);">Kesalahan: ${escapeHtml(err.message || 'Gagal merespons')}</div>`;
+          contentEl.innerHTML = `<div class="error-msg-box" style="color: #EF4444; font-size: 13px; font-weight: 500; line-height: 1.5; padding: 10px 14px; background: rgba(239, 68, 68, 0.08); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.25);">${escapeHtml(friendlyMsg)}</div>`;
         }
-        updateFooterStatus("AI Error / Limit Reached");
+        updateFooterStatus("AI Error / Network Issue");
       }
     } finally {
       isExecuting = false;
@@ -6344,6 +6358,17 @@ function getModelDisplayName(modelId) {
   return modelId;
 }
 
+function getNormalizedChatEndpoint(rawEndpoint) {
+  if (!rawEndpoint || typeof rawEndpoint !== 'string' || !rawEndpoint.trim()) {
+    return "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+  }
+  let clean = rawEndpoint.trim().replace(/\/+$/, "");
+  if (clean.endsWith("/chat/completions")) {
+    return clean;
+  }
+  return clean + "/chat/completions";
+}
+
 function isRateLimitError(status, errorMsg = "") {
   if (status === 429 || status === 503) return true;
   const lower = String(errorMsg || "").toLowerCase();
@@ -6357,6 +6382,50 @@ function isRateLimitError(status, errorMsg = "") {
     lower.includes("capacity") ||
     lower.includes("busy")
   );
+}
+
+function isRetryableAIError(status, errorMsg = "") {
+  if (isRateLimitError(status, errorMsg)) return true;
+  if (status === 429 || status === 503 || status === 502 || status === 504 || status === 500 || status === 408 || status === 0) return true;
+  const lower = String(errorMsg || "").toLowerCase();
+  return (
+    lower.includes("network error") ||
+    lower.includes("network_error") ||
+    lower.includes("failed to fetch") ||
+    lower.includes("networkrequestfailed") ||
+    lower.includes("connection") ||
+    lower.includes("refused") ||
+    lower.includes("timeout") ||
+    lower.includes("econnreset")
+  );
+}
+
+function formatFriendlyErrorMessage(err, endpointUrl = "", activeModel = "") {
+  if (!err) return "Terjadi kesalahan tidak diketahui.";
+  const raw = String(err.message || err.toString() || "");
+  const lower = raw.toLowerCase();
+
+  if (lower.includes("network error") || lower.includes("failed to fetch") || lower.includes("networkrequestfailed") || lower.includes("err_connection_refused") || lower.includes("err_name_not_resolved")) {
+    const isLocal = endpointUrl.includes("localhost") || endpointUrl.includes("127.0.0.1");
+    if (isLocal) {
+      return `Gagal terhubung ke server AI lokal (${endpointUrl}). Pastikan server AI lokal Anda (Ollama / 9Router / LM Studio / LocalAI) sudah berjalan aktif di latar belakang.`;
+    }
+    return `Koneksi jaringan terputus (Network Error). Gagal menghubungi endpoint API AI (${endpointUrl || 'API URL'}). Pastikan koneksi internet Anda aktif dan URL endpoint sudah benar di Pengaturan.`;
+  }
+
+  if (lower.includes("401") || lower.includes("invalid api key") || lower.includes("unauthorized") || lower.includes("api_key_invalid")) {
+    return `API Key tidak valid atau belum diatur (401 Unauthorized). Silakan periksa dan masukkan API Key yang benar di menu Pengaturan.`;
+  }
+
+  if (lower.includes("429") || lower.includes("quota") || lower.includes("rate limit") || lower.includes("resource_exhausted")) {
+    return `Batas kuota atau rate limit API AI tercapai (429 Rate Limit Exceeded). Silakan ganti model AI lain atau tunggu beberapa saat.`;
+  }
+
+  if (lower.includes("404") || lower.includes("not found")) {
+    return `Endpoint URL atau model tidak ditemukan (404 Not Found). Periksa Base URL API (${endpointUrl}) atau nama model (${activeModel}) di Pengaturan.`;
+  }
+
+  return raw;
 }
 
 function loadSettings() {
@@ -7030,9 +7099,10 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
 
 // Test AI Connection Button
 document.getElementById('btn-test-ai')?.addEventListener('click', async () => {
-  const endpoint = document.getElementById('setting-endpoint').value.trim().replace(/\/+$/, "") + "/chat/completions";
-  const apiKey = document.getElementById('setting-apikey').value.trim();
-  const model = document.getElementById('setting-model').value.trim();
+  const rawEp = document.getElementById('setting-endpoint')?.value || "";
+  const endpoint = getNormalizedChatEndpoint(rawEp);
+  const apiKey = document.getElementById('setting-apikey')?.value?.trim() || "";
+  const model = document.getElementById('setting-model')?.value?.trim() || "gemini-2.5-pro";
   const resultBox = document.getElementById('test-ai-result');
 
   resultBox.style.display = 'block';
@@ -7060,13 +7130,19 @@ document.getElementById('btn-test-ai')?.addEventListener('click', async () => {
       resultBox.className = 'test-result-box success';
       resultBox.textContent = `Connected successfully! Latency: ${elapsed}ms (Model: ${model})`;
     } else {
-      const errText = await res.text();
+      let errorMsg = "";
+      try {
+        const errJson = await res.json();
+        errorMsg = errJson.error?.message || errJson.message || JSON.stringify(errJson);
+      } catch (e) {
+        errorMsg = await res.text();
+      }
       resultBox.className = 'test-result-box error';
-      resultBox.textContent = `Failed (${res.status}): ${errText}`;
+      resultBox.textContent = `Failed (${res.status}): ${errorMsg}`;
     }
   } catch (err) {
     resultBox.className = 'test-result-box error';
-    resultBox.textContent = `Error: ${err.message}`;
+    resultBox.textContent = `Error: ${formatFriendlyErrorMessage(err, endpoint, model)}`;
   }
 });
 

@@ -3444,6 +3444,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   6. **Release & Packaging**:
      - Bump manifest to `v2.144.0`, re-pack `extension.crx` (456.5 KB).
 
+---
+
+### 🚀 Iterasi 345: Fix Network Error Handling, Endpoint Normalization & Auto-Rotate Resilience (v2.144.1)
+- **Problem**:
+  - Muncul error `Agent Loop Error: TypeError: network error` di `chrome://extensions/` saat endpoint AI tidak merespons, offline, atau URL endpoint tidak dinormalisasi.
+- **Penyebab & Solusi**:
+  1. **Endpoint Normalization (`getNormalizedChatEndpoint`)**:
+     - Mencegah duplikasi URL `/chat/completions/chat/completions` jika user memasukkan URL lengkap di Pengaturan.
+  2. **Retryable Error & Auto-Rotate Network Fallback (`isRetryableAIError`)**:
+     - Memperluas deteksi rate limit dan error jaringan (`network error`, `failed to fetch`, `networkrequestfailed`, `connection`, `timeout`, `econnreset`, status 0, 408, 500, 502, 503, 504).
+     - Otomatis melakukan *failover* (beralih) ke model prioritas berikutnya dalam daftar `candidateModels` jika terjadi gangguan koneksi pada model pertama.
+  3. **Actionable Friendly Error Formatter (`formatFriendlyErrorMessage`)**:
+     - Menerjemahkan error teknis mentah menjadi petunjuk yang jelas bagi pengguna (misal: apakah server AI lokal seperti Ollama/9Router belum dinyalakan, API Key keliru, atau koneksi internet terputus) lengkap dengan tombol *Coba Lagi* dan pintasan *Pengaturan*.
+  4. **CRX Build & Unit Tests**:
+     - Seluruh 17 unit test lulus 100% (Zero Bug).
+     - Bump manifest to `v2.144.1`, re-pack `extension.crx` (457.7 KB).
+
 
 
 
