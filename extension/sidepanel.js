@@ -6502,9 +6502,16 @@ function formatMarkdown(raw) {
     finalHtml = finalHtml.split(`\uE000TABLE_BLOCK_${idx}\uE001`).join(tbl);
   });
 
-  // 10. Restore Inline Code
+  // 10. Restore Inline Code (with Intelligent Color Swatches & Clean Handle Badges)
   inlineCodes.forEach((code, idx) => {
-    finalHtml = finalHtml.split(`\uE000INLINE_CODE_${idx}\uE001`).join(`<code class="md-inline-code">${code}</code>`);
+    const trimmed = code.trim();
+    if (/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/i.test(trimmed)) {
+      finalHtml = finalHtml.split(`\uE000INLINE_CODE_${idx}\uE001`).join(`<code class="md-inline-code md-color-pill"><span class="color-swatch-dot" style="background-color: ${trimmed};"></span>${trimmed}</code>`);
+    } else if (/^@[a-zA-Z0-9_\-\.]+$/i.test(trimmed)) {
+      finalHtml = finalHtml.split(`\uE000INLINE_CODE_${idx}\uE001`).join(`<code class="md-inline-code md-handle-pill"><span class="mention-at">@</span>${escapeHtml(trimmed.slice(1))}</code>`);
+    } else {
+      finalHtml = finalHtml.split(`\uE000INLINE_CODE_${idx}\uE001`).join(`<code class="md-inline-code">${code}</code>`);
+    }
   });
 
   // 11. Restore Code Blocks

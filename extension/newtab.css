@@ -1282,22 +1282,63 @@ body.has-messages .chat-messages {
 
 .message.assistant .message-content .md-inline-code,
 .message code:not(pre code) {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 11.5px;
   font-weight: 600;
-  background: rgba(32, 32, 38, 0.92) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  color: var(--accent-lime) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #E2E8F0 !important;
   padding: 2px 7px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  word-break: break-all !important;
-  overflow-wrap: anywhere !important;
-  white-space: pre-wrap !important;
-  display: inline !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
   vertical-align: baseline;
   box-sizing: border-box;
+}
+
+.message.assistant .message-content .md-inline-code.md-color-pill {
+  padding-left: 5px;
+  font-weight: 700;
+}
+
+.color-swatch-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.message.assistant .message-content .md-inline-code.md-handle-pill {
+  color: #60A5FA !important;
+  background: rgba(59, 130, 246, 0.12) !important;
+  border-color: rgba(59, 130, 246, 0.28) !important;
+}
+
+.message.assistant .message-content .md-inline-code.md-handle-pill .mention-at {
+  color: #93C5FD;
+  font-weight: 800;
+}
+
+/* Strikethrough & Deleted Text (<del>, <s>, <strike>) */
+.message.assistant .message-content del,
+.message.assistant .message-content s,
+.message.assistant .message-content strike {
+  text-decoration: line-through;
+  text-decoration-color: rgba(239, 68, 68, 0.7);
+  color: #94A3B8 !important;
+  opacity: 0.85;
+}
+
+.message.assistant .message-content del strong,
+.message.assistant .message-content s strong {
+  color: #CBD5E1 !important;
 }
 
 .message.assistant .message-actions {

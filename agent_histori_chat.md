@@ -3674,6 +3674,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.1`, build `extension.crx` (468.7 KB).
 
+---
+
+### 🚀 Iterasi 356: Intelligent Hex Color Swatches, Word-Wrap Integrity & Strikethrough Readability (v2.147.2)
+- **Root Cause Problem**:
+  - Pada checklist respons AI (`item 3`), terdapat teks hex warna (`#D71920` dan `#0062E0`) dan handle (`@surabaya` dan `@sapawargasby`).
+  - Aturan CSS `.md-inline-code` sebelumnya menerapkan `word-break: break-all !important`, yang menyebabkan pill handle panjang terpotong paksa menjadi dua baris terpisah secara canggung (misal `@sapawarga` di baris pertama, dan `sby` di baris kedua).
+  - Elemen `<del>` / strikethrough bawaan membuat teks di dark theme memudar gelap tak terbaca (*dimmed/invisible*).
+  - Hex color code ditampilkan polosan tanpa preview warna visual.
+- **Solusi & Peningkatan UI**:
+  1. **Intelligent Color Swatch Dot (`md-color-pill`)**:
+     - Parser markdown mendeteksi kode warna Hex 3/6-digit (seperti `#D71920`, `#0062E0`, `#CEF128`) dan secara otomatis merender mini color swatch dot (`<span class="color-swatch-dot" style="background-color: #D71920;"></span>#D71920`) yang elegan dan akurat.
+  2. **Handle Integrity Pill (`md-handle-pill`)**:
+     - Handle akun/nama (seperti `@surabaya`, `@sapawargasby`) dirangkul dalam kapsul utuh dengan `white-space: nowrap !important` dan `word-break: normal !important`, sehingga tidak akan pernah terbelah dua baris lagi.
+  3. **High-Legibility Strikethrough Styling**:
+     - Memperbarui styling `.message.assistant .message-content del`: Teks tetap kontras dan mudah dibaca (`color: #94A3B8`, `opacity: 0.85`), dengan garis coret merah koral yang tegas (`text-decoration-color: rgba(239, 68, 68, 0.7)`).
+  4. **Dark Theme Ordered List Text Harmony**:
+     - Menstandarkan warna teks seluruh item daftar ordered/unordered menjadi `#E2E8F0` dengan kontras tajam pada tema gelap.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.2`, build `extension.crx` (469.3 KB).
+
 
 
 
