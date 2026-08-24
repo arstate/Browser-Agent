@@ -41,17 +41,24 @@ rm -rf "$DIR/antigravity_session/brain"
 
 # 3. Buat ZIP Distribusi Siap Pakai untuk Teman / Share (Clean Distribution ZIP)
 echo "[+] Membuat berkas ZIP distribusi siap pakai (browser-agent-v2.5.0.zip)..."
-rm -f "$DIR/browser-agent-v2.5.0.zip" "$HOME/Downloads/browser-agent-v2.5.0.zip"
+RELEASE_DIR="$HOME/Downloads/browser-agent/release"
+mkdir -p "$RELEASE_DIR"
+rm -f "$DIR/browser-agent-v2.5.0.zip" "$HOME/Downloads/browser-agent-v2.5.0.zip" "$RELEASE_DIR/browser-agent-v2.5.0.zip" "$RELEASE_DIR/browser-agent-latest.zip"
+
 zip -r "$DIR/browser-agent-v2.5.0.zip" \
   extension/ host/ extension.crx key.pem setup.py install*.sh install*.bat install*.ps1 install*.command \
-  CARA_INSTALL.md README.md CHROMEWEBSTORE.md dokumentasi.md \
+  CARA_INSTALL.md README.md CHROMEWEBSTORE.md dokumentasi.md design.md RESTORE_POINTS.md \
   "CORE AGENTS" "CORE SKILLS" "CORE MEMORIES" "PERSISTENT MEMORY" \
   -x "*.git*" "*.pyc" "*__pycache__*" "*.DS_Store" > /dev/null 2>&1 || true
 
 cp -f "$DIR/browser-agent-v2.5.0.zip" "$HOME/Downloads/browser-agent-v2.5.0.zip" 2>/dev/null || true
+cp -f "$DIR/browser-agent-v2.5.0.zip" "$RELEASE_DIR/browser-agent-v2.5.0.zip" 2>/dev/null || true
+cp -f "$DIR/browser-agent-v2.5.0.zip" "$RELEASE_DIR/browser-agent-latest.zip" 2>/dev/null || true
 echo "[✔] Berkas ZIP siap share disimpan di:"
 echo "    - $DIR/browser-agent-v2.5.0.zip"
 echo "    - $HOME/Downloads/browser-agent-v2.5.0.zip"
+echo "    - $RELEASE_DIR/browser-agent-v2.5.0.zip"
+echo "    - $RELEASE_DIR/browser-agent-latest.zip"
 
 # 4. Stage All Project Code, Extensions, Skills, Agents, Transcripts
 echo "[+] Menyiapkan file untuk commit..."
