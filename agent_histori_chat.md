@@ -3695,6 +3695,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.2`, build `extension.crx` (469.3 KB).
 
+---
+
+### 🚀 Iterasi 357: Smooth Morphing "Add to Queue" Button State during Active AI Generation (v2.147.3)
+- **Kebutuhan Pengguna**:
+  - Saat AI sedang aktif berpikir/bekerja (*generating/loading*), tombol di pojok kanan bawah input bar menampilkan animasi karakter dinamis (*eyes & eyebrows expression cycle*).
+  - Jika pengguna mulai mengetik teks atau melampirkan file/mention di kolom input, tombol karakter secara halus dan mulus (*seamless morphing*) memanjang ke kiri menjadi kapsul `+ Add to Queue` dengan teks tebal kontras dan ikon karakter di sisi kanan.
+  - Saat teks input dihapus kembali, tombol menyusut kembali (*contract smoothly*) menjadi lingkaran 36px/32px dengan animasi ekspresi karakter.
+- **Implementasi & Peningkatan**:
+  1. **HTML Architecture (`.btn-queue-morph-label`)**:
+     - Menambahkan container label `btn-queue-morph-label` dengan ikon Plus SVG dan teks `Add to Queue` di dalam button `#btn-send` pada `newtab.html` dan `sidepanel.html`.
+  2. **Reactive State Sync (`syncQueueButtonMorphState()`)**:
+     - Ditambahkan fungsi reaktif yang memantau teks di `chatInput`, lampiran `pendingAttachments`, dan mention `selectedMentionAgents` saat `isExecuting === true`.
+     - Mengontrol penambahan/penghapusan kelas `.has-queue-input` pada tombol `#btn-send`.
+  3. **CSS Smooth Morphing Animation Transition**:
+     - Diterapkan transisi elastis `transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.32s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.32s, padding 0.32s, box-shadow 0.25s`.
+     - Saat `.has-queue-input` aktif: Lebar tombol melebar otomatis ke kiri (`min-width: 136px`), label meluncur masuk (`opacity: 1; transform: translateX(0)`), dan karakter wajah morphing bergeser rapi ke sisi kanan kapsul.
+     - Hover saat queuing tidak lagi menampilkan ikon stop melainkan efek glow neon Bento Lime cerah (`box-shadow: 0 0 26px rgba(206, 241, 40, 0.75)`).
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.3`, build `extension.crx` (470.1 KB).
+
 
 
 

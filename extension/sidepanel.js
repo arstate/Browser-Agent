@@ -6020,9 +6020,29 @@ function updateSendButtonState(loading) {
     }
   } else {
     btnSend.classList.remove('loading');
+    btnSend.classList.remove('has-queue-input');
     btnSend.title = "Kirim perintah (Enter)";
     if (typeof window.stopStickmanSwarmAnimation === 'function') {
       window.stopStickmanSwarmAnimation();
+    }
+  }
+  syncQueueButtonMorphState();
+}
+
+function syncQueueButtonMorphState() {
+  if (!btnSend) return;
+  const text = chatInput ? chatInput.value.trim() : '';
+  const hasInput = (text.length > 0 || pendingAttachments.length > 0 || selectedMentionAgents.length > 0);
+
+  if (isExecuting && hasInput) {
+    btnSend.classList.add('has-queue-input');
+    btnSend.title = "Masukkan ke Antrean Prompt (Add to Queue)";
+  } else {
+    btnSend.classList.remove('has-queue-input');
+    if (isExecuting) {
+      btnSend.title = "Batalkan eksekusi (Cancel)";
+    } else {
+      btnSend.title = "Kirim perintah (Enter)";
     }
   }
 }
@@ -8421,6 +8441,7 @@ function renderAttachmentsPreview() {
   });
 
   adjustChatInputHeight();
+  syncQueueButtonMorphState();
 }
 
 function removeAttachment(id) {
@@ -9106,6 +9127,7 @@ function renderActiveMentionChips() {
       removeMentionAgent(removeId);
     });
   });
+  syncQueueButtonMorphState();
 }
 
 function addMentionAgent(ag) {
@@ -9507,6 +9529,7 @@ try {
 chatInput.addEventListener('input', () => {
   adjustChatInputHeight();
   handleChatInputMentionCheck();
+  syncQueueButtonMorphState();
   if (currentChatMode === 'websearch') {
     clearTimeout(suggestionDebounceTimer);
     suggestionDebounceTimer = setTimeout(() => {
@@ -9516,6 +9539,7 @@ chatInput.addEventListener('input', () => {
 });
 chatInput.addEventListener('keyup', (e) => {
   adjustChatInputHeight();
+  syncQueueButtonMorphState();
   if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Enter' && e.key !== 'Tab') {
     handleChatInputMentionCheck();
     if (currentChatMode === 'websearch') {
@@ -9526,7 +9550,10 @@ chatInput.addEventListener('keyup', (e) => {
     }
   }
 });
-chatInput.addEventListener('change', adjustChatInputHeight);
+chatInput.addEventListener('change', () => {
+  adjustChatInputHeight();
+  syncQueueButtonMorphState();
+});
 
 // Toggle View Mode (Chat vs Terminal)
 const btnToggleView = document.getElementById('btn-toggle-view');
