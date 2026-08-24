@@ -149,13 +149,169 @@ elif IS_WINDOWS:
     except Exception as e:
         print(f"[-] Registry error: {e}")
 
+# 6. Configure Silent Debugger Flags (Suppress "started debugging this browser" banner)
+def configure_silent_debugger_flags():
+    print("\n🔕 Mengonfigurasi Silent Debugger Flag (--silent-debugger-extension-api):")
+    flag = "--silent-debugger-extension-api"
+
+    if IS_LINUX:
+        # 1. Linux Flags Conf
+        conf_files = [
+            os.path.expanduser("~/.config/chrome-flags.conf"),
+            os.path.expanduser("~/.config/chromium-flags.conf"),
+            os.path.expanduser("~/.config/brave-flags.conf"),
+            os.path.expanduser("~/.config/microsoft-edge-flags.conf")
+        ]
+        for cf in conf_files:
+            try:
+                existing = ""
+                if os.path.exists(cf):
+                    with open(cf, "r", encoding="utf-8") as f:
+                        existing = f.read()
+                if flag not in existing:
+                    os.makedirs(os.path.dirname(cf), exist_ok=True)
+                    with open(cf, "w", encoding="utf-8") as f:
+                        f.write(f"# Auto-configured by Browser Agent installer\n{flag}\n" + (existing if existing else ""))
+                    print(f"  • Flag file dibuat: {cf}")
+                else:
+                    print(f"  • Flag file sudah aktif: {cf}")
+            except Exception as e:
+                print(f"  [!] Notice flag file {cf}: {e}")
+
+        # 2. Linux Desktop Files Override (~/.local/share/applications)
+        local_apps = os.path.expanduser("~/.local/share/applications")
+        os.makedirs(local_apps, exist_ok=True)
+        search_dirs = ["/usr/share/applications", "/var/lib/flatpak/exports/share/applications", local_apps]
+        desktop_names = ["google-chrome.desktop", "google-chrome-stable.desktop", "chromium.desktop", "brave-browser.desktop", "microsoft-edge.desktop"]
+        
+        for dname in desktop_names:
+            for sdir in search_dirs:
+                src = os.path.join(sdir, dname)
+                if os.path.exists(src):
+                    try:
+                        dest = os.path.join(local_apps, dname)
+                        with open(src, "r", encoding="utf-8") as f:
+                            content = f.read()
+                        
+                        # Replace Exec lines with flag if not present
+                        new_lines = []
+                        for line in content.splitlines():
+                            if line.startswith("Exec=") and flag not in line:
+                                parts = line.split("Exec=", 1)
+                                cmd_parts = parts[1].split(" ", 1)
+                                if len(cmd_parts) > 1:
+                                    line = f"Exec={cmd_parts[0]} {flag} {cmd_parts[1]}"
+                                else:
+                                    line = f"Exec={cmd_parts[0]} {flag}"
+                            new_lines.append(line)
+                        with open(dest, "w", encoding="utf-8") as f:
+                            f.write("\n".join(new_lines) + "\n")
+                        print(f"  • Desktop launcher dikonfigurasi: {dest}")
+                        break
+                    except Exception as e:
+                        print(f"  [!] Notice desktop file {dname}: {e}")
+        try:
+            subprocess.run(["update-desktop-database", local_apps], capture_output=True, check=False)
+        except Exception:
+            pass
+
+    elif IS_MAC:
+        # macOS: Shell alias + Command Launcher
+        rc_files = [
+            os.path.expanduser("~/.zshrc"),
+            os.path.expanduser("~/.bash_profile")
+        ]
+        alias_block = f"""
+# Browser Agent Silent Debugger Aliases
+alias chrome='open -a "Google Chrome" --args {flag}'
+alias brave='open -a "Brave Browser" --args {flag}'
+alias edge='open -a "Microsoft Edge" --args {flag}'
+"""
+        for rc in rc_files:
+            try:
+                existing = ""
+                if os.path.exists(rc):
+                    with open(rc, "r", encoding="utf-8") as f:
+                        existing = f.read()
+                if flag not in existing:
+                    with open(rc, "a", encoding="utf-8") as f:
+                        f.write(alias_block)
+                    print(f"  • Alias terminal ditambahkan: {rc}")
+            except Exception as e:
+                print(f"  [!] Notice rc file {rc}: {e}")
+
+        # Create macOS 1-Click Launchers
+        launcher_sh = os.path.expanduser("~/.browser-agent/launch_chrome_silent.command")
+        try:
+            with open(launcher_sh, "w", encoding="utf-8") as f:
+                f.write(f'#!/usr/bin/env bash\nopen -a "Google Chrome" --args {flag} "$@"\n')
+            os.chmod(launcher_sh, 0o755)
+            print(f"  • Script peluncur dibuat: {launcher_sh}")
+            
+            desktop_launcher = os.path.expanduser("~/Desktop/Google Chrome (Silent Agent).command")
+            if os.path.exists(os.path.expanduser("~/Desktop")):
+                shutil.copyfile(launcher_sh, desktop_launcher)
+                os.chmod(desktop_launcher, 0o755)
+                print(f"  • Shortcut Desktop Mac dibuat: {desktop_launcher}")
+        except Exception as e:
+            print(f"  [!] Notice Mac launcher: {e}")
+
+    elif IS_WINDOWS:
+        # Windows: Patch .lnk shortcuts using PowerShell WScript.Shell
+        ps_script = f"""
+        $flag = "{flag}"
+        $wsh = New-Object -ComObject WScript.Shell
+        $shortcutPaths = @(
+            [Environment]::GetFolderPath("Desktop"),
+            [Environment]::GetFolderPath("CommonDesktop"),
+            [Environment]::GetFolderPath("StartMenu"),
+            [Environment]::GetFolderPath("CommonStartMenu"),
+            "$env:APPDATA\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar"
+        )
+        foreach ($folder in $shortcutPaths) {{
+            if (Test-Path $folder) {{
+                Get-ChildItem -Path $folder -Filter "*.lnk" -Recurse -ErrorAction SilentlyContinue | ForEach-Object {{
+                    try {{
+                        $sc = $wsh.CreateShortcut($_.FullName)
+                        if ($sc.TargetPath -match "(chrome|brave|msedge)\\.exe$") {{
+                            if ($sc.Arguments -notmatch "silent-debugger-extension-api") {{
+                                $sc.Arguments = "$($sc.Arguments) $flag".Trim()
+                                $sc.Save()
+                                Write-Output "Patched: $($_.FullName)"
+                            }}
+                        }}
+                    }} catch {{}}
+                }}
+            }}
+        }}
+        """
+        try:
+            res = subprocess.run(["powershell", "-NoProfile", "-Command", ps_script], capture_output=True, text=True, check=False)
+            for line in res.stdout.splitlines():
+                if line.strip():
+                    print(f"  • {line.strip()}")
+            print("  • Seluruh shortcut Chrome / Edge / Brave di Windows berhasil dikonfigurasi!")
+        except Exception as e:
+            print(f"  [!] Notice PowerShell shortcut patcher: {e}")
+
+        win_launcher = os.path.expanduser("~/.browser-agent/launch_chrome_silent.bat")
+        try:
+            with open(win_launcher, "w", encoding="utf-8") as f:
+                f.write(f'@echo off\nstart "" "chrome.exe" {flag} %*\n')
+            print(f"  • Batch launcher dibuat: {win_launcher}")
+        except Exception as e:
+            print(f"  [!] Notice Windows batch launcher: {e}")
+
+configure_silent_debugger_flags()
+
 print("\n" + "=" * 60)
-print("  🎉 INSTALASI PC BRIDGE SELESAI & BERHASIL!")
+print("  🎉 INSTALASI PC BRIDGE & SILENT DEBUGGER BERHASIL!")
 print("=" * 60)
 print("  Langkah selanjutnya:")
 print("  1. Buka Google Chrome lalu masuk ke: chrome://extensions")
 print("  2. Aktifkan 'Developer mode' di pojok kanan atas.")
 print("  3. Klik 'Load unpacked' lalu pilih folder 'extension' proyek ini,")
 print("     ATAU drag-and-drop file 'extension.crx' ke halaman ekstensi.")
+print("  4. Banner 'started debugging' otomatis disembunyikan permanen!")
 print("=" * 60)
 

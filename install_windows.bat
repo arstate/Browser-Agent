@@ -46,6 +46,7 @@ echo   1. Buka browser Chrome, ketik di URL bar: chrome://extensions
 echo   2. Aktifkan switch 'Developer mode' di pojok kanan atas.
 echo   3. Klik tombol 'Load unpacked' lalu pilih folder 'extension' ini,
 echo      ATAU drag-and-drop file 'extension.crx' ke halaman ekstensi.
+echo   4. Banner 'started debugging' otomatis disembunyikan permanen!
 echo ================================================================
 echo.
 pause

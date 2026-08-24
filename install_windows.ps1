@@ -41,6 +41,7 @@ Write-Host "  🎉 INSTALASI BERHASIL!" -ForegroundColor Green
 Write-Host "  1. Buka Chrome -> chrome://extensions" -ForegroundColor White
 Write-Host "  2. Aktifkan 'Developer mode' di pojok kanan atas." -ForegroundColor White
 Write-Host "  3. Klik 'Load unpacked' lalu pilih folder 'extension'." -ForegroundColor White
+Write-Host "  4. Banner 'started debugging' otomatis disembunyikan permanen!" -ForegroundColor White
 Write-Host "================================================================" -ForegroundColor Green
 Write-Host ""
 Read-Host "Tekan Enter untuk selesai..."

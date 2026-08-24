@@ -3918,6 +3918,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.14`, build `extension.crx` (471.9 KB).
 
+---
+
+### 🚀 Iterasi 369: Cross-Platform Universal Silent Debugger Auto-Configurator (v2.147.15)
+- **Kebutuhan Pengguna**:
+  - Menanamkan otomasi silent debugger `--silent-debugger-extension-api` langsung ke dalam seluruh installer universal (`setup.py`, `install_linux.sh`, `install.sh`, `install_mac.sh`, `install_mac.command`, `install_windows.bat`, `install_windows.ps1`) agar pada Mac, Windows, dan Linux, notifikasi *"started debugging this browser"* langsung di-hide secara otomatis saat installer dijalankan.
+- **Implementasi & Otomasi Lintas Sistem Operasi**:
+  1. **Linux**:
+     - Otomatis membuat/memperbarui `chrome-flags.conf`, `chromium-flags.conf`, `brave-flags.conf`, dan `microsoft-edge-flags.conf` di `~/.config/`.
+     - Otomatis menyalin dan memodifikasi file `.desktop` di `~/.local/share/applications/` dengan argumen `Exec=` yang menyertakan flag `--silent-debugger-extension-api`.
+  2. **macOS**:
+     - Otomatis menambahkan alias peluncur browser (`chrome`, `brave`, `edge`) ke `~/.zshrc` dan `~/.bash_profile`.
+     - Otomatis membuat script peluncur 1-klik `launch_chrome_silent.command` di `~/.browser-agent/` dan Desktop macOS.
+  3. **Windows**:
+     - Otomatis mem-patch seluruh shortcut `.lnk` (Desktop, Start Menu, Taskbar) via PowerShell WScript.Shell untuk menyuntikkan argumen `--silent-debugger-extension-api`.
+     - Otomatis membuat file batch peluncur `launch_chrome_silent.bat` di `~/.browser-agent/`.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.15`, build `extension.crx` (471.9 KB).
+
 
 
 
