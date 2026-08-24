@@ -40,7 +40,8 @@ rm -f "$DIR/antigravity_session/"*.tar.gz
 rm -rf "$DIR/antigravity_session/brain"
 
 # 3. Buat ZIP Distribusi Siap Pakai untuk Teman / Share (Clean Distribution ZIP)
-echo "[+] Membuat berkas ZIP distribusi siap pakai (browser-agent-v2.5.0.zip)..."
+RAW_VER=$(python3 -c "import json; print(json.load(open('$DIR/extension/manifest.json'))['version'])" 2>/dev/null || echo "2.147.15")
+echo "[+] Membuat berkas ZIP distribusi siap pakai (browser-agent-v${RAW_VER}.zip & browser-agent-v2.5.0.zip)..."
 RELEASE_DIR="$HOME/Downloads/browser-agent/release"
 mkdir -p "$RELEASE_DIR"
 rm -f "$DIR/browser-agent-v2.5.0.zip" "$HOME/Downloads/browser-agent-v2.5.0.zip" "$RELEASE_DIR/browser-agent-v2.5.0.zip" "$RELEASE_DIR/browser-agent-latest.zip"
@@ -53,12 +54,16 @@ zip -r "$DIR/browser-agent-v2.5.0.zip" \
 
 cp -f "$DIR/browser-agent-v2.5.0.zip" "$HOME/Downloads/browser-agent-v2.5.0.zip" 2>/dev/null || true
 cp -f "$DIR/browser-agent-v2.5.0.zip" "$RELEASE_DIR/browser-agent-v2.5.0.zip" 2>/dev/null || true
+cp -f "$DIR/browser-agent-v2.5.0.zip" "$RELEASE_DIR/browser-agent-v${RAW_VER}.zip" 2>/dev/null || true
 cp -f "$DIR/browser-agent-v2.5.0.zip" "$RELEASE_DIR/browser-agent-latest.zip" 2>/dev/null || true
+cp -f "$DIR/extension.crx" "$RELEASE_DIR/extension.crx" 2>/dev/null || true
 echo "[✔] Berkas ZIP siap share disimpan di:"
 echo "    - $DIR/browser-agent-v2.5.0.zip"
 echo "    - $HOME/Downloads/browser-agent-v2.5.0.zip"
+echo "    - $RELEASE_DIR/browser-agent-v${RAW_VER}.zip"
 echo "    - $RELEASE_DIR/browser-agent-v2.5.0.zip"
 echo "    - $RELEASE_DIR/browser-agent-latest.zip"
+echo "    - $RELEASE_DIR/extension.crx"
 
 # 4. Stage All Project Code, Extensions, Skills, Agents, Transcripts
 echo "[+] Menyiapkan file untuk commit..."
