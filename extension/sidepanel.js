@@ -5485,10 +5485,16 @@ function appendUserMessage(text, attachments = []) {
           `;
         }
       } else {
+        const sizeStr = formatFileSize(att.size || (att.text ? att.text.length : 0));
         attachmentsHtml += `
           <div class="user-attached-file-pill" title="${escapeHtml(att.name || 'File')}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span>${escapeHtml(att.name || 'File')}</span>
+            <div class="attached-file-icon-wrapper">
+              ${getMacOsFileIconSvg(att.name || 'File', 18, 22)}
+            </div>
+            <div class="attached-file-info">
+              <span class="attached-file-name">${escapeHtml(att.name || 'File')}</span>
+              ${sizeStr ? `<span class="attached-file-size">${sizeStr}</span>` : ''}
+            </div>
           </div>
         `;
       }
@@ -6053,6 +6059,168 @@ function escapeHtml(str) {
     }
   }
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function formatFileSize(bytes) {
+  if (!bytes || typeof bytes !== 'number' || bytes <= 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getMacOsFileIconSvg(fileName, width = 20, height = 24) {
+  const name = String(fileName || 'file.txt');
+  const ext = name.includes('.') ? name.split('.').pop().toLowerCase() : '';
+  
+  let tag = ext.toUpperCase();
+  let tagBg = '#3B82F6';
+  let tagColor = '#FFFFFF';
+  let docBg = '#18181B';
+  let docStroke = 'rgba(255, 255, 255, 0.22)';
+  let cornerFold = '#27272A';
+
+  switch (ext) {
+    case 'md':
+    case 'markdown':
+      tag = 'MD';
+      tagBg = '#0284C7'; // Cyan / Sky Blue
+      docBg = '#0C1929';
+      docStroke = 'rgba(56, 189, 248, 0.4)';
+      cornerFold = '#163352';
+      break;
+    case 'pdf':
+      tag = 'PDF';
+      tagBg = '#DC2626'; // Apple PDF Red
+      docBg = '#261214';
+      docStroke = 'rgba(239, 68, 68, 0.4)';
+      cornerFold = '#451A1E';
+      break;
+    case 'txt':
+    case 'log':
+    case 'rtf':
+      tag = 'TXT';
+      tagBg = '#D97706'; // Amber / Slate
+      docBg = '#1F1A14';
+      docStroke = 'rgba(245, 158, 11, 0.4)';
+      cornerFold = '#3B2E1C';
+      break;
+    case 'json':
+      tag = '{ }';
+      tagBg = '#CA8A04'; // Yellow Gold
+      docBg = '#1F1B12';
+      docStroke = 'rgba(234, 179, 8, 0.4)';
+      cornerFold = '#3B3319';
+      break;
+    case 'js':
+    case 'mjs':
+    case 'cjs':
+      tag = 'JS';
+      tagBg = '#EAB308'; // JS Yellow
+      tagColor = '#000000';
+      docBg = '#1F1C12';
+      docStroke = 'rgba(250, 204, 21, 0.4)';
+      cornerFold = '#3D3517';
+      break;
+    case 'ts':
+    case 'tsx':
+      tag = 'TS';
+      tagBg = '#2563EB'; // TypeScript Blue
+      docBg = '#0E172E';
+      docStroke = 'rgba(59, 130, 246, 0.4)';
+      cornerFold = '#192C59';
+      break;
+    case 'jsx':
+      tag = 'JSX';
+      tagBg = '#0891B2';
+      docBg = '#0B232E';
+      docStroke = 'rgba(6, 182, 212, 0.4)';
+      cornerFold = '#134054';
+      break;
+    case 'py':
+      tag = 'PY';
+      tagBg = '#0284C7';
+      docBg = '#0E1A29';
+      docStroke = 'rgba(56, 189, 248, 0.4)';
+      cornerFold = '#16314F';
+      break;
+    case 'html':
+    case 'htm':
+      tag = '< >';
+      tagBg = '#EA580C'; // HTML Orange
+      docBg = '#261610';
+      docStroke = 'rgba(249, 115, 22, 0.4)';
+      cornerFold = '#472416';
+      break;
+    case 'css':
+    case 'scss':
+    case 'less':
+      tag = 'CSS';
+      tagBg = '#0891B2';
+      docBg = '#0B232E';
+      docStroke = 'rgba(6, 182, 212, 0.4)';
+      cornerFold = '#134054';
+      break;
+    case 'sh':
+    case 'bash':
+    case 'zsh':
+      tag = 'SH';
+      tagBg = '#059669'; // Terminal Emerald
+      docBg = '#0B241C';
+      docStroke = 'rgba(16, 185, 129, 0.4)';
+      cornerFold = '#124233';
+      break;
+    case 'csv':
+    case 'tsv':
+    case 'xlsx':
+    case 'xls':
+      tag = ext === 'csv' ? 'CSV' : 'XLS';
+      tagBg = '#059669'; // Spreadsheet Green
+      docBg = '#0B241C';
+      docStroke = 'rgba(16, 185, 129, 0.4)';
+      cornerFold = '#124233';
+      break;
+    case 'zip':
+    case 'tar':
+    case 'gz':
+    case 'rar':
+    case '7z':
+      tag = 'ZIP';
+      tagBg = '#7C3AED'; // Archive Purple
+      docBg = '#1B132E';
+      docStroke = 'rgba(139, 92, 246, 0.4)';
+      cornerFold = '#321F59';
+      break;
+    case 'mp3':
+    case 'wav':
+    case 'm4a':
+    case 'ogg':
+    case 'flac':
+      tag = '♫';
+      tagBg = '#DB2777'; // Audio Pink
+      docBg = '#261120';
+      docStroke = 'rgba(236, 72, 153, 0.4)';
+      cornerFold = '#471B39';
+      break;
+    default:
+      tag = (tag.length > 4 ? tag.slice(0, 3) : tag) || 'DOC';
+      tagBg = '#475569';
+      docBg = '#18181B';
+      docStroke = 'rgba(255, 255, 255, 0.22)';
+      cornerFold = '#27272A';
+      break;
+  }
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="macos-doc-icon" style="flex-shrink:0; display:block;">
+      <path d="M2.5 3C2.5 1.89543 3.39543 1 4.5 1H13L17.5 5.5V21C17.5 22.1046 16.6046 23 15.5 23H4.5C3.39543 23 2.5 22.1046 2.5 21V3Z" fill="${docBg}" stroke="${docStroke}" stroke-width="1.1"/>
+      <path d="M13 1V5C13 5.55228 13.4477 6 14 6H17.5" fill="${cornerFold}" stroke="${docStroke}" stroke-width="1.1" stroke-linejoin="round"/>
+      <line x1="5.5" y1="8" x2="11" y2="8" stroke="rgba(255,255,255,0.22)" stroke-width="1" stroke-linecap="round"/>
+      <line x1="5.5" y1="11" x2="14.5" y2="11" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-linecap="round"/>
+      <line x1="5.5" y1="14" x2="13" y2="14" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-linecap="round"/>
+      <rect x="3.5" y="16.2" width="13" height="5.5" rx="1.8" fill="${tagBg}"/>
+      <text x="10" y="20.4" fill="${tagColor}" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, sans-serif" font-size="3.6" font-weight="800" text-anchor="middle" letter-spacing="0.2">${tag}</text>
+    </svg>
+  `;
 }
 
 function formatInline(str) {
@@ -8217,12 +8385,15 @@ function renderAttachmentsPreview() {
         <button type="button" class="attachment-remove-btn" title="Hapus video">×</button>
       `;
     } else {
+      const sizeStr = formatFileSize(att.size || (att.text ? att.text.length : 0));
       card.innerHTML = `
-        <svg class="attachment-file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-        </svg>
-        <span class="attachment-file-name" title="${escapeHtml(att.name)}">${escapeHtml(att.name)}</span>
+        <div class="attachment-file-icon-box">
+          ${getMacOsFileIconSvg(att.name, 20, 24)}
+        </div>
+        <div class="attachment-file-meta">
+          <span class="attachment-file-name" title="${escapeHtml(att.name)}">${escapeHtml(att.name)}</span>
+          ${sizeStr ? `<span class="attachment-file-size">${sizeStr}</span>` : ''}
+        </div>
         <button type="button" class="attachment-remove-btn" title="Hapus file">×</button>
       `;
     }

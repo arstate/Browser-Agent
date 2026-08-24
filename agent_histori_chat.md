@@ -3576,6 +3576,33 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - 17/17 Unit Tests lulus 100% (Zero Bug).
      - Bump manifest to `v2.146.3`, build `extension.crx` (461.3 KB).
 
+---
+
+### 🚀 Iterasi 352: macOS-Style File Thumbnail Badges & High-DPI Vector Icons (v2.146.4)
+- **Kebutuhan Pengguna**:
+  - Mengubah UI thumbnail preview file attachment (`.txt`, `.md`, `.pdf`, `.json`, `.js`, `.py`, dll.) menjadi ikon dokumen berestetika khas Apple macOS Finder (*folded-corner document dengan extension badge tag berwarna*).
+- **Implementasi & Peningkatan**:
+  1. **High-DPI SVG macOS File Icon Generator (`getMacOsFileIconSvg`)**:
+     - Menghasilkan ikon dokumen presisi dengan lipatan sudut kanan atas (folded flap corner), garis teks/kode halus, serta badge label bawah dengan palet warna resmi format file:
+       - `.md` / `.markdown`: Sky Blue badge `MD` (`#0284C7`)
+       - `.pdf`: Apple PDF Red badge `PDF` (`#DC2626`)
+       - `.txt` / `.log`: Amber badge `TXT` (`#D97706`)
+       - `.json`: Yellow Gold badge `{ }` (`#CA8A04`)
+       - `.js` / `.mjs`: JavaScript Yellow badge `JS` (`#EAB308`)
+       - `.ts` / `.tsx`: TypeScript Blue badge `TS` (`#2563EB`)
+       - `.py`: Python Blue badge `PY` (`#0284C7`)
+       - `.html`: HTML Orange badge `< >` (`#EA580C`)
+       - `.css` / `.scss`: Cyan badge `CSS` (`#0891B2`)
+       - `.sh` / `.bash`: Emerald Green badge `SH` (`#059669`)
+       - `.csv` / `.xlsx`: Spreadsheet Green badge `CSV` / `XLS` (`#059669`)
+       - `.zip` / `.tar`: Archive Purple badge `ZIP` (`#7C3AED`)
+       - `.mp3` / `.wav`: Audio Pink badge `♫` (`#DB2777`)
+  2. **macOS Glass Pill Cards**:
+     - Memperbarui card preview di atas input chat (`.attachment-preview-card.is-file`) dan pill attachment di gelembung pesan pengguna (`.user-attached-file-pill`) dengan radius halus (`12px`), background kaca gelap (`rgba(255, 255, 255, 0.05)`), border `rgba(255, 255, 255, 0.12)`, nama file yang terpotong rapi dengan elipsis, label ukuran file dinamis (`formatFileSize`), dan tombol close circular macOS (`×`).
+  3. **Pengujian & Rilis**:
+     - 17/17 Unit Tests lulus 100% (Zero Bug).
+     - Bump manifest to `v2.146.4`, build `extension.crx` (463.5 KB).
+
 
 
 
