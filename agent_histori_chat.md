@@ -3555,6 +3555,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - 17/17 Unit Tests lulus 100% (Zero Bug).
      - Bump manifest to `v2.146.2`, build `extension.crx` (460.5 KB).
 
+---
+
+### 🚀 Iterasi 351: Monochrome Glass Minimalism & Fullscreen Graph Node Container (v2.146.3)
+- **Kebutuhan Pengguna**:
+  - Memperbarui UI menjadi lebih clean, rounded full glasses minimalism.
+  - Mengubah skema warna dari nuansa dark kebiruan menjadi monokrom abu-abu/hitam pekat (*Deep Jet Black & Frosted Charcoal Glass*).
+  - Menambahkan tombol **Layar Penuh (Fullscreen)** untuk container graph node agar pengguna dapat mengeksplorasi seluruh struktur *Dual-Hemisphere Neural Brain Graph* tanpa batas.
+- **Implementasi & Peningkatan UI**:
+  1. **Monochrome Deep Glass Aesthetics**:
+     - Menghapus palet warna kebiruan pada variabel root dan menggantinya dengan `#08080a`, `#0c0c0f`, `#121216`, serta frosted glass backdrop blur `backdrop-filter: blur(24px)`.
+     - Update `.brain-hero-card`, `.backup-panel`, dan card grid dengan palet monokrom arang elegan dan border kaca halus `rgba(255, 255, 255, 0.08)`.
+  2. **Full-Rounded Glass Legend & Action Buttons**:
+     - Seluruh pill legend kategori otak (`Semua Otak`, `Multi-Agent`, `Skills & Tools`, dll.) dan tombol aksi (`+`, `−`, `⟲`, `⏸`, `🏷️ Label: Smart`) menggunakan radius kapsul `border-radius: 9999px` dengan efek hover kaca bercahaya.
+  3. **Tombol & Mode Fullscreen Graph Node**:
+     - Menambahkan tombol `[⛶ Layar Penuh]` di toolbar graph (`options.html`).
+     - Menambahkan handler fullscreen di `brain-graph.js` (`.brain-graph-container.is-fullscreen`) dengan dukungan tombol keyboard `Escape` untuk keluar instan.
+     - Auto-resize canvas saat beralih ke mode fullscreen untuk rendering yang tajam di resolusi monitor apa pun.
+  4. **Pengujian & Rilis**:
+     - 17/17 Unit Tests lulus 100% (Zero Bug).
+     - Bump manifest to `v2.146.3`, build `extension.crx` (461.3 KB).
+
 
 
 

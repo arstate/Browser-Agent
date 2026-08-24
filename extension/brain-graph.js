@@ -759,6 +759,39 @@ class BrainGraphEngine {
       e.currentTarget.title = this.isFrozen ? 'Jalankan Fisika' : 'Bekukan Fisika';
     });
 
+    // Fullscreen Toggle
+    const btnFullscreen = document.getElementById('btn-graph-fullscreen');
+    const graphContainer = document.getElementById('brain-graph-view');
+
+    const toggleFullscreen = () => {
+      if (!graphContainer) return;
+      const isFull = graphContainer.classList.toggle('is-fullscreen');
+      document.body.classList.toggle('graph-fullscreen-active', isFull);
+      if (btnFullscreen) {
+        btnFullscreen.innerHTML = isFull 
+          ? `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg> <span>Tutup</span>` 
+          : `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg> <span>Layar Penuh</span>`;
+        btnFullscreen.title = isFull ? "Keluar dari Layar Penuh (Esc)" : "Perluas ke Layar Penuh";
+        if (isFull) {
+          btnFullscreen.classList.add('active');
+        } else {
+          btnFullscreen.classList.remove('active');
+        }
+      }
+      setTimeout(() => {
+        this.resizeCanvas();
+        this.render();
+      }, 60);
+    };
+
+    btnFullscreen?.addEventListener('click', toggleFullscreen);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && graphContainer && graphContainer.classList.contains('is-fullscreen')) {
+        toggleFullscreen();
+      }
+    });
+
     document.querySelectorAll('.brain-graph-legend .legend-item').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.brain-graph-legend .legend-item').forEach(b => b.classList.remove('active'));

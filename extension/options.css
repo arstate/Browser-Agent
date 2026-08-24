@@ -1,15 +1,15 @@
 /* =========================================================================
    Browser Agent - Full-Screen Options / Settings Page Styling
-   Dark Luxury SaaS (Deep Slate + Frosted Glass + Bento Lime & Orange)
+   Monochrome Glass Minimalism (Deep Black + Frosted Glass + Bento Lime)
    ========================================================================= */
 
 :root {
-  --bg-app: #121214;
-  --bg-sidebar: #17171A;
-  --bg-card: #1C1C1F;
-  --bg-card-hover: #242428;
-  --bg-input: #161618;
-  --text-primary: #F4F4F6;
+  --bg-app: #08080a;
+  --bg-sidebar: #0c0c0f;
+  --bg-card: #121216;
+  --bg-card-hover: #18181d;
+  --bg-input: #0f0f13;
+  --text-primary: #FFFFFF;
   --text-secondary: #A1A1AA;
   --text-muted: #71717A;
   --border-card: rgba(255, 255, 255, 0.08);
@@ -18,10 +18,10 @@
   --accent-lime-hover: #bde01d;
   --accent-orange: #F97316;
   --accent-blue: #3B82F6;
-  --accent-dark: #1E1E22;
-  --radius-card: 16px;
+  --accent-dark: #141418;
+  --radius-card: 20px;
   --radius-pill: 9999px;
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 12px 36px rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -492,38 +492,40 @@ body.options-body {
 }
 
 .backup-panel {
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(18, 18, 22, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 18px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .backup-panel.database-panel {
-  background: linear-gradient(145deg, rgba(147, 51, 234, 0.07) 0%, rgba(15, 23, 42, 0.65) 100%);
+  background: linear-gradient(145deg, rgba(147, 51, 234, 0.08) 0%, rgba(14, 14, 18, 0.85) 100%);
   border-color: rgba(168, 85, 247, 0.28);
 }
 
 .backup-panel.database-panel:hover {
   border-color: rgba(168, 85, 247, 0.55);
-  box-shadow: 0 6px 24px rgba(147, 51, 234, 0.15);
-  transform: translateY(-1px);
+  box-shadow: 0 10px 32px rgba(147, 51, 234, 0.18);
+  transform: translateY(-2px);
 }
 
 .backup-panel.settings-panel {
-  background: linear-gradient(145deg, rgba(206, 241, 40, 0.04) 0%, rgba(15, 23, 42, 0.65) 100%);
+  background: linear-gradient(145deg, rgba(206, 241, 40, 0.05) 0%, rgba(14, 14, 18, 0.85) 100%);
   border-color: rgba(206, 241, 40, 0.2);
 }
 
 .backup-panel.settings-panel:hover {
   border-color: rgba(206, 241, 40, 0.45);
-  box-shadow: 0 6px 24px rgba(206, 241, 40, 0.1);
-  transform: translateY(-1px);
+  box-shadow: 0 10px 32px rgba(206, 241, 40, 0.12);
+  transform: translateY(-2px);
 }
 
 .panel-badge {
@@ -2473,19 +2475,19 @@ body.options-body {
    ========================================================================= */
 .brain-hero-card {
   margin-bottom: 24px;
-  background: radial-gradient(130% 130% at 50% 0%, rgba(30, 41, 59, 0.45) 0%, rgba(15, 23, 42, 0.7) 100%);
+  background: radial-gradient(130% 130% at 50% 0%, rgba(26, 26, 32, 0.7) 0%, rgba(12, 12, 16, 0.95) 100%);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 28px;
   padding: 26px 30px;
-  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 -1px 1px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 -1px 1px rgba(0, 0, 0, 0.25);
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .brain-hero-card:hover {
-  border-color: rgba(96, 165, 250, 0.35);
-  box-shadow: 0 28px 56px -12px rgba(0, 0, 0, 0.65), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 28px 56px -12px rgba(0, 0, 0, 0.75), inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .brain-hero-icon {
@@ -2493,29 +2495,29 @@ body.options-body {
   height: 50px;
   min-width: 50px;
   border-radius: 9999px;
-  background: radial-gradient(100% 100% at 50% 20%, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.08) 100%);
-  border: 1px solid rgba(96, 165, 250, 0.35);
-  color: #60A5FA;
+  background: radial-gradient(100% 100% at 50% 20%, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.25);
 }
 
 .brain-hero-title {
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.3px;
-  color: #F8FAFC;
+  color: #FFFFFF;
   margin: 0;
   line-height: 1.25;
 }
 
 .brain-hero-desc {
   font-size: 13px;
-  color: #94A3B8;
+  color: #A1A1AA;
   line-height: 1.45;
   margin-top: 4px;
   white-space: nowrap;
@@ -2695,30 +2697,56 @@ body.options-body {
 }
 
 .brain-graph-container {
-  background: radial-gradient(130% 130% at 50% 50%, rgba(30, 41, 59, 0.3) 0%, rgba(15, 23, 42, 0.7) 100%);
+  background: radial-gradient(140% 140% at 50% 50%, rgba(20, 20, 24, 0.7) 0%, rgba(8, 8, 10, 0.95) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
+  border-radius: 28px;
   overflow: hidden;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   position: relative;
-  min-height: 680px;
+  min-height: 700px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.brain-graph-container.is-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  min-height: 100vh !important;
+  border-radius: 0 !important;
+  z-index: 999999 !important;
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: #08080a !important;
+}
+
+body.graph-fullscreen-active {
+  overflow: hidden !important;
+}
+
+.brain-graph-container.is-fullscreen .brain-canvas-viewport {
+  height: calc(100vh - 64px) !important;
 }
 
 .brain-graph-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 18px;
-  background: rgba(15, 23, 42, 0.6);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(12px);
+  padding: 12px 20px;
+  background: rgba(10, 10, 14, 0.75);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   z-index: 10;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
 }
 
 .brain-graph-legend {
@@ -2731,28 +2759,33 @@ body.options-body {
 .legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 7px;
+  padding: 6px 14px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 11px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11.5px;
   font-weight: 600;
-  color: #94A3B8;
+  color: #A1A1AA;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .legend-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
   color: #FFFFFF;
+  transform: translateY(-1px);
 }
 
 .legend-item.active {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .legend-dot {
@@ -2760,50 +2793,65 @@ body.options-body {
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
 }
 
 .brain-graph-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .graph-btn {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  color: #A1A1AA;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .graph-btn-pill {
   width: auto;
-  padding: 0 12px;
-  font-size: 11px;
+  height: 32px;
+  padding: 0 14px;
+  font-size: 11.5px;
   font-weight: 600;
   border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .graph-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.09);
   border-color: rgba(255, 255, 255, 0.2);
   color: #FFFFFF;
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.graph-btn:active,
+.graph-btn.active {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #FFFFFF;
 }
 
 .brain-canvas-viewport {
   position: relative;
   width: 100%;
-  height: 620px;
+  height: 640px;
   flex: 1;
   overflow: hidden;
   cursor: grab;
@@ -2825,16 +2873,16 @@ body.options-body {
 .brain-graph-tooltip {
   position: absolute;
   pointer-events: none;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  padding: 8px 12px;
-  font-size: 11.5px;
+  background: rgba(10, 10, 14, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  padding: 10px 16px;
+  font-size: 12px;
   color: #FFFFFF;
   z-index: 20;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
   transform: translate(-50%, -120%);
   transition: opacity 0.15s ease;
   white-space: nowrap;
@@ -2844,8 +2892,8 @@ body.options-body {
   font-size: 9.5px;
   text-transform: uppercase;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  margin-bottom: 2px;
+  letter-spacing: 0.6px;
+  margin-bottom: 3px;
 }
 
 .brain-card-header {
