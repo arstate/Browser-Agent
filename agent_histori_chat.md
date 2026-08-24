@@ -3833,6 +3833,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.9`, build `extension.crx` (471.8 KB).
 
+---
+
+### 🚀 Iterasi 364: Clean & Minimalist HUD Status (Removing `(Extreme 10x)` & Total Step Slash) (v2.147.10)
+- **Kebutuhan Pengguna**:
+  - Menghapus label `(Extreme 10x)` dan format penyebut total langkah (`/18`) dari HUD kapsul overlay browser dan status bar agar tampilan jauh lebih bersih, ringkas, dan elegan.
+- **Implementasi & Peningkatan UI**:
+  1. **Clean HUD Format**:
+     - Mengubah teks status eksekusi dari `Master Agent (Extreme 10x): Step 18/18` menjadi **`Master Agent: Step 18`**.
+     - Mengubah status eksekusi sub-agent / tools menjadi **`${workerName}: Step ${currentStep} • ${badgeActionName}`** (misal: `Coding & System Engineer: Step 3 • local_run_command`).
+  2. **Content Script Fallback Simplification**:
+     - Di `content.js`, format fallback HUD disederhanakan menjadi `Step ${message.step}` jika status teks kosong.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.10`, build `extension.crx` (471.7 KB).
+
 
 
 

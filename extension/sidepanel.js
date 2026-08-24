@@ -3709,18 +3709,16 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   try {
     while (currentStep < maxSteps && isExecuting) {
       currentStep++;
-      const thinkTag = (currentThinkingLevel === 'max' || currentThinkingLevel === 'extreme') ? ' (Extreme 10x)' : (currentThinkingLevel === 'xhigh' ? ' (Xhigh)' : (currentThinkingLevel === 'low' ? ' (Fast)' : ''));
-      const displayTotalSteps = plannedStepsTotal ? Math.max(plannedStepsTotal, currentStep) : Math.max(currentStep, 1);
-      const stepStr = plannedStepsTotal ? `Step ${currentStep}/${displayTotalSteps}` : `Step ${currentStep}`;
+      const stepStr = `Step ${currentStep}`;
 
       if (hasBoss) {
-        updateFooterStatus(`👑 Master Agent${thinkTag} (${stepStr})...`);
-        notifyActiveTabExecutionState(true, currentStep, displayTotalSteps, `Master Agent${thinkTag}: ${stepStr}`);
-        updateAssistantActiveAgent(assistantBubble, "Master Agent", `Mengarahkan tim eksekutor${thinkTag} (${stepStr})...`, true, false);
+        updateFooterStatus(`👑 Master Agent (${stepStr})...`);
+        notifyActiveTabExecutionState(true, currentStep, maxSteps, `Master Agent: ${stepStr}`);
+        updateAssistantActiveAgent(assistantBubble, "Master Agent", `Mengarahkan tim eksekutor (${stepStr})...`, true, false);
       } else {
-        updateFooterStatus(`${initialAgentName}${thinkTag} (${stepStr})...`);
-        notifyActiveTabExecutionState(true, currentStep, displayTotalSteps, `${initialAgentName}${thinkTag}: ${stepStr}`);
-        updateAssistantActiveAgent(assistantBubble, initialAgentName, `Memproses${thinkTag} (${stepStr})...`, false, false);
+        updateFooterStatus(`${initialAgentName} (${stepStr})...`);
+        notifyActiveTabExecutionState(true, currentStep, maxSteps, `${initialAgentName}: ${stepStr}`);
+        updateAssistantActiveAgent(assistantBubble, initialAgentName, `Memproses (${stepStr})...`, false, false);
       }
 
       // Prepare sanitized payload for API with dynamic agent persona & skills
@@ -4007,12 +4005,11 @@ Tugas Anda:
             badgeActionName = "Konfirmasi Opsi Pilihan";
           }
           const badge = appendToolBadge(assistantBubble, badgeActionName, toolArgs, workerName);
-          const displayTotalSteps = plannedStepsTotal ? Math.max(plannedStepsTotal, currentStep) : Math.max(currentStep, 1);
-          const stepStr = plannedStepsTotal ? `Step ${currentStep}/${displayTotalSteps}` : `Step ${currentStep}`;
+          const stepStr = `Step ${currentStep}`;
           
           updateAssistantActiveAgent(assistantBubble, workerName, `Menjalankan ${badgeActionName}...`, isBossWorker, false);
           updateFooterStatus(`⚡ ${workerName}: ${badgeActionName} (${stepStr})...`);
-          notifyActiveTabExecutionState(true, currentStep, displayTotalSteps, `${workerName}${thinkTag}: ${stepStr} • ${badgeActionName}`);
+          notifyActiveTabExecutionState(true, currentStep, maxSteps, `${workerName}: ${stepStr} • ${badgeActionName}`);
 
           let toolOutput = "";
           let isImageGen = (toolName === "generate_image");
@@ -4090,11 +4087,10 @@ Tugas Anda:
 
     if (toolBadges.length > 0 && !isSubstantialFinalAnswer) {
       try {
-        const displayTotalSteps = plannedStepsTotal ? Math.max(plannedStepsTotal, currentStep) : Math.max(currentStep, 1);
-        const stepStr = plannedStepsTotal ? `Step ${currentStep}/${displayTotalSteps}` : `Step ${currentStep}`;
+        const stepStr = `Step ${currentStep}`;
         updateAssistantActiveAgent(assistantBubble, "Master Agent", `Menyusun laporan akhir (${stepStr})...`, true, false);
         updateFooterStatus(`👑 Master Agent: Menyusun laporan akhir (${stepStr})...`);
-        notifyActiveTabExecutionState(true, currentStep, displayTotalSteps, `Master Agent: Menyusun laporan akhir (${stepStr})`);
+        notifyActiveTabExecutionState(true, currentStep, maxSteps, `Master Agent: Menyusun laporan akhir (${stepStr})`);
         if (contentEl) {
           contentEl.innerHTML = '';
           contentEl.style.display = 'block';

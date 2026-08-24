@@ -625,7 +625,7 @@ content;
       }
       if (message && message.type === "AGENT_EXECUTION_STATE") {
         if (message.isExecuting) {
-          showAgentHUD(message.statusText || (message.step ? `Step ${message.step}/${message.maxSteps || 15}` : "Controlling..."));
+          showAgentHUD(message.statusText || (message.step ? `Step ${message.step}` : "Controlling..."));
         } else {
           hideAgentHUD();
         }
