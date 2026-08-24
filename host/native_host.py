@@ -606,6 +606,16 @@ def save_md_item(target_dir, item_data):
             meta["memories"] = item_data.get("memories") or []
         if "model" in item_data:
             meta["model"] = item_data.get("model") or ""
+        if "source" in item_data:
+            meta["source"] = item_data.get("source")
+        if "created_by" in item_data:
+            meta["created_by"] = item_data.get("created_by")
+        if "edited_by" in item_data:
+            meta["edited_by"] = item_data.get("edited_by")
+        if "last_refined" in item_data:
+            meta["last_refined"] = item_data.get("last_refined")
+        if "changelog" in item_data:
+            meta["changelog"] = item_data.get("changelog")
         if "is_default" in item_data:
             meta["is_default"] = bool(item_data.get("is_default"))
         if "created_at" in item_data:

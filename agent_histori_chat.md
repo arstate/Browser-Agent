@@ -3496,6 +3496,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - 17/17 Unit Tests lulus 100% (Zero Bug).
      - Bump manifest to `v2.145.1`, build `extension.crx` (458.5 KB).
 
+---
+
+### 🚀 Iterasi 348: Continuous Bi-directional Evolution & Multi-Agent Origin Badges (v2.146.0)
+- **Problem**:
+  - Sub-Agent dan Skill yang dibuat secara otonom oleh AI belum muncul otomatis di tab Manajemen Multi-Agent Persona dan Katalog Skill utama (`options.html`), dan belum memiliki badge pembeda asal-usul (apakah buatan AI, kustom pengguna, atau bawaan sistem).
+  - AI belum memiliki alur sinkronisasi dua arah untuk mempelajari dan memperbarui prompt/SOP buatan pengguna yang sudah ada secara terus-menerus.
+- **Solusi & Arsitektur Baru**:
+  1. **Badge Origin & Refinement Terverifikasi**:
+     - `[🤖 AI Auto-Evolved]`: Badge neon cyan untuk Sub-Agent dan Skill yang di-spawn otomatis oleh AI.
+     - `[⚡ AI Refined]`: Badge neon ungu untuk Sub-Agent atau Skill buatan user yang telah dipelajari, disempurnakan, dan diperbarui oleh AI.
+     - `[👤 User Custom]`: Badge untuk item kustom buatan manual pengguna.
+     - `[🔒 Bawaan]`: Badge untuk item standar bawaan sistem.
+  2. **Bi-directional Auto-Sync (Lock-Step Synchronization)**:
+     - `create_autonomous_agent`: Menyimpan ke SQLite + Markdown sekaligus menambahkan ke `custom_agents` di `chrome.storage.local` dan merefresh dropdown agent di sidepanel secara instan.
+     - `create_autonomous_skill`: Menyimpan ke SQLite + Markdown sekaligus menyinkronkan ke `custom_skills` di `chrome.storage.local`.
+     - `edit_manual_skill` & `edit_manual_agent`: Memperbarui SOP/Persona, membuat snapshot rollback di `.history/`, dan memperbarui `custom_skills`/`custom_agents` dengan label `edited_by: "autonomous_ai"`.
+     - `loadPersistentBrainData`: Sinkronisasi otomatis dua arah saat Options page dibuka sehingga semua item terpusat dan konsisten.
+  3. **Pengujian & Rilis**:
+     - 17/17 Unit Tests lulus 100% (Zero Bug).
+     - Bump manifest to `v2.146.0`, build `extension.crx` (460.3 KB).
+
 
 
 

@@ -509,23 +509,22 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
   }
 
   // 5. Inject Autonomous Brain & Persistent Memory Directives (Hermes-Surpassing Intelligence)
-  prompt += `\n\n=== 🧠 HERMES-SURPASSING PERSISTENT MEMORY & PROACTIVE CONTINUOUS SELF-EVOLUTION ENGINE ===\n`;
-  prompt += `Anda BUKAN chatbot pasif yang hanya membalas teks. Anda adalah MASTER AGENT OTONOM EKSEKUTIF yang BERTINDAK SEGERA DAN OTOMATIS (PROAKTIF) tanpa menunggu disuruh!\n`;
-  prompt += `MANDAT OTONOM PROAKTIF MUTLAK (WAJIB BERTINDAK PADA TURN PERTAMA SAAT MENDAPAT INFORMASI BARU):\n`;
-  prompt += `1. 🎯 DETEKSI PERAN / PEKERJAAN / DOMAIN / PROYEK BARU DARI PENGGUNA:\n`;
-  prompt += `   - Jika pengguna menyebutkan bahwa dirinya memiliki peran/pekerjaan/tugas/proyek baru (contoh: 'saya magang di Diskominfo bagian konten IG', 'saya jualan properti X', 'saya mengelola akun media sosial Y'):\n`;
-  prompt += `   - DILARANG KERAS HANYA MEMBALAS TEKS TANPA MENGAMBIL AKSI PENYIMPANAN!\n`;
-  prompt += `   - ANDA WAJIB LANGSUNG MEMANGGIL KE-4 TOOL INI PADA TURN YANG SAMA SECARA OTONOM:\n`;
-  prompt += `     a) \`manage_personal_memory(action='save', category='profile'|'preference'|'rule', content=..., reason=...)\`: Simpan peran & konteks kerja pengguna secara permanen.\n`;
-  prompt += `     b) \`create_autonomous_skill(name=..., description=..., workflow_markdown=...)\`: Racik SOP komprehensif khusus untuk menangani domain/tugas tersebut.\n`;
-  prompt += `     c) \`create_autonomous_agent(name=..., role_description=..., system_prompt=..., assigned_skills=[...], reason=...)\`: Spawn dan simpan Sub-Agent Spesialis baru yang terhubung ke skill tersebut.\n`;
-  prompt += `     d) \`save_epistemic_triplet(subject=..., predicate=..., object=..., confidence=1.0)\`: Tautkan relasi entitas pengetahuan baru ke grafis kognitif.\n`;
-  prompt += `   - Setelah memanggil tool-tool otonom tersebut, barulah sajikan analisis atau hasil kerja komprehensif kepada pengguna.\n`;
-  prompt += `2. 🧠 INSTANT AUTO-MEMORY RECORDING (FAKTA PERSONAL, KONTAK, ATURAN):\n`;
-  prompt += `   - Setiap kali ada data nama, email, nomor WA/telepon, KPI, atau preferensi format, LANGSUNG panggil \`manage_personal_memory\` tanpa menunggu pengguna menyuruh 'tolong ingat'!\n`;
-  prompt += `3. 🛡️ REFLEKS MENCATAT ANTI-PATTERN & DISTILASI KESALAHAN:\n`;
-  prompt += `   - Jika terjadi hambatan atau koreksi pengguna, panggil \`record_anti_pattern\` dan \`update_autonomous_skill\` / \`edit_manual_skill\` agar tidak pernah diulangi.\n`;
-  prompt += `   - DILARANG membiarkan agent tanpa skill spesifik: setiap agent spesialis WAJIB memiliki skill SOP yang terhubung langsung.\n`;
+  prompt += `\n\n=== 🧠 HERMES-SURPASSING PERSISTENT MEMORY & CONTINUOUS BIDIRECTIONAL SELF-EVOLUTION ENGINE ===\n`;
+  prompt += `Anda BUKAN chatbot pasif yang hanya membalas teks atau terjebak pada data lama yang kaku. Anda adalah MASTER AGENT OTONOM EKSEKUTIF yang BERTINDAK SEGERA, MEMPELAJARI & MENYEMPURNAKAN DATA LAMA, SERTA MENAMBAH AGENT & SKILL BARU SECARA DINAMIS!\n`;
+  prompt += `MANDAT OTONOM PROAKTIF & EVOLUSI DUA ARAH:\n`;
+  prompt += `1. 🎭 SPAWN & DAFTARKAN SUB-AGENT BARU KE MULTI-AGENT LIST (\`create_autonomous_agent\`):\n`;
+  prompt += `   - Setiap kali Anda mendeteksi peran/tugas/domain kerja baru dari pengguna (contoh: 'saya magang di Diskominfo konten IG', 'saya jualan produk X', 'saya butuh auditor SEO'):\n`;
+  prompt += `   - ANDA WAJIB LANGSUNG MEMANGGIL TOOL INI PADA TURN PERTAMA: \`create_autonomous_agent\` dan \`create_autonomous_skill\`.\n`;
+  prompt += `   - Agen dan skill baru yang Anda buat akan OTOMATIS muncul di tab Manajemen Multi-Agent Persona dan Katalog Skill dengan label terverifikasi \`[🤖 AI Auto-Evolved]\`.\n`;
+  prompt += `2. ⚡ PELAJARI & SEMPURNAKAN SKILL / AGENT KUSTOM USER (\`edit_manual_skill\` & \`edit_manual_agent\`):\n`;
+  prompt += `   - Jangan berpatokan pada data lama terus-menerus! Jika Anda melihat SOP/Prompt buatan user masih bisa disempurnakan (misal: menambahkan hook baru, aturan teknis baru, atau memperbaiki celah kesalahan), Anda BERHAK MEMPERBARUI skill tersebut via \`edit_manual_skill\` atau agen tersebut via \`edit_manual_agent\`.\n`;
+  prompt += `   - Pembaruan oleh AI otomatis dicatat riwayat rollback-nya (\`.history/\`) dan diberi label \`[⚡ AI Refined]\` sehingga sistem semakin cerdas dari waktu ke waktu.\n`;
+  prompt += `3. 🧠 INSTANT AUTO-MEMORY RECORDING (\`manage_personal_memory\`):\n`;
+  prompt += `   - Setiap kali ada fakta personal, KPI, kontak, atau preferensi penting, LANGSUNG panggil \`manage_personal_memory(action='save', ...)\` tanpa menunggu disuruh!\n`;
+  prompt += `4. 🕸️ RELASI PENGETAHUAN KOGNITIF (\`save_epistemic_triplet\`):\n`;
+  prompt += `   - Tautkan relasi entitas baru ke grafis pengetahuan kognitif dengan confidence score yang presisi.\n`;
+  prompt += `5. 🛡️ REFLEKS MENCATAT ANTI-PATTERN & DISTILASI KESALAHAN (\`record_anti_pattern\`):\n`;
+  prompt += `   - Jika terjadi hambatan atau koreksi, catat penyebab dan solusinya agar AI tidak pernah mengulangi kesalahan yang sama.\n`;
 
   // Inject User Profile & Rules
   const mems = cachedPersistentMemory.user_memories || [];
@@ -3034,11 +3033,40 @@ async function executeTool(name, args, assistantBubble = null) {
           description: args.description,
           workflow_markdown: args.workflow_markdown,
           version: args.version || "v1.0.0",
-          source: "autonomous_ai"
+          source: "autonomous_ai",
+          created_by: "AI Agent (Self-Evolved)"
         }
       });
+
+      // Synchronize directly into custom_skills in chrome.storage.local
+      try {
+        const stored = await chrome.storage.local.get(['custom_skills']);
+        let curSkills = Array.isArray(stored.custom_skills) ? [...stored.custom_skills] : [];
+        const skillId = res.id || `skill_auto_${Date.now()}`;
+        const existingIdx = curSkills.findIndex(s => s.id === skillId || s.name?.toLowerCase() === args.name?.toLowerCase());
+        const newSkillObj = {
+          id: skillId,
+          name: args.name,
+          description: args.description,
+          content: args.workflow_markdown,
+          version: args.version || "v1.0.0",
+          source: "autonomous_ai",
+          created_by: "AI Agent (Self-Evolved)",
+          created_at: new Date().toISOString()
+        };
+        if (existingIdx >= 0) {
+          curSkills[existingIdx] = { ...curSkills[existingIdx], ...newSkillObj };
+        } else {
+          curSkills.push(newSkillObj);
+        }
+        await chrome.storage.local.set({ custom_skills: curSkills });
+        if (typeof customSkills !== 'undefined') customSkills = curSkills;
+      } catch (e) {
+        console.warn("Sync custom_skills error:", e);
+      }
+
       notifyPersistentBrainUpdated();
-      return { success: true, message: "Autonomous skill created and ready for immediate execution", id: res.id, name: res.name, version: res.version };
+      return { success: true, message: "Autonomous skill created and registered in Skills Catalog", id: res.id, name: res.name, version: res.version };
     }
 
     case "update_autonomous_skill": {
@@ -3050,9 +3078,34 @@ async function executeTool(name, args, assistantBubble = null) {
           workflow_markdown: args.workflow_markdown,
           version: args.version,
           changelog: args.changelog,
-          source: "autonomous_ai"
+          source: "autonomous_ai",
+          edited_by: "autonomous_ai"
         }
       });
+
+      // Synchronize into custom_skills in chrome.storage.local
+      try {
+        const stored = await chrome.storage.local.get(['custom_skills']);
+        let curSkills = Array.isArray(stored.custom_skills) ? [...stored.custom_skills] : [];
+        const existingIdx = curSkills.findIndex(s => s.id === args.skill_id);
+        if (existingIdx >= 0) {
+          curSkills[existingIdx] = {
+            ...curSkills[existingIdx],
+            name: args.name || curSkills[existingIdx].name,
+            description: args.description || curSkills[existingIdx].description,
+            content: args.workflow_markdown || curSkills[existingIdx].content,
+            version: args.version || curSkills[existingIdx].version,
+            edited_by: "autonomous_ai",
+            last_refined: new Date().toISOString(),
+            changelog: args.changelog || "Updated by AI Agent"
+          };
+          await chrome.storage.local.set({ custom_skills: curSkills });
+          if (typeof customSkills !== 'undefined') customSkills = curSkills;
+        }
+      } catch (e) {
+        console.warn("Sync custom_skills update error:", e);
+      }
+
       notifyPersistentBrainUpdated();
       return { success: true, message: "Autonomous skill updated and refactored", id: res.id, name: res.name, version: res.version };
     }
@@ -3065,11 +3118,41 @@ async function executeTool(name, args, assistantBubble = null) {
           system_prompt: args.system_prompt,
           assigned_skills: args.assigned_skills || [],
           reason: args.reason || "Autonomous task specialization",
-          source: "autonomous_ai"
+          source: "autonomous_ai",
+          created_by: "AI Agent (Self-Evolved)"
         }
       });
+
+      // Synchronize directly into custom_agents in chrome.storage.local
+      try {
+        const stored = await chrome.storage.local.get(['custom_agents']);
+        let curAgents = Array.isArray(stored.custom_agents) ? [...stored.custom_agents] : [];
+        const agentId = res.id || `agent_auto_${Date.now()}`;
+        const existingIdx = curAgents.findIndex(a => a.id === agentId || a.name?.toLowerCase() === args.name?.toLowerCase());
+        const newAgentObj = {
+          id: agentId,
+          name: args.name,
+          description: args.role_description,
+          content: args.system_prompt,
+          skills: args.assigned_skills || [],
+          source: "autonomous_ai",
+          created_by: "AI Agent (Self-Evolved)",
+          created_at: new Date().toISOString()
+        };
+        if (existingIdx >= 0) {
+          curAgents[existingIdx] = { ...curAgents[existingIdx], ...newAgentObj };
+        } else {
+          curAgents.push(newAgentObj);
+        }
+        await chrome.storage.local.set({ custom_agents: curAgents });
+        if (typeof customAgents !== 'undefined') customAgents = curAgents;
+        if (typeof renderAgentDropdown === 'function') renderAgentDropdown();
+      } catch (e) {
+        console.warn("Sync custom_agents error:", e);
+      }
+
       notifyPersistentBrainUpdated();
-      return { success: true, message: "Autonomous specialist agent spawned and registered in agent vault", id: res.id, name: res.name };
+      return { success: true, message: "Autonomous specialist agent spawned and registered in Multi-Agent Persona list", id: res.id, name: res.name };
     }
 
     case "edit_manual_skill": {
@@ -3083,6 +3166,29 @@ async function executeTool(name, args, assistantBubble = null) {
           change_summary: args.change_summary || "Skill improvement by AI agent"
         }
       });
+
+      // Synchronize into custom_skills in chrome.storage.local
+      try {
+        const stored = await chrome.storage.local.get(['custom_skills']);
+        let curSkills = Array.isArray(stored.custom_skills) ? [...stored.custom_skills] : [];
+        const existingIdx = curSkills.findIndex(s => s.id === args.skill_id);
+        if (existingIdx >= 0) {
+          curSkills[existingIdx] = {
+            ...curSkills[existingIdx],
+            name: args.name || curSkills[existingIdx].name,
+            description: args.description || curSkills[existingIdx].description,
+            content: args.content || curSkills[existingIdx].content,
+            edited_by: "autonomous_ai",
+            last_refined: new Date().toISOString(),
+            changelog: args.change_summary || "Refined by AI Agent"
+          };
+          await chrome.storage.local.set({ custom_skills: curSkills });
+          if (typeof customSkills !== 'undefined') customSkills = curSkills;
+        }
+      } catch (e) {
+        console.warn("Sync custom_skills edit error:", e);
+      }
+
       notifyPersistentBrainUpdated();
       return { success: true, message: "Manual skill updated with rollback backup created", id: args.skill_id, res };
     }
@@ -3099,6 +3205,31 @@ async function executeTool(name, args, assistantBubble = null) {
           change_summary: args.change_summary || "Agent persona improvement by AI agent"
         }
       });
+
+      // Synchronize into custom_agents in chrome.storage.local
+      try {
+        const stored = await chrome.storage.local.get(['custom_agents']);
+        let curAgents = Array.isArray(stored.custom_agents) ? [...stored.custom_agents] : [];
+        const existingIdx = curAgents.findIndex(a => a.id === args.agent_id);
+        if (existingIdx >= 0) {
+          curAgents[existingIdx] = {
+            ...curAgents[existingIdx],
+            name: args.name || curAgents[existingIdx].name,
+            description: args.description || curAgents[existingIdx].description,
+            content: args.system_prompt || curAgents[existingIdx].content,
+            skills: args.skills || curAgents[existingIdx].skills,
+            edited_by: "autonomous_ai",
+            last_refined: new Date().toISOString(),
+            changelog: args.change_summary || "Refined by AI Agent"
+          };
+          await chrome.storage.local.set({ custom_agents: curAgents });
+          if (typeof customAgents !== 'undefined') customAgents = curAgents;
+          if (typeof renderAgentDropdown === 'function') renderAgentDropdown();
+        }
+      } catch (e) {
+        console.warn("Sync custom_agents edit error:", e);
+      }
+
       notifyPersistentBrainUpdated();
       return { success: true, message: "Manual agent updated with rollback backup created", id: args.agent_id, res };
     }

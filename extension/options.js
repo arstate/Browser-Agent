@@ -1651,6 +1651,19 @@ function renderAgentsCards(searchQuery = currentSearchAgents) {
 
   subAgents.forEach(ag => {
     const isBuiltin = BUILTIN_AGENT_IDS.includes(ag.id) || !!ag.is_builtin;
+    const isAI = (ag.source === 'autonomous_ai' || (typeof ag.created_by === 'string' && ag.created_by.includes('AI')));
+    const isRefined = (ag.edited_by === 'autonomous_ai');
+    let sourceBadge = '';
+    if (isBuiltin) {
+      sourceBadge = '<span class="badge-builtin">Bawaan</span>';
+    } else if (isAI) {
+      sourceBadge = '<span class="badge-source badge-ai-evolved">🤖 AI Auto-Evolved</span>';
+    } else if (isRefined) {
+      sourceBadge = '<span class="badge-source badge-ai-refined" title="Telah dipelajari &amp; disempurnakan oleh AI">⚡ AI Refined</span>';
+    } else {
+      sourceBadge = '<span class="badge-source badge-user-custom">👤 User Custom</span>';
+    }
+
     const card = document.createElement('div');
     card.className = `item-card`;
 
@@ -1672,7 +1685,7 @@ function renderAgentsCards(searchQuery = currentSearchAgents) {
           <div class="item-title-group">
             <div class="item-card-title">
               <span>${escapeHtml(ag.name || 'Untitled Sub-Agent')}</span>
-              ${isBuiltin ? '<span class="badge-builtin">Bawaan</span>' : ''}
+              ${sourceBadge}
             </div>
             ${cleanModel ? `<span class="tag-pill model-tag">${escapeHtml(cleanModel)}</span>` : ''}
           </div>
@@ -1745,6 +1758,19 @@ function renderSkillsCards(searchQuery = currentSearchSkills) {
 
   filtered.forEach(sk => {
     const isBuiltin = BUILTIN_SKILL_IDS.includes(sk.id) || !!sk.is_builtin;
+    const isAI = (sk.source === 'autonomous_ai' || (typeof sk.created_by === 'string' && sk.created_by.includes('AI')));
+    const isRefined = (sk.edited_by === 'autonomous_ai');
+    let sourceBadge = '';
+    if (isBuiltin) {
+      sourceBadge = '<span class="badge-builtin">Bawaan</span>';
+    } else if (isAI) {
+      sourceBadge = '<span class="badge-source badge-ai-evolved">🤖 AI Auto-Evolved</span>';
+    } else if (isRefined) {
+      sourceBadge = '<span class="badge-source badge-ai-refined" title="Telah dipelajari &amp; disempurnakan oleh AI">⚡ AI Refined</span>';
+    } else {
+      sourceBadge = '<span class="badge-source badge-user-custom">👤 User Custom</span>';
+    }
+
     const card = document.createElement('div');
     card.className = 'item-card';
     card.innerHTML = `
@@ -1752,7 +1778,7 @@ function renderSkillsCards(searchQuery = currentSearchSkills) {
         <div class="item-title-group">
           <div class="item-card-title">
             <span>⚡ ${escapeHtml(sk.name || 'Untitled Skill')}</span>
-            ${isBuiltin ? '<span class="badge-builtin">Bawaan</span>' : ''}
+            ${sourceBadge}
           </div>
           <span class="tag-pill skill-tag"><code>${escapeHtml(sk.id)}</code></span>
         </div>
@@ -1821,6 +1847,19 @@ function renderMemoriesCards(searchQuery = currentSearchMemories) {
 
   memoriesList.forEach(mem => {
     const isBuiltin = BUILTIN_MEMORY_IDS.includes(mem.id) || !!mem.is_builtin;
+    const isAI = (mem.source === 'autonomous_ai' || (typeof mem.created_by === 'string' && mem.created_by.includes('AI')));
+    const isRefined = (mem.edited_by === 'autonomous_ai');
+    let sourceBadge = '';
+    if (isBuiltin) {
+      sourceBadge = '<span class="badge-builtin">Bawaan</span>';
+    } else if (isAI) {
+      sourceBadge = '<span class="badge-source badge-ai-evolved">🤖 AI Auto-Evolved</span>';
+    } else if (isRefined) {
+      sourceBadge = '<span class="badge-source badge-ai-refined" title="Telah dipelajari &amp; disempurnakan oleh AI">⚡ AI Refined</span>';
+    } else {
+      sourceBadge = '<span class="badge-source badge-user-custom">👤 User Custom</span>';
+    }
+
     const card = document.createElement('div');
     card.className = 'item-card';
     card.innerHTML = `
@@ -1828,7 +1867,7 @@ function renderMemoriesCards(searchQuery = currentSearchMemories) {
         <div class="item-title-group">
           <div class="item-card-title">
             <span>🧠 ${escapeHtml(mem.name || 'Untitled Memory')}</span>
-            ${isBuiltin ? '<span class="badge-builtin">Bawaan</span>' : ''}
+            ${sourceBadge}
           </div>
           <span class="tag-pill memory-tag"><code>${escapeHtml(mem.id)}</code></span>
         </div>
@@ -2872,6 +2911,58 @@ async function loadPersistentBrainData() {
 
       updateBrainCounters();
       chrome.storage.local.set({ cached_persistent_brain: brainData }).catch(() => {});
+
+      // Bi-directional Auto-Sync: Merge autonomous agents into agentsList so they appear in Multi-Agent tab
+      let agentsChanged = false;
+      if (Array.isArray(brainData.autonomous_agents)) {
+        brainData.autonomous_agents.forEach(autoAg => {
+          const existing = agentsList.find(a => a.id === autoAg.id || (a.name && autoAg.name && a.name.toLowerCase() === autoAg.name.toLowerCase()));
+          if (!existing) {
+            agentsList.push({
+              id: autoAg.id,
+              name: autoAg.name,
+              description: autoAg.role_description,
+              content: autoAg.system_prompt,
+              skills: autoAg.assigned_skills || [],
+              source: "autonomous_ai",
+              created_by: "AI Agent (Self-Evolved)",
+              created_at: autoAg.created_at || new Date().toISOString()
+            });
+            agentsChanged = true;
+          }
+        });
+      }
+      if (agentsChanged) {
+        chrome.storage.local.set({ custom_agents: agentsList }).catch(() => {});
+        updateBadgeCount('badge-count-agents', agentsList.length);
+        renderAgentsCards();
+      }
+
+      // Bi-directional Auto-Sync: Merge autonomous skills into skillsList so they appear in Skills tab
+      let skillsChanged = false;
+      if (Array.isArray(brainData.autonomous_skills)) {
+        brainData.autonomous_skills.forEach(autoSk => {
+          const existing = skillsList.find(s => s.id === autoSk.id || (s.name && autoSk.name && s.name.toLowerCase() === autoSk.name.toLowerCase()));
+          if (!existing) {
+            skillsList.push({
+              id: autoSk.id,
+              name: autoSk.name,
+              description: autoSk.description,
+              content: autoSk.workflow_markdown,
+              version: autoSk.version || "v1.0.0",
+              source: "autonomous_ai",
+              created_by: "AI Agent (Self-Evolved)",
+              created_at: autoSk.created_at || new Date().toISOString()
+            });
+            skillsChanged = true;
+          }
+        });
+      }
+      if (skillsChanged) {
+        chrome.storage.local.set({ custom_skills: skillsList }).catch(() => {});
+        updateBadgeCount('badge-count-skills', skillsList.length);
+        renderSkillsCards();
+      }
 
       const searchInput = document.getElementById('search-brain-input');
       renderPersistentBrain(searchInput ? searchInput.value : "");
