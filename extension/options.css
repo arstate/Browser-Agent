@@ -1,19 +1,19 @@
 /* =========================================================================
    Browser Agent - Full-Screen Options / Settings Page Styling
-   Monochrome Glass Minimalism (Deep Black + Frosted Glass + Bento Lime)
+   Premium Monochrome & Bento Lime Glass (Synced with Homescreen / Newtab)
    ========================================================================= */
 
 :root {
-  --bg-app: #08080a;
-  --bg-sidebar: #0c0c0f;
-  --bg-card: #121216;
-  --bg-card-hover: #18181d;
-  --bg-input: #0f0f13;
+  --bg-app: #0E0E11;
+  --bg-sidebar: rgba(22, 22, 25, 0.96);
+  --bg-card: #1C1C1F;
+  --bg-card-hover: #242428;
+  --bg-input: #161618;
   --text-primary: #FFFFFF;
   --text-secondary: #A1A1AA;
   --text-muted: #71717A;
   --border-card: rgba(255, 255, 255, 0.08);
-  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-subtle: rgba(255, 255, 255, 0.06);
   --accent-lime: #CEF128;
   --accent-lime-hover: #bde01d;
   --accent-orange: #F97316;
@@ -64,6 +64,27 @@ body.options-body {
   margin: 0;
   padding: 0;
   display: flex;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Subtle Elegant Grid Stroke Ornament (Kotak-Kotak Tipis Clean Design) */
+body.options-body::before,
+.options-app-shell::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, #000 25%, transparent 88%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, #000 25%, transparent 88%);
 }
 
 .options-app-shell {
@@ -71,6 +92,8 @@ body.options-body {
   width: 100%;
   min-height: 100vh;
   background: var(--bg-app);
+  position: relative;
+  z-index: 1;
 }
 
 /* =========================================================================
@@ -79,7 +102,9 @@ body.options-body {
 .options-sidebar {
   width: 240px;
   background: var(--bg-sidebar);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -98,7 +123,7 @@ body.options-body {
   min-height: 56px;
   max-height: 56px;
   padding: 0 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   box-sizing: border-box;
@@ -252,6 +277,8 @@ body.options-body {
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
+  position: relative;
+  z-index: 2;
 }
 
 .options-view {

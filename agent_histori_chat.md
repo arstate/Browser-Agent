@@ -3603,6 +3603,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - 17/17 Unit Tests lulus 100% (Zero Bug).
      - Bump manifest to `v2.146.4`, build `extension.crx` (463.5 KB).
 
+---
+
+### 🚀 Iterasi 353: Settings Background Palette Harmony & Elegant Grid Stroke Ornament (v2.146.5)
+- **Kebutuhan Pengguna**:
+  - Menyamakan palet warna background halaman Pengaturan (`options.html` / `options.css`) agar 100% identik dan harmonis dengan Homescreen (Newtab) dan Sidebarnya.
+  - Menambahkan ornamen stroke kotak-kotak elegan (*blueprint engineering grid lines*) di latar belakang pengaturan untuk menghadirkan kesan mewah, modern, dan premium.
+- **Implementasi & Peningkatan**:
+  1. **Color Palette Sync with Homescreen & Sidebar**:
+     - Menyelaraskan variabel `:root` di `options.css`:
+       - Canvas/App Background: `--bg-app: #0E0E11`
+       - Sidebar Glass Background: `--bg-sidebar: rgba(22, 22, 25, 0.96)` dengan `backdrop-filter: blur(24px)` dan border `1px solid rgba(255, 255, 255, 0.06)`.
+       - Card Background: `--bg-card: #1C1C1F`
+       - Card Hover Background: `--bg-card-hover: #242428`
+       - Input Background: `--bg-input: #161618`
+  2. **Subtle Elegant Grid Stroke Ornament (`kotak-kotak elegan`)**:
+     - Menambahkan pseudo-element `body.options-body::before` dan `.options-app-shell::before` dengan pola garis kisi 40px × 40px:
+       ```css
+       background-size: 40px 40px;
+       background-image:
+         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+         linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+       mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, #000 25%, transparent 88%);
+       ```
+     - Efek radial mask memastikan garis kisi memudar lembut ke tepian layar (*vignette focus*), menciptakan kontras mewah yang konsisten di seluruh aplikasi.
+  3. **Pengujian & Rilis**:
+     - 17/17 Unit Tests lulus 100% (Zero Bug).
+     - Bump manifest to `v2.146.5`, build `extension.crx` (463.8 KB).
+
 
 
 
