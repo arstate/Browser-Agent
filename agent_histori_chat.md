@@ -3775,6 +3775,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.6`, build `extension.crx` (470.6 KB).
 
+---
+
+### 🚀 Iterasi 361: Perfect Centering for Collapsed Sidebar Icons & Slim Minimalist Proportions (v2.147.7)
+- **Kebutuhan Pengguna**:
+  - Tinggi tombol navigasi sebelumnya masih terasa agak terlalu tinggi (*bulky*).
+  - Saat sidebar dalam keadaan tertutup/sembunyi (*collapsed width 58px*), ikon navigasi (seperti lingkaran Home) tidak berada persis di tengah secara simetris (*off-center*).
+- **Implementasi & Peningkatan UI**:
+  1. **Perfect Centering pada Collapsed Sidebar**:
+     - Mengatur container `.sidebar-nav` dengan `align-items: center; width: 100%;` dan padding `10px 0 24px`.
+     - Dalam keadaan collapsed (`58px`), `.sidebar-nav-item` menjadi lingkaran sempurna berukuran `36px x 36px` (`border-radius: 50% !important; margin: 0 auto; justify-content: center; padding: 0 !important;`), memastikan background kaca dan ikon 100% simetris berada tepat di tengah sidebar.
+     - Brand logo di `.sidebar-top` disesuaikan dengan `padding: 0 15px` (`(58px - 28px) / 2 = 15px`) agar logo "B" juga tepat berada di tengah secara matematis.
+  2. **Smooth Expansions saat Hover**:
+     - Saat kursor hover ke sidebar (`240px`), tombol melebar halus menjadi kapsul `width: 100%; height: 34px; padding: 0 12px; border-radius: 9999px;` dengan transisi elastis bezier.
+  3. **Slim Minimalist Height di Settings Page**:
+     - Di `options.css`, tinggi `.sidebar-tab-btn` dikurangi menjadi `34px` dengan `padding: 0 12px`, font `12.5px`, dan badge `18px` yang ramping, bersih, dan elegan ala macOS.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.7`, build `extension.crx` (470.8 KB).
+
 
 
 

@@ -181,40 +181,42 @@ body.options-body::before,
 .sidebar-nav-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 10px 32px;
+  padding: 10px 10px 28px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .sidebar-group-header {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
-  color: rgba(148, 163, 184, 0.55);
+  color: rgba(148, 163, 184, 0.5);
   letter-spacing: 1px;
-  padding: 10px 14px 4px;
+  padding: 8px 12px 2px;
   text-transform: uppercase;
 }
 
 .sidebar-nav-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
-/* Mac-style Full Rounded Glasses Navigation Button */
+/* Mac-style Full Rounded Glasses Navigation Button (Slim Minimalism) */
 .sidebar-tab-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   width: 100%;
-  padding: 8px 14px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 12px;
   border: 1px solid transparent;
   background: transparent;
   color: #94A3B8;
   border-radius: 9999px !important;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
   text-align: left;
@@ -245,8 +247,8 @@ body.options-body::before,
 }
 
 .tab-btn-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -260,6 +262,8 @@ body.options-body::before,
 }
 
 .tab-btn-icon svg {
+  width: 16px !important;
+  height: 16px !important;
   stroke: currentColor;
 }
 
@@ -275,11 +279,16 @@ body.options-body::before,
   background: rgba(255, 255, 255, 0.07);
   color: #94A3B8;
   border: 1px solid rgba(255, 255, 255, 0.09);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 2px 8px;
+  height: 18px;
+  padding: 0 7px;
   border-radius: 9999px !important;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   transition: all 0.2s ease;
 }
 
