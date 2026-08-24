@@ -3479,6 +3479,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - 17/17 Unit Tests lulus 100% (Zero Bug).
      - Bump manifest to `v2.145.0`, build `extension.crx` (458.2 KB).
 
+---
+
+### 🚀 Iterasi 347: Uniform Clean Dimension Container Cards & Polished Brain UI (v2.145.1)
+- **Problem**:
+  - Ukuran container card pada Persistent Memory & Brain Vault (`options.html`) tidak seragam (ada yang panjang dan ada yang pendek tergantung panjang teks), menyebabkan tampilan grid tidak rapi dan tidak simetris.
+- **Solusi & Styling Baru**:
+  1. **Uniform Container Dimensions (`.brain-card`)**:
+     - Menetapkan tinggi presisi seragam `height: 260px; min-height: 260px; max-height: 260px;` dengan `overflow: hidden;` dan `position: relative;`.
+     - Layout flex vertical yang rapi: Header di bagian atas (`flex-shrink: 0`), konten utama di tengah (`flex: 1; overflow-y: auto;`), dan footer/alasan terkunci di bagian bawah (`margin-top: auto;`).
+  2. **Custom Micro Scrollbar**:
+     - Menambahkan scrollbar tipis modern (4px) dengan warna transparan elegan pada `.brain-card-main` dan `.brain-exp-markdown` sehingga teks panjang tetap terbaca lengkap tanpa merusak keseragaman ukuran kartu.
+  3. **Refaktor Seluruh 7 Subtabs (`options.js`)**:
+     - Penyeragaman struktur DOM untuk `facts`, `experiences`, `antipatterns`, `skills`, `agents`, `training`, dan `epistemic`.
+  4. **Pengujian & Rilis**:
+     - 17/17 Unit Tests lulus 100% (Zero Bug).
+     - Bump manifest to `v2.145.1`, build `extension.crx` (458.5 KB).
+
 
 
 

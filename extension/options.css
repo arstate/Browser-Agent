@@ -2582,24 +2582,28 @@ body.options-body {
 .brain-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
+  gap: 18px;
+  align-items: stretch;
 }
 
-/* Full Rounded Glassmorphism Content Cards */
+/* Full Rounded Glassmorphism Content Cards - Equal & Clean Dimensions */
 .brain-card {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(18px) saturate(160%);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 22px;
-  padding: 20px 22px;
+  border-radius: 20px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 14px;
+  height: 260px;
+  min-height: 260px;
+  max-height: 260px;
   box-shadow: 0 10px 28px -6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
 }
 
 .brain-card:hover {
@@ -2897,60 +2901,104 @@ body.options-body {
 }
 
 .brain-card-main {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 500;
   color: #F1F5F9;
   line-height: 1.55;
+  flex: 1;
+  overflow-y: auto;
+  word-break: break-word;
+  padding-right: 4px;
+}
+
+.brain-card-main::-webkit-scrollbar {
+  width: 4px;
+}
+
+.brain-card-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.brain-card-main::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+
+.brain-card-main::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .brain-card-reason {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #64748B;
   font-style: italic;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brain-card-reason span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .brain-ap-problem {
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 6px 10px;
   color: #FCA5A5;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.45;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .brain-ap-solution {
   background: rgba(34, 197, 94, 0.08);
   border: 1px solid rgba(34, 197, 94, 0.22);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 6px 10px;
   color: #86EFAC;
-  font-size: 12.5px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .brain-ap-rule {
-  font-size: 11.5px;
+  font-size: 11px;
   color: #94A3B8;
-  line-height: 1.4;
-  padding: 4px 6px;
+  line-height: 1.35;
+  padding: 2px 4px;
 }
 
 .brain-exp-markdown {
   background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 12px;
+  padding: 8px 10px;
+  font-size: 11.5px;
   color: #CBD5E1;
-  line-height: 1.55;
+  line-height: 1.45;
   white-space: pre-wrap;
-  max-height: 140px;
+  flex: 1;
   overflow-y: auto;
+  max-height: 120px;
+}
+
+.brain-exp-markdown::-webkit-scrollbar {
+  width: 4px;
+}
+
+.brain-exp-markdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
 }
 
 .brain-live-status-pill {
