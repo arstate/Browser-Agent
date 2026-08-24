@@ -409,6 +409,26 @@
       </div>
     </main>
 
+    <!-- Right-Hand Floating Prompt Queue Dock (Unlimited Sequential Execution) -->
+    <aside id="prompt-queue-dock" class="prompt-queue-dock" style="display: none;">
+      <div class="prompt-queue-header">
+        <div class="prompt-queue-title-wrap">
+          <span class="prompt-queue-pulse-dot"></span>
+          <span class="prompt-queue-title">Antrean Prompt</span>
+          <span class="prompt-queue-count-badge" id="prompt-queue-count">0</span>
+        </div>
+        <div class="prompt-queue-header-actions">
+          <button type="button" class="btn-queue-action" id="btn-queue-clear" title="Hapus Semua Antrean">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span>Hapus Semua</span>
+          </button>
+        </div>
+      </div>
+      <div class="prompt-queue-list" id="prompt-queue-list">
+        <!-- Dynamically rendered prompt queue cards -->
+      </div>
+    </aside>
+
     <!-- Raw PTY Terminal (Hidden by default) -->
     <main class="bento-terminal-card" id="terminal-workspace" style="display: none;">
       <div class="terminal-card-header">

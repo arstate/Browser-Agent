@@ -4280,6 +4280,9 @@ Tugas Anda:
     await detachDebugger(activeTabId);
     await focusOwnAgentTab();
     scrollToBottom();
+    setTimeout(() => {
+      checkAndProcessNextPromptQueue();
+    }, 350);
   }
 }
 
@@ -5393,6 +5396,9 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
       abortController = null;
       await focusOwnAgentTab();
       scrollToBottom();
+      setTimeout(() => {
+        checkAndProcessNextPromptQueue();
+      }, 350);
     }
 }
 
@@ -7965,6 +7971,7 @@ function startNewChat() {
   conversationHistory = [];
   pendingAttachments = [];
   clearAttachments();
+  clearPromptQueue();
   resetChatMessagesUI();
   isExecuting = false;
   abortController = null;
@@ -8732,15 +8739,268 @@ async function autoLearnReflexFromUserText(text) {
   }
 }
 
-// Send message (Prompt + Attachments)
-function handleSendMessage() {
-  if (isExecuting) {
-    cancelExecution();
+// =========================================================================
+// ⚡ Prompt Queue System (Unlimited Multi-Prompt Antrean & Auto-Execution)
+// =========================================================================
+let promptQueue = [];
+let editingQueueItemId = null;
+
+function addToPromptQueue(text, attachments = [], mentions = [], chatMode = 'agent') {
+  const item = {
+    id: 'queue_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+    text: text || '',
+    attachments: [...attachments],
+    mentions: [...mentions],
+    chatMode: chatMode || currentChatMode || 'agent',
+    timestamp: Date.now()
+  };
+  promptQueue.push(item);
+  renderPromptQueueUI();
+  showQueueToast(`⚡ Berhasil dimasukkan ke Antrean #${promptQueue.length}`);
+}
+
+function removePromptQueueItem(id) {
+  promptQueue = promptQueue.filter(item => item.id !== id);
+  if (editingQueueItemId === id) editingQueueItemId = null;
+  renderPromptQueueUI();
+}
+
+function movePromptQueueItem(index, direction) {
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= promptQueue.length) return;
+  const temp = promptQueue[index];
+  promptQueue[index] = promptQueue[targetIndex];
+  promptQueue[targetIndex] = temp;
+  renderPromptQueueUI();
+}
+
+function clearPromptQueue() {
+  promptQueue = [];
+  editingQueueItemId = null;
+  renderPromptQueueUI();
+}
+
+function checkAndProcessNextPromptQueue() {
+  if (isExecuting) return;
+  if (promptQueue.length === 0) {
+    renderPromptQueueUI();
     return;
   }
 
+  const nextItem = promptQueue.shift();
+  renderPromptQueueUI();
+
+  if (!nextItem) return;
+
+  setTimeout(() => {
+    if (nextItem.chatMode === 'chat') {
+      runChatModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
+    } else {
+      runAgentLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
+    }
+  }, 250);
+}
+
+function showQueueToast(message) {
+  let toast = document.getElementById('prompt-queue-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'prompt-queue-toast';
+    toast.className = 'prompt-queue-toast';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<span class="toast-pulse"></span> <span>${escapeHtml(message)}</span>`;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2800);
+}
+
+function renderPromptQueueUI() {
+  const dock = document.getElementById('prompt-queue-dock');
+  const list = document.getElementById('prompt-queue-list');
+  const countBadge = document.getElementById('prompt-queue-count');
+  if (!dock || !list) return;
+
+  if (promptQueue.length === 0) {
+    dock.style.display = 'none';
+    document.body.classList.remove('prompt-queue-active');
+    return;
+  }
+
+  dock.style.display = 'flex';
+  document.body.classList.add('prompt-queue-active');
+  if (countBadge) countBadge.textContent = promptQueue.length;
+
+  let html = '';
+  promptQueue.forEach((item, index) => {
+    const isNext = (index === 0);
+    const isEditing = (editingQueueItemId === item.id);
+
+    let attachmentsHtml = '';
+    if (item.attachments && item.attachments.length > 0) {
+      attachmentsHtml = `<div class="queue-card-attachments">`;
+      item.attachments.forEach(att => {
+        if (att.isImage) {
+          attachmentsHtml += `<span class="queue-att-badge image"><img src="${att.dataUrl}"> <span>${escapeHtml(att.name || 'Gambar')}</span></span>`;
+        } else {
+          attachmentsHtml += `<span class="queue-att-badge file">${getMacOsFileIconSvg(att.name, 12, 15)} <span>${escapeHtml(att.name || 'File')}</span></span>`;
+        }
+      });
+      attachmentsHtml += `</div>`;
+    }
+
+    let mentionsHtml = '';
+    if (item.mentions && item.mentions.length > 0) {
+      mentionsHtml = `<div class="queue-card-mentions">` + 
+        item.mentions.map(m => `<span class="queue-mention-tag">@${escapeHtml(getAgentShortName(m))}</span>`).join('') +
+        `</div>`;
+    }
+
+    html += `
+      <div class="prompt-queue-card ${isNext ? 'is-next' : ''}" data-queue-id="${item.id}">
+        <div class="queue-card-header">
+          <div class="queue-card-badge-wrap">
+            <span class="queue-badge-pill ${isNext ? 'pulse-lime' : ''}">
+              ${isNext ? '⚡ Antrean #1 (Berikutnya)' : `#${index + 1} Antrean`}
+            </span>
+            <span class="queue-mode-tag">${item.chatMode === 'chat' ? '💬 Chat' : '🤖 Agent'}</span>
+          </div>
+          <div class="queue-card-actions">
+            ${index > 0 ? `<button type="button" class="btn-queue-card-action btn-move-up" data-idx="${index}" title="Naikkan Urutan">▲</button>` : ''}
+            ${index < promptQueue.length - 1 ? `<button type="button" class="btn-queue-card-action btn-move-down" data-idx="${index}" title="Turunkan Urutan">▼</button>` : ''}
+            <button type="button" class="btn-queue-card-action btn-edit-queue" data-id="${item.id}" title="Edit Prompt">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </button>
+            <button type="button" class="btn-queue-card-action btn-delete-queue" data-id="${item.id}" title="Batal / Hapus Antrean">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        ${isEditing ? `
+          <div class="queue-card-editor">
+            <textarea class="queue-card-textarea" id="queue-edit-textarea-${item.id}">${escapeHtml(item.text)}</textarea>
+            <div class="queue-edit-actions">
+              <button type="button" class="btn-queue-save" data-id="${item.id}">Simpan</button>
+              <button type="button" class="btn-queue-cancel-edit" data-id="${item.id}">Batal</button>
+            </div>
+          </div>
+        ` : `
+          <div class="queue-card-body">
+            <p class="queue-prompt-text">${escapeHtml(item.text || '(Tanpa teks prompt)')}</p>
+            ${attachmentsHtml}
+            ${mentionsHtml}
+          </div>
+        `}
+      </div>
+    `;
+  });
+
+  list.innerHTML = html;
+  bindQueueCardEvents();
+}
+
+function bindQueueCardEvents() {
+  const dock = document.getElementById('prompt-queue-dock');
+  if (!dock) return;
+
+  dock.querySelector('#btn-queue-clear')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearPromptQueue();
+  });
+
+  dock.querySelectorAll('.btn-edit-queue').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      editingQueueItemId = btn.dataset.id;
+      renderPromptQueueUI();
+    });
+  });
+
+  dock.querySelectorAll('.btn-delete-queue').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removePromptQueueItem(btn.dataset.id);
+    });
+  });
+
+  dock.querySelectorAll('.btn-move-up').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx, 10);
+      movePromptQueueItem(idx, -1);
+    });
+  });
+
+  dock.querySelectorAll('.btn-move-down').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx, 10);
+      movePromptQueueItem(idx, 1);
+    });
+  });
+
+  dock.querySelectorAll('.btn-queue-save').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const textarea = document.getElementById(`queue-edit-textarea-${id}`);
+      if (textarea) {
+        const item = promptQueue.find(q => q.id === id);
+        if (item) {
+          item.text = textarea.value.trim();
+        }
+      }
+      editingQueueItemId = null;
+      renderPromptQueueUI();
+    });
+  });
+
+  dock.querySelectorAll('.btn-queue-cancel-edit').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      editingQueueItemId = null;
+      renderPromptQueueUI();
+    });
+  });
+}
+
+// Send message (Prompt + Attachments with Unlimited Queue Support)
+function handleSendMessage() {
   const text = chatInput.value.trim();
-  if (!text && pendingAttachments.length === 0 && selectedMentionAgents.length === 0) return;
+  const hasInput = (text || pendingAttachments.length > 0 || selectedMentionAgents.length > 0);
+
+  // If AI is currently generating/executing
+  if (isExecuting) {
+    if (!hasInput) {
+      // Empty input & clicked stop button -> cancel current execution
+      cancelExecution();
+      return;
+    }
+
+    // User submitted a prompt during generation -> Add to Prompt Queue!
+    const currentAttachments = [...pendingAttachments];
+    const currentMentions = [...selectedMentionAgents];
+
+    let displayMessage = text;
+    if (currentMentions.length > 0) {
+      const mentionPrefix = currentMentions.map(m => `@${getAgentShortName(m)}`).join(' ') + ' ';
+      if (!displayMessage.startsWith('@')) {
+        displayMessage = (mentionPrefix + displayMessage).trim();
+      }
+    }
+
+    addToPromptQueue(displayMessage, currentAttachments, currentMentions, currentChatMode);
+
+    chatInput.value = '';
+    clearAttachments();
+    clearMentionAgents();
+    adjustChatInputHeight();
+    return;
+  }
+
+  if (!hasInput) return;
 
   // Trigger continuous autonomous self-learning reflex in background
   autoLearnReflexFromUserText(text);

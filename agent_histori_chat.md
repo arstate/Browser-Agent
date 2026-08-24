@@ -3631,6 +3631,33 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - 17/17 Unit Tests lulus 100% (Zero Bug).
      - Bump manifest to `v2.146.5`, build `extension.crx` (463.8 KB).
 
+---
+
+### 🚀 Iterasi 354: Unlimited Multi-Prompt Queue & Autonomous Sequential Execution Engine (v2.147.0)
+- **Kebutuhan Pengguna**:
+  - Menambahkan fitur **Prompt Queue (Antrean Prompt)**: Saat AI sedang aktif memproses / men-generate respons, pengguna dapat langsung mengetik dan mengirim prompt berikutnya secara beruntun (*unlimited queue*).
+  - Menampilkan panel UI Antrean di sebelah kanan (seperti yang digambar kotak merah di screenshot pengguna) dengan penomoran `#1`, `#2`, `#3`, dst.
+  - Kartu antrean `#1` berada paling atas (berikutnya dieksekusi), bisa di-*scroll* jika antrean banyak, mendukung **Edit Prompt** (inline textarea), **Batal/Hapus Antrean**, serta **Ubah Urutan (Naik/Turun)**.
+  - Eksekusi antrean berjalan secara otomatis berurutan (*autonomous sequential chain*): Setelah giliran sesi aktif selesai, sistem langsung mengeksekusi antrean `#1`, `#2`, `#3` sampai seluruh antrean tuntas tanpa perlu input ulang dari pengguna.
+- **Implementasi & Peningkatan**:
+  1. **Prompt Queue Subsystem (`promptQueue` State & Engine)**:
+     - Dibuat struktur state `promptQueue = []` dengan kapasitas tak terbatas.
+     - Setiap item antrean merekam: `id`, `text` (prompt), `attachments` (gambar, video, file macOS style), `mentions` (@agent), `chatMode` (`agent` / `chat`), dan `timestamp`.
+  2. **Intersepsi Input Real-Time saat Generating (`handleSendMessage`)**:
+     - Saat `isExecuting === true`, jika pengguna menekan tombol Kirim atau Enter dengan teks/lampiran, prompt otomatis dimasukkan ke dalam `promptQueue` dan input form direset instan.
+     - Ditampilkan notifikasi toast mengambang elegan: `⚡ Berhasil dimasukkan ke Antrean #X`.
+     - Jika input kosong dan tombol diklik (ikon Stop), sistem membatalkan eksekusi sesi yang sedang berjalan.
+  3. **Right-Hand Floating Queue Panel UI (`#prompt-queue-dock`)**:
+     - Container docking mengambang di kanan layar dengan desain frosted deep black glass (`background: rgba(14, 14, 17, 0.92)`, `backdrop-filter: blur(28px)`, border `rgba(255, 255, 255, 0.1)`).
+     - Menampilkan indikator pulsing live, badge counter total antrean, dan tombol *Hapus Semua*.
+     - Setiap kartu antrean menampilkan badge `#1 (Berikutnya)` beranimasi Bento Lime, mode tag, preview lampiran & mention, tombol **Edit Inline** (`✏️`), tombol **Pindah Urutan** (`▲`/`▼`), dan tombol **Batal/Hapus** (`✕`).
+  4. **Autonomous Sequential Pipeline Execution (`checkAndProcessNextPromptQueue`)**:
+     - Terpasang di blok `finally` pada `runAgentLoop` dan `runChatModeLoop`.
+     - Begitu satu sesi generasi selesai, mesin antrean otomatis mengambil item teratas (`promptQueue.shift()`), memperbarui visual antrean, dan mengeksekusi prompt berikutnya secara mulus.
+  5. **Pengujian & Rilis**:
+     - 17/17 Unit Tests lulus 100% (Zero Bug).
+     - Bump manifest to `v2.147.0`, build `extension.crx` (468.4 KB).
+
 
 
 
