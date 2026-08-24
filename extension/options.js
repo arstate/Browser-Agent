@@ -3158,10 +3158,10 @@ function renderPersistentBrain(searchQuery = "") {
           <div class="brain-card-desc" title="${escapeHtml(item.description)}">${escapeHtml(item.description)}</div>
         </div>
         <div class="brain-card-footer">
-          <button type="button" class="brain-card-action-btn skill btn-view-brain-detail" data-type="skill" data-id="${item.id}">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            <span>Detail SOP</span>
-          </button>
+          <div class="brain-card-reason" style="border: none; padding: 0; margin: 0; flex: 1;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Autonomous Skill</span>
+          </div>
           <span class="brain-card-id" title="${escapeHtml(item.id)}">${escapeHtml(item.id)}</span>
         </div>
       `;
@@ -3214,10 +3214,10 @@ function renderPersistentBrain(searchQuery = "") {
           </div>
         </div>
         <div class="brain-card-footer">
-          <button type="button" class="brain-card-action-btn agent btn-view-brain-detail" data-type="agent" data-id="${item.id}">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            <span>Detail Persona</span>
-          </button>
+          <div class="brain-card-reason" style="border: none; padding: 0; margin: 0; flex: 1;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Autonomous Agent</span>
+          </div>
           <span class="brain-card-id" title="${escapeHtml(item.id)}">${escapeHtml(item.id)}</span>
         </div>
       `;
@@ -3260,10 +3260,10 @@ function renderPersistentBrain(searchQuery = "") {
           <div class="brain-exp-markdown">${escapeHtml(item.distilled_points_md)}</div>
         </div>
         <div class="brain-card-footer">
-          <button type="button" class="brain-card-action-btn training btn-view-brain-detail" data-type="training" data-id="${item.id}">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            <span>Detail Training</span>
-          </button>
+          <div class="brain-card-reason" style="border: none; padding: 0; margin: 0; flex: 1;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            <span>Saved ~${item.token_saved_estimate || 0} tokens</span>
+          </div>
           <span class="brain-card-id" title="${escapeHtml(item.id)}">${escapeHtml(item.id)}</span>
         </div>
       `;

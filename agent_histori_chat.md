@@ -3937,6 +3937,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.15`, build `extension.crx` (471.9 KB).
 
+---
+
+### 🚀 Iterasi 370: Ultra-Clean Unified Brain Cards (Eliminating Redundant Detail SOP/Persona/Training Buttons) (v2.147.16)
+- **Kebutuhan Pengguna**:
+  - Menghapus tombol `[Detail SOP]` pada kartu tab Autonomous Skills (serta tombol detail pada Specialist Agents dan Training Corpus) agar tampilan footer seluruh kartu di Persistent Brain tampil seragam, bersih, minimalis, dan elegan.
+- **Implementasi & Peningkatan UI**:
+  1. **Eliminasi Tombol Detail Redundant**:
+     - Menghapus tombol `<button class="brain-card-action-btn">` dari tab Autonomous Skills (`Detail SOP`), Specialist Agents (`Detail Persona`), dan Training Corpus (`Detail Training`).
+  2. **Unified Balanced Footers**:
+     - Seluruh tipe kartu (Facts, Experiences, Anti-Patterns, Skills, Agents, Training, Epistemic) kini memiliki arsitektur footer yang seragam: label status/alasan di sebelah kiri dan kapsul ID unik di sebelah kanan.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.16`, build `extension.crx` (471.8 KB).
+
 
 
 
