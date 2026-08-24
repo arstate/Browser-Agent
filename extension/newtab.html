@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Tab · Browser Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="xterm.css">
+  <link rel="stylesheet" href="newtab.css">
+  <link rel="stylesheet" href="stickman-animation/stickman-styles.css">
+</head>
+<body class="newtab-body">
+  <div class="fullscreen-layout">
+    <!-- Collapsible / Hover Expandable Left Sidebar Navigation -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-brand-badge" id="btn-sidebar-brand" title="Browser Agent">
+          <div class="sidebar-brand-logo">B</div>
+          <div class="sidebar-brand-info">
+            <span class="sidebar-brand-name">Browser Agent</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 1. Home / New Chat Action -->
+        <button type="button" class="sidebar-nav-item active" id="btn-header-new-chat" data-tab="home" title="Percakapan Baru (Home / New Chat)">
+          <div class="sidebar-nav-icon">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <span class="sidebar-nav-label">Home</span>
+        </button>
+
+        <!-- 2. Riwayat Chat / History Modal Trigger -->
+        <button type="button" class="sidebar-nav-item" id="btn-open-history" title="Riwayat Percakapan (History)">
+          <div class="sidebar-nav-icon">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <span class="sidebar-nav-label">Riwayat Chat</span>
+        </button>
+
+        <!-- 3. Pengaturan / Settings Trigger (Direct in-page open) -->
+        <button type="button" class="sidebar-nav-item" id="btn-open-settings" data-tab="settings" title="Pengaturan AI &amp; Konfigurasi Sistem">
+          <div class="sidebar-nav-icon">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </div>
+          <span class="sidebar-nav-label">Pengaturan</span>
+        </button>
+      </nav>
+    </aside>
+
+    <div class="fullscreen-agent-app">
+      <!-- Top Header Bar -->
+      <header class="fullscreen-header">
+        <div class="header-left">
+          <div class="header-selectors-group">
+            <!-- Active Model Switcher Dropdown Pill -->
+            <div class="model-dropdown-wrapper">
+              <button type="button" class="header-pill-btn" id="btn-active-model" title="Pilih Model AI / Urutan Prioritas">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+                <span id="active-model-name">Auto (Rotating)</span>
+                <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+
+              <div class="model-dropdown-menu" id="model-dropdown-menu" style="display: none;">
+                <div class="model-list-scroll" id="model-list-scroll"></div>
+              </div>
+            </div>
+
+            <!-- Active Agent Persona Switcher Dropdown Pill -->
+            <div class="agent-dropdown-wrapper">
+              <button type="button" class="header-pill-btn" id="btn-active-agent" title="Pilih Persona / Profil Agent AI">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg>
+                <span id="active-agent-name">General Agent</span>
+                <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+
+              <div class="agent-dropdown-menu" id="agent-dropdown-menu" style="display: none;">
+                <div class="agent-list-scroll" id="agent-list-scroll"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Status Indicator: PC Bridge -->
+          <div class="bento-status-chip chip-dark" id="chip-pc-bridge" title="Status Python Native Agent Bridge">
+            <span class="status-dot"></span>
+            <span class="chip-label">PC Bridge: <strong id="pc-bridge-text">Checking...</strong></span>
+          </div>
+
+          <!-- Status Indicator: System Tab -->
+          <div class="bento-status-chip chip-lime" id="chip-system-tab" title="Target Tab Browser">
+            <span class="status-dot"></span>
+            <span class="chip-label">Tab: <strong id="current-tab-id">-</strong></span>
+          </div>
+        </div>
+      </header>
+
+    <!-- Main Fullscreen Chat Area -->
+    <main class="fullscreen-chat-main" id="agent-workspace">
+      <!-- Clean Hero Welcome Card (Shown when conversation is empty) -->
+      <div class="welcome-card" id="welcome-card">
+        <div class="welcome-hero-header" id="welcome-hero-header">
+          <h1 class="hero-title">What should your agent <span class="hero-highlight">work on</span> next?</h1>
+          <p class="hero-subtitle">Pick Browser Agent or any specialist, then start a task — all without leaving this tab.</p>
+        </div>
+      </div>
+
+      <!-- Spacer for centered input in initial view -->
+      <div class="hero-input-placeholder" id="hero-input-placeholder"></div>
+
+      <!-- Recent Sites 8-Tile Grid (Rendered directly BELOW input prompt in initial view) -->
+      <div class="recent-sites-section" id="recent-sites-section">
+        <div class="section-heading">RECENT SITES</div>
+        <div id="recent-sites-grid" class="recent-sites-grid"></div>
+      </div>
+
+      <!-- Chat Messages Stream (Active conversation messages) -->
+      <div class="chat-messages" id="chat-messages"></div>
+
+      <!-- Bento Prompt Input Bar Container (Glides smoothly from center to bottom) -->
+      <div class="chat-input-container" id="chat-input-container">
+        <!-- Docked AI Stickman Swarm Animation (Active while AI is generating) -->
+        <div class="ai-stickman-swarm-container" id="ai-stickman-swarm-container" style="display: none;">
+          <div class="ai-stickman-stage" id="stageContainer">
+            <canvas id="physicsCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Docked Clarification / Confirmation Card -->
+        <div class="clarification-dock-container" id="clarification-dock-container" style="display: none;"></div>
+
+        <!-- Docked Plan Approval Container (Replaces prompt during planning confirmation) -->
+        <div class="plan-approval-dock" id="plan-approval-dock" style="display: none;"></div>
+
+        <!-- Agent Mention Autocomplete Dropup Menu (@mention) -->
+        <div class="agent-mention-dropup" id="agent-mention-dropup" style="display: none;"></div>
+
+        <!-- Top Status / Mode Switch Bar inside Input Container -->
+        <div class="chat-input-top-bar">
+          <!-- Left Actions Container (Mode Switcher & Thinking Level Dropup) -->
+          <div class="chat-input-header-left">
+            <!-- Single Clean Pill Button with Dropup Menu for Mode Switching -->
+            <div class="chat-mode-dropup-wrapper" id="chat-mode-dropup-wrapper">
+              <button type="button" class="btn-chat-mode-trigger" id="btn-chat-mode-trigger" title="Pilih Mode Interaksi (Agent, Chat, Web Search)">
+                <span class="chat-mode-trigger-icon" id="chat-mode-trigger-icon">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="10" rx="2"/>
+                    <circle cx="12" cy="5" r="2"/>
+                    <path d="M12 7v4"/>
+                    <line x1="8" y1="16" x2="8.01" y2="16"/>
+                    <line x1="16" y1="16" x2="16.01" y2="16"/>
+                  </svg>
+                </span>
+                <span class="chat-mode-trigger-label" id="chat-mode-trigger-label">Agent Mode</span>
+                <svg class="chat-mode-trigger-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              <!-- Mode Dropup Menu -->
+              <div class="chat-mode-dropup-menu" id="chat-mode-dropup-menu" style="display: none;">
+                <button type="button" class="chat-mode-option active" data-mode="agent">
+                  <div class="mode-option-icon">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="10" rx="2"/>
+                      <circle cx="12" cy="5" r="2"/>
+                      <path d="M12 7v4"/>
+                      <line x1="8" y1="16" x2="8.01" y2="16"/>
+                      <line x1="16" y1="16" x2="16.01" y2="16"/>
+                    </svg>
+                  </div>
+                  <span class="mode-option-title">Agent Mode</span>
+                </button>
+
+                <button type="button" class="chat-mode-option" data-mode="chat">
+                  <div class="mode-option-icon">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <span class="mode-option-title">Chat Mode</span>
+                </button>
+
+                <button type="button" class="chat-mode-option" data-mode="websearch">
+                  <div class="mode-option-icon">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="2" y1="12" x2="22" y2="12"/>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                  </div>
+                  <span class="mode-option-title">Web Search</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Thinking Level Dropup Trigger (Clean Text Only) -->
+            <div class="thinking-level-dropup-wrapper" id="thinking-level-dropup-wrapper">
+              <button type="button" class="btn-thinking-level-trigger" id="btn-thinking-level-trigger" title="Pilih Intensitas Penalaran AI">
+                <span class="thinking-level-label" id="thinking-level-label">Thinking: High</span>
+                <svg class="thinking-level-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              <!-- Thinking Level Dropup Menu (Clean Text Only) -->
+              <div class="thinking-level-dropup-menu" id="thinking-level-dropup-menu" style="display: none;">
+                <button type="button" class="thinking-level-option" data-level="low" title="Instan & Linier — Tanpa Koreksi Diri">
+                  <span class="thinking-option-title">Low</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="medium" title="Standar — 1x Sanity Check">
+                  <span class="thinking-option-title">Medium</span>
+                </button>
+                <button type="button" class="thinking-level-option active" data-level="high" title="Mendalam — Multi-Branch Tree-of-Thought">
+                  <span class="thinking-option-title">High</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="xhigh" title="Kritik Diri Ketat — Adversarial Red-Teaming">
+                  <span class="thinking-option-title">Xhigh</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="extreme" title="Eksplorasi Penuh — 10x Lipat Mikir Keras">
+                  <span class="thinking-option-title">Extreme</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Actions Container (Switch Tab & Execution Mode direct instant toggles) -->
+          <div class="chat-input-header-right">
+            <!-- Switch Tab Direct Toggle Button (ON / OFF) -->
+            <div class="switch-tab-mode-wrapper" id="switch-tab-mode-wrapper">
+              <button type="button" class="btn-switch-tab-mode-trigger is-on" id="btn-switch-tab-mode-trigger" title="Auto Switch Tab: ON (Klik untuk beralih ON / OFF)">
+                <span class="switch-tab-mode-icon" id="switch-tab-mode-icon">
+                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                </span>
+                <span class="switch-tab-mode-label" id="switch-tab-mode-label">Switch Tab: ON</span>
+              </button>
+            </div>
+
+            <!-- Execution Workflow Mode Direct Toggle Button (Accept vs Planning) -->
+            <div class="execution-mode-wrapper" id="execution-mode-wrapper">
+              <button type="button" class="btn-execution-mode-trigger mode-accept" id="btn-execution-mode-trigger" title="Mode Eksekusi: Accept (Klik untuk beralih ke Planning)">
+                <span class="execution-mode-icon" id="execution-mode-icon">
+                  <svg class="mode-icon-accept" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </span>
+                <span class="execution-mode-label" id="execution-mode-label">Accept</span>
+              </button>
+            </div>
+
+            <!-- Web Search Engine Dropup Selector (Dark Luxury Pill) -->
+            <div class="search-engine-wrapper" id="search-engine-wrapper" style="display: none;">
+              <button type="button" class="btn-search-engine-trigger" id="btn-search-engine-trigger" title="Pilih Mesin Pencari">
+                <span class="search-engine-icon" id="search-engine-icon">
+                  <img class="engine-trigger-logo" src="icons/search-engines/google.svg" alt="Google" width="13" height="13">
+                </span>
+                <span class="search-engine-label" id="search-engine-label">Google</span>
+                <svg class="search-engine-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              <div class="search-engine-dropup" id="search-engine-dropup" style="display: none;">
+                <button type="button" class="engine-dropup-item active" data-engine="google">
+                  <div class="engine-item-left">
+                    <div class="engine-item-icon-wrapper">
+                      <img class="engine-item-logo" src="icons/search-engines/google.svg" alt="Google" width="12" height="12">
+                    </div>
+                    <span class="engine-item-name">Google</span>
+                  </div>
+                  <svg class="engine-item-check" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+
+                <button type="button" class="engine-dropup-item" data-engine="duckduckgo">
+                  <div class="engine-item-left">
+                    <div class="engine-item-icon-wrapper">
+                      <img class="engine-item-logo" src="icons/search-engines/duckduckgo.svg" alt="DuckDuckGo" width="12" height="12">
+                    </div>
+                    <span class="engine-item-name">DuckDuckGo</span>
+                  </div>
+                  <svg class="engine-item-check" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+
+                <button type="button" class="engine-dropup-item" data-engine="bing">
+                  <div class="engine-item-left">
+                    <div class="engine-item-icon-wrapper">
+                      <img class="engine-item-logo" src="icons/search-engines/bing.svg" alt="Bing" width="12" height="12">
+                    </div>
+                    <span class="engine-item-name">Bing</span>
+                  </div>
+                  <svg class="engine-item-check" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+
+                <button type="button" class="engine-dropup-item" data-engine="brave">
+                  <div class="engine-item-left">
+                    <div class="engine-item-icon-wrapper">
+                      <img class="engine-item-logo" src="icons/search-engines/brave.svg" alt="Brave Search" width="12" height="12">
+                    </div>
+                    <span class="engine-item-name">Brave Search</span>
+                  </div>
+                  <svg class="engine-item-check" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+
+                <button type="button" class="engine-dropup-item" data-engine="ecosia">
+                  <div class="engine-item-left">
+                    <div class="engine-item-icon-wrapper">
+                      <img class="engine-item-logo" src="icons/search-engines/ecosia.svg" alt="Ecosia" width="12" height="12">
+                    </div>
+                    <span class="engine-item-name">Ecosia</span>
+                  </div>
+                  <svg class="engine-item-check" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+
+                <button type="button" class="engine-dropup-item" data-engine="yandex">
+                  <div class="engine-item-left">
+                    <div class="engine-item-icon-wrapper">
+                      <img class="engine-item-logo" src="icons/search-engines/yandex.svg" alt="Yandex" width="12" height="12">
+                    </div>
+                    <span class="engine-item-name">Yandex</span>
+                  </div>
+                  <svg class="engine-item-check" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-bar">
+          <div class="chat-input-main-col">
+            <!-- Active Selected Agent Mention Chips (@mention) -->
+            <div class="active-mentions-bar" id="active-mentions-bar" style="display: none;"></div>
+
+            <!-- Attachment Previews -->
+            <div class="attachments-preview-bar" id="attachments-preview-bar" style="display: none;"></div>
+
+            <textarea id="chat-input" placeholder="Ketik perintah atau drop/paste gambar di sini..." rows="1"></textarea>
+
+            <div class="chat-input-bottom-actions">
+              <button type="button" class="btn-attach" id="btn-attach-file" title="Lampirkan File / Gambar">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+              <input type="file" id="input-file-hidden" multiple style="display: none;" accept="image/*,video/*,text/*,.pdf,.json,.csv,.js,.ts,.py,.html,.css,.md,.txt,.yaml,.yml,.xml,.sh,.mp4,.webm,.mov,.mkv,.avi,.m4v">
+            </div>
+          </div>
+
+          <button id="btn-send" class="btn-send" title="Kirim Perintah">
+            <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/>
+              <polyline points="5 12 12 5 19 12"/>
+            </svg>
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7.5"></circle>
+              <line x1="21" y1="21" x2="16.3" y2="16.3"></line>
+            </svg>
+            <div class="gen-morph-container">
+              <div class="gen-face-wrapper">
+                <div class="gen-eyebrows-wrapper">
+                  <span class="gen-eyebrow gen-brow-left"></span>
+                  <span class="gen-eyebrow gen-brow-right"></span>
+                </div>
+                <div class="gen-eyes-wrapper">
+                  <span class="gen-eye-slit gen-eye-left"></span>
+                  <span class="gen-eye-slit gen-eye-right"></span>
+                </div>
+              </div>
+              <svg class="stop-icon" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="5.5" y="5.5" width="13" height="13" rx="3"></rect>
+              </svg>
+            </div>
+          </button>
+        </div>
+
+        <!-- Web Search Autocomplete Suggestions Dropdown -->
+        <div class="websearch-suggestions-dropdown" id="websearch-suggestions-dropdown" style="display: none;"></div>
+      </div>
+    </main>
+
+    <!-- Raw PTY Terminal (Hidden by default) -->
+    <main class="bento-terminal-card" id="terminal-workspace" style="display: none;">
+      <div class="terminal-card-header">
+        <div class="terminal-window-controls">
+          <span class="ctrl-dot red"></span>
+          <span class="ctrl-dot yellow"></span>
+          <span class="ctrl-dot green"></span>
+          <span class="terminal-tab-label">Interactive Local Shell (PTY)</span>
+        </div>
+        <div class="terminal-header-meta">
+          <span class="terminal-badge">UTF-8</span>
+          <span class="terminal-badge xterm-tag">xterm-256color</span>
+        </div>
+      </div>
+      <div class="terminal-wrapper" id="terminal-wrapper">
+        <div id="terminal-container"></div>
+      </div>
+    </main>
+    </div> <!-- /fullscreen-agent-app -->
+  </div> <!-- /fullscreen-layout -->
+
+  <!-- Fullscreen Embedded Settings View (In-Tab Configuration) -->
+  <div class="fullscreen-settings-overlay" id="fullscreen-settings-overlay" style="display: none;">
+    <div class="settings-overlay-body">
+      <iframe src="options.html" id="settings-embedded-iframe" class="settings-embedded-iframe"></iframe>
+    </div>
+  </div>
+
+  <!-- Settings & Onboarding Setup Modal -->
+  <div class="modal-overlay" id="settings-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-pill">CONFIGURATION</div>
+          <h2>AI Endpoint & System Setup</h2>
+          <span class="modal-subtitle">Konfigurasi Endpoint AI Custom & Installer Multiplatform</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-settings">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Section 1: AI Provider & Endpoint -->
+        <div class="settings-section">
+          <div class="section-header-row">
+            <div class="section-icon-circle">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg>
+            </div>
+            <h3 class="section-title">AI Provider & Connection</h3>
+          </div>
+          
+          <div class="form-group">
+            <label>Provider Preset</label>
+            <select id="setting-preset" class="form-select">
+              <option value="gemini">Google Gemini (OpenAI Proxy)</option>
+              <option value="openai">OpenAI (Official)</option>
+              <option value="openrouter">OpenRouter (Multi-Model)</option>
+              <option value="ollama">Ollama Local (http://localhost:11434/v1)</option>
+              <option value="9router">9Router Local Proxy (http://localhost:20128/v1)</option>
+              <option value="custom">Custom Endpoint URL</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>API Base URL</label>
+            <input type="text" id="setting-endpoint" class="form-input" placeholder="https://generativelanguage.googleapis.com/v1beta/openai" value="https://generativelanguage.googleapis.com/v1beta/openai">
+          </div>
+
+          <div class="form-group">
+            <label>API Key</label>
+            <div class="input-with-action">
+              <input type="password" id="setting-apikey" class="form-input" placeholder="Masukkan API Key (sk-... atau AIza...)">
+              <button type="button" class="btn-toggle-pwd" id="btn-toggle-apikey" title="Show/Hide">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="model-list-header-row">
+              <div>
+                <label>Urutan Prioritas Model AI (Top-to-Bottom)</label>
+                <p class="model-priority-subtext">Model #1 adalah prioritas utama. Urutan ke bawah menjadi cadangan saat mode Auto (Rotating) aktif.</p>
+              </div>
+            </div>
+          
+            <div class="models-manager-container">
+              <div id="settings-models-rows" class="settings-models-rows"></div>
+              
+              <button type="button" id="btn-add-model-row" class="btn-add-row">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Tambah Model Baru</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>Temperature (0.0 - 1.0)</label>
+              <input type="number" id="setting-temp" class="form-input" min="0" max="1" step="0.1" value="0.2">
+            </div>
+            <div class="form-group flex-1">
+              <label>Max Output Tokens</label>
+              <input type="number" id="setting-max-tokens" class="form-input" value="4096">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <button type="button" id="btn-test-ai" class="btn-secondary">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span id="test-ai-text">Test AI Connection</span>
+            </button>
+            <div id="test-ai-result" class="test-result-box" style="display: none;"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-save-settings" class="btn-primary">Simpan Pengaturan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat History Modal -->
+  <div class="modal-overlay" id="history-modal" style="display: none;">
+    <div class="modal-content modal-history-content">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-pill">HISTORY</div>
+          <h2>Riwayat Percakapan</h2>
+          <span class="modal-subtitle">Buka kembali atau kelola sesi percakapan Anda sebelumnya</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-history">&times;</button>
+      </div>
+
+      <!-- History Search Bar -->
+      <div class="history-search-bar">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="input-search-history" placeholder="Cari percakapan...">
+      </div>
+
+      <div class="modal-body" style="padding: 0;">
+        <div class="history-list-container" id="history-list-container"></div>
+      </div>
+      <div class="modal-footer modal-history-footer">
+        <button type="button" id="btn-clear-all-history" class="btn-danger-outline">Hapus Semua Riwayat</button>
+        <button type="button" id="btn-history-new-chat" class="btn-primary-compact">Mulai Chat Baru</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="delete-confirm-modal" style="display: none;">
+    <div class="modal-content delete-confirm-card">
+      <div class="modal-header">
+        <h3 class="delete-confirm-title">Hapus Riwayat Chat?</h3>
+        <button class="modal-close-btn" id="btn-close-delete-modal">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 10px 0;">
+        <div class="delete-session-preview-box">
+          <span id="delete-session-name">New Chat</span>
+        </div>
+        <p id="delete-confirm-desc">Percakapan ini akan dihapus secara permanen dari database SQLite lokal dan tidak dapat dipulihkan.</p>
+      </div>
+      <div class="modal-footer delete-modal-footer">
+        <button type="button" id="btn-cancel-delete" class="btn-secondary">Batal</button>
+        <button type="button" id="btn-confirm-delete" class="btn-danger-solid">Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox Modal for Images and Videos -->
+  <div class="image-lightbox-modal" id="image-lightbox-modal" style="display: none;">
+    <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+    <div class="lightbox-container">
+      <div class="lightbox-header">
+        <a href="#" download="media-file" class="btn-lightbox-action btn-lightbox-download" id="lightbox-download-link" target="_blank" rel="noopener noreferrer" title="Unduh Media">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span id="lightbox-download-text">Unduh Media</span>
+        </a>
+        <button type="button" class="btn-lightbox-close" id="btn-close-lightbox" title="Tutup (Esc)">&times;</button>
+      </div>
+      <div class="lightbox-img-wrapper">
+        <img src="" id="lightbox-full-img" alt="Fullscreen Preview" style="display: none;">
+        <video src="" id="lightbox-full-video" controls autoplay playsinline style="display: none; max-width: 100%; max-height: 82vh; border-radius: 12px; background: #000000;"></video>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Scripts -->
+  <script src="xterm.js"></script>
+  <script src="xterm-addon-fit.js"></script>
+  <script src="stickman-animation/stickman-config.js"></script>
+  <script src="stickman-animation/stickman-physics.js"></script>
+  <script src="stickman-animation/stickman-scenery.js"></script>
+  <script src="stickman-animation/stickman-engine.js"></script>
+  <script src="sidepanel.js"></script>
+  <script src="newtab.js"></script>
+</body>
+</html>

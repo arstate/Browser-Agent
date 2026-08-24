@@ -1,0 +1,71 @@
+{
+  "manifest_version": 3,
+  "name": "Browser Agent",
+  "version": "2.5.0",
+  "description": "Chrome Side Panel integration with Browser Agent and Antigravity CLI",
+  "permissions": [
+    "sidePanel",
+    "nativeMessaging",
+    "cookies",
+    "scripting",
+    "tabs",
+    "topSites",
+    "debugger",
+    "storage",
+    "unlimitedStorage",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Browser Agent",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "content-scripts/content.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "resources": [
+        "content-scripts/content.css",
+        "sidepanel.html"
+      ]
+    }
+  ],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApwUjLymIg5gp6OviwxhgCFAALk9EXfEPkjQClVxKyB6r2uIxqt7ywBfA1nNM55AKk75g5kg+EPqSRw3OF5cUO5uYtNr7Rw6Wi9eSDk4ijF3b/f5qZxjGHaiu4WYWoKRI52l9ORY6UPBSqjN1Ztcee6YeUWTiI85WyuOaoAPJyjdlFR/2B30ynoI6yqda1snh59gBCwMu7LbaQ4DBIQpKD/VGlXukShWMJZKS6lO/cctc3gjcERr2UCnx6BnhnMyVUhRW0lQHGzxUXi+dqc5ecs9RsBCedOaoGVqNk0IbnIS2iyeQUQNcEbz9jETD9uzvwvIJhVYboOx5BEpf6MQPcQIDAQAB"
+}
