@@ -3238,9 +3238,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Icons:** SVG Vector only (Zero Emoji Protocol).
 - **Style:** Terse Caveman Style.
 - **Versioning & Restore Point Mandate:**
-  - **Versi Terkini:** `v2.142.0` (Iterasi 342).
+  - **Versi Terkini:** `v2.143.0` (Iterasi 343).
   - **Restore Points Tracker:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md).
   - **Mandat:** Setiap ada update, jalankan `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"` dan SELALU cantumkan versi terbaru di setiap akhir respons pengguna.
+
+---
+
+### 🚀 Iterasi 343: Seamless Laptop Update Merge & Full Integration (Obsidian Neural Brain Graph + Rollback Engine)
+- **Fitur & Arsitektur Utama**:
+  1. **Laptop Remote Update Merge (`git merge origin/master`)**:
+     - Menggabungkan pembaruan dari laptop (commit `10ead23`: Obsidian Neural Brain Graph Dual-Hemisphere Visualizer Engine `brain-graph.js`, full-rounded glassmorphism UI, stickman animation triggers, dan session archives) tanpa menghapus file/fitur lokal sedikitpun.
+  2. **Combined Engine & Zero File Loss Guarantee**:
+     - Menyatukan Obsidian Neural Brain Graph Visualizer dengan Pre-Edit Snapshot Rollback Engine (`db_rollback_item`), 100% Autonomous Self-Learning, dan `.tar.gz` Full Database Backup.
+  3. **Verification**:
+     - Unit test suites passed 100% (7/7 phase 1 memory, 4/4 training corpus, 2/2 rollback tests). CRX extension rebuilt (451.7 KB).
 
 ---
 
