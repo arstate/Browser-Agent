@@ -210,38 +210,47 @@ const AUTO_AGENT_ID = "auto";
 
 function getAgentDisplayName(ag) {
   if (!ag || !ag.name) return "Agen";
-  let name = ag.name.trim();
+  let name = String(ag.name).trim();
   // Strip trailing metadata in parentheses or brackets e.g. (Module 408 & 254), (Mbak Ningsih), [v1.0]
   name = name.replace(/\s*[\(\[][^()\[\]]*[\)\]]/gi, '').trim();
-  return name || ag.name;
+  return name || String(ag.name);
 }
 
 const getAgentShortName = getAgentDisplayName;
 
 function formatUserMentions(text) {
   if (!text) return "";
-  let escaped = escapeHtml(text);
+  let escaped = escapeHtml(String(text));
 
   // Sort candidate agents by name length descending to avoid partial greedy matches
   const sorted = [...customAgents]
     .filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss)
-    .sort((a, b) => (b.name?.length || 0) - (a.name?.length || 0));
+    .sort((a, b) => (String(b.name || '').length) - (String(a.name || '').length));
 
   for (const ag of sorted) {
-    const dispName = getAgentDisplayName(ag);
+    const dispName = String(getAgentDisplayName(ag) || '');
+    const fullName = String(ag.name || '');
+    const idStr = String(ag.id || '');
+    if (!dispName && !fullName && !idStr) continue;
+
     const escapedDisp = escapeHtml(dispName);
-    const escapedFullName = escapeHtml(ag.name);
-    
-    // Replace @FullName or @DispName or @id
-    const patterns = [
-      new RegExp(`@${escapedFullName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'gi'),
-      new RegExp(`@${escapedDisp.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'gi'),
-      new RegExp(`@${ag.id.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'gi')
-    ];
+    const escapedFullName = escapeHtml(fullName);
+    const escapedId = escapeHtml(idStr);
+
+    const patterns = [];
+    if (escapedFullName) {
+      patterns.push(new RegExp(`@${escapedFullName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'gi'));
+    }
+    if (escapedDisp && escapedDisp !== escapedFullName) {
+      patterns.push(new RegExp(`@${escapedDisp.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'gi'));
+    }
+    if (escapedId && escapedId !== escapedFullName && escapedId !== escapedDisp) {
+      patterns.push(new RegExp(`@${escapedId.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'gi'));
+    }
 
     for (const pat of patterns) {
       if (pat.test(escaped)) {
-        escaped = escaped.replace(pat, `<span class="chat-mention-badge"><span class="mention-at">@</span>${escapedDisp}</span>`);
+        escaped = escaped.replace(pat, `<span class="chat-mention-badge"><span class="mention-at">@</span>${escapedDisp || escapedFullName || escapedId}</span>`);
       }
     }
   }

@@ -3716,6 +3716,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.3`, build `extension.crx` (470.1 KB).
 
+---
+
+### 🚀 Iterasi 358: Fix `ag.id.replace` TypeError in `formatUserMentions` (v2.147.4)
+- **Root Cause Problem**:
+  - Saat me-render pesan chat yang mengandung mention atau inisialisasi awal custom agents, fungsi `formatUserMentions` memanggil `ag.id.replace(...)` secara langsung.
+  - Pada kasus di mana agen memiliki ID bertipe data angka (`number`/integer autoincrement dari SQLite) atau non-string, pemanggilan `.replace()` memicu `Uncaught (in promise) TypeError: ag.id.replace is not a function`.
+- **Solusi & Peningkatan**:
+  - Membungkus seluruh akses `ag.id`, `ag.name`, dan `dispName` dengan `String(...)` secara ketat dan aman sebelum membuat regex atau manipulasi string:
+    ```javascript
+    const dispName = String(getAgentDisplayName(ag) || '');
+    const fullName = String(ag.name || '');
+    const idStr = String(ag.id || '');
+    ```
+  - Menghindari pembuatan pattern regex kosong jika string bernilai kosong.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.147.4`, build `extension.crx` (470.2 KB).
+
 
 
 
