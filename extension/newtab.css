@@ -537,9 +537,12 @@ body.newtab-body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 12px !important;
+  box-sizing: border-box !important;
   border-radius: 9999px !important;
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: #E2E8F0;
   cursor: pointer;
   border: 1px solid transparent;
@@ -569,6 +572,7 @@ body.newtab-body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
 }
 
 .model-check-box {
@@ -581,16 +585,20 @@ body.newtab-body {
 }
 
 .model-check-icon {
-  width: 13px !important;
-  height: 13px !important;
+  width: 12px !important;
+  height: 12px !important;
   stroke: var(--accent-lime);
 }
 
 .model-priority-badge {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 700;
-  padding: 2px 7px !important;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px !important;
   border-radius: 9999px !important;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);

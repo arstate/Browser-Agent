@@ -4099,6 +4099,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.3`, build `extension.crx` (475.6 KB).
 
+---
+
+### 🚀 Iterasi 380: Uniform 30px Height for Model Option Capsules (v2.150.4)
+- **Kebutuhan Pengguna**:
+  - Menyamakan tinggi container opsi model (`.model-item`) di dalam dropdown menu agar berukuran persis sama dengan tinggi tombol pill header (`.header-pill-btn` / `.bento-model-badge` = `30px`).
+- **Implementasi & Peningkatan UI**:
+  - Menyetel `height: 30px !important; min-height: 30px !important; padding: 0 12px !important; box-sizing: border-box !important;` pada `.model-item` di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css) dan [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css).
+  - Menyelaraskan proporsi font `11.5px`, ikon checkmark `12px`, dan badge prioritas `#1, #2, #3` dengan tinggi kapsul `18px` yang seimbang dan simetris.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.4`, build `extension.crx` (475.6 KB).
+
 
 
 
