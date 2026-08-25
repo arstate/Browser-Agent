@@ -3570,6 +3570,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     const fallbackTitle = (attachments[0] ? attachments[0].name : 'Chat Session');
     currentSessionTitle = (userMessage || fallbackTitle).slice(0, 45).trim();
     currentSessionCreatedAt = Date.now();
+    updateHeaderChatTitle(currentSessionTitle);
   }
 
   // Construct user content payload
@@ -5115,6 +5116,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
     const fallbackTitle = (attachments[0] ? attachments[0].name : 'Chat Session');
     currentSessionTitle = (userMessage || fallbackTitle).slice(0, 45).trim();
     currentSessionCreatedAt = Date.now();
+    updateHeaderChatTitle(currentSessionTitle);
   }
 
   // Construct user content payload
@@ -7969,6 +7971,7 @@ async function loadHistoryList(searchQuery = "") {
         sess.title = newTitle;
         if (sess.id === currentSessionId) {
           currentSessionTitle = newTitle;
+          updateHeaderChatTitle(currentSessionTitle);
         }
         if (nativePort) {
           try {
@@ -8134,8 +8137,26 @@ async function resumeSession(sessionId) {
   hydrateLocalImages(chatMessages);
   hydrateFileActions(chatMessages);
   hideHistoryModal();
+  updateHeaderChatTitle(currentSessionTitle);
   updateFooterStatus("Sesi Dimuat");
   setTimeout(() => updateFooterStatus("Agent Ready"), 1500);
+}
+
+function updateHeaderChatTitle(title) {
+  const headerTitleEl = document.getElementById('header-chat-title');
+  if (!headerTitleEl) return;
+  const activeTitle = (title !== undefined) ? title : currentSessionTitle;
+  const isChatRoomActive = document.body.classList.contains('has-messages') || (conversationHistory && conversationHistory.length > 0) || (currentSessionId !== null);
+  
+  if (isChatRoomActive && activeTitle && activeTitle !== "New Chat") {
+    headerTitleEl.textContent = activeTitle;
+    headerTitleEl.title = activeTitle;
+    headerTitleEl.style.display = "inline-flex";
+  } else {
+    headerTitleEl.textContent = "";
+    headerTitleEl.title = "";
+    headerTitleEl.style.display = "none";
+  }
 }
 
 function cancelExecution() {
@@ -8168,6 +8189,7 @@ function resetChatMessagesUI() {
     }
   }
   document.body.classList.remove('has-messages');
+  updateHeaderChatTitle("");
 }
 
 function startNewChat() {
@@ -8185,6 +8207,7 @@ function startNewChat() {
   clearAttachments();
   clearPromptQueue();
   resetChatMessagesUI();
+  updateHeaderChatTitle("");
   isExecuting = false;
   abortController = null;
   updateSendButtonState(false);
@@ -10055,6 +10078,7 @@ async function bootstrap() {
     console.warn("Bootstrap active tab query warning:", e);
   }
   updateMcpStatus();
+  updateHeaderChatTitle();
 }
 
 bootstrap();

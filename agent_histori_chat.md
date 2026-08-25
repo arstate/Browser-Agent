@@ -4111,6 +4111,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.4`, build `extension.crx` (475.6 KB).
 
+---
+
+### 🚀 Iterasi 381: Center Navbar Active Chat Session Title Display (v2.150.5)
+- **Kebutuhan Pengguna**:
+  - Menampilkan judul sesi riwayat chat aktif di bagian tengah (*center*) navbar atas ketika pengguna berada di dalam ruang percakapan (*chat room*).
+- **Implementasi & Peningkatan UI**:
+  - **HTML Structure**: Menambahkan container `.header-center-title-box` dan elemen `<span class="header-chat-title" id="header-chat-title">` di navbar header [newtab.html](file:///home/arya/browser-agent/extension/newtab.html).
+  - **Center Liquid Glass Typography**: Menata teks judul dengan posisi absolut di tengah persis (`left: 50%; transform: translate(-50%, -50%);`), rounded pill glass subtle highlight, tipografi `12.5px font-weight: 600`, dan *text-overflow: ellipsis* jika judul panjang di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css).
+  - **Dynamic State Synchronization**: Membuat fungsi `updateHeaderChatTitle()` di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js) yang otomatis meng-update teks saat sesi dimuat (`loadSession`), saat pesan pertama dikirim (pembuatan judul otomatis), saat judul di-rename inline, dan menyembunyikannya saat berada di halaman awal/new chat kosong.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.5`, build `extension.crx` (476.1 KB).
+
 
 
 
