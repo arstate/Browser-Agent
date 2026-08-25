@@ -4124,6 +4124,17 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.5`, build `extension.crx` (476.1 KB).
 
+---
+
+### 🚀 Iterasi 382: Clean Frameless Typography for Header Chat Title (v2.150.6)
+- **Kebutuhan Pengguna**:
+  - Menghapus container background pill, border, dan shadow pada teks judul sesi di tengah navbar atas agar tampil lebih bersih (*clean frameless typography*), karena elemen ini murni berupa indikator judul dan bukan tombol interaktif.
+- **Implementasi & Peningkatan UI**:
+  - Menghapus background, border, padding, dan box-shadow pada `.header-chat-title` di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css), menjadikannya teks bersih `13px font-weight: 600 color: #F1F5F9` dengan *text-overflow: ellipsis*.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.6`, build `extension.crx` (476.0 KB).
+
 
 
 

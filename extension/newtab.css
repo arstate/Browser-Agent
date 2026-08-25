@@ -434,7 +434,7 @@ body.newtab-body {
   color: #93C5FD;
 }
 
-/* Center Navbar Active Chat Session Title */
+/* Center Navbar Active Chat Session Title (Clean Frameless Typography) */
 .header-center-title-box {
   position: absolute;
   left: 50%;
@@ -449,19 +449,10 @@ body.newtab-body {
 }
 
 .header-chat-title {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
   max-width: 100%;
-  padding: 5px 16px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.06);
   color: #F1F5F9;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.2px;
   white-space: nowrap;
@@ -469,18 +460,15 @@ body.newtab-body {
   text-overflow: ellipsis;
   pointer-events: auto;
   user-select: text;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
   animation: fadeInTitle 0.2s ease;
 }
 
-.header-chat-title:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: #FFFFFF;
-}
-
 @keyframes fadeInTitle {
-  from { opacity: 0; transform: translateY(-3px); }
+  from { opacity: 0; transform: translateY(-2px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
