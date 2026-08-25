@@ -4191,6 +4191,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.10`, build `extension.crx` (478.5 KB).
 
+---
+
+### 🚀 Iterasi 387: Clean Neutral Pinned Chat Item & Active Pin Highlight (v2.150.11)
+- **Kebutuhan Pengguna**:
+  - Menghilangkan border hijau neon dan background hijau neon pada seluruh kartu histori chat yang disematkan (*pinned chat*), sehingga container kartu tetap netral/clean dan hanya tombol pin (`.btn-pin-history-item`) saja yang aktif berwarna hijau neon.
+- **Implementasi & Peningkatan UI**:
+  - **Neutral Container Glass**: Menghapus border hijau neon dan background hijau pada `.history-item-card.is-pinned` di [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css) dan [newtab.css](file:///home/arya/browser-agent/extension/newtab.css), menyamakannya dengan estetika dark liquid glass standar.
+  - **Clean Header**: Menghilangkan badge redundan "Dipin" dari kartu riwayat chat di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js).
+  - **Active Pin Button Focus**: Mempertahankan tombol pin aktif di sebelah kanan kartu dengan aksen neon lime `#CEF128` dan efek glow halus sebagai penanda tunggal yang jelas dan elegan.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.11`, build `extension.crx` (478.3 KB).
+
 
 
 

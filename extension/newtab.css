@@ -4286,13 +4286,13 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
 }
 
 .history-item-card.is-pinned {
-  border-color: rgba(206, 241, 40, 0.38);
-  background: rgba(206, 241, 40, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(26, 26, 32, 0.72);
 }
 
 .history-item-card.is-pinned:hover {
-  border-color: rgba(206, 241, 40, 0.6);
-  background: rgba(206, 241, 40, 0.08);
+  background: rgba(38, 38, 46, 0.78);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .history-item-content {
@@ -4312,9 +4312,9 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
 .history-pinned-badge {
   font-size: 10px;
   font-weight: 700;
-  color: #CEF128;
-  background: rgba(206, 241, 40, 0.14);
-  border: 1px solid rgba(206, 241, 40, 0.35);
+  color: #94A3B8;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 2px 8px;
   border-radius: 9999px;
   display: inline-flex;

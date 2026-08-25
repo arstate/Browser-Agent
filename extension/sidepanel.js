@@ -8032,12 +8032,6 @@ async function loadHistoryList(searchQuery = "") {
     card.innerHTML = `
       <div class="history-item-content">
         <div class="history-item-header">
-          ${isPinned ? `
-            <span class="history-pinned-badge" title="Disematkan ke atas">
-              <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M16 3a1 1 0 0 1 1 1v1.5a1 1 0 0 1-.293.707l-2.414 2.414A3.978 3.978 0 0 1 14 10.414V13l2 2v2h-5v5l-1 1-1-1v-5H4v-2l2-2v-2.586c0-.795-.316-1.558-.879-2.207L2.707 6.207A1 1 0 0 1 2.414 5.5V4a1 1 0 0 1 1-1h12.586z"/></svg>
-              Dipin
-            </span>
-          ` : ''}
           <span class="history-item-title" title="${escapeHtml(sess.title || 'New Chat')}">${escapeHtml(sess.title || 'New Chat')}</span>
           <span class="history-model-badge">${escapeHtml(sess.model || 'Model')}</span>
         </div>
