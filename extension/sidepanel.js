@@ -6310,6 +6310,12 @@ function parseLatexMath(str) {
 
   function convertMathTokens(expr) {
     let s = expr;
+    // 0. Clean LaTeX delimiters \left and \right
+    s = s.replace(/\\left\s*([(\[{|.\\])/g, '$1');
+    s = s.replace(/\\right\s*([)\]}|.\\])/g, '$1');
+    s = s.replace(/\\left\b/g, '');
+    s = s.replace(/\\right\b/g, '');
+
     // 1. Text wrappers: \text{...}, \mathrm{...}, \mathbf{...}, \textbf{...}, \textit{...}
     s = s.replace(/\\(?:text|mathrm|mathbf|textbf|textit|textsf)\{([^}]+)\}/g, '$1');
     

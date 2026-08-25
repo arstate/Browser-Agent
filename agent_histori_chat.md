@@ -4165,6 +4165,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.8`, build `extension.crx` (478.4 KB).
 
+---
+
+### 🚀 Iterasi 385: Frosted Dark Liquid Glass Math Block Container (v2.150.9)
+- **Kebutuhan Pengguna**:
+  - Menambahkan efek *background blur* (`backdrop-filter: blur`) pada container kotak rumus formula matematika agar lebih nyaman dibaca dan kontras tajam terhadap latar belakang bergrid.
+  - Membersihkan delimiter LaTeX `\left(` dan `\right)` yang sebelumnya tersisa pada formula kalkulasi.
+- **Implementasi & Peningkatan UI**:
+  - **Liquid Glass Container**: Menyetel `.md-math-block` dengan `backdrop-filter: blur(28px) saturate(180%)`, background semi-transparan `rgba(18, 18, 22, 0.85)`, border kaca halus `rgba(255, 255, 255, 0.1)`, box-shadow elevasi halus, dan `border-radius: 12px` di [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css) dan [newtab.css](file:///home/arya/browser-agent/extension/newtab.css).
+  - **Parser Delimiter Cleanup**: Menambahkan pembersihan otomatis untuk `\left(` $\to$ `(`, `\right)` $\to$ `)`, kurung siku, dan kurung kurawal pada `parseLatexMath` di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.9`, build `extension.crx` (478.5 KB).
+
 
 
 
