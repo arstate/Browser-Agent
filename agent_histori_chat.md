@@ -4071,6 +4071,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.1`, build `extension.crx` (475.1 KB).
 
+---
+
+### 🚀 Iterasi 378: Dark Liquid Glass & Balanced Rounded Dropdown Menus (v2.150.2)
+- **Kebutuhan Pengguna**:
+  - Memperbarui antarmuka dropdown pilihan model (`Model Selector`) dan pilihan sub-agent (`Agent Selector`) menjadi desain *Dark Liquid Glass Clean*.
+  - Menyeimbangkan kelengkungan sudut:
+    1. Item satu baris pada daftar model (`Auto (Model)` dan `#1, #2, #3 Models`) menggunakan **kapsul bulat penuh (`border-radius: 9999px`)** dengan badge prioritas monospace pil neon lime.
+    2. Item multiline pada daftar sub-agent (`Tiar Property Specialist Cards`) menggunakan **kartu melengkung proporsional (`border-radius: 14px`)** agar teks deskripsi panjang tetap terstruktur rapi tanpa distorsi bentuk kapsul.
+    3. Container dropdown menu menggunakan **panel kaca melengkung anggun (`border-radius: 20px - 22px`)** dengan *backdrop-filter blur 32px*, saturasi 190%, dan border kaca halus.
+- **Implementasi & Peningkatan UI**:
+  - Memperbarui `.model-dropdown-menu`, `.model-item`, `.agent-dropdown-menu`, `.agent-item` di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css) dan [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css).
+  - Memperbarui garis pemisah divider agent di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js) menjadi garis transparan kaca halus (`rgba(255, 255, 255, 0.08)`).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.2`, build `extension.crx` (475.4 KB).
+
 
 
 

@@ -7369,7 +7369,8 @@ function renderAgentDropdown() {
 
   if (workerAgents.length > 0) {
     const divider = document.createElement('div');
-    divider.style.cssText = "height: 1px; background: #E2E8F0; margin: 4px 8px;";
+    divider.className = "agent-list-divider";
+    divider.style.cssText = "height: 1px; background: rgba(255, 255, 255, 0.08); margin: 6px 4px;";
     container.appendChild(divider);
   }
 

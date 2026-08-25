@@ -283,25 +283,25 @@ body::before {
   color: #FFFFFF;
 }
 
-/* Quick Model Switcher Dropdown Menu (Ultra Clean Dark Glass) */
+/* Quick Model Switcher Dropdown Menu (Ultra Clean Dark Liquid Glass) */
 .model-dropdown-menu {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  width: 230px;
+  width: 250px;
   max-width: calc(100vw - 32px);
   max-height: 320px;
-  background: rgba(18, 18, 22, 0.95);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  background: rgba(18, 18, 22, 0.9) !important;
+  backdrop-filter: blur(32px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06) inset !important;
   z-index: 999999;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 6px;
+  padding: 8px !important;
   animation: dropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -315,29 +315,33 @@ body::before {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .model-item {
   display: flex;
   align-items: center;
-  padding: 7px 10px;
-  border-radius: 10px;
+  padding: 8px 12px !important;
+  border-radius: 9999px !important;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   color: #E2E8F0;
   border: 1px solid transparent;
 }
 
 .model-item:hover {
   background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
   color: #FFFFFF;
+  transform: translateX(2px);
 }
 
 .model-item.active {
-  background: rgba(206, 241, 40, 0.12);
-  color: #CEF128;
-  border-color: rgba(206, 241, 40, 0.3);
+  background: rgba(206, 241, 40, 0.14) !important;
+  color: var(--accent-lime) !important;
+  border-color: rgba(206, 241, 40, 0.38) !important;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(206, 241, 40, 0.15);
 }
 
 .model-item-info {
@@ -358,8 +362,8 @@ body::before {
 }
 
 .model-check-icon {
-  width: 14px;
-  height: 14px;
+  width: 13px !important;
+  height: 13px !important;
   color: var(--accent-lime);
   flex-shrink: 0;
 }
@@ -374,20 +378,39 @@ body::before {
   text-overflow: ellipsis;
 }
 
+.model-priority-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 7px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  letter-spacing: 0.2px;
+}
+
+.model-item.active .model-priority-badge {
+  background: rgba(206, 241, 40, 0.22);
+  border-color: rgba(206, 241, 40, 0.45);
+  color: var(--accent-lime);
+}
+
 .model-item.model-item-auto {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  margin-bottom: 4px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  margin-bottom: 2px;
 }
 
 .model-item.model-item-auto:hover {
-  background: rgba(16, 185, 129, 0.18);
-  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
 .model-item.model-item-auto.active {
-  background: rgba(16, 185, 129, 0.22);
-  border-color: #10B981;
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: #10B981 !important;
+  color: #34D399 !important;
 }
 
 .model-auto-badge {
@@ -517,51 +540,54 @@ body::before {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  width: 240px;
+  width: 270px;
   max-width: calc(100vw - 32px);
-  max-height: 320px;
-  background: rgba(18, 18, 22, 0.95);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  max-height: 340px;
+  background: rgba(18, 18, 22, 0.9) !important;
+  backdrop-filter: blur(32px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06) inset !important;
   z-index: 999999;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 6px;
+  padding: 8px !important;
   animation: dropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .agent-list-scroll {
-  max-height: 280px;
+  max-height: 300px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .agent-item {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  padding: 9px 12px !important;
+  border-radius: 14px !important;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   color: #E2E8F0;
   border: 1px solid transparent;
 }
 
 .agent-item:hover {
   background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .agent-item.active {
-  background: rgba(206, 241, 40, 0.12);
+  background: rgba(206, 241, 40, 0.12) !important;
   color: #CEF128;
-  border-color: rgba(206, 241, 40, 0.3);
+  border-color: rgba(206, 241, 40, 0.35) !important;
+  box-shadow: 0 4px 18px rgba(206, 241, 40, 0.12);
 }
 
 .agent-item-top {
@@ -572,7 +598,7 @@ body::before {
 }
 
 .agent-item-name {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #FFFFFF;
   white-space: nowrap;
@@ -585,11 +611,16 @@ body::before {
 }
 
 .agent-item-desc {
-  font-size: 10px;
+  font-size: 10.5px;
   color: #94A3B8;
+  line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.agent-item.active .agent-item-desc {
+  color: #CBD5E1;
 }
 
 .btn-del-model {
