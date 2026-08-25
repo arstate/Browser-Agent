@@ -2927,6 +2927,10 @@ body.stickman-active .chat-messages {
   transition: all 0.15s ease;
 }
 
+.chat-mode-option[data-mode="websearch"] {
+  display: none !important;
+}
+
 .chat-mode-option:hover {
   background: rgba(255, 255, 255, 0.08);
 }

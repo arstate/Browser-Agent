@@ -3982,6 +3982,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.148.0`, build `extension.crx` (472.0 KB).
 
+---
+
+### 🚀 Iterasi 372: Hiding Web Search Option from Sidepanel Mode Selector (v2.148.1)
+- **Kebutuhan Pengguna**:
+  - Menyembunyikan (hide) opsi pilihan "Web Search" pada pop-up dropdown pilihan mode di agent sidepanel agar menu interaksi lebih fokus dan ramping (hanya Agent Mode dan Chat Mode).
+- **Implementasi & Peningkatan UI**:
+  1. **Hide Web Search Option**:
+     - Menambahkan inline `style="display: none !important;"` pada tombol `<button class="chat-mode-option" data-mode="websearch">` di [sidepanel.html](file:///home/arya/browser-agent/extension/sidepanel.html).
+     - Menambahkan aturan CSS `.chat-mode-option[data-mode="websearch"] { display: none !important; }` di [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css).
+     - Memperbarui tooltip trigger menjadi `Pilih Mode Interaksi (Agent, Chat)`.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.148.1`, build `extension.crx` (472.1 KB).
+
 
 
 
