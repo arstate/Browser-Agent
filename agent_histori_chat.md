@@ -4178,6 +4178,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.9`, build `extension.crx` (478.5 KB).
 
+---
+
+### 🚀 Iterasi 386: Inline Math Comparison & Inequalities Parser (v2.150.10)
+- **Kebutuhan Pengguna**:
+  - Menjelaskan arti notasi `$< 68$` dan memastikan notasi pertidaksamaan inline seperti `$< 68$`, `$> 68$`, `$<= 50$`, `$>= 80$` terkonversi bersih tanpa tanda dollar.
+- **Implementasi & Peningkatan Parser**:
+  - **Penjelasan Makna Notasi**:
+    - `$< 68$` adalah penulisan LaTeX untuk notasi matematika **`< 68`** yang artinya: **"Lebih kecil dari 68"** atau **"Skor di bawah 68 / Kurang dari 68"**.
+  - **HTML-Escaped Inequalities Support**: Menambahkan pengenalan token pertidaksamaan HTML (`&lt;`, `&gt;`, `&le;`, `&ge;`, `<`, `>`, `<=`, `>=`) ke dalam fungsi `isMathExpression` pada [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js), sehingga seluruh ekspresi inline perbandingan angka otomatis ter-render menjadi tipografi bersih tanpa raw dollar delimiters.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.10`, build `extension.crx` (478.5 KB).
+
 
 
 

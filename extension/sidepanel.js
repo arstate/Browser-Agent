@@ -6421,14 +6421,16 @@ function parseLatexMath(str) {
     const trimmed = s.trim();
     if (/\\/.test(trimmed)) return true;
     if (/[\^_{}±×÷√∑∏∫∂∇≠≤≥≈∝]/.test(trimmed)) return true;
+    if (/&(?:lt|gt|le|ge);/.test(trimmed)) return true;
+    if (/^[<>]=?/.test(trimmed)) return true;
     if (/^\d+(?:[.,]\d+)*(?:\s*(?:k|m|b|ribu|juta|miliar|USD|IDR|SGD|EUR|rb|jt))?$/i.test(trimmed)) {
       return false;
     }
     const words = trimmed.split(/\s+/);
-    if (words.length > 1 && words.some(w => /^[a-zA-Z]{2,}$/.test(w) && !/^(?:sin|cos|tan|log|ln|lim|exp|min|max|deg)$/i.test(w))) {
+    if (words.length > 1 && words.some(w => /^[a-zA-Z]{2,}$/.test(w) && !/^(?:sin|cos|tan|log|ln|lim|exp|min|max|deg|lt|gt|le|ge)$/i.test(w))) {
       return false;
     }
-    if (/^[a-zA-Z0-9+\-*/=()<>.,\s]+$/.test(trimmed)) {
+    if (/^[a-zA-Z0-9+\-*/=()<>.,\s&;]+$/.test(trimmed)) {
       return true;
     }
     return false;
