@@ -3951,6 +3951,37 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.147.16`, build `extension.crx` (471.8 KB).
 
+---
+
+### 🚀 Iterasi 371: Major UI Overhaul - Obsidian Deep Space Dark Theme & Footer Elimination (v2.148.0)
+- **Kebutuhan Pengguna**:
+  - Update besar antarmuka Side Panel AI Agent menjadi tema Dark Mode (Obsidian Deep Space & Liquid Frosted Glass) yang 100% selaras dengan tampilan halaman New Tab / Options (`options.html`).
+  - Menghapus sepenuhnya baris shortcut footer bawah (`.app-footer-bar` yang berisi `Enter Kirim • Shift+Enter Baris baru • Agent Ready`) agar area chat lebih luas, lega, dan minimalis.
+- **Implementasi & Peningkatan UI**:
+  1. **Obsidian Deep Space Dark Palette & Grid Mesh Pattern**:
+     - Memperbarui seluruh variabel CSS (`--bg-app: #0E0E11`, `--bg-card: rgba(22, 22, 26, 0.75)`, `--text-primary: #FFFFFF`, `--text-secondary: #A1A1AA`, `--accent-lime: #CEF128`).
+     - Menyuntikkan ornamen `radial-mask grid` geometris tipis transparan pada background canvas body sidepanel.
+  2. **Top Header & Circular Action Icons**:
+     - Header kaca gelap semi-transparan dengan `backdrop-filter: blur(20px) saturate(180%)`.
+     - Tombol aksi header (`+ New Chat`, `⚙ Settings`, `🕒 History`, `🧠 Brain`) diubah menjadi lingkaran *frosted glass* bulat (`border-radius: 50%`) dengan efek hover putih menyala.
+  3. **Selectors & Status Chips**:
+     - Dropdown Model AI & Agent Persona menggunakan kapsul gelap semi-transparan dan menu pop-up *deep dark frosted glass* (`rgba(18, 18, 22, 0.95)`).
+     - Status chip PC Bridge & Active Tab ber-border halus dengan dot status glow menyala.
+  4. **Welcome Hero Screen & Frosted Suggestion Chips**:
+     - Kartu welcome bernuansa dark glass dengan judul Pure White `#FFFFFF`.
+     - 4 kartu saran prompt (`Ringkas Halaman Web`, `Ekstrak & Simpan File`, dll.) bertransformasi menjadi frosted dark cards dengan icon box menyala dan efek hover glow lime.
+  5. **Chat Bubbles, Tool Steps & Typography**:
+     - Balon user chat menggunakan gradient Neon Lime `#CEF128` berteks hitam pekat `#0E0E11`.
+     - Pesan assistant menyajikan tipografi kontras tinggi `#F1F5F9` dengan codeblock hitam pekat `#0B0E14` dan tabel dark glass.
+  6. **Input Bar & Send Button**:
+     - Kotak input dark glass `rgba(14, 14, 18, 0.85)` dengan radius `20px` dan border glow lime saat fokus.
+     - Tombol kirim Neon Lime Chartreuse bulat penuh dengan bayangan glow memikat.
+  7. **Eliminasi Total Footer Bar Bawah**:
+     - Menghapus `<footer class="app-footer-bar">` dari `sidepanel.html` dan `sidepanel.css`, memaksimalkan ruang vertikal scrolling chat.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.148.0`, build `extension.crx` (472.0 KB).
+
 
 
 
