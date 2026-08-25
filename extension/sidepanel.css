@@ -5226,23 +5226,28 @@ body.stickman-active .chat-messages {
 }
 
 .modal-close-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: none;
-  color: #A1A1AA;
-  font-size: 18px;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: #71717A !important;
+  font-size: 20px !important;
   cursor: pointer;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
+  width: auto !important;
+  height: auto !important;
+  padding: 2px 4px !important;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  line-height: 1;
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 
 .modal-close-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #FFFFFF;
+  background: transparent !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  transform: scale(1.15);
 }
 
 .modal-body {

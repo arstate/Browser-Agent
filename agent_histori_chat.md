@@ -4060,6 +4060,17 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.0`, build `extension.crx` (475.0 KB).
 
+---
+
+### 🚀 Iterasi 377: Frameless Clean Modal Close Button (v2.150.1)
+- **Kebutuhan Pengguna**:
+  - Menghapus container background, border, dan shadow pada tombol close (`×`) di modal konfirmasi hapus dan seluruh modal dialog agar tampil bersih (*frameless, transparent, minimalist*).
+- **Implementasi & Peningkatan UI**:
+  - Memperbarui `.modal-close-btn` dan `#delete-confirm-modal .modal-close-btn` di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css) dan [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css) menjadi transparan murni tanpa container box/border, dengan animasi hover zoom dan warna putih terang.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.1`, build `extension.crx` (475.1 KB).
+
 
 
 
