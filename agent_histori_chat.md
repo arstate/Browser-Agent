@@ -3996,6 +3996,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.148.1`, build `extension.crx` (472.1 KB).
 
+---
+
+### 🚀 Iterasi 373: Fix Inline Code & List Sub-Item Card Overflow Bug (v2.148.2)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug tampilan pada tab Agent New Tab (`newtab.html`) dan Sidepanel di mana elemen inline code (`<code>`) yang panjang pada bullet points list di dalam card meluap/keluar menembus batas kanan kartu (overflow lewat batas).
+- **Implementasi & Peningkatan UI**:
+  1. **Inline Code Responsive Word Wrapping**:
+     - Mengubah styling `.md-inline-code` dan `code:not(pre code)` dari `white-space: nowrap !important; display: inline-flex !important;` menjadi `white-space: pre-wrap !important; word-break: break-word !important; overflow-wrap: anywhere !important; display: inline !important; max-width: 100%; box-sizing: border-box;` di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css) dan [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css).
+     - Menjaga `.md-color-pill` dan `.md-handle-pill` tetap `inline-flex` untuk elemen swatch warna/mention singkat.
+  2. **Ordered List Cards & Sub-Bullet Bounds**:
+     - Menambahkan aturan `overflow-wrap: break-word !important; word-break: break-word !important; max-width: 100%; box-sizing: border-box;` pada `ol > li` dan `.md-list-sub` agar tidak pernah ada elemen anak yang meluber keluar dari kartu.
+- **Pengujian & Rilis**:
+  - 17/17 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.148.2`, build `extension.crx` (472.2 KB).
+
 
 
 
