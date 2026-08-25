@@ -1484,6 +1484,49 @@ body.has-messages .chat-messages {
   line-height: 1.5;
 }
 
+/* Markdown Math & LaTeX Formatting */
+.message.assistant .message-content .md-math-inline,
+.md-math-inline {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #F1F5F9;
+  letter-spacing: 0.2px;
+  display: inline;
+}
+
+.message.assistant .message-content .md-math-block,
+.md-math-block {
+  display: block;
+  text-align: center;
+  padding: 10px 14px;
+  margin: 10px 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #F8FAFC;
+  overflow-x: auto;
+}
+
+.message.assistant .message-content sup,
+.message.assistant .message-content sub {
+  font-size: 0.78em;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+.message.assistant .message-content sup {
+  top: -0.45em;
+}
+
+.message.assistant .message-content sub {
+  bottom: -0.25em;
+}
+
 .message.assistant .message-content .md-inline-code,
 .md-inline-code,
 .message code:not(pre code) {

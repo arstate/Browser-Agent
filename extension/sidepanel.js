@@ -6304,12 +6304,165 @@ function getMacOsFileIconSvg(fileName, width = 20, height = 24) {
   `;
 }
 
+function parseLatexMath(str) {
+  if (!str || (!str.includes('$') && !str.includes('\\'))) return str;
+  let res = str;
+
+  function convertMathTokens(expr) {
+    let s = expr;
+    // 1. Text wrappers: \text{...}, \mathrm{...}, \mathbf{...}, \textbf{...}, \textit{...}
+    s = s.replace(/\\(?:text|mathrm|mathbf|textbf|textit|textsf)\{([^}]+)\}/g, '$1');
+    
+    // 2. Fractions: \frac{a}{b} -> a/b
+    s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1/$2');
+    
+    // 3. Square root: \sqrt{a} -> √a or √(a)
+    s = s.replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
+
+    // 4. Common operators & symbols
+    const symbolMap = [
+      [/\\ge\b|\\geq\b/g, '≥'],
+      [/\\le\b|\\leq\b/g, '≤'],
+      [/\\neq\b|\\ne\b/g, '≠'],
+      [/\\approx\b/g, '≈'],
+      [/\\pm\b/g, '±'],
+      [/\\mp\b/g, '∓'],
+      [/\\times\b/g, '×'],
+      [/\\div\b/g, '÷'],
+      [/\\cdot\b/g, '·'],
+      [/\\bullet\b/g, '•'],
+      [/\\circ\b|\^\\circ\b|\\degree\b/g, '°'],
+      [/\\infty\b/g, '∞'],
+      [/\\sim\b/g, '∼'],
+      [/\\equiv\b/g, '≡'],
+      [/\\propto\b/g, '∝'],
+      [/\\ll\b/g, '≪'],
+      [/\\gg\b/g, '≫'],
+      [/\\in\b/g, '∈'],
+      [/\\notin\b/g, '∉'],
+      [/\\subset\b/g, '⊂'],
+      [/\\subseteq\b/g, '⊆'],
+      [/\\cup\b/g, '∪'],
+      [/\\cap\b/g, '∩'],
+      [/\\forall\b/g, '∀'],
+      [/\\exists\b/g, '∃'],
+      [/\\to\b|\\rightarrow\b/g, '→'],
+      [/\\leftarrow\b/g, '←'],
+      [/\\Rightarrow\b/g, '⇒'],
+      [/\\Leftarrow\b/g, '⇐'],
+      [/\\Leftrightarrow\b|\\iff\b/g, '⇔'],
+      [/\\sum\b/g, '∑'],
+      [/\\prod\b/g, '∏'],
+      [/\\int\b/g, '∫'],
+      [/\\partial\b/g, '∂'],
+      [/\\nabla\b/g, '∇'],
+      [/\\quad\b/g, ' '],
+      [/\\qquad\b/g, '  '],
+      [/\\%/g, '%'],
+      [/\\\$/g, '$'],
+      [/\\_/g, '_'],
+      [/\\&/g, '&'],
+      [/\\#/g, '#'],
+      [/\\\{/g, '{'],
+      [/\\\}/g, '}'],
+      [/\\alpha\b/g, 'α'],
+      [/\\beta\b/g, 'β'],
+      [/\\gamma\b/g, 'γ'],
+      [/\\delta\b/g, 'δ'],
+      [/\\epsilon\b|\\varepsilon\b/g, 'ε'],
+      [/\\zeta\b/g, 'ζ'],
+      [/\\eta\b/g, 'η'],
+      [/\\theta\b|\\vartheta\b/g, 'θ'],
+      [/\\iota\b/g, 'ι'],
+      [/\\kappa\b/g, 'κ'],
+      [/\\lambda\b/g, 'λ'],
+      [/\\mu\b/g, 'μ'],
+      [/\\nu\b/g, 'ν'],
+      [/\\xi\b/g, 'ξ'],
+      [/\\pi\b/g, 'π'],
+      [/\\rho\b/g, 'ρ'],
+      [/\\sigma\b/g, 'σ'],
+      [/\\tau\b/g, 'τ'],
+      [/\\upsilon\b/g, 'υ'],
+      [/\\phi\b|\\varphi\b/g, 'φ'],
+      [/\\chi\b/g, 'χ'],
+      [/\\psi\b/g, 'ψ'],
+      [/\\omega\b/g, 'ω'],
+      [/\\Gamma\b/g, 'Γ'],
+      [/\\Delta\b/g, 'Δ'],
+      [/\\Theta\b/g, 'Θ'],
+      [/\\Lambda\b/g, 'Λ'],
+      [/\\Xi\b/g, 'Ξ'],
+      [/\\Pi\b/g, 'Π'],
+      [/\\Sigma\b/g, 'Σ'],
+      [/\\Upsilon\b/g, 'Υ'],
+      [/\\Phi\b/g, 'Φ'],
+      [/\\Psi\b/g, 'Ψ'],
+      [/\\Omega\b/g, 'Ω']
+    ];
+
+    for (const [regex, rep] of symbolMap) {
+      s = s.replace(regex, rep);
+    }
+
+    s = s.replace(/\^{([^}]+)}|\^([0-9a-zA-Z\+\-]+)/g, (m, p1, p2) => `<sup>${p1 || p2}</sup>`);
+    s = s.replace(/_{([^}]+)}|_([0-9a-zA-Z\+\-]+)/g, (m, p1, p2) => `<sub>${p1 || p2}</sub>`);
+
+    return s.trim();
+  }
+
+  function isMathExpression(s) {
+    const trimmed = s.trim();
+    if (/\\/.test(trimmed)) return true;
+    if (/[\^_{}±×÷√∑∏∫∂∇≠≤≥≈∝]/.test(trimmed)) return true;
+    if (/^\d+(?:[.,]\d+)*(?:\s*(?:k|m|b|ribu|juta|miliar|USD|IDR|SGD|EUR|rb|jt))?$/i.test(trimmed)) {
+      return false;
+    }
+    const words = trimmed.split(/\s+/);
+    if (words.length > 1 && words.some(w => /^[a-zA-Z]{2,}$/.test(w) && !/^(?:sin|cos|tan|log|ln|lim|exp|min|max|deg)$/i.test(w))) {
+      return false;
+    }
+    if (/^[a-zA-Z0-9+\-*/=()<>.,\s]+$/.test(trimmed)) {
+      return true;
+    }
+    return false;
+  }
+
+  // 1. Block Math: $$...$$ or \[...\]
+  res = res.replace(/\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]/g, (match, b1, b2) => {
+    const mathContent = convertMathTokens(b1 || b2 || "");
+    return `<div class="md-math-block">${mathContent}</div>`;
+  });
+
+  // 2. Explicit inline LaTeX: \( ... \)
+  res = res.replace(/\\\(([\s\S]+?)\\\)/g, (match, inner) => {
+    const mathContent = convertMathTokens(inner);
+    return `<span class="md-math-inline">${mathContent}</span>`;
+  });
+
+  // 3. Inline math $...$
+  res = res.replace(/\$([^\$\n]+?)\$/g, (match, inner) => {
+    if (!isMathExpression(inner)) {
+      return match;
+    }
+    const mathContent = convertMathTokens(inner);
+    return `<span class="md-math-inline">${mathContent}</span>`;
+  });
+
+  // 4. Standalone raw LaTeX tokens outside dollars
+  res = convertMathTokens(res);
+  return res;
+}
+
 function formatInline(str) {
   if (!str) return "";
   let res = str;
 
   // Convert escaped <br> tags back to HTML line break
   res = res.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+
+  // Parse LaTeX Math Formulas & Unicode Symbols ($\ge 75$, $\le 20\%$, fractions, powers, Greek letters)
+  res = parseLatexMath(res);
 
   // Bold & Italic (***, **, *, __, ~~)
   res = res.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');

@@ -4148,6 +4148,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.7`, build `extension.crx` (476.3 KB).
 
+---
+
+### 🚀 Iterasi 384: LaTeX Math & Scientific Formulas Engine (v2.150.8)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki parsing rumus LaTeX / notasi matematika seperti `$\ge 75$` dan `$\le 20\%$` yang sebelumnya tampil mentah (*raw string*), serta menjelaskan arti notasi aslinya kepada pengguna.
+- **Implementasi & Peningkatan Parser**:
+  - **Penjelasan Makna Notasi**:
+    - `$\ge 75$` adalah sintaks LaTeX untuk **$\ge 75$** (artinya: **lebih besar atau sama dengan 75 / skor minimal 75**).
+    - `$\le 20\%$` adalah sintaks LaTeX untuk **$\le 20\%$** (artinya: **lebih kecil atau sama dengan 20% / maksimal 20%**).
+  - **Smart LaTeX Math Parser (`parseLatexMath`)**:
+    - Menambahkan parser otomatis yang menerjemahkan simbol LaTeX inline `$ ... $`, `\( ... \)`, dan block `$$ ... $$` / `\[ ... \]` ke simbol Unicode bersih (misal: `\ge` $\to$ $\ge$, `\le` $\to$ $\le$, `\neq` $\to$ $\neq$, `\approx` $\to$ $\approx$, `\pm` $\to$ $\pm$, `\times` $\to$ $\times$, `\div` $\to$ $\div$, `\%` $\to$ $\%$, huruf Yunani $\alpha, \beta, \gamma, \pi, \sigma$, pecahan `\frac{a}{b}`, perpangkatan `^2`, dan indeks `_1`) di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js).
+    - Dilengkapi proteksi mata uang agar teks harga biasa seperti `$100 USD` tidak salah terkonversi.
+  - **Math Typography Styling**: Menambahkan CSS untuk `.md-math-inline`, `.md-math-block`, `<sup>`, dan `<sub>` di [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css) dan [newtab.css](file:///home/arya/browser-agent/extension/newtab.css).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.8`, build `extension.crx` (478.4 KB).
+
 
 
 
