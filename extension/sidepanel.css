@@ -249,15 +249,16 @@ body::before {
   font-size: 11px;
   font-weight: 700;
   padding: 6px 12px;
-  border-radius: var(--radius-pill);
+  border-radius: 9999px;
   background: rgba(255, 255, 255, 0.05);
   color: #F1F5F9;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   max-width: 180px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
 .bento-model-badge span {
@@ -281,6 +282,15 @@ body::before {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
   color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+.bento-model-badge.open {
+  background: rgba(206, 241, 40, 0.12);
+  border-color: rgba(206, 241, 40, 0.45);
+  color: var(--accent-lime);
+  box-shadow: 0 0 14px rgba(206, 241, 40, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
 /* Quick Model Switcher Dropdown Menu (Ultra Clean Dark Liquid Glass) */
@@ -481,19 +491,21 @@ body::before {
 .bento-agent-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 11px;
   font-weight: 700;
-  padding: 6px 10px;
-  border-radius: var(--radius-pill);
+  padding: 6px 12px;
+  border-radius: 9999px;
   background: rgba(255, 255, 255, 0.05);
   color: #F1F5F9;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  max-width: 150px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 160px;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  user-select: none;
 }
 
 .bento-agent-badge .agent-badge-icon {
@@ -501,6 +513,7 @@ body::before {
   align-items: center;
   justify-content: center;
   color: #A1A1AA;
+  transition: color 0.15s ease;
 }
 
 .bento-agent-badge .agent-badge-icon svg {
@@ -530,9 +543,22 @@ body::before {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
   color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.12);
 }
 
 .bento-agent-badge:hover .agent-badge-icon {
+  color: var(--accent-lime);
+}
+
+.bento-agent-badge.open {
+  background: rgba(206, 241, 40, 0.12);
+  border-color: rgba(206, 241, 40, 0.45);
+  color: var(--accent-lime);
+  box-shadow: 0 0 14px rgba(206, 241, 40, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.bento-agent-badge.open .agent-badge-icon {
   color: var(--accent-lime);
 }
 

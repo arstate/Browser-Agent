@@ -4087,6 +4087,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.2`, build `extension.crx` (475.4 KB).
 
+---
+
+### 🚀 Iterasi 379: Frosted Liquid Glass Header Selector Pills (v2.150.3)
+- **Kebutuhan Pengguna**:
+  - Mengubah tombol trigger selector di top header bar (`Auto (Model)` dan `Auto (Agent)`) menjadi desain **Frosted Dark Liquid Glass Capsule (`border-radius: 9999px`)**.
+- **Implementasi & Peningkatan UI**:
+  - **Glassmorphism Pill Styling**: Menerapkan `backdrop-filter: blur(20px) saturate(180%)`, border semi-transparan `rgba(255, 255, 255, 0.1)`, inset reflection highlight, dan elevasi halus pada `.header-pill-btn`, `.bento-model-badge`, dan `.bento-agent-badge` di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css) dan [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css).
+  - **Active & Hover Micro-interactions**: Hover mengangkat kapsul secara halus (`translateY(-1px)`), meningkatkan saturasi/kecerahan kaca, dan saat dropdown aktif/terbuka memancarkan border aksen neon lime glow.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.3`, build `extension.crx` (475.6 KB).
+
 
 
 

@@ -383,22 +383,50 @@ body.newtab-body {
 .header-pill-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
+  gap: 7px;
+  padding: 6px 14px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  color: #E2E8F0;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.header-pill-btn svg {
+  color: #94A3B8;
+  transition: color 0.15s ease, transform 0.18s ease;
 }
 
 .header-pill-btn:hover {
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.1);
   color: #FFFFFF;
-  border-color: rgba(206, 241, 40, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+.header-pill-btn:hover svg {
+  color: #FFFFFF;
+}
+
+.header-pill-btn.open,
+.header-pill-btn:active {
+  background: rgba(206, 241, 40, 0.12);
+  border-color: rgba(206, 241, 40, 0.45);
+  color: var(--accent-lime);
+  box-shadow: 0 0 14px rgba(206, 241, 40, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.header-pill-btn.open svg,
+.header-pill-btn:active svg {
+  color: var(--accent-lime);
 }
 
 .google-search-btn:hover {
