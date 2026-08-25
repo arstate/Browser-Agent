@@ -4031,6 +4031,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Termasuk test kasus pin dan rename).
   - Bump manifest to `v2.149.0`, build `extension.crx` (474.0 KB).
 
+---
+
+### 🚀 Iterasi 375: Full Rounded Glass Clean UI Overhaul (v2.149.1)
+- **Kebutuhan Pengguna**:
+  - Mengubah seluruh elemen antarmuka pada modal Riwayat Percakapan (History) dan Delete Confirmation menjadi desain **Full Rounded Glass Clean (Kapsul & Lingkaran Penuh)**:
+    1. Input bar rename judul menjadi kapsul penuh (`border-radius: 9999px`) dengan tombol Save dan Cancel bundar (`border-radius: 50%`).
+    2. Tombol aksi histori (Pin, Rename, Delete) menjadi lingkaran kaca penuh (`border-radius: 50%`) dengan efek frosted acrylic glass dan glow transisi halus.
+    3. Tombol footer modal histori ("Hapus Semua Riwayat" dan "Mulai Chat Baru") menjadi tombol pil bulat penuh (`border-radius: 9999px`).
+    4. Popup dialog konfirmasi hapus ("Hapus Riwayat Chat?") menjadi full rounded glass card (`border-radius: 26px`) dengan tombol aksi pil bulat penuh ("Batal" & "Hapus") dan close button lingkaran kaca.
+    5. Search bar riwayat menjadi pil bulat penuh (`border-radius: 9999px`) dengan efek liquid dark frosted glass.
+- **Implementasi & Peningkatan UI**:
+  - Memperbarui aturan styling di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css) dan [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.149.1`, build `extension.crx` (474.7 KB).
+
 
 
 

@@ -5780,17 +5780,20 @@ body.stickman-active .chat-messages {
   align-items: center;
   gap: 8px;
   margin: 12px 16px 6px;
-  padding: 8px 12px;
+  padding: 8px 16px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  transition: all 0.15s ease;
+  border-radius: 9999px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
 .history-search-bar:focus-within {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(206, 241, 40, 0.4);
-  box-shadow: 0 0 0 3px rgba(206, 241, 40, 0.1);
+  border-color: rgba(206, 241, 40, 0.45);
+  box-shadow: 0 0 0 3px rgba(206, 241, 40, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
 .history-search-bar svg {
@@ -5828,11 +5831,13 @@ body.stickman-active .chat-messages {
 
 .history-item-card {
   background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 11px 14px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5877,10 +5882,10 @@ body.stickman-active .chat-messages {
   font-size: 9.5px;
   font-weight: 700;
   color: #CEF128;
-  background: rgba(206, 241, 40, 0.12);
-  border: 1px solid rgba(206, 241, 40, 0.28);
-  padding: 1px 6px;
-  border-radius: 6px;
+  background: rgba(206, 241, 40, 0.14);
+  border: 1px solid rgba(206, 241, 40, 0.35);
+  padding: 2px 7px;
+  border-radius: 9999px;
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -5901,60 +5906,76 @@ body.stickman-active .chat-messages {
 .history-rename-wrap {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   width: 100%;
+  background: rgba(14, 14, 18, 0.75);
+  border: 1px solid rgba(206, 241, 40, 0.45);
+  border-radius: 9999px;
+  padding: 3px 6px 3px 12px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 0 16px rgba(206, 241, 40, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.history-rename-wrap:focus-within {
+  border-color: var(--accent-lime);
+  box-shadow: 0 0 20px rgba(206, 241, 40, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.15);
 }
 
 .history-rename-input {
   flex: 1;
   min-width: 0;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--accent-lime);
-  border-radius: 6px;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
   color: #FFFFFF;
   font-size: 12px;
   font-weight: 600;
-  padding: 3px 8px;
-  outline: none;
-  box-shadow: 0 0 8px rgba(206, 241, 40, 0.25);
+  padding: 2px 0;
   font-family: inherit;
+  box-shadow: none !important;
 }
 
 .btn-save-rename,
 .btn-cancel-rename {
   width: 24px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: 50% !important;
   border: 1px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-save-rename {
-  background: rgba(206, 241, 40, 0.2);
+  background: rgba(206, 241, 40, 0.25);
   color: var(--accent-lime);
-  border-color: rgba(206, 241, 40, 0.4);
+  border-color: rgba(206, 241, 40, 0.45);
 }
 
 .btn-save-rename:hover {
   background: var(--accent-lime);
-  color: #000000;
+  color: #0E0E11;
+  transform: scale(1.08);
+  box-shadow: 0 0 10px rgba(206, 241, 40, 0.5);
 }
 
 .btn-cancel-rename {
   background: rgba(255, 255, 255, 0.08);
   color: #94A3B8;
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .btn-cancel-rename:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #F87171;
-  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.25);
+  color: #FF8080;
+  border-color: rgba(239, 68, 68, 0.45);
+  transform: scale(1.08);
 }
 
 .history-model-badge {
@@ -5964,8 +5985,8 @@ body.stickman-active .chat-messages {
   color: #38BDF8;
   background: rgba(56, 189, 248, 0.15);
   border: 1px solid rgba(56, 189, 248, 0.25);
-  padding: 1px 6px;
-  border-radius: 6px;
+  padding: 2px 7px;
+  border-radius: 9999px;
   white-space: nowrap;
 }
 
@@ -5990,53 +6011,61 @@ body.stickman-active .chat-messages {
 .history-item-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .btn-history-action {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: #71717A;
+  width: 30px;
+  height: 30px;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: #8E8E93;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-history-action:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #E2E8F0;
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px) scale(1.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .btn-pin-history-item:hover {
-  background: rgba(206, 241, 40, 0.15);
+  background: rgba(206, 241, 40, 0.18);
   color: var(--accent-lime);
-  border-color: rgba(206, 241, 40, 0.3);
+  border-color: rgba(206, 241, 40, 0.45);
+  box-shadow: 0 0 12px rgba(206, 241, 40, 0.3);
 }
 
 .btn-pin-history-item.is-pinned {
   color: var(--accent-lime);
-  background: rgba(206, 241, 40, 0.16);
-  border-color: rgba(206, 241, 40, 0.35);
+  background: rgba(206, 241, 40, 0.2);
+  border-color: rgba(206, 241, 40, 0.5);
+  box-shadow: 0 0 10px rgba(206, 241, 40, 0.25);
 }
 
 .btn-rename-history-item:hover {
-  background: rgba(56, 189, 248, 0.15);
+  background: rgba(56, 189, 248, 0.18);
   color: #38BDF8;
-  border-color: rgba(56, 189, 248, 0.3);
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
 }
 
 .btn-del-history-item:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #F87171;
-  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.22);
+  color: #FF7070;
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
 }
 
 .btn-history-action svg,
@@ -6078,24 +6107,26 @@ body.stickman-active .chat-messages {
    Delete Confirmation Popup Modal (Clean SaaS)
    ========================================== */
 .delete-modal-overlay {
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .delete-confirm-card {
   max-width: 320px;
   width: 90%;
   text-align: center;
-  padding: 24px 20px 20px;
+  padding: 24px 22px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  background: #18181C;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.3);
+  background: rgba(18, 18, 22, 0.9) !important;
+  backdrop-filter: blur(36px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(190%) !important;
+  border-radius: 26px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06) inset !important;
   animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   color: #FFFFFF;
 }
@@ -6115,7 +6146,7 @@ body.stickman-active .chat-messages {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
   margin-bottom: 2px;
 }
 
@@ -6134,10 +6165,10 @@ body.stickman-active .chat-messages {
 
 .delete-session-chip {
   max-width: 100%;
-  padding: 5px 12px;
+  padding: 6px 14px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6165,25 +6196,28 @@ body.stickman-active .chat-messages {
   display: flex;
   gap: 10px;
   width: 100%;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .btn-cancel-delete {
   flex: 1;
-  padding: 9px 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px !important;
   font-size: 12px;
   font-weight: 700;
   color: #E2E8F0;
   cursor: pointer;
-  transition: all 0.15s ease;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-cancel-delete:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.16);
   color: #FFFFFF;
+  transform: translateY(-1px);
 }
 
 .btn-danger-confirm {
@@ -6192,22 +6226,22 @@ body.stickman-active .chat-messages {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 14px;
+  padding: 10px 20px;
   background: #EF4444;
   border: 1px solid #DC2626;
-  border-radius: 12px;
+  border-radius: 9999px !important;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   color: #FFFFFF;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
-  transition: all 0.15s ease;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-danger-confirm:hover {
   background: #DC2626;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.55);
 }
 
 /* =========================================================================
