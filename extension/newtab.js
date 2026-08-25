@@ -6,6 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const recentSitesGrid = document.getElementById('recent-sites-grid');
   const chatInput = document.getElementById('chat-input');
 
+  // Populate dynamic version badge from manifest
+  try {
+    const manifestVersion = chrome?.runtime?.getManifest?.()?.version;
+    if (manifestVersion) {
+      const versionEl = document.getElementById('sidebar-app-version');
+      if (versionEl) versionEl.textContent = `v${manifestVersion}`;
+    }
+  } catch (e) {}
+
   // Populate Recent Sites Grid
   function renderRecentSites() {
     if (!recentSitesGrid) return;

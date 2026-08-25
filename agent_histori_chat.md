@@ -4047,6 +4047,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.149.1`, build `extension.crx` (474.7 KB).
 
+---
+
+### 🚀 Iterasi 376: Penambahan Badge Versi UI pada Sidebar Brand Header (v2.150.0)
+- **Kebutuhan Pengguna**:
+  - Menambahkan badge versi aplikasi tepat di sebelah kanan nama brand "Browser Agent" pada sidebar navigasi kiri halaman New Tab dan Options.
+- **Implementasi & Peningkatan UI**:
+  - **HTML Structure**: Menambahkan `<span class="sidebar-brand-version" id="sidebar-app-version">v2.150.0</span>` di dalam `.sidebar-brand-info` di [newtab.html](file:///home/arya/browser-agent/extension/newtab.html) dan [options.html](file:///home/arya/browser-agent/extension/options.html).
+  - **Dark Luxury Glass Badge Styling**: Merancang badge pil kapsul neon lime (`border-radius: 9999px`) dengan font monospace JetBrains Mono, border subtle neon glow, dan frosted backdrop blur di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css) dan [options.css](file:///home/arya/browser-agent/extension/options.css).
+  - **Dynamic Hydration**: Menghubungkan pembacaan versi dinamis langsung dari `chrome.runtime.getManifest().version` di [newtab.js](file:///home/arya/browser-agent/extension/newtab.js) dan [options.js](file:///home/arya/browser-agent/extension/options.js).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.0`, build `extension.crx` (475.0 KB).
+
 
 
 

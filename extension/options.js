@@ -299,6 +299,14 @@ async function sendNativeRpc(action, params = {}) {
 // Initial Load & Config Management
 // =========================================================================
 async function init() {
+  try {
+    const manifestVersion = chrome?.runtime?.getManifest?.()?.version;
+    if (manifestVersion) {
+      const versionEl = document.getElementById('sidebar-app-version');
+      if (versionEl) versionEl.textContent = `v${manifestVersion}`;
+    }
+  } catch (e) {}
+
   connectNativeHost();
   await loadConfig();
   // 1. Instant Cache Hydration: Render UI in 0ms without waiting for Native Host IPC
