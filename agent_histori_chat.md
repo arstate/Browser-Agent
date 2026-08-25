@@ -4135,6 +4135,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.6`, build `extension.crx` (476.0 KB).
 
+---
+
+### 🚀 Iterasi 383: Sidebar Monochrome Beta Tag & Bottom Frameless App Version (v2.150.7)
+- **Kebutuhan Pengguna**:
+  - Mengubah badge versi di samping teks "Browser Agent" pada header sidebar menjadi tag teks **`Beta`** monokrom sederhana tanpa glow.
+  - Memindahkan teks versi aplikasi (`v2.150.7`) ke bagian paling bawah sidebar (*sidebar footer*) secara bersih dan tanpa container (*frameless*).
+- **Implementasi & Peningkatan UI**:
+  - **Sidebar Brand Tag**: Mengubah `.sidebar-brand-version` menjadi `.sidebar-brand-tag` dengan teks `Beta`, warna monokrom netral (`color: #94A3B8; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: none;`) di [newtab.html](file:///home/arya/browser-agent/extension/newtab.html), [options.html](file:///home/arya/browser-agent/extension/options.html), [newtab.css](file:///home/arya/browser-agent/extension/newtab.css), dan [options.css](file:///home/arya/browser-agent/extension/options.css).
+  - **Sidebar Bottom Version**: Menambahkan container `.sidebar-footer` dengan elemen `.sidebar-version-text` ber-id `#sidebar-app-version` di bagian paling bawah sidebar, dengan tipografi monospace JetBrains Mono tanpa latar belakang/border.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.7`, build `extension.crx` (476.3 KB).
+
 
 
 
