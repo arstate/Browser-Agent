@@ -21,6 +21,7 @@ let conversationHistory = [];
 let pendingAttachments = [];
 let currentSessionId = null;
 let currentSessionTitle = "New Chat";
+let currentSessionIsPinned = false;
 let currentSessionCreatedAt = null;
 let sessionToDeleteId = null;
 let sessionToDeleteTitle = "";
@@ -7729,6 +7730,7 @@ async function saveCurrentSessionToDB() {
     id: currentSessionId,
     title: currentSessionTitle || "New Chat",
     model: config.model || "Default Model",
+    is_pinned: currentSessionIsPinned ? 1 : 0,
     messages: sanitizedMessages,
     created_at: currentSessionCreatedAt || Date.now()
   };
@@ -7822,6 +7824,7 @@ async function loadHistoryList(searchQuery = "") {
       id: s.id,
       title: s.title,
       model: s.model,
+      is_pinned: s.is_pinned ? 1 : 0,
       message_count: s.messages ? s.messages.length : 0,
       preview: s.messages && s.messages[0] ? (s.messages[0].content || "").slice(0, 120) : "",
       created_at: s.created_at,
@@ -7836,7 +7839,7 @@ async function loadHistoryList(searchQuery = "") {
         (s.model && s.model.toLowerCase().includes(q))
       );
     }
-    sessions.sort((a, b) => (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
+    sessions.sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0) || (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
   }
 
   if (sessions.length === 0) {
@@ -7856,13 +7859,21 @@ async function loadHistoryList(searchQuery = "") {
   container.innerHTML = '';
   sessions.forEach(sess => {
     const isActive = sess.id === currentSessionId;
+    const isPinned = !!sess.is_pinned;
     const timeStr = formatTimeAgo(sess.updated_at || sess.created_at);
 
     const card = document.createElement('div');
-    card.className = `history-item-card ${isActive ? 'active-session' : ''}`;
+    card.className = `history-item-card ${isActive ? 'active-session' : ''} ${isPinned ? 'is-pinned' : ''}`;
+    card.setAttribute('data-session-id', sess.id);
     card.innerHTML = `
       <div class="history-item-content">
         <div class="history-item-header">
+          ${isPinned ? `
+            <span class="history-pinned-badge" title="Disematkan ke atas">
+              <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M16 3a1 1 0 0 1 1 1v1.5a1 1 0 0 1-.293.707l-2.414 2.414A3.978 3.978 0 0 1 14 10.414V13l2 2v2h-5v5l-1 1-1-1v-5H4v-2l2-2v-2.586c0-.795-.316-1.558-.879-2.207L2.707 6.207A1 1 0 0 1 2.414 5.5V4a1 1 0 0 1 1-1h12.586z"/></svg>
+              Dipin
+            </span>
+          ` : ''}
           <span class="history-item-title" title="${escapeHtml(sess.title || 'New Chat')}">${escapeHtml(sess.title || 'New Chat')}</span>
           <span class="history-model-badge">${escapeHtml(sess.model || 'Model')}</span>
         </div>
@@ -7873,18 +7884,137 @@ async function loadHistoryList(searchQuery = "") {
         </div>
         ${sess.preview ? `<div class="history-preview">${escapeHtml(sess.preview)}</div>` : ''}
       </div>
-      <button type="button" class="btn-del-history-item" title="Hapus percakapan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"/>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-        </svg>
-      </button>
+      <div class="history-item-actions">
+        <button type="button" class="btn-history-action btn-pin-history-item ${isPinned ? 'is-pinned' : ''}" title="${isPinned ? 'Lepas Sematan (Unpin)' : 'Sematkan ke Atas (Pin)'}">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="17" x2="12" y2="22"/>
+            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
+          </svg>
+        </button>
+        <button type="button" class="btn-history-action btn-rename-history-item" title="Ubah Judul Percakapan">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button type="button" class="btn-history-action btn-del-history-item" title="Hapus Percakapan">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      </div>
     `;
 
-    // Resume chat on card click
+    // Resume chat on card click (excluding action buttons and inline input)
     card.addEventListener('click', (e) => {
-      if (e.target.closest('.btn-del-history-item')) return;
+      if (e.target.closest('.btn-history-action') || e.target.closest('.history-rename-wrap')) return;
       resumeSession(sess.id);
+    });
+
+    // Pin toggle
+    const pinBtn = card.querySelector('.btn-pin-history-item');
+    pinBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const nextPinnedState = !sess.is_pinned;
+      sess.is_pinned = nextPinnedState ? 1 : 0;
+      if (sess.id === currentSessionId) {
+        currentSessionIsPinned = nextPinnedState;
+      }
+      if (nativePort) {
+        try {
+          await sendNativeRpc("db_pin_session", { session_id: sess.id, is_pinned: nextPinnedState });
+        } catch (err) {
+          console.warn("SQLite pin error:", err);
+        }
+      }
+      try {
+        const res = await chrome.storage.local.get(['chat_sessions_cache']);
+        const cache = res.chat_sessions_cache || {};
+        if (cache[sess.id]) {
+          cache[sess.id].is_pinned = nextPinnedState ? 1 : 0;
+          await chrome.storage.local.set({ chat_sessions_cache: cache });
+        }
+      } catch (err) {}
+      loadHistoryList(searchQuery);
+    });
+
+    // Inline Rename
+    const renameBtn = card.querySelector('.btn-rename-history-item');
+    renameBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const headerEl = card.querySelector('.history-item-header');
+      const oldTitle = sess.title || 'New Chat';
+      headerEl.innerHTML = `
+        <div class="history-rename-wrap">
+          <input type="text" class="history-rename-input" value="${escapeHtml(oldTitle)}" maxlength="80" />
+          <button type="button" class="btn-save-rename" title="Simpan Judul">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <button type="button" class="btn-cancel-rename" title="Batal">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      `;
+      const input = headerEl.querySelector('.history-rename-input');
+      const saveBtn = headerEl.querySelector('.btn-save-rename');
+      const cancelBtn = headerEl.querySelector('.btn-cancel-rename');
+
+      input.focus();
+      input.select();
+
+      const doSave = async () => {
+        const newTitle = (input.value || '').trim() || 'New Chat';
+        sess.title = newTitle;
+        if (sess.id === currentSessionId) {
+          currentSessionTitle = newTitle;
+        }
+        if (nativePort) {
+          try {
+            await sendNativeRpc("db_rename_session", { session_id: sess.id, title: newTitle });
+          } catch (err) {
+            console.warn("SQLite rename error:", err);
+          }
+        }
+        try {
+          const res = await chrome.storage.local.get(['chat_sessions_cache']);
+          const cache = res.chat_sessions_cache || {};
+          if (cache[sess.id]) {
+            cache[sess.id].title = newTitle;
+            await chrome.storage.local.set({ chat_sessions_cache: cache });
+          }
+        } catch (err) {}
+        loadHistoryList(searchQuery);
+      };
+
+      const doCancel = () => {
+        loadHistoryList(searchQuery);
+      };
+
+      saveBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        doSave();
+      });
+
+      cancelBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        doCancel();
+      });
+
+      input.addEventListener('keydown', (ev) => {
+        ev.stopPropagation();
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          doSave();
+        } else if (ev.key === 'Escape') {
+          ev.preventDefault();
+          doCancel();
+        }
+      });
+
+      input.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+      });
     });
 
     // Delete session on trash button click
@@ -7931,6 +8061,7 @@ async function resumeSession(sessionId) {
 
   currentSessionId = session.id;
   currentSessionTitle = session.title;
+  currentSessionIsPinned = !!session.is_pinned;
   currentSessionCreatedAt = session.created_at;
   conversationHistory = session.messages || [];
 
@@ -8046,6 +8177,7 @@ function startNewChat() {
   saveCurrentSessionToDB();
   currentSessionId = null;
   currentSessionTitle = "New Chat";
+  currentSessionIsPinned = false;
   currentSessionCreatedAt = null;
   conversationHistory = [];
   pendingAttachments = [];
@@ -8138,6 +8270,7 @@ async function confirmDeleteSession() {
     // 3. Reset current session to clean state
     currentSessionId = null;
     currentSessionTitle = "New Chat";
+    currentSessionIsPinned = false;
     currentSessionCreatedAt = null;
     conversationHistory = [];
     resetChatMessagesUI();
@@ -8173,6 +8306,7 @@ async function confirmDeleteSession() {
   if (sid === currentSessionId) {
     currentSessionId = null;
     currentSessionTitle = "New Chat";
+    currentSessionIsPinned = false;
     currentSessionCreatedAt = null;
     conversationHistory = [];
     resetChatMessagesUI();

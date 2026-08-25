@@ -4011,6 +4011,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 17/17 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.148.2`, build `extension.crx` (472.2 KB).
 
+---
+
+### 🚀 Iterasi 374: Fitur Pin Histori Chat & Rename Judul Percakapan (v2.149.0)
+- **Kebutuhan Pengguna**:
+  - Menambahkan fitur **Pin (Sematkan)** pada sesi histori chat agar percakapan penting tetap berada di urutan teratas daftar riwayat percakapan.
+  - Menambahkan fitur **Rename Judul (Ubah Nama)** pada setiap sesi chat di modal riwayat percakapan agar pengguna dapat mengganti judul sesi sesuai topik/kebutuhan secara instan.
+- **Implementasi & Peningkatan Sistem**:
+  1. **SQLite Database Schema Migration & Storage Dual-Sync**:
+     - Menambahkan kolom `is_pinned INTEGER DEFAULT 0` dan indeks `idx_sessions_pinned_updated ON sessions(is_pinned DESC, updated_at DESC)` di [native_host.py](file:///home/arya/browser-agent/host/native_host.py).
+     - Menambahkan RPC method `db_pin_session(session_id, is_pinned)` dan `db_rename_session(session_id, title)`.
+     - Meng-update `db_save_session` dan `db_get_sessions` agar mengurutkan percakapan berdasarkan prioritas: `is_pinned DESC, updated_at DESC`.
+     - Menyelaraskan cache lokal `chrome.storage.local` dengan status `is_pinned` dan `title` yang diperbarui.
+  2. **Interaktivitas UI & Inline Editing**:
+     - Menambahkan tombol aksi **Pin** (`.btn-pin-history-item`) dengan ikon SVG pushpin ber-aksen neon lime, tooltip informatif, dan badge visual `.history-pinned-badge` pada kartu yang dipin.
+     - Menambahkan tombol aksi **Rename** (`.btn-rename-history-item`) dengan ikon pensil yang memicu inline input editor (`.history-rename-wrap`) lengkap dengan tombol Save (✓) dan Cancel (✕), mendukung tombol `Enter` untuk simpan dan `Escape` untuk batal.
+     - Menerapkan styling modern Dark Luxury Liquid Glass di [newtab.css](file:///home/arya/browser-agent/extension/newtab.css) dan [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Termasuk test kasus pin dan rename).
+  - Bump manifest to `v2.149.0`, build `extension.crx` (474.0 KB).
+
 
 
 

@@ -184,11 +184,17 @@ def init_db():
                     message_count INTEGER DEFAULT 0,
                     preview TEXT DEFAULT '',
                     messages_json TEXT NOT NULL,
+                    is_pinned INTEGER DEFAULT 0,
                     created_at INTEGER NOT NULL,
                     updated_at INTEGER NOT NULL
                 )
             """)
+            try:
+                cursor.execute("ALTER TABLE sessions ADD COLUMN is_pinned INTEGER DEFAULT 0")
+            except Exception:
+                pass
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_updated_at ON sessions(updated_at DESC)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_pinned_updated ON sessions(is_pinned DESC, updated_at DESC)")
 
             # Dedicated Settings Table
             cursor.execute("""
@@ -800,20 +806,22 @@ def db_save_session(session_data):
         created_at = int(session_data.get("created_at") or now)
         updated_at = now
         messages_json = json.dumps(messages)
+        is_pinned = 1 if session_data.get("is_pinned") else 0
 
         with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO sessions (id, title, model, message_count, preview, messages_json, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO sessions (id, title, model, message_count, preview, messages_json, is_pinned, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     title=excluded.title,
                     model=excluded.model,
                     message_count=excluded.message_count,
                     preview=excluded.preview,
                     messages_json=excluded.messages_json,
+                    is_pinned=COALESCE(excluded.is_pinned, sessions.is_pinned, 0),
                     updated_at=excluded.updated_at
-            """, (sid, title, model, int(msg_count), str(preview), str(messages_json), int(created_at), int(updated_at)))
+            """, (sid, title, model, int(msg_count), str(preview), str(messages_json), int(is_pinned), int(created_at), int(updated_at)))
             conn.commit()
 
         # Real-time Autonomous Training Distillation (Knowledge Persistence Independent of Raw Chat)
@@ -884,22 +892,50 @@ def db_get_sessions(search=""):
             if search and search.strip():
                 query = f"%{search.strip()}%"
                 cursor.execute("""
-                    SELECT id, title, model, message_count, preview, created_at, updated_at
+                    SELECT id, title, model, message_count, preview, COALESCE(is_pinned, 0) as is_pinned, created_at, updated_at
                     FROM sessions
                     WHERE title LIKE ? OR preview LIKE ? OR model LIKE ?
-                    ORDER BY updated_at DESC
+                    ORDER BY is_pinned DESC, updated_at DESC
                 """, (query, query, query))
             else:
                 cursor.execute("""
-                    SELECT id, title, model, message_count, preview, created_at, updated_at
+                    SELECT id, title, model, message_count, preview, COALESCE(is_pinned, 0) as is_pinned, created_at, updated_at
                     FROM sessions
-                    ORDER BY updated_at DESC
+                    ORDER BY is_pinned DESC, updated_at DESC
                 """)
             rows = cursor.fetchall()
             sessions = [dict(row) for row in rows]
             return {"status": "ok", "sessions": sessions}
     except Exception as e:
         log(f"Error in db_get_sessions: {e}")
+        return {"status": "error", "error": str(e)}
+
+def db_pin_session(sid, is_pinned=True):
+    try:
+        pinned_val = 1 if is_pinned else 0
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE sessions SET is_pinned = ? WHERE id = ?", (pinned_val, sid))
+            conn.commit()
+        return {"status": "ok", "id": sid, "is_pinned": bool(pinned_val)}
+    except Exception as e:
+        log(f"Error in db_pin_session: {e}")
+        return {"status": "error", "error": str(e)}
+
+def db_rename_session(sid, new_title):
+    try:
+        new_title = str(new_title or "").strip()
+        if not new_title:
+            return {"status": "error", "error": "Title cannot be empty"}
+        now = int(time.time() * 1000)
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE sessions SET title = ?, updated_at = ? WHERE id = ?", (new_title, now, sid))
+            cursor.execute("UPDATE chat_training_corpus SET title = ?, updated_at = ? WHERE session_id = ?", (new_title, now, sid))
+            conn.commit()
+        return {"status": "ok", "id": sid, "title": new_title, "updated_at": now}
+    except Exception as e:
+        log(f"Error in db_rename_session: {e}")
         return {"status": "error", "error": str(e)}
 
 def prune_messages_for_rpc(messages):
@@ -3178,6 +3214,16 @@ def handle_local_rpc(msg):
 
     elif action == "db_delete_session":
         res = db_delete_session(msg.get("session_id", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_pin_session":
+        res = db_pin_session(msg.get("session_id", ""), msg.get("is_pinned", True))
+        res["id"] = req_id
+        return res
+
+    elif action == "db_rename_session":
+        res = db_rename_session(msg.get("session_id", ""), msg.get("title", ""))
         res["id"] = req_id
         return res
 

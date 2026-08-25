@@ -165,6 +165,45 @@ class TestPersistentMemoryPhase1(unittest.TestCase):
         })
         self.assertEqual(rpc_sync.get("status"), "ok")
 
+    def test_07_session_pin_and_rename(self):
+        # 1. Save dummy session
+        save_res = native_host.db_save_session({
+            "id": "sess_pin_test_001",
+            "title": "Initial Session Title",
+            "model": "gemini-2.5-flash",
+            "messages": [{"role": "user", "content": "Hello test"}],
+            "created_at": 1700000000000
+        })
+        self.assertEqual(save_res.get("status"), "ok")
+
+        # 2. Pin session
+        pin_res = native_host.db_pin_session("sess_pin_test_001", True)
+        self.assertEqual(pin_res.get("status"), "ok")
+        self.assertTrue(pin_res.get("is_pinned"))
+
+        # 3. Rename session
+        rename_res = native_host.db_rename_session("sess_pin_test_001", "Renamed Pinned Project")
+        self.assertEqual(rename_res.get("status"), "ok")
+        self.assertEqual(rename_res.get("title"), "Renamed Pinned Project")
+
+        # 4. Verify get sessions returns pinned session first with new title
+        list_res = native_host.db_get_sessions("Renamed Pinned")
+        self.assertEqual(list_res.get("status"), "ok")
+        sessions = list_res.get("sessions", [])
+        self.assertTrue(len(sessions) >= 1)
+        target = next((s for s in sessions if s["id"] == "sess_pin_test_001"), None)
+        self.assertIsNotNone(target)
+        self.assertEqual(target["title"], "Renamed Pinned Project")
+        self.assertEqual(target["is_pinned"], 1)
+
+        # 5. Unpin session
+        unpin_res = native_host.db_pin_session("sess_pin_test_001", False)
+        self.assertEqual(unpin_res.get("status"), "ok")
+        self.assertFalse(unpin_res.get("is_pinned"))
+
+        # 6. Clean up
+        native_host.db_delete_session("sess_pin_test_001")
+
     @classmethod
     def tearDownClass(cls):
         # Clean up test records
