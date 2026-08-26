@@ -4442,28 +4442,19 @@ try {
     }
 
     if (msg.type === "TELEGRAM_PROMPT_EXECUTE") {
-      const { text, callback_data, senderId, senderName, botToken } = msg;
-      chrome.storage.local.get(['telegram_bot_config']).then(data => {
-        const tgCfg = data.telegram_bot_config || {};
-        if (callback_data) {
-          handleTelegramIncomingUpdateInSidepanel({
-            update_id: Date.now(),
-            callback_query: {
-              id: "cb_" + Date.now(),
-              from: { id: senderId, first_name: senderName },
-              data: callback_data
-            }
-          }, tgCfg);
-        } else if (text) {
-          handleTelegramIncomingUpdateInSidepanel({
-            update_id: Date.now(),
-            message: {
-              from: { id: senderId, first_name: senderName },
-              text: text
-            }
-          }, tgCfg);
+      const { text, senderId, senderName, botToken } = msg;
+      if (text) {
+        activeTelegramSession = { senderId, senderName, botToken, statusMessageId: null };
+        updateTelegramLiveStatus(`⏳ <b>Browser Agent:</b> Memulai eksekusi instruksi...`).catch(() => {});
+        
+        hideClarificationDock();
+
+        if (chatInput) {
+          chatInput.value = text;
+          adjustChatInputHeight();
+          handleSendMessage();
         }
-      });
+      }
       sendResponse({ status: "handled_by_sidepanel" });
       return true;
     }
@@ -6730,6 +6721,11 @@ function showClarificationDock(question, options = [], contextSummary = "") {
 
   scrollToBottom();
 
+  // Persist clarification options to storage so background service worker can resolve inline buttons
+  chrome.storage.local.set({
+    telegram_active_clarification: { question, options, contextSummary }
+  });
+
   // Broadcast Interactive Option Buttons directly to Telegram Bot if active Telegram session
   if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
     const { botToken, senderId } = activeTelegramSession;
@@ -6767,6 +6763,7 @@ function hideClarificationDock() {
     dock.innerHTML = '';
   }
   activeClarificationState = null;
+  chrome.storage.local.remove(['telegram_active_clarification']);
 }
 
 function appendAssistantMessage(initialText = null, isLiveLoading = true, agentInfo = null) {

@@ -441,14 +441,35 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
     }
 
     if (data.startsWith('clarify_opt:')) {
-      // Forward option selection directly to active Sidepanel / NewTab
+      const optIdx = parseInt(data.replace('clarify_opt:', ''), 10);
+      const storageData = await chrome.storage.local.get(['telegram_active_clarification']);
+      const clarState = storageData.telegram_active_clarification;
+      let selectedText = "";
+      if (clarState && Array.isArray(clarState.options) && clarState.options[optIdx]) {
+        selectedText = clarState.options[optIdx];
+      } else {
+        selectedText = `Opsi ${optIdx + 1}`;
+      }
+      await chrome.storage.local.remove(['telegram_active_clarification']);
+
+      await telegramSendMessage(botToken, fromId, `👉 <b>Anda Memilih Opsi ${optIdx + 1}:</b>\n<i>"${escapeHtml(selectedText)}"</i>\n\nMemulai eksekusi arahan...`);
+
       chrome.runtime.sendMessage({
         type: "TELEGRAM_PROMPT_EXECUTE",
-        callback_data: data,
+        text: selectedText,
         senderId: fromId,
         senderName: cb.from?.first_name || 'User',
         botToken
-      }).catch(() => {});
+      }, async (res) => {
+        if (chrome.runtime.lastError || !res || res.status !== "handled_by_sidepanel") {
+          try {
+            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tabs && tabs[0]) {
+              await chrome.sidePanel.open({ tabId: tabs[0].id }).catch(() => {});
+            }
+          } catch(e) {}
+        }
+      });
       return;
     }
 
@@ -649,15 +670,30 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
   }
 
   // 3. User Prompt Execution -> Forward to Open Sidepanel / NewTab
+  let effectiveText = text;
+  const storageData = await chrome.storage.local.get(['telegram_active_clarification']);
+  const clarState = storageData.telegram_active_clarification;
+  if (clarState && Array.isArray(clarState.options)) {
+    const trimmed = text.trim();
+    if (/^[1-9]$/.test(trimmed)) {
+      const numIdx = parseInt(trimmed, 10) - 1;
+      if (clarState.options[numIdx]) {
+        effectiveText = clarState.options[numIdx];
+        await telegramSendMessage(botToken, senderId, `👉 <b>Memilih Opsi ${trimmed}:</b> <i>"${escapeHtml(effectiveText)}"</i>`);
+      }
+    }
+    await chrome.storage.local.remove(['telegram_active_clarification']);
+  }
+
   const now = Date.now();
-  if (lastProcessedTelegramPrompt.text === text && (now - lastProcessedTelegramPrompt.time < 3000)) {
+  if (lastProcessedTelegramPrompt.text === effectiveText && (now - lastProcessedTelegramPrompt.time < 3000)) {
     return;
   }
-  lastProcessedTelegramPrompt = { text, time: now };
+  lastProcessedTelegramPrompt = { text: effectiveText, time: now };
 
   chrome.runtime.sendMessage({
     type: "TELEGRAM_PROMPT_EXECUTE",
-    text,
+    text: effectiveText,
     senderId,
     senderName,
     botToken

@@ -4645,6 +4645,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.44`, build `extension.crx` (676.5 KB).
 
+---
+
+### 🚀 Iterasi 421: Instant Execution for Telegram Clarification & Prompts (v2.150.45)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug di mana tombol opsi klarifikasi arahan di Telegram bot tidak langsung mengeksekusi aksi saat diklik atau saat pengguna mengetik prompt kustom seperti `tes aja`.
+- **Akar Masalah (Root Cause)**:
+  - Event `TELEGRAM_PROMPT_EXECUTE` sebelumnya hanya menaruh teks di input tanpa memanggil pipeline pengiriman pesan utama (`handleSendMessage`), dan state opsi klarifikasi (`telegram_active_clarification`) belum disinkronkan ke storage bersama yang dapat diakses oleh Service Worker.
+- **Implementasi & Peningkatan Sistem**:
+  - **Shared Clarification Storage Sync**: `showClarificationDock` kini menyimpan state opsi ke `chrome.storage.local` (`telegram_active_clarification`), memungkinkan `background.js` secara otomatis memetakan klik tombol inline keyboard maupun balasan angka langsung (`1`, `2`, `3`).
+  - **Direct Pipeline Execution via `handleSendMessage()`**: Saat event `TELEGRAM_PROMPT_EXECUTE` diterima di `sidepanel.js`, sistem secara otomatis memanggil `handleSendMessage()`, yang mengurus pembuatan bubble pesan pengguna, penutupan clarification dock, serta pemicuan loop eksekusi AI secara instan.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.45`, build `extension.crx` (676.8 KB).
+
 
 
 
