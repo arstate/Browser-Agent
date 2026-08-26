@@ -649,6 +649,18 @@ def delete_md_item(target_dir, item_id):
         log(f"Error deleting {item_id} in {target_dir}: {e}")
         return {"status": "error", "error": str(e)}
 
+_whisper_model_cache = None
+
+def get_local_whisper_model():
+    global _whisper_model_cache
+    if _whisper_model_cache is None:
+        try:
+            from faster_whisper import WhisperModel
+            _whisper_model_cache = WhisperModel("base", device="cpu", compute_type="int8")
+        except Exception as e:
+            log(f"Local faster-whisper model load error: {e}")
+    return _whisper_model_cache
+
 def transcribe_audio_file(file_base64, mime_type="audio/ogg", api_key="", endpoint="", preset=""):
     try:
         if not file_base64:
@@ -662,7 +674,7 @@ def transcribe_audio_file(file_base64, mime_type="audio/ogg", api_key="", endpoi
         with open(in_path, "wb") as f:
             f.write(raw_bytes)
 
-        # Convert to MP3 using ffmpeg for maximum STT compatibility
+        # Convert to MP3 using ffmpeg for maximum compatibility
         has_mp3 = False
         try:
             conv = subprocess.run(["ffmpeg", "-i", in_path, "-vn", "-ar", "44100", "-ac", "1", "-b:a", "128k", out_mp3_path, "-y"], capture_output=True, timeout=10)
@@ -674,18 +686,30 @@ def transcribe_audio_file(file_base64, mime_type="audio/ogg", api_key="", endpoi
         upload_path = out_mp3_path if has_mp3 else in_path
         transcribed_text = ""
 
-        # Strategy 0: Local Linux CLI Whisper if installed
+        # Primary Strategy: Local Linux Whisper via faster-whisper (Zero API dependency, instant sub-second)
         try:
-            if shutil.which("whisper"):
-                res_w = subprocess.run(["whisper", upload_path, "--output_format", "txt", "--output_dir", "/tmp", "--language", "id"], capture_output=True, text=True, timeout=30)
-                txt_out = f"/tmp/{tmp_id}.txt"
-                if os.path.exists(txt_out):
-                    with open(txt_out, "r") as f_w:
-                        transcribed_text = f_w.read().strip()
-                    try: os.remove(txt_out)
-                    except Exception: pass
-        except Exception as we:
-            log(f"Local whisper CLI notice: {we}")
+            w_model = get_local_whisper_model()
+            if w_model:
+                segments, info = w_model.transcribe(upload_path, beam_size=5, vad_filter=True)
+                texts = [s.text.strip() for s in segments if s.text]
+                if texts:
+                    transcribed_text = " ".join(texts).strip()
+        except Exception as fwe:
+            log(f"Local faster_whisper transcription error: {fwe}")
+
+        # Strategy 0: Local Linux CLI Whisper if installed
+        if not transcribed_text:
+            try:
+                if shutil.which("whisper"):
+                    res_w = subprocess.run(["whisper", upload_path, "--output_format", "txt", "--output_dir", "/tmp", "--language", "id"], capture_output=True, text=True, timeout=30)
+                    txt_out = f"/tmp/{tmp_id}.txt"
+                    if os.path.exists(txt_out):
+                        with open(txt_out, "r") as f_w:
+                            transcribed_text = f_w.read().strip()
+                        try: os.remove(txt_out)
+                        except Exception: pass
+            except Exception as we:
+                log(f"Local whisper CLI notice: {we}")
 
         # Strategy 1: Google Gemini Multimodal Audio Transcription
         if not transcribed_text and api_key and (api_key.startswith("AIza") or "generativelanguage" in endpoint or preset == "gemini" or preset == "9router"):

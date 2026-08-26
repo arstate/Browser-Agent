@@ -2522,20 +2522,27 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     let anyToolExecuted = false;
     const executedToolCalls = [];
 
+    const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
     const STEP_EMOJIS = ["⚡", "⚙️", "🔍", "📂", "✨", "🎯", "🚀", "💡"];
+    let spinnerIdx = 0;
     let currentEmoji = "⚡";
     let currentBaseText = "Menganalisis instruksi & merancang eksekusi";
     let lastRenderedText = "";
     let lastEditTime = 0;
     let isAgentRunning = true;
 
-    // Helper to render and edit live status safely (throttled to at most once per 3s to prevent 429 Flood Control)
+    function buildStatusString() {
+      const spinnerChar = SPINNER_FRAMES[spinnerIdx % SPINNER_FRAMES.length];
+      const cleanBase = currentBaseText.replace(/\.+$/, '').trim();
+      return `${currentEmoji} <b>Master Agent</b> <code>[${spinnerChar}]</code>\n<i>${cleanBase}...</i>`;
+    }
+
+    // Helper to render and edit live status safely (fast & clean animation)
     async function renderLiveStatus(force = false) {
       if (!liveStatusMsgId || !isAgentRunning) return;
       const now = Date.now();
-      if (!force && (now - lastEditTime < 3000)) return;
-      const cleanBase = currentBaseText.replace(/\.+$/, '').trim();
-      const textToRender = `${currentEmoji} <b>Master Agent:</b> ${cleanBase}...`;
+      if (!force && (now - lastEditTime < 1100)) return;
+      const textToRender = buildStatusString();
       
       if (textToRender !== lastRenderedText || force) {
         lastRenderedText = textToRender;
@@ -2545,21 +2552,32 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     }
 
     // Send initial status message
-    const initialStatus = await telegramSendMessage(botToken, senderId, `⚡ <b>Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
+    const initialText = `${currentEmoji} <b>Master Agent</b> <code>[⠋]</code>\n<i>Menganalisis instruksi & merancang eksekusi...</i>`;
+    const initialStatus = await telegramSendMessage(botToken, senderId, initialText);
     if (initialStatus && initialStatus.result && initialStatus.result.message_id) {
       liveStatusMsgId = initialStatus.result.message_id;
-      lastRenderedText = `⚡ <b>Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`;
+      lastRenderedText = initialText;
       lastEditTime = Date.now();
     }
 
-    // Native Telegram typing action pulse (every 4.5 seconds) -> Zero rate limit, displays native animated typing header!
+    // Fast & smooth visual animated spinner ticker (every 1.2s)
+    const animTicker = setInterval(async () => {
+      if (!isAgentRunning) {
+        clearInterval(animTicker);
+        return;
+      }
+      spinnerIdx++;
+      await renderLiveStatus(false);
+    }, 1200);
+
+    // Native Telegram typing action pulse (every 3.5 seconds) -> Zero rate limit, displays native animated typing header!
     const typingTicker = setInterval(() => {
       if (!isAgentRunning) {
         clearInterval(typingTicker);
         return;
       }
       telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
-    }, 4500);
+    }, 3500);
 
     // Multi-turn Autonomous Agent Loop
     while (stepCount < maxSteps) {
@@ -2676,9 +2694,10 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       } catch (se) {}
     }
 
-    // Stop typing ticker
+    // Stop animation & typing ticker
     isAgentRunning = false;
     clearInterval(typingTicker);
+    clearInterval(animTicker);
 
     if (!finalResponseText) {
       finalResponseText = "✅ Tugas agent telah selesai dijalankan di browser.";

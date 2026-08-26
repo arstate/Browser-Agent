@@ -5303,6 +5303,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.83`, build `extension.crx` (838.2 KB).
 
+---
+
+### 🚀 Iterasi 460: Offline Local Faster-Whisper Audio Transcription, LLM Typo Refinement, and Fast Modern Animated Telegram Spinner (v2.150.84)
+- **Kebutuhan Pengguna**:
+  - Mengganti arsitektur Speech-to-Text dari API eksternal menjadi transkripsi lokal offline di Linux Host menggunakan AI `faster-whisper`.
+  - Hasil transkrip mentah suara dianalisis oleh model LLM yang sama (sesuai API key & model yang dikonfigurasi di pengaturan) untuk membersihkan typo fonetik / istilah gaul / nama software sebelum AI mengeksekusi instruksi dan merespons.
+  - Memperbarui animasi loading status bot Telegram agar bergerak lebih cepat, lebih estetik, modern, dan clean (`⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏`).
+- **Implementasi & Peningkatan Sistem**:
+  - Di [native_host.py](file:///home/arya/browser-agent/host/native_host.py):
+    - Mengintegrasikan library `faster_whisper` dengan model `base` (int8 quantized pada CPU) sebagai strategi transkripsi suara offline utama (Zero external API, latensi sub-detik).
+  - Di [background.js](file:///home/arya/browser-agent/extension/background.js):
+    - Saat menerima audio voice note Telegram, berkas langsung ditranskripsi oleh local whisper di host.
+    - Transkripsi suara mentah dikirimkan ke model LLM aktif untuk pembersihan typo fonetik (*AI Audio Transcript Typo & Intent Corrector*).
+    - Menampilkan preview transkrip hasil perbaikan kepada pengguna di chat Telegram.
+    - **Fast & Clean Animated Loading Spinner**: Mengimplementasikan visual spinner frames (`SPINNER_FRAMES` interval 1.2s) dengan rendering status dinamis (`⚡ Master Agent [⠋] \n <i>...</i>`), typing pulse setiap 3.5s, dan penyelesaian yang instan.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.84`, build `extension.crx` (839.1 KB).
+
 
 
 
