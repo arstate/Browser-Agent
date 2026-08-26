@@ -4712,6 +4712,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.48`, build `extension.crx` (678.6 KB).
 
+---
+
+### 🚀 Iterasi 425: Eliminate Duplicate Telegram Poller Spams & Fix loadHistoryList Reference (v2.150.49)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki `ReferenceError: loadHistorySessions is not defined` pada [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js).
+  - Mengeliminasi bug bot Telegram yang mengirim pesan berulang-ulang / spam (misal: pesan screenshot atau error API yang terkirim 8 kali berturut-turut).
+- **Akar Masalah (Root Cause)**:
+  - Blok kode Telegram polling usang di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js) masih tertinggal sebanyak ~490 baris. Akibatnya, setiap tab `chrome://newtab/` dan `sidepanel.html` yang terbuka ikut menjalankan poller dan update handler sendiri bersamaan dengan `background.js`, menyebabkan pesan terproses 8x lipat.
+  - Nama fungsi pemuat riwayat di `sidepanel.js` adalah `loadHistoryList()`, bukan `loadHistorySessions()`.
+  - Fallback model pada `executePromptInBackgroundServiceWorker` sebelumnya belum memetakan preset secara otomatis jika model bernilai `"auto"`.
+- **Implementasi & Peningkatan Sistem**:
+  - **Complete Poller Removal from Sidepanel**: Menghapus seluruh blok poller duplikat di `sidepanel.js` sehingga Service Worker `background.js` menjadi SATU-SATUNYA eksekutor resmi Telegram di seluruh ekstensi.
+  - **Function Reference Fix**: Memperbaiki pemanggilan listener `TELEGRAM_HISTORY_UPDATED` menjadi `loadHistoryList()`.
+  - **Smart Dynamic Model Fallback**: Menambahkan resolusi otomatis model jika diset ke `"auto"` (Gemini: `gemini-2.5-flash`, OpenAI: `gpt-4o-mini`, Groq: `llama-3.3-70b-versatile`, OpenRouter: `meta-llama/llama-3.3-70b-instruct`, Ollama: `llama3.2`).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.49`, build `extension.crx` (673.9 KB).
+
 
 
 

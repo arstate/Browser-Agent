@@ -661,11 +661,21 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
     const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config', 'custom_agents', 'chat_sessions_cache']);
     const cfg = storageData.browser_agent_config || {};
     const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
-
-    const model = activeTgCfg.selected_model || cfg.selectedModelChoice || cfg.model || "gemini-2.5-flash";
-    const apiKey = cfg.apiKey;
     const preset = cfg.preset || "gemini";
     const customEndpoint = cfg.customEndpoint || "";
+    const apiKey = cfg.apiKey;
+
+    let model = activeTgCfg.selected_model;
+    if (!model || model === "auto") {
+      model = cfg.selectedModelChoice || cfg.model;
+    }
+    if (!model || model === "auto") {
+      if (preset === "openai") model = "gpt-4o-mini";
+      else if (preset === "groq") model = "llama-3.3-70b-versatile";
+      else if (preset === "openrouter") model = "meta-llama/llama-3.3-70b-instruct";
+      else if (preset === "ollama") model = "llama3.2";
+      else model = "gemini-2.5-flash";
+    }
 
     if (!apiKey && preset !== "ollama" && preset !== "9router") {
       await telegramSendMessage(botToken, senderId, `⚠️ <b>API Key Belum Dikonfigurasi:</b> Silakan buka menu Pengaturan Browser Agent di Chrome untuk memasukkan API Key Anda.`);
