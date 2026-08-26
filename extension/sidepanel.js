@@ -2986,6 +2986,7 @@ async function executeTool(name, args, assistantBubble = null) {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
           } else {
+            lastCapturedScreenshotDataUrl = dataUrl;
             let savedFilePath = "";
             const screenshotId = `walkthrough_${Date.now()}`;
             
@@ -3715,12 +3716,89 @@ async function notifyActiveTabExecutionState(isExec, step = 1, maxStep = 15, sta
   } catch (e) {}
 }
 
-// Global listener for stop/pause execution from content script HUD
+// Telegram Remote Bridge State & Helpers
+let activeTelegramSession = null;
+let lastCapturedScreenshotDataUrl = null;
+
+async function telegramSendMessageFromSidepanel(botToken, chatId, text, replyMarkup = null) {
+  if (!botToken || !chatId) return;
+  try {
+    const payload = {
+      chat_id: chatId,
+      text: text,
+      parse_mode: "HTML",
+      disable_web_page_preview: false
+    };
+    if (replyMarkup) payload.reply_markup = replyMarkup;
+
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (err) {
+    console.error("Sidepanel Telegram Send Error:", err);
+  }
+}
+
+async function telegramSendPhotoFromSidepanel(botToken, chatId, photoDataUrlOrBase64, caption = "") {
+  if (!botToken || !chatId || !photoDataUrlOrBase64) return;
+  try {
+    let base64Data = photoDataUrlOrBase64;
+    let mimeType = "image/png";
+    if (photoDataUrlOrBase64.startsWith("data:")) {
+      const parts = photoDataUrlOrBase64.split(",");
+      mimeType = parts[0].split(";")[0].split(":")[1] || "image/png";
+      base64Data = parts[1];
+    }
+
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+
+    const formData = new FormData();
+    formData.append("chat_id", chatId);
+    formData.append("photo", blob, "screenshot.png");
+    if (caption) formData.append("caption", caption);
+    formData.append("parse_mode", "HTML");
+
+    const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+      method: "POST",
+      body: formData
+    });
+    return await resp.json();
+  } catch (err) {
+    console.error("Sidepanel Telegram Send Photo Error:", err);
+  }
+}
+
+// Global listener for stop/pause execution & incoming Telegram commands
 try {
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && (msg.type === "ABORT_AGENT_EXECUTION" || msg.type === "PAUSE_AGENT_EXECUTION")) {
       cancelExecution();
       sendResponse({ status: "aborted" });
+      return true;
+    }
+
+    if (msg && msg.type === "TELEGRAM_PROMPT_EXECUTE") {
+      const { text, senderId, senderName, botToken } = msg;
+      activeTelegramSession = { senderId, senderName, botToken };
+
+      // Send initial acknowledgement to Telegram
+      telegramSendMessageFromSidepanel(botToken, senderId, `🤖 <b>[Browser Agent Terhubung]</b>\n\nMemulai eksekusi kontrol browser untuk instruksi:\n<i>"${escapeHtml(text)}"</i>`).catch(() => {});
+
+      if (currentChatMode === 'chat') {
+        runChatModeLoop(text, [], []);
+      } else {
+        runAgentLoop(text, [], []);
+      }
+      sendResponse({ status: "handled_by_sidepanel" });
       return true;
     }
   });
@@ -4186,6 +4264,20 @@ Tugas Anda:
           updateFooterStatus(`⚡ ${workerName}: ${badgeActionName} (${stepStr})...`);
           notifyActiveTabExecutionState(true, currentStep, maxSteps, `${workerName}: ${stepStr} • ${badgeActionName}`);
 
+          // Broadcast live step progress to Telegram remote chat
+          if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
+            let userFriendlyAction = badgeActionName;
+            if (toolName === "browser_navigate") userFriendlyAction = `🌐 Membuka link: ${toolArgs.url || 'halaman web'}`;
+            else if (toolName === "browser_click") userFriendlyAction = `👆 Mengklik elemen interaktif`;
+            else if (toolName === "browser_type") userFriendlyAction = `⌨️ Mengetik: "${toolArgs.text || ''}"`;
+            else if (toolName === "browser_control_media") userFriendlyAction = `▶️ Mengontrol pemutar media YouTube (${toolArgs.action || 'play'})...`;
+            else if (toolName === "browser_screenshot") userFriendlyAction = `📸 Mengambil screenshot walkthrough visual...`;
+            else if (toolName === "browser_snapshot") userFriendlyAction = `🔍 Menganalisis elemen visual halaman...`;
+            else if (toolName === "local_run_command") userFriendlyAction = `💻 Menjalankan perintah terminal: ${toolArgs.command || ''}`;
+            
+            telegramSendMessageFromSidepanel(activeTelegramSession.botToken, activeTelegramSession.senderId, `⏳ <b>${escapeHtml(workerName)}:</b> ${escapeHtml(userFriendlyAction)} (<i>${stepStr}</i>)`).catch(() => {});
+          }
+
           let toolOutput = "";
           let isImageGen = (toolName === "generate_image");
           let genImgResult = null;
@@ -4468,6 +4560,19 @@ Tugas Anda:
     updateAssistantActiveAgent(assistantBubble, finalAgentName, (currentExecutionMode === 'planning' && !isPlanApprovedRun) ? "Rencana Siap" : "Selesai", hasBoss, true);
     updateFooterStatus("Agent Ready");
 
+    // Final Notification to Telegram Remote
+    if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
+      const finalMsg = conversationHistory[conversationHistory.length - 1]?.content || "Tugas browser telah berhasil diselesaikan!";
+      const activeModelTag = typeof activeModelChoice !== 'undefined' ? activeModelChoice : 'Browser Agent';
+      await telegramSendMessageFromSidepanel(activeTelegramSession.botToken, activeTelegramSession.senderId, `🤖 <b>[${activeModelTag}]</b>\n\n${finalMsg}`);
+      
+      if (lastCapturedScreenshotDataUrl) {
+        await telegramSendPhotoFromSidepanel(activeTelegramSession.botToken, activeTelegramSession.senderId, lastCapturedScreenshotDataUrl, "📸 <b>Screenshot Hasil Tindakan Browser</b>");
+        lastCapturedScreenshotDataUrl = null;
+      }
+      activeTelegramSession = null;
+    }
+
     if (currentExecutionMode === 'planning' && !isPlanApprovedRun) {
       showPlanApprovalDock();
     }
@@ -4487,6 +4592,10 @@ Tugas Anda:
       updateAssistantText(assistantBubble, "*[Eksekusi dihentikan oleh pengguna]*", false);
       updateAssistantActiveAgent(assistantBubble, finalAgentName, "Dibatalkan", hasBoss, true);
       updateFooterStatus("Execution Cancelled");
+      if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
+        await telegramSendMessageFromSidepanel(activeTelegramSession.botToken, activeTelegramSession.senderId, `⏹️ <i>Eksekusi browser dibatalkan oleh sistem/pengguna.</i>`);
+        activeTelegramSession = null;
+      }
     } else {
       console.error("Agent Loop Error:", err);
       const friendlyMsg = formatFriendlyErrorMessage(err, config.endpoint, (typeof activeModelChoice !== 'undefined' ? activeModelChoice : ''));
@@ -4497,6 +4606,10 @@ Tugas Anda:
       }
       updateAssistantActiveAgent(assistantBubble, finalAgentName, "Error", hasBoss, true);
       updateFooterStatus("AI Error / Network Issue");
+      if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
+        await telegramSendMessageFromSidepanel(activeTelegramSession.botToken, activeTelegramSession.senderId, `❌ <b>Gagal Menjalankan Tugas:</b>\n${err.message || 'Terjadi kesalahan sistem'}`);
+        activeTelegramSession = null;
+      }
     }
   } finally {
     isExecuting = false;
@@ -5569,6 +5682,20 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
         });
       }
 
+      // Telegram Remote Notification from Chat Mode
+      if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
+        if (switchMatch) {
+          const targetPrompt = switchMatch[1].trim() || userMessage;
+          await telegramSendMessageFromSidepanel(activeTelegramSession.botToken, activeTelegramSession.senderId, `🔄 <i>Perintah memerlukan otomatisasi browser. Otomatis beralih ke Mode Agent untuk mengeksekusi...</i>`);
+          setChatMode("agent");
+          runAgentLoop(targetPrompt, attachments);
+          return;
+        } else {
+          await telegramSendMessageFromSidepanel(activeTelegramSession.botToken, activeTelegramSession.senderId, `🤖 <b>[Browser Agent]</b>\n\n${cleanFinalText || accumulatedContent}`);
+          activeTelegramSession = null;
+        }
+      }
+
       const finalAgentName = hasBoss ? "Master Agent" : (resolvedAgents[0]?.name || "General Agent");
       updateAssistantActiveAgent(assistantBubble, finalAgentName, "Selesai", hasBoss, true);
 
@@ -5582,6 +5709,10 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 
     } catch (err) {
       const finalAgentName = hasBoss ? "Master Agent" : (resolvedAgents[0]?.name || "General Agent");
+      if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
+        await telegramSendMessageFromSidepanel(activeTelegramSession.botToken, activeTelegramSession.senderId, `❌ <b>Gagal Menjawab Chat:</b>\n${err.message || 'Terjadi kesalahan'}`);
+        activeTelegramSession = null;
+      }
       const isAbort = (
         err.name === 'AbortError' ||
         err.code === 20 ||

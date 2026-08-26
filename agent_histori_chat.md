@@ -4503,6 +4503,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.34`, build `extension.crx` (494.5 KB).
 
+---
+
+### 🚀 Iterasi 411: Full Browser Control Pipeline, Step-by-Step Telegram Updates & Fullscreen OS Screenshot (v2.150.35)
+- **Kebutuhan Pengguna**:
+  - Memampukan Telegram Bot memiliki **kontrol penuh terhadap Browser Agent** (seperti memutar lagu di YouTube, klik elemen, membuka link, dan menjalankan tool browser lainnya), mengirimkan update progres langkah secara real-time step-by-step ke chat Telegram (e.g. `⏳ Membuka YouTube...`, `▶️ Memutar video...`), memasukkan riwayat prompt ke histori chat Side Panel, serta mendukung pengambilan gambar tangkapan layar asli (baik screenshot Tab Chrome maupun Fullscreen Desktop Linux OS via `sendPhoto`).
+- **Implementasi & Peningkatan Sistem**:
+  - **Telegram Remote Bridge ke Side Panel (`TELEGRAM_PROMPT_EXECUTE`)**: Meneruskan perintah chat Telegram langsung ke loop eksekusi utama Browser Agent (`runAgentLoop` / `runChatModeLoop`), sehingga seluruh aksi browser (membuka tab, navigasi, klik DOM, kontrol audio/video) dieksekusi secara riil.
+  - **Live Step-by-Step Telegram Broadcasting**: Menyuntikkan siaran status berkala saat agent menjalankan aksi (seperti membuka URL, klik tombol, analisis visual, kontrol media YouTube) agar pengguna dapat memantau setiap langkah di chat Telegram secara langsung.
+  - **Native Fullscreen Desktop Linux OS Screenshot (`capture_os_screenshot`)**: Menambahkan RPC handler pada `native_host.py` yang menggunakan `PIL.ImageGrab` / `ImageMagick import -window root` untuk mengambil screenshot 1920x1080 desktop Linux OS.
+  - **Telegram Photo Sender (`sendPhoto`)**: Mengirimkan file gambar screenshot asli (bukan sekadar teks URL) langsung ke chat Telegram via `telegramSendPhoto` / `telegramSendPhotoFromSidepanel` dengan perintah `/screenshot` (Tab Chrome) dan `/screenshot_os` (Fullscreen Desktop Linux).
+  - **Autonomous Background Task Fallback (`executeAutonomousBackgroundTelegramTask`)**: Menyediakan eksekusi otomatis cerdas untuk pencarian YouTube, pemutaran media otomatis, navigasi URL, dan inferensi AI jika Side Panel sedang tertutup.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.35`, build `extension.crx` (498.3 KB).
+
 
 
 

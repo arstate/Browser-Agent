@@ -4013,6 +4013,184 @@ async function executeAIResponseForTelegram(userPrompt, senderName) {
   };
 }
 
+// Telegram API Helper: Send Photo (Chrome Tab or Fullscreen Linux OS)
+async function telegramSendPhoto(botToken, chatId, photoDataUrlOrBase64, caption = "") {
+  try {
+    let base64Data = photoDataUrlOrBase64;
+    let mimeType = "image/png";
+    if (photoDataUrlOrBase64.startsWith("data:")) {
+      const parts = photoDataUrlOrBase64.split(",");
+      mimeType = parts[0].split(";")[0].split(":")[1] || "image/png";
+      base64Data = parts[1];
+    }
+
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+
+    const formData = new FormData();
+    formData.append("chat_id", chatId);
+    formData.append("photo", blob, "screenshot.png");
+    if (caption) formData.append("caption", caption);
+    formData.append("parse_mode", "HTML");
+
+    const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+      method: "POST",
+      body: formData
+    });
+    return await resp.json();
+  } catch (err) {
+    console.error("Error sending photo to Telegram:", err);
+    await telegramSendMessage(botToken, chatId, `⚠️ Gagal mengirim file gambar: ${err.message}`);
+  }
+}
+
+// Background Autonomous Task Runner for Telegram Remote Control
+async function executeAutonomousBackgroundTelegramTask(text, senderId, senderName, botToken) {
+  const lower = text.toLowerCase();
+  let modelUsed = "";
+  let agentUsed = "General Browser Assistant";
+  let responseText = "";
+
+  // 1. Check for YouTube / Media playback intent: e.g. "buka yt play deny caknan", "putar lagu X di youtube"
+  const isYtPlay = (lower.includes("youtube") || lower.includes("yt") || lower.includes("play") || lower.includes("putar") || lower.includes("lagu") || lower.includes("musik"));
+  
+  if (isYtPlay) {
+    try {
+      const cleanQuery = text.replace(/^(buka|tolong|coba|play|putar|cari|di|youtube|yt|bro|gan|lagu|musik)+/gi, '').trim() || text;
+      await telegramSendMessage(botToken, senderId, `⏳ <b>Browser Assistant:</b> 🌐 Membuka YouTube untuk mencari <i>"${escapeHtml(cleanQuery)}"</i>...`);
+      
+      const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(cleanQuery)}`;
+      const tab = await chrome.tabs.create({ url: searchUrl, active: true });
+      
+      // Wait for YouTube search tab to load
+      await new Promise(r => setTimeout(r, 3500));
+      
+      await telegramSendMessage(botToken, senderId, `⏳ <b>Browser Assistant:</b> 🔍 Menemukan video YouTube dan mengaktifkan playback...`);
+
+      // Inject script to click first video result
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            const firstVid = document.querySelector('ytd-video-renderer a#thumbnail') || document.querySelector('a#video-title') || document.querySelector('ytd-rich-grid-media a#thumbnail');
+            if (firstVid) firstVid.click();
+          }
+        });
+      } catch (e) {}
+
+      await new Promise(r => setTimeout(r, 2500));
+      
+      // Ensure playback is unmuted and playing
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            const video = document.querySelector('video');
+            if (video) {
+              video.muted = false;
+              video.play().catch(() => {});
+            }
+          }
+        });
+      } catch (e) {}
+
+      // Capture screenshot of YouTube tab
+      await new Promise(r => setTimeout(r, 1500));
+      let tabDataUrl = null;
+      try {
+        tabDataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
+      } catch(e) {}
+
+      responseText = `Video YouTube untuk pencarian <b>"${escapeHtml(cleanQuery)}"</b> telah berhasil dibuka dan sedang diputar di browser!`;
+      await telegramSendMessage(botToken, senderId, `✅ <b>[Browser Agent Selesai]</b>\n\n${responseText}`);
+
+      if (tabDataUrl) {
+        await telegramSendPhoto(botToken, senderId, tabDataUrl, `📸 <b>Tampilan YouTube Player Aktif</b>`);
+      }
+
+      // Record interaction in logs
+      const logEntry = {
+        id: `tg_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        user_id: senderId,
+        user_message: text,
+        agent_response: responseText,
+        model_used: "Autonomous Browser Action",
+        agent_used: "General Browser Assistant",
+        actions_taken: `Opened YouTube & played video: ${cleanQuery}`,
+        status: "Success (200 OK)"
+      };
+      telegramBotLogs.push(logEntry);
+      if (telegramBotLogs.length > 200) telegramBotLogs.shift();
+      await chrome.storage.local.set({ telegram_bot_logs: telegramBotLogs });
+      renderTelegramLogs();
+      return;
+    } catch(err) {
+      await telegramSendMessage(botToken, senderId, `⚠️ Gagal memutar video di YouTube: ${err.message}`);
+    }
+  }
+
+  // 2. Check for navigation intent (e.g. "buka google.com", "buka kompas.com")
+  const urlMatch = text.match(/(https?:\/\/[^\s]+|[a-zA-Z0-9-]+\.(com|org|net|id|co\.id|io|ai|dev|app)[^\s]*)/i);
+  if (lower.startsWith("buka ") && urlMatch) {
+    try {
+      let targetUrl = urlMatch[0];
+      if (!targetUrl.startsWith("http")) targetUrl = "https://" + targetUrl;
+      await telegramSendMessage(botToken, senderId, `⏳ <b>Browser Assistant:</b> 🌐 Membuka link: <code>${escapeHtml(targetUrl)}</code>...`);
+      const tab = await chrome.tabs.create({ url: targetUrl, active: true });
+      await new Promise(r => setTimeout(r, 3000));
+      
+      let tabDataUrl = null;
+      try {
+        tabDataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
+      } catch(e) {}
+
+      responseText = `Halaman web <b>${escapeHtml(targetUrl)}</b> telah berhasil dibuka di browser Chrome!`;
+      await telegramSendMessage(botToken, senderId, `✅ <b>[Browser Agent Selesai]</b>\n\n${responseText}`);
+      if (tabDataUrl) {
+        await telegramSendPhoto(botToken, senderId, tabDataUrl, `📸 <b>Tampilan Halaman: ${escapeHtml(targetUrl)}</b>`);
+      }
+      return;
+    } catch(err) {
+      await telegramSendMessage(botToken, senderId, `⚠️ Gagal membuka URL: ${err.message}`);
+    }
+  }
+
+  // 3. Fallback to Real AI Engine Execution
+  try {
+    await telegramSendMessage(botToken, senderId, `⏳ <i>Browser Agent sedang memproses instruksi dengan AI Engine...</i>`);
+    const aiRes = await executeAIResponseForTelegram(text, senderName);
+    responseText = aiRes.responseText;
+    modelUsed = aiRes.modelUsed;
+    agentUsed = aiRes.agentUsed;
+
+    await telegramSendMessage(botToken, senderId, `🤖 <b>[${modelUsed}]</b>\n\n${responseText}`);
+
+    const logEntry = {
+      id: `tg_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      user_id: senderId,
+      user_message: text,
+      agent_response: responseText,
+      model_used: modelUsed || "Default",
+      agent_used: agentUsed || "General Assistant",
+      actions_taken: "AI Inference & Completed",
+      status: "Success (200 OK)"
+    };
+    telegramBotLogs.push(logEntry);
+    if (telegramBotLogs.length > 200) telegramBotLogs.shift();
+    await chrome.storage.local.set({ telegram_bot_logs: telegramBotLogs });
+    renderTelegramLogs();
+  } catch(err) {
+    await telegramSendMessage(botToken, senderId, `⚠️ Terjadi kesalahan saat memproses: ${err.message}`);
+  }
+}
+
 // Process incoming Telegram Updates (Messages & Callback Queries)
 async function handleTelegramIncomingUpdate(update) {
   const botToken = telegramConfig.bot_token;
@@ -4026,6 +4204,93 @@ async function handleTelegramIncomingUpdate(update) {
 
     // Whitelist check
     if (telegramConfig.authorized_chat_id && fromId !== String(telegramConfig.authorized_chat_id)) {
+      return;
+    }
+
+    if (data === 'cmd_model') {
+      const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config']);
+      const cfg = storageData.browser_agent_config || config || {};
+      const tgCfg = storageData.telegram_bot_config || telegramConfig || {};
+      const modelList = Array.isArray(cfg.models) && cfg.models.length > 0 ? cfg.models : (DEFAULT_MODELS_BY_PRESET[cfg.preset] || [{ id: cfg.model || "gemini-2.5-flash", name: cfg.model || "Default Model" }]);
+      const keyboardRows = [
+        [{ text: `🤖 AUTO (Smart Dynamic) ${tgCfg.auto_model ? '✓' : ''}`, callback_data: "set_model:auto" }]
+      ];
+      for (let i = 0; i < modelList.length; i += 2) {
+        const row = [];
+        const m1 = modelList[i];
+        const m1Id = m1.id || m1;
+        const m1Name = m1.name || m1Id;
+        const isM1Active = !tgCfg.auto_model && (tgCfg.selected_model === m1Id || cfg.model === m1Id);
+        row.push({ text: `${isM1Active ? '🟢 ' : ''}${m1Name}`, callback_data: `set_model:${m1Id}` });
+        if (i + 1 < modelList.length) {
+          const m2 = modelList[i + 1];
+          const m2Id = m2.id || m2;
+          const m2Name = m2.name || m2Id;
+          const isM2Active = !tgCfg.auto_model && (tgCfg.selected_model === m2Id || cfg.model === m2Id);
+          row.push({ text: `${isM2Active ? '🟢 ' : ''}${m2Name}`, callback_data: `set_model:${m2Id}` });
+        }
+        keyboardRows.push(row);
+      }
+      await telegramSendMessage(botToken, fromId, `🧠 <b>Pilih Model AI:</b>\n\nModel aktif: <code>${tgCfg.auto_model ? 'AUTO' : (tgCfg.selected_model || cfg.model || 'Default')}</code>`, { inline_keyboard: keyboardRows });
+      return;
+    } else if (data === 'cmd_agent') {
+      const storageData = await chrome.storage.local.get(['custom_agents', 'active_agent_id', 'telegram_bot_config']);
+      const agents = Array.isArray(storageData.custom_agents) && storageData.custom_agents.length > 0 ? storageData.custom_agents : [{ id: "master_agent", name: "Master Agent" }];
+      const tgCfg = storageData.telegram_bot_config || telegramConfig || {};
+      const keyboardRows = [
+        [{ text: `🧠 AUTO (Delegasi Otomatis) ${tgCfg.auto_agent ? '✓' : ''}`, callback_data: "set_agent:auto" }]
+      ];
+      for (let i = 0; i < agents.length; i += 2) {
+        const row = [];
+        const a1 = agents[i];
+        const isA1Active = !tgCfg.auto_agent && (tgCfg.selected_agent === a1.id || storageData.active_agent_id === a1.id);
+        row.push({ text: `${isA1Active ? '🟢 ' : ''}${a1.name}`, callback_data: `set_agent:${a1.id}` });
+        if (i + 1 < agents.length) {
+          const a2 = agents[i + 1];
+          const isA2Active = !tgCfg.auto_agent && (tgCfg.selected_agent === a2.id || storageData.active_agent_id === a2.id);
+          row.push({ text: `${isA2Active ? '🟢 ' : ''}${a2.name}`, callback_data: `set_agent:${a2.id}` });
+        }
+        keyboardRows.push(row);
+      }
+      await telegramSendMessage(botToken, fromId, `👥 <b>Pilih Spesialis Agent:</b>`, { inline_keyboard: keyboardRows });
+      return;
+    } else if (data === 'cmd_screenshot') {
+      await telegramSendMessage(botToken, fromId, `📸 <b>Pilih Jenis Screenshot:</b>`, {
+        inline_keyboard: [
+          [{ text: "🌐 Screenshot Tab Chrome Aktif", callback_data: "cmd_screenshot_tab" }],
+          [{ text: "🖥️ Screenshot Fullscreen Desktop OS Linux", callback_data: "cmd_screenshot_os" }]
+        ]
+      });
+      return;
+    } else if (data === 'cmd_screenshot_tab') {
+      await telegramSendMessage(botToken, fromId, `📸 <i>Mengambil tangkapan layar tab Chrome...</i>`);
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const activeTab = tabs[0];
+        const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
+        if (dataUrl) {
+          const caption = `📸 <b>Screenshot Tab Chrome</b>\n<i>${escapeHtml(activeTab?.title || 'Chrome Tab')}</i>\nURL: <code>${escapeHtml(activeTab?.url || '-')}</code>`;
+          await telegramSendPhoto(botToken, fromId, dataUrl, caption);
+        } else {
+          await telegramSendMessage(botToken, fromId, `⚠️ Gagal mengambil tangkapan layar tab.`);
+        }
+      } catch (err) {
+        await telegramSendMessage(botToken, fromId, `⚠️ Error screenshot tab: ${err.message}`);
+      }
+      return;
+    } else if (data === 'cmd_screenshot_os') {
+      await telegramSendMessage(botToken, fromId, `🖥️ <i>Mengambil screenshot Full Desktop Linux OS...</i>`);
+      try {
+        const rpcRes = await sendNativeRpc("capture_os_screenshot", {});
+        if (rpcRes && rpcRes.status === "ok" && rpcRes.data_url) {
+          const caption = `🖥️ <b>Fullscreen Linux OS Desktop Screenshot</b>\nWaktu: <code>${new Date().toLocaleString('id-ID')}</code>`;
+          await telegramSendPhoto(botToken, fromId, rpcRes.data_url, caption);
+        } else {
+          await telegramSendMessage(botToken, fromId, `⚠️ Gagal mengambil screenshot OS: ${rpcRes?.error || 'Native Host error'}`);
+        }
+      } catch (err) {
+        await telegramSendMessage(botToken, fromId, `⚠️ Error screenshot OS: ${err.message}`);
+      }
       return;
     }
 
@@ -4092,7 +4357,7 @@ async function handleTelegramIncomingUpdate(update) {
     const arg = parts.slice(1).join(' ').trim();
 
     if (cmd === '/start' || cmd === '/help') {
-      const welcome = `🤖 <b>Browser Agent Remote Control Aktif!</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, Anda dapat mengontrol browser dan mengeksekusi AI langsung dari chat ini.\n\n<b>Pilihan Perintah:</b>\n• /model - Ganti model AI\n• /agent - Ganti spesialis agent\n• /mode - Ganti mode kerja\n• /screenshot - Ambil tangkapan layar Chrome\n• /status - Cek status tab & performa\n• /new - Mulai sesi baru\n\n<i>Atau langsung ketik perintah apa saja untuk dieksekusi oleh AI Agent!</i>`;
+      const welcome = `🤖 <b>Browser Agent Remote Control Aktif!</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, Anda dapat mengontrol browser dan mengeksekusi AI langsung dari chat ini.\n\n<b>Pilihan Perintah:</b>\n• /model - Ganti model AI aktif\n• /agent - Ganti spesialis agent\n• /mode - Ganti mode kerja\n• /screenshot - Ambil screenshot Tab Chrome\n• /screenshot_os - Ambil screenshot Full Desktop Linux\n• /status - Cek status tab & performa\n• /new - Mulai sesi percakapan baru\n\n<i>Atau langsung ketik perintah seperti "buka yt play deny caknan" untuk langsung dieksekusi di browser!</i>`;
       await telegramSendMessage(botToken, senderId, welcome, {
         inline_keyboard: [
           [
@@ -4100,8 +4365,8 @@ async function handleTelegramIncomingUpdate(update) {
             { text: "👥 Spesialis Agent", callback_data: "cmd_agent" }
           ],
           [
-            { text: "📸 Screenshot Tab", callback_data: "cmd_screenshot" },
-            { text: "⚙️ Mode Kerja", callback_data: "cmd_mode" }
+            { text: "📸 Screenshot Tab", callback_data: "cmd_screenshot_tab" },
+            { text: "🖥️ Screenshot OS Linux", callback_data: "cmd_screenshot_os" }
           ]
         ]
       });
@@ -4172,30 +4437,36 @@ async function handleTelegramIncomingUpdate(update) {
       return;
     }
 
-    if (cmd === '/mode') {
-      await telegramSendMessage(botToken, senderId, `⚙️ <b>Pilih Mode Eksekusi:</b>`, {
-        inline_keyboard: [
-          [
-            { text: "💬 Chat Mode", callback_data: "set_mode:chat" },
-            { text: "🌐 Autonomous Browsing", callback_data: "set_mode:autonomous" }
-          ],
-          [
-            { text: "🐝 Swarm Multi-Agent Mode", callback_data: "set_mode:swarm" }
-          ]
-        ]
-      });
-      return;
-    }
-
-    if (cmd === '/screenshot') {
-      await telegramSendMessage(botToken, senderId, `📸 <i>Mengambil tangkapan layar browser...</i>`);
+    if (cmd === '/screenshot' || cmd === '/screenshot_tab') {
+      await telegramSendMessage(botToken, senderId, `📸 <i>Mengambil tangkapan layar tab Chrome...</i>`);
       try {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         const activeTab = tabs[0];
-        const tabInfo = activeTab ? `Tab Aktif: ${activeTab.title || 'Untitled'}` : 'Browser Standby';
-        await telegramSendMessage(botToken, senderId, `✅ <b>Screenshot Tab Chrome:</b>\n<i>${escapeHtml(tabInfo)}</i>\nURL: <code>${escapeHtml(activeTab?.url || '-')}</code>`);
+        const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
+        if (dataUrl) {
+          const caption = `📸 <b>Screenshot Tab Chrome</b>\n<i>${escapeHtml(activeTab?.title || 'Chrome Tab')}</i>\nURL: <code>${escapeHtml(activeTab?.url || '-')}</code>`;
+          await telegramSendPhoto(botToken, senderId, dataUrl, caption);
+        } else {
+          await telegramSendMessage(botToken, senderId, `⚠️ Gagal mengambil snapshot tab.`);
+        }
       } catch (err) {
-        await telegramSendMessage(botToken, senderId, `⚠️ Gagal mengambil snapshot: ${err.message}`);
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal mengambil screenshot tab: ${err.message}`);
+      }
+      return;
+    }
+
+    if (cmd === '/screenshot_os' || cmd === '/screenshot_fullscreen') {
+      await telegramSendMessage(botToken, senderId, `🖥️ <i>Mengambil screenshot Full Desktop Linux OS...</i>`);
+      try {
+        const rpcRes = await sendNativeRpc("capture_os_screenshot", {});
+        if (rpcRes && rpcRes.status === "ok" && rpcRes.data_url) {
+          const caption = `🖥️ <b>Fullscreen Linux OS Desktop Screenshot</b>\nWaktu: <code>${new Date().toLocaleString('id-ID')}</code>`;
+          await telegramSendPhoto(botToken, senderId, rpcRes.data_url, caption);
+        } else {
+          await telegramSendMessage(botToken, senderId, `⚠️ Gagal mengambil screenshot OS Desktop: ${rpcRes?.error || 'Native Host Error'}`);
+        }
+      } catch (err) {
+        await telegramSendMessage(botToken, senderId, `⚠️ Error screenshot OS: ${err.message}`);
       }
       return;
     }
@@ -4233,43 +4504,32 @@ async function handleTelegramIncomingUpdate(update) {
     }
   }
 
-  // Regular Prompt / Instruction Execution with REAL AI Engine
-  await telegramSendMessage(botToken, senderId, `⏳ <i>Browser Agent sedang memproses instruksi dengan AI Engine...</i>`);
-
-  let responseText = "";
-  let modelUsed = "";
-  let agentUsed = "";
-  let actionsTaken = "AI Inference & Task Completed";
-
+  // 3. Try delegating to open Side Panel first (so it runs the full Agent loop with live UI & step notifications)
+  let handledBySidepanel = false;
   try {
-    const aiRes = await executeAIResponseForTelegram(text, senderName);
-    responseText = aiRes.responseText;
-    modelUsed = aiRes.modelUsed;
-    agentUsed = aiRes.agentUsed;
+    const sideRes = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({
+        type: "TELEGRAM_PROMPT_EXECUTE",
+        text,
+        senderId,
+        senderName,
+        botToken
+      }, (res) => {
+        if (chrome.runtime.lastError || !res) resolve(null);
+        else resolve(res);
+      });
+    });
+    if (sideRes && sideRes.status === "handled_by_sidepanel") {
+      handledBySidepanel = true;
+    }
+  } catch (e) {}
 
-    await telegramSendMessage(botToken, senderId, `🤖 <b>[${modelUsed}]</b>\n\n${responseText}`);
-  } catch (err) {
-    responseText = `Terjadi kesalahan saat memproses instruksi: ${err.message}`;
-    await telegramSendMessage(botToken, senderId, `⚠️ ${responseText}`);
+  if (handledBySidepanel) {
+    return;
   }
 
-  // Record Interaction in Dedicated Telegram Logs
-  const logEntry = {
-    id: `tg_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    user_id: senderId,
-    user_message: text,
-    agent_response: responseText,
-    model_used: modelUsed || "Default",
-    agent_used: agentUsed || "General Assistant",
-    actions_taken: actionsTaken,
-    status: "Success (200 OK)"
-  };
-
-  telegramBotLogs.push(logEntry);
-  if (telegramBotLogs.length > 200) telegramBotLogs.shift();
-  await chrome.storage.local.set({ telegram_bot_logs: telegramBotLogs });
-  renderTelegramLogs();
+  // 4. Fallback: Execute Autonomous Background Task directly from options.js
+  await executeAutonomousBackgroundTelegramTask(text, senderId, senderName, botToken);
 }
 
 // Event Listeners for Telegram Bot View

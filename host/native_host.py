@@ -3332,6 +3332,51 @@ def handle_local_rpc(msg):
         res["id"] = req_id
         return res
 
+    elif action == "capture_os_screenshot":
+        try:
+            tmp_path = "/tmp/browser_agent_os_screenshot.png"
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except:
+                    pass
+            
+            success = False
+            # 1. Try PIL ImageGrab
+            try:
+                import PIL.ImageGrab
+                img = PIL.ImageGrab.grab()
+                img.save(tmp_path, "PNG")
+                success = os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 0
+            except Exception as pe:
+                log(f"PIL ImageGrab note: {pe}")
+
+            # 2. Try ImageMagick import -window root
+            if not success:
+                res = subprocess.run(["import", "-window", "root", tmp_path], capture_output=True, timeout=5)
+                success = res.returncode == 0 and os.path.exists(tmp_path)
+
+            # 3. Try spectacle / scrot / maim / grim
+            if not success:
+                for cmd in [["spectacle", "-b", "-n", "-o", tmp_path], ["scrot", tmp_path], ["maim", tmp_path], ["grim", tmp_path]]:
+                    try:
+                        res = subprocess.run(cmd, capture_output=True, timeout=5)
+                        if res.returncode == 0 and os.path.exists(tmp_path):
+                            success = True
+                            break
+                    except:
+                        continue
+
+            if success and os.path.exists(tmp_path):
+                with open(tmp_path, "rb") as f:
+                    b64 = base64.b64encode(f.read()).decode("utf-8")
+                data_url = f"data:image/png;base64,{b64}"
+                return {"id": req_id, "status": "ok", "data_url": data_url, "file_path": tmp_path}
+            else:
+                return {"id": req_id, "status": "error", "error": "Gagal mengambil screenshot desktop Linux"}
+        except Exception as e:
+            return {"id": req_id, "status": "error", "error": str(e)}
+
     # Agents RPC Handlers
     elif action == "list_agents":
         res = list_md_items(AGENTS_DIR)
