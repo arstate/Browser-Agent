@@ -5288,6 +5288,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.82`, build `extension.crx` (826.8 KB).
 
+---
+
+### 🚀 Iterasi 459: Ultra-Concise AI Response Style & Instant Direct Fast-Path for Photo Remove-BG & Convert-PDF (v2.150.83)
+- **Kebutuhan Pengguna**:
+  - Mengatasi respons AI yang terlalu panjang (laporan rangkuman eksekutif, audit sistem, dan sintesis bertele-tele) ketika hanya melakukan tugas rutin seperti download MP3, pemutaran media, atau pemotongan gambar.
+  - Memperbaiki pengiriman berkas gambar remove background dan convert PDF agar langsung terkirim tanpa bug atau tertahan di teks.
+- **Implementasi & Peningkatan Sistem**:
+  - Di [background.js](file:///home/arya/browser-agent/extension/background.js):
+    - **Ultra-Concise Prompt Directive (Aturan 6)**: Mengganti kewajiban membuat laporan komprehensif dengan aturan respon singkat, padat, ramah, dan to-the-point (1-2 baris pendek). Melarang keras AI membuat rangkuman eksekutif atau audit host Linux yang tidak diminta pengguna.
+    - **Synthesis Prompt Update**: Menyederhanakan pesan penutup menjadi ucapan ringkas dan bersahabat (misal: *"Berikut file musiknya sudah siap didengarkan, Bro! 🎧"*).
+    - **Instant Photo Fast-Path**: Menambahkan deteksi intent langsung pada pesan foto ber-caption `"remove bg"`, `"hapus background"`, atau `"convert pdf"`. Eksekusi AI `rembg` dan Python PDF dilakukan secara instan (< 1 detik) via RPC `remove_background` dan langsung diunggah via `telegram_send_file` sebagai dokumen uncompressed.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.83`, build `extension.crx` (838.2 KB).
+
 
 
 

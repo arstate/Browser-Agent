@@ -654,6 +654,52 @@ PANDUAN EKSEKUSI PENGOLAHAN FOTO PENGGUNA:
    - Lalu WAJIB panggil 'send_file_to_telegram' ({ "file_path": "/tmp/hasil_dokumen.pdf", "file_name": "hasil_dokumen.pdf", "caption": "Berikut berkas PDF hasil konversi foto Anda." })
 3. DILARANG KERAS hanya membalas laporan teks tanpa memanggil tool 'remove_image_background' atau 'send_file_to_telegram'!`;
 
+      // Instant Fast-Path for Direct Photo Operations (Zero Failure & Sub-Second Latency)
+      const lowerText = (text || "").toLowerCase().trim();
+      const isRemoveBgIntent = /remove\s*bg|hapus\s*bg|hapus\s*background|tanpa\s*background|png\s*transparan|no\s*bg|potong\s*background/.test(lowerText);
+      const isPdfConvertIntent = /convert\s*pdf|jadikan\s*pdf|ubah\s*ke\s*pdf|buat\s*pdf|to\s*pdf/.test(lowerText);
+
+      if (isRemoveBgIntent) {
+        await telegramSendMessage(botToken, senderId, `✂️ <i>Memotong background gambar dengan AI rembg...</i>`);
+        const outPath = `/tmp/nobg_${Date.now()}.png`;
+        const rpcRes = await sendNativeRpcInBackground("remove_background", {
+          input_path: localPhotoPath,
+          output_path: outPath
+        });
+        if (rpcRes && rpcRes.status === "ok") {
+          await sendNativeRpcInBackground("telegram_send_file", {
+            bot_token: botToken,
+            chat_id: senderId,
+            file_path: rpcRes.output_path,
+            file_name: "foto_transparent.png",
+            caption: "Berikut foto PNG transparan hasil potong background sudah siap, Bro! ✂️✨",
+            media_type: "document"
+          });
+          await telegramSendMessage(botToken, senderId, `✅ Foto PNG transparan tanpa background sudah siap dan terkirim, Bro! ✂️`);
+          return;
+        }
+      }
+
+      if (isPdfConvertIntent) {
+        await telegramSendMessage(botToken, senderId, `📄 <i>Mengonversi foto ke dokumen PDF...</i>`);
+        const outPdfPath = `/tmp/converted_doc_${Date.now()}.pdf`;
+        const rpcRes = await sendNativeRpcInBackground("run_command", {
+          command: `python3 -c "from PIL import Image; Image.open('${localPhotoPath}').convert('RGB').save('${outPdfPath}')"`
+        });
+        if (rpcRes && rpcRes.status === "ok") {
+          await sendNativeRpcInBackground("telegram_send_file", {
+            bot_token: botToken,
+            chat_id: senderId,
+            file_path: outPdfPath,
+            file_name: "dokumen_foto.pdf",
+            caption: "Berikut berkas PDF hasil konversi foto Anda, Bro! 📄✨",
+            media_type: "document"
+          });
+          await telegramSendMessage(botToken, senderId, `✅ Berkas PDF hasil konversi foto sudah siap dan terkirim, Bro! 📄`);
+          return;
+        }
+      }
+
       if (!text) {
         text = `Tolong analisis, baca teks, dan jelaskan detail gambar ini secara mendalam:${promptContext}`;
       } else {
@@ -2336,7 +2382,13 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
 5. 🖼️ ANALISIS GAMBAR & DOKUMEN:
    - Jika pengguna mengirim foto/screenshot/gambar, amati dan baca seluruh elemen visual, teks, diagram, atau error dengan teliti.
    - Jika pengguna mengirim dokumen (PDF, Word, TXT, CSV, JSON), baca dan analisis seluruh isi dokumen yang terlampir secara mendalam, tepat, dan komprehensif.
-6. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua temuan atau data yang terekstrak secara komprehensif!
+6. 💬 GAYA KOMUNIKASI SINGKAT, PADAT, & RAMAH (RINGKAS & TO THE POINT):
+   - JIKA TUGAS ADALAH AKSI RUTIN ATAU PENGIRIMAN FILE/MEDIA (contoh: download lagu mp3, convert pdf, remove background, pause/play video, buka tab, ketik teks): Berikan balasan yang SINGKAT, RAMAH, dan TO-THE-POINT (1-2 baris pendek saja). Contoh:
+     • "Berikut lagu Denny Caknan - Wirang sudah siap didengarkan, Bro! 🎧"
+     • "Berikut foto PNG transparan hasil potong background sudah siap, Bro! ✂️"
+     • "Pemutaran YouTube berhasil dihentikan (Paused) ⏸️"
+   - DILARANG KERAS membuat rangkuman eksekutif, analisis sintesis, audit host Linux, atau laporan panjang yang tidak diminta pengguna!
+   - HANYA buat penjelasan terperinci jika pengguna secara eksplisit meminta analisis mendalam atau ringkasan dokumen.
 7. 💬 ATURAN FORMAT PESAN TELEGRAM (BERSIH & ESTETIK):
    - DILARANG menggunakan Markdown Pipe Tables (| Kolom 1 | Kolom 2 |) karena Telegram tidak mendukung rendering tabel secara visual dan akan terlihat berantakan!
    - Gunakan format list bullet point dengan ikon emoji yang rapi (contoh: • <b>Parameter:</b> Nilai).
@@ -2597,14 +2649,14 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
 
     // If tools were executed but final text is empty, run one synthesis turn to generate the final report
     if (!finalResponseText && anyToolExecuted) {
-      currentBaseText = "Menyusun laporan akhir eksekusi";
+      currentBaseText = "Menyusun pesan balasan";
       currentEmoji = "✨";
       await renderLiveStatus(true);
       telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
       try {
         const synthTurns = applyPonytailContextOptimization([
           ...conversationTurns,
-          { role: "user", content: "Sintesiskan semua temuan dan hasil eksekusi tool di atas, lalu berikan laporan akhir yang lengkap, jelas, dan terstruktur dalam format Markdown kepada pengguna sekarang." }
+          { role: "user", content: "Tugas eksekusi tool di atas telah selesai. Berikan respon penutup yang SINGKAT, RAMAH, dan TO-THE-POINT (1-2 baris pendek saja). Contoh: 'Berikut file musiknya sudah siap didengarkan, Bro! 🎧' atau 'Berikut berkasnya sudah selesai diproses, Bro! ✨'. DILARANG KERAS membuat rangkuman eksekutif, analisis sintesis, audit host Linux, atau laporan panjang!" }
         ], storageData.plugin_settings);
 
         const synthRes = await fetch(endpoint, {
