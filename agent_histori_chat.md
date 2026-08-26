@@ -5217,6 +5217,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.78`, build `extension.crx` (696.8 KB).
 
+---
+
+### 🚀 Iterasi 455: Clean Minimalist Subtitle Typography & Zero-Clutter Feature Badges (v2.150.79)
+- **Kebutuhan Pengguna**:
+  - Menghapus emoji ikon (⚡ dan 🧠) di baris subjudul/tagline kartu plugin Ponytail dan Epistemic Graph.
+  - Membersihkan dekorasi emoji berlebih pada badge pills untuk estetika tipografi bersih, elegan, dan profesional.
+- **Implementasi & Peningkatan Sistem**:
+  - Di [options.html](file:///home/arya/browser-agent/extension/options.html):
+    - Mengganti tagline Ponytail menjadi `Smart Context Trimmer & Token Saver` tanpa emoji petir `⚡`.
+    - Mengganti tagline Epistemic Graph Sync menjadi `Knowledge Graph Expander` tanpa emoji otak `🧠`.
+    - Menghilangkan dekorasi emoji pada badge pills (`Context Trimming`, `DOM Pruner`, `Hemat 50–75% Token`).
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.79`, build `extension.crx` (825.4 KB).
+
 
 
 
