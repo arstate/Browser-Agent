@@ -622,6 +622,7 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
   }
 
   // Handle Photo Attachments (Images / Screenshots)
+  // Handle Photo Attachments (Images / Screenshots)
   if (Array.isArray(msg.photo) && msg.photo.length > 0) {
     const highestPhoto = msg.photo[msg.photo.length - 1];
     telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
@@ -632,7 +633,28 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
         dataUrl: downloaded.dataUrl,
         mime: downloaded.mime
       };
-      if (!text) text = "Tolong analisis, baca teks, dan jelaskan detail gambar ini secara mendalam:";
+
+      // Save local binary copy to /tmp for CLI / Python image processing & conversion
+      const ext = (downloaded.mime === "image/jpeg" || downloaded.mime === "image/jpg") ? "jpg" : "png";
+      const localPhotoPath = `/tmp/telegram_photo_${Date.now()}.${ext}`;
+      try {
+        await sendNativeRpcInBackground("write_file", {
+          path: localPhotoPath,
+          content: downloaded.base64,
+          is_base64: true
+        });
+      } catch (e) {}
+
+      const promptContext = `\n[Foto pengguna telah disimpan di PC lokal: "${localPhotoPath}"].
+Jika pengguna meminta konversi atau pengolahan berkas (contoh: "convert pdf", "jadikan pdf", merge, crop, OCR, zip):
+1. Eksekusi perintah di Linux via 'run_bash_command' / 'bash_run_command' untuk memproses file ${localPhotoPath}. Contoh konversi ke PDF: python3 -c "from PIL import Image; Image.open('${localPhotoPath}').convert('RGB').save('/tmp/hasil_dokumen.pdf')"
+2. WAJIB PANGGIL TOOL 'send_file_to_telegram' dengan argument: { "file_path": "/tmp/hasil_dokumen.pdf", "file_name": "hasil_dokumen.pdf", "caption": "Berikut berkas PDF hasil konversi foto Anda." } agar file terkirim langsung ke chat Telegram pengguna!`;
+
+      if (!text) {
+        text = `Tolong analisis, baca teks, dan jelaskan detail gambar ini secara mendalam:${promptContext}`;
+      } else {
+        text = `${text}\n${promptContext}`;
+      }
     }
   }
   // Handle Voice Notes & Audio Messages (Speech-to-Text via Configured API Key)
@@ -717,17 +739,31 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
   // Handle Document Attachments (PDF, DOCX, CSV, JSON, TXT, Code, etc.)
   else if (msg.document) {
     const doc = msg.document;
-    const fileName = doc.file_name || "document";
+    const fileName = doc.file_name || `document_${Date.now()}`;
     telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
     const downloaded = await downloadTelegramFile(botToken, doc.file_id);
     if (downloaded) {
+      const localDocPath = `/tmp/${fileName}`;
+      try {
+        await sendNativeRpcInBackground("write_file", {
+          path: localDocPath,
+          content: downloaded.base64,
+          is_base64: true
+        });
+      } catch (e) {}
+
+      const filePromptContext = `\n[Berkas dokumen pengguna telah disimpan di PC lokal: "${localDocPath}"].
+Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge PDF, convert DOCX, ekstraksi):
+1. Eksekusi proses via 'run_bash_command' / 'bash_run_command'
+2. WAJIB PANGGIL TOOL 'send_file_to_telegram' untuk mengirimkan file hasil ke chat Telegram pengguna!`;
+
       if (downloaded.mime && downloaded.mime.startsWith("image/")) {
         mediaPayload = {
           type: "image",
           dataUrl: downloaded.dataUrl,
           mime: downloaded.mime
         };
-        if (!text) text = `Tolong analisis dan jelaskan gambar dokumen ${fileName} ini:`;
+        text = (text ? `${text}\n` : `Tolong analisis dan jelaskan gambar dokumen ${fileName} ini:\n`) + filePromptContext;
       } else {
         // Extract text from document via Native Host RPC (pdftotext for PDF, XML for DOCX, plain UTF-8 for text/data)
         let docText = "";
@@ -753,7 +789,7 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
           extractedText: docText || ""
         };
 
-        const docHeader = `📄 [Dokumen Terlampir: "${fileName}"]\n--- ISI DOKUMEN ---\n${docText ? docText.slice(0, 40000) : 'Dokumen berhasil diunduh.'}\n--- AKHIR DOKUMEN ---\n\n`;
+        const docHeader = `📄 [Dokumen Terlampir: "${fileName}"]\n--- ISI DOKUMEN ---\n${docText ? docText.slice(0, 40000) : 'Dokumen berhasil diunduh.'}\n--- AKHIR DOKUMEN ---\n${filePromptContext}\n\n`;
         text = docHeader + (text || "Tolong baca, analisis, dan jelaskan isi dokumen ini secara komprehensif:");
       }
     }
@@ -1447,7 +1483,7 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
       return { error: rpcRes?.error || `Gagal membuka aplikasi '${app}'` };
     }
 
-    if (toolName === "run_bash_command") {
+    if (toolName === "run_bash_command" || toolName === "bash_run_command" || toolName === "local_run_command") {
       const cmd = toolArgs.command || "";
       const cwd = toolArgs.cwd || "";
       const rpcRes = await sendNativeRpcInBackground("run_command", { command: cmd, cwd });
@@ -1474,7 +1510,7 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
       return { error: rpcRes?.error || "Gagal mengetik ke jendela aktif." };
     }
 
-    if (toolName === "read_os_file") {
+    if (toolName === "read_os_file" || toolName === "local_read_file") {
       const rpcRes = await sendNativeRpcInBackground("read_file", { path: toolArgs.path });
       if (rpcRes && rpcRes.status === "ok") {
         return { status: "success", content: rpcRes.content, path: rpcRes.path, size: rpcRes.size };
@@ -1482,7 +1518,7 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
       return { error: rpcRes?.error || "Gagal membaca file." };
     }
 
-    if (toolName === "write_os_file") {
+    if (toolName === "write_os_file" || toolName === "local_write_file") {
       const rpcRes = await sendNativeRpcInBackground("write_file", { path: toolArgs.path, content: toolArgs.content });
       if (rpcRes && rpcRes.status === "ok") {
         return { status: "success", message: `Berhasil menulis file ${rpcRes.path}` };

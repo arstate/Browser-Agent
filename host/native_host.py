@@ -3714,13 +3714,22 @@ def handle_local_rpc(msg):
     elif action == "write_file":
         path = os.path.expanduser(msg.get("path", ""))
         content = msg.get("content", "")
+        is_base64 = msg.get("is_base64", False)
         if not path:
             return {"id": req_id, "status": "error", "error": "No file path provided"}
         try:
             os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content)
-            return {"id": req_id, "status": "ok", "path": path, "bytes_written": len(content.encode('utf-8'))}
+            if is_base64:
+                if isinstance(content, str) and "," in content:
+                    content = content.split(",", 1)[1]
+                raw_data = base64.b64decode(content) if isinstance(content, str) else content
+                with open(path, "wb") as f:
+                    f.write(raw_data)
+                return {"id": req_id, "status": "ok", "path": path, "bytes_written": len(raw_data)}
+            else:
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                return {"id": req_id, "status": "ok", "path": path, "bytes_written": len(content.encode('utf-8'))}
         except Exception as e:
             return {"id": req_id, "status": "error", "error": str(e)}
 

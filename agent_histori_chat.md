@@ -5245,6 +5245,28 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.80`, build `extension.crx` (825.4 KB).
 
+---
+
+### 🚀 Iterasi 457: Top Hero Header on Tampilan UI, Clean Plugins Hero, and Automated Local File Handling for Telegram PDF Delivery (v2.150.81)
+- **Kebutuhan Pengguna**:
+  - Menghilangkan icon puzzle `🧩` dari judul hero header Plugin Ecosystem di tab Plugins.
+  - Menambahkan top hero navbar/header banner di tab `Tampilan & UI` (`tab-view-ui`) agar konsisten dengan tab pengaturan lainnya.
+  - Memperbaiki bot Telegram saat menerima perintah convert PDF / pengolahan berkas agar file hasil konversi otomatis dibuat di disk lokal `/tmp/` dan dikirimkan kembali ke chat Telegram pengguna via `send_file_to_telegram`.
+- **Implementasi & Peningkatan Sistem**:
+  - Di [options.html](file:///home/arya/browser-agent/extension/options.html):
+    - Menghapus icon puzzle `🧩` dari `<h1 class="hero-provider-title">Plugin Ecosystem & Token Optimizers</h1>`.
+    - Menambahkan top hero card banner pada `tab-view-ui` ("Tampilan & UI", deskripsi tema, dan status badge Dark Luxury).
+    - Memperbarui switch di `tab-view-ui` menjadi `.custom-pill-switch` flat Bento style.
+  - Di [native_host.py](file:///home/arya/browser-agent/host/native_host.py):
+    - Menambahkan dukungan binary decoding `is_base64: true` pada RPC action `write_file`.
+  - Di [background.js](file:///home/arya/browser-agent/extension/background.js):
+    - Saat menerima lampiran foto/dokumen Telegram, file otomatis disimpan ke `/tmp/telegram_photo_<timestamp>.<ext>` atau `/tmp/<filename>`.
+    - Menyisipkan panduan prompt dan instruksi eksekusi konversi (Python PIL / pdftoppm / convert) serta mandat wajib mengirimkan berkas via `send_file_to_telegram`.
+    - Menambahkan alias tool (`bash_run_command`, `local_run_command`, `local_write_file`, `local_read_file`, `telegram_send_file`) pada `executeBackgroundTool`.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.81`, build `extension.crx` (825.4 KB).
+
 
 
 
