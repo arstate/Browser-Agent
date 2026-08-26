@@ -4315,6 +4315,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.20`, build `extension.crx` (479.9 KB).
 
+---
+
+### 🚀 Iterasi 397: Kinetic Motion SVG, Emojis Cleanup & Vertical Centering (v2.150.21)
+- **Kebutuhan Pengguna**:
+  - Menghapus emoji pada baris opsi UI Preferences (*🏃, 🔘, ✨, 🎨*) agar tampilan jauh lebih clean dan berwibawa.
+  - Mengganti ikon animasi dengan ikon kinetic sphere motion trail SVG persis sesuai referensi pengguna.
+  - Memperbaiki perataan vertikal judul kartu (*Animasi & Widget Web* dan *Tema Visual Dark Luxury*) agar berada tepat di tengah-tengah (*vertical center*) sejajar dengan kotak ikonnya.
+- **Implementasi & Peningkatan UI**:
+  - **Kinetic Motion Sphere SVG**: Menuliskan vektor SVG presisi tinggi berupa lingkaran utama dengan dua concentric motion arc trails di [options.html](file:///home/arya/browser-agent/extension/options.html).
+  - **Emoji Removal**: Membersihkan semua emoji awal pada label opsi di [options.html](file:///home/arya/browser-agent/extension/options.html).
+  - **Pixel-Perfect Vertical Alignment**: Menetapkan `align-items: center !important`, `line-height: 1 !important`, dan reset margin pada `.bento-glass-card .card-header-text h2` serta `.ui-pref-label` di [options.css](file:///home/arya/browser-agent/extension/options.css).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.21`, build `extension.crx` (480.0 KB).
+
 
 
 
