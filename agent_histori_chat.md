@@ -4674,6 +4674,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.46`, build `extension.crx` (676.8 KB).
 
+---
+
+### 🚀 Iterasi 423: Standalone Background AI Processing & Telegram HTML Tag Fix (v2.150.47)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki `ReferenceError: startTelegramPollingDaemonFromSidepanel is not defined` pada `sidepanel.js` saat membuka New Tab.
+  - Memperbaiki bug format teks aneh di mana tag HTML `<b>`, `<i>` terkirim sebagai teks mentah di chat Telegram bot.
+  - Memastikan bot Telegram tetap dapat merespons dan mengeksekusi chat AI dengan lancar meskipun tab New Tab maupun Side Panel Browser Agent sedang tidak dibuka.
+- **Akar Masalah (Root Cause)**:
+  - Panggilan lama `startTelegramPollingDaemonFromSidepanel()` masih tertinggal di fungsi `bootstrap()` [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js).
+  - Parser `formatMarkdownForTelegram()` di `background.js` sebelumnya meng-escape semua karakter `<` dan `>`, sehingga tag HTML bawaan Telegram (`<b>`, `<i>`, dll.) ikut ter-escape menjadi `&lt;b&gt;`.
+  - Jika tidak ada tab New Tab atau Side Panel yang aktif, pengiriman runtime message gagal dan tidak ada fallback eksekusi AI di Service Worker.
+- **Implementasi & Peningkatan Sistem**:
+  - **Standalone Background AI Engine (`executePromptInBackgroundServiceWorker`)**: Jika pengguna mengirim prompt melalui Telegram saat tidak ada tab Browser Agent yang terbuka, Service Worker `background.js` secara mandiri memproses prompt menggunakan AI Provider aktif (Gemini / OpenAI / Groq / OpenRouter / Ollama), menyimpan sesi percakapan ke cache, dan mengirimkan balasannya ke Telegram.
+  - **Telegram HTML Tag Lookahead Parser**: Memperbarui `formatMarkdownForTelegram()` di `background.js` menggunakan regex negative lookahead sehingga tag HTML resmi Telegram (`<b>`, `<i>`, `<u>`, `<s>`, `<code>`, `<pre>`, `<a>`, `<blockquote>`) dipertahankan secara murni tanpa double-escaping.
+  - **Clean Bootstrap Removal**: Menghapus pemanggilan poller usang di `bootstrap()` [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.47`, build `extension.crx` (677.9 KB).
+
 
 
 

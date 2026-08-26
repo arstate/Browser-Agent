@@ -11257,7 +11257,6 @@ async function bootstrap() {
   }
   updateMcpStatus();
   updateHeaderChatTitle();
-  startTelegramPollingDaemonFromSidepanel();
 }
 
 bootstrap();

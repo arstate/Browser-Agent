@@ -37,6 +37,7 @@ function formatMarkdownForTelegram(rawText) {
   if (!rawText || typeof rawText !== 'string') return '';
   let str = rawText;
 
+  // 1. Extract code blocks
   const codeBlocks = [];
   str = str.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
     const placeholder = `___TG_CODE_BLOCK_${codeBlocks.length}___`;
@@ -46,6 +47,7 @@ function formatMarkdownForTelegram(rawText) {
     return placeholder;
   });
 
+  // 2. Extract inline code
   const inlineCodes = [];
   str = str.replace(/`([^`\n]+)`/g, (match, code) => {
     const placeholder = `___TG_INLINE_CODE_${inlineCodes.length}___`;
@@ -54,16 +56,23 @@ function formatMarkdownForTelegram(rawText) {
     return placeholder;
   });
 
-  str = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // 3. Escape raw HTML characters without double-escaping valid Telegram HTML tags
+  str = str.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;');
+  str = str.replace(/<(?!\/?(?:b|i|u|s|strong|em|ins|strike|del|code|pre|a|blockquote)(?:\s+[^>]+)?>)/gi, '&lt;');
+
+  // 4. Convert Markdown syntax
   str = str.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2">$1</a>');
   str = str.replace(/^#{1,6}\s+(.+)$/gm, '<b>$1</b>');
-  str = str.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
-  str = str.replace(/__([^_]+)__/g, '<b>$1</b>');
-  str = str.replace(/(^|[^*])\*([^*\n]+)\*([^*]|$)/g, '$1<i>$2</i>$3');
-  str = str.replace(/(^|[^_])_([^_\n]+)_([^_]|$)/g, '$1<i>$2</i>$3');
-  str = str.replace(/^[\*\-]\s+(.+)$/gm, '• $1');
+  str = str.replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>');
+  str = str.replace(/__([^_\n]+?)__/g, '<b>$1</b>');
+  str = str.replace(/^[ \t]{4,8}[\*\-\+][ \t]+/gm, '      • ');
+  str = str.replace(/^[ \t]{2,3}[\*\-\+][ \t]+/gm, '   • ');
+  str = str.replace(/^[ \t]*[\*\-\+][ \t]+/gm, '• ');
+  str = str.replace(/(^|[^\*])\*([^*\n\s](?:[^*\n]*[^*\n\s])?)\*(?!\*)/g, '$1<i>$2</i>');
+  str = str.replace(/(^|[^_])_([^_\n\s](?:[^_\n]*[^_\n\s])?)_(?!_)/g, '$1<i>$2</i>');
   str = str.replace(/\n{3,}/g, '\n\n');
 
+  // 5. Restore preserved code elements
   inlineCodes.forEach((codeHtml, idx) => {
     str = str.replace(`___TG_INLINE_CODE_${idx}___`, codeHtml);
   });
@@ -623,15 +632,97 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
     botToken
   }, async (res) => {
     if (chrome.runtime.lastError || !res || res.status !== "handled_by_sidepanel") {
-      // If sidepanel is closed, open sidepanel on current active tab
-      try {
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tabs && tabs[0]) {
-          await chrome.sidePanel.open({ tabId: tabs[0].id }).catch(() => {});
-        }
-      } catch(e) {}
+      // If sidepanel is closed or new tab is not open, execute AI directly in background service worker
+      await executePromptInBackgroundServiceWorker(effectiveText, senderId, senderName, botToken, tgCfg);
     }
   });
+}
+
+// Standalone Direct AI Processing in Background Service Worker
+async function executePromptInBackgroundServiceWorker(text, senderId, senderName, botToken, tgCfg) {
+  try {
+    const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config', 'custom_agents', 'chat_sessions_cache']);
+    const cfg = storageData.browser_agent_config || {};
+    const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
+
+    const model = activeTgCfg.selected_model || cfg.selectedModelChoice || cfg.model || "gemini-2.5-flash";
+    const apiKey = cfg.apiKey;
+    const preset = cfg.preset || "gemini";
+    const customEndpoint = cfg.customEndpoint || "";
+
+    if (!apiKey && preset !== "ollama" && preset !== "9router") {
+      await telegramSendMessage(botToken, senderId, `⚠️ <b>API Key Belum Dikonfigurasi:</b> Silakan buka menu Pengaturan Browser Agent di Chrome untuk memasukkan API Key Anda.`);
+      return;
+    }
+
+    let responseText = "";
+
+    if (preset === "gemini" || (!preset && !customEndpoint)) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const payload = {
+        contents: [{ role: "user", parts: [{ text: text }] }]
+      };
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.candidates && json.candidates[0]?.content?.parts) {
+        responseText = json.candidates[0].content.parts.map(p => p.text || '').join('');
+      } else if (json.error) {
+        responseText = `⚠️ Error Gemini: ${json.error.message || JSON.stringify(json.error)}`;
+      }
+    } else {
+      // OpenAI / Groq / OpenRouter / Custom / Ollama
+      let endpoint = "https://api.openai.com/v1/chat/completions";
+      if (preset === "groq") endpoint = "https://api.groq.com/openai/v1/chat/completions";
+      else if (preset === "openrouter") endpoint = "https://openrouter.ai/api/v1/chat/completions";
+      else if (preset === "ollama") endpoint = (customEndpoint || "http://localhost:11434") + "/v1/chat/completions";
+      else if (customEndpoint) endpoint = customEndpoint.endsWith('/chat/completions') ? customEndpoint : (customEndpoint + '/chat/completions');
+
+      const headers = { "Content-Type": "application/json" };
+      if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: model,
+          messages: [{ role: "user", content: text }]
+        })
+      });
+      const json = await res.json();
+      if (json.choices && json.choices[0]?.message?.content) {
+        responseText = json.choices[0].message.content;
+      } else if (json.error) {
+        responseText = `⚠️ Error API: ${json.error.message || JSON.stringify(json.error)}`;
+      }
+    }
+
+    if (!responseText) {
+      responseText = "⚠️ Tidak ada respons yang dihasilkan oleh model AI.";
+    }
+
+    // Save conversation to chat sessions cache
+    const cache = storageData.chat_sessions_cache || {};
+    const sessId = 'sess_' + Date.now();
+    cache[sessId] = {
+      id: sessId,
+      title: text.slice(0, 40).trim(),
+      created_at: Date.now(),
+      updated_at: Date.now(),
+      messages: [
+        { role: 'user', content: text, timestamp: Date.now() },
+        { role: 'assistant', content: responseText, timestamp: Date.now() }
+      ]
+    };
+    await chrome.storage.local.set({ chat_sessions_cache: cache });
+
+    await telegramSendMessage(botToken, senderId, responseText);
+  } catch (err) {
+    await telegramSendMessage(botToken, senderId, `⚠️ Gagal memproses instruksi di latar belakang: ${err.message}`);
+  }
 }
 
 // Background Poller Execution
