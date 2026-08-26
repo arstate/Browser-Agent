@@ -4780,6 +4780,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.52`, build `extension.crx` (674.8 KB).
 
+---
+
+### 🚀 Iterasi 429: Telegram Markdown Formatter Placeholder Collision Fix (v2.150.53)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki teks pesan Telegram yang rusak menjadi token aneh seperti `(___TG_INLINE_CODE_0___)`.
+- **Akar Masalah (Root Cause)**:
+  - Format placeholder lama `___TG_INLINE_CODE_${idx}___` mengandung karakter *underscore* (`_`). Saat regex italic markdown (`_text_`) dieksekusi, karakter underscore pada placeholder ikut tertimpa menjadi tag HTML `_<i>TG_INLINE_CODE_...</i>_` sehingga tahap restorasi kode gagal mencocokkan string placeholder asli.
+- **Implementasi & Peningkatan Sistem**:
+  - **Collision-Free Placeholders**: Mengganti format token placeholder menjadi `@@@TGINLINECODE${idx}@@@` dan `@@@TGCODEBLOCK${idx}@@@` di [background.js](file:///home/arya/browser-agent/extension/background.js), [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js), dan [options.js](file:///home/arya/browser-agent/extension/options.js).
+  - **Clean HTML Output**: Seluruh format teks inline code (`` `code` ``) dan blok kode (```` ```code``` ````) kini dikonversi murni menjadi tag HTML `<code>...</code>` dan `<pre><code>...</code></pre>` yang bersih dan nyaman dibaca di aplikasi Telegram.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.53`, build `extension.crx` (674.8 KB).
+
 
 
 

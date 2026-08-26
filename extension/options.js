@@ -3820,7 +3820,7 @@ function formatMarkdownForTelegram(rawText) {
   // 1. Extract code blocks and inline code
   const codeBlocks = [];
   str = str.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
-    const placeholder = `___TG_CODE_BLOCK_${codeBlocks.length}___`;
+    const placeholder = `@@@TGCODEBLOCK${codeBlocks.length}@@@`;
     const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const langAttr = lang ? ` class="language-${lang}"` : '';
     codeBlocks.push(`<pre><code${langAttr}>${escapedCode}</code></pre>`);
@@ -3829,7 +3829,7 @@ function formatMarkdownForTelegram(rawText) {
 
   const inlineCodes = [];
   str = str.replace(/`([^`\n]+)`/g, (match, code) => {
-    const placeholder = `___TG_INLINE_CODE_${inlineCodes.length}___`;
+    const placeholder = `@@@TGINLINECODE${inlineCodes.length}@@@`;
     const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     inlineCodes.push(`<code>${escapedCode}</code>`);
     return placeholder;
@@ -3860,10 +3860,10 @@ function formatMarkdownForTelegram(rawText) {
 
   // 8. Restore Code Blocks & Inline Code
   codeBlocks.forEach((cb, idx) => {
-    str = str.replace(`___TG_CODE_BLOCK_${idx}___`, cb);
+    str = str.replace(`@@@TGCODEBLOCK${idx}@@@`, cb);
   });
   inlineCodes.forEach((ic, idx) => {
-    str = str.replace(`___TG_INLINE_CODE_${idx}___`, ic);
+    str = str.replace(`@@@TGINLINECODE${idx}@@@`, ic);
   });
 
   // 9. Normalize paragraph spacing
