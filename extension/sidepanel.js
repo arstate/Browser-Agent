@@ -4034,6 +4034,41 @@ async function handleTelegramIncomingUpdateInSidepanel(update, tgCfg) {
       return;
     }
 
+    // Handle Clarification Option Selection from Telegram Inline Buttons
+    if (data.startsWith('clarify_opt:')) {
+      const optIdx = parseInt(data.replace('clarify_opt:', ''), 10);
+      let selectedText = "";
+      if (activeClarificationState && Array.isArray(activeClarificationState.options) && activeClarificationState.options[optIdx]) {
+        selectedText = activeClarificationState.options[optIdx];
+      } else {
+        selectedText = `Opsi ${optIdx + 1}`;
+      }
+
+      hideClarificationDock();
+      
+      await telegramSendMessageFromSidepanel(botToken, fromId, `👉 <b>Anda Memilih Opsi ${optIdx + 1}:</b>\n<i>"${escapeHtml(selectedText)}"</i>\n\nMemulai eksekusi arahan...`);
+      
+      activeTelegramSession = { senderId: fromId, senderName: cb.from?.first_name || 'User', botToken, statusMessageId: null };
+      
+      if (chatInput) {
+        chatInput.value = selectedText;
+      }
+      document.body.classList.add('has-messages');
+      if (welcomeCard) welcomeCard.style.display = 'none';
+
+      if (currentChatMode === 'chat') {
+        runChatModeLoop(selectedText, [], []);
+      } else {
+        runAgentLoop(selectedText, [], []);
+      }
+      return;
+    }
+
+    if (data === 'clarify_custom') {
+      await telegramSendMessageFromSidepanel(botToken, fromId, `✏️ <b>Ketik Arahan Kustom:</b>\nSilakan ketik langsung instruksi spesifik Anda di chat ini.`);
+      return;
+    }
+
     if (data === 'cmd_history' || data === 'cmd_sessions') {
       await handleTelegramHistoryCommand(botToken, fromId);
       return;
@@ -4341,18 +4376,32 @@ async function handleTelegramIncomingUpdateInSidepanel(update, tgCfg) {
     return;
   }
 
+  // Check if clarification dock was active and user replied with single digit option (e.g. "1", "2", "3")
+  let effectiveText = text;
+  if (activeClarificationState && Array.isArray(activeClarificationState.options)) {
+    const trimmed = text.trim();
+    if (/^[1-9]$/.test(trimmed)) {
+      const numIdx = parseInt(trimmed, 10) - 1;
+      if (activeClarificationState.options[numIdx]) {
+        effectiveText = activeClarificationState.options[numIdx];
+        await telegramSendMessageFromSidepanel(botToken, senderId, `👉 <b>Memilih Opsi ${trimmed}:</b> <i>"${escapeHtml(effectiveText)}"</i>`);
+      }
+    }
+    hideClarificationDock();
+  }
+
   activeTelegramSession = { senderId, senderName, botToken, statusMessageId: null };
   updateTelegramLiveStatus(`⏳ <b>Browser Agent:</b> Memulai eksekusi instruksi...`).catch(() => {});
 
   if (chatInput) {
-    chatInput.value = text;
+    chatInput.value = effectiveText;
   }
   hideClarificationDock();
 
   // If in welcome screen without session, create fresh session
   if (!currentSessionId) {
     currentSessionId = 'sess_' + Date.now();
-    currentSessionTitle = text.slice(0, 45).trim();
+    currentSessionTitle = effectiveText.slice(0, 45).trim();
     currentSessionCreatedAt = Date.now();
     updateHeaderChatTitle(currentSessionTitle);
   }
@@ -4362,9 +4411,9 @@ async function handleTelegramIncomingUpdateInSidepanel(update, tgCfg) {
   if (welcomeCard) welcomeCard.style.display = 'none';
 
   if (currentChatMode === 'chat') {
-    runChatModeLoop(text, [], []);
+    runChatModeLoop(effectiveText, [], []);
   } else {
-    runAgentLoop(text, [], []);
+    runAgentLoop(effectiveText, [], []);
   }
 }
 
@@ -6720,6 +6769,35 @@ function showClarificationDock(question, options = [], contextSummary = "") {
   });
 
   scrollToBottom();
+
+  // Broadcast Interactive Option Buttons directly to Telegram Bot if active Telegram session
+  if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
+    const { botToken, senderId } = activeTelegramSession;
+    let tgMsg = `❓ <b>KONFIRMASI ARAHAN MASTER AGENT</b>\n\n`;
+    tgMsg += `<b>${escapeHtml(question || "Mohon konfirmasi pilihan arahan Anda:")}</b>\n`;
+    if (contextSummary) {
+      tgMsg += `\n<i>${escapeHtml(contextSummary)}</i>\n`;
+    }
+    tgMsg += `\n<i>Silakan ketuk salah satu opsi di bawah atau balas langsung dengan angka/pesan kustom:</i>`;
+
+    const keyboardRows = [];
+    (options || []).forEach((opt, idx) => {
+      const cleanOpt = typeof opt === 'string' ? opt : JSON.stringify(opt);
+      const optLabel = `${idx + 1}. ${cleanOpt.length > 36 ? cleanOpt.slice(0, 33) + '...' : cleanOpt}`;
+      keyboardRows.push([{
+        text: optLabel,
+        callback_data: `clarify_opt:${idx}`
+      }]);
+    });
+    keyboardRows.push([{
+      text: "✏️ Ketik Arahan Kustom Sendiri",
+      callback_data: "clarify_custom"
+    }]);
+
+    telegramSendMessageFromSidepanel(botToken, senderId, tgMsg, {
+      inline_keyboard: keyboardRows
+    }).catch(err => console.error("Error sending clarification to Telegram:", err));
+  }
 }
 
 function hideClarificationDock() {

@@ -4616,6 +4616,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.42`, build `extension.crx` (670.6 KB).
 
+---
+
+### 🚀 Iterasi 419: Interactive Clarification Option Buttons for Telegram Bot (v2.150.43)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug di mana opsi konfirmasi arahan Master Agent (`ask_clarification`) hanya muncul di antarmuka Browser Agent tetapi tidak terkirim sebagai tombol pilihan interaktif di Telegram Bot.
+- **Implementasi & Peningkatan Sistem**:
+  - **Telegram Clarification Broadcast with Inline Keyboard**: Fungsi `showClarificationDock` kini secara otomatis menyusun dan mengirim pesan konfirmasi arahan lengkap dengan Inline Keyboard Button untuk setiap opsi (Opsi 1, Opsi 2, Opsi 3, serta tombol Ketik Kustom) langsung ke chat Telegram pengguna.
+  - **Clarification Callback Query Execution (`clarify_opt:<idx>`)**: Menambahkan handler callback query di `handleTelegramIncomingUpdateInSidepanel` sehingga saat pengguna menekan tombol pilihan di Telegram, Browser Agent langsung menerima opsi tersebut, menutup clarification dock di UI, dan mengeksekusi tugas secara otomatis.
+  - **Smart Numerical Mapping (Single Digit Reply)**: Pengguna Telegram juga dapat membalas chat secara langsung hanya dengan mengetik angka `"1"`, `"2"`, atau `"3"`, dan sistem akan secara otomatis memetakan angka tersebut ke teks opsi yang bersangkutan.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.43`, build `extension.crx` (671.4 KB).
+
 
 
 
