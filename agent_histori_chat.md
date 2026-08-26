@@ -4280,6 +4280,17 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.17`, build `extension.crx` (480.1 KB).
 
+---
+
+### 🚀 Iterasi 394: Robust Direct Fallback View Switching (v2.150.18)
+- **Kebutuhan Pengguna**:
+  - Memastikan container pengaturan Tampilan & UI (*toggle Animasi Stickman Swarm & toggle Floating Agent Mode*) selalu muncul 100% saat diklik tanpa blank.
+- **Implementasi & Perbaikan**:
+  - **Dynamic Fallback Lookup**: Memperbaiki loop navigasi tab di [options.js](file:///home/arya/browser-agent/extension/options.js) untuk secara dinamis menyembunyikan semua `.options-view` dan menampilkan target view melalui direct DOM lookup (`tabViews[tabName] || document.getElementById('tab-view-' + tabName)`).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.18`, build `extension.crx` (480.2 KB).
+
 
 
 

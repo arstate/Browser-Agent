@@ -2434,11 +2434,16 @@ function setupEventListeners() {
         brainAccordionHeader?.classList.remove('has-active-child');
       }
 
-      Object.keys(tabViews).forEach(k => {
-        if (tabViews[k]) {
-          tabViews[k].style.display = (k === tabName) ? 'flex' : 'none';
-        }
+      // Hide all options-view elements first
+      document.querySelectorAll('.options-view').forEach(view => {
+        view.style.display = 'none';
       });
+
+      // Show the selected view by tabViews or direct ID lookup
+      const targetView = tabViews[tabName] || document.getElementById(`tab-view-${tabName}`);
+      if (targetView) {
+        targetView.style.display = 'flex';
+      }
 
       if (targetId) {
         setTimeout(() => {
