@@ -4962,6 +4962,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.64`, build `extension.crx` (679.2 KB).
 
+---
+
+### 🚀 Iterasi 441: Telegram Execution Tool Steps Full Visual Accordion Persistence in New Tab & Sidepanel History (v2.150.65)
+- **Kebutuhan Pengguna**:
+  - Memastikan saat sesi riwayat chat dari Telegram dibuka di New Tab / Sidepanel, seluruh riwayat langkah eksekusi agent (`browser_list_tabs`, `browser_navigate`, `browser_wait`, `browser_snapshot`, `browser_click`, `browser_control_media`, dll.) beserta badge accordion `[N] Langkah Tindakan Selesai` tampil lengkap dan visual seperti saat dijalankan langsung di browser.
+- **Akar Masalah (Root Cause)**:
+  - Pada Service Worker [background.js](file:///home/arya/browser-agent/extension/background.js), pesan assistant yang disimpan ke `tgSession.messages` sebelumnya hanya menyimpan teks `content` tanpa array `tool_calls` dan objek `agentInfo`. Akibatnya, saat `resumeSession` me-render sesi di New Tab/Sidepanel, accordion langkah tindakan tidak muncul.
+- **Implementasi & Peningkatan Sistem**:
+  - **Tool Execution Recorder (`executedToolCalls`)**: Mengumpulkan seluruh tool calls yang dieksekusi secara berurutan selama multi-turn agent loop di Service Worker.
+  - **Rich Assistant Message Persistence**: Menyimpan `tool_calls: executedToolCalls` dan `agentInfo: { id: 'master_agent', name: 'Master Agent', isBoss: true }` ke dalam objek pesan assistant di sesi Telegram.
+  - **Attachment Preview Persistence**: Menyimpan metadata lampiran (foto/dokumen) ke dalam objek pesan pengguna agar riwayat visual di New Tab/Sidepanel 100% konsisten.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.65`, build `extension.crx` (679.4 KB).
+
 
 
 

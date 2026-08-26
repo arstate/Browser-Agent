@@ -1777,6 +1777,7 @@ MANDAT EKSEKUTIF UTAMA:
     const maxSteps = 6;
     let liveStatusMsgId = null;
     let anyToolExecuted = false;
+    const executedToolCalls = [];
 
     // Send initial status message (Clean continuous Step 1, 2, 3 format without /5)
     const initialStatus = await telegramSendMessage(botToken, senderId, `⏳ <b>[Langkah 1] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
@@ -1836,6 +1837,15 @@ MANDAT EKSEKUTIF UTAMA:
             tArgs = typeof tc.function?.arguments === 'string' ? JSON.parse(tc.function.arguments) : (tc.function?.arguments || {});
           } catch(e) {}
 
+          executedToolCalls.push({
+            id: tc.id || `call_${Date.now()}_${executedToolCalls.length}`,
+            type: "function",
+            function: {
+              name: tName,
+              arguments: typeof tc.function?.arguments === 'string' ? tc.function.arguments : JSON.stringify(tArgs)
+            }
+          });
+
           const stepDesc = getToolStepDescription(tName, tArgs);
           if (liveStatusMsgId) {
             await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `⏳ <b>[Langkah ${stepCount + 1}] Master Agent:</b> ${stepDesc}`).catch(() => {});
@@ -1893,8 +1903,42 @@ MANDAT EKSEKUTIF UTAMA:
     // 3. Update dedicated Telegram session in cache & SQLite
     tgSession.updated_at = Date.now();
     tgSession.model = model;
-    tgSession.messages.push({ role: 'user', content: text, timestamp: Date.now() });
-    tgSession.messages.push({ role: 'assistant', content: finalResponseText, timestamp: Date.now() });
+
+    const userMsgObj = {
+      role: 'user',
+      content: text,
+      timestamp: Date.now()
+    };
+    if (mediaPayload && mediaPayload.type === 'image' && mediaPayload.dataUrl) {
+      userMsgObj.attachments = [{
+        type: 'image',
+        name: 'Telegram Photo',
+        dataUrl: mediaPayload.dataUrl
+      }];
+    } else if (mediaPayload && mediaPayload.type === 'document') {
+      userMsgObj.attachments = [{
+        type: 'file',
+        name: mediaPayload.fileName || 'Telegram Document',
+        mime: 'application/octet-stream'
+      }];
+    }
+    tgSession.messages.push(userMsgObj);
+
+    const assistantMsgObj = {
+      role: 'assistant',
+      content: finalResponseText,
+      timestamp: Date.now(),
+      agentInfo: {
+        id: "master_agent",
+        name: "Master Agent",
+        isBoss: true
+      }
+    };
+    if (executedToolCalls.length > 0) {
+      assistantMsgObj.tool_calls = executedToolCalls;
+    }
+    tgSession.messages.push(assistantMsgObj);
+
     cache[sessId] = tgSession;
     await chrome.storage.local.set({ chat_sessions_cache: cache });
 
