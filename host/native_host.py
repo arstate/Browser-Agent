@@ -674,8 +674,21 @@ def transcribe_audio_file(file_base64, mime_type="audio/ogg", api_key="", endpoi
         upload_path = out_mp3_path if has_mp3 else in_path
         transcribed_text = ""
 
+        # Strategy 0: Local Linux CLI Whisper if installed
+        try:
+            if shutil.which("whisper"):
+                res_w = subprocess.run(["whisper", upload_path, "--output_format", "txt", "--output_dir", "/tmp", "--language", "id"], capture_output=True, text=True, timeout=30)
+                txt_out = f"/tmp/{tmp_id}.txt"
+                if os.path.exists(txt_out):
+                    with open(txt_out, "r") as f_w:
+                        transcribed_text = f_w.read().strip()
+                    try: os.remove(txt_out)
+                    except Exception: pass
+        except Exception as we:
+            log(f"Local whisper CLI notice: {we}")
+
         # Strategy 1: Google Gemini Multimodal Audio Transcription
-        if api_key and (api_key.startswith("AIza") or "generativelanguage" in endpoint or preset == "gemini" or preset == "9router"):
+        if not transcribed_text and api_key and (api_key.startswith("AIza") or "generativelanguage" in endpoint or preset == "gemini" or preset == "9router"):
             try:
                 gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
                 with open(upload_path, "rb") as f_up:

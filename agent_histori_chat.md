@@ -5082,6 +5082,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.71`, build `extension.crx` (685.9 KB).
 
+---
+
+### 🚀 Iterasi 448: Local Linux Audio Preprocessing & AI LLM Typo/Intent Refinement (v2.150.72)
+- **Kebutuhan Pengguna**:
+  - Memastikan rekaman suara (Voice Note / Audio) pengguna diproses dan dikonversi secara lokal di Linux PC host, lalu hasil transkrip suara mentah otomatis dikirimkan ke LLM untuk dikoreksi kesalahan ketik (typo), fonetik, dan tanda bacanya sebelum dieksekusi agar agen benar-benar memahami maksud instruksi pengguna.
+- **Akar Masalah (Root Cause)**:
+  - Transkripsi suara mentah dari audio terkadang mengandung salah dengar fonetik (kata bahasa daerah/Indonesia yang terdeteksi mirip bahasa asing atau slang yang tidak rapi) sehingga agen salah memahami prompt.
+- **Implementasi & Peningkatan Sistem**:
+  - **Local Linux Audio Engine**: [native_host.py](file:///home/arya/browser-agent/host/native_host.py) memproses berkas audio secara lokal, mengonversi format ke audio standar 16kHz mono `.wav` / 128kbps `.mp3` via `ffmpeg`, mengecek ketersediaan local Whisper CLI, dan mengirim ke Gemini/OpenAI STT engine.
+  - **AI LLM Typo & Intent Refinement Stage**: Pada [background.js](file:///home/arya/browser-agent/extension/background.js) `processTelegramMessage`, transkrip mentah otomatis dilewatkan ke LLM Corrector prompt (`temperature: 0.1`) untuk merapikan typo, ejaan istilah teknis/Linux, dan sintaks tanpa mengubah maksud asli perintah.
+  - **Accurate Understanding & Seamless Dispatch**: Hasil transkrip bersih ditampilkan ke pengguna (`🎙️ Transkrip Suara: "..."`), lalu diteruskan langsung ke Master Agent untuk dieksekusi secara presisi.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.72`, build `extension.crx` (687.2 KB).
+
 
 
 

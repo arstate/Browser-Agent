@@ -598,9 +598,53 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
         });
 
         if (rpcRes && rpcRes.status === "ok" && rpcRes.text) {
-          const transcribed = rpcRes.text.trim();
-          await telegramSendMessage(botToken, senderId, `🎙️ <b>Transkrip Suara:</b> <i>"${escapeHtml(transcribed)}"</i>`);
-          text = transcribed;
+          const rawTranscribed = rpcRes.text.trim();
+          let refinedText = rawTranscribed;
+
+          // AI LLM Phonetic & Typo Refinement: Correct typos/slang/grammar so the agent understands accurately
+          try {
+            const refineModel = activeTgCfg.selected_model || cfg.selectedModelChoice || cfg.model || "gemini-2.5-flash";
+            const headers = { "Content-Type": "application/json" };
+            if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+
+            let endpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+            if (rawEndpoint) {
+              endpoint = rawEndpoint.endsWith("/chat/completions") ? rawEndpoint : `${rawEndpoint.replace(/\/+$/, '')}/chat/completions`;
+            }
+
+            const refineRes = await fetch(endpoint, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({
+                model: refineModel,
+                messages: [
+                  {
+                    role: "system",
+                    content: "Anda adalah AI Audio Transcript Typo & Intent Corrector. Tugas Anda adalah membaca transkripsi suara mentah pengguna, memperbaiki kesalahan ketik (typo), salah dengar fonetik kata/istilah (misal istilah Linux, tool web, bahasa gaul Indonesia, nama software), serta merapikan tanda baca agar menjadi kalimat perintah yang jelas dan mudah dipahami oleh AI Agent. HANYA berikan hasil kalimat yang sudah diperbaiki tanpa tanda kutip, tanpa kata pengantar, dan tanpa penjelasan tambahan."
+                  },
+                  {
+                    role: "user",
+                    content: `Perbaiki teks transkripsi suara mentah berikut:\n"${rawTranscribed}"`
+                  }
+                ],
+                temperature: 0.1,
+                max_tokens: 1024
+              })
+            });
+
+            if (refineRes.ok) {
+              const refineJson = await refineRes.json();
+              const corrected = refineJson.choices?.[0]?.message?.content?.trim();
+              if (corrected && corrected.length > 0) {
+                refinedText = corrected.replace(/^["']|["']$/g, '').trim();
+              }
+            }
+          } catch (refineErr) {
+            console.warn("Audio transcript refinement notice:", refineErr);
+          }
+
+          await telegramSendMessage(botToken, senderId, `🎙️ <b>Transkrip Suara:</b> <i>"${escapeHtml(refinedText)}"</i>`);
+          text = refinedText;
         } else {
           await telegramSendMessage(botToken, senderId, `⚠️ Gagal mentranskripsi pesan suara: ${rpcRes?.error || 'Tidak ada teks yang terdeteksi'}`);
           return;
