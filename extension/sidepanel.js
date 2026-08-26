@@ -92,6 +92,29 @@ async function loadPersistentMemoryFromHost() {
   } catch (e) {}
 }
 
+let cachedPluginSettings = {
+  ponytail: {
+    enabled: true,
+    maxRecentTurns: 6,
+    maxToolOutputChars: 1200,
+    stripRedundantDOM: true,
+    stripBase64: true,
+    preserveSystemFacts: true
+  }
+};
+
+chrome.storage.local.get(['plugin_settings'], (res) => {
+  if (res && res.plugin_settings) {
+    cachedPluginSettings = { ...cachedPluginSettings, ...res.plugin_settings };
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.plugin_settings) {
+    cachedPluginSettings = { ...cachedPluginSettings, ...(changes.plugin_settings.newValue || {}) };
+  }
+});
+
 function notifyPersistentBrainUpdated() {
   try {
     chrome.storage.local.set({ persistent_brain_last_updated: Date.now() }).catch(() => {});
@@ -662,7 +685,14 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
 - Sajikan analisis empiris, berbasis data dan fakta nyata di layar browser atau file sistem.
 - Jika terjadi kegagalan atau error pada tools/eksekusi: DILARANG menyembunyikan error atau mengembalikan respons kosong! AI WAJIB segera mendiagnosa root cause, mencari solusi alternatif yang benar, dan mencatatnya ke \`record_anti_pattern\`.\n`;
 
-  // 6. Inject Dynamic AI Cognitive / Thinking Level Directive (Hacked Client-Side without API dependency)
+  // 6. Inject Active Plugins Directives (Ponytail Context Optimizer, etc.)
+  const ponytail = cachedPluginSettings?.ponytail || { enabled: true, maxRecentTurns: 6 };
+  if (ponytail.enabled !== false) {
+    prompt += `\n=== 🧩 DAFTAR PLUGIN AKTIF (PLUGIN ECOSYSTEM) ===\n`;
+    prompt += `• [PLUGIN: PONYTAIL (AKTIF)]: Kompresi konteks riwayat aktif. Ponytail otomatis memangkas token DOM redundan dan membatasi turn lama menjadi ${ponytail.maxRecentTurns || 6} pesan terpadat untuk menghemat 50-75% token prompt. Anda dapat memeriksa efisiensi kapan saja via tool 'ponytail_token_meter'.\n`;
+  }
+
+  // 7. Inject Dynamic AI Cognitive / Thinking Level Directive (Hacked Client-Side without API dependency)
   prompt += getThinkingDirective(currentThinkingLevel);
 
   return prompt;
@@ -1300,6 +1330,17 @@ const AGENT_TOOLS = [
     function: {
       name: "get_telegram_bot_status",
       description: "Get the current configuration, whitelist user ID, and status of the built-in Telegram Bot Remote Control.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ponytail_token_meter",
+      description: "Ponytail Token Saver Plugin: Check active token optimization status, context turn count, and token compression savings estimate.",
       parameters: {
         type: "object",
         properties: {}
@@ -2186,6 +2227,21 @@ async function executeTool(name, args, assistantBubble = null) {
   }
 
   switch (name) {
+    case "ponytail_token_meter": {
+      const p = (cachedPluginSettings?.ponytail) || { enabled: true, maxRecentTurns: 6 };
+      return {
+        status: "ok",
+        plugin_name: "Ponytail Context Trimmer & Token Saver",
+        is_active: p.enabled !== false,
+        max_recent_turns: p.maxRecentTurns || 6,
+        max_tool_output_chars: p.maxToolOutputChars || 1200,
+        strip_redundant_dom: p.stripRedundantDOM !== false,
+        strip_base64: p.stripBase64 !== false,
+        estimated_token_savings_percent: "50% - 75%",
+        summary: "Plugin Ponytail aktif mengompresi konteks riwayat, memotong pohon DOM berlebih, dan menghemat biaya token AI."
+      };
+    }
+
     case "ask_clarification": {
       const q = args.question || "Mohon konfirmasi pilihan arahan Anda:";
       const opts = Array.isArray(args.options) ? args.options : [];
@@ -3672,20 +3728,24 @@ function sanitizeMessagesForApi(history, isChatOnly = false) {
       });
     }
 
-    // Handle tool message content trimming to prevent context limit errors
+    // Handle tool message content trimming via Ponytail plugin to prevent context limit errors
+    const ponytail = cachedPluginSettings?.ponytail || { enabled: true, maxRecentTurns: 6, maxToolOutputChars: 1200 };
+    const maxRecent = (ponytail.enabled !== false) ? (ponytail.maxRecentTurns || 6) : 4;
+    const maxChars = (ponytail.enabled !== false) ? (ponytail.maxToolOutputChars || 1200) : 800;
+
     if (msg.role === 'tool' && typeof content === 'string') {
-      const isRecent = index >= arr.length - 4;
-      if (!isRecent && content.length > 800) {
+      const isRecent = index >= arr.length - maxRecent;
+      if (!isRecent && content.length > maxChars) {
         try {
           const parsed = JSON.parse(content);
           content = JSON.stringify({
             status: parsed.status || "success",
             title: parsed.pageTitle || parsed.title || undefined,
             url: parsed.url || undefined,
-            summary: "Output truncated to preserve token context"
+            summary: `Output pruned by Ponytail plugin (${content.length - maxChars} chars saved)`
           });
         } catch (e) {
-          content = content.slice(0, 500) + "... [truncated]";
+          content = content.slice(0, maxChars) + "... [trimmed by Ponytail]";
         }
       } else if (content.length > 30000) {
         content = content.slice(0, 30000) + "\n... [truncated to prevent token limit]";

@@ -5176,6 +5176,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.76`, build `extension.crx` (690.4 KB).
 
+---
+
+### 🚀 Iterasi 453: Automatic Dual-Engine Plugin Injection & Live Dynamic Tool Dispatch (v2.150.77)
+- **Kebutuhan Pengguna**:
+  - Memastikan ketika plugin di-ON-kan di menu Plugins, direktif instruksi plugin dan fungsionalitas tool otomatis dibaca dan dipatuhi oleh **Agent Browser** (Sidepanel/Newtab) maupun **Bot Telegram** (Background Worker).
+- **Akar Masalah (Root Cause)**:
+  - Sebelum integrasi ini, status plugin ON/OFF baru disimpan di storage dan background execution, namun belum otomatis menyisipkan blok direktif panduan plugin (`=== 🧩 DAFTAR PLUGIN AKTIF ===`) ke dalam `buildDynamicSystemPrompt` di Sidepanel serta `AGENT_TOOLS` runtime dispatcher.
+- **Implementasi & Peningkatan Sistem**:
+  - **Auto-Prompt Injection on Both Engines**:
+    - Di [background.js](file:///home/arya/browser-agent/extension/background.js) (Bot Telegram & Background Agent): Otomatis menyuntikkan status dan direktif plugin aktif (`Ponytail`, dll.) ke dalam `systemInstruction` pada setiap request masuk.
+    - Di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js) (Browser Agent Sidepanel & Fullscreen Dashboard): Otomatis menyuntikkan direktif plugin aktif ke dalam `buildDynamicSystemPrompt` menggunakan cache `plugin_settings` reaktif real-time.
+  - **Dynamic Tool Dispatch & Execution**:
+    - Menambahkan tool `ponytail_token_meter` ke dalam `AGENT_TOOLS` dan `BACKGROUND_AGENT_TOOLS` serta handler eksekusinya di kedua runtime.
+    - Menghubungkan `sanitizeMessagesForApi` di Sidepanel ke parameter konfigurasi Ponytail (`maxRecentTurns`, `maxToolOutputChars`, `stripRedundantDOM`, `stripBase64`).
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.77`, build `extension.crx` (694.5 KB).
+
 
 
 

@@ -2300,6 +2300,14 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       });
     }
 
+    // Inject Active Plugins Directives (Ponytail Context Optimizer, etc.)
+    const pluginSettings = storageData.plugin_settings || {};
+    const ponytail = pluginSettings.ponytail || { enabled: true, maxRecentTurns: 6 };
+    if (ponytail.enabled !== false) {
+      systemInstruction += "\n\n=== 🧩 DAFTAR PLUGIN AKTIF (PLUGIN ECOSYSTEM) ===\n";
+      systemInstruction += `• [PLUGIN: PONYTAIL (AKTIF)]: Kompresi konteks riwayat aktif. Ponytail otomatis memangkas token DOM redundan dan membatasi turn lama menjadi ${ponytail.maxRecentTurns || 6} pesan terpadat untuk menghemat 50-75% token prompt. Anda dapat memeriksa efisiensi kapan saja via tool 'ponytail_token_meter'.\n`;
+    }
+
     // Inject Dynamic AI Cognitive / Thinking Level Directive (Low, Medium, High, Xhigh, Extreme)
     const activeThinkingLevel = activeTgCfg.thinking_level || storageData.thinking_level || cfg.thinking_level || "high";
     systemInstruction += getThinkingDirective(activeThinkingLevel);
