@@ -5116,6 +5116,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.73`, build `extension.crx` (688.0 KB).
 
+---
+
+### 🚀 Iterasi 450: Automatic /thinking Command Registrar & Resilient Fail-Safe Telegram Poller (v2.150.74)
+- **Kebutuhan Pengguna**:
+  - Memastikan menu perintah `/thinking` terdaftar secara otomatis ke server Telegram API (`setMyCommands`) saat bot aktif sehingga menu `/thinking` langsung muncul di popup shortcut slash command Telegram.
+  - Memperbaiki bot yang macet setelah restart server dengan mekanisme auto-recovery, timeout controller, dan pembersihan webhook conflict otomatis.
+- **Akar Masalah (Root Cause)**:
+  - `telegramSetMyCommands` sebelumnya hanya dipanggil dari tombol simpan UI Options/Sidepanel dan belum dipanggil secara otomatis oleh Background Service Worker saat memulai polling.
+  - Pada saat restart server, koneksi polling lama bisa mengalami conflict 409 atau fetch timeout tanpa auto-clear webhook.
+- **Implementasi & Peningkatan Sistem**:
+  - **Auto Command Registrar (`telegramSetMyCommands`)**: Menambahkan fungsi pendaftaran resmi `setMyCommands` di [background.js](file:///home/arya/browser-agent/extension/background.js) yang otomatis mendaftarkan 9 perintah lengkap (`/start`, `/thinking`, `/model`, `/agent`, `/history`, `/screenshot`, `/screenshot_os`, `/status`, `/new`) ke Telegram API pada setiap inisialisasi poller.
+  - **30s Long-Polling Client Timeout & Conflict Resolution**: Menambahkan client-side timeout signal pada fetch long-polling, pembersihan webhook otomatis (`deleteWebhook`) jika mendeteksi HTTP 409 conflict, dan penanganan auto-restart yang kokoh saat menerima pesan `RESTART_TELEGRAM_BOT` atau `TELEGRAM_CONFIG_UPDATED`.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.74`, build `extension.crx` (688.5 KB).
+
 
 
 

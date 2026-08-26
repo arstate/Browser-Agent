@@ -2460,18 +2460,55 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
   }
 }
 
+// Telegram API Command Registrar
+async function telegramSetMyCommands(botToken) {
+  if (!botToken) return false;
+  const commands = [
+    { command: "start", description: "Buka menu utama & instruksi Browser Agent" },
+    { command: "thinking", description: "Atur mode berpikir AI (Low, Med, High, Xhigh, Extreme)" },
+    { command: "model", description: "Pilih model AI aktif atau aktifkan auto-routing" },
+    { command: "agent", description: "Pilih persona spesialis agent atau delegasi otomatis" },
+    { command: "history", description: "Daftar riwayat sesi percakapan & pindah sesi" },
+    { command: "screenshot", description: "Ambil screenshot tab Chrome aktif di PC" },
+    { command: "screenshot_os", description: "Ambil screenshot Full Desktop OS Linux" },
+    { command: "status", description: "Cek tab aktif, model, memory, dan performa" },
+    { command: "new", description: "Mulai sesi baru dan bersihkan tampilan chat" }
+  ];
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/setMyCommands`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ commands })
+    });
+    const json = await res.json();
+    return json && json.ok;
+  } catch (err) {
+    return false;
+  }
+}
+
 // Background Poller Execution
-async function checkAndRestartTelegramPoller() {
+async function checkAndRestartTelegramPoller(force = false) {
+  if (force && telegramAbortController) {
+    try { telegramAbortController.abort(); } catch(e) {}
+    telegramAbortController = null;
+    telegramPollingActive = false;
+  }
+
   if (telegramPollingActive) return;
 
   const storageData = await chrome.storage.local.get(['telegram_bot_config', 'telegram_last_update_id']);
   const tgCfg = storageData.telegram_bot_config;
 
   if (!tgCfg || !tgCfg.enabled || !tgCfg.bot_token) {
+    telegramPollingActive = false;
     return;
   }
 
   telegramPollingActive = true;
+
+  // Auto-register command list with Telegram API so /thinking immediately shows in Telegram popup
+  telegramSetMyCommands(tgCfg.bot_token).catch(() => {});
 
   while (telegramPollingActive) {
     try {
@@ -2483,10 +2520,32 @@ async function checkAndRestartTelegramPoller() {
 
       let lastId = liveStorage.telegram_last_update_id || 0;
       telegramAbortController = new AbortController();
+      const timeoutId = setTimeout(() => {
+        try { telegramAbortController.abort(); } catch(e) {}
+      }, 30000);
 
       // Fast Long-Polling (timeout 25s) -> Instant push when message arrives!
       const url = `https://api.telegram.org/bot${activeCfg.bot_token}/getUpdates?offset=${lastId + 1}&timeout=25`;
       const res = await fetch(url, { signal: telegramAbortController.signal });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          // Conflict: delete any active webhook and resume long-polling
+          try {
+            await fetch(`https://api.telegram.org/bot${activeCfg.bot_token}/deleteWebhook?drop_pending_updates=false`);
+          } catch (we) {}
+          await new Promise(r => setTimeout(r, 1500));
+          continue;
+        } else if (res.status === 401) {
+          console.warn("Telegram Bot Token is invalid (401 Unauthorized)");
+          break;
+        } else {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+      }
+
       const json = await res.json();
 
       if (json.ok && Array.isArray(json.result) && json.result.length > 0) {
@@ -2508,12 +2567,18 @@ async function checkAndRestartTelegramPoller() {
           });
         }
       } else if (json.error_code === 409) {
-        // Another connection was active, sleep 2s and resume
-        await new Promise(r => setTimeout(r, 2000));
+        try {
+          await fetch(`https://api.telegram.org/bot${activeCfg.bot_token}/deleteWebhook?drop_pending_updates=false`);
+        } catch (we) {}
+        await new Promise(r => setTimeout(r, 1500));
       }
     } catch (err) {
-      if (err.name === 'AbortError') break;
-      await new Promise(r => setTimeout(r, 1000));
+      if (err.name === 'AbortError') {
+        // Timeout or intentional abort - sleep briefly and continue
+        await new Promise(r => setTimeout(r, 200));
+        continue;
+      }
+      await new Promise(r => setTimeout(r, 1500));
     }
   }
 
@@ -2578,18 +2643,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "TELEGRAM_CONFIG_UPDATED") {
-    checkAndRestartTelegramPoller();
+    checkAndRestartTelegramPoller(true);
     sendResponse({ status: "ok" });
     return true;
   }
 
   if (message.type === "RESTART_TELEGRAM_BOT") {
-    telegramPollingActive = false;
     chrome.storage.local.get(['telegram_bot_config']).then(async (data) => {
       const tgCfg = data.telegram_bot_config;
       if (tgCfg && tgCfg.bot_token) {
         try {
-          // Flush pending telegram updates offset
+          // Flush pending telegram updates offset & clear any webhook conflict
+          await fetch(`https://api.telegram.org/bot${tgCfg.bot_token}/deleteWebhook?drop_pending_updates=false`).catch(() => {});
           const dropRes = await fetch(`https://api.telegram.org/bot${tgCfg.bot_token}/getUpdates?offset=-1`);
           const dropJson = await dropRes.json();
           if (dropJson.ok && dropJson.result && dropJson.result.length > 0) {
@@ -2598,9 +2663,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         } catch(e) {}
       }
-      setTimeout(() => {
-        checkAndRestartTelegramPoller();
-      }, 500);
+      checkAndRestartTelegramPoller(true);
     });
     sendResponse({ status: "ok", message: "Telegram bot restarted successfully" });
     return true;
