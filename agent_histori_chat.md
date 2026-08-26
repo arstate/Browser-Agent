@@ -4929,6 +4929,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.62`, build `extension.crx` (675.3 KB).
 
+---
+
+### 🚀 Iterasi 439: Full CDP Browser Control Agent Integration & Accurate Clicking in Telegram Engine (v2.150.63)
+- **Kebutuhan Pengguna**:
+  - Menghubungkan kemampuan penuh Browser Control Agent (seperti di Sidepanel: `browser_snapshot`, `browser_click` berbasis `backendNodeId`, `browser_type`, `browser_extract_table`, `browser_navigate`, `browser_wait`) ke dalam mesin Background Telegram Agent agar klik-klik dan kontrol browser 100% akurat dan presisi, serta mencegah AI melenceng ke perintah curl/bash pada tugas web/browser.
+- **Akar Masalah (Root Cause)**:
+  - Tool di Service Worker sebelumnya menggunakan nama non-standar (`click_element`, `type_text`) berbasis query selector sederhana tanpa CDP accessibility node bounds. Hal ini membuat model AI cenderung mencoba `run_bash_command` dengan `curl` saat mengecek data website.
+- **Implementasi & Peningkatan Sistem**:
+  - **Full CDP Tool Suite Alignment**: Mengadopsi tool resmi Browser Agent ke `BACKGROUND_AGENT_TOOLS` di [background.js](file:///home/arya/browser-agent/extension/background.js) (`browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_extract_table`, `browser_screenshot`, `browser_list_tabs`, `browser_switch_tab`, `browser_wait`, `browser_control_media`).
+  - **Precision CDP Engine**: Menggunakan `attachCdpDebugger` (`Accessibility.getFullAXTree`, `DOM.resolveNode`, `DOM.scrollIntoViewIfNeeded`, dan `Input.dispatchMouseEvent` / `Input.insertText`) untuk akurasi klik dan input tanpa halusinasi.
+  - **Strict Browser Control Mandate**: Memperbarui instruksi Master Agent yang melarang keras penggunaan curl/bash untuk tugas web dan mewajibkan eksekusi kontrol browser visual + laporan tertulis terstruktur.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.63`, build `extension.crx` (677.8 KB).
+
 
 
 

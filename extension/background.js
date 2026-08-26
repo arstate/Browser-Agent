@@ -714,19 +714,170 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
   });
 }
 
-// Tool Definitions for Background Autonomous Agent Loop
+// Tool Definitions for Background Autonomous Agent Loop (Aligned with Sidepanel Browser Control Agent)
 const BACKGROUND_AGENT_TOOLS = [
-  // A. Linux OS & Terminal Control Tools
+  // 1. 🌐 Primary Browser Control Agent Tools (CDP & Live DOM)
+  {
+    type: "function",
+    function: {
+      name: "browser_navigate",
+      description: "Navigate or open a specific URL in a dedicated browser tab (e.g. 'http://localhost:20128/dashboard/quota', 'https://www.google.com', 'https://youtube.com').",
+      parameters: {
+        type: "object",
+        properties: {
+          url: { type: "string", description: "The full URL to navigate to" }
+        },
+        required: ["url"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "browser_snapshot",
+      description: "Capture real-time interactive DOM elements, forms, and Accessibility Tree with backendNodeIds for clicking, typing, and post-action verification. Essential for zero-hallucination browser control.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "browser_click",
+      description: "Click an interactive element on the page using its verified backendNodeId (from browser_snapshot) with 100% precision via CDP mouse events.",
+      parameters: {
+        type: "object",
+        properties: {
+          backendNodeId: { type: "integer", description: "The backendNodeId from browser_snapshot" },
+          selector: { type: "string", description: "Optional fallback CSS selector or button text" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "browser_type",
+      description: "Type text into an input element using its backendNodeId (from browser_snapshot) or selector.",
+      parameters: {
+        type: "object",
+        properties: {
+          backendNodeId: { type: "integer", description: "The backendNodeId of the target input element" },
+          text: { type: "string", description: "The text to type" },
+          pressEnter: { type: "boolean", description: "Whether to press Enter after typing", default: false }
+        },
+        required: ["text"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "browser_extract_table",
+      description: "Extract structured data from tables, quota grids, or virtual scroll lists (e.g. 9Router Quota Tracker, Meta Ads Manager, analytics grids). Automatically extracts all rows, headers, and metrics.",
+      parameters: {
+        type: "object",
+        properties: {
+          max_rows: { type: "integer", description: "Maximum number of rows to extract (default: 100)", default: 100 },
+          auto_scroll: { type: "boolean", description: "Auto-scroll to capture virtualized rows", default: true }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "browser_screenshot",
+      description: "Capture visual screenshot walkthrough of the active browser tab and send the image directly to Telegram.",
+      parameters: {
+        type: "object",
+        properties: {
+          caption: { type: "string", description: "Caption description for the screenshot photo" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "browser_list_tabs",
+      description: "List all currently open browser tabs (tabId, title, url, active) to find and switch between target pages.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "browser_switch_tab",
+      description: "Switch focus and bind the agent to a specific browser tab by tabId, title keyword, or URL.",
+      parameters: {
+        type: "object",
+        properties: {
+          tabId: { type: "string", description: "The tabId or title/url keyword to switch to" }
+        },
+        required: ["tabId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "browser_wait",
+      description: "Wait for a specified duration in seconds (1 to 10) for slow network, async API requests, or heavy web apps (like 9Router or Meta Ads) to settle.",
+      parameters: {
+        type: "object",
+        properties: {
+          duration_seconds: { type: "number", description: "Duration to wait in seconds (default: 2)", default: 2 }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "browser_control_media",
+      description: "Control media playback (YouTube, Spotify, video) on active tab: play, pause, toggle, mute, status.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: { type: "string", enum: ["play", "pause", "toggle", "mute", "unmute", "status"] }
+        },
+        required: ["action"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ask_clarification",
+      description: "Present 3 clickable option buttons on Telegram when instructions are ambiguous.",
+      parameters: {
+        type: "object",
+        properties: {
+          question: { type: "string", description: "Question to ask" },
+          options: { type: "array", items: { type: "string" }, description: "Up to 3 selectable options" }
+        },
+        required: ["question", "options"]
+      }
+    }
+  },
+
+  // 2. 💻 Native Linux OS Desktop & Terminal Tools
   {
     type: "function",
     function: {
       name: "open_linux_app",
-      description: "Open/launch any Linux desktop application or GUI window (e.g. 'dolphin' for file manager, 'konsole' or 'xterm' for terminal, 'code' for VS Code, 'gedit', 'calc', etc.).",
+      description: "Open any Linux desktop application or GUI window (e.g. 'dolphin' for file manager, 'konsole' or 'xterm' for terminal, 'code' for VS Code, 'gedit', 'calc', etc.).",
       parameters: {
         type: "object",
         properties: {
           app_name: { type: "string", description: "Binary or command name (e.g. 'dolphin', 'konsole', 'code')" },
-          args: { type: "string", description: "Optional file path or arguments to pass to the application" }
+          args: { type: "string", description: "Optional arguments or path" }
         },
         required: ["app_name"]
       }
@@ -736,11 +887,11 @@ const BACKGROUND_AGENT_TOOLS = [
     type: "function",
     function: {
       name: "run_bash_command",
-      description: "Execute a bash shell command directly on Linux OS and receive stdout/stderr output (e.g. 'ls -la', 'ps aux', 'git status', 'mkdir', 'curl', 'ping', 'cat', etc.).",
+      description: "Execute a bash shell command directly on Linux OS and receive stdout/stderr output (e.g. 'ls -la', 'ps aux', 'git status', 'mkdir', etc.).",
       parameters: {
         type: "object",
         properties: {
-          command: { type: "string", description: "Bash shell command string to execute" },
+          command: { type: "string", description: "Bash command string to execute" },
           cwd: { type: "string", description: "Optional working directory" }
         },
         required: ["command"]
@@ -751,12 +902,12 @@ const BACKGROUND_AGENT_TOOLS = [
     type: "function",
     function: {
       name: "type_os_text",
-      description: "Type text, commands, or send keystrokes into the active Linux Desktop window or Terminal.",
+      description: "Type text or keystrokes into the active Linux Desktop window or Terminal.",
       parameters: {
         type: "object",
         properties: {
           text: { type: "string", description: "Text or command string to type" },
-          press_enter: { type: "boolean", description: "Whether to press Enter key after typing", default: true }
+          press_enter: { type: "boolean", description: "Press Enter after typing", default: true }
         },
         required: ["text"]
       }
@@ -766,7 +917,7 @@ const BACKGROUND_AGENT_TOOLS = [
     type: "function",
     function: {
       name: "read_os_file",
-      description: "Read the text contents of a file from the Linux filesystem.",
+      description: "Read text contents of a file on Linux OS.",
       parameters: {
         type: "object",
         properties: {
@@ -780,7 +931,7 @@ const BACKGROUND_AGENT_TOOLS = [
     type: "function",
     function: {
       name: "write_os_file",
-      description: "Create or write text content to a file in the Linux filesystem.",
+      description: "Write text content to a file on Linux OS.",
       parameters: {
         type: "object",
         properties: {
@@ -790,140 +941,30 @@ const BACKGROUND_AGENT_TOOLS = [
         required: ["path", "content"]
       }
     }
-  },
-
-  // B. Chrome Browser Control Tools
-  {
-    type: "function",
-    function: {
-      name: "navigate_to",
-      description: "Open target web URL in a dedicated browser tab (never overwrites New Tab or active user tab).",
-      parameters: {
-        type: "object",
-        properties: {
-          url: { type: "string", description: "Target URL to open (e.g. 'https://www.google.com', 'https://youtube.com', 'http://192.168.1.1:8080', 'http://localhost:3000')" }
-        },
-        required: ["url"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "new_tab",
-      description: "Create and switch to a brand new Chrome tab with specified URL.",
-      parameters: {
-        type: "object",
-        properties: {
-          url: { type: "string", description: "URL for the new tab (default: https://www.google.com)" }
-        }
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "switch_tab",
-      description: "Switch to an existing tab by Title or ID.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: { type: "string", description: "Title or URL keywords of tab to switch to" },
-          tab_id: { type: "number", description: "Optional specific tab ID" }
-        }
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "click_element",
-      description: "Click an interactive button, link, tab, or submit element on the active web page.",
-      parameters: {
-        type: "object",
-        properties: {
-          selector: { type: "string", description: "CSS selector, button text, or element text to click (e.g. 'button.submit', 'Login', '#login-btn', 'Masuk', 'Sign in')" }
-        },
-        required: ["selector"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "type_text",
-      description: "Type text or password into an input field or textarea on the active web page.",
-      parameters: {
-        type: "object",
-        properties: {
-          selector: { type: "string", description: "CSS selector or field type (e.g. 'input[type=password]', '#username', 'input[name=pass]', 'search')" },
-          text: { type: "string", description: "Text or password value to type" },
-          press_enter: { type: "boolean", description: "Whether to press Enter key after typing to submit form", default: false }
-        },
-        required: ["text"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_page_content",
-      description: "Read the current active web page's title, URL, visible text content, and interactive inputs/buttons.",
-      parameters: {
-        type: "object",
-        properties: {}
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "scroll_page",
-      description: "Scroll the active webpage up or down.",
-      parameters: {
-        type: "object",
-        properties: {
-          direction: { type: "string", enum: ["up", "down"], default: "down" },
-          amount: { type: "number", description: "Pixels to scroll (default 500)", default: 500 }
-        }
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "take_screenshot",
-      description: "Take a screenshot of the active browser screen or full desktop and send the photo directly to Telegram.",
-      parameters: {
-        type: "object",
-        properties: {
-          caption: { type: "string", description: "Caption description for the screenshot photo" }
-        }
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "ask_clarification",
-      description: "Ask the user clarification with 3 clickable option buttons on Telegram.",
-      parameters: {
-        type: "object",
-        properties: {
-          question: { type: "string", description: "Question to ask the user" },
-          options: {
-            type: "array",
-            items: { type: "string" },
-            description: "Array of up to 3 selectable options"
-          }
-        },
-        required: ["question", "options"]
-      }
-    }
   }
 ];
 
 let telegramAgentWorkerTabId = null;
+
+async function attachCdpDebugger(tabId) {
+  if (!tabId) return false;
+  try {
+    const tab = await chrome.tabs.get(tabId).catch(() => null);
+    if (!tab || !tab.url || tab.url.startsWith("chrome://") || tab.url.startsWith("chrome-extension://")) {
+      return false;
+    }
+    await chrome.debugger.attach({ tabId }, "1.3");
+    await chrome.debugger.sendCommand({ tabId }, "Runtime.enable").catch(() => {});
+    await chrome.debugger.sendCommand({ tabId }, "DOM.enable").catch(() => {});
+    await chrome.debugger.sendCommand({ tabId }, "Accessibility.enable").catch(() => {});
+    return true;
+  } catch (err) {
+    if (err && err.message && err.message.includes("already attached")) {
+      return true;
+    }
+    return false;
+  }
+}
 
 async function getOrCreateTelegramAgentTab(targetUrl = null) {
   // 1. If targetUrl is requested:
@@ -970,7 +1011,53 @@ async function getOrCreateTelegramAgentTab(targetUrl = null) {
 
 async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
   try {
-    // 1. Linux OS Tool Handlers
+    // A. Browser Navigation & Tab Tools
+    if (toolName === "browser_navigate" || toolName === "navigate_to" || toolName === "browser_create_tab" || toolName === "new_tab") {
+      let targetUrl = (toolArgs.url || "https://www.google.com").trim();
+      if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+        targetUrl = "https://" + targetUrl;
+      }
+      const workerTab = await getOrCreateTelegramAgentTab(targetUrl);
+      return { status: "success", url: targetUrl, tab_id: workerTab?.id, pageTitle: workerTab?.title, message: `Berhasil membuka tab baru ${targetUrl}` };
+    }
+
+    if (toolName === "browser_list_tabs") {
+      const allTabs = await chrome.tabs.query({});
+      const list = allTabs.map(t => ({
+        tabId: t.id,
+        title: t.title || "Untitled",
+        url: t.url || "about:blank",
+        active: !!t.active
+      }));
+      return { status: "success", total: list.length, tabs: list };
+    }
+
+    if (toolName === "browser_switch_tab" || toolName === "switch_tab") {
+      const allTabs = await chrome.tabs.query({});
+      let target = null;
+      const query = String(toolArgs.tabId || toolArgs.tab_id || toolArgs.query || "").toLowerCase();
+      
+      if (/^\d+$/.test(query)) {
+        target = allTabs.find(t => t.id === Number(query));
+      }
+      if (!target && query) {
+        target = allTabs.find(t => (t.title && t.title.toLowerCase().includes(query)) || (t.url && t.url.toLowerCase().includes(query)));
+      }
+      if (target && target.id) {
+        await chrome.tabs.update(target.id, { active: true });
+        telegramAgentWorkerTabId = target.id;
+        return { status: "success", tabId: target.id, title: target.title, url: target.url, message: `Beralih ke tab "${target.title}"` };
+      }
+      return { error: `Tab '${query}' tidak ditemukan.` };
+    }
+
+    if (toolName === "browser_wait") {
+      const dur = Math.min(15, Math.max(1, Number(toolArgs.duration_seconds) || 2));
+      await new Promise(r => setTimeout(r, dur * 1000));
+      return { status: "success", waited_seconds: dur };
+    }
+
+    // B. Linux OS Native Tools
     if (toolName === "open_linux_app") {
       const app = toolArgs.app_name || toolArgs.command || "konsole";
       const args = toolArgs.args || "";
@@ -1024,43 +1111,100 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
       return { error: rpcRes?.error || "Gagal menulis file." };
     }
 
-    // 2. Chrome Browser Tool Handlers
-    if (toolName === "navigate_to" || toolName === "new_tab") {
-      let targetUrl = (toolArgs.url || "https://www.google.com").trim();
-      if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
-        targetUrl = "https://" + targetUrl;
-      }
-      const workerTab = await getOrCreateTelegramAgentTab(targetUrl);
-      return { status: "success", url: targetUrl, tab_id: workerTab?.id, message: `Berhasil membuka tab baru ${targetUrl}` };
-    }
-
-    if (toolName === "switch_tab") {
-      const allTabs = await chrome.tabs.query({});
-      let target = null;
-      if (toolArgs.tab_id) {
-        target = allTabs.find(t => t.id === Number(toolArgs.tab_id));
-      } else if (toolArgs.query) {
-        const q = String(toolArgs.query).toLowerCase();
-        target = allTabs.find(t => (t.title && t.title.toLowerCase().includes(q)) || (t.url && t.url.toLowerCase().includes(q)));
-      }
-      if (target && target.id) {
-        await chrome.tabs.update(target.id, { active: true });
-        telegramAgentWorkerTabId = target.id;
-        return { status: "success", tab_id: target.id, title: target.title, url: target.url, message: `Beralih ke tab "${target.title}"` };
-      }
-      return { error: "Tab yang dicari tidak ditemukan." };
-    }
-
+    // C. Active Browser Tab Verification
     const activeTab = await getOrCreateTelegramAgentTab(null);
     if (!activeTab || !activeTab.id) {
-      return { error: "Tidak ada tab web yang aktif untuk dikontrol. Silakan gunakan perintah 'navigate_to' terlebih dahulu untuk membuka halaman web." };
+      return { error: "Tidak ada tab web yang aktif untuk dikontrol. Silakan gunakan perintah 'browser_navigate' terlebih dahulu untuk membuka halaman web." };
     }
 
     if (activeTab.url && (activeTab.url.startsWith("chrome://") || activeTab.url.startsWith("chrome-extension://"))) {
-      return { error: "Tab aktif saat ini adalah halaman internal Chrome. Gunakan 'navigate_to' untuk membuka tab web yang dituju terlebih dahulu." };
+      return { error: "Tab aktif saat ini adalah halaman internal Chrome. Gunakan 'browser_navigate' untuk membuka tab web yang dituju terlebih dahulu." };
     }
 
-    if (toolName === "click_element") {
+    // D. CDP-Powered Interactive Browser Tools
+    if (toolName === "browser_snapshot" || toolName === "get_page_content") {
+      await attachCdpDebugger(activeTab.id);
+      let interactiveNodes = [];
+      try {
+        const { nodes } = await chrome.debugger.sendCommand({ tabId: activeTab.id }, "Accessibility.getFullAXTree");
+        interactiveNodes = (nodes || []).filter(n => {
+          if (n.ignored) return false;
+          const role = n.role?.value;
+          const name = n.name?.value;
+          const isInteractive = [
+            "button", "link", "textbox", "searchbox", "checkbox", "radio", "combobox", 
+            "menuitem", "tab", "heading", "switch", "gridcell", "row", "columnheader"
+          ].includes(role);
+          return isInteractive || (name && name.trim().length > 0);
+        }).map(n => ({
+          backendNodeId: n.backendDOMNodeId,
+          role: n.role?.value,
+          name: n.name?.value,
+          value: n.value?.value,
+          description: n.description?.value
+        }));
+      } catch(e) {}
+
+      // Scrape text content and table rows
+      const [domRes] = await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id },
+        func: () => {
+          const text = document.body ? (document.body.innerText || '').slice(0, 12000) : '';
+          const rows = [];
+          document.querySelectorAll('tr, .quota-item, [role="row"], .card, .grid > div, [class*="quota"], [class*="row"]').forEach(el => {
+            const t = (el.innerText || '').replace(/\s+/g, ' ').trim();
+            if (t && t.length > 4 && t.length < 300 && !rows.includes(t)) rows.push(t);
+          });
+          return { text, rows: rows.slice(0, 50) };
+        }
+      }).catch(() => [{}]);
+
+      return {
+        status: "success",
+        pageTitle: activeTab.title,
+        url: activeTab.url,
+        interactiveElementsCount: interactiveNodes.length,
+        interactiveElements: interactiveNodes.slice(0, 60),
+        tableRows: domRes?.result?.rows || [],
+        visibleTextPreview: (domRes?.result?.text || '').slice(0, 4000)
+      };
+    }
+
+    if (toolName === "browser_click" || toolName === "click_element") {
+      const backendNodeId = toolArgs.backendNodeId;
+      if (backendNodeId) {
+        await attachCdpDebugger(activeTab.id);
+        try {
+          await chrome.debugger.sendCommand({ tabId: activeTab.id }, "DOM.scrollIntoViewIfNeeded", { backendNodeId }).catch(() => {});
+          
+          let coords = null;
+          try {
+            const { object } = await chrome.debugger.sendCommand({ tabId: activeTab.id }, "DOM.resolveNode", { backendNodeId });
+            if (object && object.objectId) {
+              const res = await chrome.debugger.sendCommand({ tabId: activeTab.id }, "Runtime.callFunctionOn", {
+                objectId: object.objectId,
+                functionDeclaration: `function() {
+                  const target = this.closest('button, [role="button"], a, input, select, textarea, [role="radio"], [role="checkbox"], [role="tab"], [role="menuitem"], label') || this;
+                  if (typeof target.scrollIntoView === 'function') target.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'center' });
+                  const rect = target.getBoundingClientRect ? target.getBoundingClientRect() : this.getBoundingClientRect();
+                  return { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) };
+                }`,
+                returnByValue: true
+              });
+              coords = res?.result?.value;
+            }
+          } catch(e) {}
+
+          if (coords && coords.x > 0 && coords.y > 0) {
+            await chrome.debugger.sendCommand({ tabId: activeTab.id }, "Input.dispatchMouseEvent", { type: "mousePressed", x: coords.x, y: coords.y, button: "left", clickCount: 1 });
+            await chrome.debugger.sendCommand({ tabId: activeTab.id }, "Input.dispatchMouseEvent", { type: "mouseReleased", x: coords.x, y: coords.y, button: "left", clickCount: 1 });
+            await new Promise(r => setTimeout(r, 600));
+            return { status: "success", backendNodeId, clickedAt: coords, message: "Klik elemen presisi berhasil via CDP!" };
+          }
+        } catch(e) {}
+      }
+
+      // Fallback selector-based click
       const [res] = await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
         func: (sel) => {
@@ -1078,11 +1222,43 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
         },
         args: [toolArgs.selector || 'button']
       });
-      await new Promise(r => setTimeout(r, 1200));
+      await new Promise(r => setTimeout(r, 800));
       return res?.result || { error: "Gagal mengklik elemen." };
     }
 
-    if (toolName === "type_text") {
+    if (toolName === "browser_type" || toolName === "type_text") {
+      const backendNodeId = toolArgs.backendNodeId;
+      const textToType = toolArgs.text || "";
+      const pressEnter = !!(toolArgs.pressEnter || toolArgs.press_enter);
+
+      if (backendNodeId) {
+        await attachCdpDebugger(activeTab.id);
+        try {
+          await chrome.debugger.sendCommand({ tabId: activeTab.id }, "DOM.focus", { backendNodeId }).catch(() => {});
+          const { object } = await chrome.debugger.sendCommand({ tabId: activeTab.id }, "DOM.resolveNode", { backendNodeId });
+          if (object && object.objectId) {
+            await chrome.debugger.sendCommand({ tabId: activeTab.id }, "Runtime.callFunctionOn", {
+              objectId: object.objectId,
+              functionDeclaration: `function() {
+                const target = this.closest('input, textarea, [contenteditable="true"]') || this;
+                if (typeof target.focus === 'function') target.focus();
+                if ('value' in target) target.value = '';
+                else if (target.isContentEditable) target.innerText = '';
+              }`,
+              userGesture: true
+            });
+          }
+          await chrome.debugger.sendCommand({ tabId: activeTab.id }, "Input.insertText", { text: textToType });
+          if (pressEnter) {
+            await chrome.debugger.sendCommand({ tabId: activeTab.id }, "Input.dispatchKeyEvent", { type: "keyDown", text: "\r", unmodifiedText: "\r", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13, key: "Enter", code: "Enter" });
+            await chrome.debugger.sendCommand({ tabId: activeTab.id }, "Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13 });
+          }
+          await new Promise(r => setTimeout(r, 500));
+          return { status: "success", backendNodeId, typedText: textToType, pressedEnter: pressEnter };
+        } catch(e) {}
+      }
+
+      // Fallback selector-based typing
       const [res] = await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
         func: (sel, val, enter) => {
@@ -1106,51 +1282,46 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
           }
           return { success: false, error: 'Input form tidak ditemukan di halaman.' };
         },
-        args: [toolArgs.selector || '', toolArgs.text || '', !!toolArgs.press_enter]
+        args: [toolArgs.selector || '', textToType, pressEnter]
       });
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 800));
       return res?.result || { error: "Gagal mengisi input teks." };
     }
 
-    if (toolName === "get_page_content") {
+    if (toolName === "browser_extract_table") {
+      const maxRows = Math.min(300, Math.max(5, Number(toolArgs.max_rows) || 100));
+      const autoScroll = toolArgs.auto_scroll !== false;
+
       const [res] = await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
-        func: () => {
-          const title = document.title;
-          const url = window.location.href;
-          const text = document.body ? (document.body.innerText || '').slice(0, 12000) : '';
-          
-          // Extract table or card rows cleanly
-          const tableRows = [];
-          document.querySelectorAll('tr, .quota-item, [role="row"], .card, .grid > div, [class*="quota"], [class*="row"]').forEach(el => {
-            const t = (el.innerText || '').replace(/\s+/g, ' ').trim();
-            if (t && t.length > 5 && t.length < 300 && !tableRows.includes(t)) tableRows.push(t);
-          });
-
-          const inputs = Array.from(document.querySelectorAll('input, button, a[href]')).slice(0, 20).map(e => ({
-            tag: e.tagName.toLowerCase(),
-            type: e.type || '',
-            id: e.id || '',
-            name: e.name || '',
-            text: (e.innerText || e.value || e.placeholder || '').slice(0, 50)
-          }));
-          return { title, url, text, extracted_rows: tableRows.slice(0, 50), inputs };
-        }
+        func: async (maxR, doScroll) => {
+          const rowDataMap = new Map();
+          function scrape() {
+            document.querySelectorAll('tr, .quota-item, [role="row"], .card, .grid > div, [class*="quota"], [class*="row"]').forEach(r => {
+              const t = (r.innerText || '').replace(/\s+/g, ' ').trim();
+              if (t && t.length > 4 && !rowDataMap.has(t)) {
+                rowDataMap.set(t, t);
+              }
+            });
+          }
+          scrape();
+          if (doScroll) {
+            for (let i = 0; i < 4 && rowDataMap.size < maxR; i++) {
+              window.scrollBy(0, 600);
+              await new Promise(r => setTimeout(r, 200));
+              scrape();
+            }
+            window.scrollTo(0, 0);
+          }
+          const all = Array.from(rowDataMap.values()).slice(0, maxR);
+          return { total_extracted: all.length, rows: all };
+        },
+        args: [maxRows, autoScroll]
       });
-      return res?.result || { title: activeTab.title, url: activeTab.url };
+      return res?.result || { total_extracted: 0, rows: [] };
     }
 
-    if (toolName === "scroll_page") {
-      const amount = (toolArgs.direction === 'up' ? -1 : 1) * (toolArgs.amount || 500);
-      await chrome.scripting.executeScript({
-        target: { tabId: activeTab.id },
-        func: (amt) => { window.scrollBy({ top: amt, behavior: 'smooth' }); },
-        args: [amount]
-      });
-      return { success: true, scrolled: amount };
-    }
-
-    if (toolName === "take_screenshot") {
+    if (toolName === "browser_screenshot" || toolName === "take_screenshot") {
       let dataUrl = null;
       if (activeTab && activeTab.windowId) {
         try {
@@ -1166,6 +1337,24 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
         return { success: true, message: "Screenshot tab berhasil dikirim ke Telegram." };
       }
       return { error: "Gagal mengambil screenshot tab." };
+    }
+
+    if (toolName === "browser_control_media") {
+      const action = toolArgs.action || "toggle";
+      const [res] = await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id },
+        func: (act) => {
+          const videos = Array.from(document.querySelectorAll('video, audio'));
+          const ytPlayBtn = document.querySelector('.ytp-play-button') || document.querySelector('button.ytp-play-button');
+          if (act === 'toggle' || act === 'play' || act === 'pause') {
+            if (ytPlayBtn) ytPlayBtn.click();
+            else videos.forEach(v => v.paused ? v.play() : v.pause());
+          }
+          return { action: act, playing: videos.some(v => !v.paused) };
+        },
+        args: [action]
+      });
+      return res?.result || { success: true, action };
     }
 
     if (toolName === "ask_clarification") {
@@ -1248,19 +1437,20 @@ function parseChatCompletionResponse(rawText) {
 }
 
 function getToolStepDescription(toolName, args) {
+  if (toolName === "browser_navigate" || toolName === "navigate_to") return `Membuka halaman web <code>${escapeHtml(args.url || '')}</code>...`;
+  if (toolName === "browser_snapshot" || toolName === "get_page_content") return `Mengambil snapshot DOM & Accessibility Tree...`;
+  if (toolName === "browser_click" || toolName === "click_element") return `Mengklik elemen ${args.backendNodeId ? `(ID: ${args.backendNodeId})` : `<i>"${escapeHtml(args.selector || '')}"</i>`} via CDP...`;
+  if (toolName === "browser_type" || toolName === "type_text") return `Mengisi teks ke form / input via CDP...`;
+  if (toolName === "browser_extract_table") return `Mengekstrak baris data tabel & quota grid...`;
+  if (toolName === "browser_screenshot" || toolName === "take_screenshot") return `Mengambil screenshot walkthrough...`;
+  if (toolName === "browser_list_tabs") return `Memeriksa daftar tab yang terbuka...`;
+  if (toolName === "browser_switch_tab" || toolName === "switch_tab") return `Beralih ke tab target...`;
+  if (toolName === "browser_wait") return `Menunggu rendering web (${args.duration_seconds || 2}s)...`;
   if (toolName === "open_linux_app") return `Membuka aplikasi Linux <code>${escapeHtml(args.app_name || args.command || '')}</code>...`;
   if (toolName === "run_bash_command") return `Menjalankan perintah bash <code>${escapeHtml((args.command || '').slice(0, 40))}</code>...`;
   if (toolName === "type_os_text") return `Mengetik teks ke jendela/terminal aktif...`;
   if (toolName === "read_os_file") return `Membaca file OS <code>${escapeHtml(args.path || '')}</code>...`;
   if (toolName === "write_os_file") return `Menulis file OS <code>${escapeHtml(args.path || '')}</code>...`;
-  if (toolName === "navigate_to") return `Membuka tab web baru <code>${escapeHtml(args.url || '')}</code>...`;
-  if (toolName === "new_tab") return `Membuka tab baru <code>${escapeHtml(args.url || '')}</code>...`;
-  if (toolName === "switch_tab") return `Beralih ke tab target...`;
-  if (toolName === "click_element") return `Mengklik elemen <i>"${escapeHtml(args.selector || '')}"</i>...`;
-  if (toolName === "type_text") return `Mengisi teks / password ke form browser...`;
-  if (toolName === "take_screenshot") return `Mengambil screenshot layar...`;
-  if (toolName === "get_page_content") return `Membaca struktur dan konten halaman aktif...`;
-  if (toolName === "scroll_page") return `Menggulir halaman web...`;
   if (toolName === "ask_clarification") return `Menyiapkan opsi konfirmasi...`;
   return `Menjalankan aksi ${escapeHtml(toolName)}...`;
 }
@@ -1334,34 +1524,36 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
     const customMemories = Array.isArray(storageData.custom_memories) ? storageData.custom_memories : [];
     const customSkills = Array.isArray(storageData.custom_skills) ? storageData.custom_skills : [];
 
-    // Build rich dynamic system prompt with Dual Full OS + Browser Capabilities
-    let systemInstruction = `You are Browser Agent (Master Autonomous System & Dual-Engine Agent) controlling both Google Chrome Browser AND the Host Linux OS Desktop/Terminal via Telegram remote control.
+    // Build rich dynamic system prompt with Master Browser Control Agent Instructions
+    let systemInstruction = `You are Browser Agent (Master Autonomous Browser Control Agent & Supreme System Controller) operating Google Chrome and Host OS via Telegram remote control.
 
-YOU HAVE FULL DUAL CAPABILITIES WITH ATOMIC TOOL ACCESS:
-A. Linux OS & Terminal Control:
-- 'open_linux_app': Launch Linux GUI apps (e.g. 'dolphin' for file manager, 'konsole' or 'xterm' for terminal, 'code' for VS Code, etc.).
-- 'run_bash_command': Execute shell commands directly on Linux OS (e.g. 'ls -la', 'ps aux', 'git status', 'mkdir', 'curl', 'ping', etc.).
-- 'type_os_text': Type text/commands into the active terminal window or desktop application.
-- 'read_os_file' / 'write_os_file': Read and write files directly on the local filesystem.
-- 'take_screenshot': Capture active tab or full Linux desktop screenshot.
+YOU HAVE FULL ACCESS TO OFFICIAL BROWSER AGENT CDP TOOLS:
+1. 🌐 Browser Navigation & Tab Control:
+- 'browser_navigate': Open target URL (e.g. 'http://localhost:20128/dashboard/quota', 'https://youtube.com', 'https://adsmanager.facebook.com').
+- 'browser_list_tabs': List all currently open tabs.
+- 'browser_switch_tab': Switch focus to target tab by title/URL keyword.
+- 'browser_wait': Wait for dynamic web apps/SPAs to settle.
 
-B. Chrome Browser Control:
-- 'navigate_to' / 'new_tab': Open target websites in dedicated tabs (never overwriting user active tab).
-- 'click_element': Click buttons, links, search triggers.
-- 'type_text': Type inputs into web forms.
-- 'get_page_content': Read DOM text, tables, and inputs.
-- 'scroll_page': Scroll page up/down.
-- 'ask_clarification': Present 3 clickable option buttons if ambiguous.
+2. 🎯 Zero-Hallucination CDP Inspection & Interaction:
+- 'browser_snapshot': Capture real-time Accessibility Tree with backendNodeIds of all buttons, inputs, links, and DOM elements.
+- 'browser_click': Click buttons/elements with 100% precision via CDP using 'backendNodeId'.
+- 'browser_type': Type text or passwords with exact input focus using 'backendNodeId'.
+- 'browser_extract_table': Auto-scroll and extract structured rows/metrics from tables (e.g. 9Router Quota Tracker, Meta Ads Manager grids).
+- 'browser_screenshot': Take a visual screenshot of the tab.
+
+3. 💻 Linux OS Desktop & Terminal Tools (Used ONLY when user explicitly asks for OS/Terminal commands):
+- 'open_linux_app': Launch desktop GUI apps (e.g. 'dolphin', 'konsole', 'code').
+- 'run_bash_command': Execute bash shell command on OS.
+- 'type_os_text': Type text into active OS window.
 
 Current Browser State:
 • Active Tab: ${activeTabInfo}
 
 MANDAT EKSEKUTIF UTAMA:
-1. Jika pengguna meminta membuka 9router, dashboard 9router, atau cek kuota/kredit: LANGSUNG BUKA 'http://localhost:20128/dashboard/quota' (atau 'http://localhost:20128/dashboard'), lalu panggil 'get_page_content' untuk membaca data kuota, dan BERIKAN LAPORAN RINCI tentang persentase/sisa kuota setiap provider (Gemini, Claude, DeepSeek, OpenAI)!
-2. Jika pengguna meminta membuka Dolphin, Konsole, Terminal, VS Code, atau aplikasi Linux: LANGSUNG PANGGIL 'open_linux_app' atau 'run_bash_command'!
-3. Jika pengguna meminta menjalankan perintah shell / cek file / mengetik di terminal: LANGSUNG PANGGIL 'run_bash_command' atau 'type_os_text'!
-4. Jika pengguna meminta membuka web / browsing / login: LANGSUNG PANGGIL 'navigate_to' atau 'click_element'!
-5. SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Dilarang berhenti tanpa menuliskan laporan akhir!`;
+1. 🌐 SEMUA TUGAS WEB & BROWSER (Contoh: "cek sisa kredit 9router", "cek usage 9router", "buka youtube", "analisis iklan meta", "isi form web"):
+   - WAJIB gunakan browser control tools: Buka halaman via 'browser_navigate' (atau 'browser_switch_tab'), ambil data via 'browser_extract_table' atau 'browser_snapshot', klik dengan 'browser_click', dan ketik dengan 'browser_type'.
+   - DILARANG menggunakan perintah curl/bash jika tugas tersebut adalah tugas web atau dashboard browser!
+2. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua angka, persentase sisa kuota setiap provider, atau data yang terekstrak secara komprehensif!`;
 
     // Inject Verified Facts & User Profile Memories
     if (userMemories.length > 0) {
