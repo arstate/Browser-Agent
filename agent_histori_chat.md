@@ -4291,6 +4291,17 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.18`, build `extension.crx` (480.2 KB).
 
+---
+
+### 🚀 Iterasi 395: Fix Nested Card Bento Bug in AI & Providers (v2.150.19)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki kartu "PC Bridge & Local Tools" yang tidak sengaja bersarang (*nested*) di dalam kartu "AI Image Generation".
+- **Implementasi & Perbaikan**:
+  - **Penataan Struktur HTML**: Melengkapi penutupan tag `div` pada `#card-image-gen` di [options.html](file:///home/arya/browser-agent/extension/options.html) sehingga `#card-pc-bridge` kembali menjadi bento card mandiri yang berdiri sejajar dengan rapi.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.19`, build `extension.crx` (480.2 KB).
+
 
 
 
