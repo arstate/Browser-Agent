@@ -4413,6 +4413,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.27`, build `extension.crx` (490.5 KB).
 
+---
+
+### 🚀 Iterasi 404: Dedicated Connected Apps Icons & Official Telegram Vector (v2.150.28)
+- **Kebutuhan Pengguna**:
+  - Menyimpan dan menggunakan berkas icon SVG resmi Telegram (`telegram-svgrepo-com.svg`) ke dalam direktori aset ekstensi `extension/icons/connected-apps/telegram.svg` agar tampilan kartu dan header konfigurasi lebih rapi dan profesional.
+- **Implementasi & Penataan Aset**:
+  - **Direktori Aset Khusus**: Membuat folder [extension/icons/connected-apps/](file:///home/arya/browser-agent/extension/icons/connected-apps/) dan menyalin icon SVG vektor resmi ke [telegram.svg](file:///home/arya/browser-agent/extension/icons/connected-apps/telegram.svg).
+  - **Integrasi UI**: Mengganti seluruh icon Telegram generik di [options.html](file:///home/arya/browser-agent/extension/options.html) (pada kartu Hub Katalog, Header Halaman Konfigurasi, dan Header Formulir Kredensial) dengan tag `<img>` yang memuat icon resmi SVG beresolusi tajam.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.28`, build `extension.crx` (489.6 KB).
+
 
 
 
