@@ -3483,6 +3483,45 @@ def handle_local_rpc(msg):
             }
         except subprocess.TimeoutExpired:
             return {"id": req_id, "status": "error", "error": f"Command timed out after {timeout}s"}
+    elif action == "open_application":
+        app_name = msg.get("app_name") or msg.get("command") or msg.get("app")
+        args = msg.get("args", "")
+        if not app_name:
+            return {"id": req_id, "status": "error", "error": "No application specified"}
+        try:
+            full_cmd = f"{app_name} {args}".strip()
+            log(f"Launching Linux GUI app in background: {full_cmd}")
+            subprocess.Popen(full_cmd, shell=True, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return {"id": req_id, "status": "ok", "message": f"Aplikasi '{app_name}' berhasil dibuka di Linux Desktop."}
+        except Exception as e:
+            return {"id": req_id, "status": "error", "error": str(e)}
+
+    elif action == "type_os_text":
+        text = msg.get("text", "")
+        press_enter = bool(msg.get("press_enter", False))
+        if not text:
+            return {"id": req_id, "status": "error", "error": "No text provided"}
+        try:
+            if os.path.exists('/usr/bin/xdotool'):
+                subprocess.run(['xdotool', 'type', '--delay', '15', text], capture_output=True)
+                if press_enter:
+                    time.sleep(0.1)
+                    subprocess.run(['xdotool', 'key', 'Return'], capture_output=True)
+                return {"id": req_id, "status": "ok", "message": f"Berhasil mengetik ke jendela aktif via xdotool"}
+            elif os.path.exists('/usr/bin/wtype'):
+                subprocess.run(['wtype', text], capture_output=True)
+                if press_enter:
+                    time.sleep(0.1)
+                    subprocess.run(['wtype', '-k', 'Return'], capture_output=True)
+                return {"id": req_id, "status": "ok", "message": f"Berhasil mengetik ke jendela aktif via wtype"}
+            elif os.path.exists('/usr/bin/ydotool'):
+                subprocess.run(['ydotool', 'type', text], capture_output=True)
+                if press_enter:
+                    time.sleep(0.1)
+                    subprocess.run(['ydotool', 'key', '28:1', '28:0'], capture_output=True)
+                return {"id": req_id, "status": "ok", "message": f"Berhasil mengetik ke jendela aktif via ydotool"}
+            else:
+                return {"id": req_id, "status": "error", "error": "Tidak ditemukan tool simulasi ketik (xdotool/wtype/ydotool)"}
         except Exception as e:
             return {"id": req_id, "status": "error", "error": str(e)}
 

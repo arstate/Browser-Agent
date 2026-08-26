@@ -4884,6 +4884,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.59`, build `extension.crx` (672.4 KB).
 
+---
+
+### 🚀 Iterasi 436: Full Linux OS Desktop & Terminal Remote Control Dual-Engine (v2.150.60)
+- **Kebutuhan Pengguna**:
+  - Mengaktifkan kemampuan kontrol penuh Linux OS Desktop dan Terminal dari bot Telegram (misal: membuka file manager Dolphin, membuka Konsole/Terminal, menjalankan bash script, mengetik ke jendela aktif Linux).
+- **Akar Masalah (Root Cause)**:
+  - Background Agent sebelumnya hanya dilengkapi dengan tool browser (`navigate_to`, `click_element`) dan system prompt menginstruksikan AI bahwa ia hanya bot browser.
+- **Implementasi & Peningkatan Sistem**:
+  - **Native Linux OS Actions**: Menambahkan RPC action `open_application` (meluncurkan GUI apps secara background detached via `subprocess.Popen`) dan `type_os_text` (simulasi ketik via `xdotool`/`wtype`/`ydotool`) di [native_host.py](file:///home/arya/browser-agent/host/native_host.py).
+  - **New Background Agent OS Tools**: Menambahkan `open_linux_app`, `run_bash_command`, `type_os_text`, `read_os_file`, `write_os_file` ke registry `BACKGROUND_AGENT_TOOLS` di [background.js](file:///home/arya/browser-agent/extension/background.js).
+  - **Dual-Engine System Instruction**: Memperbarui system instruction Master Agent dengan mandat eksplisit untuk mengeksekusi tool Linux OS dan browser secara proaktif tanpa menolak perintah pengguna.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.60`, build `extension.crx` (673.6 KB).
+
 
 
 

@@ -716,6 +716,83 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
 
 // Tool Definitions for Background Autonomous Agent Loop
 const BACKGROUND_AGENT_TOOLS = [
+  // A. Linux OS & Terminal Control Tools
+  {
+    type: "function",
+    function: {
+      name: "open_linux_app",
+      description: "Open/launch any Linux desktop application or GUI window (e.g. 'dolphin' for file manager, 'konsole' or 'xterm' for terminal, 'code' for VS Code, 'gedit', 'calc', etc.).",
+      parameters: {
+        type: "object",
+        properties: {
+          app_name: { type: "string", description: "Binary or command name (e.g. 'dolphin', 'konsole', 'code')" },
+          args: { type: "string", description: "Optional file path or arguments to pass to the application" }
+        },
+        required: ["app_name"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "run_bash_command",
+      description: "Execute a bash shell command directly on Linux OS and receive stdout/stderr output (e.g. 'ls -la', 'ps aux', 'git status', 'mkdir', 'curl', 'ping', 'cat', etc.).",
+      parameters: {
+        type: "object",
+        properties: {
+          command: { type: "string", description: "Bash shell command string to execute" },
+          cwd: { type: "string", description: "Optional working directory" }
+        },
+        required: ["command"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "type_os_text",
+      description: "Type text, commands, or send keystrokes into the active Linux Desktop window or Terminal.",
+      parameters: {
+        type: "object",
+        properties: {
+          text: { type: "string", description: "Text or command string to type" },
+          press_enter: { type: "boolean", description: "Whether to press Enter key after typing", default: true }
+        },
+        required: ["text"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "read_os_file",
+      description: "Read the text contents of a file from the Linux filesystem.",
+      parameters: {
+        type: "object",
+        properties: {
+          path: { type: "string", description: "Absolute path to file" }
+        },
+        required: ["path"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "write_os_file",
+      description: "Create or write text content to a file in the Linux filesystem.",
+      parameters: {
+        type: "object",
+        properties: {
+          path: { type: "string", description: "Absolute path to file" },
+          content: { type: "string", description: "Content to write" }
+        },
+        required: ["path", "content"]
+      }
+    }
+  },
+
+  // B. Chrome Browser Control Tools
   {
     type: "function",
     function: {
@@ -761,7 +838,7 @@ const BACKGROUND_AGENT_TOOLS = [
     type: "function",
     function: {
       name: "click_element",
-      description: "Click an interactive button, link, tab, or submit element on the active page.",
+      description: "Click an interactive button, link, tab, or submit element on the active web page.",
       parameters: {
         type: "object",
         properties: {
@@ -775,7 +852,7 @@ const BACKGROUND_AGENT_TOOLS = [
     type: "function",
     function: {
       name: "type_text",
-      description: "Type text or password into an input field or textarea on the active page.",
+      description: "Type text or password into an input field or textarea on the active web page.",
       parameters: {
         type: "object",
         properties: {
@@ -791,7 +868,7 @@ const BACKGROUND_AGENT_TOOLS = [
     type: "function",
     function: {
       name: "get_page_content",
-      description: "Read the current active page's title, URL, visible text content, and interactive inputs/buttons.",
+      description: "Read the current active web page's title, URL, visible text content, and interactive inputs/buttons.",
       parameters: {
         type: "object",
         properties: {}
@@ -893,6 +970,61 @@ async function getOrCreateTelegramAgentTab(targetUrl = null) {
 
 async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
   try {
+    // 1. Linux OS Tool Handlers
+    if (toolName === "open_linux_app") {
+      const app = toolArgs.app_name || toolArgs.command || "konsole";
+      const args = toolArgs.args || "";
+      const rpcRes = await sendNativeRpcInBackground("open_application", { app_name: app, args });
+      if (rpcRes && rpcRes.status === "ok") {
+        return { status: "success", message: `Aplikasi Linux '${app}' berhasil dibuka di Desktop.` };
+      }
+      return { error: rpcRes?.error || `Gagal membuka aplikasi '${app}'` };
+    }
+
+    if (toolName === "run_bash_command") {
+      const cmd = toolArgs.command || "";
+      const cwd = toolArgs.cwd || "";
+      const rpcRes = await sendNativeRpcInBackground("run_command", { command: cmd, cwd });
+      if (rpcRes && rpcRes.status === "ok") {
+        const out = (rpcRes.stdout || '').trim();
+        const err = (rpcRes.stderr || '').trim();
+        return {
+          status: "success",
+          stdout: out || "(perintah selesai tanpa output)",
+          stderr: err,
+          exit_code: rpcRes.exit_code
+        };
+      }
+      return { error: rpcRes?.error || "Gagal mengeksekusi perintah shell." };
+    }
+
+    if (toolName === "type_os_text") {
+      const text = toolArgs.text || "";
+      const press_enter = toolArgs.press_enter !== false;
+      const rpcRes = await sendNativeRpcInBackground("type_os_text", { text, press_enter });
+      if (rpcRes && rpcRes.status === "ok") {
+        return { status: "success", message: `Berhasil mengetik teks ke jendela aktif di Desktop.` };
+      }
+      return { error: rpcRes?.error || "Gagal mengetik ke jendela aktif." };
+    }
+
+    if (toolName === "read_os_file") {
+      const rpcRes = await sendNativeRpcInBackground("read_file", { path: toolArgs.path });
+      if (rpcRes && rpcRes.status === "ok") {
+        return { status: "success", content: rpcRes.content, path: rpcRes.path, size: rpcRes.size };
+      }
+      return { error: rpcRes?.error || "Gagal membaca file." };
+    }
+
+    if (toolName === "write_os_file") {
+      const rpcRes = await sendNativeRpcInBackground("write_file", { path: toolArgs.path, content: toolArgs.content });
+      if (rpcRes && rpcRes.status === "ok") {
+        return { status: "success", message: `Berhasil menulis file ${rpcRes.path}` };
+      }
+      return { error: rpcRes?.error || "Gagal menulis file." };
+    }
+
+    // 2. Chrome Browser Tool Handlers
     if (toolName === "navigate_to" || toolName === "new_tab") {
       let targetUrl = (toolArgs.url || "https://www.google.com").trim();
       if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
@@ -1047,12 +1179,17 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
 }
 
 function getToolStepDescription(toolName, args) {
+  if (toolName === "open_linux_app") return `Membuka aplikasi Linux <code>${escapeHtml(args.app_name || args.command || '')}</code>...`;
+  if (toolName === "run_bash_command") return `Menjalankan perintah bash <code>${escapeHtml((args.command || '').slice(0, 40))}</code>...`;
+  if (toolName === "type_os_text") return `Mengetik teks ke jendela/terminal aktif...`;
+  if (toolName === "read_os_file") return `Membaca file OS <code>${escapeHtml(args.path || '')}</code>...`;
+  if (toolName === "write_os_file") return `Menulis file OS <code>${escapeHtml(args.path || '')}</code>...`;
   if (toolName === "navigate_to") return `Membuka tab web baru <code>${escapeHtml(args.url || '')}</code>...`;
   if (toolName === "new_tab") return `Membuka tab baru <code>${escapeHtml(args.url || '')}</code>...`;
   if (toolName === "switch_tab") return `Beralih ke tab target...`;
   if (toolName === "click_element") return `Mengklik elemen <i>"${escapeHtml(args.selector || '')}"</i>...`;
   if (toolName === "type_text") return `Mengisi teks / password ke form browser...`;
-  if (toolName === "take_screenshot") return `Mengambil tangkapan layar tab Chrome...`;
+  if (toolName === "take_screenshot") return `Mengambil screenshot layar...`;
   if (toolName === "get_page_content") return `Membaca struktur dan konten halaman aktif...`;
   if (toolName === "scroll_page") return `Menggulir halaman web...`;
   if (toolName === "ask_clarification") return `Menyiapkan opsi konfirmasi...`;
@@ -1106,22 +1243,33 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
       if (t) activeTabInfo = `Title: "${t.title || 'Untitled'}" | URL: ${t.url || 'about:blank'}`;
     } catch(e) {}
 
-    // Build rich dynamic system prompt with Master Agent Instructions, Brain facts, and Skills
-    let systemInstruction = `You are Browser Agent (Master Autonomous Agent) controlling the Chrome browser and operating systems via Telegram remote control.
-You have FULL access to autonomous tools to control the browser:
-- 'navigate_to': Open websites, dashboards, servers, web pages (e.g. 9router.com, youtube.com, 192.168.1.1, etc.).
-- 'type_text': Type login usernames, passwords, search queries into form inputs.
-- 'click_element': Click buttons (e.g. Login, Submit, Next, Search), links, or interactive items.
-- 'get_page_content': Inspect page text and DOM elements.
-- 'take_screenshot': Take a snapshot and send it to Telegram.
-- 'ask_clarification': Present 3 clickable option buttons if the command is ambiguous.
+    // Build rich dynamic system prompt with Dual Full OS + Browser Capabilities
+    let systemInstruction = `You are Browser Agent (Master Autonomous System & Dual-Engine Agent) controlling both Google Chrome Browser AND the Host Linux OS Desktop/Terminal via Telegram remote control.
+
+YOU HAVE FULL DUAL CAPABILITIES WITH ATOMIC TOOL ACCESS:
+A. Linux OS & Terminal Control:
+- 'open_linux_app': Launch Linux GUI apps (e.g. 'dolphin' for file manager, 'konsole' or 'xterm' for terminal, 'code' for VS Code, etc.).
+- 'run_bash_command': Execute shell commands directly on Linux OS (e.g. 'ls -la', 'ps aux', 'git status', 'mkdir', 'curl', 'ping', etc.).
+- 'type_os_text': Type text/commands into the active terminal window or desktop application.
+- 'read_os_file' / 'write_os_file': Read and write files directly on the local filesystem.
+- 'take_screenshot': Capture active tab or full Linux desktop screenshot.
+
+B. Chrome Browser Control:
+- 'navigate_to' / 'new_tab': Open target websites in dedicated tabs (never overwriting user active tab).
+- 'click_element': Click buttons, links, search triggers.
+- 'type_text': Type inputs into web forms.
+- 'get_page_content': Read DOM text and inputs.
+- 'scroll_page': Scroll page up/down.
+- 'ask_clarification': Present 3 clickable option buttons if ambiguous.
 
 Current Browser State:
 • Active Tab: ${activeTabInfo}
 
-MANDAT EKSEKUTIF:
-1. Jika pengguna meminta untuk membuka dashboard, server, youtube, mencari sesuatu, login, atau mengontrol browser: LANGSUNG PANGGIL TOOL (seperti 'navigate_to', 'type_text', 'click_element', 'take_screenshot')! Jangan hanya berbicara atau membalas teks pasif.
-2. Bertindaklah proaktif dan selesaikan tugas secara tuntas langkah demi langkah.`;
+MANDAT EKSEKUTIF UTAMA:
+1. Jika pengguna meminta membuka Dolphin, Konsole, Terminal, VS Code, atau aplikasi Linux: LANGSUNG PANGGIL 'open_linux_app' atau 'run_bash_command'!
+2. Jika pengguna meminta menjalankan perintah shell / cek file / mengetik di terminal: LANGSUNG PANGGIL 'run_bash_command' atau 'type_os_text'!
+3. Jika pengguna meminta membuka web / browsing / login: LANGSUNG PANGGIL 'navigate_to' atau 'click_element'!
+4. DILARANG KERAS menolak atau mengatakan "saya hanya bot browser". Anda adalah Full System Agent dengan akses Native Host OS! Selalu panggil tool yang sesuai secara langsung!`;
 
     if (storageData.cached_persistent_brain && Array.isArray(storageData.cached_persistent_brain.facts)) {
       const facts = storageData.cached_persistent_brain.facts.slice(0, 15);
