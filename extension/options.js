@@ -3796,12 +3796,13 @@ function renderTelegramLogs() {
 
 // Telegram API Helper: Send Message
 async function telegramSendMessage(botToken, chatId, text, replyMarkup = null) {
-  if (!botToken || !chatId) return false;
+  if (!botToken || !chatId) return null;
   try {
     const payload = {
       chat_id: chatId,
       text: text,
-      parse_mode: 'HTML'
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
     };
     if (replyMarkup) {
       payload.reply_markup = replyMarkup;
@@ -3811,11 +3812,35 @@ async function telegramSendMessage(botToken, chatId, text, replyMarkup = null) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const json = await res.json();
-    return json.ok;
+    return await res.json();
   } catch (err) {
     console.error("Failed to send Telegram message:", err);
-    return false;
+    return null;
+  }
+}
+
+// Telegram API Helper: Edit Message (Anti-Spam In-Place Updates)
+async function telegramEditMessage(botToken, chatId, messageId, text, replyMarkup = null) {
+  if (!botToken || !chatId || !messageId) return null;
+  try {
+    const payload = {
+      chat_id: chatId,
+      message_id: messageId,
+      text: text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+    if (replyMarkup) {
+      payload.reply_markup = replyMarkup;
+    }
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (err) {
+    return null;
   }
 }
 
@@ -4049,12 +4074,19 @@ async function telegramSendPhoto(botToken, chatId, photoDataUrlOrBase64, caption
   }
 }
 
-// Background Autonomous Task Runner for Telegram Remote Control
+// Background Autonomous Task Runner for Telegram Remote Control (Anti-Spam In-Place Editing)
 async function executeAutonomousBackgroundTelegramTask(text, senderId, senderName, botToken) {
   const lower = text.toLowerCase();
   let modelUsed = "";
   let agentUsed = "General Browser Assistant";
   let responseText = "";
+  let statusMsgId = null;
+
+  // Send initial progress message
+  const initRes = await telegramSendMessage(botToken, senderId, `⏳ <b>Browser Agent:</b> Memulai eksekusi instruksi...`);
+  if (initRes && initRes.ok && initRes.result?.message_id) {
+    statusMsgId = initRes.result.message_id;
+  }
 
   // 1. Check for YouTube / Media playback intent: e.g. "buka yt play deny caknan", "putar lagu X di youtube"
   const isYtPlay = (lower.includes("youtube") || lower.includes("yt") || lower.includes("play") || lower.includes("putar") || lower.includes("lagu") || lower.includes("musik"));
@@ -4062,7 +4094,10 @@ async function executeAutonomousBackgroundTelegramTask(text, senderId, senderNam
   if (isYtPlay) {
     try {
       const cleanQuery = text.replace(/^(buka|tolong|coba|play|putar|cari|di|youtube|yt|bro|gan|lagu|musik)+/gi, '').trim() || text;
-      await telegramSendMessage(botToken, senderId, `⏳ <b>Browser Assistant:</b> 🌐 Membuka YouTube untuk mencari <i>"${escapeHtml(cleanQuery)}"</i>...`);
+      
+      if (statusMsgId) {
+        await telegramEditMessage(botToken, senderId, statusMsgId, `⏳ <b>Browser Assistant:</b> 🌐 Membuka YouTube untuk mencari "<i>${escapeHtml(cleanQuery)}</i>"...`);
+      }
       
       const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(cleanQuery)}`;
       const tab = await chrome.tabs.create({ url: searchUrl, active: true });
@@ -4070,7 +4105,9 @@ async function executeAutonomousBackgroundTelegramTask(text, senderId, senderNam
       // Wait for YouTube search tab to load
       await new Promise(r => setTimeout(r, 3500));
       
-      await telegramSendMessage(botToken, senderId, `⏳ <b>Browser Assistant:</b> 🔍 Menemukan video YouTube dan mengaktifkan playback...`);
+      if (statusMsgId) {
+        await telegramEditMessage(botToken, senderId, statusMsgId, `⏳ <b>Browser Assistant:</b> 🔍 Menemukan video dan mengaktifkan playback...`);
+      }
 
       // Inject script to click first video result
       try {
@@ -4107,7 +4144,12 @@ async function executeAutonomousBackgroundTelegramTask(text, senderId, senderNam
       } catch(e) {}
 
       responseText = `Video YouTube untuk pencarian <b>"${escapeHtml(cleanQuery)}"</b> telah berhasil dibuka dan sedang diputar di browser!`;
-      await telegramSendMessage(botToken, senderId, `✅ <b>[Browser Agent Selesai]</b>\n\n${responseText}`);
+      
+      if (statusMsgId) {
+        await telegramEditMessage(botToken, senderId, statusMsgId, `✅ <b>Browser Agent:</b> Tugas selesai dijalankan!`);
+      }
+      
+      await telegramSendMessage(botToken, senderId, `🤖 <b>[Autonomous Browser Action]</b>\n\n${responseText}`);
 
       if (tabDataUrl) {
         await telegramSendPhoto(botToken, senderId, tabDataUrl, `📸 <b>Tampilan YouTube Player Aktif</b>`);
@@ -4131,7 +4173,11 @@ async function executeAutonomousBackgroundTelegramTask(text, senderId, senderNam
       renderTelegramLogs();
       return;
     } catch(err) {
-      await telegramSendMessage(botToken, senderId, `⚠️ Gagal memutar video di YouTube: ${err.message}`);
+      if (statusMsgId) {
+        await telegramEditMessage(botToken, senderId, statusMsgId, `❌ <b>Gagal memutar video di YouTube:</b> ${err.message}`);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal memutar video di YouTube: ${err.message}`);
+      }
     }
   }
 
@@ -4141,7 +4187,10 @@ async function executeAutonomousBackgroundTelegramTask(text, senderId, senderNam
     try {
       let targetUrl = urlMatch[0];
       if (!targetUrl.startsWith("http")) targetUrl = "https://" + targetUrl;
-      await telegramSendMessage(botToken, senderId, `⏳ <b>Browser Assistant:</b> 🌐 Membuka link: <code>${escapeHtml(targetUrl)}</code>...`);
+      
+      if (statusMsgId) {
+        await telegramEditMessage(botToken, senderId, statusMsgId, `⏳ <b>Browser Assistant:</b> 🌐 Membuka link: <code>${escapeHtml(targetUrl)}</code>...`);
+      }
       const tab = await chrome.tabs.create({ url: targetUrl, active: true });
       await new Promise(r => setTimeout(r, 3000));
       
@@ -4151,23 +4200,39 @@ async function executeAutonomousBackgroundTelegramTask(text, senderId, senderNam
       } catch(e) {}
 
       responseText = `Halaman web <b>${escapeHtml(targetUrl)}</b> telah berhasil dibuka di browser Chrome!`;
-      await telegramSendMessage(botToken, senderId, `✅ <b>[Browser Agent Selesai]</b>\n\n${responseText}`);
+      
+      if (statusMsgId) {
+        await telegramEditMessage(botToken, senderId, statusMsgId, `✅ <b>Browser Agent:</b> Tugas selesai dijalankan!`);
+      }
+      
+      await telegramSendMessage(botToken, senderId, `🤖 <b>[General Browser Assistant]</b>\n\n${responseText}`);
+      
       if (tabDataUrl) {
         await telegramSendPhoto(botToken, senderId, tabDataUrl, `📸 <b>Tampilan Halaman: ${escapeHtml(targetUrl)}</b>`);
       }
       return;
     } catch(err) {
-      await telegramSendMessage(botToken, senderId, `⚠️ Gagal membuka URL: ${err.message}`);
+      if (statusMsgId) {
+        await telegramEditMessage(botToken, senderId, statusMsgId, `❌ <b>Gagal membuka URL:</b> ${err.message}`);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal membuka URL: ${err.message}`);
+      }
     }
   }
 
   // 3. Fallback to Real AI Engine Execution
   try {
-    await telegramSendMessage(botToken, senderId, `⏳ <i>Browser Agent sedang memproses instruksi dengan AI Engine...</i>`);
+    if (statusMsgId) {
+      await telegramEditMessage(botToken, senderId, statusMsgId, `⏳ <i>Browser Agent sedang memproses dengan AI Engine...</i>`);
+    }
     const aiRes = await executeAIResponseForTelegram(text, senderName);
     responseText = aiRes.responseText;
     modelUsed = aiRes.modelUsed;
     agentUsed = aiRes.agentUsed;
+
+    if (statusMsgId) {
+      await telegramEditMessage(botToken, senderId, statusMsgId, `✅ <b>Browser Agent:</b> Selesai!`);
+    }
 
     await telegramSendMessage(botToken, senderId, `🤖 <b>[${modelUsed}]</b>\n\n${responseText}`);
 
@@ -4187,7 +4252,11 @@ async function executeAutonomousBackgroundTelegramTask(text, senderId, senderNam
     await chrome.storage.local.set({ telegram_bot_logs: telegramBotLogs });
     renderTelegramLogs();
   } catch(err) {
-    await telegramSendMessage(botToken, senderId, `⚠️ Terjadi kesalahan saat memproses: ${err.message}`);
+    if (statusMsgId) {
+      await telegramEditMessage(botToken, senderId, statusMsgId, `❌ <b>Error:</b> ${err.message}`);
+    } else {
+      await telegramSendMessage(botToken, senderId, `⚠️ Terjadi kesalahan saat memproses: ${err.message}`);
+    }
   }
 }
 

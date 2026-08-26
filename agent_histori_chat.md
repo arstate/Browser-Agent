@@ -4518,6 +4518,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.35`, build `extension.crx` (498.3 KB).
 
+---
+
+### 🚀 Iterasi 412: Anti-Spam Single In-Place Status Editing & Clean Short Progress for Telegram Bot (v2.150.36)
+- **Kebutuhan Pengguna**:
+  - Mencegah spam pesan bersambung di Telegram saat proses AI berjalan, mengubah sistem notifikasi menjadi **edit pesan in-place** pada satu balon pesan (`editMessageText`), serta memformat status langkah menjadi ringkas dan bersih (misal: *"Menjalankan perintah terminal..."*) tanpa mencetak seluruh kode/script panjang ke chat.
+- **Implementasi & Peningkatan Sistem**:
+  - **In-Place Telegram Status Updater (`updateTelegramLiveStatus` & `telegramEditMessageFromSidepanel`)**: Hanya membuat 1 pesan progres awal, kemudian memperbarui teks pada pesan yang sama saat langkah bertambah tanpa memicu notifikasi beruntun.
+  - **Clean Short Action Summaries**: Menyederhanakan seluruh deskripsi alat (tool execution) menjadi 1 baris bersih tanpa men-dump query SQL, kode Python, atau perintah terminal mentah.
+  - **Clean Final Response**: Saat tugas selesai, balon progres di-update menjadi `✅ Browser Agent: Tugas selesai dijalankan!` lalu mengirimkan 1 respons final dari AI (beserta foto tangkapan layar jika ada).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.36`, build `extension.crx` (499.1 KB).
+
 
 
 
