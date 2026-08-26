@@ -3659,6 +3659,22 @@ async function initTelegramBotSettings() {
   }
 }
 
+// Helper: Extract array of clean Telegram User IDs from string/array
+function getAuthorizedTelegramIds(authorizedConfig) {
+  if (!authorizedConfig) return [];
+  if (Array.isArray(authorizedConfig)) return authorizedConfig.map(s => String(s).trim()).filter(Boolean);
+  return String(authorizedConfig)
+    .split(/[\s,;]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function isTelegramUserAuthorized(userId, authorizedConfig) {
+  const list = getAuthorizedTelegramIds(authorizedConfig);
+  if (list.length === 0) return true;
+  return list.includes(String(userId).trim());
+}
+
 function updateTelegramStatusUI() {
   const statusPill = document.getElementById('telegram-bot-status-pill');
   const statusDot = document.getElementById('telegram-status-dot');
@@ -3670,12 +3686,12 @@ function updateTelegramStatusUI() {
   const hubStatusText = document.getElementById('hub-telegram-status-text');
   const hubUserInfo = document.getElementById('hub-telegram-user-info');
 
-  const isOnline = telegramConfig.enabled && !!telegramConfig.bot_token;
+  const isOnline = telegramConfig.enabled && telegramConfig.bot_token;
 
   if (statusPill && statusDot && statusText) {
     if (isOnline) {
       statusPill.style.background = 'rgba(16, 185, 129, 0.15)';
-      statusPill.style.borderColor = 'rgba(52, 211, 153, 0.35)';
+      statusPill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
       statusPill.style.color = '#34d399';
       statusDot.style.background = '#10B981';
       statusDot.style.boxShadow = '0 0 8px #10B981';
@@ -3695,12 +3711,12 @@ function updateTelegramStatusUI() {
   if (hubStatusPill && hubStatusDot && hubStatusText) {
     if (isOnline) {
       hubStatusPill.style.background = 'rgba(16, 185, 129, 0.15)';
-      hubStatusPill.style.borderColor = 'rgba(52, 211, 153, 0.35)';
+      hubStatusPill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
       hubStatusPill.style.color = '#34d399';
       hubStatusDot.style.background = '#10B981';
       hubStatusDot.style.boxShadow = '0 0 8px #10B981';
       hubStatusDot.style.animation = 'pulseLiveGreen 2s infinite';
-      hubStatusText.textContent = 'Online';
+      hubStatusText.textContent = 'Online (Standby)';
     } else {
       hubStatusPill.style.background = 'rgba(100, 116, 139, 0.15)';
       hubStatusPill.style.borderColor = 'rgba(100, 116, 139, 0.3)';
@@ -3713,8 +3729,10 @@ function updateTelegramStatusUI() {
   }
 
   if (hubUserInfo) {
-    if (telegramConfig.authorized_chat_id) {
-      hubUserInfo.innerHTML = `Whitelist: <code style="color: #38bdf8;">ID ${escapeHtml(telegramConfig.authorized_chat_id)}</code>`;
+    const authList = getAuthorizedTelegramIds(telegramConfig.authorized_chat_id);
+    if (authList.length > 0) {
+      const displayStr = authList.length === 1 ? `ID ${authList[0]}` : `${authList.length} User (${authList.join(', ')})`;
+      hubUserInfo.innerHTML = `Whitelist: <code style="color: #38bdf8;">${escapeHtml(displayStr)}</code>`;
     } else {
       hubUserInfo.innerHTML = `Whitelist: <code style="color: #cbd5e1;">Belum Diset</code>`;
     }
@@ -4378,8 +4396,8 @@ async function handleTelegramIncomingUpdate(update) {
     const fromId = String(cb.from?.id || '');
     const data = cb.data || '';
 
-    // Whitelist check
-    if (telegramConfig.authorized_chat_id && fromId !== String(telegramConfig.authorized_chat_id)) {
+    // Whitelist check (Multi-User Support)
+    if (!isTelegramUserAuthorized(fromId, telegramConfig.authorized_chat_id)) {
       return;
     }
 
@@ -4575,17 +4593,17 @@ async function handleTelegramIncomingUpdate(update) {
   const text = msg.text.trim();
 
   // If authorized_chat_id is empty, auto-detect on first message if user desires
-  if (!telegramConfig.authorized_chat_id) {
+  const authList = getAuthorizedTelegramIds(telegramConfig.authorized_chat_id);
+  if (authList.length === 0) {
     telegramConfig.authorized_chat_id = senderId;
     const inputChatId = document.getElementById('input-telegram-chatid');
     if (inputChatId) inputChatId.value = senderId;
     chrome.storage.local.set({ telegram_bot_config: telegramConfig });
-    await telegramSendMessage(botToken, senderId, `🎉 <b>Selamat Datang, ${escapeHtml(senderName)}!</b>\nID Akun Anda <code>${senderId}</code> telah berhasil didaftarkan sebagai pemilik resmi Browser Agent.`);
-  }
-
-  // Security Whitelist Filter
-  if (String(telegramConfig.authorized_chat_id) !== senderId) {
-    await telegramSendMessage(botToken, senderId, `⛔ <b>Akses Ditolak.</b> Bot ini diproteksi khusus untuk pemilik terdaftar.`);
+    updateTelegramStatusUI();
+    await telegramSendMessage(botToken, senderId, `🎉 <b>Selamat Datang, ${escapeHtml(senderName)}!</b>\nID Akun Anda <code>${senderId}</code> telah berhasil didaftarkan ke whitelist resmi Browser Agent.`);
+  } else if (!isTelegramUserAuthorized(senderId, telegramConfig.authorized_chat_id)) {
+    // Security Whitelist Filter (Multi-User)
+    await telegramSendMessage(botToken, senderId, `⛔ <b>Akses Ditolak.</b> ID Akun Anda (<code>${senderId}</code>) tidak terdaftar dalam whitelist pengguna resmi bot ini.`);
     return;
   }
 
@@ -4941,7 +4959,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Auto-detect Telegram ID
+  // Auto-detect Telegram ID (Multi-User Whitelist Support)
   document.getElementById('btn-autodetect-telegram-id')?.addEventListener('click', async () => {
     const inputToken = document.getElementById('input-telegram-token');
     const token = inputToken ? inputToken.value.trim() : telegramConfig.bot_token;
@@ -4953,16 +4971,34 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates`);
       const json = await res.json();
       if (json.ok && Array.isArray(json.result) && json.result.length > 0) {
-        const lastMsg = json.result[json.result.length - 1].message;
+        // Look for the most recent message with a sender
+        let lastMsg = null;
+        for (let i = json.result.length - 1; i >= 0; i--) {
+          if (json.result[i].message && json.result[i].message.from) {
+            lastMsg = json.result[i].message;
+            break;
+          }
+        }
+
         if (lastMsg && lastMsg.from) {
           const detectedId = String(lastMsg.from.id);
           const detectedName = lastMsg.from.first_name || 'User';
           const inputChatId = document.getElementById('input-telegram-chatid');
-          if (inputChatId) inputChatId.value = detectedId;
-          telegramConfig.authorized_chat_id = detectedId;
-          await chrome.storage.local.set({ telegram_bot_config: telegramConfig });
-          showSaveToast(`ID Akun ${detectedName} (${detectedId}) berhasil dikunci!`);
-          alert(`✅ ID Berhasil Dideteksi & Dikunci!\n\nNama: ${detectedName}\nID Telegram: ${detectedId}\n\nHanya akun ini yang dapat memerintah bot.`);
+          
+          const existingIds = getAuthorizedTelegramIds(inputChatId ? inputChatId.value : telegramConfig.authorized_chat_id);
+          if (!existingIds.includes(detectedId)) {
+            existingIds.push(detectedId);
+            const newIdsStr = existingIds.join(', ');
+            if (inputChatId) inputChatId.value = newIdsStr;
+            telegramConfig.authorized_chat_id = newIdsStr;
+            await chrome.storage.local.set({ telegram_bot_config: telegramConfig });
+            updateTelegramStatusUI();
+            showSaveToast(`ID Akun ${detectedName} (${detectedId}) berhasil ditambahkan ke whitelist!`);
+            alert(`✅ ID Berhasil Dideteksi & Ditambahkan ke Whitelist!\n\nNama: ${detectedName}\nID Telegram: ${detectedId}\n\nTotal User Whitelist: ${existingIds.length} akun (${newIdsStr})`);
+          } else {
+            showSaveToast(`ID Telegram ${detectedId} (${detectedName}) sudah ada di whitelist.`);
+            alert(`ℹ️ ID Telegram ${detectedId} (${detectedName}) sudah terdaftar dalam whitelist.`);
+          }
           return;
         }
       }

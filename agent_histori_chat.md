@@ -4583,6 +4583,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.40`, build `extension.crx` (669.0 KB).
 
+---
+
+### 🚀 Iterasi 417: Multi-User Whitelist Support for Telegram Bot Remote Control (v2.150.41)
+- **Kebutuhan Pengguna**:
+  - Mengizinkan penambahan lebih dari 1 user Telegram (multi-user whitelist) yang dapat mengontrol dan mengeksekusi perintah Browser Agent melalui bot Telegram.
+- **Implementasi & Peningkatan Sistem**:
+  - **Multi-User Whitelist Parsing & Validation (`getAuthorizedTelegramIds` & `isTelegramUserAuthorized`)**: Mendukung input multiple ID Telegram yang dipisahkan tanda koma (`,`), spasi, titik koma (`;`), atau newline pada konfigurasi `authorized_chat_id`.
+  - **Multi-User Smart Auto-Detection (`btn-autodetect-telegram-id`)**: Tombol "Deteksi ID Otomatis" kini secara cerdas memeriksa apakah ID baru sudah ada dalam daftar; jika belum, ID tersebut langsung di-append ke daftar whitelist yang sudah ada tanpa menimpa ID lama.
+  - **Multi-User Real-time Security Verification**: Memperbarui otorisasi pesan dan callback query di `options.js` dan `sidepanel.js` agar memeriksa seluruh ID dalam array whitelist.
+  - **UI & Hub Status Update**: Menampilkan jumlah akun whitelist yang terdaftar (contoh: `2 User (5871099248, 123456789)`) pada status hub.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.41`, build `extension.crx` (669.7 KB).
+
 
 
 

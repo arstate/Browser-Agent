@@ -1265,7 +1265,7 @@ const AGENT_TOOLS = [
         type: "object",
         properties: {
           bot_token: { type: "string", description: "The HTTP API bot token from @BotFather (e.g. '123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ')" },
-          authorized_chat_id: { type: "string", description: "The authorized user Telegram ID (e.g. '5871099248') for private whitelist security" },
+          authorized_chat_id: { type: "string", description: "The authorized user Telegram ID(s), e.g. '5871099248' or comma-separated '5871099248, 123456789' for multi-user whitelist security" },
           enabled: { type: "boolean", description: "Whether to enable the Telegram bot listener daemon (default true)" },
           auto_model: { type: "boolean", description: "Enable dynamic model routing (default true)" },
           auto_agent: { type: "boolean", description: "Enable smart agent routing (default true)" },
@@ -3726,6 +3726,22 @@ let activeTelegramSession = null;
 let lastCapturedScreenshotDataUrl = null;
 let lastTelegramEditTimestamp = 0;
 
+// Helper: Extract array of clean Telegram User IDs from string/array
+function getAuthorizedTelegramIds(authorizedConfig) {
+  if (!authorizedConfig) return [];
+  if (Array.isArray(authorizedConfig)) return authorizedConfig.map(s => String(s).trim()).filter(Boolean);
+  return String(authorizedConfig)
+    .split(/[\s,;]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function isTelegramUserAuthorized(userId, authorizedConfig) {
+  const list = getAuthorizedTelegramIds(authorizedConfig);
+  if (list.length === 0) return true;
+  return list.includes(String(userId).trim());
+}
+
 // Helper: Cleanly format Markdown text specifically for Telegram HTML parse mode without altering Browser Agent UI
 function formatMarkdownForTelegram(rawText) {
   if (!rawText || typeof rawText !== 'string') return '';
@@ -3998,8 +4014,8 @@ async function handleTelegramIncomingUpdateInSidepanel(update, tgCfg) {
     const fromId = String(cb.from?.id || '');
     const data = cb.data || '';
 
-    // Whitelist check
-    if (tgCfg.authorized_chat_id && fromId !== String(tgCfg.authorized_chat_id)) {
+    // Whitelist check (Multi-User Support)
+    if (!isTelegramUserAuthorized(fromId, tgCfg.authorized_chat_id)) {
       return;
     }
 
@@ -4136,15 +4152,14 @@ async function handleTelegramIncomingUpdateInSidepanel(update, tgCfg) {
   const text = msg.text.trim();
 
   // If authorized_chat_id is empty, auto-detect on first message
-  if (!tgCfg.authorized_chat_id) {
+  const authList = getAuthorizedTelegramIds(tgCfg.authorized_chat_id);
+  if (authList.length === 0) {
     tgCfg.authorized_chat_id = senderId;
     await chrome.storage.local.set({ telegram_bot_config: tgCfg });
-    await telegramSendMessageFromSidepanel(botToken, senderId, `🎉 <b>Selamat Datang, ${escapeHtml(senderName)}!</b>\nID Akun Anda <code>${senderId}</code> telah berhasil didaftarkan sebagai pemilik resmi Browser Agent.`);
-  }
-
-  // Security Whitelist Filter
-  if (String(tgCfg.authorized_chat_id) !== senderId) {
-    await telegramSendMessageFromSidepanel(botToken, senderId, `⛔ <b>Akses Ditolak.</b> Bot ini diproteksi khusus untuk pemilik terdaftar.`);
+    await telegramSendMessageFromSidepanel(botToken, senderId, `🎉 <b>Selamat Datang, ${escapeHtml(senderName)}!</b>\nID Akun Anda <code>${senderId}</code> telah berhasil didaftarkan ke whitelist resmi Browser Agent.`);
+  } else if (!isTelegramUserAuthorized(senderId, tgCfg.authorized_chat_id)) {
+    // Security Whitelist Filter (Multi-User)
+    await telegramSendMessageFromSidepanel(botToken, senderId, `⛔ <b>Akses Ditolak.</b> ID Akun Anda (<code>${senderId}</code>) tidak terdaftar dalam whitelist pengguna resmi bot ini.`);
     return;
   }
 
