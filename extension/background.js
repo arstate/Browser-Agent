@@ -182,23 +182,49 @@ function sendNativeRpcInBackground(action, payload = {}) {
     try {
       const port = chrome.runtime.connectNative("com.antigravity.chrome.agent");
       const msgId = "rpc_" + Date.now();
+      let chunkBuffer = null;
+
       const handler = (res) => {
-        if (res && res.id === msgId) {
-          port.disconnect();
-          resolve(res);
+        if (!res || res.id !== msgId) return;
+
+        // Handle chunked response (payload > 500KB)
+        if (res.is_chunk) {
+          if (!chunkBuffer) {
+            chunkBuffer = { chunks: new Array(res.total_chunks), received: 0 };
+          }
+          chunkBuffer.chunks[res.chunk_index] = res.chunk_data;
+          chunkBuffer.received++;
+          if (chunkBuffer.received === res.total_chunks) {
+            const fullJsonStr = chunkBuffer.chunks.join('');
+            try {
+              const fullMsg = JSON.parse(fullJsonStr);
+              port.disconnect();
+              resolve(fullMsg);
+            } catch (e) {
+              port.disconnect();
+              resolve({ status: "error", error: "Failed to parse reassembled RPC chunks: " + e.message });
+            }
+          }
+          return; // Wait for remaining chunks before disconnecting
         }
+
+        // Regular non-chunked response
+        port.disconnect();
+        resolve(res);
       };
+
       port.onMessage.addListener(handler);
       port.onDisconnect.addListener(() => {
-        // Safely access chrome.runtime.lastError to prevent unchecked error log
         const err = chrome.runtime.lastError;
         resolve(null);
       });
-      port.postMessage({ id: msgId, action, payload });
+
+      port.postMessage({ id: msgId, action, ...payload });
+
       setTimeout(() => {
         try { port.disconnect(); } catch(e) {}
         resolve(null);
-      }, 15000);
+      }, 20000);
     } catch (e) {
       resolve(null);
     }

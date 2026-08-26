@@ -3383,10 +3383,26 @@ def handle_local_rpc(msg):
                     log(f"PIL ImageGrab fallback note: {pe}")
 
             if success and os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 0:
-                with open(tmp_path, "rb") as f:
+                final_path = tmp_path
+                mime_type = "image/png"
+                try:
+                    from PIL import Image
+                    with Image.open(tmp_path) as im:
+                        if im.mode in ("RGBA", "P"):
+                            im = im.convert("RGB")
+                        im.thumbnail((1920, 1080), Image.Resampling.LANCZOS)
+                        opt_path = "/tmp/browser_agent_os_screenshot_opt.jpg"
+                        im.save(opt_path, "JPEG", quality=85, optimize=True)
+                        if os.path.exists(opt_path) and os.path.getsize(opt_path) > 0:
+                            final_path = opt_path
+                            mime_type = "image/jpeg"
+                except Exception as opt_err:
+                    log(f"Screenshot compression note: {opt_err}")
+
+                with open(final_path, "rb") as f:
                     b64 = base64.b64encode(f.read()).decode("utf-8")
-                data_url = f"data:image/png;base64,{b64}"
-                return {"id": req_id, "status": "ok", "data_url": data_url, "file_path": tmp_path}
+                data_url = f"data:{mime_type};base64,{b64}"
+                return {"id": req_id, "status": "ok", "data_url": data_url, "file_path": final_path}
             else:
                 return {"id": req_id, "status": "error", "error": "Gagal mengambil screenshot desktop Linux"}
         except Exception as e:

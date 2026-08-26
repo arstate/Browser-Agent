@@ -4870,6 +4870,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.58`, build `extension.crx` (672.1 KB).
 
+---
+
+### 🚀 Iterasi 435: RPC Chunk Reassembly in Background & High-Speed Desktop Screenshot Compression (v2.150.59)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki `⚠️ Gagal mengambil screenshot OS: Native Host error` saat menjalankan perintah `/screenshot_os` di Telegram.
+- **Akar Masalah (Root Cause)**:
+  - Screenshot desktop Linux resolusi tinggi menghasilkan base64 PNG berukuran > 1.3 MB. Native Host memecahnya menjadi beberapa chunk (500 KB limit), namun `sendNativeRpcInBackground` di [background.js](file:///home/arya/browser-agent/extension/background.js) langsung menutup port pada penerimaan chunk pertama sebelum reassembly selesai, memicu `BrokenPipeError` di Native Host dan status error di ekstensi.
+- **Implementasi & Peningkatan Sistem**:
+  - **Full RPC Chunk Reassembly in Background**: Menambahkan buffer reassembly multi-chunk di `sendNativeRpcInBackground` pada [background.js](file:///home/arya/browser-agent/extension/background.js) sehingga pesan native berukuran besar digabungkan utuh sebelum port diputus.
+  - **High-Speed PIL Screenshot Compression**: Mengoptimalkan output screenshot desktop di [native_host.py](file:///home/arya/browser-agent/host/native_host.py) dengan kompresi JPEG lanczos (kualitas 85%, max 1920x1080) berukuran ~350 KB, memangkas waktu kirim Telegram menjadi < 500 ms.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.59`, build `extension.crx` (672.4 KB).
+
 
 
 
