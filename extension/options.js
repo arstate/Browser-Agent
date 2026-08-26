@@ -10,7 +10,7 @@ let config = {
   model: "gemini-2.5-flash",
   imageModel: "dall-e-3",
   temperature: 0.2,
-  maxTokens: 4096,
+  maxTokens: 1000000,
   models: [],
   customModels: []
 };
@@ -444,7 +444,7 @@ function applyConfigToUI() {
     settingTemp.value = config.temperature ?? 0.2;
     if (tempValDisplay) tempValDisplay.textContent = Number(config.temperature ?? 0.2).toFixed(2);
   }
-  if (settingMaxTokens) settingMaxTokens.value = config.maxTokens || 4096;
+  if (settingMaxTokens) settingMaxTokens.value = config.maxTokens || 1000000;
   const settingStickman = document.getElementById('setting-stickman-animation');
   if (settingStickman) {
     settingStickman.checked = (config.stickmanAnimation !== false);

@@ -11,7 +11,7 @@ let config = {
   selectedModelChoice: "auto",
   imageModel: "dall-e-3",
   temperature: 0.2,
-  maxTokens: 4096,
+  maxTokens: 1000000,
   autoRotateModel: true,
   models: [],
   customModels: []
@@ -4324,7 +4324,7 @@ Tugas Anda:
               tools: isPlanningTurn ? undefined : AGENT_TOOLS,
               tool_choice: isPlanningTurn ? undefined : "auto",
               temperature: parseFloat(config.temperature) || 0.2,
-              max_tokens: parseInt(config.maxTokens) || 4096,
+              max_tokens: parseInt(config.maxTokens, 10) || 1000000,
               stream: true
             }),
             signal: abortController.signal
@@ -5853,7 +5853,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
               model: activeModelChoice,
               messages,
               temperature: parseFloat(config.temperature) || 0.7,
-              max_tokens: parseInt(config.maxTokens) || 4096,
+              max_tokens: parseInt(config.maxTokens, 10) || 1000000,
               stream: true
             }),
             signal: abortController.signal
@@ -7679,7 +7679,7 @@ function saveSettings() {
   config.endpoint = document.getElementById('setting-endpoint').value.trim();
   config.apiKey = document.getElementById('setting-apikey').value.trim();
   config.temperature = parseFloat(document.getElementById('setting-temp').value) || 0.2;
-  config.maxTokens = parseInt(document.getElementById('setting-max-tokens').value) || 4096;
+  config.maxTokens = parseInt(document.getElementById('setting-max-tokens').value, 10) || 1000000;
 
   // Collect all model inputs from rows in priority order
   const modelCards = document.querySelectorAll('.model-row-item');
@@ -7816,7 +7816,7 @@ function applyConfigToUI() {
   if (settingTemp) settingTemp.value = config.temperature || 0.2;
 
   const settingMaxTokens = document.getElementById('setting-max-tokens');
-  if (settingMaxTokens) settingMaxTokens.value = config.maxTokens || 4096;
+  if (settingMaxTokens) settingMaxTokens.value = config.maxTokens || 1000000;
 }
 
 function renderModelDropdown() {

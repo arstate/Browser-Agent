@@ -694,21 +694,28 @@ def transcribe_audio_file(file_base64, mime_type="audio/ogg", api_key="", endpoi
         try:
             w_model = get_local_whisper_model()
             if w_model:
-                indonesian_prompt = (
-                    "Transkripsi percakapan bahasa Indonesia sehari-hari. "
-                    "Analisis mendalam, SEO, on page, konten SEO, keyword, "
-                    "YouTube, download lagu MP3, coding, script, remove bg, convert PDF."
+                bilingual_prompt = (
+                    "Transkripsi audio percakapan bahasa Indonesia bercampur istilah bahasa Inggris (Indonesian-English code-mixing). "
+                    "Analisis lagi mendalam, on page SEO, off page SEO, konten SEO, keyword research, meta tags, backlink, "
+                    "YouTube, download lagu MP3, coding, script, remove bg, convert PDF, pause, play, browser agent."
                 )
+                # First attempt: Auto language detection with bilingual vocabulary prompt (handles code-mixing flawlessly)
                 segments, info = w_model.transcribe(
                     upload_path,
                     beam_size=5,
-                    language="id",
-                    initial_prompt=indonesian_prompt,
+                    initial_prompt=bilingual_prompt,
                     vad_filter=True
                 )
                 texts = [s.text.strip() for s in segments if s.text]
                 if not texts:
-                    segments, info = w_model.transcribe(upload_path, beam_size=5, initial_prompt=indonesian_prompt, vad_filter=True)
+                    # Fallback with language="id"
+                    segments, info = w_model.transcribe(
+                        upload_path,
+                        beam_size=5,
+                        language="id",
+                        initial_prompt=bilingual_prompt,
+                        vad_filter=True
+                    )
                     texts = [s.text.strip() for s in segments if s.text]
                 if texts:
                     transcribed_text = " ".join(texts).strip()

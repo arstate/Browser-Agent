@@ -5353,6 +5353,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.86`, build `extension.crx` (839.4 KB).
 
+---
+
+### 🚀 Iterasi 463: Bilingual Indonesian-English Code-Mixing Transcription, Persistent 35-Step Browser Agent Execution, and 1,000,000 Output Token Expansion (v2.150.87)
+- **Kebutuhan Pengguna**:
+  - Memaksimalkan transkripsi suara percakapan campuran Bahasa Indonesia dan istilah teknis Bahasa Inggris (Indonesian-English Code Mixing seperti on page, SEO, keyword, content, download MP3, YouTube, convert PDF).
+  - Mengatasi AI Agent yang sering langsung berhenti atau menyelesaikan tugasnya sebelum seluruh proses browser control / analisis web selesai.
+  - Menyelaraskan batas output token AI agar mengikuti nilai pengaturan Browser Agent hingga maksimal 1.000.000 (1 Juta Tokens).
+- **Implementasi & Peningkatan Sistem**:
+  - Di [native_host.py](file:///home/arya/browser-agent/host/native_host.py):
+    - Mengoptimalkan `WhisperModel('small')` dengan bilingual vocabulary prompt dan deteksi otomatis bahasa tanpa mengunci paksa satu kamus bahasa, sehingga istilah bahasa Inggris dan percakapan Indonesia dapat ditranskripsi secara harmonis dan presisi.
+  - Di [background.js](file:///home/arya/browser-agent/extension/background.js):
+    - **Ekspansi Max Steps**: Menaikkan batas putaran otonom `maxSteps` dari `8` menjadi `35` putaran untuk memastikan tugas penjelajahan web yang kompleks, navigasi multi-halaman, audit SEO, dan ekstraksi tabel tidak terputus di tengah jalan.
+    - **Mandat Eksekutif Aturan 8**: Mewajibkan AI mengeksekusi penjelajahan browser, snapshot DOM, dan pengumpulan data secara tuntas 100% sebelum menyatakan tugas selesai.
+    - **Smart Synthesis Mode**: Membedakan tugas analisis mendalam (SEO, audit, review, riset) yang membutuhkan laporan lengkap dengan tugas rutin (download MP3, convert PDF) yang membutuhkan respons 1-2 baris.
+    - **Output Token 1.000.000**: Mengupdate seluruh pemanggilan endpoint LLM menggunakan `parseInt(cfg.maxTokens, 10) || 1000000`.
+  - Di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js), [options.js](file:///home/arya/browser-agent/extension/options.js), [options.html](file:///home/arya/browser-agent/extension/options.html):
+    - Memperbarui nilai default dan fallback `maxTokens` menjadi `1000000`.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.87`, build `extension.crx` (838.6 KB).
+
 
 
 

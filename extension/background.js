@@ -2421,7 +2421,12 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
    - DILARANG menggunakan Markdown Pipe Tables (| Kolom 1 | Kolom 2 |) karena Telegram tidak mendukung rendering tabel secara visual dan akan terlihat berantakan!
    - Gunakan format list bullet point dengan ikon emoji yang rapi (contoh: • <b>Parameter:</b> Nilai).
    - Jangan gunakan garis pemisah '---' berlebihan.
-   - Sajikan laporan yang bersih, terstruktur, estetik, dan rapi agar nyaman dibaca di Telegram.`;
+   - Sajikan laporan yang bersih, terstruktur, estetik, dan rapi agar nyaman dibaca di Telegram.
+8. 🌐 EKSEKUSI TUNTAS TUGAS BROWSER CONTROL & ANALISIS WEB (DILARANG BERHENTI DINI / NO PREMATURE EXIT):
+   - JIKA PENGGUNA MEMINTA BROWSER CONTROL, ANALISIS WEB, AUDIT ON-PAGE / KONTEN SEO, ATAU PENJELAJAHAN TAB:
+     a. DILARANG KERAS langsung berhenti atau menyatakan selesai sebelum Anda benar-benar mengeksekusi langkah-langkahnya secara tuntas di browser!
+     b. WAJIB lakukan navigasi ('browser_navigate' / 'browser_switch_tab'), ambil Accessibility Tree & DOM via 'browser_snapshot' / 'browser_extract_table', periksa elemen halaman, analisis secara komprehensif, dan lanjutkan multi-turn tool calling hingga tugas benar-benar terselesaikan 100%!
+     c. Berikan hasil analisis mendalam (On-Page SEO, Meta Tags, Heading Structure, Kecepatan, Konten Keyword, dsb) secara lengkap, mendalam, dan terstruktur sesuai permintaan pengguna.`;
 
     // Inject Verified Facts & User Profile Memories
     if (userMemories.length > 0) {
@@ -2545,7 +2550,7 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
 
     let finalResponseText = "";
     let stepCount = 0;
-    const maxSteps = 8;
+    const maxSteps = 35;
     let liveStatusMsgId = null;
     let anyToolExecuted = false;
     const executedToolCalls = [];
@@ -2624,7 +2629,7 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
           tool_choice: "auto",
           stream: false,
           temperature: cfg.temperature ?? 0.2,
-          max_tokens: cfg.maxTokens || 4096
+          max_tokens: parseInt(cfg.maxTokens, 10) || 1000000
         })
       });
 
@@ -2700,9 +2705,14 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       await renderLiveStatus(true);
       telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
       try {
+        const isAnalysisTask = /analisis|audit|review|jelaskan|evaluasi|rangkum|periksa|cek|riset|detail|seo/i.test(text);
+        const synthPrompt = isAnalysisTask
+          ? "Tugas penjelajahan dan pengumpulan data browser di atas telah selesai. Berikan LAPORAN HASIL ANALISIS MENDALAM yang terstruktur, rapi, dan komprehensif sesuai data yang telah diambil dari halaman web. Gunakan format emoji dan bullet point yang estetik untuk Telegram (tanpa pipe markdown tables)."
+          : "Tugas eksekusi tool di atas telah selesai. Berikan respon penutup yang SINGKAT, RAMAH, dan TO-THE-POINT (1-2 baris pendek saja). Contoh: 'Berikut file musiknya sudah siap didengarkan, Bro! 🎧' atau 'Berikut berkasnya sudah selesai diproses, Bro! ✨'. DILARANG membuat rangkuman panjang jika hanya aksi download/convert/file rutin.";
+
         const synthTurns = applyPonytailContextOptimization([
           ...conversationTurns,
-          { role: "user", content: "Tugas eksekusi tool di atas telah selesai. Berikan respon penutup yang SINGKAT, RAMAH, dan TO-THE-POINT (1-2 baris pendek saja). Contoh: 'Berikut file musiknya sudah siap didengarkan, Bro! 🎧' atau 'Berikut berkasnya sudah selesai diproses, Bro! ✨'. DILARANG KERAS membuat rangkuman eksekutif, analisis sintesis, audit host Linux, atau laporan panjang!" }
+          { role: "user", content: synthPrompt }
         ], storageData.plugin_settings);
 
         const synthRes = await fetch(endpoint, {
@@ -2713,7 +2723,7 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
             messages: synthTurns,
             stream: false,
             temperature: 0.2,
-            max_tokens: 4096
+            max_tokens: parseInt(cfg.maxTokens, 10) || 1000000
           })
         });
         const synthText = await synthRes.text();
