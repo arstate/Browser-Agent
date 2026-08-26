@@ -4794,6 +4794,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.53`, build `extension.crx` (674.8 KB).
 
+---
+
+### 🚀 Iterasi 430: Full Autonomous Agent Mode with Live Step-by-Step Telegram Progress (v2.150.54)
+- **Kebutuhan Pengguna**:
+  - Mengaktifkan kembali kemampuan **Agent Mode** autonomous controlling (seperti membuka URL, mengisi password login, klik tombol, screenshot hasil) langsung melalui bot Telegram.
+  - Menampilkan progres eksekusi live langkah demi langkah (`[Langkah 1/5] Master Agent: ...`) di chat Telegram tanpa latensi berlebih.
+- **Akar Masalah (Root Cause)**:
+  - Background Service Worker sebelumnya hanya menjalankan *single chat completion* pasif tanpa tool calling sehingga tidak dapat mengontrol browser atau mengeksekusi aksi bertingkat.
+- **Implementasi & Peningkatan Sistem**:
+  - **Background Autonomous Agent Loop**: Memasang kumpulan tool eksekutif (`navigate_to`, `click_element`, `type_text`, `get_page_content`, `scroll_page`, `take_screenshot`, `ask_clarification`) pada [background.js](file:///home/arya/browser-agent/extension/background.js).
+  - **Live Step Progress Updates**: Mengirim dan memperbarui pesan status live di Telegram (`telegramEditMessageText`) setiap kali sebuah langkah/tool dimulai dan diselesaikan.
+  - **Active Browser Integration**: Menggunakan `chrome.scripting.executeScript` dan `chrome.tabs` untuk berinteraksi langsung dengan tab browser (membuka URL dashboard, mengisi input password, klik login) dan mengirim screenshot hasil ke Telegram.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.54`, build `extension.crx` (678.3 KB).
+
 
 
 

@@ -664,10 +664,277 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
   });
 }
 
-// Standalone Direct AI Processing in Background Service Worker (Fast, Dedicated Session)
+// Tool Definitions for Background Autonomous Agent Loop
+const BACKGROUND_AGENT_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "navigate_to",
+      description: "Navigate active Chrome tab to a specific web URL or search engine.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: { type: "string", description: "Target URL to open (e.g. 'https://www.google.com', 'https://youtube.com', 'http://192.168.1.1:8080', 'http://localhost:3000')" }
+        },
+        required: ["url"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "click_element",
+      description: "Click an interactive button, link, tab, or submit element on the active page.",
+      parameters: {
+        type: "object",
+        properties: {
+          selector: { type: "string", description: "CSS selector, button text, or element text to click (e.g. 'button.submit', 'Login', '#login-btn', 'Masuk', 'Sign in')" }
+        },
+        required: ["selector"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "type_text",
+      description: "Type text or password into an input field or textarea on the active page.",
+      parameters: {
+        type: "object",
+        properties: {
+          selector: { type: "string", description: "CSS selector or field type (e.g. 'input[type=password]', '#username', 'input[name=pass]', 'search')" },
+          text: { type: "string", description: "Text or password value to type" },
+          press_enter: { type: "boolean", description: "Whether to press Enter key after typing to submit form", default: false }
+        },
+        required: ["text"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_page_content",
+      description: "Read the current active page's title, URL, visible text content, and interactive inputs/buttons.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "scroll_page",
+      description: "Scroll the active webpage up or down.",
+      parameters: {
+        type: "object",
+        properties: {
+          direction: { type: "string", enum: ["up", "down"], default: "down" },
+          amount: { type: "number", description: "Pixels to scroll (default 500)", default: 500 }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "take_screenshot",
+      description: "Take a screenshot of the active browser screen or full desktop and send the photo directly to Telegram.",
+      parameters: {
+        type: "object",
+        properties: {
+          caption: { type: "string", description: "Caption description for the screenshot photo" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ask_clarification",
+      description: "Ask the user clarification with 3 clickable option buttons on Telegram.",
+      parameters: {
+        type: "object",
+        properties: {
+          question: { type: "string", description: "Question to ask the user" },
+          options: {
+            type: "array",
+            items: { type: "string" },
+            description: "Array of up to 3 selectable options"
+          }
+        },
+        required: ["question", "options"]
+      }
+    }
+  }
+];
+
+async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
+  try {
+    if (toolName === "navigate_to") {
+      let targetUrl = (toolArgs.url || "").trim();
+      if (!targetUrl) return { error: "URL is empty" };
+      if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+        targetUrl = "https://" + targetUrl;
+      }
+      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
+      if (activeTab && activeTab.id) {
+        await chrome.tabs.update(activeTab.id, { url: targetUrl });
+      } else {
+        await chrome.tabs.create({ url: targetUrl, active: true });
+      }
+      await new Promise(r => setTimeout(r, 2200));
+      return { status: "success", url: targetUrl, message: `Berhasil membuka ${targetUrl}` };
+    }
+
+    if (toolName === "click_element") {
+      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
+      if (!activeTab || !activeTab.id) return { error: "No active tab found" };
+      const [res] = await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id },
+        func: (sel) => {
+          let el = null;
+          try { el = document.querySelector(sel); } catch(e) {}
+          if (!el) {
+            const all = Array.from(document.querySelectorAll('button, a, input, [role="button"], span, div'));
+            el = all.find(e => e.innerText && e.innerText.trim().toLowerCase().includes(sel.toLowerCase()));
+          }
+          if (el) {
+            el.click();
+            return { success: true, text: (el.innerText || el.value || '').trim() };
+          }
+          return { success: false, error: `Element '${sel}' not found` };
+        },
+        args: [toolArgs.selector || 'button']
+      });
+      await new Promise(r => setTimeout(r, 1200));
+      return res?.result || { error: "Failed to click element" };
+    }
+
+    if (toolName === "type_text") {
+      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
+      if (!activeTab || !activeTab.id) return { error: "No active tab found" };
+      const [res] = await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id },
+        func: (sel, val, enter) => {
+          let el = null;
+          if (sel) {
+            try { el = document.querySelector(sel); } catch(e) {}
+          }
+          if (!el) {
+            el = document.querySelector('input[type="password"]') || document.querySelector('input[type="text"], textarea, input:not([type="hidden"])');
+          }
+          if (el) {
+            el.focus();
+            el.value = val;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            if (enter) {
+              el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+              if (el.form) el.form.submit();
+            }
+            return { success: true, value: val };
+          }
+          return { success: false, error: 'Input element not found' };
+        },
+        args: [toolArgs.selector || '', toolArgs.text || '', !!toolArgs.press_enter]
+      });
+      await new Promise(r => setTimeout(r, 1000));
+      return res?.result || { error: "Failed to type text" };
+    }
+
+    if (toolName === "get_page_content") {
+      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
+      if (!activeTab || !activeTab.id) return { error: "No active tab found" };
+      const [res] = await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id },
+        func: () => {
+          const title = document.title;
+          const url = window.location.href;
+          const text = document.body ? document.body.innerText.slice(0, 2500) : '';
+          const inputs = Array.from(document.querySelectorAll('input, button, a[href]')).slice(0, 15).map(e => ({
+            tag: e.tagName.toLowerCase(),
+            type: e.type || '',
+            id: e.id || '',
+            name: e.name || '',
+            text: (e.innerText || e.value || e.placeholder || '').slice(0, 50)
+          }));
+          return { title, url, text, inputs };
+        }
+      });
+      return res?.result || { title: activeTab.title, url: activeTab.url };
+    }
+
+    if (toolName === "scroll_page") {
+      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
+      if (!activeTab || !activeTab.id) return { error: "No active tab" };
+      const amount = (toolArgs.direction === 'up' ? -1 : 1) * (toolArgs.amount || 500);
+      await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id },
+        func: (amt) => { window.scrollBy({ top: amt, behavior: 'smooth' }); },
+        args: [amount]
+      });
+      return { success: true, scrolled: amount };
+    }
+
+    if (toolName === "take_screenshot") {
+      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
+      let dataUrl = null;
+      if (activeTab && activeTab.windowId) {
+        try {
+          dataUrl = await chrome.tabs.captureVisibleTab(activeTab.windowId, { format: "png" });
+        } catch(e) {}
+      }
+      if (!dataUrl) {
+        const rpcRes = await sendNativeRpcInBackground("capture_os_screenshot", {});
+        if (rpcRes && rpcRes.status === "ok" && rpcRes.data_url) dataUrl = rpcRes.data_url;
+      }
+      if (dataUrl) {
+        await telegramSendPhoto(botToken, senderId, dataUrl, toolArgs.caption || `📸 Layar Tab: ${activeTab?.title || 'Browser'}`);
+        return { success: true, message: "Screenshot sent to Telegram successfully" };
+      }
+      return { error: "Failed to take screenshot" };
+    }
+
+    if (toolName === "ask_clarification") {
+      const question = toolArgs.question || "Mohon pilih salah satu opsi:";
+      const options = Array.isArray(toolArgs.options) ? toolArgs.options.slice(0, 3) : [];
+      const inline_keyboard = [];
+      options.forEach((opt, idx) => {
+        inline_keyboard.push([{ text: `👉 ${opt}`, callback_data: `clarify_opt:${idx}` }]);
+      });
+      inline_keyboard.push([{ text: "✏️ Ketik Jawaban Kustom", callback_data: "clarify_custom" }]);
+      await telegramSendMessage(botToken, senderId, `❓ <b>${escapeHtml(question)}</b>`, { inline_keyboard });
+      await chrome.storage.local.set({ telegram_active_clarification: { question, options, timestamp: Date.now() } });
+      return { success: true, message: "Clarification buttons sent to Telegram" };
+    }
+  } catch (err) {
+    return { error: err.message };
+  }
+  return { error: `Tool ${toolName} not supported` };
+}
+
+function getToolStepDescription(toolName, args) {
+  if (toolName === "navigate_to") return `Membuka alamat web <code>${escapeHtml(args.url || '')}</code>...`;
+  if (toolName === "click_element") return `Mengklik elemen <i>"${escapeHtml(args.selector || '')}"</i>...`;
+  if (toolName === "type_text") return `Mengisi teks / password ke form browser...`;
+  if (toolName === "take_screenshot") return `Mengambil tangkapan layar tab Chrome...`;
+  if (toolName === "get_page_content") return `Membaca struktur dan konten halaman aktif...`;
+  if (toolName === "scroll_page") return `Menggulir halaman web...`;
+  if (toolName === "ask_clarification") return `Menyiapkan opsi konfirmasi...`;
+  return `Menjalankan aksi ${escapeHtml(toolName)}...`;
+}
+
+// Standalone Direct Autonomous AI Agent Execution in Background Service Worker
 async function executePromptInBackgroundServiceWorker(text, senderId, senderName, botToken, tgCfg) {
   try {
-    // 1. Send instant typing indicator so Telegram shows 'typing...' immediately
+    // 1. Send instant typing indicator so Telegram shows 'typing...' immediately (< 30ms)
     telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
 
     const storageData = await chrome.storage.local.get([
@@ -703,16 +970,39 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
       return;
     }
 
-    // Build rich dynamic system prompt with Brain facts and Custom Skills
-    let systemInstruction = "You are Browser Agent (Antigravity Neural Core) AI assistant responding via Telegram remote control. Be helpful, concise, accurate, and format with clean markdown.\n";
+    // Get Active Tab Context for Browser Agent
+    let activeTabInfo = "No active tab";
+    try {
+      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      const t = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
+      if (t) activeTabInfo = `Title: "${t.title || 'Untitled'}" | URL: ${t.url || 'about:blank'}`;
+    } catch(e) {}
+
+    // Build rich dynamic system prompt with Master Agent Instructions, Brain facts, and Skills
+    let systemInstruction = `You are Browser Agent (Master Autonomous Agent) controlling the Chrome browser and operating systems via Telegram remote control.
+You have FULL access to autonomous tools to control the browser:
+- 'navigate_to': Open websites, dashboards, servers, web pages (e.g. 9router.com, youtube.com, 192.168.1.1, etc.).
+- 'type_text': Type login usernames, passwords, search queries into form inputs.
+- 'click_element': Click buttons (e.g. Login, Submit, Next, Search), links, or interactive items.
+- 'get_page_content': Inspect page text and DOM elements.
+- 'take_screenshot': Take a snapshot and send it to Telegram.
+- 'ask_clarification': Present 3 clickable option buttons if the command is ambiguous.
+
+Current Browser State:
+• Active Tab: ${activeTabInfo}
+
+MANDAT EKSEKUTIF:
+1. Jika pengguna meminta untuk membuka dashboard, server, youtube, mencari sesuatu, login, atau mengontrol browser: LANGSUNG PANGGIL TOOL (seperti 'navigate_to', 'type_text', 'click_element', 'take_screenshot')! Jangan hanya berbicara atau membalas teks pasif.
+2. Bertindaklah proaktif dan selesaikan tugas secara tuntas langkah demi langkah.`;
+
     if (storageData.cached_persistent_brain && Array.isArray(storageData.cached_persistent_brain.facts)) {
       const facts = storageData.cached_persistent_brain.facts.slice(0, 15);
       if (facts.length > 0) {
-        systemInstruction += "\n[Memory & Brain Facts]:\n" + facts.map(f => `• ${f.text || f}`).join('\n') + "\n";
+        systemInstruction += "\n\n[Long-term Memory Facts]:\n" + facts.map(f => `• ${f.text || f}`).join('\n');
       }
     }
     if (Array.isArray(storageData.custom_skills) && storageData.custom_skills.length > 0) {
-      systemInstruction += "\n[Available Skills]:\n" + storageData.custom_skills.slice(0, 8).map(s => `• ${s.name}: ${s.description || ''}`).join('\n') + "\n";
+      systemInstruction += "\n\n[Available Skills]:\n" + storageData.custom_skills.slice(0, 8).map(s => `• ${s.name}: ${s.description || ''}`).join('\n');
     }
 
     // 2. Retrieve dedicated Telegram session history
@@ -749,77 +1039,138 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
     const headers = { "Content-Type": "application/json" };
     if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
-    const messages = [
+    const conversationTurns = [
       { role: "system", content: systemInstruction }
     ];
     for (const m of history) {
       if (m.role === 'user' || m.role === 'assistant') {
-        messages.push({
+        conversationTurns.push({
           role: m.role === 'assistant' ? 'assistant' : 'user',
           content: m.content || ''
         });
       }
     }
-    messages.push({ role: "user", content: text });
+    conversationTurns.push({ role: "user", content: text });
 
-    let responseText = "";
+    let finalResponseText = "";
+    let stepCount = 0;
+    const maxSteps = 6;
+    let liveStatusMsgId = null;
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        model: model,
-        messages,
-        stream: false,
-        temperature: cfg.temperature ?? 0.2,
-        max_tokens: cfg.maxTokens || 4096
-      })
-    });
+    // Send initial status message
+    const initialStatus = await telegramSendMessage(botToken, senderId, `⏳ <b>[Langkah 1/5] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
+    if (initialStatus && initialStatus.result && initialStatus.result.message_id) {
+      liveStatusMsgId = initialStatus.result.message_id;
+    }
 
-    const rawText = await res.text();
+    // Multi-turn Autonomous Agent Loop
+    while (stepCount < maxSteps) {
+      stepCount++;
+      telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
 
-    try {
-      const json = JSON.parse(rawText);
-      if (json.choices && json.choices[0]?.message?.content) {
-        responseText = json.choices[0].message.content;
-      } else if (json.candidates && json.candidates[0]?.content?.parts) {
-        responseText = json.candidates[0].content.parts.map(p => p.text || '').join('');
-      } else if (json.error) {
-        responseText = `⚠️ Error API: ${json.error.message || JSON.stringify(json.error)}`;
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: model,
+          messages: conversationTurns,
+          tools: BACKGROUND_AGENT_TOOLS,
+          tool_choice: "auto",
+          stream: false,
+          temperature: cfg.temperature ?? 0.2,
+          max_tokens: cfg.maxTokens || 4096
+        })
+      });
+
+      const rawText = await res.text();
+      let responseObj = null;
+
+      try {
+        responseObj = JSON.parse(rawText);
+      } catch (parseErr) {
+        if (rawText.includes("data:")) {
+          const lines = rawText.split("\n");
+          const streamChunks = [];
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith("data:") || trimmed === "data: [DONE]") continue;
+            const dataStr = trimmed.replace(/^data:\s*/, "");
+            try {
+              const chunkJson = JSON.parse(dataStr);
+              const delta = chunkJson.choices?.[0]?.delta?.content || chunkJson.choices?.[0]?.message?.content || "";
+              if (delta) streamChunks.push(delta);
+            } catch (e) {}
+          }
+          if (streamChunks.length > 0) {
+            responseObj = { choices: [{ message: { content: streamChunks.join("") } }] };
+          }
+        }
       }
-    } catch (parseErr) {
-      // Handle Server-Sent Events (SSE) streaming format (e.g. data: {"choices":[{"delta":{"content":"..."}}]})
-      if (rawText.includes("data:")) {
-        const lines = rawText.split("\n");
-        const streamChunks = [];
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith("data:") || trimmed === "data: [DONE]") continue;
-          const dataStr = trimmed.replace(/^data:\s*/, "");
+
+      if (!responseObj) {
+        finalResponseText = "⚠️ Gagal membaca respons dari model AI.";
+        break;
+      }
+
+      if (responseObj.error) {
+        finalResponseText = `⚠️ Error API: ${responseObj.error.message || JSON.stringify(responseObj.error)}`;
+        break;
+      }
+
+      const choice = responseObj.choices?.[0];
+      const message = choice?.message;
+
+      if (!message) {
+        finalResponseText = "⚠️ Tidak ada pesan yang dihasilkan oleh model AI.";
+        break;
+      }
+
+      // Check if LLM requested tool execution
+      if (message.tool_calls && Array.isArray(message.tool_calls) && message.tool_calls.length > 0) {
+        conversationTurns.push(message);
+
+        for (const tc of message.tool_calls) {
+          const tName = tc.function?.name || "tool";
+          let tArgs = {};
           try {
-            const chunkJson = JSON.parse(dataStr);
-            const delta = chunkJson.choices?.[0]?.delta?.content || chunkJson.choices?.[0]?.message?.content || "";
-            if (delta) streamChunks.push(delta);
-          } catch (e) {}
+            tArgs = typeof tc.function?.arguments === 'string' ? JSON.parse(tc.function.arguments) : (tc.function?.arguments || {});
+          } catch(e) {}
+
+          const stepDesc = getToolStepDescription(tName, tArgs);
+          if (liveStatusMsgId) {
+            await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `⏳ <b>[Langkah ${stepCount + 1}/5] Master Agent:</b> ${stepDesc}`).catch(() => {});
+          }
+
+          const toolResult = await executeBackgroundTool(tName, tArgs, senderId, botToken);
+
+          conversationTurns.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            name: tName,
+            content: JSON.stringify(toolResult)
+          });
         }
-        if (streamChunks.length > 0) {
-          responseText = streamChunks.join("");
-        }
-      }
-      if (!responseText) {
-        responseText = rawText.slice(0, 1000);
+      } else {
+        // Final text answer reached
+        finalResponseText = message.content || "";
+        break;
       }
     }
 
-    if (!responseText) {
-      responseText = "⚠️ Tidak ada respons yang dihasilkan oleh model AI.";
+    if (!finalResponseText && stepCount >= maxSteps) {
+      finalResponseText = "✅ Tugas agent telah selesai dijalankan di browser.";
+    }
+
+    // Update status to finished
+    if (liveStatusMsgId) {
+      await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `✅ <b>[Selesai] Master Agent:</b> Instruksi berhasil dieksekusi!`).catch(() => {});
     }
 
     // 3. Update dedicated Telegram session in cache & SQLite
     tgSession.updated_at = Date.now();
     tgSession.model = model;
     tgSession.messages.push({ role: 'user', content: text, timestamp: Date.now() });
-    tgSession.messages.push({ role: 'assistant', content: responseText, timestamp: Date.now() });
+    tgSession.messages.push({ role: 'assistant', content: finalResponseText, timestamp: Date.now() });
     cache[sessId] = tgSession;
     await chrome.storage.local.set({ chat_sessions_cache: cache });
 
@@ -829,8 +1180,8 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
     // Notify UI if history sidebar is open
     chrome.runtime.sendMessage({ type: "TELEGRAM_HISTORY_UPDATED" }).catch(() => {});
 
-    // 4. Send formatted response to Telegram
-    await telegramSendMessage(botToken, senderId, responseText);
+    // 4. Send final response to Telegram
+    await telegramSendMessage(botToken, senderId, finalResponseText);
   } catch (err) {
     await telegramSendMessage(botToken, senderId, `⚠️ Gagal memproses instruksi: ${err.message}`);
   }
