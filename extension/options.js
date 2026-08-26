@@ -420,9 +420,13 @@ function applyConfigToUI() {
   });
 
   const displayChoice = document.getElementById('display-active-model-choice');
-  if (settingPreset) {
-    settingPreset.value = config.preset || "gemini-flash";
-    handlePresetChange(false);
+  if (displayChoice) {
+    const models = getModelsList();
+    if (models.length > 0) {
+      displayChoice.textContent = `${models[0].name || models[0].id} (Primary #1)`;
+    } else {
+      displayChoice.textContent = config.model || "Auto (Rotating Priority)";
+    }
   }
 
   if (settingEndpoint) settingEndpoint.value = config.endpoint || "";

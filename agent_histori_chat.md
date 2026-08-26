@@ -4217,6 +4217,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.12`, build `extension.crx` (478.8 KB).
 
+---
+
+### 🚀 Iterasi 389: Fix Options Initialization ReferenceError & UI Restore (v2.150.13)
+- **Kebutuhan Pengguna & Bug Report**:
+  - Memperbaiki error `Uncaught (in promise) ReferenceError: settingPreset is not defined` pada `options.js:423` yang menyebabkan proses inisialisasi pengaturan terhenti (*crash*), tab sidebar tidak bisa diklik, dan data konfigurasi terlihat tidak muncul.
+- **Implementasi & Perbaikan**:
+  - **Pembersihan ReferenceError**: Menghapus referensi variabel yang tidak terdefinisi `settingPreset` di dalam `applyConfigToUI()` dan mengembalikan logika `displayChoice` model rendering dengan aman pada [options.js](file:///home/arya/browser-agent/extension/options.js).
+  - **Verifikasi Sintaks**: Menjalankan pengecekan statis sintaks JavaScript dengan Node.js dan memastikan seluruh 18/18 unit test lulus tanpa error.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.13`, build `extension.crx` (478.9 KB).
+
 
 
 
