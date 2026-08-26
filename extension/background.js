@@ -177,6 +177,51 @@ async function telegramSendChatAction(botToken, chatId, action = "typing") {
   }
 }
 
+async function downloadTelegramFile(botToken, fileId) {
+  if (!botToken || !fileId) return null;
+  try {
+    const infoRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+    const infoJson = await infoRes.json();
+    if (!infoJson.ok || !infoJson.result || !infoJson.result.file_path) {
+      return null;
+    }
+    const filePath = infoJson.result.file_path;
+    const downloadUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+    const fileRes = await fetch(downloadUrl);
+    const arrayBuffer = await fileRes.arrayBuffer();
+
+    let binary = '';
+    const bytes = new Uint8Array(arrayBuffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
+
+    let mime = "application/octet-stream";
+    const lower = filePath.toLowerCase();
+    if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) mime = "image/jpeg";
+    else if (lower.endsWith(".png")) mime = "image/png";
+    else if (lower.endsWith(".webp")) mime = "image/webp";
+    else if (lower.endsWith(".gif")) mime = "image/gif";
+    else if (lower.endsWith(".pdf")) mime = "application/pdf";
+    else if (lower.endsWith(".txt") || lower.endsWith(".md")) mime = "text/plain";
+    else if (lower.endsWith(".csv")) mime = "text/csv";
+    else if (lower.endsWith(".json")) mime = "application/json";
+
+    return {
+      filePath,
+      fileSize: infoJson.result.file_size,
+      mime,
+      base64,
+      dataUrl: `data:${mime};base64,${base64}`
+    };
+  } catch (e) {
+    console.error("Error downloading telegram file:", e);
+    return null;
+  }
+}
+
 function sendNativeRpcInBackground(action, payload = {}) {
   return new Promise((resolve) => {
     try {
@@ -466,11 +511,12 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
 
   // 2. Message Handler
   const msg = update.message;
-  if (!msg || !msg.text) return;
+  if (!msg) return;
 
   const senderId = String(msg.from?.id || msg.chat?.id || '');
   const senderName = msg.from?.first_name || 'User';
-  const text = msg.text.trim();
+  let text = (msg.text || msg.caption || '').trim();
+  let mediaPayload = null;
 
   // Whitelist setup / validation
   const authList = getAuthorizedTelegramIds(tgCfg.authorized_chat_id);
@@ -483,13 +529,74 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
     return;
   }
 
+  // Handle Photo Attachments (Images / Screenshots)
+  if (Array.isArray(msg.photo) && msg.photo.length > 0) {
+    const highestPhoto = msg.photo[msg.photo.length - 1];
+    telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
+    const downloaded = await downloadTelegramFile(botToken, highestPhoto.file_id);
+    if (downloaded) {
+      mediaPayload = {
+        type: "image",
+        dataUrl: downloaded.dataUrl,
+        mime: downloaded.mime
+      };
+      if (!text) text = "Tolong analisis, baca teks, dan jelaskan detail gambar ini secara mendalam:";
+    }
+  }
+  // Handle Document Attachments (PDF, DOCX, CSV, JSON, TXT, Code, etc.)
+  else if (msg.document) {
+    const doc = msg.document;
+    const fileName = doc.file_name || "document";
+    telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
+    const downloaded = await downloadTelegramFile(botToken, doc.file_id);
+    if (downloaded) {
+      if (downloaded.mime && downloaded.mime.startsWith("image/")) {
+        mediaPayload = {
+          type: "image",
+          dataUrl: downloaded.dataUrl,
+          mime: downloaded.mime
+        };
+        if (!text) text = `Tolong analisis dan jelaskan gambar dokumen ${fileName} ini:`;
+      } else {
+        // Extract text from document via Native Host RPC (pdftotext for PDF, XML for DOCX, plain UTF-8 for text/data)
+        let docText = "";
+        try {
+          const rpcRes = await sendNativeRpcInBackground("extract_document_text", {
+            file_base64: downloaded.base64,
+            file_name: fileName
+          });
+          if (rpcRes && rpcRes.status === "ok" && rpcRes.text) {
+            docText = rpcRes.text;
+          }
+        } catch (e) {}
+
+        if (!docText && (fileName.endsWith(".txt") || fileName.endsWith(".csv") || fileName.endsWith(".json") || fileName.endsWith(".md"))) {
+          try {
+            docText = atob(downloaded.base64);
+          } catch (e) {}
+        }
+
+        mediaPayload = {
+          type: "document",
+          fileName: fileName,
+          extractedText: docText || ""
+        };
+
+        const docHeader = `📄 [Dokumen Terlampir: "${fileName}"]\n--- ISI DOKUMEN ---\n${docText ? docText.slice(0, 40000) : 'Dokumen berhasil diunduh.'}\n--- AKHIR DOKUMEN ---\n\n`;
+        text = docHeader + (text || "Tolong baca, analisis, dan jelaskan isi dokumen ini secara komprehensif:");
+      }
+    }
+  }
+
+  if (!text && !mediaPayload) return;
+
   // Slash Commands (Instant Sub-Second Response)
   if (text.startsWith('/')) {
     const parts = text.split(' ');
     const cmd = parts[0].toLowerCase();
 
     if (cmd === '/start' || cmd === '/help') {
-      const welcome = `🤖 <b>Browser Agent Remote Control Aktif!</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, Anda dapat mengontrol browser dan mengeksekusi AI langsung dari chat ini.\n\n<b>Pilihan Perintah:</b>\n• /history - Daftar riwayat sesi chat & pindah sesi\n• /model - Ganti model AI aktif\n• /agent - Ganti spesialis agent\n• /screenshot - Ambil screenshot Tab Chrome\n• /screenshot_os - Ambil screenshot Full Desktop Linux\n• /status - Cek status tab & performa\n• /new - Mulai sesi percakapan baru\n\n<i>Atau langsung ketik perintah apa saja untuk dieksekusi di browser!</i>`;
+      const welcome = `🤖 <b>Browser Agent Remote Control Aktif!</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, Anda dapat mengontrol browser, mengirim gambar/foto untuk dianalisis, mengirim file dokumen (PDF, Word, Excel, CSV, TXT), dan mengeksekusi AI langsung dari chat ini.\n\n<b>Pilihan Perintah:</b>\n• /history - Daftar riwayat sesi chat & pindah sesi\n• /model - Ganti model AI aktif\n• /agent - Ganti spesialis agent\n• /screenshot - Ambil screenshot Tab Chrome\n• /screenshot_os - Ambil screenshot Full Desktop Linux\n• /status - Cek status tab & performa\n• /new - Mulai sesi percakapan baru\n\n<i>Kirim foto, dokumen PDF/Word/TXT, atau ketik instruksi apa saja!</i>`;
       await telegramSendMessage(botToken, senderId, welcome, {
         inline_keyboard: [
           [
@@ -634,7 +741,6 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
           } catch (e) {}
         }
         if (!dataUrl) {
-          // Fallback to Native OS Screenshot if tab capture is restricted (e.g. activeTab permission or chrome:// page)
           const rpcRes = await sendNativeRpcInBackground("capture_os_screenshot", {});
           if (rpcRes && rpcRes.status === "ok" && rpcRes.data_url) {
             dataUrl = rpcRes.data_url;
@@ -708,8 +814,8 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
   }
   lastProcessedTelegramPrompt = { text: effectiveText, time: now };
 
-  // Execute directly and independently in background
-  executePromptInBackgroundServiceWorker(effectiveText, senderId, senderName, botToken, tgCfg).catch(err => {
+  // Execute directly and independently in background (with optional media/document payload)
+  executePromptInBackgroundServiceWorker(effectiveText, senderId, senderName, botToken, tgCfg, mediaPayload).catch(err => {
     console.error("Error executing background prompt:", err);
   });
 }
@@ -1456,7 +1562,7 @@ function getToolStepDescription(toolName, args) {
 }
 
 // Standalone Direct Autonomous AI Agent Execution in Background Service Worker
-async function executePromptInBackgroundServiceWorker(text, senderId, senderName, botToken, tgCfg) {
+async function executePromptInBackgroundServiceWorker(text, senderId, senderName, botToken, tgCfg, mediaPayload = null) {
   try {
     // 1. Send instant typing indicator so Telegram shows 'typing...' immediately (< 30ms)
     telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
@@ -1553,7 +1659,10 @@ MANDAT EKSEKUTIF UTAMA:
 1. 🌐 SEMUA TUGAS WEB & BROWSER (Contoh: "cek sisa kredit 9router", "cek usage 9router", "buka youtube", "analisis iklan meta", "isi form web"):
    - WAJIB gunakan browser control tools: Buka halaman via 'browser_navigate' (atau 'browser_switch_tab'), ambil data via 'browser_extract_table' atau 'browser_snapshot', klik dengan 'browser_click', dan ketik dengan 'browser_type'.
    - DILARANG menggunakan perintah curl/bash jika tugas tersebut adalah tugas web atau dashboard browser!
-2. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua angka, persentase sisa kuota setiap provider, atau data yang terekstrak secara komprehensif!`;
+2. 🖼️ ANALISIS GAMBAR & DOKUMEN:
+   - Jika pengguna mengirim foto/screenshot/gambar, amati dan baca seluruh elemen visual, teks, diagram, atau error dengan teliti.
+   - Jika pengguna mengirim dokumen (PDF, Word, TXT, CSV, JSON), baca dan analisis seluruh isi dokumen yang terlampir secara mendalam, tepat, dan komprehensif.
+3. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua temuan atau data yang terekstrak secara komprehensif!`;
 
     // Inject Verified Facts & User Profile Memories
     if (userMemories.length > 0) {
@@ -1644,7 +1753,24 @@ MANDAT EKSEKUTIF UTAMA:
         });
       }
     }
-    conversationTurns.push({ role: "user", content: text });
+
+    // Support multimodal vision user turn if image payload attached
+    if (mediaPayload && mediaPayload.type === 'image' && mediaPayload.dataUrl) {
+      conversationTurns.push({
+        role: "user",
+        content: [
+          { type: "text", text: text },
+          {
+            type: "image_url",
+            image_url: {
+              url: mediaPayload.dataUrl
+            }
+          }
+        ]
+      });
+    } else {
+      conversationTurns.push({ role: "user", content: text });
+    }
 
     let finalResponseText = "";
     let stepCount = 0;
@@ -1652,8 +1778,8 @@ MANDAT EKSEKUTIF UTAMA:
     let liveStatusMsgId = null;
     let anyToolExecuted = false;
 
-    // Send initial status message
-    const initialStatus = await telegramSendMessage(botToken, senderId, `⏳ <b>[Langkah 1/5] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
+    // Send initial status message (Clean continuous Step 1, 2, 3 format without /5)
+    const initialStatus = await telegramSendMessage(botToken, senderId, `⏳ <b>[Langkah 1] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
     if (initialStatus && initialStatus.result && initialStatus.result.message_id) {
       liveStatusMsgId = initialStatus.result.message_id;
     }
@@ -1712,7 +1838,7 @@ MANDAT EKSEKUTIF UTAMA:
 
           const stepDesc = getToolStepDescription(tName, tArgs);
           if (liveStatusMsgId) {
-            await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `⏳ <b>[Langkah ${stepCount + 1}/5] Master Agent:</b> ${stepDesc}`).catch(() => {});
+            await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `⏳ <b>[Langkah ${stepCount + 1}] Master Agent:</b> ${stepDesc}`).catch(() => {});
           }
 
           const toolResult = await executeBackgroundTool(tName, tArgs, senderId, botToken);

@@ -4944,6 +4944,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.63`, build `extension.crx` (677.8 KB).
 
+---
+
+### 🚀 Iterasi 440: Multimodal Vision Image & Document (PDF/DOCX/TXT/CSV) Reader + Clean Step Counter (v2.150.64)
+- **Kebutuhan Pengguna**:
+  - Menghilangkan format notasi `/5` pada indikator langkah eksekusi (menjadi clean continuous `[Langkah 1]`, `[Langkah 2]`, `[Langkah 3]`, dst.).
+  - Mengaktifkan fitur pembacaan & analisis file gambar (foto, screenshot, diagram) dan file dokumen (PDF, Word DOCX, Excel/CSV, JSON, TXT, code) yang dikirimkan oleh pengguna melalui bot Telegram.
+- **Akar Masalah (Root Cause)**:
+  - Poller Telegram sebelumnya hanya memeriksa `msg.text` dan mengabaikan `msg.photo` dan `msg.document`.
+  - Teks status awal dan edit status sebelumnya hardcoded dengan `[Langkah 1/5]`.
+- **Implementasi & Peningkatan Sistem**:
+  - **Clean Step Notation**: Mengganti seluruh format status langkah di [background.js](file:///home/arya/browser-agent/extension/background.js) menjadi `[Langkah 1]`, `[Langkah 2]`, dst. (tanpa batas `/5` yang membingungkan).
+  - **Telegram File Downloader (`downloadTelegramFile`)**: Mengunduh binary file/foto dari Telegram Bot API dan mengonversinya menjadi Base64 Data URL & buffer.
+  - **Native Document Extractor (`extract_document_text`)**: Menambahkan handler di [native_host.py](file:///home/arya/browser-agent/host/native_host.py) untuk mengekstrak teks dokumen PDF (via `pdftotext`), DOCX (via built-in XML parser), CSV, JSON, TXT, dan kode hingga 100.000 karakter.
+  - **Multimodal Vision Prompting**: Menyuntikkan `image_url` ke format pesan user model AI saat gambar dikirimkan, sehingga AI dapat membaca teks di gambar, diagram, tabel, dan UI secara visual.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.64`, build `extension.crx` (679.2 KB).
+
 
 
 

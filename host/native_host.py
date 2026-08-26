@@ -3551,6 +3551,70 @@ def handle_local_rpc(msg):
         except Exception as e:
             return {"id": req_id, "status": "error", "error": str(e)}
 
+    elif action == "extract_document_text":
+        file_path = msg.get("file_path")
+        file_base64 = msg.get("file_base64")
+        file_name = msg.get("file_name", "")
+        try:
+            raw_bytes = None
+            if file_path and os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    raw_bytes = f.read()
+            elif file_base64:
+                if "," in file_base64:
+                    file_base64 = file_base64.split(",", 1)[1]
+                raw_bytes = base64.b64decode(file_base64)
+            
+            if not raw_bytes:
+                return {"id": req_id, "status": "error", "error": "No file content or path provided"}
+            
+            lower_name = file_name.lower()
+            text_result = ""
+            
+            # 1. PDF Extractor
+            if lower_name.endswith(".pdf") or raw_bytes.startswith(b"%PDF"):
+                import tempfile
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_pdf:
+                    tmp_pdf.write(raw_bytes)
+                    tmp_pdf_path = tmp_pdf.name
+                
+                try:
+                    if shutil.which("pdftotext"):
+                        res = subprocess.run(["pdftotext", "-layout", tmp_pdf_path, "-"], capture_output=True, text=True, timeout=30)
+                        text_result = res.stdout.strip()
+                    if not text_result:
+                        text_chunks = re.findall(r"\(([^\(\)]+)\)\s*T[jJ]", raw_bytes.decode("latin-1", errors="ignore"))
+                        text_result = " ".join(text_chunks)
+                finally:
+                    if os.path.exists(tmp_pdf_path):
+                        try:
+                            os.remove(tmp_pdf_path)
+                        except Exception:
+                            pass
+                        
+            # 2. DOCX Extractor
+            elif lower_name.endswith(".docx"):
+                import zipfile, xml.etree.ElementTree as ET
+                with zipfile.ZipFile(io.BytesIO(raw_bytes)) as z:
+                    xml_content = z.read("word/document.xml")
+                    tree = ET.fromstring(xml_content)
+                    texts = [node.text for node in tree.iter() if node.text]
+                    text_result = " ".join(texts)
+                    
+            # 3. Plain Text / CSV / JSON / Code
+            else:
+                text_result = raw_bytes.decode("utf-8", errors="replace")
+                
+            return {
+                "id": req_id,
+                "status": "ok",
+                "file_name": file_name,
+                "text": text_result[:100000],
+                "char_count": len(text_result)
+            }
+        except Exception as e:
+            return {"id": req_id, "status": "error", "error": str(e)}
+
     elif action == "list_dir":
         path = os.path.expanduser(msg.get("path") or os.getcwd())
         try:
