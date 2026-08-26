@@ -134,7 +134,7 @@
 
       <!-- Sidebar Bottom: App Version (Frameless Clean Typography) -->
       <div class="sidebar-footer">
-        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.19</span>
+        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.20</span>
       </div>
     </aside>
 
@@ -926,58 +926,33 @@
 
       <!-- TAB 6: Tampilan & UI (Interface & Theme) -->
       <div class="options-view" id="tab-view-ui" style="display: none;">
-        <!-- Hero Header -->
-        <div class="bento-card bento-hero-provider-card">
-          <div class="hero-provider-top-row">
-            <div class="hero-provider-brand">
-              <div class="hero-provider-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-                  <path d="M2 12h20"/>
-                </svg>
-              </div>
-              <div>
-                <h1 class="hero-provider-title">Tampilan &amp; Antarmuka UI</h1>
-                <p class="hero-provider-desc">Kustomisasi animasi antarmuka, floating widget web, dan estetika visual Dark Luxury</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bento Grid: UI Preferences -->
-        <div class="bento-grid-2col" style="margin-top: 16px;">
+        <!-- Bento Grid: UI Preferences (Full Rounded Glasses) -->
+        <div class="bento-grid-2col">
           <!-- Card 1: Animasi & Widget Web -->
-          <div class="bento-card" id="card-ui-preferences">
+          <div class="bento-card bento-glass-card" id="card-ui-preferences">
             <div class="card-header">
-              <div class="header-icon-box" style="background: rgba(206, 241, 40, 0.1); color: var(--accent-lime);">
+              <div class="header-icon-box" style="background: rgba(206, 241, 40, 0.12); color: var(--accent-lime); border-radius: 12px;">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                  <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z"/>
+                  <path d="M19 3l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z"/>
                 </svg>
               </div>
               <div>
                 <h2>Animasi &amp; Widget Web</h2>
-                <p>Pengaturan visual pekerja stickman dan tombol floating di halaman web</p>
               </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 0;">
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-card); border-radius: 14px;">
-                <div>
-                  <strong style="display: block; font-size: 13.5px; color: #FFFFFF; margin-bottom: 3px;">🏃 Animasi Pekerja Stickman (Swarm)</strong>
-                  <span style="font-size: 12px; color: var(--text-muted);">Tampilkan animasi stickman server di atas toolbar saat AI sedang berpikir atau mengeksekusi tools</span>
-                </div>
+            <div class="ui-pref-list">
+              <div class="ui-pref-pill-row">
+                <span class="ui-pref-label">🏃 Animasi Pekerja Stickman (Swarm)</span>
                 <label class="toggle-switch">
                   <input type="checkbox" id="setting-stickman-animation" checked>
                   <span class="toggle-slider"></span>
                 </label>
               </div>
 
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-card); border-radius: 14px; margin-top: 10px;">
-                <div>
-                  <strong style="display: block; font-size: 13.5px; color: #FFFFFF; margin-bottom: 3px;">🔘 Tombol Mengambang Web (Floating Button "Agent Mode")</strong>
-                  <span style="font-size: 12px; color: var(--text-muted);">Tampilkan tombol floating hijau "Agent Mode" di pojok halaman web untuk membuka sidepanel secara instan dengan 1-klik</span>
-                </div>
+              <div class="ui-pref-pill-row">
+                <span class="ui-pref-label">🔘 Tombol Mengambang Web (Floating Button "Agent Mode")</span>
                 <label class="toggle-switch">
                   <input type="checkbox" id="setting-floating-button" checked>
                   <span class="toggle-slider"></span>
@@ -987,37 +962,30 @@
           </div>
 
           <!-- Card 2: Estetika Dark Luxury Theme -->
-          <div class="bento-card" id="card-ui-theme-info">
+          <div class="bento-card bento-glass-card" id="card-ui-theme-info">
             <div class="card-header">
-              <div class="header-icon-box" style="background: rgba(168, 85, 247, 0.1); color: #c084fc;">
+              <div class="header-icon-box" style="background: rgba(168, 85, 247, 0.12); color: #c084fc; border-radius: 12px;">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                 </svg>
               </div>
               <div>
                 <h2>Tema Visual Dark Luxury</h2>
-                <p>Estetika desain kaca transparan dan tipografi presisi tinggi</p>
               </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-card); border-radius: 14px;">
-                <div>
-                  <strong style="display: block; font-size: 13.5px; color: #FFFFFF; margin-bottom: 3px;">✨ Frosted Liquid Glass (28px Blur)</strong>
-                  <span style="font-size: 12px; color: var(--text-muted);">Efek kaca gelap dengan background blur tinggi dan border kaca ultra-tipis</span>
-                </div>
-                <span class="badge-active-pill" style="padding: 4px 10px; font-size: 11px; font-weight: 700; background: rgba(206, 241, 40, 0.15); color: #CEF128; border: 1px solid rgba(206, 241, 40, 0.35); border-radius: 9999px;">Aktif</span>
+            <div class="ui-pref-list">
+              <div class="ui-pref-pill-row">
+                <span class="ui-pref-label">✨ Frosted Liquid Glass (28px Blur)</span>
+                <span class="badge-active-pill" style="padding: 4px 12px; font-size: 11px; font-weight: 700; background: rgba(206, 241, 40, 0.15); color: #CEF128; border: 1px solid rgba(206, 241, 40, 0.35); border-radius: 9999px;">Aktif</span>
               </div>
 
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-card); border-radius: 14px;">
-                <div>
-                  <strong style="display: block; font-size: 13.5px; color: #FFFFFF; margin-bottom: 3px;">🎨 Aksen Warna Cyber</strong>
-                  <span style="font-size: 12px; color: var(--text-muted);">Palet aksen Cyber Lime (#CEF128), Tech Blue, dan Neon Purple</span>
-                </div>
-                <div style="display: flex; gap: 6px; align-items: center;">
-                  <span style="width: 14px; height: 14px; border-radius: 50%; background: #CEF128; box-shadow: 0 0 8px rgba(206, 241, 40, 0.6); display: inline-block;"></span>
-                  <span style="width: 14px; height: 14px; border-radius: 50%; background: #60a5fa; display: inline-block;"></span>
-                  <span style="width: 14px; height: 14px; border-radius: 50%; background: #c084fc; display: inline-block;"></span>
+              <div class="ui-pref-pill-row">
+                <span class="ui-pref-label">🎨 Aksen Warna Cyber</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span style="width: 13px; height: 13px; border-radius: 50%; background: #CEF128; box-shadow: 0 0 8px rgba(206, 241, 40, 0.6); display: inline-block;"></span>
+                  <span style="width: 13px; height: 13px; border-radius: 50%; background: #60a5fa; display: inline-block;"></span>
+                  <span style="width: 13px; height: 13px; border-radius: 50%; background: #c084fc; display: inline-block;"></span>
                 </div>
               </div>
             </div>

@@ -4302,6 +4302,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.19`, build `extension.crx` (480.2 KB).
 
+---
+
+### 🚀 Iterasi 396: Full Rounded Glasses Style for UI Preferences (v2.150.20)
+- **Kebutuhan Pengguna**:
+  - Mengubah tampilan kartu di Tampilan & UI menjadi gaya Full Rounded Glasses yang super clean, minimalis, dan elegan tanpa teks deskripsi yang panjang.
+  - Mengganti ikon kartu "Animasi & Widget Web" dengan ikon animasi/sparkles yang estetik.
+- **Implementasi & Peningkatan UI**:
+  - **Motion & Sparkle Header Icon**: Mengganti ikon lightning bolt dengan ikon motion sparkles cyber lime yang lebih merepresentasikan animasi antarmuka di [options.html](file:///home/arya/browser-agent/extension/options.html).
+  - **Pembersihan Deskripsi & Full Rounded Capsule**: Menghapus teks deskripsi panjang dan merombak setiap baris opsi menjadi pill capsule bulat penuh (`border-radius: 9999px !important; background: rgba(255, 255, 255, 0.035); backdrop-filter: blur(14px)`) dengan hover glow halus di [options.css](file:///home/arya/browser-agent/extension/options.css).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.20`, build `extension.crx` (479.9 KB).
+
 
 
 
