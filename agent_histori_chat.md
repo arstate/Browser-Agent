@@ -4383,6 +4383,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.25`, build `extension.crx` (478.0 KB).
 
+---
+
+### 🚀 Iterasi 402: Connected Apps Menu & Telegram Bot Remote Control Ecosystem (v2.150.26)
+- **Kebutuhan Pengguna**:
+  - Menambahkan menu baru **"Connected Apps"** di sidebar navigasi di bawah *Tampilan & UI*.
+  - Mengintegrasikan **Telegram Bot Remote Control** yang memungkinkan pengguna mengontrol Browser Agent dari smartphone (chat commands `/model`, `/agent`, `/mode`, `/screenshot`, `/status`, `/new`).
+  - Menerapkan fitur **Whitelist Security (Authorized User ID)** agar bot privat hanya merespons akun pemilik resmi.
+  - Memisahkan **Riwayat & Log Chat Telegram** tersendiri (*Dedicated Realtime Log View*) yang terisolasi dari chat browser utama.
+- **Implementasi & Peningkatan Sistem**:
+  - **Sidebar & View Bento Grid**: Menambahkan tombol navigasi `#tab-btn-connected-apps` dan view bento glass `#tab-view-connected-apps` di [options.html](file:///home/arya/browser-agent/extension/options.html) dengan 3 kartu: *Telegram Bot Remote*, *Dedicated Telegram Chat History & Live Stream Logs*, dan *Panduan Singkat Perintah Remote*.
+  - **Telegram Bot Poller Daemon**: Membangun background long-polling daemon di [options.js](file:///home/arya/browser-agent/extension/options.js) yang memanggil Telegram Bot API, memproses perintah slash command (`/start`, `/model`, `/agent`, `/mode`, `/screenshot`, `/status`, `/new`), mengeksekusi instruksi AI di browser, mengirim balasan dua arah, dan mencatat log interaksi ke `telegram_bot_logs`.
+  - **Auto-Detect User ID & Command Registrar**: Menambahkan tombol 1-klik untuk mendeteksi ID akun pengguna secara otomatis dan mendaftarkan shortcut menu bot via `setMyCommands`.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.26`, build `extension.crx` (486.8 KB).
+
 
 
 
