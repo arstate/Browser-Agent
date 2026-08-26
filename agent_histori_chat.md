@@ -4437,6 +4437,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.29`, build `extension.crx` (489.6 KB).
 
+---
+
+### 🚀 Iterasi 406: Full-Rounded Pill Glass UI & Zero-Emoji Clean Button Refactor (v2.150.30)
+- **Kebutuhan Pengguna**:
+  - Menghilangkan seluruh emoji pada tombol aksi dan input (`💾`, `⚡`, `📋`, `🔍`, `🔄`, `🗑️`, `⚙️`, `🟢`).
+  - Mengubah seluruh input form, tombol aksi, toggle row, dan badge status menjadi bentuk **Full Rounded Pill Glass** (`border-radius: 9999px`) dengan efek dark liquid glass yang bersih, minimalis, dan profesional.
+- **Implementasi & Penataan UI**:
+  - **Tombol Aksi Full-Rounded Pill**: Mengganti teks tombol menjadi bersih tanpa emoji (*Simpan Pengaturan*, *Test Koneksi*, *Daftarkan Menu Perintah*, *Deteksi ID Otomatis*, *Segarkan*, *Bersihkan Log*) dengan `border-radius: 9999px` dan padding proporsional.
+  - **Input Form Full-Rounded Glass**: Mengubah form input *Bot Token* dan *Authorized User ID* ke `border-radius: 9999px`, `background: rgba(18, 18, 22, 0.65)`, `border: 1px solid rgba(255, 255, 255, 0.1)` dan padding `10px 18px`.
+  - **Pill Row Preferences**: Memperbarui baris preferensi switch dengan `border-radius: 9999px` dan background glass halus.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.30`, build `extension.crx` (489.5 KB).
+
 
 
 
