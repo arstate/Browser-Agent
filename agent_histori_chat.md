@@ -4544,6 +4544,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.37`, build `extension.crx` (661.8 KB).
 
+---
+
+### 🚀 Iterasi 414: Telegram Direct New Tab Prompt Ingestion & Interactive /history Session Switcher (v2.150.38)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki masalah di mana chat Telegram tidak masuk ke halaman New Tab (`newtab.html`) / Side Panel, memastikan setiap chat yang dikirim dari Telegram langsung masuk secara visual ke histori chat Browser Agent (membuat sesi baru atau melanjutkan sesi aktif), serta menambahkan fitur `/history` / `/sessions` dengan tombol inline keyboard interaktif di Telegram untuk berpindah sesi percakapan secara langsung.
+- **Implementasi & Peningkatan Sistem**:
+  - **Always-Running Telegram Poller Daemon di `sidepanel.js`**: Menjalankan polling daemon di `sidepanel.js` (yang selalu aktif baik di Side Panel maupun New Tab `newtab.html`) dengan cooperative lease lock (`telegram_poller_lease`) sehingga pesan Telegram selalu tertangkap secara instan tanpa harus membuka halaman Options.
+  - **Direct Visual Ingestion & Auto-Trigger**: Saat pesan Telegram masuk, UI `newtab.html` langsung menghapus hero banner, mengaktifkan kelas `has-messages`, memasukkan balon chat user, dan menjalankan `runAgentLoop`/`runChatModeLoop` secara langsung.
+  - **Interactive Telegram History & Session Switcher (`/history` & `/sessions`)**: Menampilkan daftar sesi terbaru dengan tombol inline keyboard `[💬 Sesi 1]`, `[💬 Sesi 2]`, `[➕ Buat Sesi Baru]` yang memungkinkan pengguna berpindah sesi percakapan di Browser Agent langsung dari Telegram.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.38`, build `extension.crx` (667.0 KB).
+
 
 
 

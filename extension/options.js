@@ -3849,13 +3849,14 @@ async function telegramSetMyCommands(botToken) {
   if (!botToken) return false;
   const commands = [
     { command: "start", description: "Buka menu utama dan bantuan Browser Agent" },
+    { command: "history", description: "Daftar riwayat sesi percakapan & pindah sesi" },
     { command: "model", description: "Pilih model AI aktif atau aktifkan auto-routing" },
     { command: "agent", description: "Pilih persona spesialis agent atau delegasi otomatis" },
     { command: "mode", description: "Ganti mode kerja: Chat, Autonomous Agent, atau Swarm" },
     { command: "screenshot", description: "Ambil screenshot tab Chrome aktif di PC" },
+    { command: "screenshot_os", description: "Ambil screenshot Full Desktop OS Linux" },
     { command: "status", description: "Cek tab aktif, model, memory, dan performa" },
-    { command: "autoaccept", description: "Toggle eksekusi web otomatis tanpa konfirmasi" },
-    { command: "new", description: "Mulai sesi baru dan bersihkan memori chat" }
+    { command: "new", description: "Mulai sesi baru dan bersihkan tampilan chat" }
   ];
   try {
     const res = await fetch(`https://api.telegram.org/bot${botToken}/setMyCommands`, {
@@ -4299,6 +4300,69 @@ async function handleTelegramIncomingUpdate(update) {
       return;
     }
 
+    if (data === 'cmd_history' || data === 'cmd_sessions') {
+      const storageData = await chrome.storage.local.get(['chat_sessions_cache']);
+      const cache = storageData.chat_sessions_cache || {};
+      let sessions = Object.values(cache);
+      sessions.sort((a, b) => (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
+      sessions = sessions.slice(0, 6);
+
+      if (sessions.length === 0) {
+        await telegramSendMessage(botToken, fromId, `🗂️ <b>Riwayat Sesi Percakapan:</b>\n\nBelum ada sesi percakapan yang tersimpan.`, {
+          inline_keyboard: [
+            [{ text: "➕ Buat Sesi Percakapan Baru", callback_data: "cmd_new_session" }]
+          ]
+        });
+        return;
+      }
+
+      let text = `🗂️ <b>Daftar Riwayat Sesi Chat Browser Agent:</b>\n\n`;
+      const keyboardRows = [];
+      const switchButtons = [];
+
+      sessions.forEach((s, idx) => {
+        const num = idx + 1;
+        const title = s.title || `Sesi ${num}`;
+        const dateStr = s.created_at ? new Date(s.created_at).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+        const msgCount = Array.isArray(s.messages) ? s.messages.length : 0;
+        
+        text += `${num}. 💬 <b>${escapeHtml(title.slice(0, 38))}</b>\n`;
+        text += `   <i>Waktu: ${dateStr} • ${msgCount} pesan</i>\n\n`;
+
+        switchButtons.push({
+          text: `Sesi ${num}`,
+          callback_data: `switch_sess:${s.id}`
+        });
+      });
+
+      text += `<i>Ketuk tombol di bawah untuk langsung berpindah sesi chat:</i>`;
+
+      for (let i = 0; i < switchButtons.length; i += 2) {
+        keyboardRows.push(switchButtons.slice(i, i + 2));
+      }
+      keyboardRows.push([
+        { text: "➕ Buat Sesi Baru", callback_data: "cmd_new_session" },
+        { text: "🔄 Segarkan List", callback_data: "cmd_history" }
+      ]);
+
+      await telegramSendMessage(botToken, fromId, text, { inline_keyboard: keyboardRows });
+      return;
+    }
+
+    if (data.startsWith('switch_sess:')) {
+      const sid = data.replace('switch_sess:', '');
+      const storageData = await chrome.storage.local.get(['chat_sessions_cache']);
+      const sess = storageData.chat_sessions_cache?.[sid];
+      const title = sess?.title || 'Sesi Chat';
+      await telegramSendMessage(botToken, fromId, `📂 <b>Berhasil Beralih ke Sesi:</b>\n<i>"${escapeHtml(title)}"</i>\n\nSesi ini sekarang aktif. Silakan ketik pesan untuk melanjutkan percakapan!`);
+      return;
+    }
+
+    if (data === 'cmd_new_session') {
+      await telegramSendMessage(botToken, fromId, `✨ <b>Sesi Percakapan Baru Telah Dibuat!</b>\n\nSilakan ketik instruksi atau prompt baru Anda.`);
+      return;
+    }
+
     if (data === 'cmd_model') {
       const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config']);
       const cfg = storageData.browser_agent_config || config || {};
@@ -4449,19 +4513,72 @@ async function handleTelegramIncomingUpdate(update) {
     const arg = parts.slice(1).join(' ').trim();
 
     if (cmd === '/start' || cmd === '/help') {
-      const welcome = `🤖 <b>Browser Agent Remote Control Aktif!</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, Anda dapat mengontrol browser dan mengeksekusi AI langsung dari chat ini.\n\n<b>Pilihan Perintah:</b>\n• /model - Ganti model AI aktif\n• /agent - Ganti spesialis agent\n• /mode - Ganti mode kerja\n• /screenshot - Ambil screenshot Tab Chrome\n• /screenshot_os - Ambil screenshot Full Desktop Linux\n• /status - Cek status tab & performa\n• /new - Mulai sesi percakapan baru\n\n<i>Atau langsung ketik perintah seperti "buka yt play deny caknan" untuk langsung dieksekusi di browser!</i>`;
+      const welcome = `🤖 <b>Browser Agent Remote Control Aktif!</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, Anda dapat mengontrol browser dan mengeksekusi AI langsung dari chat ini.\n\n<b>Pilihan Perintah:</b>\n• /history - Daftar riwayat sesi chat & pindah sesi\n• /model - Ganti model AI aktif\n• /agent - Ganti spesialis agent\n• /mode - Ganti mode kerja\n• /screenshot - Ambil screenshot Tab Chrome\n• /screenshot_os - Ambil screenshot Full Desktop Linux\n• /status - Cek status tab & performa\n• /new - Mulai sesi percakapan baru\n\n<i>Atau langsung ketik perintah apa saja untuk dieksekusi di browser!</i>`;
       await telegramSendMessage(botToken, senderId, welcome, {
         inline_keyboard: [
           [
-            { text: "🤖 Model AI", callback_data: "cmd_model" },
-            { text: "👥 Spesialis Agent", callback_data: "cmd_agent" }
+            { text: "🗂️ Riwayat Sesi", callback_data: "cmd_history" },
+            { text: "🤖 Model AI", callback_data: "cmd_model" }
           ],
           [
-            { text: "📸 Screenshot Tab", callback_data: "cmd_screenshot_tab" },
-            { text: "🖥️ Screenshot OS Linux", callback_data: "cmd_screenshot_os" }
+            { text: "👥 Spesialis Agent", callback_data: "cmd_agent" },
+            { text: "📸 Screenshot Tab", callback_data: "cmd_screenshot_tab" }
+          ],
+          [
+            { text: "🖥️ Screenshot OS Linux", callback_data: "cmd_screenshot_os" },
+            { text: "✨ Sesi Baru", callback_data: "cmd_new_session" }
           ]
         ]
       });
+      return;
+    }
+
+    if (cmd === '/history' || cmd === '/sessions') {
+      const storageData = await chrome.storage.local.get(['chat_sessions_cache']);
+      const cache = storageData.chat_sessions_cache || {};
+      let sessions = Object.values(cache);
+      sessions.sort((a, b) => (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
+      sessions = sessions.slice(0, 6);
+
+      if (sessions.length === 0) {
+        await telegramSendMessage(botToken, senderId, `🗂️ <b>Riwayat Sesi Percakapan:</b>\n\nBelum ada sesi percakapan yang tersimpan.`, {
+          inline_keyboard: [
+            [{ text: "➕ Buat Sesi Percakapan Baru", callback_data: "cmd_new_session" }]
+          ]
+        });
+        return;
+      }
+
+      let text = `🗂️ <b>Daftar Riwayat Sesi Chat Browser Agent:</b>\n\n`;
+      const keyboardRows = [];
+      const switchButtons = [];
+
+      sessions.forEach((s, idx) => {
+        const num = idx + 1;
+        const title = s.title || `Sesi ${num}`;
+        const dateStr = s.created_at ? new Date(s.created_at).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+        const msgCount = Array.isArray(s.messages) ? s.messages.length : 0;
+        
+        text += `${num}. 💬 <b>${escapeHtml(title.slice(0, 38))}</b>\n`;
+        text += `   <i>Waktu: ${dateStr} • ${msgCount} pesan</i>\n\n`;
+
+        switchButtons.push({
+          text: `Sesi ${num}`,
+          callback_data: `switch_sess:${s.id}`
+        });
+      });
+
+      text += `<i>Ketuk tombol di bawah untuk langsung berpindah sesi chat:</i>`;
+
+      for (let i = 0; i < switchButtons.length; i += 2) {
+        keyboardRows.push(switchButtons.slice(i, i + 2));
+      }
+      keyboardRows.push([
+        { text: "➕ Buat Sesi Baru", callback_data: "cmd_new_session" },
+        { text: "🔄 Segarkan List", callback_data: "cmd_history" }
+      ]);
+
+      await telegramSendMessage(botToken, senderId, text, { inline_keyboard: keyboardRows });
       return;
     }
 

@@ -3852,28 +3852,476 @@ async function telegramSendPhotoFromSidepanel(botToken, chatId, photoDataUrlOrBa
   }
 }
 
-// Global listener for stop/pause execution & incoming Telegram commands
+// =========================================================================
+// Telegram Remote Control Poller Daemon & Bridge Engine
+// =========================================================================
+const sidepanelPollerInstanceId = 'sp_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+let telegramRemoteDaemonStarted = false;
+
+// Fetch Recent Sessions for Telegram History Command
+async function getTelegramRecentSessions() {
+  let sessions = [];
+  try {
+    if (nativePort) {
+      const res = await sendNativeRpc("db_get_sessions", { search: "" });
+      if (res && res.status === "ok" && Array.isArray(res.sessions)) {
+        sessions = res.sessions;
+      }
+    }
+  } catch (e) {}
+
+  if (sessions.length === 0) {
+    const res = await chrome.storage.local.get(['chat_sessions_cache']);
+    const cache = res.chat_sessions_cache || {};
+    sessions = Object.values(cache);
+  }
+
+  sessions.sort((a, b) => (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
+  return sessions.slice(0, 6);
+}
+
+// Render and Send /history message to Telegram
+async function handleTelegramHistoryCommand(botToken, chatId) {
+  const sessions = await getTelegramRecentSessions();
+  if (sessions.length === 0) {
+    await telegramSendMessageFromSidepanel(botToken, chatId, `🗂️ <b>Riwayat Sesi Percakapan:</b>\n\nBelum ada sesi percakapan yang tersimpan di database.`, {
+      inline_keyboard: [
+        [{ text: "➕ Buat Sesi Percakapan Baru", callback_data: "cmd_new_session" }]
+      ]
+    });
+    return;
+  }
+
+  let text = `🗂️ <b>Daftar Riwayat Sesi Chat Browser Agent:</b>\n\n`;
+  const keyboardRows = [];
+  const switchButtons = [];
+
+  sessions.forEach((s, idx) => {
+    const num = idx + 1;
+    const title = s.title || `Sesi ${num}`;
+    const dateStr = s.created_at ? new Date(s.created_at).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+    const msgCount = Array.isArray(s.messages) ? s.messages.length : (s.message_count || 0);
+    const isCurrent = (s.id === currentSessionId);
+    
+    text += `${num}. ${isCurrent ? '🟢 ' : '💬 '}<b>${escapeHtml(title.slice(0, 38))}</b>\n`;
+    text += `   <i>Waktu: ${dateStr} • ${msgCount} pesan</i>\n\n`;
+
+    switchButtons.push({
+      text: `${isCurrent ? '🟢 ' : ''}Sesi ${num}`,
+      callback_data: `switch_sess:${s.id}`
+    });
+  });
+
+  text += `<i>Ketuk tombol di bawah untuk langsung berpindah sesi chat:</i>`;
+
+  // Pair buttons 2 per row
+  for (let i = 0; i < switchButtons.length; i += 2) {
+    keyboardRows.push(switchButtons.slice(i, i + 2));
+  }
+  keyboardRows.push([
+    { text: "➕ Buat Sesi Baru", callback_data: "cmd_new_session" },
+    { text: "🔄 Segarkan List", callback_data: "cmd_history" }
+  ]);
+
+  await telegramSendMessageFromSidepanel(botToken, chatId, text, { inline_keyboard: keyboardRows });
+}
+
+// Process Incoming Telegram Update directly in Sidepanel / New Tab
+async function handleTelegramIncomingUpdateInSidepanel(update, tgCfg) {
+  const botToken = tgCfg.bot_token;
+  if (!botToken) return;
+
+  // 1. Handle Callback Query (Buttons)
+  if (update.callback_query) {
+    const cb = update.callback_query;
+    const fromId = String(cb.from?.id || '');
+    const data = cb.data || '';
+
+    // Whitelist check
+    if (tgCfg.authorized_chat_id && fromId !== String(tgCfg.authorized_chat_id)) {
+      return;
+    }
+
+    if (data === 'cmd_history' || data === 'cmd_sessions') {
+      await handleTelegramHistoryCommand(botToken, fromId);
+      return;
+    }
+
+    if (data.startsWith('switch_sess:')) {
+      const sid = data.replace('switch_sess:', '');
+      await resumeSession(sid);
+      const title = currentSessionTitle || 'Sesi Chat';
+      await telegramSendMessageFromSidepanel(botToken, fromId, `📂 <b>Berhasil Beralih ke Sesi:</b>\n<i>"${escapeHtml(title)}"</i>\n\nSesi ini sekarang aktif di Browser Agent. Silakan ketik perintah untuk melanjutkan!`);
+      return;
+    }
+
+    if (data === 'cmd_new_session') {
+      startNewChat();
+      await telegramSendMessageFromSidepanel(botToken, fromId, `✨ <b>Sesi Percakapan Baru Telah Dibuat!</b>\n\nTampilan Browser Agent telah di-reset ke sesi baru. Silakan ketik prompt atau instruksi Anda.`);
+      return;
+    }
+
+    if (data === 'cmd_model') {
+      const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config']);
+      const cfg = storageData.browser_agent_config || config || {};
+      const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
+      const modelList = Array.isArray(cfg.models) && cfg.models.length > 0 ? cfg.models : (DEFAULT_MODELS_BY_PRESET[cfg.preset] || [{ id: cfg.model || "gemini-2.5-flash", name: cfg.model || "Default Model" }]);
+      const keyboardRows = [
+        [{ text: `🤖 AUTO (Smart Dynamic) ${activeTgCfg.auto_model ? '✓' : ''}`, callback_data: "set_model:auto" }]
+      ];
+      for (let i = 0; i < modelList.length; i += 2) {
+        const row = [];
+        const m1 = modelList[i];
+        const m1Id = m1.id || m1;
+        const m1Name = m1.name || m1Id;
+        const isM1Active = !activeTgCfg.auto_model && (activeTgCfg.selected_model === m1Id || cfg.model === m1Id);
+        row.push({ text: `${isM1Active ? '🟢 ' : ''}${m1Name}`, callback_data: `set_model:${m1Id}` });
+        if (i + 1 < modelList.length) {
+          const m2 = modelList[i + 1];
+          const m2Id = m2.id || m2;
+          const m2Name = m2.name || m2Id;
+          const isM2Active = !activeTgCfg.auto_model && (activeTgCfg.selected_model === m2Id || cfg.model === m2Id);
+          row.push({ text: `${isM2Active ? '🟢 ' : ''}${m2Name}`, callback_data: `set_model:${m2Id}` });
+        }
+        keyboardRows.push(row);
+      }
+      await telegramSendMessageFromSidepanel(botToken, fromId, `🧠 <b>Pilih Model AI:</b>\n\nModel aktif: <code>${activeTgCfg.auto_model ? 'AUTO' : (activeTgCfg.selected_model || cfg.model || 'Default')}</code>`, { inline_keyboard: keyboardRows });
+      return;
+    }
+
+    if (data === 'cmd_agent') {
+      const storageData = await chrome.storage.local.get(['custom_agents', 'active_agent_id', 'telegram_bot_config']);
+      const agents = Array.isArray(storageData.custom_agents) && storageData.custom_agents.length > 0 ? storageData.custom_agents : [{ id: "master_agent", name: "Master Agent" }];
+      const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
+      const keyboardRows = [
+        [{ text: `🧠 AUTO (Delegasi Otomatis) ${activeTgCfg.auto_agent ? '✓' : ''}`, callback_data: "set_agent:auto" }]
+      ];
+      for (let i = 0; i < agents.length; i += 2) {
+        const row = [];
+        const a1 = agents[i];
+        const isA1Active = !activeTgCfg.auto_agent && (activeTgCfg.selected_agent === a1.id || storageData.active_agent_id === a1.id);
+        row.push({ text: `${isA1Active ? '🟢 ' : ''}${a1.name}`, callback_data: `set_agent:${a1.id}` });
+        if (i + 1 < agents.length) {
+          const a2 = agents[i + 1];
+          const isA2Active = !activeTgCfg.auto_agent && (activeTgCfg.selected_agent === a2.id || storageData.active_agent_id === a2.id);
+          row.push({ text: `${isA2Active ? '🟢 ' : ''}${a2.name}`, callback_data: `set_agent:${a2.id}` });
+        }
+        keyboardRows.push(row);
+      }
+      await telegramSendMessageFromSidepanel(botToken, fromId, `👥 <b>Pilih Spesialis Agent:</b>`, { inline_keyboard: keyboardRows });
+      return;
+    }
+
+    if (data === 'cmd_screenshot_tab') {
+      await telegramSendMessageFromSidepanel(botToken, fromId, `📸 <i>Mengambil tangkapan layar tab Chrome...</i>`);
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const activeTab = tabs[0];
+        const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
+        if (dataUrl) {
+          const caption = `📸 <b>Screenshot Tab Chrome</b>\n<i>${escapeHtml(activeTab?.title || 'Chrome Tab')}</i>\nURL: <code>${escapeHtml(activeTab?.url || '-')}</code>`;
+          await telegramSendPhotoFromSidepanel(botToken, fromId, dataUrl, caption);
+        } else {
+          await telegramSendMessageFromSidepanel(botToken, fromId, `⚠️ Gagal mengambil tangkapan layar tab.`);
+        }
+      } catch (err) {
+        await telegramSendMessageFromSidepanel(botToken, fromId, `⚠️ Error screenshot tab: ${err.message}`);
+      }
+      return;
+    }
+
+    if (data === 'cmd_screenshot_os') {
+      await telegramSendMessageFromSidepanel(botToken, fromId, `🖥️ <i>Mengambil screenshot Full Desktop Linux OS...</i>`);
+      try {
+        const rpcRes = await sendNativeRpc("capture_os_screenshot", {});
+        if (rpcRes && rpcRes.status === "ok" && rpcRes.data_url) {
+          const caption = `🖥️ <b>Fullscreen Linux OS Desktop Screenshot</b>\nWaktu: <code>${new Date().toLocaleString('id-ID')}</code>`;
+          await telegramSendPhotoFromSidepanel(botToken, fromId, rpcRes.data_url, caption);
+        } else {
+          await telegramSendMessageFromSidepanel(botToken, fromId, `⚠️ Gagal mengambil screenshot OS: ${rpcRes?.error || 'Native Host error'}`);
+        }
+      } catch (err) {
+        await telegramSendMessageFromSidepanel(botToken, fromId, `⚠️ Error screenshot OS: ${err.message}`);
+      }
+      return;
+    }
+
+    if (data.startsWith('set_model:')) {
+      const selectedModel = data.replace('set_model:', '');
+      tgCfg.auto_model = (selectedModel === 'auto');
+      tgCfg.selected_model = (selectedModel === 'auto' ? '' : selectedModel);
+      await chrome.storage.local.set({ telegram_bot_config: tgCfg });
+      await telegramSendMessageFromSidepanel(botToken, fromId, `✅ <b>Model AI Berhasil Diganti:</b> <code>${escapeHtml(selectedModel === 'auto' ? 'AUTO (Smart Dynamic)' : selectedModel)}</code>`);
+      return;
+    }
+
+    if (data.startsWith('set_agent:')) {
+      const selectedAgent = data.replace('set_agent:', '');
+      tgCfg.auto_agent = (selectedAgent === 'auto');
+      tgCfg.selected_agent = (selectedAgent === 'auto' ? '' : selectedAgent);
+      await chrome.storage.local.set({ telegram_bot_config: tgCfg });
+      await telegramSendMessageFromSidepanel(botToken, fromId, `👥 <b>Spesialis Agent Berhasil Dipilih:</b> <code>${escapeHtml(selectedAgent === 'auto' ? 'AUTO (Delegasi Otomatis)' : selectedAgent)}</code>`);
+      return;
+    }
+    return;
+  }
+
+  // 2. Handle Messages
+  const msg = update.message;
+  if (!msg || !msg.text) return;
+
+  const senderId = String(msg.from?.id || msg.chat?.id || '');
+  const senderName = msg.from?.first_name || 'User';
+  const text = msg.text.trim();
+
+  // If authorized_chat_id is empty, auto-detect on first message
+  if (!tgCfg.authorized_chat_id) {
+    tgCfg.authorized_chat_id = senderId;
+    await chrome.storage.local.set({ telegram_bot_config: tgCfg });
+    await telegramSendMessageFromSidepanel(botToken, senderId, `🎉 <b>Selamat Datang, ${escapeHtml(senderName)}!</b>\nID Akun Anda <code>${senderId}</code> telah berhasil didaftarkan sebagai pemilik resmi Browser Agent.`);
+  }
+
+  // Security Whitelist Filter
+  if (String(tgCfg.authorized_chat_id) !== senderId) {
+    await telegramSendMessageFromSidepanel(botToken, senderId, `⛔ <b>Akses Ditolak.</b> Bot ini diproteksi khusus untuk pemilik terdaftar.`);
+    return;
+  }
+
+  // Handle Slash Commands
+  if (text.startsWith('/')) {
+    const parts = text.split(' ');
+    const cmd = parts[0].toLowerCase();
+
+    if (cmd === '/start' || cmd === '/help') {
+      const welcome = `🤖 <b>Browser Agent Remote Control Aktif!</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, Anda dapat mengontrol browser dan mengeksekusi AI langsung dari chat ini.\n\n<b>Pilihan Perintah:</b>\n• /history - Daftar riwayat sesi chat & pindah sesi\n• /model - Ganti model AI aktif\n• /agent - Ganti spesialis agent\n• /screenshot - Ambil screenshot Tab Chrome\n• /screenshot_os - Ambil screenshot Full Desktop Linux\n• /status - Cek status tab & performa\n• /new - Mulai sesi percakapan baru\n\n<i>Atau langsung ketik perintah apa saja untuk dieksekusi di browser!</i>`;
+      await telegramSendMessageFromSidepanel(botToken, senderId, welcome, {
+        inline_keyboard: [
+          [
+            { text: "🗂️ Riwayat Sesi", callback_data: "cmd_history" },
+            { text: "🤖 Model AI", callback_data: "cmd_model" }
+          ],
+          [
+            { text: "👥 Spesialis Agent", callback_data: "cmd_agent" },
+            { text: "📸 Screenshot Tab", callback_data: "cmd_screenshot_tab" }
+          ],
+          [
+            { text: "🖥️ Screenshot OS Linux", callback_data: "cmd_screenshot_os" },
+            { text: "✨ Sesi Baru", callback_data: "cmd_new_session" }
+          ]
+        ]
+      });
+      return;
+    }
+
+    if (cmd === '/history' || cmd === '/sessions') {
+      await handleTelegramHistoryCommand(botToken, senderId);
+      return;
+    }
+
+    if (cmd === '/new') {
+      startNewChat();
+      await telegramSendMessageFromSidepanel(botToken, senderId, `✨ <b>Sesi Percakapan Baru Telah Dibuat!</b>\n\nTampilan Browser Agent telah di-reset ke sesi baru. Silakan ketik prompt atau instruksi Anda.`);
+      return;
+    }
+
+    if (cmd === '/model') {
+      const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config']);
+      const cfg = storageData.browser_agent_config || config || {};
+      const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
+      const modelList = Array.isArray(cfg.models) && cfg.models.length > 0 ? cfg.models : (DEFAULT_MODELS_BY_PRESET[cfg.preset] || [{ id: cfg.model || "gemini-2.5-flash", name: cfg.model || "Default Model" }]);
+      const keyboardRows = [
+        [{ text: `🤖 AUTO (Smart Dynamic) ${activeTgCfg.auto_model ? '✓' : ''}`, callback_data: "set_model:auto" }]
+      ];
+      for (let i = 0; i < modelList.length; i += 2) {
+        const row = [];
+        const m1 = modelList[i];
+        const m1Id = m1.id || m1;
+        const m1Name = m1.name || m1Id;
+        const isM1Active = !activeTgCfg.auto_model && (activeTgCfg.selected_model === m1Id || cfg.model === m1Id);
+        row.push({ text: `${isM1Active ? '🟢 ' : ''}${m1Name}`, callback_data: `set_model:${m1Id}` });
+        if (i + 1 < modelList.length) {
+          const m2 = modelList[i + 1];
+          const m2Id = m2.id || m2;
+          const m2Name = m2.name || m2Id;
+          const isM2Active = !activeTgCfg.auto_model && (activeTgCfg.selected_model === m2Id || cfg.model === m2Id);
+          row.push({ text: `${isM2Active ? '🟢 ' : ''}${m2Name}`, callback_data: `set_model:${m2Id}` });
+        }
+        keyboardRows.push(row);
+      }
+      await telegramSendMessageFromSidepanel(botToken, senderId, `🧠 <b>Pilih Model AI:</b>\n\nModel aktif: <code>${activeTgCfg.auto_model ? 'AUTO' : (activeTgCfg.selected_model || cfg.model || 'Default')}</code>`, { inline_keyboard: keyboardRows });
+      return;
+    }
+
+    if (cmd === '/agent') {
+      const storageData = await chrome.storage.local.get(['custom_agents', 'active_agent_id', 'telegram_bot_config']);
+      const agents = Array.isArray(storageData.custom_agents) && storageData.custom_agents.length > 0 ? storageData.custom_agents : [{ id: "master_agent", name: "Master Agent" }];
+      const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
+      const keyboardRows = [
+        [{ text: `🧠 AUTO (Delegasi Otomatis) ${activeTgCfg.auto_agent ? '✓' : ''}`, callback_data: "set_agent:auto" }]
+      ];
+      for (let i = 0; i < agents.length; i += 2) {
+        const row = [];
+        const a1 = agents[i];
+        const isA1Active = !activeTgCfg.auto_agent && (activeTgCfg.selected_agent === a1.id || storageData.active_agent_id === a1.id);
+        row.push({ text: `${isA1Active ? '🟢 ' : ''}${a1.name}`, callback_data: `set_agent:${a1.id}` });
+        if (i + 1 < agents.length) {
+          const a2 = agents[i + 1];
+          const isA2Active = !activeTgCfg.auto_agent && (activeTgCfg.selected_agent === a2.id || storageData.active_agent_id === a2.id);
+          row.push({ text: `${isA2Active ? '🟢 ' : ''}${a2.name}`, callback_data: `set_agent:${a2.id}` });
+        }
+        keyboardRows.push(row);
+      }
+      await telegramSendMessageFromSidepanel(botToken, senderId, `👥 <b>Pilih Spesialis Agent:</b>`, { inline_keyboard: keyboardRows });
+      return;
+    }
+
+    if (cmd === '/screenshot' || cmd === '/screenshot_tab') {
+      await telegramSendMessageFromSidepanel(botToken, senderId, `📸 <i>Mengambil tangkapan layar tab Chrome...</i>`);
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const activeTab = tabs[0];
+        const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
+        if (dataUrl) {
+          const caption = `📸 <b>Screenshot Tab Chrome</b>\n<i>${escapeHtml(activeTab?.title || 'Chrome Tab')}</i>\nURL: <code>${escapeHtml(activeTab?.url || '-')}</code>`;
+          await telegramSendPhotoFromSidepanel(botToken, senderId, dataUrl, caption);
+        } else {
+          await telegramSendMessageFromSidepanel(botToken, senderId, `⚠️ Gagal mengambil snapshot tab.`);
+        }
+      } catch (err) {
+        await telegramSendMessageFromSidepanel(botToken, senderId, `⚠️ Gagal mengambil screenshot tab: ${err.message}`);
+      }
+      return;
+    }
+
+    if (cmd === '/screenshot_os' || cmd === '/screenshot_fullscreen') {
+      await telegramSendMessageFromSidepanel(botToken, senderId, `🖥️ <i>Mengambil screenshot Full Desktop Linux OS...</i>`);
+      try {
+        const rpcRes = await sendNativeRpc("capture_os_screenshot", {});
+        if (rpcRes && rpcRes.status === "ok" && rpcRes.data_url) {
+          const caption = `🖥️ <b>Fullscreen Linux OS Desktop Screenshot</b>\nWaktu: <code>${new Date().toLocaleString('id-ID')}</code>`;
+          await telegramSendPhotoFromSidepanel(botToken, senderId, rpcRes.data_url, caption);
+        } else {
+          await telegramSendMessageFromSidepanel(botToken, senderId, `⚠️ Gagal mengambil screenshot OS Desktop: ${rpcRes?.error || 'Native Host Error'}`);
+        }
+      } catch (err) {
+        await telegramSendMessageFromSidepanel(botToken, senderId, `⚠️ Error screenshot OS: ${err.message}`);
+      }
+      return;
+    }
+
+    if (cmd === '/status') {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const activeTab = tabs[0];
+      const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config', 'custom_agents']);
+      const cfg = storageData.browser_agent_config || config || {};
+      const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
+      const agents = Array.isArray(storageData.custom_agents) ? storageData.custom_agents : [];
+      
+      let realActiveModel = "";
+      if (activeTgCfg.selected_model) {
+        realActiveModel = activeTgCfg.selected_model;
+      } else if (cfg.selectedModelChoice && cfg.selectedModelChoice !== "auto") {
+        realActiveModel = cfg.selectedModelChoice;
+      } else if (Array.isArray(cfg.models) && cfg.models.length > 0) {
+        realActiveModel = cfg.models[0].id || cfg.models[0];
+      } else {
+        realActiveModel = cfg.model || "gemini-2.5-flash";
+      }
+      
+      const modelDisplay = activeTgCfg.auto_model ? `AUTO (${realActiveModel})` : realActiveModel;
+      const agentDisplay = activeTgCfg.auto_agent ? `AUTO (${agents[0]?.name || 'Master Agent'})` : (agents.find(a => a.id === activeTgCfg.selected_agent)?.name || 'Master Agent');
+
+      const statusMsg = `📊 <b>Status Browser Agent:</b>\n\n• <b>Tab Aktif:</b> ${escapeHtml(activeTab?.title || 'None')}\n• <b>URL:</b> <code>${escapeHtml(activeTab?.url || '-')}</code>\n• <b>Sesi Chat:</b> <code>${escapeHtml(currentSessionTitle || 'New Chat')}</code>\n• <b>Model:</b> <code>${escapeHtml(modelDisplay)}</code>\n• <b>Agent:</b> <code>${escapeHtml(agentDisplay)}</code>\n• <b>Auto-Accept:</b> <code>${activeTgCfg.auto_accept ? 'ON (Otomatis)' : 'OFF (Safe Mode)'}</code>\n• <b>Status:</b> <code>Online 🟢</code>`;
+      await telegramSendMessageFromSidepanel(botToken, senderId, statusMsg);
+      return;
+    }
+  }
+
+  // 3. User Prompt Execution (Direct Ingestion into Browser Agent)
+  activeTelegramSession = { senderId, senderName, botToken, statusMessageId: null };
+  updateTelegramLiveStatus(`⏳ <b>Browser Agent:</b> Memulai eksekusi instruksi...`).catch(() => {});
+
+  if (chatInput) {
+    chatInput.value = text;
+  }
+  hideClarificationDock();
+
+  // If in welcome screen without session, create fresh session
+  if (!currentSessionId) {
+    currentSessionId = 'sess_' + Date.now();
+    currentSessionTitle = text.slice(0, 45).trim();
+    currentSessionCreatedAt = Date.now();
+    updateHeaderChatTitle(currentSessionTitle);
+  }
+
+  // Ensure body has-messages is active so chat UI renders immediately
+  document.body.classList.add('has-messages');
+  if (welcomeCard) welcomeCard.style.display = 'none';
+
+  if (currentChatMode === 'chat') {
+    runChatModeLoop(text, [], []);
+  } else {
+    runAgentLoop(text, [], []);
+  }
+}
+
+// Background Telegram Poller Daemon running in Sidepanel / NewTab
+async function startTelegramPollingDaemonFromSidepanel() {
+  if (telegramRemoteDaemonStarted) return;
+  telegramRemoteDaemonStarted = true;
+
+  while (true) {
+    try {
+      const storageData = await chrome.storage.local.get(['telegram_bot_config', 'telegram_poller_lease', 'telegram_last_update_id']);
+      const tgCfg = storageData.telegram_bot_config;
+
+      if (!tgCfg || !tgCfg.enabled || !tgCfg.bot_token) {
+        await new Promise(r => setTimeout(r, 3000));
+        continue;
+      }
+
+      // Check cooperative leader lease
+      const now = Date.now();
+      const lease = storageData.telegram_poller_lease;
+      const isLeader = (lease && lease.id === sidepanelPollerInstanceId);
+      const isExpired = (!lease || (now - (lease.time || 0) > 7000));
+
+      if (!isLeader && !isExpired) {
+        // Another instance is currently leader, standby
+        await new Promise(r => setTimeout(r, 2500));
+        continue;
+      }
+
+      // Claim / Renew lease
+      await chrome.storage.local.set({
+        telegram_poller_lease: { id: sidepanelPollerInstanceId, time: now }
+      });
+
+      const lastId = storageData.telegram_last_update_id || 0;
+      const url = `https://api.telegram.org/bot${tgCfg.bot_token}/getUpdates?offset=${lastId + 1}&timeout=12`;
+      const res = await fetch(url);
+      const json = await res.json();
+
+      if (json.ok && Array.isArray(json.result) && json.result.length > 0) {
+        let maxUpdateId = lastId;
+        for (const update of json.result) {
+          if (update.update_id > maxUpdateId) maxUpdateId = update.update_id;
+          await handleTelegramIncomingUpdateInSidepanel(update, tgCfg);
+        }
+        await chrome.storage.local.set({ telegram_last_update_id: maxUpdateId });
+      }
+    } catch (err) {
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+}
+
+// Global listener for stop/pause execution
 try {
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && (msg.type === "ABORT_AGENT_EXECUTION" || msg.type === "PAUSE_AGENT_EXECUTION")) {
       cancelExecution();
       sendResponse({ status: "aborted" });
-      return true;
-    }
-
-    if (msg && msg.type === "TELEGRAM_PROMPT_EXECUTE") {
-      const { text, senderId, senderName, botToken } = msg;
-      activeTelegramSession = { senderId, senderName, botToken, statusMessageId: null };
-
-      // Send initial acknowledgement in a single message
-      updateTelegramLiveStatus(`⏳ <b>Browser Agent:</b> Memulai eksekusi instruksi...`).catch(() => {});
-
-      if (currentChatMode === 'chat') {
-        runChatModeLoop(text, [], []);
-      } else {
-        runAgentLoop(text, [], []);
-      }
-      sendResponse({ status: "handled_by_sidepanel" });
       return true;
     }
   });
@@ -10634,6 +11082,7 @@ async function bootstrap() {
   }
   updateMcpStatus();
   updateHeaderChatTitle();
+  startTelegramPollingDaemonFromSidepanel();
 }
 
 bootstrap();
