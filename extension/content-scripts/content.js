@@ -612,11 +612,54 @@ content;
     initFloatingAgentWidget();
   }
 
+  // Real-time listener for settings changes (e.g., floating button on/off toggle)
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (window !== window.top) return;
+        if (area === 'local') {
+          if ('show_floating_button' in changes || 'browser_agent_config' in changes) {
+            let isEnabled = true;
+            if ('show_floating_button' in changes) {
+              isEnabled = (changes.show_floating_button.newValue !== false);
+            } else if (changes.browser_agent_config && changes.browser_agent_config.newValue) {
+              isEnabled = (changes.browser_agent_config.newValue.showFloatingButton !== false);
+            }
+            
+            const widget = document.getElementById('ba-floating-agent-widget');
+            if (isEnabled) {
+              if (!widget) {
+                createFloatingAgentWidget();
+              } else {
+                widget.style.display = 'block';
+              }
+            } else {
+              if (widget) {
+                widget.remove();
+              }
+            }
+          }
+        }
+      });
+    }
+  } catch (e) {}
+
   // Listen to execution state, sidepanel visibility, and click animations from extension sidepanel (Top Window Only)
   try {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (window !== window.top) {
         return;
+      }
+      if (message && message.type === "TOGGLE_FLOATING_BUTTON") {
+        const widget = document.getElementById('ba-floating-agent-widget');
+        if (message.enabled) {
+          if (!widget) createFloatingAgentWidget();
+          else widget.style.display = 'block';
+        } else {
+          if (widget) widget.remove();
+        }
+        sendResponse({ status: "ok" });
+        return true;
       }
       if (message && message.type === "SIDEPANEL_VISIBILITY") {
         updateFloatingWidgetVisibility(message.isOpen);

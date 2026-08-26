@@ -363,9 +363,15 @@ async function hydrateFromLocalStorage() {
 }
 
 async function loadConfig() {
-  const res = await chrome.storage.local.get(['browser_agent_config', 'active_agent_id']);
+  const res = await chrome.storage.local.get(['browser_agent_config', 'active_agent_id', 'show_floating_button', 'setting_stickman_animation']);
   if (res && res.browser_agent_config) {
     config = { ...config, ...res.browser_agent_config };
+  }
+  if (res && typeof res.show_floating_button === 'boolean') {
+    config.showFloatingButton = res.show_floating_button;
+  }
+  if (res && typeof res.setting_stickman_animation === 'boolean') {
+    config.stickmanAnimation = res.setting_stickman_animation;
   }
   if (res && res.active_agent_id) {
     activeAgentId = res.active_agent_id;
@@ -414,13 +420,9 @@ function applyConfigToUI() {
   });
 
   const displayChoice = document.getElementById('display-active-model-choice');
-  if (displayChoice) {
-    const models = getModelsList();
-    if (models.length > 0) {
-      displayChoice.textContent = `${models[0].name || models[0].id} (Primary #1)`;
-    } else {
-      displayChoice.textContent = config.model || "Auto (Rotating Priority)";
-    }
+  if (settingPreset) {
+    settingPreset.value = config.preset || "gemini-flash";
+    handlePresetChange(false);
   }
 
   if (settingEndpoint) settingEndpoint.value = config.endpoint || "";
@@ -434,6 +436,10 @@ function applyConfigToUI() {
   const settingStickman = document.getElementById('setting-stickman-animation');
   if (settingStickman) {
     settingStickman.checked = (config.stickmanAnimation !== false);
+  }
+  const settingFloatingBtn = document.getElementById('setting-floating-button');
+  if (settingFloatingBtn) {
+    settingFloatingBtn.checked = (config.showFloatingButton !== false);
   }
 }
 
@@ -589,6 +595,8 @@ async function saveAllConfig(silent = false) {
   config.maxTokens = settingMaxTokens ? parseInt(settingMaxTokens.value, 10) : config.maxTokens;
   const settingStickman = document.getElementById('setting-stickman-animation');
   config.stickmanAnimation = settingStickman ? settingStickman.checked : (config.stickmanAnimation !== false);
+  const settingFloatingBtn = document.getElementById('setting-floating-button');
+  config.showFloatingButton = settingFloatingBtn ? settingFloatingBtn.checked : (config.showFloatingButton !== false);
   config.models = models.length > 0 ? models : [
     { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" }
   ];
@@ -605,7 +613,8 @@ async function saveAllConfig(silent = false) {
   await chrome.storage.local.set({ 
     browser_agent_config: config, 
     active_agent_id: activeAgentId,
-    setting_stickman_animation: config.stickmanAnimation
+    setting_stickman_animation: config.stickmanAnimation,
+    show_floating_button: config.showFloatingButton
   });
 
   // 2. Persist to SQLite Database via Native Host (Separate Model Table + Settings Table)
@@ -2644,6 +2653,17 @@ function setupEventListeners() {
     config.stickmanAnimation = isEnabled;
     chrome.storage.local.set({ 
       setting_stickman_animation: isEnabled,
+      browser_agent_config: config 
+    });
+    triggerAutoSave(0);
+  });
+
+  // Floating Button "Agent Mode" Toggle
+  document.getElementById('setting-floating-button')?.addEventListener('change', (e) => {
+    const isEnabled = e.target.checked;
+    config.showFloatingButton = isEnabled;
+    chrome.storage.local.set({ 
+      show_floating_button: isEnabled,
       browser_agent_config: config 
     });
     triggerAutoSave(0);

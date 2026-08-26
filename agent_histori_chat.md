@@ -4204,6 +4204,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.11`, build `extension.crx` (478.3 KB).
 
+---
+
+### 🚀 Iterasi 388: On/Off Floating Button ("Agent Mode") Settings Toggle (v2.150.12)
+- **Kebutuhan Pengguna**:
+  - Menambahkan toggle pengaturan di halaman opsi/pengaturan (`options.html`) untuk menyalakan/mematikan (*on/off*) tombol mengambang (*floating button*) hijau "Agent Mode" yang muncul di pojok halaman web untuk membuka sidepanel.
+- **Implementasi & Peningkatan Pengaturan**:
+  - **Settings Toggle UI**: Menambahkan switch toggle "🔘 Tombol Mengambang Web (Floating Button 'Agent Mode')" pada section **Tampilan & Animasi UI** di [options.html](file:///home/arya/browser-agent/extension/options.html).
+  - **State Hydration & Persistence**: Mengintegrasikan `show_floating_button` dan `config.showFloatingButton` ke dalam `loadConfig`, `applyConfigToUI`, `saveConfig`, dan event listener di [options.js](file:///home/arya/browser-agent/extension/options.js).
+  - **Real-time DOM Sync**: Menambahkan listener `chrome.storage.onChanged` dan message dispatcher di [content.js](file:///home/arya/browser-agent/extension/content-scripts/content.js) sehingga saat pengguna mematikan/menyalakan toggle di pengaturan, tombol floating di seluruh tab web aktif langsung hilang/muncul secara instan tanpa perlu reload halaman.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.12`, build `extension.crx` (478.8 KB).
+
 
 
 
