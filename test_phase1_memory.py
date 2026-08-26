@@ -209,6 +209,11 @@ class TestPersistentMemoryPhase1(unittest.TestCase):
         self.assertEqual(res.get("status"), "error")
         self.assertIn("No audio data", res.get("error", ""))
 
+    def test_10_web_search_query(self):
+        res = native_host.perform_web_search("poppler pdftoppm linux", max_results=3)
+        self.assertEqual(res.get("status"), "ok")
+        self.assertTrue(isinstance(res.get("results"), list))
+
     @classmethod
     def tearDownClass(cls):
         # Clean up test records

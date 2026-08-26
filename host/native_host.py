@@ -755,6 +755,60 @@ def transcribe_audio_file(file_base64, mime_type="audio/ogg", api_key="", endpoi
         log(f"Error in transcribe_audio_file: {e}")
         return {"status": "error", "error": str(e)}
 
+def perform_web_search(query, max_results=6):
+    try:
+        import subprocess
+        import re
+        import urllib.parse
+        from html import unescape
+
+        query = (query or "").strip()
+        if not query:
+            return {"status": "error", "error": "Query cannot be empty"}
+
+        url = "https://lite.duckduckgo.com/lite/"
+        encoded_payload = f"q={urllib.parse.quote_plus(query)}"
+
+        res = subprocess.run(
+            ["curl", "-s", "-L", "-d", encoded_payload, url, "-A", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"],
+            capture_output=True,
+            text=True,
+            timeout=15
+        )
+
+        results = []
+        if res.returncode == 0 and res.stdout:
+            html = res.stdout
+            matches = re.findall(
+                r'<a rel=[\'"]nofollow[\'"] href=[\'"]([^\'"]*)[\'"] class=[\'"]result-link[\'"]>(.*?)</a>.*?<td class=[\'"]result-snippet[\'"]>\s*(.*?)\s*</td>',
+                html,
+                re.DOTALL
+            )
+            for link, title, snip in matches[:max_results]:
+                clean_title = unescape(re.sub(r'<[^>]+>', '', title).strip())
+                clean_snip = unescape(re.sub(r'<[^>]+>', '', snip).strip())
+                actual_url = link
+                if "uddg=" in link:
+                    try:
+                        actual_url = urllib.parse.unquote(link.split("uddg=")[1].split("&")[0])
+                    except Exception:
+                        pass
+                results.append({
+                    "title": clean_title,
+                    "url": actual_url,
+                    "snippet": clean_snip
+                })
+
+        return {
+            "status": "ok",
+            "query": query,
+            "count": len(results),
+            "results": results
+        }
+    except Exception as e:
+        log(f"Error in perform_web_search: {e}")
+        return {"status": "error", "error": str(e)}
+
 def save_generated_image(image_id, image_data, prompt=""):
     try:
         os.makedirs(IMAGES_DIR, exist_ok=True)
@@ -3834,6 +3888,13 @@ def handle_local_rpc(msg):
         endpoint = msg.get("endpoint", "")
         preset = msg.get("preset", "")
         res = transcribe_audio_file(file_base64, mime_type, api_key, endpoint, preset)
+        res["id"] = req_id
+        return res
+
+    elif action == "web_search":
+        query = msg.get("query", "")
+        max_results = int(msg.get("max_results") or 6)
+        res = perform_web_search(query, max_results)
         res["id"] = req_id
         return res
 

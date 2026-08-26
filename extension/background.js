@@ -1164,6 +1164,36 @@ const BACKGROUND_AGENT_TOOLS = [
   {
     type: "function",
     function: {
+      name: "web_search",
+      description: "Search the web via DuckDuckGo in real-time to find live information, tutorials, CLI commands, Python syntax, documentation, or solutions whenever you don't know the exact command or method.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Search keywords (e.g. 'how to convert pdf to png poppler pdftoppm', 'merge pdf linux command', 'ffmpeg convert video mp4')" }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "learn_new_skill",
+      description: "Save a newly discovered workflow, CLI recipe, or solution into the Browser Agent Brain SQLite database so it is permanently remembered and recalled for all future tasks.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Short descriptive name for the skill (e.g. 'PDF to Image Zip Converter', 'Merge PDF CLI Workflow')" },
+          description: { type: "string", description: "Summary of what this skill does" },
+          workflow_markdown: { type: "string", description: "Step-by-step instructions, CLI commands, or Python code for executing the workflow" }
+        },
+        required: ["name", "workflow_markdown"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "generate_image",
       description: "Generate an image or illustration using the AI Image Generation model configured in Browser Agent settings (DALL-E 3, Imagen 3, Flux, SDXL, etc.). Always use this tool whenever the user asks to draw, generate, or create an image. The generated photo will automatically be saved and sent directly to the user's Telegram chat.",
       parameters: {
@@ -1364,6 +1394,46 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
         };
       }
       return { error: rpcRes?.error || "Gagal mengirim berkas ke Telegram." };
+    }
+
+    if (toolName === "web_search") {
+      const query = (toolArgs.query || "").trim();
+      const rpcRes = await sendNativeRpcInBackground("web_search", { query, max_results: 6 });
+      if (rpcRes && rpcRes.status === "ok") {
+        return {
+          status: "success",
+          query: query,
+          results: rpcRes.results,
+          count: rpcRes.count,
+          message: `Ditemukan ${rpcRes.count} hasil pencarian untuk "${query}"`
+        };
+      }
+      return { error: rpcRes?.error || "Gagal melakukan pencarian web." };
+    }
+
+    if (toolName === "learn_new_skill") {
+      const skillName = toolArgs.name || "Autonomous Skill";
+      const skillDesc = toolArgs.description || "";
+      const workflow = toolArgs.workflow_markdown || "";
+
+      const rpcRes = await sendNativeRpcInBackground("db_save_autonomous_skill", {
+        skill: {
+          name: skillName,
+          description: skillDesc,
+          workflow_markdown: workflow,
+          source: "autonomous_ai_telegram"
+        }
+      });
+
+      if (rpcRes && rpcRes.status === "ok") {
+        return {
+          status: "success",
+          skill_id: rpcRes.id,
+          name: skillName,
+          message: `Skill baru '${skillName}' berhasil dipelajari dan disimpan ke Brain SQLite database!`
+        };
+      }
+      return { error: rpcRes?.error || "Gagal menyimpan skill baru." };
     }
 
     if (toolName === "generate_image") {
@@ -1833,6 +1903,8 @@ function getThinkingDirective(level) {
 }
 
 function getToolStepDescription(toolName, args) {
+  if (toolName === "web_search") return `Mencari solusi di web untuk <code>${escapeHtml((args.query || '').slice(0, 45))}</code>...`;
+  if (toolName === "learn_new_skill") return `Menyimpan & mengingat skill baru <code>${escapeHtml(args.name || '')}</code> ke Brain...`;
   if (toolName === "generate_image") return `Membuat gambar AI <code>${escapeHtml((args.prompt || '').slice(0, 45))}</code> via model Pengaturan...`;
   if (toolName === "send_file_to_telegram" || toolName === "telegram_send_file") return `Mengunggah & mengirim berkas <code>${escapeHtml(args.file_name || args.file_path || 'dokumen')}</code> ke Telegram...`;
   if (toolName === "browser_navigate" || toolName === "navigate_to") return `Membuka halaman web <code>${escapeHtml(args.url || '')}</code>...`;
@@ -1936,13 +2008,15 @@ YOU HAVE FULL ACCESS TO OFFICIAL BROWSER AGENT CDP & OS TOOLS:
 - 'browser_snapshot': Capture real-time Accessibility Tree with backendNodeIds of all buttons, inputs, links, and DOM elements.
 - 'browser_click': Click buttons/elements with 100% precision via CDP using 'backendNodeId'.
 - 'browser_type': Type text or passwords with exact input focus using 'backendNodeId'.
-- 'browser_extract_table': Auto-scroll and extract structured rows/metrics from tables (e.g. 9Router Quota Tracker, Meta Ads Manager grids).
+- 'browser_extract_table': Auto-scroll and extract structured rows/metrics from tables.
 - 'browser_screenshot': Take a visual screenshot of the tab.
 
-3. 💻 Linux OS Desktop, Terminal, File Sharing & AI Image Generation:
+3. 💻 Linux OS Desktop, Terminal, File Processing, Search & AI Tools:
+- 'web_search': Search the web in real-time to find live tutorials, documentation, CLI syntax, Python libraries, or solutions whenever you encounter an unknown or challenging problem.
+- 'learn_new_skill': Save any newly discovered workflow, CLI recipe, or solution into the Browser Agent Brain SQLite database so you permanently remember it for all future tasks.
+- 'send_file_to_telegram': Send ANY local file (PDF, ZIP archive, document, text file, script, audio MP3/WAV, video MP4, or photo) directly to the user's Telegram chat.
+- 'run_bash_command': Execute bash shell command on Linux OS (e.g. PDF manipulation via 'pdftoppm' / 'pdfunite' / 'convert' / Python, download audio via 'yt-dlp', convert video via 'ffmpeg', curl, git, zip, dll).
 - 'generate_image': Generate gambar/ilustrasi AI berkualitas tinggi menggunakan model AI Image Generation yang dikonfigurasi di Pengaturan (${cfg.imageModel || 'ag/gemini-3.1-flash-image'}). Foto otomatis tersimpan dan dikirim langsung ke chat Telegram pengguna!
-- 'send_file_to_telegram': Kirim berkas/file apapun (dokumen script .txt/.pdf/.docx/.json/.csv, gambar/foto, lagu audio .mp3/.wav, video .mp4) langsung ke Telegram pengguna!
-- 'run_bash_command': Execute bash shell command on Linux OS (e.g. download lagu/video via 'yt-dlp', convert audio via 'ffmpeg', curl, git, dll).
 - 'open_linux_app': Launch desktop GUI apps (e.g. 'dolphin', 'konsole', 'code').
 - 'type_os_text': Type text into active OS window.
 - 'read_os_file' & 'write_os_file': Membaca dan menulis file lokal.
@@ -1950,19 +2024,25 @@ YOU HAVE FULL ACCESS TO OFFICIAL BROWSER AGENT CDP & OS TOOLS:
 Current Browser State:
 • Active Tab: ${activeTabInfo}
 
-MANDAT EKSEKUTIF UTAMA:
-1. 🌐 TUGAS WEB & DASHBOARD (Contoh: "cek sisa kredit 9router", "cek usage 9router", "buka youtube", "analisis iklan meta", "isi form web"):
+MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
+1. 📄 MANIPULASI FILE, PDF, GAMBAR, AUDIO & ZIP:
+   - Jika pengguna meminta membuat/mengedit/menggabungkan/mengonversi file (contoh: "edit jadi pdf", "merge pdf", "convert pdf to image", "buatkan pdf dari gambar", "convert gambar ke pdf", "ekstrak zip", "download lagu mp3"):
+     a. JALANKAN perintah bash / python di Linux via 'run_bash_command' secara nyata untuk menghasilkan file output di /tmp/.
+     b. UNTUK PDF TO IMAGE: Selalu gunakan 'pdftoppm -png -r 150 <file.pdf> /tmp/page' lalu bungkus seluruh gambar ke dalam file ZIP ('zip -j /tmp/hasil_gambar.zip /tmp/page-*.png') agar tidak nyepam di chat Telegram, kemudian kirim file ZIP tersebut via 'send_file_to_telegram'!
+     c. UNTUK IMAGE TO PDF / MERGE PDF: Gunakan 'convert /path/*.png /tmp/output.pdf' (atau script Python PIL 'from PIL import Image; ...' / 'pdfunite in1.pdf in2.pdf /tmp/merged.pdf'), lalu kirim file PDF via 'send_file_to_telegram'!
+     d. WAJIB SELALU KIRIM FILE HASIL AKHIR: DILARANG KERAS hanya membalas pesan teks tanpa memanggil 'send_file_to_telegram' ketika diminta memproses berkas!
+2. 🔍 TIDAK TAHU? CARI TAHU DENGAN 'web_search' LALU SIMPAN SKILL:
+   - Jika Anda belum mengetahui sintaks CLI atau metode untuk suatu permintaan pengguna, gunakan tool 'web_search' untuk mencari tahu di internet.
+   - Setelah menemukan solusi dan berhasil mengeksekusinya, panggil tool 'learn_new_skill' untuk menyimpan resep workflow tersebut ke database Brain Browser Agent agar Anda mengingatnya selamanya.
+3. 🌐 TUGAS WEB & DASHBOARD (Contoh: "cek sisa kredit 9router", "cek usage 9router", "buka youtube", "analisis iklan meta", "isi form web"):
    - WAJIB gunakan browser control tools: Buka halaman via 'browser_navigate' (atau 'browser_switch_tab'), ambil data via 'browser_extract_table' atau 'browser_snapshot', klik dengan 'browser_click', dan ketik dengan 'browser_type'.
    - DILARANG menggunakan perintah curl/bash jika tugas tersebut adalah tugas web atau dashboard browser!
-2. 🎨 GENERASI GAMBAR AI (AI IMAGE GENERATION):
-   - Jika pengguna meminta untuk membuat, melukis, menggambar, atau men-generate gambar (contoh: "generate image kucing makan eskrim", "buatkan gambar pemandangan cyberpunk", "draw a cute kitten"): WAJIB langsung panggil tool 'generate_image' dengan prompt yang kaya, detail, dan artistik. Gambar akan otomatis di-generate menggunakan model AI Image Generation yang disetting di Pengaturan Browser Agent (${cfg.imageModel || 'ag/gemini-3.1-flash-image'}) dan dikirimkan langsung ke chat Telegram pengguna!
-3. 📦 PENGIRIMAN FILE, MEDIA & DOWNLOAD KE TELEGRAM:
-   - Jika pengguna meminta membuatkan script konten, artikel, dokumen, atau kode: Buat isinya dan kirim langsung menggunakan 'send_file_to_telegram' (atau 'write_os_file' lalu 'send_file_to_telegram') agar pengguna menerima file dokumen (.txt, .docx, .pdf, dll) langsung di chat Telegramnya.
-   - Jika pengguna meminta mendownload lagu/MP3/video (contoh: "downloadin mp3 deny caknan", "download video yt"): Jalankan perintah terminal 'run_bash_command' menggunakan 'yt-dlp' (misal: yt-dlp "ytsearch1:Denny Caknan" -x --audio-format mp3 -o "/tmp/Denny_Caknan.%(ext)s"), lalu panggil 'send_file_to_telegram' dengan file_path="/tmp/Denny_Caknan.mp3" untuk mengirim lagu/video langsung ke pengguna!
-4. 🖼️ ANALISIS GAMBAR & DOKUMEN:
+4. 🎨 GENERASI GAMBAR AI (AI IMAGE GENERATION):
+   - Jika pengguna meminta untuk membuat, melukis, menggambar, atau men-generate gambar (contoh: "generate image kucing makan eskrim", "buatkan gambar pemandangan cyberpunk", "draw a cute kitten"): WAJIB langsung panggil tool 'generate_image' dengan prompt yang kaya, detail, dan artistik.
+5. 🖼️ ANALISIS GAMBAR & DOKUMEN:
    - Jika pengguna mengirim foto/screenshot/gambar, amati dan baca seluruh elemen visual, teks, diagram, atau error dengan teliti.
    - Jika pengguna mengirim dokumen (PDF, Word, TXT, CSV, JSON), baca dan analisis seluruh isi dokumen yang terlampir secara mendalam, tepat, dan komprehensif.
-5. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua temuan atau data yang terekstrak secara komprehensif!`;
+6. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua temuan atau data yang terekstrak secara komprehensif!`;
 
     // Inject Verified Facts & User Profile Memories
     if (userMemories.length > 0) {

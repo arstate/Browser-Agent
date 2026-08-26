@@ -5064,6 +5064,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 19/19 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.70`, build `extension.crx` (683.4 KB).
 
+---
+
+### 🚀 Iterasi 447: Unlimited Multi-Format File Mastery, Web Search & Autonomous Skill Learning (v2.150.71)
+- **Kebutuhan Pengguna**:
+  - Memastikan Master Agent di Telegram dapat memproses segala jenis manipulasi berkas (PDF to images, merge PDF, image to PDF, pembuatan script, zip bundling) dan selalu mengirimkan file fisik hasil akhir ke Telegram tanpa dibatasi.
+  - Jika format gambar hasil konversi PDF banyak, berkas otomatis dibungkus ke dalam satu arsip `.zip` agar chat Telegram tidak ter-spam banyak foto.
+  - Jika agen tidak mengetahui cara menyelesaikan suatu perintah baru, agen dapat mencari solusi langsung di internet via tool `web_search` dan secara otomatis menyimpan resep workflow tersebut ke database Brain SQLite via `learn_new_skill` agar diingat permanen.
+- **Akar Masalah (Root Cause)**:
+  - Background Service Worker belum memiliki tool `web_search` dan `learn_new_skill` dalam daftar `BACKGROUND_AGENT_TOOLS`.
+  - Prompt sistem belum memiliki resep manipulasi PDF/ZIP (`pdftoppm`, `zip`, `convert`, `pdfunite`) dan belum memiliki larangan keras terhadap penutupan tugas tanpa pengiriman berkas.
+- **Implementasi & Peningkatan Sistem**:
+  - **Real-Time `web_search` Engine**: Menambahkan RPC `web_search` berbasis DuckDuckGo Lite di [native_host.py](file:///home/arya/browser-agent/host/native_host.py) dan tool `web_search` di [background.js](file:///home/arya/browser-agent/extension/background.js) untuk mencari dokumentasi, CLI flags, dan solusi di internet secara live.
+  - **Autonomous Skill Memory Vault (`learn_new_skill`)**: Menambahkan tool `learn_new_skill` di [background.js](file:///home/arya/browser-agent/extension/background.js) yang memanggil `db_save_autonomous_skill` pada database SQLite SQLite untuk menyimpan skill baru secara permanen.
+  - **Unrestricted File & PDF Recipe Directive**: Memperbarui instruksi eksekutif Master Agent untuk menjalankan CLI Linux (`pdftoppm`, `pdfunite`, `convert`, Python PIL), mengompres hasil multipage ke `.zip`, dan selalu mengunggah file hasil akhir via `send_file_to_telegram`.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.71`, build `extension.crx` (685.9 KB).
+
 
 
 
