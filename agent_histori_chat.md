@@ -4766,6 +4766,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.51`, build `extension.crx` (674.5 KB).
 
+---
+
+### 🚀 Iterasi 428: Robust SSE Stream Decoupling & stream:false Enforcement (v2.150.52)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki error `Gagal memproses instruksi: Unexpected token 'd', "data: {"id"... is not valid JSON` pada chat Telegram bot.
+- **Akar Masalah (Root Cause)**:
+  - Proxy/Endpoint penyedia AI secara default mengembalikan respons dalam format Server-Sent Events (SSE) stream (`data: {"choices": [...]}`). Pemanggilan langsung `await res.json()` menyebabkan kegagalan parse JSON karena terdapat token pembuka `data:`.
+- **Implementasi & Peningkatan Sistem**:
+  - **Explicit Non-Streaming Flag**: Menambahkan parameter `stream: false` ke dalam payload permintaan POST ke API model AI.
+  - **Bulletproof SSE Stream Parser**: Membaca body respons menggunakan `await res.text()` dan menerapkan parser ganda. Jika respons berformat SSE (`data:` stream chunks), sistem secara otomatis membedah potongan teks `choices[0].delta.content` dan menyusunnya kembali menjadi jawaban teks yang utuh.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.52`, build `extension.crx` (674.8 KB).
+
 
 
 

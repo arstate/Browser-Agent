@@ -770,17 +770,45 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
       body: JSON.stringify({
         model: model,
         messages,
+        stream: false,
         temperature: cfg.temperature ?? 0.2,
         max_tokens: cfg.maxTokens || 4096
       })
     });
-    const json = await res.json();
-    if (json.choices && json.choices[0]?.message?.content) {
-      responseText = json.choices[0].message.content;
-    } else if (json.candidates && json.candidates[0]?.content?.parts) {
-      responseText = json.candidates[0].content.parts.map(p => p.text || '').join('');
-    } else if (json.error) {
-      responseText = `⚠️ Error API: ${json.error.message || JSON.stringify(json.error)}`;
+
+    const rawText = await res.text();
+
+    try {
+      const json = JSON.parse(rawText);
+      if (json.choices && json.choices[0]?.message?.content) {
+        responseText = json.choices[0].message.content;
+      } else if (json.candidates && json.candidates[0]?.content?.parts) {
+        responseText = json.candidates[0].content.parts.map(p => p.text || '').join('');
+      } else if (json.error) {
+        responseText = `⚠️ Error API: ${json.error.message || JSON.stringify(json.error)}`;
+      }
+    } catch (parseErr) {
+      // Handle Server-Sent Events (SSE) streaming format (e.g. data: {"choices":[{"delta":{"content":"..."}}]})
+      if (rawText.includes("data:")) {
+        const lines = rawText.split("\n");
+        const streamChunks = [];
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:") || trimmed === "data: [DONE]") continue;
+          const dataStr = trimmed.replace(/^data:\s*/, "");
+          try {
+            const chunkJson = JSON.parse(dataStr);
+            const delta = chunkJson.choices?.[0]?.delta?.content || chunkJson.choices?.[0]?.message?.content || "";
+            if (delta) streamChunks.push(delta);
+          } catch (e) {}
+        }
+        if (streamChunks.length > 0) {
+          responseText = streamChunks.join("");
+        }
+      }
+      if (!responseText) {
+        responseText = rawText.slice(0, 1000);
+      }
     }
 
     if (!responseText) {
