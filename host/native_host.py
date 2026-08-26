@@ -3903,6 +3903,28 @@ def handle_local_rpc(msg):
         except Exception as e:
             return {"id": req_id, "status": "error", "error": str(e)}
 
+    elif action == "remove_background":
+        input_path = os.path.expanduser(msg.get("input_path", ""))
+        output_path = os.path.expanduser(msg.get("output_path", "") or f"/tmp/nobg_{int(time.time())}.png")
+        if not input_path or not os.path.exists(input_path):
+            return {"id": req_id, "status": "error", "error": f"Input image not found: {input_path}"}
+        try:
+            from rembg import remove
+            from PIL import Image
+            input_img = Image.open(input_path)
+            output_img = remove(input_img)
+            os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+            output_img.save(output_path, "PNG")
+            return {
+                "id": req_id,
+                "status": "ok",
+                "output_path": output_path,
+                "file_name": os.path.basename(output_path),
+                "message": f"Background berhasil dihapus. Berkas PNG transparan tersimpan di {output_path}"
+            }
+        except Exception as e:
+            return {"id": req_id, "status": "error", "error": str(e)}
+
     elif action == "transcribe_audio":
         file_base64 = msg.get("file_base64", "")
         mime_type = msg.get("mime_type", "audio/ogg")

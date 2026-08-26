@@ -646,9 +646,13 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
       } catch (e) {}
 
       const promptContext = `\n[Foto pengguna telah disimpan di PC lokal: "${localPhotoPath}"].
-Jika pengguna meminta konversi atau pengolahan berkas (contoh: "convert pdf", "jadikan pdf", merge, crop, OCR, zip):
-1. Eksekusi perintah di Linux via 'run_bash_command' / 'bash_run_command' untuk memproses file ${localPhotoPath}. Contoh konversi ke PDF: python3 -c "from PIL import Image; Image.open('${localPhotoPath}').convert('RGB').save('/tmp/hasil_dokumen.pdf')"
-2. WAJIB PANGGIL TOOL 'send_file_to_telegram' dengan argument: { "file_path": "/tmp/hasil_dokumen.pdf", "file_name": "hasil_dokumen.pdf", "caption": "Berikut berkas PDF hasil konversi foto Anda." } agar file terkirim langsung ke chat Telegram pengguna!`;
+PANDUAN EKSEKUSI PENGOLAHAN FOTO PENGGUNA:
+1. JIKA USER MEMINTA "REMOVE BG" / HAPUS BACKGROUND / JADIKAN PNG TRANSPARAN:
+   - LANGSUNG PANGGIL TOOL 'remove_image_background' dengan { "input_path": "${localPhotoPath}", "output_path": "/tmp/hasil_transparan.png" }! Tool ini akan otomatis memproses AI cut-out background dan langsung mengirimkan berkas PNG transparan ke Telegram pengguna!
+2. JIKA USER MEMINTA "CONVERT PDF" / JADIKAN PDF:
+   - Eksekusi via run_bash_command: python3 -c "from PIL import Image; Image.open('${localPhotoPath}').convert('RGB').save('/tmp/hasil_dokumen.pdf')"
+   - Lalu WAJIB panggil 'send_file_to_telegram' ({ "file_path": "/tmp/hasil_dokumen.pdf", "file_name": "hasil_dokumen.pdf", "caption": "Berikut berkas PDF hasil konversi foto Anda." })
+3. DILARANG KERAS hanya membalas laporan teks tanpa memanggil tool 'remove_image_background' atau 'send_file_to_telegram'!`;
 
       if (!text) {
         text = `Tolong analisis, baca teks, dan jelaskan detail gambar ini secara mendalam:${promptContext}`;
@@ -1356,6 +1360,22 @@ const BACKGROUND_AGENT_TOOLS = [
         properties: {}
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "remove_image_background",
+      description: "Hapus background dari foto/gambar secara otomatis menggunakan AI rembg dan hasilkan file PNG transparan (Alpha channel). File PNG transparan akan otomatis dibuat di /tmp/ dan langsung dikirimkan ke chat Telegram pengguna!",
+      parameters: {
+        type: "object",
+        properties: {
+          input_path: { type: "string", description: "Path absolut berkas gambar masukan di PC lokal (contoh: '/tmp/telegram_photo_123.jpg')" },
+          output_path: { type: "string", description: "Path opsional berkas keluaran PNG transparan (default: '/tmp/hasil_transparan.png')" },
+          caption: { type: "string", description: "Deskripsi pesan pengantar untuk gambar PNG transparan di Telegram" }
+        },
+        required: ["input_path"]
+      }
+    }
   }
 ];
 
@@ -1960,6 +1980,37 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
         estimated_token_savings_percent: "50% - 75%",
         summary: "Plugin Ponytail aktif mengompresi konteks riwayat, memotong pohon DOM berlebih, dan menghemat biaya token AI."
       };
+    }
+
+    if (toolName === "remove_image_background") {
+      const inPath = toolArgs.input_path || "";
+      const outPath = toolArgs.output_path || `/tmp/nobg_${Date.now()}.png`;
+      const caption = toolArgs.caption || "Berikut gambar PNG transparan (Alpha channel) hasil pemotongan latar belakang (Remove Background).";
+
+      const rpcRes = await sendNativeRpcInBackground("remove_background", {
+        input_path: inPath,
+        output_path: outPath
+      });
+
+      if (rpcRes && rpcRes.status === "ok") {
+        // Automatically send the resulting transparent PNG document directly to Telegram
+        await sendNativeRpcInBackground("telegram_send_file", {
+          bot_token: botToken,
+          chat_id: senderId,
+          file_path: rpcRes.output_path,
+          file_name: rpcRes.file_name,
+          caption: caption,
+          media_type: "document" // Send as document to preserve full uncompressed Alpha transparency
+        });
+
+        return {
+          status: "success",
+          output_path: rpcRes.output_path,
+          file_name: rpcRes.file_name,
+          message: `Latar belakang berhasil dihapus dan berkas PNG transparan '${rpcRes.file_name}' telah dikirim langsung ke Telegram pengguna!`
+        };
+      }
+      return { error: rpcRes?.error || "Gagal menghapus background gambar." };
     }
   } catch (err) {
     return { error: err.message };

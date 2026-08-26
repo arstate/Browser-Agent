@@ -5267,6 +5267,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.81`, build `extension.crx` (825.4 KB).
 
+---
+
+### 🚀 Iterasi 458: Modular Code Architecture Foldering & AI Background Removal with Direct PNG Delivery (v2.150.82)
+- **Kebutuhan Pengguna**:
+  - Memisahkan file kodingan ke dalam struktur folder modular yang rapi:
+    - Folder `extension/connected-apps/telegram/` untuk seluruh logic, style, dan controller Telegram Bot.
+    - Folder `extension/plugins/ponytail/` untuk seluruh logic, style, modal, dan engine context trimmer Ponytail.
+  - Memperbaiki bot Telegram saat menerima perintah remove background ("remove bg ini bro") agar file PNG transparan (Alpha channel) langsung dibuat via AI `rembg` dan dikirimkan kembali ke chat Telegram pengguna secara instan tanpa hanya membalas pesan teks.
+- **Implementasi & Peningkatan Sistem**:
+  - **Modular Foldering Structure**:
+    - Dibuat `extension/connected-apps/telegram/telegram.js`, `telegram.css`, dan `telegram_service.js`.
+    - Dibuat `extension/plugins/ponytail/ponytail.js`, `ponytail.css`, dan `ponytail_optimizer.js`.
+    - Di-load secara terstruktur di [options.html](file:///home/arya/browser-agent/extension/options.html) dan [sidepanel.html](file:///home/arya/browser-agent/extension/sidepanel.html).
+  - **AI Background Removal Engine (`rembg` + PIL)**:
+    - Di [native_host.py](file:///home/arya/browser-agent/host/native_host.py): Menambahkan RPC action `remove_background` yang mengeksekusi Python `rembg.remove` beresolusi tinggi ke PNG 32-bit (RGBA) transparan.
+    - Di [background.js](file:///home/arya/browser-agent/extension/background.js): Mendaftarkan tool `remove_image_background` di `BACKGROUND_AGENT_TOOLS` dengan otomatisasi pengiriman berkas via `telegram_send_file` (media_type: `document` untuk menjaga 100% transparansi Alpha).
+    - Di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js): Mendaftarkan tool `remove_image_background` di `AGENT_TOOLS`.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.82`, build `extension.crx` (826.8 KB).
+
 
 
 

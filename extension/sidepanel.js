@@ -1346,6 +1346,21 @@ const AGENT_TOOLS = [
         properties: {}
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "remove_image_background",
+      description: "Hapus background dari foto/gambar secara otomatis menggunakan AI rembg dan hasilkan file PNG transparan (Alpha channel).",
+      parameters: {
+        type: "object",
+        properties: {
+          input_path: { type: "string", description: "Path absolut berkas gambar masukan di PC lokal (contoh: '/tmp/photo.jpg')" },
+          output_path: { type: "string", description: "Path opsional berkas keluaran PNG transparan (default: '/tmp/hasil_transparan.png')" }
+        },
+        required: ["input_path"]
+      }
+    }
   }
 ];
 
@@ -2240,6 +2255,24 @@ async function executeTool(name, args, assistantBubble = null) {
         estimated_token_savings_percent: "50% - 75%",
         summary: "Plugin Ponytail aktif mengompresi konteks riwayat, memotong pohon DOM berlebih, dan menghemat biaya token AI."
       };
+    }
+
+    case "remove_image_background": {
+      const inPath = args.input_path || "";
+      const outPath = args.output_path || `/tmp/nobg_${Date.now()}.png`;
+      const rpcRes = await sendNativeRpc("remove_background", {
+        input_path: inPath,
+        output_path: outPath
+      });
+      if (rpcRes && rpcRes.status === "ok") {
+        return {
+          status: "success",
+          output_path: rpcRes.output_path,
+          file_name: rpcRes.file_name,
+          message: `Background berhasil dihapus. Berkas PNG transparan tersimpan di ${rpcRes.output_path}`
+        };
+      }
+      return { error: rpcRes?.error || "Gagal menghapus background gambar." };
     }
 
     case "ask_clarification": {

@@ -1,0 +1,86 @@
+/* =========================================================================
+   Connected Apps - Telegram Bot Dedicated Styling
+   ========================================================================= */
+
+#card-telegram-bot,
+#card-telegram-logs {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#telegram-logs-container {
+  min-height: 250px;
+  max-height: 480px;
+  overflow-y: auto;
+  background: rgba(18, 18, 22, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#telegram-logs-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+#telegram-logs-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 9999px;
+}
+
+#telegram-logs-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+
+#telegram-logs-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.telegram-log-entry {
+  display: flex;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 12px;
+  line-height: 1.5;
+  transition: all 0.15s ease;
+}
+
+.telegram-log-entry:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+.telegram-log-inbound {
+  border-left: 3px solid #38bdf8;
+}
+
+.telegram-log-outbound {
+  border-left: 3px solid #a855f7;
+}
+
+.telegram-log-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.telegram-log-sender {
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.telegram-log-time {
+  font-size: 10.5px;
+  color: #64748b;
+}
+
+.telegram-log-body {
+  color: #cbd5e1;
+  word-break: break-word;
+}
