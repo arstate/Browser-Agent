@@ -3551,6 +3551,16 @@ chrome.runtime.onMessage.addListener((msg) => {
   if (msg && (msg.type === "PERSISTENT_BRAIN_UPDATED" || msg.action === "PERSISTENT_BRAIN_UPDATED" || msg.type === "SESSION_SAVED")) {
     triggerDebouncedBrainReload();
   }
+  if (msg && (msg.type === "TELEGRAM_CONFIG_UPDATED" || msg.type === "TELEGRAM_LOGS_UPDATED")) {
+    initTelegramBotSettings();
+  }
+});
+
+// Storage Change Listener for Instant Reactive UI
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && (changes.telegram_bot_config || changes.telegram_bot_logs)) {
+    initTelegramBotSettings();
+  }
 });
 
 // Fast lightweight 2.5s Poller Daemon to detect changes in background without page refresh

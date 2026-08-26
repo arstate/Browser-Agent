@@ -129,11 +129,15 @@ Browser Agent SUDAH MEMILIKI fitur bawaan terintegrasi (Built-in Native) bernama
      * /status : Mengecek status polling bot, model aktif, dan memori persistent.
      * /new : Mereset percakapan baru.
    - Dedicated Chat Logs: Semua pesan dari bot dicatat terpisah di panel "Riwayat & Log Chat Telegram" di tab Connected Apps.
-2. Panduan Menjawab Pertanyaan Seputar Telegram Bot:
+2. Panduan Eksekusi & Konfigurasi Otomatis Telegram Bot:
+   - ATURAN OTOMASI MUTLAK (AUTO-CONFIGURE DIRECTLY):
+     * Ketika Anda membaca Bot Token (misal dari chat @BotFather di tab Telegram Web) atau ketika pengguna memberikan Bot Token / ID Telegram:
+     * DILARANG KERAS hanya menyuruh pengguna menyalin dan menyetelnya secara manual di menu Pengaturan!
+     * Master Agent WAJIB LANGSUNG MEMANGGIL TOOL configure_telegram_bot({ bot_token: "...", authorized_chat_id: "...", enabled: true }) untuk mengonfigurasi dan mengaktifkan bot secara otomatis!
+     * Setelah tool berhasil dijalankan, laporkan kepada pengguna bahwa bot sudah aktif, terverifikasi, dan siap digunakan melalui link t.me/NamaBotAnda dengan perintah /start.
    - Jika pengguna bertanya apakah bisa terkoneksi ke bot Telegram (misal: "bisa konek ke bot tele ga", "ada bot tele ga", "gimana cara remote dari telegram"):
      * JANGAN PERNAH menyuruh user membuat script Python/Node.js sendiri!
-     * Beritahu pengguna dengan antusias bahwa Browser Agent SUDAH MEMILIKI fitur bawaan "Connected Apps" di menu Pengaturan -> Connected Apps -> Telegram Bot.
-     * Jelaskan cara mengaktifkannya dalam 3 langkah mudah: (1) Ambil token dari @BotFather, (2) Buka menu Connected Apps di Pengaturan dan paste tokennya, (3) Ketik pesan apa saja ke bot lalu klik "Deteksi ID Otomatis" untuk mengunci akun pengguna.
+     * Beritahu pengguna bahwa Browser Agent SUDAH MEMILIKI fitur bawaan "Connected Apps" di menu Pengaturan -> Connected Apps -> Telegram Bot. Jika token sudah ada di tab web Telegram, tawarkan atau langsung bantu konfigurasikan secara otomatis via tool configure_telegram_bot!
 
 You have access to 3 categories of tools:
 1. BROWSER AUTOMATION TOOLS (via Chrome DevTools Protocol):
@@ -518,7 +522,7 @@ ATURAN KRUSIAL:
 3. 💻 Local PC Tools: local_read_file, local_write_file, local_list_dir, local_run_command.
 4. 🎨 AI Image Generation: generate_image(prompt, size).
 5. 💬 Interactive Clarification & Sub-Agent Analysis: ask_clarification, agent_subtask_analysis.
-6. 📱 Built-in Connected Apps & Telegram Bot Remote: Browser Agent memiliki mesin Telegram Bot bawaan di tab Connected Apps (Pengaturan). Pengguna bisa mengontrol browser, mengganti model/agent, mengambil screenshot tab, dan chat jarak jauh via bot Telegram tanpa script eksternal.
+6. 📱 Built-in Connected Apps & Telegram Bot Remote: configure_telegram_bot, get_telegram_bot_status. Browser Agent memiliki mesin Telegram Bot bawaan. Ketika mendeteksi Bot Token & Chat ID (misal dari chat @BotFather di tab Telegram Web) atau ketika user meminta koneksi Telegram, Master Agent WAJIB LANGSUNG MEMANGGIL configure_telegram_bot({ bot_token, authorized_chat_id, enabled: true }) untuk mengaktifkan bot secara otomatis tanpa menyuruh pengguna setting manual!
 
 Always provide clear, comprehensive final answers in clean Markdown.`;
 
@@ -1249,6 +1253,36 @@ const AGENT_TOOLS = [
           purpose: { type: "string", description: "Why this micro-tool was written" }
         },
         required: ["language", "code", "purpose"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "configure_telegram_bot",
+      description: "Directly configure, save, and activate the built-in Telegram Bot Remote Control in Browser Agent settings. When user provides a bot token, allowed chat ID, or when the agent reads them from @BotFather on Telegram Web, IMMEDIATELY call this tool to configure the bot directly without requiring the user to do manual setup.",
+      parameters: {
+        type: "object",
+        properties: {
+          bot_token: { type: "string", description: "The HTTP API bot token from @BotFather (e.g. '123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ')" },
+          authorized_chat_id: { type: "string", description: "The authorized user Telegram ID (e.g. '5871099248') for private whitelist security" },
+          enabled: { type: "boolean", description: "Whether to enable the Telegram bot listener daemon (default true)" },
+          auto_model: { type: "boolean", description: "Enable dynamic model routing (default true)" },
+          auto_agent: { type: "boolean", description: "Enable smart agent routing (default true)" },
+          auto_accept: { type: "boolean", description: "Auto-accept actions without prompt (default true)" }
+        },
+        required: ["bot_token"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_telegram_bot_status",
+      description: "Get the current configuration, whitelist user ID, and status of the built-in Telegram Bot Remote Control.",
+      parameters: {
+        type: "object",
+        properties: {}
       }
     }
   }
@@ -3340,6 +3374,116 @@ async function executeTool(name, args, assistantBubble = null) {
       } else {
         return { success: false, error: `Unsupported language: ${lang}` };
       }
+    }
+
+    case "configure_telegram_bot": {
+      const botToken = (args.bot_token || "").trim();
+      const authChatId = (args.authorized_chat_id || "").trim();
+      const enabled = args.enabled !== false;
+      const autoModel = args.auto_model !== false;
+      const autoAgent = args.auto_agent !== false;
+      const autoAccept = args.auto_accept !== false;
+
+      if (!botToken) {
+        return { error: "Bot token is required." };
+      }
+
+      // Verify token with Telegram API
+      let botInfo = null;
+      try {
+        const resp = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+        const json = await resp.json();
+        if (!json.ok) {
+          return { error: `Telegram Bot Token tidak valid: ${json.description || 'Gagal verifikasi'}` };
+        }
+        botInfo = json.result;
+      } catch (err) {
+        return { error: `Gagal menghubungi server Telegram: ${err.message}` };
+      }
+
+      // Automatically register bot commands with Telegram
+      try {
+        const cmdList = [
+          { command: "start", description: "Buka menu utama & instruksi Browser Agent" },
+          { command: "model", description: "Ganti/cek model AI aktif (/model auto)" },
+          { command: "agent", description: "Ganti/cek spesialis agent (/agent auto)" },
+          { command: "mode", description: "Ganti mode percakapan (/mode chat atau agent)" },
+          { command: "screenshot", description: "Ambil tangkapan layar tab aktif Chrome" },
+          { command: "status", description: "Cek kesehatan daemon & ringkasan memori" },
+          { command: "new", description: "Mulai sesi percakapan baru" }
+        ];
+        await fetch(`https://api.telegram.org/bot${botToken}/setMyCommands`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ commands: cmdList })
+        });
+      } catch(e) {}
+
+      // Save directly into chrome.storage.local
+      const currentStorage = await chrome.storage.local.get(['telegram_bot_config']);
+      const updatedConfig = {
+        ...(currentStorage.telegram_bot_config || {}),
+        bot_token: botToken,
+        authorized_chat_id: authChatId || currentStorage.telegram_bot_config?.authorized_chat_id || "",
+        enabled: enabled,
+        auto_model: autoModel,
+        auto_agent: autoAgent,
+        auto_accept: autoAccept,
+        bot_username: botInfo.username,
+        bot_first_name: botInfo.first_name,
+        updated_at: new Date().toISOString()
+      };
+
+      await chrome.storage.local.set({ telegram_bot_config: updatedConfig });
+
+      // Notify options page / background to update polling daemon immediately
+      try {
+        chrome.runtime.sendMessage({
+          type: "TELEGRAM_CONFIG_UPDATED",
+          config: updatedConfig
+        });
+      } catch(e) {}
+
+      // Record this configuration in personal memories so AI remembers it permanently
+      try {
+        await sendNativeRpc("db_save_personal_memory", {
+          memory: {
+            category: "knowledge",
+            content: `Telegram Bot Remote Control terhubung ke @${botInfo.username} (ID: ${botInfo.id}) dengan Whitelist Chat ID: ${updatedConfig.authorized_chat_id || 'Semua'} dan status AKTIF.`,
+            reason: "Autonomous Telegram Bot Setup",
+            confidence: 1.0,
+            source: "autonomous_ai"
+          }
+        });
+        notifyPersistentBrainUpdated();
+      } catch(e) {}
+
+      return {
+        success: true,
+        message: `Bot Telegram @${botInfo.username} (${botInfo.first_name}) berhasil dikonfigurasikan dan diaktifkan secara otomatis!`,
+        bot_username: botInfo.username,
+        bot_first_name: botInfo.first_name,
+        bot_id: botInfo.id,
+        bot_url: `https://t.me/${botInfo.username}`,
+        authorized_chat_id: updatedConfig.authorized_chat_id,
+        enabled: updatedConfig.enabled,
+        commands_registered: true
+      };
+    }
+
+    case "get_telegram_bot_status": {
+      const data = await chrome.storage.local.get(['telegram_bot_config', 'telegram_bot_logs']);
+      const config = data.telegram_bot_config || {};
+      const logs = Array.isArray(data.telegram_bot_logs) ? data.telegram_bot_logs : [];
+      return {
+        success: true,
+        configured: !!config.bot_token,
+        enabled: !!config.enabled,
+        bot_username: config.bot_username || "Belum diset",
+        authorized_chat_id: config.authorized_chat_id || "Belum diset",
+        total_logs: logs.length,
+        last_log: logs.length > 0 ? logs[logs.length - 1] : null
+      };
     }
 
     case "generate_image": {
