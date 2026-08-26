@@ -3437,6 +3437,11 @@ async function executeTool(name, args, assistantBubble = null) {
 
       await chrome.storage.local.set({ telegram_bot_config: updatedConfig });
 
+      // Automatically set Telegram Bot Profile Photo to Browser Agent Icon
+      try {
+        await telegramSetBotProfilePhotoFromSidepanel(token);
+      } catch(e) {}
+
       // Notify options page / background to update polling daemon immediately
       try {
         chrome.runtime.sendMessage({
@@ -3787,6 +3792,29 @@ async function updateTelegramLiveStatus(statusText) {
   lastTelegramEditTimestamp = Date.now();
 
   await telegramEditMessageFromSidepanel(botToken, senderId, activeTelegramSession.statusMessageId, statusText);
+}
+
+// Telegram API Helper: Set Bot Profile Photo to Browser Agent Icon
+async function telegramSetBotProfilePhotoFromSidepanel(botToken) {
+  if (!botToken) return false;
+  try {
+    const iconUrl = chrome.runtime.getURL("icons/icon512.png");
+    const resp = await fetch(iconUrl);
+    const blob = await resp.blob();
+
+    const formData = new FormData();
+    formData.append("photo", blob, "avatar.png");
+
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/setMyProfilePhoto`, {
+      method: "POST",
+      body: formData
+    });
+    const json = await res.json();
+    return json.ok;
+  } catch (err) {
+    console.warn("Set bot profile photo error:", err);
+    return false;
+  }
 }
 
 async function telegramSendPhotoFromSidepanel(botToken, chatId, photoDataUrlOrBase64, caption = "") {

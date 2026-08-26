@@ -3871,6 +3871,29 @@ async function telegramSetMyCommands(botToken) {
   }
 }
 
+// Telegram API Helper: Set Bot Profile Photo to Browser Agent Icon
+async function telegramSetBotProfilePhoto(botToken) {
+  if (!botToken) return false;
+  try {
+    const iconUrl = chrome.runtime.getURL("icons/icon512.png");
+    const resp = await fetch(iconUrl);
+    const blob = await resp.blob();
+
+    const formData = new FormData();
+    formData.append("photo", blob, "avatar.png");
+
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/setMyProfilePhoto`, {
+      method: "POST",
+      body: formData
+    });
+    const json = await res.json();
+    return json.ok;
+  } catch (err) {
+    console.error("Failed to set Telegram bot profile photo:", err);
+    return false;
+  }
+}
+
 // Background Telegram Poller Daemon
 async function startTelegramPollingDaemon() {
   if (telegramPollingActive) return;
@@ -4627,6 +4650,11 @@ document.addEventListener('DOMContentLoaded', () => {
     updateTelegramStatusUI();
     showSaveToast("Pengaturan Telegram Bot berhasil disimpan!");
 
+    // Automatically ensure Bot Profile Photo is set to Browser Agent Icon
+    if (telegramConfig.bot_token) {
+      telegramSetBotProfilePhoto(telegramConfig.bot_token).catch(() => {});
+    }
+
     if (telegramConfig.enabled && telegramConfig.bot_token) {
       startTelegramPollingDaemon();
     } else {
@@ -4683,6 +4711,33 @@ document.addEventListener('DOMContentLoaded', () => {
       alert("✅ Seluruh perintah shortcut (/model, /agent, /mode, /screenshot, /status) berhasil didaftarkan ke Telegram API!");
     } else {
       alert("❌ Gagal mendaftarkan menu perintah ke Telegram.");
+    }
+  });
+
+  // Set Bot Profile Photo to Browser Agent Icon
+  document.getElementById('btn-set-telegram-avatar')?.addEventListener('click', async () => {
+    const inputToken = document.getElementById('input-telegram-token');
+    const token = inputToken ? inputToken.value.trim() : telegramConfig.bot_token;
+    if (!token) {
+      alert("Masukkan Bot Token terlebih dahulu!");
+      return;
+    }
+    const btn = document.getElementById('btn-set-telegram-avatar');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) btn.innerHTML = `<span>Mengunggah...</span>`;
+
+    try {
+      const ok = await telegramSetBotProfilePhoto(token);
+      if (ok) {
+        showSaveToast("Foto profil Bot Telegram berhasil diatur!");
+        alert("🎉 Foto profil Bot Telegram Anda telah berhasil diperbarui menggunakan Icon resmi Browser Agent!");
+      } else {
+        alert("⚠️ Gagal mengatur foto profil bot. Pastikan Bot Token valid.");
+      }
+    } catch (err) {
+      alert("❌ Error: " + err.message);
+    } finally {
+      if (btn) btn.innerHTML = origHtml;
     }
   });
 

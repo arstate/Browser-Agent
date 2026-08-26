@@ -4531,6 +4531,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.36`, build `extension.crx` (499.1 KB).
 
+---
+
+### 🚀 Iterasi 413: Automated Official Browser Agent Avatar & Profile Photo for Telegram Bot (v2.150.37)
+- **Kebutuhan Pengguna**:
+  - Mengganti avatar/foto profil Telegram Bot yang sebelumnya default teks "BB" menjadi **Icon resmi Browser Agent** (Lime Chartreuse Squircle dengan logo BA elegan resolusi tinggi 512x512).
+- **Implementasi & Peningkatan Sistem**:
+  - **High-Resolution 512x512 Asset Generation (`icon512.png`)**: Menghasilkan file ikon resmi resolusi tinggi 512x512 dari `icon.svg`.
+  - **Telegram Bot Profile Photo API (`setMyProfilePhoto`)**: Mengimplementasikan `telegramSetBotProfilePhoto` di `options.js` dan `telegramSetBotProfilePhotoFromSidepanel` di `sidepanel.js` untuk mengunggah `icon512.png` ke Telegram API via `multipart/form-data`.
+  - **Auto-Sync & Dedicated UI Button (`btn-set-telegram-avatar`)**: Menambahkan tombol *"Set Foto Profil Bot"* di kartu pengaturan Connected Apps Telegram Bot, serta menyematkan auto-upload otomatis saat token disimpan atau saat tool `configure_telegram_bot` dijalankan.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.37`, build `extension.crx` (661.8 KB).
+
 
 
 
