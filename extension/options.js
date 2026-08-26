@@ -3655,6 +3655,11 @@ function updateTelegramStatusUI() {
   const statusText = document.getElementById('telegram-status-text');
   const badgeNav = document.getElementById('badge-status-telegram');
 
+  const hubStatusPill = document.getElementById('hub-telegram-status-pill');
+  const hubStatusDot = document.getElementById('hub-telegram-status-dot');
+  const hubStatusText = document.getElementById('hub-telegram-status-text');
+  const hubUserInfo = document.getElementById('hub-telegram-user-info');
+
   const isOnline = telegramConfig.enabled && !!telegramConfig.bot_token;
 
   if (statusPill && statusDot && statusText) {
@@ -3674,6 +3679,34 @@ function updateTelegramStatusUI() {
       statusDot.style.boxShadow = 'none';
       statusDot.style.animation = 'none';
       statusText.textContent = 'Offline';
+    }
+  }
+
+  if (hubStatusPill && hubStatusDot && hubStatusText) {
+    if (isOnline) {
+      hubStatusPill.style.background = 'rgba(16, 185, 129, 0.15)';
+      hubStatusPill.style.borderColor = 'rgba(52, 211, 153, 0.35)';
+      hubStatusPill.style.color = '#34d399';
+      hubStatusDot.style.background = '#10B981';
+      hubStatusDot.style.boxShadow = '0 0 8px #10B981';
+      hubStatusDot.style.animation = 'pulseLiveGreen 2s infinite';
+      hubStatusText.textContent = 'Online';
+    } else {
+      hubStatusPill.style.background = 'rgba(100, 116, 139, 0.15)';
+      hubStatusPill.style.borderColor = 'rgba(100, 116, 139, 0.3)';
+      hubStatusPill.style.color = '#94a3b8';
+      hubStatusDot.style.background = '#64748b';
+      hubStatusDot.style.boxShadow = 'none';
+      hubStatusDot.style.animation = 'none';
+      hubStatusText.textContent = 'Offline';
+    }
+  }
+
+  if (hubUserInfo) {
+    if (telegramConfig.authorized_chat_id) {
+      hubUserInfo.innerHTML = `Whitelist: <code style="color: #38bdf8;">ID ${escapeHtml(telegramConfig.authorized_chat_id)}</code>`;
+    } else {
+      hubUserInfo.innerHTML = `Whitelist: <code style="color: #cbd5e1;">Belum Diset</code>`;
     }
   }
 
@@ -4172,6 +4205,27 @@ document.addEventListener('DOMContentLoaded', () => {
       await chrome.storage.local.set({ telegram_bot_logs: telegramBotLogs });
       renderTelegramLogs();
       showSaveToast("Riwayat log Telegram telah dibersihkan.");
+    }
+  });
+
+  // Switch between Connected Apps Hub Catalog and Telegram Detail View
+  document.getElementById('btn-open-telegram-config')?.addEventListener('click', () => {
+    const hub = document.getElementById('connected-apps-hub');
+    const detail = document.getElementById('connected-app-telegram-detail');
+    if (hub && detail) {
+      hub.style.display = 'none';
+      detail.style.display = 'block';
+      renderTelegramLogs();
+    }
+  });
+
+  document.getElementById('btn-back-to-apps-hub')?.addEventListener('click', () => {
+    const hub = document.getElementById('connected-apps-hub');
+    const detail = document.getElementById('connected-app-telegram-detail');
+    if (hub && detail) {
+      detail.style.display = 'none';
+      hub.style.display = 'block';
+      updateTelegramStatusUI();
     }
   });
 });

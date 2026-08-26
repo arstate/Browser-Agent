@@ -4399,6 +4399,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.26`, build `extension.crx` (486.8 KB).
 
+---
+
+### 🚀 Iterasi 403: Connected Apps Catalog Hub & Dedicated Config Page (v2.150.27)
+- **Kebutuhan Pengguna**:
+  - Menyusun ulang tampilan menu **Connected Apps** menjadi format **Katalog / Hub Kartu Aplikasi** yang rapi, elegan, dan terstruktur.
+  - Kartu Telegram Bot dilengkapi tombol aksi **"⚙️ Konfigurasi & Log"** yang ketika diklik akan membuka halaman detail konfigurasi khusus Telegram Bot dengan tombol navigasi **"← Kembali ke Connected Apps"** di bagian atas.
+- **Implementasi & Peningkatan UI**:
+  - **Connected Apps Catalog Hub (`#connected-apps-hub`)**: Menampilkan 4 kartu bento glass aplikasi (*Telegram Bot Remote*, *WhatsApp Gateway Fonnte*, *Webhook & Automasi*, dan *Local PC Companion Bridge*) dengan status pill, ringkasan fitur, dan indikator whitelist.
+  - **Telegram Bot Configuration Sub-View (`#connected-app-telegram-detail`)**: Menampung formulir otorisasi token & whitelist ID, dedicated log chat stream real-time, dan shortcut cheat sheet dengan breadcrumb navigasi.
+  - **Transisi Tampilan Halus**: Menghubungkan tombol `#btn-open-telegram-config` dan `#btn-back-to-apps-hub` di [options.js](file:///home/arya/browser-agent/extension/options.js) serta sinkronisasi status live pulse online/offline di katalog hub.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.27`, build `extension.crx` (490.5 KB).
+
 
 
 
