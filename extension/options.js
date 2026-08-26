@@ -264,7 +264,7 @@ function connectNativeHost() {
   }
 }
 
-async function sendNativeRpc(action, params = {}) {
+async function sendNativeRpc(action, params = {}, retryCount = 0) {
   // If not connected, attempt immediate connection and wait up to 2.5s
   if (!nativePort) {
     connectNativeHost();
@@ -280,7 +280,7 @@ async function sendNativeRpc(action, params = {}) {
   return new Promise((resolve, reject) => {
     const id = nativeReqId++;
     nativeRpcCallbacks.set(id, { resolve, reject });
-    setTimeout(() => {
+    const timeoutHandle = setTimeout(() => {
       if (nativeRpcCallbacks.has(id) || nativeRpcCallbacks.has(String(id))) {
         nativeRpcCallbacks.delete(id);
         nativeRpcCallbacks.delete(String(id));
@@ -290,8 +290,13 @@ async function sendNativeRpc(action, params = {}) {
     try {
       nativePort.postMessage({ id, action, ...params });
     } catch (err) {
+      clearTimeout(timeoutHandle);
       nativeRpcCallbacks.delete(id);
       nativeRpcCallbacks.delete(String(id));
+      if (retryCount < 1) {
+        nativePort = null;
+        return sendNativeRpc(action, params, retryCount + 1).then(resolve).catch(reject);
+      }
       reject(err);
     }
   });
@@ -1335,7 +1340,7 @@ async function loadAgents() {
         loaded = true;
       }
     } catch (e) {
-      console.warn("Native list_agents notice:", e);
+      // Graceful fallback to storage cache
     }
   }
 
@@ -1432,7 +1437,7 @@ async function loadSkills() {
         loaded = true;
       }
     } catch (e) {
-      console.warn("Native list_skills notice:", e);
+      // Graceful fallback to storage cache
     }
   }
 

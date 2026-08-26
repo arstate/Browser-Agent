@@ -62,14 +62,34 @@ async function loadPersistentMemoryFromHost() {
         autonomous_agents: res.autonomous_agents || [],
         counts: res.counts || {}
       };
+      chrome.storage.local.set({ cached_persistent_brain_data: res }).catch(() => {});
       console.log("[Brain] Persistent Memory Loaded:", cachedPersistentMemory.counts);
       if (typeof updateBrainDrawerBadge === "function") {
         updateBrainDrawerBadge();
       }
+      return;
     }
   } catch (err) {
-    console.warn("[Brain] Could not load persistent memory from host:", err);
+    // Graceful fallback to cached storage on startup/reconnect
   }
+
+  try {
+    const cached = await chrome.storage.local.get(['cached_persistent_brain_data']);
+    if (cached && cached.cached_persistent_brain_data) {
+      const res = cached.cached_persistent_brain_data;
+      cachedPersistentMemory = {
+        user_memories: res.user_memories || [],
+        experience_ledger: res.experience_ledger || [],
+        anti_patterns: res.anti_patterns || [],
+        autonomous_skills: res.autonomous_skills || [],
+        autonomous_agents: res.autonomous_agents || [],
+        counts: res.counts || {}
+      };
+      if (typeof updateBrainDrawerBadge === "function") {
+        updateBrainDrawerBadge();
+      }
+    }
+  } catch (e) {}
 }
 
 function notifyPersistentBrainUpdated() {
@@ -1905,18 +1925,18 @@ function connectNativeHost() {
   }
 }
 
-async function sendNativeRpc(action, params = {}) {
-  // If not connected, attempt immediate connection and wait up to 1.5s
+async function sendNativeRpc(action, params = {}, retryCount = 0) {
+  // If not connected, attempt immediate connection and wait up to 2.0s
   if (!nativePort) {
     connectNativeHost();
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 20; i++) {
       await new Promise(r => setTimeout(r, 100));
       if (nativePort) break;
     }
   }
 
   if (!nativePort) {
-    throw new Error("Native PC Bridge is not connected. Run setup script.");
+    throw new Error("Native PC Bridge is offline");
   }
 
   return new Promise((resolve, reject) => {
@@ -1924,7 +1944,7 @@ async function sendNativeRpc(action, params = {}) {
     nativeRpcCallbacks.set(id, { resolve, reject });
     
     // 30s timeout
-    setTimeout(() => {
+    const timeoutHandle = setTimeout(() => {
       if (nativeRpcCallbacks.has(id)) {
         nativeRpcCallbacks.delete(id);
         reject(new Error(`RPC action '${action}' timed out`));
@@ -1934,7 +1954,12 @@ async function sendNativeRpc(action, params = {}) {
     try {
       nativePort.postMessage({ id, action, ...params });
     } catch (postErr) {
+      clearTimeout(timeoutHandle);
       nativeRpcCallbacks.delete(id);
+      if (retryCount < 1) {
+        nativePort = null;
+        return sendNativeRpc(action, params, retryCount + 1).then(resolve).catch(reject);
+      }
       reject(postErr);
     }
   });

@@ -4995,6 +4995,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.66`, build `extension.crx` (680.6 KB).
 
+---
+
+### 🚀 Iterasi 443: Native Host Disconnect Auto-Reconnection & Resilient Brain Storage Fallback (v2.150.67)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki peringatan/bug `[Brain] Could not load persistent memory from host: Error: Native host has exited.` pada `chrome://newtab/` saat sidepanel diinisialisasi.
+  - Memperbaiki notice `Native list_agents notice: Error: Native host has exited.` dan `Native list_skills notice: Error: Native host has exited.` pada `options.js`.
+  - Memastikan status loading di bot Telegram berjalan sangat mulus (anti jedug-jedug / tanpa loncatan tinggi baris) dan konsisten.
+- **Akar Masalah (Root Cause)**:
+  - Saat ekstensi di-reload atau tab dibuka ulang, koneksi Native Host lama terputus sehingga panggilan RPC sebelum rekoneksi sempurna melempar exception `Native host has exited`.
+  - Fungsi pemuat memori dan agent di UI belum memiliki penanganan auto-retry dan silent fallback lokal yang mulus saat startup/reconnect.
+- **Implementasi & Peningkatan Sistem**:
+  - **Resilient RPC with Auto-Retry**: Memperbarui `sendNativeRpc` di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js) dan [options.js](file:///home/arya/browser-agent/extension/options.js) dengan mekanisme auto-reconnect dan single-retry transparan jika port terputus saat request dikirim.
+  - **Silent Brain Cache Hydration**: Menambahkan fallback otomatis ke `chrome.storage.local.get(['cached_persistent_brain_data'])` di `loadPersistentMemoryFromHost`, `loadAgents`, dan `loadSkills` sehingga UI langsung tampil 0ms tanpa error merah di konsol.
+  - **Smooth Anti-Flicker Telegram Status**: Mengunci format 1 baris konsisten dengan debounce >= 1000ms antar update status sehingga chat Telegram sama sekali tidak berkedip / melompat ("jedug-jedug").
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.67`, build `extension.crx` (680.8 KB).
+
 
 
 
