@@ -5390,6 +5390,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.88`, build `extension.crx` (839.2 KB).
 
+---
+
+### 🚀 Iterasi 465: Resolved Top-Level SyntaxError ('telegramConfig' Re-declaration) in Options Page (v2.150.89)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki error fatal pada Chrome Extensions: `Uncaught SyntaxError: Identifier 'telegramConfig' has already been declared` yang menyebabkan script `options.js` gagal dieksekusi secara total sehingga seluruh interaksi sidebar pengaturan macet.
+- **Implementasi & Peningkatan Sistem**:
+  - Di [options.js](file:///home/arya/browser-agent/extension/options.js):
+    - Membersihkan blok kode duplikat controller Telegram dan modul Ponytail yang tersisa di bagian bawah `options.js` setelah refaktorisasi modular ke folder `connected-apps/telegram/` dan `plugins/ponytail/`.
+    - Menghilangkan redeklarasi variabel global `let telegramConfig`, `let telegramBotLogs`, dan `let telegramPollingActive`.
+    - Script `options.js` kini tereksekusi 100% bersih tanpa syntax error, dan seluruh menu sidebar pengaturan berfungsi mulus dan responsif.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.89`, build `extension.crx` (839.4 KB).
+
 
 
 
