@@ -4841,6 +4841,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.56`, build `extension.crx` (678.7 KB).
 
+---
+
+### 🚀 Iterasi 433: Elimination of Obsolete Duplicate Poller & Unchecked runtime.lastError (v2.150.57)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki `Unchecked runtime.lastError: The message port closed before a response was received` pada `options.html#ai:0` di `chrome://newtab/`.
+- **Akar Masalah (Root Cause)**:
+  - Halaman `options.js` (yang dimuat sebagai iframe di `newtab.html#ai`) masih menyimpan ~800 baris kode polling legacy (`handleTelegramIncomingPrompt`) yang memanggil `chrome.runtime.sendMessage({ type: "TELEGRAM_PROMPT_EXECUTE" })` tanpa ada receiver aktif di background.
+- **Implementasi & Peningkatan Sistem**:
+  - **Purged Obsolete Duplicate Loop**: Menghapus seluruh blok fungsi eksekutor legacy di [options.js](file:///home/arya/browser-agent/extension/options.js) sehingga seluruh polling dan eksekusi Telegram kini 100% tersentralisasi secara bersih di Background Service Worker ([background.js](file:///home/arya/browser-agent/extension/background.js)).
+  - **Zero Unchecked Errors**: Menjamin tidak ada lagi pesan runtime tak tertangkap (*uncaught port closed*) saat membuka tab baru (`chrome://newtab/`).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.57`, build `extension.crx` (671.4 KB).
+
 
 
 
