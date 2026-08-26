@@ -694,13 +694,40 @@ const BACKGROUND_AGENT_TOOLS = [
     type: "function",
     function: {
       name: "navigate_to",
-      description: "Navigate active Chrome tab to a specific web URL or search engine.",
+      description: "Open target web URL in a dedicated browser tab (never overwrites New Tab or active user tab).",
       parameters: {
         type: "object",
         properties: {
           url: { type: "string", description: "Target URL to open (e.g. 'https://www.google.com', 'https://youtube.com', 'http://192.168.1.1:8080', 'http://localhost:3000')" }
         },
         required: ["url"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "new_tab",
+      description: "Create and switch to a brand new Chrome tab with specified URL.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: { type: "string", description: "URL for the new tab (default: https://www.google.com)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "switch_tab",
+      description: "Switch to an existing tab by Title or ID.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Title or URL keywords of tab to switch to" },
+          tab_id: { type: "number", description: "Optional specific tab ID" }
+        }
       }
     }
   },
@@ -793,29 +820,89 @@ const BACKGROUND_AGENT_TOOLS = [
   }
 ];
 
+let telegramAgentWorkerTabId = null;
+
+async function getOrCreateTelegramAgentTab(targetUrl = null) {
+  // 1. If targetUrl is requested:
+  if (targetUrl) {
+    if (telegramAgentWorkerTabId) {
+      try {
+        const existing = await chrome.tabs.get(telegramAgentWorkerTabId);
+        if (existing && existing.id) {
+          await chrome.tabs.update(existing.id, { url: targetUrl, active: true });
+          await new Promise(r => setTimeout(r, 2000));
+          return existing;
+        }
+      } catch(e) {
+        telegramAgentWorkerTabId = null;
+      }
+    }
+    // Create dedicated fresh worker tab without touching existing tabs
+    const createdTab = await chrome.tabs.create({ url: targetUrl, active: true });
+    telegramAgentWorkerTabId = createdTab.id;
+    await new Promise(r => setTimeout(r, 2200));
+    return createdTab;
+  }
+
+  // 2. If inspecting current tab without targetUrl:
+  if (telegramAgentWorkerTabId) {
+    try {
+      const existing = await chrome.tabs.get(telegramAgentWorkerTabId);
+      if (existing && existing.id) return existing;
+    } catch(e) {
+      telegramAgentWorkerTabId = null;
+    }
+  }
+
+  try {
+    const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    let cand = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
+    if (cand && cand.url && !cand.url.startsWith("chrome://") && !cand.url.startsWith("chrome-extension://")) {
+      return cand;
+    }
+  } catch(e) {}
+
+  return null;
+}
+
 async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
   try {
-    if (toolName === "navigate_to") {
-      let targetUrl = (toolArgs.url || "").trim();
-      if (!targetUrl) return { error: "URL is empty" };
+    if (toolName === "navigate_to" || toolName === "new_tab") {
+      let targetUrl = (toolArgs.url || "https://www.google.com").trim();
       if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
         targetUrl = "https://" + targetUrl;
       }
-      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
-      if (activeTab && activeTab.id) {
-        await chrome.tabs.update(activeTab.id, { url: targetUrl });
-      } else {
-        await chrome.tabs.create({ url: targetUrl, active: true });
+      const workerTab = await getOrCreateTelegramAgentTab(targetUrl);
+      return { status: "success", url: targetUrl, tab_id: workerTab?.id, message: `Berhasil membuka tab baru ${targetUrl}` };
+    }
+
+    if (toolName === "switch_tab") {
+      const allTabs = await chrome.tabs.query({});
+      let target = null;
+      if (toolArgs.tab_id) {
+        target = allTabs.find(t => t.id === Number(toolArgs.tab_id));
+      } else if (toolArgs.query) {
+        const q = String(toolArgs.query).toLowerCase();
+        target = allTabs.find(t => (t.title && t.title.toLowerCase().includes(q)) || (t.url && t.url.toLowerCase().includes(q)));
       }
-      await new Promise(r => setTimeout(r, 2200));
-      return { status: "success", url: targetUrl, message: `Berhasil membuka ${targetUrl}` };
+      if (target && target.id) {
+        await chrome.tabs.update(target.id, { active: true });
+        telegramAgentWorkerTabId = target.id;
+        return { status: "success", tab_id: target.id, title: target.title, url: target.url, message: `Beralih ke tab "${target.title}"` };
+      }
+      return { error: "Tab yang dicari tidak ditemukan." };
+    }
+
+    const activeTab = await getOrCreateTelegramAgentTab(null);
+    if (!activeTab || !activeTab.id) {
+      return { error: "Tidak ada tab web yang aktif untuk dikontrol. Silakan gunakan perintah 'navigate_to' terlebih dahulu untuk membuka halaman web." };
+    }
+
+    if (activeTab.url && (activeTab.url.startsWith("chrome://") || activeTab.url.startsWith("chrome-extension://"))) {
+      return { error: "Tab aktif saat ini adalah halaman internal Chrome. Gunakan 'navigate_to' untuk membuka tab web yang dituju terlebih dahulu." };
     }
 
     if (toolName === "click_element") {
-      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
-      if (!activeTab || !activeTab.id) return { error: "No active tab found" };
       const [res] = await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
         func: (sel) => {
@@ -829,18 +916,15 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
             el.click();
             return { success: true, text: (el.innerText || el.value || '').trim() };
           }
-          return { success: false, error: `Element '${sel}' not found` };
+          return { success: false, error: `Elemen '${sel}' tidak ditemukan di halaman.` };
         },
         args: [toolArgs.selector || 'button']
       });
       await new Promise(r => setTimeout(r, 1200));
-      return res?.result || { error: "Failed to click element" };
+      return res?.result || { error: "Gagal mengklik elemen." };
     }
 
     if (toolName === "type_text") {
-      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
-      if (!activeTab || !activeTab.id) return { error: "No active tab found" };
       const [res] = await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
         func: (sel, val, enter) => {
@@ -862,18 +946,15 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
             }
             return { success: true, value: val };
           }
-          return { success: false, error: 'Input element not found' };
+          return { success: false, error: 'Input form tidak ditemukan di halaman.' };
         },
         args: [toolArgs.selector || '', toolArgs.text || '', !!toolArgs.press_enter]
       });
       await new Promise(r => setTimeout(r, 1000));
-      return res?.result || { error: "Failed to type text" };
+      return res?.result || { error: "Gagal mengisi input teks." };
     }
 
     if (toolName === "get_page_content") {
-      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
-      if (!activeTab || !activeTab.id) return { error: "No active tab found" };
       const [res] = await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
         func: () => {
@@ -894,9 +975,6 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
     }
 
     if (toolName === "scroll_page") {
-      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
-      if (!activeTab || !activeTab.id) return { error: "No active tab" };
       const amount = (toolArgs.direction === 'up' ? -1 : 1) * (toolArgs.amount || 500);
       await chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
@@ -907,8 +985,6 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
     }
 
     if (toolName === "take_screenshot") {
-      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
       let dataUrl = null;
       if (activeTab && activeTab.windowId) {
         try {
@@ -921,9 +997,9 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
       }
       if (dataUrl) {
         await telegramSendPhoto(botToken, senderId, dataUrl, toolArgs.caption || `📸 Layar Tab: ${activeTab?.title || 'Browser'}`);
-        return { success: true, message: "Screenshot sent to Telegram successfully" };
+        return { success: true, message: "Screenshot tab berhasil dikirim ke Telegram." };
       }
-      return { error: "Failed to take screenshot" };
+      return { error: "Gagal mengambil screenshot tab." };
     }
 
     if (toolName === "ask_clarification") {
@@ -945,7 +1021,9 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
 }
 
 function getToolStepDescription(toolName, args) {
-  if (toolName === "navigate_to") return `Membuka alamat web <code>${escapeHtml(args.url || '')}</code>...`;
+  if (toolName === "navigate_to") return `Membuka tab web baru <code>${escapeHtml(args.url || '')}</code>...`;
+  if (toolName === "new_tab") return `Membuka tab baru <code>${escapeHtml(args.url || '')}</code>...`;
+  if (toolName === "switch_tab") return `Beralih ke tab target...`;
   if (toolName === "click_element") return `Mengklik elemen <i>"${escapeHtml(args.selector || '')}"</i>...`;
   if (toolName === "type_text") return `Mengisi teks / password ke form browser...`;
   if (toolName === "take_screenshot") return `Mengambil tangkapan layar tab Chrome...`;

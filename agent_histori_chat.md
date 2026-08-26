@@ -4855,6 +4855,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.57`, build `extension.crx` (671.4 KB).
 
+---
+
+### 🚀 Iterasi 434: Dedicated Telegram Agent Worker Tab Protection & Tab Isolation (v2.150.58)
+- **Kebutuhan Pengguna**:
+  - Memastikan eksekusi kontrol browser di Agent Mode Telegram membuat tab baru atau beralih tab khusus tanpa pernah menimpa (*overwrite*) atau menutup tab aktif pengguna atau halaman New Tab Browser Agent.
+- **Akar Masalah (Root Cause)**:
+  - Tool `navigate_to` di [background.js](file:///home/arya/browser-agent/extension/background.js) sebelumnya langsung memanggil `chrome.tabs.update(activeTab.id, { url })` pada tab yang sedang dibuka pengguna.
+- **Implementasi & Peningkatan Sistem**:
+  - **Dedicated Worker Tab Manager (`getOrCreateTelegramAgentTab`)**: Mengelola worker tab khusus (`telegramAgentWorkerTabId`) untuk tugas Telegram. Jika belum ada, sistem membuat tab baru mandiri via `chrome.tabs.create` tanpa mengganggu tab aktif pengguna atau halaman `newtab.html`.
+  - **New Browser Control Tools**: Menambahkan tool `new_tab` dan `switch_tab` ke dalam tool registry `BACKGROUND_AGENT_TOOLS`.
+  - **Internal Page Protection**: Melindungi halaman internal Chrome (`chrome://`, `chrome-extension://`) dari kegagalan script injection saat agent melakukan inspeksi DOM atau aksi form.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.58`, build `extension.crx` (672.1 KB).
+
 
 
 
