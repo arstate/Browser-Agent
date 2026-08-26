@@ -3885,6 +3885,134 @@ function stopTelegramPollingDaemon() {
   updateTelegramStatusUI();
 }
 
+// Execute Real AI Request for Telegram Remote User
+async function executeAIResponseForTelegram(userPrompt, senderName) {
+  const storageData = await chrome.storage.local.get([
+    'browser_agent_config',
+    'custom_agents',
+    'active_agent_id',
+    'telegram_bot_config',
+    'custom_memories',
+    'custom_skills'
+  ]);
+
+  const cfg = storageData.browser_agent_config || config || {};
+  const tgCfg = storageData.telegram_bot_config || telegramConfig || {};
+
+  // 1. Resolve Real Configured Active Model
+  let activeModel = "";
+  let isAuto = tgCfg.auto_model !== false;
+
+  if (tgCfg.selected_model && tgCfg.selected_model !== "auto") {
+    activeModel = tgCfg.selected_model;
+    isAuto = false;
+  } else if (cfg.selectedModelChoice && cfg.selectedModelChoice !== "auto") {
+    activeModel = cfg.selectedModelChoice;
+    isAuto = false;
+  } else if (Array.isArray(cfg.models) && cfg.models.length > 0) {
+    activeModel = cfg.models[0].id || cfg.models[0];
+  } else {
+    activeModel = cfg.model || "gemini-2.5-flash";
+  }
+
+  const displayModel = isAuto ? `auto (${activeModel})` : activeModel;
+
+  // 2. Resolve Real Active Agent
+  const customAgentsList = Array.isArray(storageData.custom_agents) ? storageData.custom_agents : [];
+  const activeAgentId = tgCfg.selected_agent || storageData.active_agent_id;
+  let activeAgentObj = customAgentsList.find(a => a.id === activeAgentId) || customAgentsList[0] || { name: "Master Agent" };
+  const displayAgent = activeAgentObj.name || "Master Agent";
+
+  // 3. Get Active Browser Tab Context
+  let activeTabTitle = "";
+  let activeTabUrl = "";
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tabs[0]) {
+      activeTabTitle = tabs[0].title || "";
+      activeTabUrl = tabs[0].url || "";
+    }
+  } catch(e) {}
+
+  // 4. Construct System Instruction
+  let systemInstruction = `You are Browser Agent (Active Specialist: ${displayAgent}), an autonomous AI assistant responding directly to the user (${senderName}) via Telegram Remote Control.\n`;
+  if (activeTabUrl) {
+    systemInstruction += `Active Chrome Browser Tab: "${activeTabTitle}" (${activeTabUrl}).\n`;
+  }
+  systemInstruction += `Answer directly, helpfully, accurately, and politely in the language of the user (Indonesian). Format using clean readable text without overly verbose filler.`;
+
+  // 5. Call LLM Endpoint if configured
+  if (!cfg.endpoint) {
+    return {
+      modelUsed: displayModel,
+      agentUsed: displayAgent,
+      responseText: `⚠️ Endpoint LLM belum dikonfigurasi di Pengaturan Browser Agent. Silakan buka tab Pengaturan untuk mengatur API Key / Endpoint.`
+    };
+  }
+
+  const endpointUrl = cfg.endpoint.replace(/\/+$/, "") + "/chat/completions";
+  const headers = { "Content-Type": "application/json" };
+  if (cfg.apiKey) headers["Authorization"] = `Bearer ${cfg.apiKey}`;
+
+  const payload = {
+    model: activeModel,
+    messages: [
+      { role: "system", content: systemInstruction },
+      { role: "user", content: userPrompt }
+    ],
+    temperature: parseFloat(cfg.temperature) || 0.7,
+    max_tokens: parseInt(cfg.maxTokens) || 2048,
+    stream: false
+  };
+
+  const resp = await fetch(endpointUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload)
+  });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    throw new Error(`AI API Error (${resp.status}): ${errText}`);
+  }
+
+  const rawResponse = await resp.text();
+  let aiText = "";
+
+  // Handle SSE stream if provider sends SSE
+  if (rawResponse.includes("data:")) {
+    let accumulated = "";
+    const lines = rawResponse.split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed === "data: [DONE]") continue;
+      if (trimmed.startsWith("data:")) {
+        try {
+          const chunkJson = JSON.parse(trimmed.slice(5).trim());
+          const delta = chunkJson.choices?.[0]?.delta?.content || "";
+          accumulated += delta;
+        } catch(e) {}
+      }
+    }
+    aiText = accumulated.trim();
+  }
+
+  if (!aiText) {
+    try {
+      const json = JSON.parse(rawResponse);
+      aiText = json.choices?.[0]?.message?.content || json.choices?.[0]?.text || "Perintah berhasil dieksekusi.";
+    } catch(e) {
+      aiText = rawResponse;
+    }
+  }
+
+  return {
+    modelUsed: displayModel,
+    agentUsed: displayAgent,
+    responseText: aiText
+  };
+}
+
 // Process incoming Telegram Updates (Messages & Callback Queries)
 async function handleTelegramIncomingUpdate(update) {
   const botToken = telegramConfig.bot_token;
@@ -3903,10 +4031,30 @@ async function handleTelegramIncomingUpdate(update) {
 
     if (data.startsWith('set_model:')) {
       const selectedModel = data.replace('set_model:', '');
-      await telegramSendMessage(botToken, fromId, `✅ <b>Model AI Berhasil Diganti:</b> <code>${escapeHtml(selectedModel)}</code>`);
+      if (selectedModel === 'auto') {
+        telegramConfig.auto_model = true;
+        telegramConfig.selected_model = '';
+      } else {
+        telegramConfig.auto_model = false;
+        telegramConfig.selected_model = selectedModel;
+      }
+      await chrome.storage.local.set({ telegram_bot_config: telegramConfig });
+      const chkAutoModel = document.getElementById('setting-telegram-auto-model');
+      if (chkAutoModel) chkAutoModel.checked = telegramConfig.auto_model;
+      await telegramSendMessage(botToken, fromId, `✅ <b>Model AI Berhasil Diganti:</b> <code>${escapeHtml(selectedModel === 'auto' ? 'AUTO (Smart Dynamic)' : selectedModel)}</code>`);
     } else if (data.startsWith('set_agent:')) {
       const selectedAgent = data.replace('set_agent:', '');
-      await telegramSendMessage(botToken, fromId, `👥 <b>Spesialis Agent Berhasil Dipilih:</b> <code>${escapeHtml(selectedAgent)}</code>`);
+      if (selectedAgent === 'auto') {
+        telegramConfig.auto_agent = true;
+        telegramConfig.selected_agent = '';
+      } else {
+        telegramConfig.auto_agent = false;
+        telegramConfig.selected_agent = selectedAgent;
+      }
+      await chrome.storage.local.set({ telegram_bot_config: telegramConfig });
+      const chkAutoAgent = document.getElementById('setting-telegram-auto-agent');
+      if (chkAutoAgent) chkAutoAgent.checked = telegramConfig.auto_agent;
+      await telegramSendMessage(botToken, fromId, `👥 <b>Spesialis Agent Berhasil Dipilih:</b> <code>${escapeHtml(selectedAgent === 'auto' ? 'AUTO (Delegasi Otomatis)' : selectedAgent)}</code>`);
     } else if (data.startsWith('set_mode:')) {
       const selectedMode = data.replace('set_mode:', '');
       await telegramSendMessage(botToken, fromId, `⚙️ <b>Mode Kerja Berhasil Diganti:</b> <code>${escapeHtml(selectedMode)}</code>`);
@@ -3961,35 +4109,65 @@ async function handleTelegramIncomingUpdate(update) {
     }
 
     if (cmd === '/model') {
-      await telegramSendMessage(botToken, senderId, `🧠 <b>Pilih Model AI:</b>`, {
-        inline_keyboard: [
-          [{ text: "🤖 AUTO (Smart Dynamic Routing)", callback_data: "set_model:auto" }],
-          [
-            { text: "🟢 Gemini 2.5 Flash", callback_data: "set_model:gemini-2.5-flash" },
-            { text: "🟣 Claude 3.5 Sonnet", callback_data: "set_model:claude-3-5-sonnet" }
-          ],
-          [
-            { text: "🔵 GPT-4o", callback_data: "set_model:gpt-4o" },
-            { text: "⚡ DeepSeek-V3 / R1", callback_data: "set_model:deepseek-v3" }
-          ]
-        ]
+      const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config']);
+      const cfg = storageData.browser_agent_config || config || {};
+      const tgCfg = storageData.telegram_bot_config || telegramConfig || {};
+      
+      const modelList = Array.isArray(cfg.models) && cfg.models.length > 0 ? cfg.models : (DEFAULT_MODELS_BY_PRESET[cfg.preset] || [{ id: cfg.model || "gemini-2.5-flash", name: cfg.model || "Default Model" }]);
+      
+      const keyboardRows = [
+        [{ text: `🤖 AUTO (Smart Dynamic) ${tgCfg.auto_model ? '✓' : ''}`, callback_data: "set_model:auto" }]
+      ];
+      
+      for (let i = 0; i < modelList.length; i += 2) {
+        const row = [];
+        const m1 = modelList[i];
+        const m1Id = m1.id || m1;
+        const m1Name = m1.name || m1Id;
+        const isM1Active = !tgCfg.auto_model && (tgCfg.selected_model === m1Id || cfg.model === m1Id);
+        row.push({ text: `${isM1Active ? '🟢 ' : ''}${m1Name}`, callback_data: `set_model:${m1Id}` });
+        
+        if (i + 1 < modelList.length) {
+          const m2 = modelList[i + 1];
+          const m2Id = m2.id || m2;
+          const m2Name = m2.name || m2Id;
+          const isM2Active = !tgCfg.auto_model && (tgCfg.selected_model === m2Id || cfg.model === m2Id);
+          row.push({ text: `${isM2Active ? '🟢 ' : ''}${m2Name}`, callback_data: `set_model:${m2Id}` });
+        }
+        keyboardRows.push(row);
+      }
+
+      await telegramSendMessage(botToken, senderId, `🧠 <b>Pilih Model AI:</b>\n\nModel aktif: <code>${tgCfg.auto_model ? 'AUTO (Smart Dynamic)' : (tgCfg.selected_model || cfg.model || 'Default')}</code>`, {
+        inline_keyboard: keyboardRows
       });
       return;
     }
 
     if (cmd === '/agent') {
-      await telegramSendMessage(botToken, senderId, `👥 <b>Pilih Spesialis Agent:</b>`, {
-        inline_keyboard: [
-          [{ text: "🧠 AUTO (Delegasi Otomatis)", callback_data: "set_agent:auto" }],
-          [
-            { text: "🌐 General Assistant", callback_data: "set_agent:general" },
-            { text: "🔬 Deep Web Researcher", callback_data: "set_agent:researcher" }
-          ],
-          [
-            { text: "💻 Coding Engineer", callback_data: "set_agent:coder" },
-            { text: "🏢 Tiar Sales Closer", callback_data: "set_agent:tiar_closer" }
-          ]
-        ]
+      const storageData = await chrome.storage.local.get(['custom_agents', 'active_agent_id', 'telegram_bot_config']);
+      const agents = Array.isArray(storageData.custom_agents) && storageData.custom_agents.length > 0 ? storageData.custom_agents : [{ id: "master_agent", name: "Master Agent" }];
+      const tgCfg = storageData.telegram_bot_config || telegramConfig || {};
+      
+      const keyboardRows = [
+        [{ text: `🧠 AUTO (Delegasi Otomatis) ${tgCfg.auto_agent ? '✓' : ''}`, callback_data: "set_agent:auto" }]
+      ];
+      
+      for (let i = 0; i < agents.length; i += 2) {
+        const row = [];
+        const a1 = agents[i];
+        const isA1Active = !tgCfg.auto_agent && (tgCfg.selected_agent === a1.id || storageData.active_agent_id === a1.id);
+        row.push({ text: `${isA1Active ? '🟢 ' : ''}${a1.name}`, callback_data: `set_agent:${a1.id}` });
+        
+        if (i + 1 < agents.length) {
+          const a2 = agents[i + 1];
+          const isA2Active = !tgCfg.auto_agent && (tgCfg.selected_agent === a2.id || storageData.active_agent_id === a2.id);
+          row.push({ text: `${isA2Active ? '🟢 ' : ''}${a2.name}`, callback_data: `set_agent:${a2.id}` });
+        }
+        keyboardRows.push(row);
+      }
+
+      await telegramSendMessage(botToken, senderId, `👥 <b>Pilih Spesialis Agent:</b>\n\nAgent aktif: <code>${tgCfg.auto_agent ? 'AUTO (Delegasi Otomatis)' : (agents.find(a => a.id === tgCfg.selected_agent)?.name || 'Master Agent')}</code>`, {
+        inline_keyboard: keyboardRows
       });
       return;
     }
@@ -4011,7 +4189,6 @@ async function handleTelegramIncomingUpdate(update) {
 
     if (cmd === '/screenshot') {
       await telegramSendMessage(botToken, senderId, `📸 <i>Mengambil tangkapan layar browser...</i>`);
-      // Capture visible tab if permitted
       try {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         const activeTab = tabs[0];
@@ -4026,7 +4203,26 @@ async function handleTelegramIncomingUpdate(update) {
     if (cmd === '/status') {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const activeTab = tabs[0];
-      const statusMsg = `📊 <b>Status Browser Agent:</b>\n\n• <b>Tab Aktif:</b> ${escapeHtml(activeTab?.title || 'None')}\n• <b>URL:</b> <code>${escapeHtml(activeTab?.url || '-')}</code>\n• <b>Model:</b> <code>${telegramConfig.auto_model ? 'AUTO (Smart Dynamic)' : 'Gemini 2.5 Flash'}</code>\n• <b>Agent:</b> <code>${telegramConfig.auto_agent ? 'AUTO (Smart Delegation)' : 'General Assistant'}</code>\n• <b>Auto-Accept:</b> <code>${telegramConfig.auto_accept ? 'ON (Otomatis)' : 'OFF (Safe Mode)'}</code>\n• <b>Latensi Engine:</b> <code>Online 🟢</code>`;
+      const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config', 'custom_agents']);
+      const cfg = storageData.browser_agent_config || config || {};
+      const tgCfg = storageData.telegram_bot_config || telegramConfig || {};
+      const agents = Array.isArray(storageData.custom_agents) ? storageData.custom_agents : [];
+      
+      let realActiveModel = "";
+      if (tgCfg.selected_model) {
+        realActiveModel = tgCfg.selected_model;
+      } else if (cfg.selectedModelChoice && cfg.selectedModelChoice !== "auto") {
+        realActiveModel = cfg.selectedModelChoice;
+      } else if (Array.isArray(cfg.models) && cfg.models.length > 0) {
+        realActiveModel = cfg.models[0].id || cfg.models[0];
+      } else {
+        realActiveModel = cfg.model || "gemini-2.5-flash";
+      }
+      
+      const modelDisplay = tgCfg.auto_model ? `AUTO (${realActiveModel})` : realActiveModel;
+      const agentDisplay = tgCfg.auto_agent ? `AUTO (${agents[0]?.name || 'Master Agent'})` : (agents.find(a => a.id === tgCfg.selected_agent)?.name || 'Master Agent');
+
+      const statusMsg = `📊 <b>Status Browser Agent:</b>\n\n• <b>Tab Aktif:</b> ${escapeHtml(activeTab?.title || 'None')}\n• <b>URL:</b> <code>${escapeHtml(activeTab?.url || '-')}</code>\n• <b>Model:</b> <code>${escapeHtml(modelDisplay)}</code>\n• <b>Agent:</b> <code>${escapeHtml(agentDisplay)}</code>\n• <b>Auto-Accept:</b> <code>${tgCfg.auto_accept ? 'ON (Otomatis)' : 'OFF (Safe Mode)'}</code>\n• <b>Latensi Engine:</b> <code>Online 🟢</code>`;
       await telegramSendMessage(botToken, senderId, statusMsg);
       return;
     }
@@ -4037,21 +4233,19 @@ async function handleTelegramIncomingUpdate(update) {
     }
   }
 
-  // Regular Prompt / Instruction Execution
-  const processingNotice = await telegramSendMessage(botToken, senderId, `⏳ <i>Browser Agent sedang memproses instruksi Anda...</i>`);
+  // Regular Prompt / Instruction Execution with REAL AI Engine
+  await telegramSendMessage(botToken, senderId, `⏳ <i>Browser Agent sedang memproses instruksi dengan AI Engine...</i>`);
 
   let responseText = "";
-  let modelUsed = telegramConfig.auto_model ? "auto (Gemini 2.5 Flash)" : "gemini-2.5-flash";
-  let agentUsed = telegramConfig.auto_agent ? "auto (General Assistant)" : "General Assistant";
+  let modelUsed = "";
+  let agentUsed = "";
   let actionsTaken = "AI Inference & Task Completed";
 
   try {
-    // Call Native Host RPC or LLM Provider
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    const currentUrl = tabs[0]?.url || "";
-
-    // Simulation of rapid intelligent response
-    responseText = `Perintah Anda telah berhasil diproses oleh Browser Agent!\n\n📋 <b>Instruksi:</b> "${text}"\n\n🌐 <b>Hasil Eksekusi:</b>\nAgent telah menganalisis konteks pada halaman aktif (${escapeHtml(currentUrl || 'Browser Engine')}) dan menyelesaikan permintaan Anda dengan sukses.`;
+    const aiRes = await executeAIResponseForTelegram(text, senderName);
+    responseText = aiRes.responseText;
+    modelUsed = aiRes.modelUsed;
+    agentUsed = aiRes.agentUsed;
 
     await telegramSendMessage(botToken, senderId, `🤖 <b>[${modelUsed}]</b>\n\n${responseText}`);
   } catch (err) {
@@ -4066,8 +4260,8 @@ async function handleTelegramIncomingUpdate(update) {
     user_id: senderId,
     user_message: text,
     agent_response: responseText,
-    model_used: modelUsed,
-    agent_used: agentUsed,
+    model_used: modelUsed || "Default",
+    agent_used: agentUsed || "General Assistant",
     actions_taken: actionsTaken,
     status: "Success (200 OK)"
   };

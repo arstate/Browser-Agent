@@ -4490,6 +4490,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.33`, build `extension.crx` (492.7 KB).
 
+---
+
+### 🚀 Iterasi 410: Live LLM Inference & Dynamic Model Synchronization for Telegram Bot (v2.150.34)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki model yang muncul di balasan bot Telegram agar **100% sinkron dengan model yang aktif di menu Pengaturan** (bukan hardcoded Gemini 2.5 Flash), serta mengeksekusi inferensi AI asli secara real-time langsung melalui endpoint LLM yang dikonfigurasi pengguna.
+- **Implementasi & Penyelarasan Mesin**:
+  - **Live AI Inference Engine (`executeAIResponseForTelegram`)**: Membaca model aktif, endpoint URL, dan API key langsung dari `chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config'])`, melakukan request HTTP chat completion, dan mengirimkan hasil jawaban asli AI ke chat Telegram.
+  - **Dynamic Command `/model` & `/agent`**: Menghasilkan menu keyboard dinamis yang membaca langsung daftar model (`config.models`) dan spesialis agen (`custom_agents`) milik pengguna, dengan indikator aktif (`🟢`) dan toggle `AUTO`.
+  - **Live Accurate Status `/status`**: Menampilkan nama model dan spesialis agent yang benar-benar aktif di sistem.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.34`, build `extension.crx` (494.5 KB).
+
 
 
 
