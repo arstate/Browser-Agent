@@ -4255,6 +4255,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.15`, build `extension.crx` (480.2 KB).
 
+---
+
+### 🚀 Iterasi 392: Clean Frosted Glass LLM Providers Header (v2.150.16)
+- **Kebutuhan Pengguna**:
+  - Menghapus elemen yang tidak penting pada hero header LLM Providers (*kotak ikon sun/spinner sebelah judul dan baris kontrol bawah yang redundan berisi Default Provider/Model & + + Add custom model*).
+  - Meng-upgrade tampilan header hero menjadi gaya Dark Liquid Glass yang super clean, minimalis, dan elegan.
+- **Implementasi & Peningkatan UI**:
+  - **Pembersihan Elemen Redundan**: Menghapus `.hero-provider-icon` dan `.hero-provider-controls-row` dari [options.html](file:///home/arya/browser-agent/extension/options.html) sehingga layout header lebih lega dan fokus pada fungsi utama.
+  - **Frosted Liquid Glass Upgrade**: Memperbarui `.bento-hero-provider-card` dengan efek `backdrop-filter: blur(28px) saturate(180%)`, border kaca ultra-tipis, dan capsule pill action buttons (*Export/Import DB, Export/Import Settings, Status Save*) beranimasi hover elevasi halus di [options.css](file:///home/arya/browser-agent/extension/options.css).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.16`, build `extension.crx` (480.1 KB).
+
 
 
 
