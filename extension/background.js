@@ -124,7 +124,24 @@ async function telegramSendMessage(botToken, chatId, text, replyMarkup = null) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    return await res.json();
+    const json = await res.json();
+    
+    // If HTML parsing failed on Telegram server, automatically retry with clean plain text
+    if (!json.ok && json.error_code === 400) {
+      const fallbackPayload = {
+        chat_id: chatId,
+        text: text,
+        disable_web_page_preview: true
+      };
+      if (replyMarkup) fallbackPayload.reply_markup = replyMarkup;
+      const fbRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fallbackPayload)
+      });
+      return await fbRes.json();
+    }
+    return json;
   } catch (err) {
     return null;
   }
@@ -148,7 +165,25 @@ async function telegramEditMessageText(botToken, chatId, messageId, text, replyM
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    return await res.json();
+    const json = await res.json();
+    
+    // If HTML parsing failed on Telegram server, automatically retry with clean plain text
+    if (!json.ok && json.error_code === 400) {
+      const fallbackPayload = {
+        chat_id: chatId,
+        message_id: messageId,
+        text: text,
+        disable_web_page_preview: true
+      };
+      if (replyMarkup) fallbackPayload.reply_markup = replyMarkup;
+      const fbRes = await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fallbackPayload)
+      });
+      return await fbRes.json();
+    }
+    return json;
   } catch (err) {
     return null;
   }
@@ -2237,45 +2272,43 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     const executedToolCalls = [];
 
     const STEP_EMOJIS = ["⚡", "⚙️", "🔍", "📂", "✨", "🎯", "🚀", "💡"];
-    const ANIM_SPINNERS = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
     let currentEmoji = "⚡";
     let currentBaseText = "Menganalisis instruksi & merancang eksekusi";
-    let animFrameIndex = 0;
     let lastRenderedText = "";
+    let lastEditTime = 0;
     let isAgentRunning = true;
 
-    // Helper to render and edit live status smoothly with animated loading spinner
+    // Helper to render and edit live status safely (throttled to at most once per 3s to prevent 429 Flood Control)
     async function renderLiveStatus(force = false) {
       if (!liveStatusMsgId || !isAgentRunning) return;
+      const now = Date.now();
+      if (!force && (now - lastEditTime < 3000)) return;
       const cleanBase = currentBaseText.replace(/\.+$/, '').trim();
-      const spinner = ANIM_SPINNERS[animFrameIndex % ANIM_SPINNERS.length];
-      const textToRender = `${currentEmoji} <b>Master Agent:</b> ${cleanBase} <i>[ ${spinner} ]</i>`;
+      const textToRender = `${currentEmoji} <b>Master Agent:</b> ${cleanBase}...`;
       
       if (textToRender !== lastRenderedText || force) {
         lastRenderedText = textToRender;
+        lastEditTime = now;
         await telegramEditMessageText(botToken, senderId, liveStatusMsgId, textToRender).catch(() => {});
       }
     }
 
     // Send initial status message
-    const initialStatus = await telegramSendMessage(botToken, senderId, `⚡ <b>Master Agent:</b> Menganalisis instruksi & merancang eksekusi <i>[ ⠋ ]</i>`);
+    const initialStatus = await telegramSendMessage(botToken, senderId, `⚡ <b>Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
     if (initialStatus && initialStatus.result && initialStatus.result.message_id) {
       liveStatusMsgId = initialStatus.result.message_id;
-      lastRenderedText = `⚡ <b>Master Agent:</b> Menganalisis instruksi & merancang eksekusi <i>[ ⠋ ]</i>`;
+      lastRenderedText = `⚡ <b>Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`;
+      lastEditTime = Date.now();
     }
 
-    // Continuous smooth animation ticker (every 900ms)
-    const statusAnimTimer = setInterval(() => {
+    // Native Telegram typing action pulse (every 4.5 seconds) -> Zero rate limit, displays native animated typing header!
+    const typingTicker = setInterval(() => {
       if (!isAgentRunning) {
-        clearInterval(statusAnimTimer);
+        clearInterval(typingTicker);
         return;
       }
-      animFrameIndex++;
-      renderLiveStatus();
-      if (animFrameIndex % 4 === 0) {
-        telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
-      }
-    }, 900);
+      telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
+    }, 4500);
 
     // Multi-turn Autonomous Agent Loop
     while (stepCount < maxSteps) {
@@ -2390,9 +2423,9 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       } catch (se) {}
     }
 
-    // Stop continuous animation ticker
+    // Stop typing ticker
     isAgentRunning = false;
-    clearInterval(statusAnimTimer);
+    clearInterval(typingTicker);
 
     if (!finalResponseText) {
       finalResponseText = "✅ Tugas agent telah selesai dijalankan di browser.";
@@ -2455,7 +2488,7 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     await telegramSendMessage(botToken, senderId, finalResponseText);
   } catch (err) {
     isAgentRunning = false;
-    if (typeof statusAnimTimer !== 'undefined') clearInterval(statusAnimTimer);
+    if (typeof typingTicker !== 'undefined') clearInterval(typingTicker);
     await telegramSendMessage(botToken, senderId, `⚠️ Gagal memproses instruksi: ${err.message}`);
   }
 }

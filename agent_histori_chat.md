@@ -5132,6 +5132,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.74`, build `extension.crx` (688.5 KB).
 
+---
+
+### 🚀 Iterasi 451: Telegram 429 Flood-Control Immunity, HTML Entity Auto-Fallback & Native Typing Pulse (v2.150.75)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bot Telegram yang macet / tidak merespons chat pengguna meskipun server sudah di-restart.
+- **Akar Masalah (Root Cause)**:
+  - **HTTP 429 Too Many Requests (Telegram Flood Control)**: Timer animasi status 900ms sebelumnya memicu request `editMessageText` berulang kali ke server Telegram sehingga Telegram memberlakukan pembatasan laju (*cooldown rate limit*).
+  - **Missing Plain-Text Fallback**: Ketika pesan balasan memuat entitas HTML yang tidak valid, Telegram mengembalikan HTTP 400 (`Bad Request`) tanpa fallback ke pesan teks biasa (*plain text*), sehingga pesan balasan gagal terkirim.
+- **Implementasi & Peningkatan Sistem**:
+  - **Removal of Aggressive 900ms Edit Loop**: Menghapus interval edit gelembung pesan status setiap 900ms. Menggantinya dengan pembaruan status berbasis transisi langkah (*step transitions*) yang di-throttle minimal 3.000ms antar edit.
+  - **Native Animated Typing Pulse**: Mengimplementasikan pulse `telegramSendChatAction(..., "typing")` berkala setiap 4,5 detik yang 100% bebas limit dan menampilkan animasi *"Browser Agent is typing..."* di header Telegram.
+  - **Automatic Plain-Text Fail-Safe**: `telegramSendMessage` dan `telegramEditMessageText` kini otomatis mendeteksi kegagalan parsing HTML dan langsung mengirim ulang dalam format teks biasa (*plain text*) tanpa jeda.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.75`, build `extension.crx` (688.9 KB).
+
 
 
 
