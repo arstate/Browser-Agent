@@ -3881,15 +3881,23 @@ def handle_local_rpc(msg):
             endpoint_method = "sendDocument"
             file_field = "document"
 
-            if media_type == "photo" or lower_name.endswith((".png", ".jpg", ".jpeg", ".webp")):
+            if media_type == "document":
+                # Raw document mode: preserves 100% transparency, original resolution & format
+                endpoint_method = "sendDocument"
+                file_field = "document"
+            elif media_type == "photo" or (media_type == "auto" and lower_name.endswith((".jpg", ".jpeg", ".webp"))):
                 endpoint_method = "sendPhoto"
                 file_field = "photo"
-            elif media_type == "audio" or lower_name.endswith((".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac")):
+            elif media_type == "audio" or (media_type == "auto" and lower_name.endswith((".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac"))):
                 endpoint_method = "sendAudio"
                 file_field = "audio"
-            elif media_type == "video" or lower_name.endswith((".mp4", ".mkv", ".mov", ".webm", ".avi")):
+            elif media_type == "video" or (media_type == "auto" and lower_name.endswith((".mp4", ".mkv", ".mov", ".webm", ".avi"))):
                 endpoint_method = "sendVideo"
                 file_field = "video"
+            elif lower_name.endswith(".png"):
+                # PNG files must be sent as raw uncompressed documents to preserve transparent alpha channel
+                endpoint_method = "sendDocument"
+                file_field = "document"
 
             # Execute via curl subprocess for ultra fast, reliable multipart upload
             url = f"https://api.telegram.org/bot{bot_token}/{endpoint_method}"

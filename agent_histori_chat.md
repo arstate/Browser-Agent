@@ -5322,6 +5322,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.84`, build `extension.crx` (839.1 KB).
 
+---
+
+### 🚀 Iterasi 461: Send Transparent PNG via Document File to Preserve 100% Alpha Channel Transparency (v2.150.85)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki pengiriman file PNG transparan (hasil remove background atau generasi citra) agar selalu dikirimkan sebagai berkas Dokumen uncompressed (`sendDocument`) di Telegram, bukan dikompresi menjadi foto JPEG oleh Telegram (`sendPhoto`) yang menghilangkan background transparan (Alpha channel).
+- **Implementasi & Peningkatan Sistem**:
+  - Di [native_host.py](file:///home/arya/browser-agent/host/native_host.py):
+    - Pada RPC action `telegram_send_file`: Jika berkas berakhiran `.png` atau `media_type === "document"`, endpoint dipaksa menggunakan `sendDocument` via `curl` multipart upload.
+    - Menjaga 100% ketajaman piksel asli dan kanal transparansi Alpha tanpa artefak kompresi Telegram.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.85`, build `extension.crx` (839.4 KB).
+
 
 
 
