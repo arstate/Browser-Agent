@@ -147,7 +147,7 @@
 
       <!-- Sidebar Bottom: App Version (Frameless Clean Typography) -->
       <div class="sidebar-footer">
-        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.39</span>
+        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.40</span>
       </div>
     </aside>
 
@@ -1193,7 +1193,7 @@
 
           <div class="bento-grid-2col" style="align-items: stretch;">
             <!-- Card 1: Telegram Bot Remote Control -->
-            <div class="bento-card bento-glass-card" id="card-telegram-bot" style="display: flex; flex-direction: column; justify-content: space-between; max-height: 560px; height: 560px; box-sizing: border-box;">
+            <div class="bento-card bento-glass-card" id="card-telegram-bot" style="display: flex; flex-direction: column; justify-content: space-between;">
               <div>
                 <div class="card-header" style="justify-content: space-between;">
                   <div style="display: flex; align-items: center; gap: 12px;">
@@ -1276,7 +1276,7 @@
               </div>
 
               <!-- Action Buttons -->
-              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px;">
                 <button type="button" class="btn-primary" id="btn-save-telegram-config" style="padding: 9px 22px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: var(--accent-lime); color: #000; border: none; cursor: pointer;">
                   Simpan Pengaturan
                 </button>
@@ -1294,40 +1294,42 @@
             </div>
 
             <!-- Card 2: Dedicated Telegram Chat History & Live Stream Logs -->
-            <div class="bento-card bento-glass-card" id="card-telegram-logs" style="display: flex; flex-direction: column; max-height: 560px; height: 560px; box-sizing: border-box;">
-              <div class="card-header" style="justify-content: space-between; margin-bottom: 14px; flex-shrink: 0;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <div class="header-icon-box" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-radius: 12px;">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
+            <div class="bento-card bento-glass-card" id="card-telegram-logs" style="display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div class="card-header" style="justify-content: space-between; margin-bottom: 14px; flex-shrink: 0;">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="header-icon-box" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-radius: 12px;">
+                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                      </svg>
+                    </div>
+                    <div class="card-header-text">
+                      <h2>Riwayat &amp; Log Chat Telegram</h2>
+                    </div>
                   </div>
-                  <div class="card-header-text">
-                    <h2>Riwayat &amp; Log Chat Telegram</h2>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <button type="button" class="btn-secondary" id="btn-refresh-telegram-logs" title="Segarkan Log" style="width: 32px; height: 32px; padding: 0; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    </button>
+                    <button type="button" class="btn-secondary" id="btn-clear-telegram-logs" title="Bersihkan Riwayat Log" style="width: 32px; height: 32px; padding: 0; border-radius: 9999px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #f87171; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>
                   </div>
                 </div>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                  <button type="button" class="btn-secondary" id="btn-refresh-telegram-logs" title="Segarkan Log" style="width: 32px; height: 32px; padding: 0; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                  </button>
-                  <button type="button" class="btn-secondary" id="btn-clear-telegram-logs" title="Bersihkan Riwayat Log" style="width: 32px; height: 32px; padding: 0; border-radius: 9999px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #f87171; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                  </button>
-                </div>
-              </div>
 
-              <!-- Dedicated Log Stream Container (Fixed Max Height with Smooth Scroll) -->
-              <div id="telegram-logs-container" style="flex: 1; min-height: 0; max-height: 480px; overflow-y: auto; background: rgba(18, 18, 22, 0.65); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
-                <div style="margin: auto; padding: 36px 16px; text-align: center; color: #64748b; font-size: 12px;">
-                  <p>Belum ada riwayat percakapan dari Bot Telegram.</p>
-                  <p style="margin-top: 6px; font-size: 11px; color: #475569;">Pesan yang Anda kirim dari Telegram ke bot akan tampil di sini secara real-time.</p>
+                <!-- Dedicated Log Stream Container (Fixed Max Height with Smooth Scroll) -->
+                <div id="telegram-logs-container" style="min-height: 250px; max-height: 480px; overflow-y: auto; background: rgba(18, 18, 22, 0.65); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                  <div style="margin: auto; padding: 36px 16px; text-align: center; color: #64748b; font-size: 12px;">
+                    <p>Belum ada riwayat percakapan dari Bot Telegram.</p>
+                    <p style="margin-top: 6px; font-size: 11px; color: #475569;">Pesan yang Anda kirim dari Telegram ke bot akan tampil di sini secara real-time.</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Card 3: Quick Setup Guide & Shortcut Cheat Sheet -->
-          <div class="bento-card bento-glass-card" style="margin-top: 18px;">
+          <div class="bento-card bento-glass-card" style="margin-top: 24px;">
             <div class="card-header">
               <div class="header-icon-box" style="background: rgba(206, 241, 40, 0.12); color: var(--accent-lime); border-radius: 12px;">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

@@ -4569,6 +4569,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.39`, build `extension.crx` (667.1 KB).
 
+---
+
+### 🚀 Iterasi 416: Telegram HTML Paragraph Formatter & Options UI Overflow Fix (v2.150.40)
+- **Kebutuhan Pengguna**:
+  - Merapikan format paragraf, heading, bullets (`•`), dan kode di pesan Telegram agar tampil bersih, rapi, dan terbaca tanpa unparsed asterisks/hyphens (`* **Tab 1**` atau `- **Tugas**`), sambil memastikan teks tampilan di Browser Agent UI tetap utuh tanpa perubahan.
+  - Memperbaiki bug UI di halaman Options di mana tombol pengaturan kredensial Telegram Bot terpotong atau tumpang tindih dengan kartu panduan di bawahnya.
+- **Implementasi & Peningkatan Sistem**:
+  - **Dedicated Telegram HTML Paragraph Formatter (`formatMarkdownForTelegram`)**: Mengonversi Markdown mentah (`**bold**`, `* item`, `- item`, `### header`, ````code````) menjadi format HTML Telegram yang valid (`<b>`, `<i>`, `•`, `<code>`, `<pre>`, `<a href>`) dengan sanitasi HTML dan normalisasi spasi paragraf hanya untuk payload Telegram. Tampilan di dalam Browser Agent tidak terpengaruh.
+  - **Cooperative Poller Lease Lock**: Sinkronisasi poller Telegram antara `options.js` dan `sidepanel.js` menggunakan lease lock bersama untuk mengeliminasi respons ganda.
+  - **Options UI Layout Cleanup**: Menghilangkan hardcoded height constraint pada `#card-telegram-bot` sehingga seluruh form, toggle switches, dan tombol aksi terbungkus secara proporsional dengan margin pemisah yang bersih.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.40`, build `extension.crx` (669.0 KB).
+
 
 
 

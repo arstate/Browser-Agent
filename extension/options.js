@@ -3794,13 +3794,73 @@ function renderTelegramLogs() {
   container.scrollTop = container.scrollHeight;
 }
 
+// Helper: Cleanly format Markdown text specifically for Telegram HTML parse mode without altering Browser Agent UI
+function formatMarkdownForTelegram(rawText) {
+  if (!rawText || typeof rawText !== 'string') return '';
+  let str = rawText;
+
+  // 1. Extract code blocks and inline code
+  const codeBlocks = [];
+  str = str.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+    const placeholder = `___TG_CODE_BLOCK_${codeBlocks.length}___`;
+    const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const langAttr = lang ? ` class="language-${lang}"` : '';
+    codeBlocks.push(`<pre><code${langAttr}>${escapedCode}</code></pre>`);
+    return placeholder;
+  });
+
+  const inlineCodes = [];
+  str = str.replace(/`([^`\n]+)`/g, (match, code) => {
+    const placeholder = `___TG_INLINE_CODE_${inlineCodes.length}___`;
+    const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    inlineCodes.push(`<code>${escapedCode}</code>`);
+    return placeholder;
+  });
+
+  // 2. Escape raw HTML entities
+  str = str.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;');
+  str = str.replace(/<(?!\/?(?:b|i|u|s|code|pre|a|blockquote)(?:\s+[^>]+)?>)/gi, '&lt;');
+
+  // 3. Convert Headers
+  str = str.replace(/^#{1,6}\s+(.+)$/gm, '<b>$1</b>');
+
+  // 4. Convert Bold
+  str = str.replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>');
+  str = str.replace(/__([^_\n]+?)__/g, '<b>$1</b>');
+
+  // 5. Convert Bullets / Lists
+  str = str.replace(/^[ \t]{4,8}[\*\-\+][ \t]+/gm, '      • ');
+  str = str.replace(/^[ \t]{2,3}[\*\-\+][ \t]+/gm, '   • ');
+  str = str.replace(/^[ \t]*[\*\-\+][ \t]+/gm, '• ');
+
+  // 6. Convert Italic
+  str = str.replace(/(^|[^\*])\*([^*\n\s](?:[^*\n]*[^*\n\s])?)\*(?!\*)/g, '$1<i>$2</i>');
+  str = str.replace(/(^|[^_])_([^_\n\s](?:[^_\n]*[^_\n\s])?)_(?!_)/g, '$1<i>$2</i>');
+
+  // 7. Convert Links
+  str = str.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2">$1</a>');
+
+  // 8. Restore Code Blocks & Inline Code
+  codeBlocks.forEach((cb, idx) => {
+    str = str.replace(`___TG_CODE_BLOCK_${idx}___`, cb);
+  });
+  inlineCodes.forEach((ic, idx) => {
+    str = str.replace(`___TG_INLINE_CODE_${idx}___`, ic);
+  });
+
+  // 9. Normalize paragraph spacing
+  str = str.replace(/\n{3,}/g, '\n\n').trim();
+  return str;
+}
+
 // Telegram API Helper: Send Message
 async function telegramSendMessage(botToken, chatId, text, replyMarkup = null) {
   if (!botToken || !chatId) return null;
   try {
+    const formattedText = formatMarkdownForTelegram(text);
     const payload = {
       chat_id: chatId,
-      text: text,
+      text: formattedText,
       parse_mode: 'HTML',
       disable_web_page_preview: true
     };
@@ -3823,10 +3883,11 @@ async function telegramSendMessage(botToken, chatId, text, replyMarkup = null) {
 async function telegramEditMessage(botToken, chatId, messageId, text, replyMarkup = null) {
   if (!botToken || !chatId || !messageId) return null;
   try {
+    const formattedText = formatMarkdownForTelegram(text);
     const payload = {
       chat_id: chatId,
       message_id: messageId,
-      text: text,
+      text: formattedText,
       parse_mode: 'HTML',
       disable_web_page_preview: true
     };
@@ -3895,6 +3956,8 @@ async function telegramSetBotProfilePhoto(botToken) {
   }
 }
 
+const optionsPollerInstanceId = 'opt_' + Math.random().toString(36).slice(2, 9);
+
 // Background Telegram Poller Daemon
 async function startTelegramPollingDaemon() {
   if (telegramPollingActive) return;
@@ -3903,6 +3966,25 @@ async function startTelegramPollingDaemon() {
 
   while (telegramPollingActive && telegramConfig.enabled && telegramConfig.bot_token) {
     try {
+      // Check cooperative leader lease
+      const storageData = await chrome.storage.local.get(['telegram_bot_config', 'telegram_poller_lease', 'telegram_last_update_id']);
+      if (storageData.telegram_last_update_id && storageData.telegram_last_update_id > telegramLastUpdateId) {
+        telegramLastUpdateId = storageData.telegram_last_update_id;
+      }
+
+      const lease = storageData.telegram_poller_lease;
+      const now = Date.now();
+      if (lease && lease.id !== optionsPollerInstanceId && (now - lease.time < 8000)) {
+        // Another instance (e.g. Sidepanel or NewTab) is leader. Sleep and wait.
+        await new Promise(r => setTimeout(r, 4000));
+        continue;
+      }
+
+      // Claim / renew lease
+      await chrome.storage.local.set({
+        telegram_poller_lease: { id: optionsPollerInstanceId, time: now }
+      });
+
       telegramPollAbortController = new AbortController();
       const url = `https://api.telegram.org/bot${telegramConfig.bot_token}/getUpdates?offset=${telegramLastUpdateId + 1}&timeout=20`;
       const res = await fetch(url, { signal: telegramPollAbortController.signal });
@@ -3911,6 +3993,7 @@ async function startTelegramPollingDaemon() {
       if (json.ok && Array.isArray(json.result) && json.result.length > 0) {
         for (const update of json.result) {
           telegramLastUpdateId = update.update_id;
+          await chrome.storage.local.set({ telegram_last_update_id: telegramLastUpdateId });
           await handleTelegramIncomingUpdate(update);
         }
       }
