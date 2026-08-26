@@ -4417,97 +4417,57 @@ async function handleTelegramIncomingUpdateInSidepanel(update, tgCfg) {
   }
 }
 
-// Background Telegram Poller Daemon running in Sidepanel / NewTab
-async function startTelegramPollingDaemonFromSidepanel() {
-  if (telegramRemoteDaemonStarted) return;
-  telegramRemoteDaemonStarted = true;
-
-  while (true) {
-    try {
-      const storageData = await chrome.storage.local.get(['telegram_bot_config', 'telegram_poller_lease', 'telegram_last_update_id']);
-      const tgCfg = storageData.telegram_bot_config;
-
-      if (!tgCfg || !tgCfg.enabled || !tgCfg.bot_token) {
-        await new Promise(r => setTimeout(r, 3000));
-        continue;
-      }
-
-      // Check cooperative leader lease
-      const now = Date.now();
-      const lease = storageData.telegram_poller_lease;
-      const isLeader = (lease && lease.id === sidepanelPollerInstanceId);
-      const isExpired = (!lease || (now - (lease.time || 0) > 8000));
-
-      if (!isLeader && !isExpired) {
-        // Another instance is currently leader, standby
-        await new Promise(r => setTimeout(r, 2500));
-        continue;
-      }
-
-      // Claim / Renew lease
-      await chrome.storage.local.set({
-        telegram_poller_lease: { id: sidepanelPollerInstanceId, time: now }
-      });
-
-      const lastId = storageData.telegram_last_update_id || 0;
-      const url = `https://api.telegram.org/bot${tgCfg.bot_token}/getUpdates?offset=${lastId + 1}&timeout=12`;
-      const res = await fetch(url);
-      const json = await res.json();
-
-      if (json.ok && Array.isArray(json.result) && json.result.length > 0) {
-        // 1. Immediately advance offset to prevent any duplicate fetch
-        let maxUpdateId = lastId;
-        for (const update of json.result) {
-          if (update.update_id > maxUpdateId) maxUpdateId = update.update_id;
-        }
-        await chrome.storage.local.set({ telegram_last_update_id: maxUpdateId });
-
-        // 2. Dispatch updates ensuring no duplicate processing
-        for (const update of json.result) {
-          if (processedTelegramUpdateIds.has(update.update_id)) {
-            continue;
-          }
-          processedTelegramUpdateIds.add(update.update_id);
-          if (processedTelegramUpdateIds.size > 200) {
-            const firstItem = processedTelegramUpdateIds.values().next().value;
-            processedTelegramUpdateIds.delete(firstItem);
-          }
-
-          // Handle update
-          handleTelegramIncomingUpdateInSidepanel(update, tgCfg).catch(err => {
-            console.error("Error handling Telegram update:", err);
-          });
-        }
-      }
-    } catch (err) {
-      await new Promise(r => setTimeout(r, 3000));
-    }
-  }
-}
-
-// Global listener for stop/pause execution and options delegation
+// =========================================================================
+// Telegram Remote Event Dispatcher & Message Listener
+// =========================================================================
 try {
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (!msg) return;
+
     if (msg.type === "PING_SIDEPANEL_ALIVE") {
       sendResponse({ status: "alive" });
       return true;
     }
+
+    if (msg.type === "START_NEW_CHAT_DIRECT") {
+      startNewChat();
+      sendResponse({ status: "ok" });
+      return true;
+    }
+
+    if (msg.type === "SWITCH_SESSION_DIRECT" && msg.sessionId) {
+      resumeSession(msg.sessionId);
+      sendResponse({ status: "ok" });
+      return true;
+    }
+
     if (msg.type === "TELEGRAM_PROMPT_EXECUTE") {
-      const { text, senderId, senderName, botToken } = msg;
+      const { text, callback_data, senderId, senderName, botToken } = msg;
       chrome.storage.local.get(['telegram_bot_config']).then(data => {
         const tgCfg = data.telegram_bot_config || {};
-        handleTelegramIncomingUpdateInSidepanel({
-          update_id: Date.now(),
-          message: {
-            from: { id: senderId, first_name: senderName },
-            text: text
-          }
-        }, tgCfg);
+        if (callback_data) {
+          handleTelegramIncomingUpdateInSidepanel({
+            update_id: Date.now(),
+            callback_query: {
+              id: "cb_" + Date.now(),
+              from: { id: senderId, first_name: senderName },
+              data: callback_data
+            }
+          }, tgCfg);
+        } else if (text) {
+          handleTelegramIncomingUpdateInSidepanel({
+            update_id: Date.now(),
+            message: {
+              from: { id: senderId, first_name: senderName },
+              text: text
+            }
+          }, tgCfg);
+        }
       });
       sendResponse({ status: "handled_by_sidepanel" });
       return true;
     }
+
     if (msg.type === "ABORT_AGENT_EXECUTION" || msg.type === "PAUSE_AGENT_EXECUTION") {
       cancelExecution();
       sendResponse({ status: "aborted" });

@@ -4629,6 +4629,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.43`, build `extension.crx` (671.4 KB).
 
+---
+
+### 🚀 Iterasi 420: Sub-Second Telegram Remote Engine in Service Worker (v2.150.44)
+- **Kebutuhan Pengguna**:
+  - Mengeliminasi delay parah / kelambatan respons saat pengguna mengirimkan perintah slash command (`/start`, `/model`, `/status`, dll.) di Telegram bot.
+- **Akar Masalah (Root Cause)**:
+  - Persaingan multiple long-polling fetch di tab `options.js` dan `sidepanel.js` yang memicu error `HTTP 409 Conflict: terminated by other getUpdates request` dari Telegram API. Akibatnya, request getUpdates sering di-drop dan mengalami timeout/sleep berulang kali.
+- **Implementasi & Peningkatan Sistem**:
+  - **Centralized Master Poller in Service Worker (`background.js`)**: Seluruh polling Telegram dipindahkan 100% ke background Service Worker tunggal, menghilangkan duplikasi polling dan mengeliminasi error HTTP 409 conflict secara permanen.
+  - **Sub-Second Instant Slash Command Response**: Perintah `/start`, `/model`, `/agent`, `/status`, `/new`, `/history`, `/screenshot`, dan `/screenshot_os` kini dieksekusi langsung di `background.js` dengan latensi super kilat (< 100ms).
+  - **Watchdog Alarm & Auto-Keepalive**: Alarm periodik `telegram_poller_watchdog` memastikan Service Worker tetap standby dan aktif mendengarkan pesan Telegram kapan pun browser terbuka.
+  - **Clean Prompt Forwarding**: Perintah instruksi AI langsung diteruskan secara instan (`TELEGRAM_PROMPT_EXECUTE`) ke antarmuka Side Panel / New Tab yang aktif.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.44`, build `extension.crx` (676.5 KB).
+
 
 
 

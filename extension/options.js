@@ -3976,95 +3976,14 @@ async function telegramSetBotProfilePhoto(botToken) {
 
 const optionsPollerInstanceId = 'opt_' + Math.random().toString(36).slice(2, 9);
 
-const optionsProcessedTelegramUpdates = new Set();
-
-// Background Telegram Poller Daemon (Fallback when Sidepanel is closed)
+// Telegram Engine Status & Logs Updater (Polling is handled 100% centrally by background Service Worker)
 async function startTelegramPollingDaemon() {
-  if (telegramPollingActive) return;
-  telegramPollingActive = true;
-  updateTelegramStatusUI();
-
-  while (telegramPollingActive && telegramConfig.enabled && telegramConfig.bot_token) {
-    try {
-      // 1. Check if Side Panel or New Tab is actively open
-      let sidepanelAlive = false;
-      try {
-        const ping = await new Promise((res) => {
-          chrome.runtime.sendMessage({ type: "PING_SIDEPANEL_ALIVE" }, (r) => {
-            if (chrome.runtime.lastError || !r) res(null);
-            else res(r);
-          });
-        });
-        if (ping && ping.status === "alive") sidepanelAlive = true;
-      } catch (e) {}
-
-      if (sidepanelAlive) {
-        // Side Panel or New Tab is leader and actively handling Telegram commands.
-        // Options page yields to avoid duplicate polling and duplicate execution.
-        await new Promise(r => setTimeout(r, 4000));
-        continue;
-      }
-
-      // 2. Check cooperative leader lease
-      const storageData = await chrome.storage.local.get(['telegram_bot_config', 'telegram_poller_lease', 'telegram_last_update_id']);
-      if (storageData.telegram_last_update_id && storageData.telegram_last_update_id > telegramLastUpdateId) {
-        telegramLastUpdateId = storageData.telegram_last_update_id;
-      }
-
-      const lease = storageData.telegram_poller_lease;
-      const now = Date.now();
-      if (lease && lease.id !== optionsPollerInstanceId && (now - lease.time < 8000)) {
-        // Another instance is leader. Sleep and wait.
-        await new Promise(r => setTimeout(r, 3000));
-        continue;
-      }
-
-      // Claim / renew lease
-      await chrome.storage.local.set({
-        telegram_poller_lease: { id: optionsPollerInstanceId, time: now }
-      });
-
-      telegramPollAbortController = new AbortController();
-      const url = `https://api.telegram.org/bot${telegramConfig.bot_token}/getUpdates?offset=${telegramLastUpdateId + 1}&timeout=12`;
-      const res = await fetch(url, { signal: telegramPollAbortController.signal });
-      const json = await res.json();
-
-      if (json.ok && Array.isArray(json.result) && json.result.length > 0) {
-        // Advance offset immediately to prevent duplicate fetches
-        let maxUpdateId = telegramLastUpdateId;
-        for (const update of json.result) {
-          if (update.update_id > maxUpdateId) maxUpdateId = update.update_id;
-        }
-        telegramLastUpdateId = maxUpdateId;
-        await chrome.storage.local.set({ telegram_last_update_id: maxUpdateId });
-
-        for (const update of json.result) {
-          if (optionsProcessedTelegramUpdates.has(update.update_id)) continue;
-          optionsProcessedTelegramUpdates.add(update.update_id);
-          if (optionsProcessedTelegramUpdates.size > 200) {
-            const firstItem = optionsProcessedTelegramUpdates.values().next().value;
-            optionsProcessedTelegramUpdates.delete(firstItem);
-          }
-          await handleTelegramIncomingUpdate(update);
-        }
-      }
-    } catch (err) {
-      if (err.name === 'AbortError') break;
-      // Sleep 3s before retrying upon network error
-      await new Promise(r => setTimeout(r, 3000));
-    }
-  }
-
-  telegramPollingActive = false;
+  telegramPollingActive = telegramConfig.enabled && !!telegramConfig.bot_token;
   updateTelegramStatusUI();
 }
 
 function stopTelegramPollingDaemon() {
   telegramPollingActive = false;
-  if (telegramPollAbortController) {
-    telegramPollAbortController.abort();
-    telegramPollAbortController = null;
-  }
   updateTelegramStatusUI();
 }
 
