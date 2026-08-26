@@ -4913,6 +4913,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.61`, build `extension.crx` (674.4 KB).
 
+---
+
+### 🚀 Iterasi 438: 9Router SSE Tool Calling Aggregator & Multi-Turn Report Synthesis Engine (v2.150.62)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki masalah saat meminta bot Telegram memeriksa kuota/kredit 9Router atau data dashboard browser, bot hanya membalas pesan generik *"Tugas agent telah selesai dijalankan di browser"* tanpa memberikan laporan rincian sisa kuota/kredit.
+- **Akar Masalah (Root Cause)**:
+  - 9Router dan endpoint proxy AI streaming selalu mengembalikan respons SSE chunked (`data: {"choices":[{"delta":{"tool_calls":...}}]}`). Pada [background.js](file:///home/arya/browser-agent/extension/background.js), parser sebelumnya mengabaikan `delta.tool_calls` dalam stream SSE sehingga objek tool response gagal diekstrak dan loop AI terputus lebih awal.
+  - Selain itu, `get_page_content` sebelumnya hanya mengambil 2.500 karakter dan tidak mengekstrak baris tabel quota tracker secara terstruktur.
+- **Implementasi & Peningkatan Sistem**:
+  - **Universal SSE Tool Calls Aggregator (`parseChatCompletionResponse`)**: Menangani penggabungan utuh `delta.tool_calls` dan `delta.content` yang tersebar di multi-chunk SSE stream dari 9Router/OpenAI/Gemini.
+  - **Enhanced DOM & Table Extractor**: Meningkatkan batas teks `get_page_content` hingga 12.000 karakter dan secara otomatis mengekstrak elemen tabel (`tr`, `[role="row"]`, `.quota-item`, `.card`).
+  - **Multi-Turn Report Synthesis Engine**: Menambahkan langkah sintesis otomatis jika tool telah dieksekusi agar model AI selalu menyusun laporan akhir Markdown yang lengkap, rinci, dan terstruktur kepada pengguna di Telegram.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.62`, build `extension.crx` (675.3 KB).
+
 
 
 

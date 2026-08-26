@@ -1118,15 +1118,23 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
         func: () => {
           const title = document.title;
           const url = window.location.href;
-          const text = document.body ? document.body.innerText.slice(0, 2500) : '';
-          const inputs = Array.from(document.querySelectorAll('input, button, a[href]')).slice(0, 15).map(e => ({
+          const text = document.body ? (document.body.innerText || '').slice(0, 12000) : '';
+          
+          // Extract table or card rows cleanly
+          const tableRows = [];
+          document.querySelectorAll('tr, .quota-item, [role="row"], .card, .grid > div, [class*="quota"], [class*="row"]').forEach(el => {
+            const t = (el.innerText || '').replace(/\s+/g, ' ').trim();
+            if (t && t.length > 5 && t.length < 300 && !tableRows.includes(t)) tableRows.push(t);
+          });
+
+          const inputs = Array.from(document.querySelectorAll('input, button, a[href]')).slice(0, 20).map(e => ({
             tag: e.tagName.toLowerCase(),
             type: e.type || '',
             id: e.id || '',
             name: e.name || '',
             text: (e.innerText || e.value || e.placeholder || '').slice(0, 50)
           }));
-          return { title, url, text, inputs };
+          return { title, url, text, extracted_rows: tableRows.slice(0, 50), inputs };
         }
       });
       return res?.result || { title: activeTab.title, url: activeTab.url };
@@ -1176,6 +1184,67 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
     return { error: err.message };
   }
   return { error: `Tool ${toolName} not supported` };
+}
+
+function parseChatCompletionResponse(rawText) {
+  rawText = (rawText || "").trim();
+  if (rawText.startsWith("{")) {
+    try {
+      return JSON.parse(rawText);
+    } catch (e) {}
+  }
+  if (rawText.includes("data:")) {
+    const lines = rawText.split("\n");
+    let accumulatedContent = "";
+    const accumulatedToolCallsMap = {};
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:") || trimmed === "data: [DONE]") continue;
+      const dataStr = trimmed.replace(/^data:\s*/, "").trim();
+      if (!dataStr) continue;
+
+      try {
+        const chunkJson = JSON.parse(dataStr);
+        const choice = chunkJson.choices?.[0];
+        if (!choice) continue;
+
+        const deltaContent = choice.delta?.content || choice.message?.content || "";
+        if (deltaContent) accumulatedContent += deltaContent;
+
+        const deltaToolCalls = choice.delta?.tool_calls || choice.message?.tool_calls;
+        if (Array.isArray(deltaToolCalls)) {
+          for (const tc of deltaToolCalls) {
+            const idx = tc.index ?? 0;
+            if (!accumulatedToolCallsMap[idx]) {
+              accumulatedToolCallsMap[idx] = {
+                id: tc.id || `call_${Date.now()}_${idx}`,
+                type: tc.type || "function",
+                function: {
+                  name: tc.function?.name || "",
+                  arguments: tc.function?.arguments || ""
+                }
+              };
+            } else {
+              if (tc.id && !accumulatedToolCallsMap[idx].id) accumulatedToolCallsMap[idx].id = tc.id;
+              if (tc.function?.name) accumulatedToolCallsMap[idx].function.name += tc.function.name;
+              if (tc.function?.arguments) accumulatedToolCallsMap[idx].function.arguments += tc.function.arguments;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    const toolCallsList = Object.values(accumulatedToolCallsMap);
+    const messageObj = {};
+    if (accumulatedContent) messageObj.content = accumulatedContent;
+    if (toolCallsList.length > 0) messageObj.tool_calls = toolCallsList;
+
+    if (accumulatedContent || toolCallsList.length > 0) {
+      return { choices: [{ message: messageObj }] };
+    }
+  }
+  return null;
 }
 
 function getToolStepDescription(toolName, args) {
@@ -1280,7 +1349,7 @@ B. Chrome Browser Control:
 - 'navigate_to' / 'new_tab': Open target websites in dedicated tabs (never overwriting user active tab).
 - 'click_element': Click buttons, links, search triggers.
 - 'type_text': Type inputs into web forms.
-- 'get_page_content': Read DOM text and inputs.
+- 'get_page_content': Read DOM text, tables, and inputs.
 - 'scroll_page': Scroll page up/down.
 - 'ask_clarification': Present 3 clickable option buttons if ambiguous.
 
@@ -1288,10 +1357,11 @@ Current Browser State:
 • Active Tab: ${activeTabInfo}
 
 MANDAT EKSEKUTIF UTAMA:
-1. Jika pengguna meminta membuka Dolphin, Konsole, Terminal, VS Code, atau aplikasi Linux: LANGSUNG PANGGIL 'open_linux_app' atau 'run_bash_command'!
-2. Jika pengguna meminta menjalankan perintah shell / cek file / mengetik di terminal: LANGSUNG PANGGIL 'run_bash_command' atau 'type_os_text'!
-3. Jika pengguna meminta membuka web / browsing / login: LANGSUNG PANGGIL 'navigate_to' atau 'click_element'!
-4. DILARANG KERAS menolak atau mengatakan "saya hanya bot browser". Anda adalah Full System Agent dengan akses Native Host OS! Selalu panggil tool yang sesuai secara langsung!`;
+1. Jika pengguna meminta membuka 9router, dashboard 9router, atau cek kuota/kredit: LANGSUNG BUKA 'http://localhost:20128/dashboard/quota' (atau 'http://localhost:20128/dashboard'), lalu panggil 'get_page_content' untuk membaca data kuota, dan BERIKAN LAPORAN RINCI tentang persentase/sisa kuota setiap provider (Gemini, Claude, DeepSeek, OpenAI)!
+2. Jika pengguna meminta membuka Dolphin, Konsole, Terminal, VS Code, atau aplikasi Linux: LANGSUNG PANGGIL 'open_linux_app' atau 'run_bash_command'!
+3. Jika pengguna meminta menjalankan perintah shell / cek file / mengetik di terminal: LANGSUNG PANGGIL 'run_bash_command' atau 'type_os_text'!
+4. Jika pengguna meminta membuka web / browsing / login: LANGSUNG PANGGIL 'navigate_to' atau 'click_element'!
+5. SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Dilarang berhenti tanpa menuliskan laporan akhir!`;
 
     // Inject Verified Facts & User Profile Memories
     if (userMemories.length > 0) {
@@ -1388,6 +1458,7 @@ MANDAT EKSEKUTIF UTAMA:
     let stepCount = 0;
     const maxSteps = 6;
     let liveStatusMsgId = null;
+    let anyToolExecuted = false;
 
     // Send initial status message
     const initialStatus = await telegramSendMessage(botToken, senderId, `⏳ <b>[Langkah 1/5] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
@@ -1415,29 +1486,7 @@ MANDAT EKSEKUTIF UTAMA:
       });
 
       const rawText = await res.text();
-      let responseObj = null;
-
-      try {
-        responseObj = JSON.parse(rawText);
-      } catch (parseErr) {
-        if (rawText.includes("data:")) {
-          const lines = rawText.split("\n");
-          const streamChunks = [];
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith("data:") || trimmed === "data: [DONE]") continue;
-            const dataStr = trimmed.replace(/^data:\s*/, "");
-            try {
-              const chunkJson = JSON.parse(dataStr);
-              const delta = chunkJson.choices?.[0]?.delta?.content || chunkJson.choices?.[0]?.message?.content || "";
-              if (delta) streamChunks.push(delta);
-            } catch (e) {}
-          }
-          if (streamChunks.length > 0) {
-            responseObj = { choices: [{ message: { content: streamChunks.join("") } }] };
-          }
-        }
-      }
+      let responseObj = parseChatCompletionResponse(rawText);
 
       if (!responseObj) {
         finalResponseText = "⚠️ Gagal membaca respons dari model AI.";
@@ -1459,6 +1508,7 @@ MANDAT EKSEKUTIF UTAMA:
 
       // Check if LLM requested tool execution
       if (message.tool_calls && Array.isArray(message.tool_calls) && message.tool_calls.length > 0) {
+        anyToolExecuted = true;
         conversationTurns.push(message);
 
         for (const tc of message.tool_calls) {
@@ -1489,7 +1539,31 @@ MANDAT EKSEKUTIF UTAMA:
       }
     }
 
-    if (!finalResponseText && stepCount >= maxSteps) {
+    // If tools were executed but final text is empty, run one synthesis turn to generate the final report
+    if (!finalResponseText && anyToolExecuted) {
+      telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
+      try {
+        const synthRes = await fetch(endpoint, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              ...conversationTurns,
+              { role: "user", content: "Sintesiskan semua temuan dan hasil eksekusi tool di atas, lalu berikan laporan akhir yang lengkap, jelas, dan terstruktur dalam format Markdown kepada pengguna sekarang." }
+            ],
+            stream: false,
+            temperature: 0.2,
+            max_tokens: 4096
+          })
+        });
+        const synthText = await synthRes.text();
+        const synthObj = parseChatCompletionResponse(synthText);
+        finalResponseText = synthObj?.choices?.[0]?.message?.content || "";
+      } catch (se) {}
+    }
+
+    if (!finalResponseText) {
       finalResponseText = "✅ Tugas agent telah selesai dijalankan di browser.";
     }
 
