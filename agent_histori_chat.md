@@ -4899,6 +4899,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.60`, build `extension.crx` (673.6 KB).
 
+---
+
+### 🚀 Iterasi 437: Live Persistent Brain & Knowledge Graph Integration in Telegram Service Worker (v2.150.61)
+- **Kebutuhan Pengguna**:
+  - Menghubungkan basis data Persistent Brain, Profil Pribadi (seperti fakta pacar Arya adalah Nurkhofifah / Fifa, NIM UNESA, email), Knowledge Graph Triplets, Anti-Patterns, dan Skills ke dalam prompt Background Telegram Agent.
+- **Akar Masalah (Root Cause)**:
+  - Pada [background.js](file:///home/arya/browser-agent/extension/background.js), sistem sebelumnya hanya mengecek `storageData.cached_persistent_brain.facts` yang kosong (karena key database asli di SQLite adalah `user_memories` dan `epistemic_triplets`), serta tidak melakukan pemanggilan RPC real-time ke `db_get_persistent_memory`.
+- **Implementasi & Peningkatan Sistem**:
+  - **Live Native Brain Loader**: Menambahkan pemanggilan otomatis `sendNativeRpcInBackground("db_get_persistent_memory", {})` dengan fallback cache `cached_persistent_brain_data` pada saat setiap pesan Telegram diterima.
+  - **Rich System Prompt Brain Injection**: Menginjeksi 33+ User Memories, 41+ Epistemic Triplets kognitif (`subject -> predicate -> object`), Anti-Pattern Vault, serta 55+ Custom & Autonomous Skills secara terstruktur ke dalam system prompt AI di Service Worker.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.61`, build `extension.crx` (674.4 KB).
+
 
 
 

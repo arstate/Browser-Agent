@@ -1243,6 +1243,28 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
       if (t) activeTabInfo = `Title: "${t.title || 'Untitled'}" | URL: ${t.url || 'about:blank'}`;
     } catch(e) {}
 
+    // 1.5. Fetch Live Persistent Brain Data from Native Host SQLite (User Memories, Facts, Epistemic Triplets, Skills)
+    let brainData = {};
+    try {
+      const rpcBrain = await sendNativeRpcInBackground("db_get_persistent_memory", { search: "" });
+      if (rpcBrain && rpcBrain.status === "ok") {
+        brainData = rpcBrain;
+        chrome.storage.local.set({ cached_persistent_brain_data: rpcBrain }).catch(() => {});
+      }
+    } catch (be) {}
+
+    if (!brainData.user_memories) {
+      const cached = await chrome.storage.local.get(['cached_persistent_brain_data']);
+      brainData = cached.cached_persistent_brain_data || {};
+    }
+
+    const userMemories = Array.isArray(brainData.user_memories) ? brainData.user_memories : [];
+    const epistemicTriplets = Array.isArray(brainData.epistemic_triplets) ? brainData.epistemic_triplets : [];
+    const autoSkills = Array.isArray(brainData.autonomous_skills) ? brainData.autonomous_skills : [];
+    const antiPatterns = Array.isArray(brainData.anti_patterns) ? brainData.anti_patterns : [];
+    const customMemories = Array.isArray(storageData.custom_memories) ? storageData.custom_memories : [];
+    const customSkills = Array.isArray(storageData.custom_skills) ? storageData.custom_skills : [];
+
     // Build rich dynamic system prompt with Dual Full OS + Browser Capabilities
     let systemInstruction = `You are Browser Agent (Master Autonomous System & Dual-Engine Agent) controlling both Google Chrome Browser AND the Host Linux OS Desktop/Terminal via Telegram remote control.
 
@@ -1271,14 +1293,48 @@ MANDAT EKSEKUTIF UTAMA:
 3. Jika pengguna meminta membuka web / browsing / login: LANGSUNG PANGGIL 'navigate_to' atau 'click_element'!
 4. DILARANG KERAS menolak atau mengatakan "saya hanya bot browser". Anda adalah Full System Agent dengan akses Native Host OS! Selalu panggil tool yang sesuai secara langsung!`;
 
-    if (storageData.cached_persistent_brain && Array.isArray(storageData.cached_persistent_brain.facts)) {
-      const facts = storageData.cached_persistent_brain.facts.slice(0, 15);
-      if (facts.length > 0) {
-        systemInstruction += "\n\n[Long-term Memory Facts]:\n" + facts.map(f => `• ${f.text || f}`).join('\n');
-      }
+    // Inject Verified Facts & User Profile Memories
+    if (userMemories.length > 0) {
+      systemInstruction += "\n\n=== 📌 FAKTA PERSONAL, PROFIL & ATURAN PENGGUNA TERVERIFIKASI (PERSISTENT MEMORY) ===\n";
+      userMemories.forEach((m, idx) => {
+        const cat = (m.category || 'FACT').toUpperCase();
+        systemInstruction += `${idx + 1}. [${cat}] ${m.content}\n`;
+      });
     }
-    if (Array.isArray(storageData.custom_skills) && storageData.custom_skills.length > 0) {
-      systemInstruction += "\n\n[Available Skills]:\n" + storageData.custom_skills.slice(0, 8).map(s => `• ${s.name}: ${s.description || ''}`).join('\n');
+
+    // Inject Epistemic Knowledge Triplets (Subject -> Predicate -> Object)
+    if (epistemicTriplets.length > 0) {
+      systemInstruction += "\n\n=== 🕸️ KNOWLEDGE GRAPH TRIPLETS (RELASI PENGETAHUAN KOGNITIF) ===\n";
+      epistemicTriplets.slice(0, 30).forEach(t => {
+        if (!t.negative_constraint) {
+          systemInstruction += `• (${t.subject}) --[${t.predicate}]--> (${t.object})\n`;
+        }
+      });
+    }
+
+    // Inject Custom Memories / User Preferences
+    if (customMemories.length > 0) {
+      systemInstruction += "\n\n=== 🧠 PREFERENSI & ATURAN PENGGUNA ===\n";
+      customMemories.forEach(cm => {
+        systemInstruction += `### ${cm.name}:\n${cm.content}\n\n`;
+      });
+    }
+
+    // Inject Anti-Patterns (Failure Prevention)
+    if (antiPatterns.length > 0) {
+      systemInstruction += "\n\n=== 🛡️ ANTI-PATTERN VAULT (Pencegahan Kesalahan) ===\n";
+      antiPatterns.slice(0, 8).forEach((ap, idx) => {
+        systemInstruction += `• [Pencegahan] Konteks: ${ap.target_domain} | Solusi: ${ap.winning_fix} | Aturan: ${ap.prevention_rule}\n`;
+      });
+    }
+
+    // Inject Available Skills (Custom + Autonomous)
+    const allSkills = [...customSkills, ...autoSkills];
+    if (allSkills.length > 0) {
+      systemInstruction += "\n\n=== ⚡ KATALOG KEMAMPUAN KHUSUS & SKILLS ===\n";
+      allSkills.slice(0, 12).forEach(sk => {
+        systemInstruction += `• Skill: ${sk.name} - ${sk.description || ''}\n`;
+      });
     }
 
     // 2. Retrieve dedicated Telegram session history
