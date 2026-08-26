@@ -4242,6 +4242,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.14`, build `extension.crx` (479.6 KB).
 
+---
+
+### 🚀 Iterasi 391: Dedicated "Tampilan & UI" Settings View (v2.150.15)
+- **Kebutuhan Pengguna**:
+  - Menambahkan menu navigasi baru di sidebar bernama **"Tampilan & UI"** (*Interface & Theme*) dan memindahkan seluruh kartu pengaturan tampilan UI (*Animasi Stickman Swarm & Floating Button Web "Agent Mode"*) dari tab AI & Providers ke dalam tab khusus tersebut.
+- **Implementasi & Peningkatan UI**:
+  - **Sidebar Navigation Tab**: Menambahkan tombol navigasi `.sidebar-tab-btn` dengan `data-tab="ui"` berikon antarmuka/globe neon purple di bawah grup Brain pada [options.html](file:///home/arya/browser-agent/extension/options.html).
+  - **Dedicated Interface View (`tab-view-ui`)**: Memindahkan `#card-ui-preferences` dan menambahkan `#card-ui-theme-info` (estetika Dark Luxury, palet warna, dan efek blur) ke dalam view terdedikasi di [options.html](file:///home/arya/browser-agent/extension/options.html).
+  - **Tab Switching Logic**: Mendaftarkan `ui` ke dalam `tabViews` di [options.js](file:///home/arya/browser-agent/extension/options.js) sehingga transisi tampilan tab berjalan instan dan mulus.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.15`, build `extension.crx` (480.2 KB).
+
 
 
 

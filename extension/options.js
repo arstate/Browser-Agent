@@ -177,7 +177,8 @@ const tabViews = {
   agents: document.getElementById('tab-view-agents'),
   skills: document.getElementById('tab-view-skills'),
   memories: document.getElementById('tab-view-memories'),
-  'persistent-brain': document.getElementById('tab-view-persistent-brain')
+  'persistent-brain': document.getElementById('tab-view-persistent-brain'),
+  ui: document.getElementById('tab-view-ui')
 };
 
 // Elements - Modals
