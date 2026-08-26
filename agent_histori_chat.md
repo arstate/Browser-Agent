@@ -4659,6 +4659,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.45`, build `extension.crx` (676.8 KB).
 
+---
+
+### 🚀 Iterasi 422: Fix Temporal Dead Zone ReferenceError in Service Worker (v2.150.46)
+- **Kebutuhan Pengguna**:
+  - Mengeliminasi error runtime `Uncaught (in promise) ReferenceError: Cannot access 'telegramPollingActive' before initialization` di `background.js`.
+- **Akar Masalah (Root Cause)**:
+  - Pemanggilan fungsi `checkAndRestartTelegramPoller()` dijalankan secara sinkron pada top-level evaluasi skrip sebelum baris deklarasi `let telegramPollingActive = false;` dieksekusi, sehingga memicu JavaScript Temporal Dead Zone (TDZ).
+- **Implementasi & Peningkatan Sistem**:
+  - **Top-Level Variable Hoisting**: Memindahkan seluruh deklarasi variabel state (`telegramPollingActive`, `telegramAbortController`, `bgProcessedUpdateIds`, dll.) ke baris paling atas `background.js`.
+  - **Safe Initialization Pipeline**: Pemanggilan inisialisasi awal (`checkAndRestartTelegramPoller()`, `enableSidePanelOnAction()`, dll.) dipindahkan ke baris paling bawah setelah seluruh fungsi dan variabel terdefinisi lengkap.
+  - **Native Messaging Error Suppression**: Menambahkan penanganan `chrome.runtime.lastError` pada `port.onDisconnect` native host messaging untuk membersihkan log peringatan unchecked error.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.46`, build `extension.crx` (676.8 KB).
+
 
 
 

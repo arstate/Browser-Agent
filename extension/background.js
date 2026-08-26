@@ -2,125 +2,14 @@
 // Browser Agent - Background Service Worker & Master Telegram Engine
 // =========================================================================
 
-// Enable opening the side panel when clicking the extension icon safely
-const enableSidePanelOnAction = async () => {
-  try {
-    if (chrome.sidePanel && typeof chrome.sidePanel.setPanelBehavior === "function") {
-      await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-    }
-  } catch (error) {
-    // Silently handle race condition during SW startup/reload
-  }
-};
-
-chrome.runtime.onInstalled.addListener(async (details) => {
-  await enableSidePanelOnAction();
-  if (details && details.reason === "install") {
-    try {
-      chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
-    } catch (e) {}
-  }
-  setupWatchdogAlarm();
-  checkAndRestartTelegramPoller();
-});
-
-chrome.runtime.onStartup.addListener(async () => {
-  await enableSidePanelOnAction();
-  setupWatchdogAlarm();
-  checkAndRestartTelegramPoller();
-});
-
-enableSidePanelOnAction();
-setupWatchdogAlarm();
-checkAndRestartTelegramPoller();
-
-// Periodic watchdog alarm to keep Telegram Poller alive in MV3
-function setupWatchdogAlarm() {
-  try {
-    if (chrome.alarms) {
-      chrome.alarms.create("telegram_poller_watchdog", { periodInMinutes: 1 });
-    }
-  } catch (e) {}
-}
-
-if (chrome.alarms) {
-  chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === "telegram_poller_watchdog") {
-      checkAndRestartTelegramPoller();
-    }
-  });
-}
-
-// Track Side Panel open state across tabs
+// --- State Variables (Initialized First to Prevent TDZ Errors) ---
 let isSidePanelOpen = false;
-
-chrome.runtime.onConnect.addListener((port) => {
-  if (port.name === "sidepanel") {
-    isSidePanelOpen = true;
-    broadcastSidePanelState(true);
-
-    port.onDisconnect.addListener(() => {
-      isSidePanelOpen = false;
-      broadcastSidePanelState(false);
-    });
-  }
-});
-
-function broadcastSidePanelState(isOpen) {
-  try {
-    chrome.tabs.query({}, (tabs) => {
-      if (chrome.runtime.lastError || !tabs) return;
-      tabs.forEach((t) => {
-        if (t.id) {
-          chrome.tabs.sendMessage(t.id, { type: "SIDEPANEL_VISIBILITY", isOpen }).catch(() => {});
-        }
-      });
-    });
-  } catch (e) {}
-}
-
-// Listen for runtime messages
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (!message) return;
-  if (message.type === "CHECK_SIDEPANEL_OPEN") {
-    sendResponse({ isOpen: isSidePanelOpen });
-    return true;
-  }
-
-  if (message.type === "OPEN_SIDE_PANEL") {
-    if (sender && sender.tab && sender.tab.id) {
-      chrome.sidePanel.open({ tabId: sender.tab.id }).catch(err => {
-        if (sender.tab.windowId) {
-          chrome.sidePanel.open({ windowId: sender.tab.windowId }).catch(() => {});
-        }
-      });
-    }
-    sendResponse({ status: "ok" });
-    return true;
-  }
-
-  if (message.type === "TELEGRAM_CONFIG_UPDATED") {
-    checkAndRestartTelegramPoller();
-    sendResponse({ status: "ok" });
-    return true;
-  }
-});
-
-// Watch storage changes for Telegram config
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.telegram_bot_config) {
-    checkAndRestartTelegramPoller();
-  }
-});
-
-// =========================================================================
-// Centralized Telegram Remote Control Engine (Zero Conflict, Sub-Second Latency)
-// =========================================================================
 let telegramPollingActive = false;
 let telegramAbortController = null;
 const bgProcessedUpdateIds = new Set();
 let lastProcessedTelegramPrompt = { text: '', time: 0 };
 
+// --- Helper Functions ---
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -254,6 +143,8 @@ function sendNativeRpcInBackground(action, payload = {}) {
       };
       port.onMessage.addListener(handler);
       port.onDisconnect.addListener(() => {
+        // Safely access chrome.runtime.lastError to prevent unchecked error log
+        const err = chrome.runtime.lastError;
         resolve(null);
       });
       port.postMessage({ id: msgId, action, payload });
@@ -265,6 +156,39 @@ function sendNativeRpcInBackground(action, payload = {}) {
       resolve(null);
     }
   });
+}
+
+// Sidepanel Action Click Handler
+const enableSidePanelOnAction = async () => {
+  try {
+    if (chrome.sidePanel && typeof chrome.sidePanel.setPanelBehavior === "function") {
+      await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+    }
+  } catch (error) {
+    // Silently handle race condition during SW startup/reload
+  }
+};
+
+// Periodic watchdog alarm to keep Telegram Poller alive in MV3
+function setupWatchdogAlarm() {
+  try {
+    if (chrome.alarms) {
+      chrome.alarms.create("telegram_poller_watchdog", { periodInMinutes: 1 });
+    }
+  } catch (e) {}
+}
+
+function broadcastSidePanelState(isOpen) {
+  try {
+    chrome.tabs.query({}, (tabs) => {
+      if (chrome.runtime.lastError || !tabs) return;
+      tabs.forEach((t) => {
+        if (t.id) {
+          chrome.tabs.sendMessage(t.id, { type: "SIDEPANEL_VISIBILITY", isOpen }).catch(() => {});
+        }
+      });
+    });
+  } catch (e) {}
 }
 
 // Master Update Dispatcher
@@ -769,3 +693,78 @@ async function checkAndRestartTelegramPoller() {
 
   telegramPollingActive = false;
 }
+
+// --- Event Listeners Registration ---
+chrome.runtime.onInstalled.addListener(async (details) => {
+  await enableSidePanelOnAction();
+  if (details && details.reason === "install") {
+    try {
+      chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+    } catch (e) {}
+  }
+  setupWatchdogAlarm();
+  checkAndRestartTelegramPoller();
+});
+
+chrome.runtime.onStartup.addListener(async () => {
+  await enableSidePanelOnAction();
+  setupWatchdogAlarm();
+  checkAndRestartTelegramPoller();
+});
+
+if (chrome.alarms) {
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === "telegram_poller_watchdog") {
+      checkAndRestartTelegramPoller();
+    }
+  });
+}
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === "sidepanel") {
+    isSidePanelOpen = true;
+    broadcastSidePanelState(true);
+
+    port.onDisconnect.addListener(() => {
+      isSidePanelOpen = false;
+      broadcastSidePanelState(false);
+    });
+  }
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message) return;
+  if (message.type === "CHECK_SIDEPANEL_OPEN") {
+    sendResponse({ isOpen: isSidePanelOpen });
+    return true;
+  }
+
+  if (message.type === "OPEN_SIDE_PANEL") {
+    if (sender && sender.tab && sender.tab.id) {
+      chrome.sidePanel.open({ tabId: sender.tab.id }).catch(err => {
+        if (sender.tab.windowId) {
+          chrome.sidePanel.open({ windowId: sender.tab.windowId }).catch(() => {});
+        }
+      });
+    }
+    sendResponse({ status: "ok" });
+    return true;
+  }
+
+  if (message.type === "TELEGRAM_CONFIG_UPDATED") {
+    checkAndRestartTelegramPoller();
+    sendResponse({ status: "ok" });
+    return true;
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.telegram_bot_config) {
+    checkAndRestartTelegramPoller();
+  }
+});
+
+// --- Initial Startup Bootstrapping ---
+enableSidePanelOnAction();
+setupWatchdogAlarm();
+checkAndRestartTelegramPoller();
