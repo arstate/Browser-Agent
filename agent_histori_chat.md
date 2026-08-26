@@ -4425,6 +4425,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.28`, build `extension.crx` (489.6 KB).
 
+---
+
+### 🚀 Iterasi 405: Unified Bento Hero Header Container for Connected Apps (v2.150.29)
+- **Kebutuhan Pengguna**:
+  - Menyamakan style header atas pada menu **Connected Apps** dengan container **LLM Providers** (Image 2), menghilangkan icon floating terpisah yang menggantung di atas teks dan menggantinya dengan kartu bento dark liquid glass yang bersih, rapi, dan elegan.
+- **Implementasi & Peningkatan UI**:
+  - **Penyelarasan Kontainer Hero Header**: Mengganti `<div class="view-header">` pada `#connected-apps-hub` dan `#connected-app-telegram-detail` dengan `.bento-card.bento-hero-provider-card` di [options.html](file:///home/arya/browser-agent/extension/options.html) (`background: rgba(18, 18, 22, 0.72)`, `border-radius: 20px`, `border: 1px solid rgba(255, 255, 255, 0.08)`, `padding: 20px 24px`).
+  - **Tipografi Bersih**: Judul utama `<h1>Connected Apps & Integrasi</h1>` (font-weight 700, 20px) dengan deskripsi abu-abu halus langsung di bawahnya (`#94A3B8`, 12.5px), persis seperti tampilan LLM Providers.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.29`, build `extension.crx` (489.6 KB).
+
 
 
 
