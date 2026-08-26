@@ -1047,6 +1047,23 @@ const BACKGROUND_AGENT_TOOLS = [
         required: ["path", "content"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_file_to_telegram",
+      description: "Send any local file (document, text file, script, audio MP3/WAV, video MP4, photo, or generated content) directly to the user's Telegram chat. Use this when the user asks to download music/video (e.g. via yt-dlp or curl), write a script, generate a document, or send an image/file.",
+      parameters: {
+        type: "object",
+        properties: {
+          file_path: { type: "string", description: "Absolute path to the local file to send (e.g. '/tmp/Denny_Caknan.mp3', '/home/arya/dokumen.pdf', '/tmp/script_kucing.txt')" },
+          content: { type: "string", description: "Direct text/markdown content to send as a file if creating on the fly" },
+          file_name: { type: "string", description: "File name with extension (e.g. 'script_konten_kucing.txt', 'lagu.mp3', 'data.json')" },
+          caption: { type: "string", description: "Caption description for the sent file or media" },
+          media_type: { type: "string", enum: ["auto", "document", "photo", "audio", "video"], description: "Type of media" }
+        }
+      }
+    }
   }
 ];
 
@@ -1215,6 +1232,26 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
         return { status: "success", message: `Berhasil menulis file ${rpcRes.path}` };
       }
       return { error: rpcRes?.error || "Gagal menulis file." };
+    }
+
+    if (toolName === "send_file_to_telegram" || toolName === "telegram_send_file") {
+      const rpcRes = await sendNativeRpcInBackground("telegram_send_file", {
+        bot_token: botToken,
+        chat_id: senderId,
+        file_path: toolArgs.file_path || "",
+        content: toolArgs.content,
+        file_name: toolArgs.file_name || "",
+        caption: toolArgs.caption || "",
+        media_type: toolArgs.media_type || "auto"
+      });
+      if (rpcRes && rpcRes.status === "ok") {
+        return {
+          status: "success",
+          file_name: rpcRes.file_name,
+          message: `Berkas '${rpcRes.file_name}' berhasil dikirim langsung ke chat Telegram pengguna!`
+        };
+      }
+      return { error: rpcRes?.error || "Gagal mengirim berkas ke Telegram." };
     }
 
     // C. Active Browser Tab Verification
@@ -1543,6 +1580,7 @@ function parseChatCompletionResponse(rawText) {
 }
 
 function getToolStepDescription(toolName, args) {
+  if (toolName === "send_file_to_telegram" || toolName === "telegram_send_file") return `Mengunggah & mengirim berkas <code>${escapeHtml(args.file_name || args.file_path || 'dokumen')}</code> ke Telegram...`;
   if (toolName === "browser_navigate" || toolName === "navigate_to") return `Membuka halaman web <code>${escapeHtml(args.url || '')}</code>...`;
   if (toolName === "browser_snapshot" || toolName === "get_page_content") return `Mengambil snapshot DOM & Accessibility Tree...`;
   if (toolName === "browser_click" || toolName === "click_element") return `Mengklik elemen ${args.backendNodeId ? `(ID: ${args.backendNodeId})` : `<i>"${escapeHtml(args.selector || '')}"</i>`} via CDP...`;
@@ -1553,7 +1591,7 @@ function getToolStepDescription(toolName, args) {
   if (toolName === "browser_switch_tab" || toolName === "switch_tab") return `Beralih ke tab target...`;
   if (toolName === "browser_wait") return `Menunggu rendering web (${args.duration_seconds || 2}s)...`;
   if (toolName === "open_linux_app") return `Membuka aplikasi Linux <code>${escapeHtml(args.app_name || args.command || '')}</code>...`;
-  if (toolName === "run_bash_command") return `Menjalankan perintah bash <code>${escapeHtml((args.command || '').slice(0, 40))}</code>...`;
+  if (toolName === "run_bash_command") return `Menjalankan terminal <code>${escapeHtml((args.command || '').slice(0, 45))}</code>...`;
   if (toolName === "type_os_text") return `Mengetik teks ke jendela/terminal aktif...`;
   if (toolName === "read_os_file") return `Membaca file OS <code>${escapeHtml(args.path || '')}</code>...`;
   if (toolName === "write_os_file") return `Menulis file OS <code>${escapeHtml(args.path || '')}</code>...`;
@@ -1631,9 +1669,9 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
     const customSkills = Array.isArray(storageData.custom_skills) ? storageData.custom_skills : [];
 
     // Build rich dynamic system prompt with Master Browser Control Agent Instructions
-    let systemInstruction = `You are Browser Agent (Master Autonomous Browser Control Agent & Supreme System Controller) operating Google Chrome and Host OS via Telegram remote control.
+    let systemInstruction = `You are Browser Agent (Master Autonomous Browser Control Agent & Supreme System Controller) operating Google Chrome, Host OS, and Telegram Bot remote engine.
 
-YOU HAVE FULL ACCESS TO OFFICIAL BROWSER AGENT CDP TOOLS:
+YOU HAVE FULL ACCESS TO OFFICIAL BROWSER AGENT CDP & OS TOOLS:
 1. 🌐 Browser Navigation & Tab Control:
 - 'browser_navigate': Open target URL (e.g. 'http://localhost:20128/dashboard/quota', 'https://youtube.com', 'https://adsmanager.facebook.com').
 - 'browser_list_tabs': List all currently open tabs.
@@ -1647,22 +1685,27 @@ YOU HAVE FULL ACCESS TO OFFICIAL BROWSER AGENT CDP TOOLS:
 - 'browser_extract_table': Auto-scroll and extract structured rows/metrics from tables (e.g. 9Router Quota Tracker, Meta Ads Manager grids).
 - 'browser_screenshot': Take a visual screenshot of the tab.
 
-3. 💻 Linux OS Desktop & Terminal Tools (Used ONLY when user explicitly asks for OS/Terminal commands):
+3. 💻 Linux OS Desktop, Terminal & File Sharing Tools:
+- 'send_file_to_telegram': Kirim berkas/file apapun (dokumen script .txt/.pdf/.docx/.json/.csv, gambar/foto, lagu audio .mp3/.wav, video .mp4) langsung ke Telegram pengguna!
+- 'run_bash_command': Execute bash shell command on Linux OS (e.g. download lagu/video via 'yt-dlp', convert audio via 'ffmpeg', curl, git, dll).
 - 'open_linux_app': Launch desktop GUI apps (e.g. 'dolphin', 'konsole', 'code').
-- 'run_bash_command': Execute bash shell command on OS.
 - 'type_os_text': Type text into active OS window.
+- 'read_os_file' & 'write_os_file': Membaca dan menulis file lokal.
 
 Current Browser State:
 • Active Tab: ${activeTabInfo}
 
 MANDAT EKSEKUTIF UTAMA:
-1. 🌐 SEMUA TUGAS WEB & BROWSER (Contoh: "cek sisa kredit 9router", "cek usage 9router", "buka youtube", "analisis iklan meta", "isi form web"):
+1. 🌐 TUGAS WEB & DASHBOARD (Contoh: "cek sisa kredit 9router", "cek usage 9router", "buka youtube", "analisis iklan meta", "isi form web"):
    - WAJIB gunakan browser control tools: Buka halaman via 'browser_navigate' (atau 'browser_switch_tab'), ambil data via 'browser_extract_table' atau 'browser_snapshot', klik dengan 'browser_click', dan ketik dengan 'browser_type'.
    - DILARANG menggunakan perintah curl/bash jika tugas tersebut adalah tugas web atau dashboard browser!
-2. 🖼️ ANALISIS GAMBAR & DOKUMEN:
+2. 📦 PENGIRIMAN FILE, MEDIA & DOWNLOAD KE TELEGRAM:
+   - Jika pengguna meminta membuatkan script konten, artikel, dokumen, atau kode: Buat isinya dan kirim langsung menggunakan 'send_file_to_telegram' (atau 'write_os_file' lalu 'send_file_to_telegram') agar pengguna menerima file dokumen (.txt, .docx, .pdf, dll) langsung di chat Telegramnya.
+   - Jika pengguna meminta mendownload lagu/MP3/video (contoh: "downloadin mp3 deny caknan", "download video yt"): Jalankan perintah terminal 'run_bash_command' menggunakan 'yt-dlp' (misal: yt-dlp "ytsearch1:Denny Caknan" -x --audio-format mp3 -o "/tmp/Denny_Caknan.%(ext)s"), lalu panggil 'send_file_to_telegram' dengan file_path="/tmp/Denny_Caknan.mp3" untuk mengirim lagu/video langsung ke pengguna!
+3. 🖼️ ANALISIS GAMBAR & DOKUMEN:
    - Jika pengguna mengirim foto/screenshot/gambar, amati dan baca seluruh elemen visual, teks, diagram, atau error dengan teliti.
    - Jika pengguna mengirim dokumen (PDF, Word, TXT, CSV, JSON), baca dan analisis seluruh isi dokumen yang terlampir secara mendalam, tepat, dan komprehensif.
-3. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua temuan atau data yang terekstrak secara komprehensif!`;
+4. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua temuan atau data yang terekstrak secara komprehensif!`;
 
     // Inject Verified Facts & User Profile Memories
     if (userMemories.length > 0) {
@@ -1774,15 +1817,19 @@ MANDAT EKSEKUTIF UTAMA:
 
     let finalResponseText = "";
     let stepCount = 0;
-    const maxSteps = 6;
+    const maxSteps = 8;
     let liveStatusMsgId = null;
     let anyToolExecuted = false;
     const executedToolCalls = [];
+    let lastEditTimestamp = 0;
 
-    // Send initial status message (Clean continuous Step 1, 2, 3 format without /5)
-    const initialStatus = await telegramSendMessage(botToken, senderId, `⏳ <b>[Langkah 1] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
+    const STEP_EMOJIS = ["⚡", "⚙️", "🔍", "📂", "✨", "🎯", "🚀", "💡"];
+
+    // Send initial status message (Smooth clean animated Step 1 without /5 fraction)
+    const initialStatus = await telegramSendMessage(botToken, senderId, `⚡ <b>[Langkah 1] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
     if (initialStatus && initialStatus.result && initialStatus.result.message_id) {
       liveStatusMsgId = initialStatus.result.message_id;
+      lastEditTimestamp = Date.now();
     }
 
     // Multi-turn Autonomous Agent Loop
@@ -1847,8 +1894,15 @@ MANDAT EKSEKUTIF UTAMA:
           });
 
           const stepDesc = getToolStepDescription(tName, tArgs);
+          const currentEmoji = STEP_EMOJIS[(stepCount) % STEP_EMOJIS.length];
+
+          // Smooth debounced status update to prevent screen flickering (anti jedug-jedug)
           if (liveStatusMsgId) {
-            await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `⏳ <b>[Langkah ${stepCount + 1}] Master Agent:</b> ${stepDesc}`).catch(() => {});
+            const now = Date.now();
+            if (now - lastEditTimestamp > 800) {
+              await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `${currentEmoji} <b>[Langkah ${stepCount + 1}] Master Agent:</b> ${stepDesc}`).catch(() => {});
+              lastEditTimestamp = Date.now();
+            }
           }
 
           const toolResult = await executeBackgroundTool(tName, tArgs, senderId, botToken);
@@ -1895,7 +1949,7 @@ MANDAT EKSEKUTIF UTAMA:
       finalResponseText = "✅ Tugas agent telah selesai dijalankan di browser.";
     }
 
-    // Update status to finished
+    // Update status to finished smoothly
     if (liveStatusMsgId) {
       await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `✅ <b>[Selesai] Master Agent:</b> Instruksi berhasil dieksekusi!`).catch(() => {});
     }

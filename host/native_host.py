@@ -3615,6 +3615,112 @@ def handle_local_rpc(msg):
         except Exception as e:
             return {"id": req_id, "status": "error", "error": str(e)}
 
+    elif action == "read_file_binary":
+        path = os.path.expanduser(msg.get("path", ""))
+        if not path:
+            return {"id": req_id, "status": "error", "error": "No file path provided"}
+        try:
+            if not os.path.exists(path):
+                return {"id": req_id, "status": "error", "error": f"File not found: {path}"}
+            file_size = os.path.getsize(path)
+            with open(path, "rb") as f:
+                raw_bytes = f.read()
+            b64_data = base64.b64encode(raw_bytes).decode("ascii")
+            file_name = os.path.basename(path)
+            return {
+                "id": req_id,
+                "status": "ok",
+                "file_name": file_name,
+                "file_size": file_size,
+                "base64": b64_data,
+                "path": path
+            }
+        except Exception as e:
+            return {"id": req_id, "status": "error", "error": str(e)}
+
+    elif action == "telegram_send_file":
+        bot_token = msg.get("bot_token")
+        chat_id = msg.get("chat_id")
+        file_path = os.path.expanduser(msg.get("file_path", ""))
+        content = msg.get("content")
+        file_name = msg.get("file_name", "")
+        caption = msg.get("caption", "")
+        media_type = (msg.get("media_type") or "auto").lower()
+
+        if not bot_token or not chat_id:
+            return {"id": req_id, "status": "error", "error": "Missing bot_token or chat_id"}
+
+        try:
+            tmp_created = False
+            target_path = file_path
+
+            if content is not None and not file_path:
+                import tempfile
+                fname = file_name or "document.txt"
+                tmp_f = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix="_" + fname, delete=False)
+                tmp_f.write(content)
+                tmp_f.close()
+                target_path = tmp_f.name
+                tmp_created = True
+                if not file_name:
+                    file_name = fname
+
+            if not target_path or not os.path.exists(target_path):
+                return {"id": req_id, "status": "error", "error": f"File not found: {target_path}"}
+
+            if not file_name:
+                file_name = os.path.basename(target_path)
+
+            lower_name = file_name.lower()
+            endpoint_method = "sendDocument"
+            file_field = "document"
+
+            if media_type == "photo" or lower_name.endswith((".png", ".jpg", ".jpeg", ".webp")):
+                endpoint_method = "sendPhoto"
+                file_field = "photo"
+            elif media_type == "audio" or lower_name.endswith((".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac")):
+                endpoint_method = "sendAudio"
+                file_field = "audio"
+            elif media_type == "video" or lower_name.endswith((".mp4", ".mkv", ".mov", ".webm", ".avi")):
+                endpoint_method = "sendVideo"
+                file_field = "video"
+
+            # Execute via curl subprocess for ultra fast, reliable multipart upload
+            url = f"https://api.telegram.org/bot{bot_token}/{endpoint_method}"
+            cmd = [
+                "curl", "-s", "-X", "POST", url,
+                "-F", f"chat_id={chat_id}",
+                "-F", f"{file_field}=@{target_path};filename={file_name}"
+            ]
+            if caption:
+                cmd.extend(["-F", f"caption={caption}"])
+
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+            log(f"Telegram send file response: {res.stdout[:200]}")
+
+            if tmp_created and os.path.exists(target_path):
+                try:
+                    os.remove(target_path)
+                except Exception:
+                    pass
+
+            try:
+                res_json = json.loads(res.stdout)
+                if res_json.get("ok"):
+                    return {
+                        "id": req_id,
+                        "status": "ok",
+                        "file_name": file_name,
+                        "media_type": endpoint_method,
+                        "message": f"Berkas '{file_name}' berhasil dikirim ke Telegram pengguna!"
+                    }
+                else:
+                    return {"id": req_id, "status": "error", "error": res_json.get("description", "Upload failed")}
+            except Exception:
+                return {"id": req_id, "status": "ok", "file_name": file_name, "raw_response": res.stdout[:100]}
+        except Exception as e:
+            return {"id": req_id, "status": "error", "error": str(e)}
+
     elif action == "list_dir":
         path = os.path.expanduser(msg.get("path") or os.getcwd())
         try:

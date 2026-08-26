@@ -4977,6 +4977,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.65`, build `extension.crx` (679.4 KB).
 
+---
+
+### 🚀 Iterasi 442: Direct File/Media/Audio Downloader & Sender Tool + Smooth Anti-Flicker Telegram Status (v2.150.66)
+- **Kebutuhan Pengguna**:
+  - Memungkinkan bot Telegram mengirim file apapun secara mandiri ke chat pengguna (file teks/skrip `.txt`, dokumen `.pdf`/`.docx`, foto/gambar, audio lagu `.mp3`, video `.mp4`, data `.csv`/`.json`).
+  - Memungkinkan bot men-download lagu/audio/video (misal MP3 Denny Caknan via `yt-dlp` atau terminal) dan langsung mengirimkannya ke pengguna di Telegram.
+  - Menghilangkan kedipan atau layout bouncing ("jedug-jedug") pada status loading langkah eksekusi bot Telegram dengan animasi emoji bertahap dan debounced rate-limiting.
+- **Akar Masalah (Root Cause)**:
+  - Ekosistem tool di Service Worker sebelumnya belum mengekspos tool pengiriman file ke Telegram (`send_file_to_telegram`).
+  - Pembaruan status langkah sebelumnya dilakukan tanpa rate-limiting sehingga UI Telegram dapat berkedip cepat jika model memanggil tool berurutan.
+- **Implementasi & Peningkatan Sistem**:
+  - **`send_file_to_telegram` Tool**: Menambahkan tool mandiri di [background.js](file:///home/arya/browser-agent/extension/background.js) dan [native_host.py](file:///home/arya/browser-agent/host/native_host.py) menggunakan `curl` multipart form-data upload untuk mengirim file audio (`sendAudio`), video (`sendVideo`), foto (`sendPhoto`), dan dokumen (`sendDocument`).
+  - **Audio & Media Download Workflow Instruction**: Membekali Master Agent dengan instruksi otomatis untuk menjalankan download via `yt-dlp` ke `/tmp/` dan mengirimkan file hasil unduhan langsung ke Telegram.
+  - **Smooth Anti-Flicker Animated Status ("Anti Jedug-Jedug")**: Menerapkan urutan emoji proses (`⚡`, `⚙️`, `🔍`, `📂`, `✨`, `🎯`), debouncing 800ms antar edit pesan status, dan background typing action yang mulus tanpa merusak tata letak chat Telegram.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.66`, build `extension.crx` (680.6 KB).
+
 
 
 
