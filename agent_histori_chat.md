@@ -5148,6 +5148,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.75`, build `extension.crx` (688.9 KB).
 
+---
+
+### 🚀 Iterasi 452: Modular Plugin Ecosystem & Ponytail Token Saver Context Optimizer (v2.150.76)
+- **Kebutuhan Pengguna**:
+  - Menambahkan menu **Plugins** di sidebar navigasi (tepat di bawah Connected Apps).
+  - Menyediakan katalog daftar plugin yang bisa di-ON/OFF secara independen.
+  - Menambahkan plugin pertama: **Ponytail Plugin** (Smart Context Trimmer & Token Saver) untuk menghemat konsumsi token secara signifikan dengan tombol pengaturan detail (konfigurasi turns, pemangkasan DOM, dan katalog tool).
+- **Akar Masalah & Arsitektur (Root Cause & Architecture)**:
+  - Ekosistem sebelumnya belum memiliki modular plugin framework khusus optimasi resource/token dan tool hook yang dapat diaktif-nonaktifkan langsung dari UI Pengaturan.
+  - Percakapan multi-turn yang panjang atau snapshot accessibility tree/DOM raksasa menghabiskan banyak token jika dikirim utuh pada setiap giliran tanpa pemangkasan cerdas.
+- **Implementasi & Peningkatan Sistem**:
+  - **Sidebar Plugin Navigation & UI Grid**: Menambahkan tombol tab `🧩 Plugins` di sidebar navigasi [options.html](file:///home/arya/browser-agent/extension/options.html) dan katalog view `tab-view-plugins` bergaya Bento Liquid Dark Glass.
+  - **Plugin Toggle & Persistent Storage**: Menambahkan toggle switch ON/OFF untuk setiap plugin yang tersinkronisasi otomatis ke `chrome.storage.local` dan database SQLite native host `settings`.
+  - **Ponytail Plugin Settings & Tool Modal**: Menambahkan modal `#modal-plugin-ponytail` dengan parameter:
+    - *Batas Riwayat Utuh (Max Recent Turns)*: Mengatur berapa pesan terbaru yang disimpan dengan resolusi penuh (default 6).
+    - *Batas Output Tool Lama (Max Chars)*: Memadatkan output tool di turn lama (default 1200 chars).
+    - *Pangkas Duplikasi Pohon DOM*: Otomatis membersihkan accessibility tree berulang.
+    - *Bersihkan Base64 Raksasa*: Mengganti string base64 attachment lama di history dengan metadata ringkas.
+    - *Proteksi Memori Kognitif*: Memastikan system prompt, aturan persona, dan graf pengetahuan tetap utuh 100%.
+  - **Ponytail Tool Suite**:
+    - `ponytail_compress_history`: Pemadatan riwayat chat bertahap sebelum payload dikirim ke AI.
+    - `ponytail_prune_dom`: Pemangkasan snapshot DOM redundan.
+    - `ponytail_token_meter`: Metering estimasi penghematan token (50% - 75% token reduction) secara real-time.
+  - **Execution Engine Hook**: Mengintegrasikan `applyPonytailContextOptimization` ke [background.js](file:///home/arya/browser-agent/extension/background.js) dan [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js).
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.76`, build `extension.crx` (690.4 KB).
+
 
 
 

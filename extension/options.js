@@ -179,7 +179,8 @@ const tabViews = {
   memories: document.getElementById('tab-view-memories'),
   'persistent-brain': document.getElementById('tab-view-persistent-brain'),
   ui: document.getElementById('tab-view-ui'),
-  'connected-apps': document.getElementById('tab-view-connected-apps')
+  'connected-apps': document.getElementById('tab-view-connected-apps'),
+  plugins: document.getElementById('tab-view-plugins')
 };
 
 // Elements - Modals
@@ -4223,6 +4224,140 @@ document.addEventListener('DOMContentLoaded', () => {
       hub.style.display = 'block';
       updateTelegramStatusUI();
     }
+  });
+
+  // =========================================================================
+  // PLUGIN ECOSYSTEM & PONYTAIL TOKEN OPTIMIZER
+  // =========================================================================
+  const DEFAULT_PLUGIN_SETTINGS = {
+    ponytail: {
+      enabled: true,
+      maxRecentTurns: 6,
+      maxToolOutputChars: 1200,
+      stripRedundantDOM: true,
+      stripBase64: true,
+      preserveSystemFacts: true
+    }
+  };
+
+  async function getPluginSettings() {
+    const data = await chrome.storage.local.get(['plugin_settings']);
+    return {
+      ...DEFAULT_PLUGIN_SETTINGS,
+      ...(data.plugin_settings || {}),
+      ponytail: {
+        ...DEFAULT_PLUGIN_SETTINGS.ponytail,
+        ...(data.plugin_settings?.ponytail || {})
+      }
+    };
+  }
+
+  async function savePluginSettings(settings) {
+    await chrome.storage.local.set({ plugin_settings: settings });
+    sendNativeMessage({ action: "db_save_setting", key: "plugin_settings", value: settings });
+    showSaveToast();
+  }
+
+  function updatePonytailStatusUI(ponytail) {
+    const toggle = document.getElementById('plugin-ponytail-toggle');
+    const statusText = document.getElementById('plugin-ponytail-status-text');
+    const badge = document.getElementById('plugins-total-active-badge');
+    const navBadge = document.getElementById('badge-status-plugins');
+
+    const isEnabled = ponytail.enabled !== false;
+    if (toggle) toggle.checked = isEnabled;
+    if (statusText) {
+      statusText.textContent = isEnabled ? '● Aktif (Optimal)' : '○ Nonaktif';
+      statusText.style.color = isEnabled ? '#4ade80' : '#94a3b8';
+    }
+    const countActive = isEnabled ? 1 : 0;
+    if (badge) badge.textContent = `${countActive} Plugin Aktif`;
+    if (navBadge) navBadge.textContent = `${countActive} Aktif`;
+  }
+
+  // Load and apply initial plugin settings
+  getPluginSettings().then(settings => {
+    updatePonytailStatusUI(settings.ponytail);
+  });
+
+  // Ponytail Toggle Switch Listener
+  document.getElementById('plugin-ponytail-toggle')?.addEventListener('change', async (e) => {
+    const settings = await getPluginSettings();
+    settings.ponytail.enabled = !!e.target.checked;
+    await savePluginSettings(settings);
+    updatePonytailStatusUI(settings.ponytail);
+  });
+
+  // Ponytail Settings Modal Open
+  const modalPonytail = document.getElementById('modal-plugin-ponytail');
+  document.getElementById('btn-config-ponytail')?.addEventListener('click', async () => {
+    const settings = await getPluginSettings();
+    const p = settings.ponytail;
+
+    const turnsInput = document.getElementById('ponytail-max-turns');
+    const turnsVal = document.getElementById('ponytail-max-turns-val');
+    const charsInput = document.getElementById('ponytail-max-tool-chars');
+    const charsVal = document.getElementById('ponytail-max-tool-chars-val');
+    const domOpt = document.getElementById('ponytail-opt-dom');
+    const b64Opt = document.getElementById('ponytail-opt-base64');
+    const factsOpt = document.getElementById('ponytail-opt-facts');
+
+    if (turnsInput) {
+      turnsInput.value = p.maxRecentTurns || 6;
+      if (turnsVal) turnsVal.textContent = `${turnsInput.value} Turns`;
+    }
+    if (charsInput) {
+      charsInput.value = p.maxToolOutputChars || 1200;
+      if (charsVal) charsVal.textContent = `${charsInput.value} Chars`;
+    }
+    if (domOpt) domOpt.checked = p.stripRedundantDOM !== false;
+    if (b64Opt) b64Opt.checked = p.stripBase64 !== false;
+    if (factsOpt) factsOpt.checked = p.preserveSystemFacts !== false;
+
+    if (modalPonytail) modalPonytail.style.display = 'flex';
+  });
+
+  // Modal Dynamic Value Updates
+  document.getElementById('ponytail-max-turns')?.addEventListener('input', (e) => {
+    const valSpan = document.getElementById('ponytail-max-turns-val');
+    if (valSpan) valSpan.textContent = `${e.target.value} Turns`;
+  });
+
+  document.getElementById('ponytail-max-tool-chars')?.addEventListener('input', (e) => {
+    const valSpan = document.getElementById('ponytail-max-tool-chars-val');
+    if (valSpan) valSpan.textContent = `${e.target.value} Chars`;
+  });
+
+  // Close Modal
+  function closePonytailModal() {
+    if (modalPonytail) modalPonytail.style.display = 'none';
+  }
+  document.getElementById('btn-close-ponytail-modal')?.addEventListener('click', closePonytailModal);
+  document.getElementById('btn-cancel-ponytail-modal')?.addEventListener('click', closePonytailModal);
+
+  // Form Save
+  document.getElementById('form-ponytail-settings')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const settings = await getPluginSettings();
+
+    const turnsInput = document.getElementById('ponytail-max-turns');
+    const charsInput = document.getElementById('ponytail-max-tool-chars');
+    const domOpt = document.getElementById('ponytail-opt-dom');
+    const b64Opt = document.getElementById('ponytail-opt-base64');
+    const factsOpt = document.getElementById('ponytail-opt-facts');
+
+    settings.ponytail = {
+      ...settings.ponytail,
+      maxRecentTurns: parseInt(turnsInput?.value || '6', 10),
+      maxToolOutputChars: parseInt(charsInput?.value || '1200', 10),
+      stripRedundantDOM: !!domOpt?.checked,
+      stripBase64: !!b64Opt?.checked,
+      preserveSystemFacts: !!factsOpt?.checked
+    };
+
+    await savePluginSettings(settings);
+    updatePonytailStatusUI(settings.ponytail);
+    closePonytailModal();
   });
 });
 

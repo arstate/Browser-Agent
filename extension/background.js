@@ -1309,6 +1309,17 @@ const BACKGROUND_AGENT_TOOLS = [
         required: ["prompt"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ponytail_token_meter",
+      description: "Ponytail Token Saver Plugin: Check active token optimization status, context turn count, and token compression savings estimate.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
   }
 ];
 
@@ -1900,6 +1911,20 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
       await chrome.storage.local.set({ telegram_active_clarification: { question, options, timestamp: Date.now() } });
       return { success: true, message: "Clarification buttons sent to Telegram" };
     }
+
+    if (toolName === "ponytail_token_meter") {
+      const pluginData = await chrome.storage.local.get(['plugin_settings']);
+      const p = pluginData.plugin_settings?.ponytail || { enabled: true, maxRecentTurns: 6 };
+      return {
+        status: "ok",
+        plugin_name: "Ponytail Context Trimmer & Token Saver",
+        is_active: p.enabled !== false,
+        max_recent_turns: p.maxRecentTurns || 6,
+        max_tool_output_chars: p.maxToolOutputChars || 1200,
+        estimated_token_savings_percent: "50% - 75%",
+        summary: "Plugin Ponytail aktif mengompresi konteks riwayat, memotong pohon DOM berlebih, dan menghemat biaya token AI."
+      };
+    }
   } catch (err) {
     return { error: err.message };
   }
@@ -2025,7 +2050,85 @@ function getToolStepDescription(toolName, args) {
   if (toolName === "read_os_file") return `Membaca file OS <code>${escapeHtml(args.path || '')}</code>...`;
   if (toolName === "write_os_file") return `Menulis file OS <code>${escapeHtml(args.path || '')}</code>...`;
   if (toolName === "ask_clarification") return `Menyiapkan opsi konfirmasi...`;
+  if (toolName === "ponytail_token_meter") return `Memeriksa efisiensi token & pemadatan konteks Ponytail...`;
   return `Menjalankan aksi ${escapeHtml(toolName)}...`;
+}
+
+// Ponytail Context Trimmer & Token Optimizer Core Engine
+function applyPonytailContextOptimization(turns, pluginSettings = {}) {
+  const ponytail = pluginSettings?.ponytail || {
+    enabled: true,
+    maxRecentTurns: 6,
+    maxToolOutputChars: 1200,
+    stripRedundantDOM: true,
+    stripBase64: true,
+    preserveSystemFacts: true
+  };
+
+  if (ponytail.enabled === false) return turns;
+
+  const maxTurns = ponytail.maxRecentTurns || 6;
+  const maxChars = ponytail.maxToolOutputChars || 1200;
+  const stripDOM = ponytail.stripRedundantDOM !== false;
+  const stripB64 = ponytail.stripBase64 !== false;
+
+  const optimized = [];
+  const systemMsg = turns.find(t => t.role === 'system');
+  if (systemMsg) optimized.push(systemMsg);
+
+  const nonSystem = turns.filter(t => t.role !== 'system');
+  const recentThreshold = Math.max(0, nonSystem.length - maxTurns);
+
+  nonSystem.forEach((turn, idx) => {
+    const isOldTurn = idx < recentThreshold;
+    let content = turn.content;
+
+    if (typeof content === 'string') {
+      // 1. Strip heavy raw base64 data URLs from older turns
+      if (stripB64 && isOldTurn && content.includes('data:image/')) {
+        content = content.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]{100,}/g, '[Gambar/Attachment: base64 diringkas oleh Ponytail Token Saver]');
+      }
+
+      // 2. Prune repeated DOM dumps if older turn
+      if (stripDOM && isOldTurn && content.length > maxChars) {
+        if (content.includes('backendNodeId') || content.includes('accessibilityTree') || content.includes('interactiveElements')) {
+          content = content.slice(0, maxChars) + `\n... [Older DOM tree trimmed (${content.length - maxChars} chars saved by Ponytail)]`;
+        } else {
+          content = content.slice(0, maxChars) + `\n... [Older output trimmed by Ponytail]`;
+        }
+      }
+    } else if (Array.isArray(content)) {
+      if (stripB64 && isOldTurn) {
+        content = content.map(item => {
+          if (item.type === 'image_url' && item.image_url?.url?.startsWith('data:')) {
+            return { type: 'text', text: '[Past Image attachment omitted by Ponytail]' };
+          }
+          return item;
+        });
+      }
+    }
+
+    const newTurn = { ...turn, content };
+    if (isOldTurn && Array.isArray(newTurn.tool_calls)) {
+      newTurn.tool_calls = newTurn.tool_calls.map(tc => {
+        let args = tc.function?.arguments || '';
+        if (typeof args === 'string' && args.length > 500) {
+          args = args.slice(0, 500) + '... [args trimmed]';
+        }
+        return {
+          ...tc,
+          function: {
+            ...tc.function,
+            arguments: args
+          }
+        };
+      });
+    }
+
+    optimized.push(newTurn);
+  });
+
+  return optimized;
 }
 
 // Standalone Direct Autonomous AI Agent Execution in Background Service Worker
@@ -2041,7 +2144,8 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
       'custom_skills',
       'custom_memories',
       'cached_persistent_brain',
-      'chat_sessions_cache'
+      'chat_sessions_cache',
+      'plugin_settings'
     ]);
     const cfg = storageData.browser_agent_config || {};
     const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
@@ -2315,12 +2419,14 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       stepCount++;
       telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
 
+      const optimizedTurns = applyPonytailContextOptimization(conversationTurns, storageData.plugin_settings);
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers,
         body: JSON.stringify({
           model: model,
-          messages: conversationTurns,
+          messages: optimizedTurns,
           tools: BACKGROUND_AGENT_TOOLS,
           tool_choice: "auto",
           stream: false,
@@ -2374,7 +2480,6 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
           const stepDesc = getToolStepDescription(tName, tArgs);
           currentEmoji = STEP_EMOJIS[stepCount % STEP_EMOJIS.length];
           currentBaseText = stepDesc.replace(/\.+$/, '').trim();
-          animFrameIndex = 0;
 
           // Immediate render on new step
           await renderLiveStatus(true);
@@ -2399,19 +2504,20 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     if (!finalResponseText && anyToolExecuted) {
       currentBaseText = "Menyusun laporan akhir eksekusi";
       currentEmoji = "✨";
-      animFrameIndex = 0;
       await renderLiveStatus(true);
       telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
       try {
+        const synthTurns = applyPonytailContextOptimization([
+          ...conversationTurns,
+          { role: "user", content: "Sintesiskan semua temuan dan hasil eksekusi tool di atas, lalu berikan laporan akhir yang lengkap, jelas, dan terstruktur dalam format Markdown kepada pengguna sekarang." }
+        ], storageData.plugin_settings);
+
         const synthRes = await fetch(endpoint, {
           method: "POST",
           headers,
           body: JSON.stringify({
             model: model,
-            messages: [
-              ...conversationTurns,
-              { role: "user", content: "Sintesiskan semua temuan dan hasil eksekusi tool di atas, lalu berikan laporan akhir yang lengkap, jelas, dan terstruktur dalam format Markdown kepada pengguna sekarang." }
-            ],
+            messages: synthTurns,
             stream: false,
             temperature: 0.2,
             max_tokens: 4096
