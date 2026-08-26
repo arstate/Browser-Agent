@@ -5232,6 +5232,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.79`, build `extension.crx` (825.4 KB).
 
+---
+
+### 🚀 Iterasi 456: Glow Eliminator & Flat Modern Bento Slider Switch (v2.150.80)
+- **Kebutuhan Pengguna**:
+  - Menghapus efek glow / pendaran radial kuning (`box-shadow`) pada tombol slider ON/OFF switch plugin agar tampil datar, rapi, dan bersih sesuai estetika Bento minimalis.
+- **Implementasi & Peningkatan Sistem**:
+  - Di [options.css](file:///home/arya/browser-agent/extension/options.css):
+    - Mengatur `box-shadow: none;` pada `.custom-pill-switch input:checked + .pill-switch-track` dan state `:hover`.
+    - Mempertahankan warna solid flat `#CEF128` (Lime Green) dengan circular dark contrast thumb tanpa pendaran berlebih.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.80`, build `extension.crx` (825.4 KB).
+
 
 
 

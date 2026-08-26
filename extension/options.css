@@ -3410,15 +3410,15 @@ body.graph-fullscreen-active {
 }
 
 .custom-pill-switch input:checked + .pill-switch-track {
-  background: #CEF128; /* Accent Lime Green matching reference image */
-  border-color: rgba(206, 241, 40, 0.8);
-  box-shadow: 0 0 14px rgba(206, 241, 40, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  background: #CEF128; /* Flat Crisp Accent Lime Green matching reference image */
+  border-color: #CEF128;
+  box-shadow: none;
 }
 
 .custom-pill-switch input:checked + .pill-switch-track:before {
   transform: translateX(22px);
   background: #0E0E11; /* Dark contrasting thumb circle */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .custom-pill-switch:hover .pill-switch-track {
@@ -3426,7 +3426,7 @@ body.graph-fullscreen-active {
 }
 
 .custom-pill-switch input:checked:hover + .pill-switch-track {
-  box-shadow: 0 0 18px rgba(206, 241, 40, 0.6);
+  box-shadow: none;
 }
 
 /* Plugin Glass Card & Rounded Elements */
