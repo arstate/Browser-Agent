@@ -4557,6 +4557,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.38`, build `extension.crx` (667.0 KB).
 
+---
+
+### 🚀 Iterasi 415: Constrained Height & Smooth Scrollbar for Telegram Chat Logs Container (v2.150.39)
+- **Kebutuhan Pengguna**:
+  - Membatasi tinggi container riwayat & log chat Telegram di halaman Options agar terkunci presisi sama tinggi dengan kartu kredensial di sebelahnya (`max-height: 560px`), tidak molor ke bawah saat terdapat banyak riwayat pesan, serta memiliki scroll internal yang mulus.
+- **Implementasi & Peningkatan Sistem**:
+  - **Height Synchronization & Lock (`max-height: 560px`)**: Menetapkan `max-height: 560px; height: 560px` pada `#card-telegram-bot` dan `#card-telegram-logs` sehingga kedua kartu sejajar rapi di bagian bawah.
+  - **Internal Scroll Container (`telegram-logs-container`)**: Menerapkan `flex: 1; min-height: 0; max-height: 480px; overflow-y: auto` pada container log dengan custom scrollbar ramping bernuansa Dark Glass.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.39`, build `extension.crx` (667.1 KB).
+
 
 
 

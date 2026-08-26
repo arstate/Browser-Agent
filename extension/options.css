@@ -3345,3 +3345,18 @@ body.graph-fullscreen-active {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
   }
 }
+
+/* Telegram Logs Container Custom Scrollbar */
+#telegram-logs-container::-webkit-scrollbar {
+  width: 6px;
+}
+#telegram-logs-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+#telegram-logs-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+#telegram-logs-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
