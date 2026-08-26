@@ -8734,8 +8734,8 @@ async function resumeSession(sessionId) {
   }
   let session = null;
 
-  // 1. Fetch from SQLite
-  if (nativePort) {
+  // 1. Fetch from SQLite for regular browser sessions
+  if (nativePort && !String(sessionId || '').startsWith('sess_tg_')) {
     try {
       const res = await sendNativeRpc("db_get_session", { session_id: sessionId });
       if (res && res.status === "ok" && res.session) {
@@ -8746,7 +8746,7 @@ async function resumeSession(sessionId) {
     }
   }
 
-  // 2. Fetch from cache fallback
+  // 2. Fetch from cache fallback (dedicated storage for Telegram and local cache)
   if (!session) {
     const res = await chrome.storage.local.get(['chat_sessions_cache']);
     const cache = res.chat_sessions_cache || {};

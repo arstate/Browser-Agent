@@ -681,40 +681,29 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
     ]);
     const cfg = storageData.browser_agent_config || {};
     const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
-    let preset = cfg.preset || "gemini";
-    const customEndpoint = cfg.customEndpoint || "";
-    let apiKey = cfg.apiKey;
+    const apiKey = cfg.apiKey;
+    const rawEndpoint = cfg.endpoint || cfg.customEndpoint || "";
 
-    // Auto-detect Provider if API key format matches standard prefixes
-    if (apiKey && typeof apiKey === 'string') {
-      const trimmedKey = apiKey.trim();
-      if (trimmedKey.startsWith("AIzaSy") || trimmedKey.startsWith("AIza")) {
-        preset = "gemini";
-      } else if (trimmedKey.startsWith("gsk_")) {
-        preset = "groq";
-      } else if (trimmedKey.startsWith("sk-or-")) {
-        preset = "openrouter";
+    // Resolve Model matching Browser Agent exact priority list
+    let model = activeTgCfg.selected_model;
+    if (!model || model === "auto") {
+      if (cfg.selectedModelChoice && cfg.selectedModelChoice !== "auto") {
+        model = cfg.selectedModelChoice;
+      } else if (Array.isArray(cfg.models) && cfg.models.length > 0) {
+        model = cfg.models[0].id || cfg.models[0].name || cfg.models[0];
+      } else if (cfg.model && cfg.model !== "auto") {
+        model = cfg.model;
+      } else {
+        model = "gemini-2.5-flash";
       }
     }
 
-    let model = activeTgCfg.selected_model;
-    if (!model || model === "auto") {
-      model = cfg.selectedModelChoice || cfg.model;
-    }
-    if (!model || model === "auto") {
-      if (preset === "openai") model = "gpt-4o-mini";
-      else if (preset === "groq") model = "llama-3.3-70b-versatile";
-      else if (preset === "openrouter") model = "meta-llama/llama-3.3-70b-instruct";
-      else if (preset === "ollama") model = "llama3.2";
-      else model = "gemini-2.5-flash";
-    }
-
-    if (!apiKey && preset !== "ollama" && preset !== "9router") {
+    if (!apiKey && cfg.preset !== "ollama" && cfg.preset !== "9router") {
       await telegramSendMessage(botToken, senderId, `⚠️ <b>API Key Belum Dikonfigurasi:</b> Silakan buka menu Pengaturan Browser Agent di Chrome untuk memasukkan API Key Anda.`);
       return;
     }
 
-    // Build rich System Instruction with Brain facts and Skills
+    // Build rich dynamic system prompt with Brain facts and Custom Skills
     let systemInstruction = "You are Browser Agent (Antigravity Neural Core) AI assistant responding via Telegram remote control. Be helpful, concise, accurate, and format with clean markdown.\n";
     if (storageData.cached_persistent_brain && Array.isArray(storageData.cached_persistent_brain.facts)) {
       const facts = storageData.cached_persistent_brain.facts.slice(0, 15);
@@ -745,90 +734,69 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
     // Build context history (last 10 messages)
     const history = Array.isArray(tgSession.messages) ? tgSession.messages.slice(-10) : [];
     
+    let endpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+    if (rawEndpoint && rawEndpoint.trim()) {
+      let clean = rawEndpoint.trim().replace(/\/+$/, "");
+      endpoint = clean.endsWith("/chat/completions") ? clean : (clean + "/chat/completions");
+    } else if (cfg.preset === "groq") {
+      endpoint = "https://api.groq.com/openai/v1/chat/completions";
+    } else if (cfg.preset === "openrouter") {
+      endpoint = "https://openrouter.ai/api/v1/chat/completions";
+    } else if (cfg.preset === "openai") {
+      endpoint = "https://api.openai.com/v1/chat/completions";
+    }
+
+    const headers = { "Content-Type": "application/json" };
+    if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+
+    const messages = [
+      { role: "system", content: systemInstruction }
+    ];
+    for (const m of history) {
+      if (m.role === 'user' || m.role === 'assistant') {
+        messages.push({
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: m.content || ''
+        });
+      }
+    }
+    messages.push({ role: "user", content: text });
+
     let responseText = "";
 
-    if (preset === "gemini" || (!preset && !customEndpoint)) {
-      const contents = [];
-      for (const m of history) {
-        if (m.role === 'user' || m.role === 'assistant') {
-          contents.push({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: m.content || '' }]
-          });
-        }
-      }
-      contents.push({
-        role: "user",
-        parts: [{ text: text }]
-      });
-
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const payload = {
-        systemInstruction: { parts: [{ text: systemInstruction }] },
-        contents
-      };
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const json = await res.json();
-      if (json.candidates && json.candidates[0]?.content?.parts) {
-        responseText = json.candidates[0].content.parts.map(p => p.text || '').join('');
-      } else if (json.error) {
-        responseText = `⚠️ Error Gemini: ${json.error.message || JSON.stringify(json.error)}`;
-      }
-    } else {
-      // OpenAI / Groq / OpenRouter / Custom / Ollama
-      let endpoint = "https://api.openai.com/v1/chat/completions";
-      if (preset === "groq") endpoint = "https://api.groq.com/openai/v1/chat/completions";
-      else if (preset === "openrouter") endpoint = "https://openrouter.ai/api/v1/chat/completions";
-      else if (preset === "ollama") endpoint = (customEndpoint || "http://localhost:11434") + "/v1/chat/completions";
-      else if (customEndpoint) endpoint = customEndpoint.endsWith('/chat/completions') ? customEndpoint : (customEndpoint + '/chat/completions');
-
-      const headers = { "Content-Type": "application/json" };
-      if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
-
-      const messages = [
-        { role: "system", content: systemInstruction }
-      ];
-      for (const m of history) {
-        if (m.role === 'user' || m.role === 'assistant') {
-          messages.push({
-            role: m.role === 'assistant' ? 'assistant' : 'user',
-            content: m.content || ''
-          });
-        }
-      }
-      messages.push({ role: "user", content: text });
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          model: model,
-          messages
-        })
-      });
-      const json = await res.json();
-      if (json.choices && json.choices[0]?.message?.content) {
-        responseText = json.choices[0].message.content;
-      } else if (json.error) {
-        responseText = `⚠️ Error API: ${json.error.message || JSON.stringify(json.error)}`;
-      }
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: model,
+        messages,
+        temperature: cfg.temperature ?? 0.2,
+        max_tokens: cfg.maxTokens || 4096
+      })
+    });
+    const json = await res.json();
+    if (json.choices && json.choices[0]?.message?.content) {
+      responseText = json.choices[0].message.content;
+    } else if (json.candidates && json.candidates[0]?.content?.parts) {
+      responseText = json.candidates[0].content.parts.map(p => p.text || '').join('');
+    } else if (json.error) {
+      responseText = `⚠️ Error API: ${json.error.message || JSON.stringify(json.error)}`;
     }
 
     if (!responseText) {
       responseText = "⚠️ Tidak ada respons yang dihasilkan oleh model AI.";
     }
 
-    // 3. Update dedicated Telegram session in cache
+    // 3. Update dedicated Telegram session in cache & SQLite
     tgSession.updated_at = Date.now();
     tgSession.model = model;
     tgSession.messages.push({ role: 'user', content: text, timestamp: Date.now() });
     tgSession.messages.push({ role: 'assistant', content: responseText, timestamp: Date.now() });
     cache[sessId] = tgSession;
     await chrome.storage.local.set({ chat_sessions_cache: cache });
+
+    // Sync to SQLite in native host
+    sendNativeRpcInBackground("db_save_session", { session: tgSession }).catch(() => {});
 
     // Notify UI if history sidebar is open
     chrome.runtime.sendMessage({ type: "TELEGRAM_HISTORY_UPDATED" }).catch(() => {});

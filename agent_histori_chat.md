@@ -4749,6 +4749,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.50`, build `extension.crx` (674.7 KB).
 
+---
+
+### 🚀 Iterasi 427: Standardized OpenAI-Compatible Endpoint Engine & Telegram SQLite Sync (v2.150.51)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki `Error API: Incorrect API key provided: sk-...` saat background service worker memproses chat Telegram.
+  - Memperbaiki `SQLite get session notice: Error: Session not found` saat membuka/memuat sesi chat Telegram di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js).
+- **Akar Masalah (Root Cause)**:
+  - Background Service Worker sebelumnya mengarahkan kunci `sk-...` ke endpoint resmi OpenAI (`api.openai.com`) padahal pengguna menggunakan endpoint kustom atau Google OpenAI proxy bawaan Browser Agent.
+  - `resumeSession` memanggil RPC `db_get_session` ke Native Host SQLite untuk id `sess_tg_<senderId>` yang hanya tersimpan di `chat_sessions_cache`.
+- **Implementasi & Peningkatan Sistem**:
+  - **Standardized Endpoint Resolution**: Background engine kini 100% menyelaraskan panggilan API dengan [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js) menggunakan format OpenAI-compatible endpoint standar (`getNormalizedChatEndpoint`), mencakup Google Gemini OpenAI-compatible proxy, 9Router, Groq, OpenRouter, dan custom endpoints dengan model exact priority list.
+  - **Dual-Storage Session Sync**: Setiap pesan baru dari bot Telegram disimpan ke `chat_sessions_cache` dan secara otomatis disinkronkan ke SQLite via Native Host `db_save_session`.
+  - **Silent Telegram Cache Resume**: `resumeSession` langsung memuat data dari cache untuk `sess_tg_*` tanpa memunculkan notice/warning SQLite.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.51`, build `extension.crx` (674.5 KB).
+
 
 
 
