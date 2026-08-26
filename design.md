@@ -109,3 +109,29 @@ Standar visual kartu (*content card*) pada halaman **Persistent Memory & Brain V
 - **Footer Row (`.brain-card-footer`)**: `display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 12px;`.
 - **Action Pill Button (`.brain-card-action-btn`)**: `border-radius: 9999px; font-size: 11.5px; font-weight: 600; padding: 6px 14px;` dengan aksen border glow sesuai tipe item (Emerald untuk Skill, Purple untuk Agent, Amber untuk Training).
 - **ID Badge (`.brain-card-id`)**: Kapsul monospace ramping ber-border halus (`padding: 3px 10px; border-radius: 9999px; max-width: 140px; text-overflow: ellipsis;`).
+
+---
+
+## 🔮 4. Tampilan & UI Preferences Bento Glass Container System
+
+Standar visual kartu preferensi antarmuka pada view **Tampilan & UI** (`#tab-view-ui`):
+
+### A. Bento Glass Container Geometry (`.bento-glass-card`)
+- **Corner Radius**: `border-radius: 24px !important;` (24px Smooth Squircle Glass).
+- **Surface**: `background: rgba(18, 18, 22, 0.72) !important;` dengan `backdrop-filter: blur(28px) saturate(180%) !important;`.
+- **Border Stroke**: `1px solid rgba(255, 255, 255, 0.08) !important;`.
+- **Internal Padding**: `padding: 24px 26px !important;`.
+- **Elevation & Inner Highlight**: `box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;`.
+
+### B. Header Box & Vertical Centering Architecture
+- **Header Container (`.card-header`)**: `display: flex; align-items: center !important; gap: 14px; margin-bottom: 20px;`.
+- **Icon Box (`.header-icon-box`)**: `width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;`.
+- **Title (`.card-header-text h2`)**: `font-size: 16px; font-weight: 700; color: #FFFFFF; line-height: 1 !important; margin: 0 !important; display: flex; align-items: center;` (100% presisi vertikal center sejajar kotak ikon).
+
+### C. Full Rounded Pill Row Items (`.ui-pref-pill-row`)
+- **Pill Geometry**: `border-radius: 9999px !important;` (Kapsul Bulat Penuh).
+- **Height & Spacing**: `height: 52px; min-height: 52px; padding: 0 22px; margin-bottom: 0;`.
+- **Surface**: `background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.07); backdrop-filter: blur(14px);`.
+- **Interactive Hover**: `background: rgba(255, 255, 255, 0.065); border-color: rgba(255, 255, 255, 0.14); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); transform: translateY(-1px);`.
+- **Typography (`.ui-pref-label`)**: `font-size: 13.5px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.01em; line-height: 1; display: inline-flex; align-items: center;`.
+

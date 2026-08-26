@@ -4355,6 +4355,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.23`, build `extension.crx` (480.0 KB).
 
+---
+
+### 🚀 Iterasi 400: Design System Specs Update in design.md (v2.150.24)
+- **Kebutuhan Pengguna**:
+  - Mendokumentasikan spesifikasi ukuran radius sudut (*rounded corner*) kontainer kartu bento glass (`24px`) dan baris kapsul opsi (`9999px`) ke dalam [design.md](file:///home/arya/browser-agent/design.md).
+- **Implementasi & Dokumentasi**:
+  - **Spesifikasi Geometri Bento Glass**: Menambahkan Bagian 4 di [design.md](file:///home/arya/browser-agent/design.md) yang merinci:
+    - **Container Corner Radius**: `24px` (`border-radius: 24px !important;` Smooth Squircle Glass).
+    - **Pill Row Radius**: `9999px` (`border-radius: 9999px !important;` Full Rounded Pill).
+    - **Padding & Surface**: `24px 26px` padding internal, `blur(28px) saturate(180%)`, border stroke `1px solid rgba(255, 255, 255, 0.08)`.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.24`, build `extension.crx` (480.0 KB).
+
 
 
 
