@@ -147,7 +147,7 @@
 
       <!-- Sidebar Bottom: App Version (Frameless Clean Typography) -->
       <div class="sidebar-footer">
-        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.30</span>
+        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.31</span>
       </div>
     </aside>
 
@@ -1191,85 +1191,87 @@
             </div>
           </div>
 
-          <div class="bento-grid-2col" style="align-items: start;">
+          <div class="bento-grid-2col" style="align-items: stretch;">
             <!-- Card 1: Telegram Bot Remote Control -->
-            <div class="bento-card bento-glass-card" id="card-telegram-bot">
-              <div class="card-header" style="justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <div class="header-icon-box" style="background: rgba(34, 158, 217, 0.12); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <img src="icons/connected-apps/telegram.svg" width="22" height="22" alt="Telegram" style="display: block;">
+            <div class="bento-card bento-glass-card" id="card-telegram-bot" style="display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div class="card-header" style="justify-content: space-between;">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="header-icon-box" style="background: rgba(34, 158, 217, 0.12); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                      <img src="icons/connected-apps/telegram.svg" width="22" height="22" alt="Telegram" style="display: block;">
+                    </div>
+                    <div class="card-header-text">
+                      <h2>Kredensial &amp; Otorisasi</h2>
+                    </div>
                   </div>
-                  <div class="card-header-text">
-                    <h2>Kredensial &amp; Otorisasi</h2>
+                  <div id="telegram-bot-status-pill" class="brain-live-status-pill" style="padding: 4px 12px; font-size: 11px; background: rgba(100, 116, 139, 0.15); border-color: rgba(100, 116, 139, 0.3); color: #94a3b8; border-radius: 9999px;">
+                    <span class="live-pulse-dot" id="telegram-status-dot" style="background: #64748b; box-shadow: none; animation: none;"></span>
+                    <span id="telegram-status-text">Offline</span>
                   </div>
                 </div>
-                <div id="telegram-bot-status-pill" class="brain-live-status-pill" style="padding: 4px 12px; font-size: 11px; background: rgba(100, 116, 139, 0.15); border-color: rgba(100, 116, 139, 0.3); color: #94a3b8; border-radius: 9999px;">
-                  <span class="live-pulse-dot" id="telegram-status-dot" style="background: #64748b; box-shadow: none; animation: none;"></span>
-                  <span id="telegram-status-text">Offline</span>
-                </div>
-              </div>
 
-              <!-- Bot Token Input -->
-              <div class="form-group" style="margin-bottom: 16px;">
-                <label for="input-telegram-token" style="font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                  <span>Bot Token (@BotFather)</span>
-                  <a href="https://t.me/BotFather" target="_blank" style="color: #38bdf8; font-size: 11px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                    Buka @BotFather
-                    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                  </a>
-                </label>
-                <div style="display: flex; gap: 8px; position: relative;">
-                  <input type="password" id="input-telegram-token" class="form-control" placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ" style="font-family: monospace; font-size: 12px; background: rgba(18, 18, 22, 0.65); border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; padding: 10px 18px; color: #fff; width: 100%;">
-                  <button type="button" class="btn-secondary" id="btn-toggle-telegram-token-vis" style="padding: 0 16px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  </button>
+                <!-- Bot Token Input -->
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label for="input-telegram-token" style="font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Bot Token (@BotFather)</span>
+                    <a href="https://t.me/BotFather" target="_blank" style="color: #38bdf8; font-size: 11px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                      Buka @BotFather
+                      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
+                  </label>
+                  <div style="display: flex; gap: 8px; position: relative;">
+                    <input type="password" id="input-telegram-token" class="form-control" placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ" style="font-family: monospace; font-size: 12px; background: rgba(18, 18, 22, 0.65); border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; padding: 10px 18px; color: #fff; width: 100%;">
+                    <button type="button" class="btn-secondary" id="btn-toggle-telegram-token-vis" style="padding: 0 16px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  </div>
+                  <p style="font-size: 11px; color: #64748b; margin-top: 4px;">Token tersimpan secara lokal dan aman di browser Anda.</p>
                 </div>
-                <p style="font-size: 11px; color: #64748b; margin-top: 4px;">Token tersimpan secara lokal dan aman di browser Anda.</p>
-              </div>
 
-              <!-- Whitelist Authorized User ID -->
-              <div class="form-group" style="margin-bottom: 16px;">
-                <label for="input-telegram-chatid" style="font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; display: block;">
-                  Authorized Telegram User ID (Whitelist Khusus Anda)
-                </label>
-                <div style="display: flex; gap: 8px;">
-                  <input type="text" id="input-telegram-chatid" class="form-control" placeholder="Contoh: 123456789 (Hanya ID ini yang bisa chat)" style="font-family: monospace; font-size: 12px; background: rgba(18, 18, 22, 0.65); border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; padding: 10px 18px; color: #fff; flex: 1;">
-                  <button type="button" class="btn-secondary" id="btn-autodetect-telegram-id" style="padding: 0 18px; border-radius: 9999px; font-size: 11.5px; font-weight: 600; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); white-space: nowrap; cursor: pointer;">
-                    Deteksi ID Otomatis
-                  </button>
+                <!-- Whitelist Authorized User ID -->
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label for="input-telegram-chatid" style="font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; display: block;">
+                    Authorized Telegram User ID (Whitelist Khusus Anda)
+                  </label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" id="input-telegram-chatid" class="form-control" placeholder="Contoh: 123456789 (Hanya ID ini yang bisa chat)" style="font-family: monospace; font-size: 12px; background: rgba(18, 18, 22, 0.65); border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; padding: 10px 18px; color: #fff; flex: 1;">
+                    <button type="button" class="btn-secondary" id="btn-autodetect-telegram-id" style="padding: 0 18px; border-radius: 9999px; font-size: 11.5px; font-weight: 600; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); white-space: nowrap; cursor: pointer;">
+                      Deteksi ID Otomatis
+                    </button>
+                  </div>
+                  <p style="font-size: 11px; color: #64748b; margin-top: 4px;">Ketik pesan apa saja ke bot Anda di Telegram lalu klik "Deteksi ID Otomatis".</p>
                 </div>
-                <p style="font-size: 11px; color: #64748b; margin-top: 4px;">Ketik pesan apa saja ke bot Anda di Telegram lalu klik "Deteksi ID Otomatis".</p>
-              </div>
 
-              <!-- Preferences Switches -->
-              <div class="ui-pref-list" style="margin-top: 16px; margin-bottom: 16px;">
-                <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 10px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); margin-bottom: 8px;">
-                  <span class="ui-pref-label">Aktifkan Listener Bot Telegram</span>
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="setting-telegram-enabled">
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-                <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 10px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); margin-bottom: 8px;">
-                  <span class="ui-pref-label">Auto Dynamic Model Routing (/model auto)</span>
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="setting-telegram-auto-model" checked>
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-                <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 10px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); margin-bottom: 8px;">
-                  <span class="ui-pref-label">Auto Smart Agent Routing (/agent auto)</span>
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="setting-telegram-auto-agent" checked>
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-                <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 10px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
-                  <span class="ui-pref-label">Auto-Accept Web Actions Tanpa Konfirmasi</span>
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="setting-telegram-auto-accept" checked>
-                    <span class="toggle-slider"></span>
-                  </label>
+                <!-- Preferences Switches -->
+                <div class="ui-pref-list" style="margin-top: 16px; margin-bottom: 16px;">
+                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 10px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); margin-bottom: 8px;">
+                    <span class="ui-pref-label">Aktifkan Listener Bot Telegram</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="setting-telegram-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 10px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); margin-bottom: 8px;">
+                    <span class="ui-pref-label">Auto Dynamic Model Routing (/model auto)</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="setting-telegram-auto-model" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 10px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); margin-bottom: 8px;">
+                    <span class="ui-pref-label">Auto Smart Agent Routing (/agent auto)</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="setting-telegram-auto-agent" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 10px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+                    <span class="ui-pref-label">Auto-Accept Web Actions Tanpa Konfirmasi</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="setting-telegram-auto-accept" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -1288,8 +1290,8 @@
             </div>
 
             <!-- Card 2: Dedicated Telegram Chat History & Live Stream Logs -->
-            <div class="bento-card bento-glass-card" id="card-telegram-logs">
-              <div class="card-header" style="justify-content: space-between;">
+            <div class="bento-card bento-glass-card" id="card-telegram-logs" style="display: flex; flex-direction: column; height: 100%;">
+              <div class="card-header" style="justify-content: space-between; margin-bottom: 14px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                   <div class="header-icon-box" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-radius: 12px;">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1301,18 +1303,18 @@
                   </div>
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                  <button type="button" class="btn-secondary" id="btn-refresh-telegram-logs" title="Segarkan Log" style="padding: 5px 14px; border-radius: 9999px; font-size: 11.5px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; cursor: pointer;">
-                    Segarkan
+                  <button type="button" class="btn-secondary" id="btn-refresh-telegram-logs" title="Segarkan Log" style="width: 32px; height: 32px; padding: 0; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                   </button>
-                  <button type="button" class="btn-secondary" id="btn-clear-telegram-logs" title="Bersihkan Log" style="padding: 5px 14px; border-radius: 9999px; font-size: 11.5px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; cursor: pointer;">
-                    Bersihkan Log
+                  <button type="button" class="btn-secondary" id="btn-clear-telegram-logs" title="Bersihkan Riwayat Log" style="width: 32px; height: 32px; padding: 0; border-radius: 9999px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #f87171; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   </button>
                 </div>
               </div>
 
-              <!-- Dedicated Log Stream Container -->
-              <div id="telegram-logs-container" style="min-height: 380px; max-height: 480px; overflow-y: auto; background: #121216; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
-                <div style="padding: 36px 16px; text-align: center; color: #64748b; font-size: 12px;">
+              <!-- Dedicated Log Stream Container (Flex Stretch to Equal Height) -->
+              <div id="telegram-logs-container" style="flex: 1; min-height: 250px; overflow-y: auto; background: rgba(18, 18, 22, 0.65); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="margin: auto; padding: 36px 16px; text-align: center; color: #64748b; font-size: 12px;">
                   <p>Belum ada riwayat percakapan dari Bot Telegram.</p>
                   <p style="margin-top: 6px; font-size: 11px; color: #475569;">Pesan yang Anda kirim dari Telegram ke bot akan tampil di sini secara real-time.</p>
                 </div>

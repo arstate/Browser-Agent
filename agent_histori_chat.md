@@ -4451,6 +4451,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.30`, build `extension.crx` (489.5 KB).
 
+---
+
+### 🚀 Iterasi 407: Icon-Only SVG Pill Buttons & Equal-Height Bento Log Stream (v2.150.31)
+- **Kebutuhan Pengguna**:
+  - Mengubah tombol aksi pada panel riwayat chat (*Segarkan* dan *Bersihkan*) menjadi tombol **Icon-Only SVG murni** tanpa teks dan tanpa emoji, berdesain circular full-rounded glass (`border-radius: 9999px`).
+  - Menyamakan tinggi (*equal-height stretch*) container riwayat & log chat Telegram agar bagian bawahnya sejajar presisi dengan container kredensial & otorisasi.
+- **Implementasi & Penataan UI**:
+  - **Tombol Icon-Only SVG**: Mengganti teks tombol dengan icon vektor SVG minimalis (`#btn-refresh-telegram-logs` dan `#btn-clear-telegram-logs`, ukuran 32x32px circular pill dengan tooltip HTML `title`).
+  - **Equal-Height Bento Alignment**: Mengatur `.bento-grid-2col` ke `align-items: stretch` serta `#card-telegram-logs` dan `#telegram-logs-container` ke `display: flex; flex-direction: column; flex: 1; min-height: 250px;`, sehingga container log chat memanjang otomatis mengikuti tinggi kartu kredensial di sebelahnya.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.31`, build `extension.crx` (489.7 KB).
+
 
 
 
