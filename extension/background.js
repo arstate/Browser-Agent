@@ -732,15 +732,30 @@ PANDUAN EKSEKUSI PENGOLAHAN FOTO PENGGUNA:
           const rawTranscribed = rpcRes.text.trim();
           let refinedText = rawTranscribed;
 
-          // AI LLM Phonetic & Typo Refinement: Correct typos/slang/grammar so the agent understands accurately
+          // AI LLM Phonetic & Typo Refinement: Correct typos/slang/Indonesian phonetic sounds into accurate commands
           try {
-            const refineModel = activeTgCfg.selected_model || cfg.selectedModelChoice || cfg.model || "gemini-2.5-flash";
+            const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
+            let refineModel = activeTgCfg.selected_model;
+            if (!refineModel || refineModel === "auto") {
+              if (cfg.selectedModelChoice && cfg.selectedModelChoice !== "auto") {
+                refineModel = cfg.selectedModelChoice;
+              } else if (Array.isArray(cfg.models) && cfg.models.length > 0) {
+                refineModel = cfg.models[0].id || cfg.models[0].name || cfg.models[0];
+              } else if (cfg.model && cfg.model !== "auto") {
+                refineModel = cfg.model;
+              } else {
+                refineModel = "gemini-2.5-flash";
+              }
+            }
+
             const headers = { "Content-Type": "application/json" };
             if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
             let endpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
             if (rawEndpoint) {
               endpoint = rawEndpoint.endsWith("/chat/completions") ? rawEndpoint : `${rawEndpoint.replace(/\/+$/, '')}/chat/completions`;
+            } else if (apiKey && apiKey.startsWith("AIza")) {
+              endpoint = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${apiKey}`;
             }
 
             const refineRes = await fetch(endpoint, {
@@ -751,11 +766,24 @@ PANDUAN EKSEKUSI PENGOLAHAN FOTO PENGGUNA:
                 messages: [
                   {
                     role: "system",
-                    content: "Anda adalah AI Audio Transcript Typo & Intent Corrector. Tugas Anda adalah membaca transkripsi suara mentah pengguna, memperbaiki kesalahan ketik (typo), salah dengar fonetik kata/istilah (misal istilah Linux, tool web, bahasa gaul Indonesia, nama software), serta merapikan tanda baca agar menjadi kalimat perintah yang jelas dan mudah dipahami oleh AI Agent. HANYA berikan hasil kalimat yang sudah diperbaiki tanpa tanda kutip, tanpa kata pengantar, dan tanpa penjelasan tambahan."
+                    content: `Anda adalah AI Voice Command & Typo Corrector untuk pengguna Indonesia.
+Pengguna berbicara dalam bahasa Indonesia dan sering menyebut istilah SEO, web, browser, komputer, atau musik.
+TUGAS UTAMA ANDA:
+1. Analisis transkripsi suara mentah dan perbaiki salah dengar fonetik ke istilah yang benar.
+   Contoh perbaikan:
+   - "own pick" / "on pick" -> "on page"
+   - "See you" / "C U" -> "SEO"
+   - "10 content" / "ten content" -> "dan konten"
+   - "own pick See you 10 content" -> "on page dan konten SEO"
+   - "remove background / remove bg" -> "remove bg"
+   - "wirang / denny caknan" -> "lagu Denny Caknan - Wirang"
+   - "convert pdf" -> "convert ke PDF"
+2. Kembalikan kalimat perintah bahasa Indonesia yang natural, padat, dan jelas.
+3. HANYA keluarkan kalimat hasil perbaikan tanpa tanda kutip, tanpa kata pembuka/penutup, dan tanpa penjelasan apa pun.`
                   },
                   {
                     role: "user",
-                    content: `Perbaiki teks transkripsi suara mentah berikut:\n"${rawTranscribed}"`
+                    content: rawTranscribed
                   }
                 ],
                 temperature: 0.1,
@@ -767,7 +795,7 @@ PANDUAN EKSEKUSI PENGOLAHAN FOTO PENGGUNA:
               const refineJson = await refineRes.json();
               const corrected = refineJson.choices?.[0]?.message?.content?.trim();
               if (corrected && corrected.length > 0) {
-                refinedText = corrected.replace(/^["']|["']$/g, '').trim();
+                refinedText = corrected.replace(/^["'«»]|["'«»]$/g, '').trim();
               }
             }
           } catch (refineErr) {

@@ -656,9 +656,13 @@ def get_local_whisper_model():
     if _whisper_model_cache is None:
         try:
             from faster_whisper import WhisperModel
-            _whisper_model_cache = WhisperModel("base", device="cpu", compute_type="int8")
+            _whisper_model_cache = WhisperModel("small", device="cpu", compute_type="int8")
         except Exception as e:
-            log(f"Local faster-whisper model load error: {e}")
+            try:
+                from faster_whisper import WhisperModel
+                _whisper_model_cache = WhisperModel("base", device="cpu", compute_type="int8")
+            except Exception as e2:
+                log(f"Local faster-whisper model load error: {e2}")
     return _whisper_model_cache
 
 def transcribe_audio_file(file_base64, mime_type="audio/ogg", api_key="", endpoint="", preset=""):
@@ -690,8 +694,22 @@ def transcribe_audio_file(file_base64, mime_type="audio/ogg", api_key="", endpoi
         try:
             w_model = get_local_whisper_model()
             if w_model:
-                segments, info = w_model.transcribe(upload_path, beam_size=5, vad_filter=True)
+                indonesian_prompt = (
+                    "Transkripsi percakapan bahasa Indonesia sehari-hari. "
+                    "Analisis mendalam, SEO, on page, konten SEO, keyword, "
+                    "YouTube, download lagu MP3, coding, script, remove bg, convert PDF."
+                )
+                segments, info = w_model.transcribe(
+                    upload_path,
+                    beam_size=5,
+                    language="id",
+                    initial_prompt=indonesian_prompt,
+                    vad_filter=True
+                )
                 texts = [s.text.strip() for s in segments if s.text]
+                if not texts:
+                    segments, info = w_model.transcribe(upload_path, beam_size=5, initial_prompt=indonesian_prompt, vad_filter=True)
+                    texts = [s.text.strip() for s in segments if s.text]
                 if texts:
                     transcribed_text = " ".join(texts).strip()
         except Exception as fwe:

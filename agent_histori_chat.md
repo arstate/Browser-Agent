@@ -5335,6 +5335,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.85`, build `extension.crx` (839.4 KB).
 
+---
+
+### 🚀 Iterasi 462: Accurate Indonesian Faster-Whisper Biasing & Robust AI LLM Voice Transcript Typo Corrector (v2.150.86)
+- **Kebutuhan Pengguna**:
+  - Meningkatkan akurasi transkripsi suara percakapan Bahasa Indonesia (menghindari salah dengar fonetik seperti *"own pick See you 10 content"* ketika pengguna mengucapkan *"analisis lagi mendalam yang on page dan konten seo"*).
+  - Memperbaiki bug pada LLM typo refinement di mana teks transkripsi mentah yang salah dengar belum ter-edit otomatis oleh model AI aktif sebelum dikirim dan dieksekusi.
+- **Implementasi & Peningkatan Sistem**:
+  - Di [native_host.py](file:///home/arya/browser-agent/host/native_host.py):
+    - Mengupgrade model lokal ke `WhisperModel('small')` (dengan fallback `base`) int8 quantization.
+    - Menambahkan parameter `language="id"` dan `initial_prompt` kontekstual bahasa Indonesia (SEO on page, off page, konten SEO, keyword, download MP3, coding, script, remove bg, convert PDF) sebagai prioritas biasing fonetik.
+  - Di [background.js](file:///home/arya/browser-agent/extension/background.js):
+    - Memperbaiki `ReferenceError` pada penentuan model koreksi audio (`activeTgCfg`).
+    - Menyempurnakan prompt *AI Voice Command & Typo Corrector* untuk memetakan salah dengar istilah web/SEO Indonesia (*"own pick"* -> *"on page"*, *"See you"* -> *"SEO"*, *"10 content"* -> *"dan konten"*) menjadi instruksi perintah yang presisi.
+    - Menampilkan hasil transkrip yang telah diperbaiki rapi oleh LLM ke chat Telegram.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.86`, build `extension.crx` (839.4 KB).
+
 
 
 
