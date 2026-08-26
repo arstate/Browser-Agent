@@ -3342,32 +3342,47 @@ def handle_local_rpc(msg):
                     pass
             
             success = False
-            # 1. Try PIL ImageGrab
-            try:
-                import PIL.ImageGrab
-                img = PIL.ImageGrab.grab()
-                img.save(tmp_path, "PNG")
-                success = os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 0
-            except Exception as pe:
-                log(f"PIL ImageGrab note: {pe}")
+            desktop_env = os.environ.get("XDG_CURRENT_DESKTOP", "").upper()
+            is_wayland = bool(os.environ.get("WAYLAND_DISPLAY"))
 
-            # 2. Try ImageMagick import -window root
+            # Build prioritized list of screenshot commands based on active desktop environment
+            cmd_candidates = []
+            if "KDE" in desktop_env or os.path.exists("/usr/bin/spectacle"):
+                cmd_candidates.append(["spectacle", "-b", "-n", "-o", tmp_path])
+            if is_wayland or os.path.exists("/usr/bin/grim"):
+                cmd_candidates.append(["grim", tmp_path])
+            if "GNOME" in desktop_env or os.path.exists("/usr/bin/gnome-screenshot"):
+                cmd_candidates.append(["gnome-screenshot", "-f", tmp_path])
+            
+            # Standard Linux X11/generic CLI tools
+            cmd_candidates.extend([
+                ["spectacle", "-b", "-n", "-o", tmp_path],
+                ["scrot", tmp_path],
+                ["maim", tmp_path],
+                ["import", "-window", "root", tmp_path]
+            ])
+
+            for cmd in cmd_candidates:
+                try:
+                    res = subprocess.run(cmd, capture_output=True, timeout=4)
+                    if res.returncode == 0 and os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 0:
+                        success = True
+                        break
+                except Exception as ex:
+                    log(f"Screenshot candidate {cmd[0]} error: {ex}")
+                    continue
+
+            # Fallback to PIL ImageGrab if CLI tools did not succeed
             if not success:
-                res = subprocess.run(["import", "-window", "root", tmp_path], capture_output=True, timeout=5)
-                success = res.returncode == 0 and os.path.exists(tmp_path)
+                try:
+                    import PIL.ImageGrab
+                    img = PIL.ImageGrab.grab()
+                    img.save(tmp_path, "PNG")
+                    success = os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 0
+                except Exception as pe:
+                    log(f"PIL ImageGrab fallback note: {pe}")
 
-            # 3. Try spectacle / scrot / maim / grim
-            if not success:
-                for cmd in [["spectacle", "-b", "-n", "-o", tmp_path], ["scrot", tmp_path], ["maim", tmp_path], ["grim", tmp_path]]:
-                    try:
-                        res = subprocess.run(cmd, capture_output=True, timeout=5)
-                        if res.returncode == 0 and os.path.exists(tmp_path):
-                            success = True
-                            break
-                    except:
-                        continue
-
-            if success and os.path.exists(tmp_path):
+            if success and os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 0:
                 with open(tmp_path, "rb") as f:
                     b64 = base64.b64encode(f.read()).decode("utf-8")
                 data_url = f"data:image/png;base64,{b64}"

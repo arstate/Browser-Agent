@@ -180,7 +180,7 @@ async function telegramSendChatAction(botToken, chatId, action = "typing") {
 function sendNativeRpcInBackground(action, payload = {}) {
   return new Promise((resolve) => {
     try {
-      const port = chrome.runtime.connectNative("com.antigravity.browser_agent");
+      const port = chrome.runtime.connectNative("com.antigravity.chrome.agent");
       const msgId = "rpc_" + Date.now();
       const handler = (res) => {
         if (res && res.id === msgId) {
@@ -198,7 +198,7 @@ function sendNativeRpcInBackground(action, payload = {}) {
       setTimeout(() => {
         try { port.disconnect(); } catch(e) {}
         resolve(null);
-      }, 8000);
+      }, 15000);
     } catch (e) {
       resolve(null);
     }

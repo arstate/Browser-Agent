@@ -4826,6 +4826,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.55`, build `extension.crx` (678.7 KB).
 
+---
+
+### 🚀 Iterasi 432: Fix Native Host Identifier & KDE Wayland Screenshot Tool Order (v2.150.56)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki error `Gagal mengambil screenshot OS: Native Host error` saat menjalankan perintah `/screenshot_os` atau tombol `🖥️ Screenshot OS Linux` di Telegram.
+- **Akar Masalah (Root Cause)**:
+  - Di [background.js](file:///home/arya/browser-agent/extension/background.js), pemanggilan Native RPC keliru menggunakan host identifier `com.antigravity.browser_agent` padahal manifes Native Host OS terdaftar dengan nama `com.antigravity.chrome.agent`.
+  - Di [native_host.py](file:///home/arya/browser-agent/host/native_host.py), urutan capture screenshot pada Linux desktop belum mendeteksi KDE Wayland secara prioritas sehingga `PIL.ImageGrab` dan `import` mengalami timeout sebelum `spectacle` sempat dipanggil.
+- **Implementasi & Peningkatan Sistem**:
+  - **Corrected Native Host Identifier**: Memperbaiki target koneksi `chrome.runtime.connectNative("com.antigravity.chrome.agent")` pada Service Worker.
+  - **KDE Wayland First Execution**: Menata ulang urutan kandidat screenshot di [native_host.py](file:///home/arya/browser-agent/host/native_host.py) dengan memprioritaskan `spectacle -b -n -o` pada lingkungan KDE Wayland (selesai dalam < 0.9 detik).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.56`, build `extension.crx` (678.7 KB).
+
 
 
 
