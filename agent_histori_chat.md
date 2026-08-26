@@ -4464,6 +4464,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.31`, build `extension.crx` (489.7 KB).
 
+---
+
+### 🚀 Iterasi 408: Native Connected Apps Knowledge & Self-Awareness Prompt Injection (v2.150.32)
+- **Kebutuhan Pengguna**:
+  - Mengatasi masalah AI Agent yang belum menyadari bahwa ekstensi Browser Agent sudah memiliki fitur bawaan resmi **Connected Apps: Telegram Bot Remote Control** dan sebelumnya malah menyarankan membuat script Python/Node.js eksternal.
+- **Implementasi & Peningkatan Prompt**:
+  - **Injeksi Pengetahuan Fitur Bawaan (`sidepanel.js`)**: Menyuntikkan deskripsi lengkap modul *Connected Apps & Telegram Bot Remote Control Ecosystem* ke dalam `DEFAULT_SYSTEM_PROMPT`, `CHAT_ONLY_SYSTEM_PROMPT`, dan `buildDynamicSystemPrompt()`.
+  - **Panduan Respon 3 Langkah Mudah**: Menginstruksikan agent untuk selalu mengenalkan fitur native Connected Apps dan memandu user mengaktifkannya via menu *Pengaturan -> Connected Apps -> Telegram Bot* (Bot Token dari `@BotFather`, aktifkan listener, dan klik *Deteksi ID Otomatis* untuk whitelist security).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.32`, build `extension.crx` (490.9 KB).
+
 
 
 
