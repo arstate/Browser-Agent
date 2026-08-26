@@ -4984,6 +4984,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Restart Bot & Fresh Chat
+  document.getElementById('btn-restart-telegram-bot')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-restart-telegram-bot');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) btn.innerHTML = `<span>Merestart Bot...</span>`;
+
+    try {
+      await chrome.storage.local.remove(['telegram_active_clarification']);
+      chrome.runtime.sendMessage({ type: "RESTART_TELEGRAM_BOT" }, (res) => {
+        showSaveToast("🎉 Bot Telegram berhasil di-restart dan siap untuk chat baru!");
+        renderTelegramLogs();
+        updateTelegramStatusUI();
+      });
+    } catch (err) {
+      alert("Error: " + err.message);
+    } finally {
+      setTimeout(() => {
+        if (btn) btn.innerHTML = origHtml;
+      }, 800);
+    }
+  });
+
   // Switch between Connected Apps Hub Catalog and Telegram Detail View
   document.getElementById('btn-open-telegram-config')?.addEventListener('click', () => {
     const hub = document.getElementById('connected-apps-hub');

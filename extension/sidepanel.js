@@ -3848,6 +3848,9 @@ async function telegramEditMessageFromSidepanel(botToken, chatId, messageId, tex
   }
 }
 
+const telegramSendMessage = telegramSendMessageFromSidepanel;
+const telegramEditMessageText = telegramEditMessageFromSidepanel;
+
 // In-place single status updater (prevents message spam by editing the same message)
 async function updateTelegramLiveStatus(statusText) {
   if (!activeTelegramSession || !activeTelegramSession.botToken || !activeTelegramSession.senderId) return;

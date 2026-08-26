@@ -4810,6 +4810,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.54`, build `extension.crx` (678.3 KB).
 
+---
+
+### 🚀 Iterasi 431: Fix telegramEditMessageText Scope & Add Restart Bot / Fresh Chat Button (v2.150.55)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki error `Gagal memproses instruksi: telegramEditMessageText is not defined` pada eksekusi background agent Telegram.
+  - Menambahkan tombol **Restart Bot & Fresh Chat** di halaman Pengaturan Connected Apps Telegram agar pengguna dapat me-reset poller bot, membersihkan pending update queue, dan memulai sesi chat segar.
+- **Akar Masalah (Root Cause)**:
+  - Fungsi `telegramEditMessageText` dipanggil saat mengedit live progress message di [background.js](file:///home/arya/browser-agent/extension/background.js) namun deklarasi fungsinya belum didefinisikan secara global di scope Service Worker.
+- **Implementasi & Peningkatan Sistem**:
+  - **Defined telegramEditMessageText**: Menambahkan implementasi lengkap `telegramEditMessageText(botToken, chatId, messageId, text, replyMarkup)` di [background.js](file:///home/arya/browser-agent/extension/background.js) dan alias aman di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js).
+  - **Restart Bot UI Button**: Menambahkan tombol `#btn-restart-telegram-bot` dengan styling bento glass dan icon refresh di [options.html](file:///home/arya/browser-agent/extension/options.html) dan [options.js](file:///home/arya/browser-agent/extension/options.js).
+  - **Background Poller Flush RPC**: Menambahkan handler `RESTART_TELEGRAM_BOT` yang melakukan flush offset `getUpdates?offset=-1` dan me-reboot listener polling secara instan.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.55`, build `extension.crx` (678.7 KB).
+
 
 
 

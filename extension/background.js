@@ -106,6 +106,30 @@ async function telegramSendMessage(botToken, chatId, text, replyMarkup = null) {
   }
 }
 
+async function telegramEditMessageText(botToken, chatId, messageId, text, replyMarkup = null) {
+  if (!botToken || !chatId || !messageId) return null;
+  try {
+    const formattedText = formatMarkdownForTelegram(text);
+    const payload = {
+      chat_id: chatId,
+      message_id: messageId,
+      text: formattedText,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+    if (replyMarkup) payload.reply_markup = replyMarkup;
+
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (err) {
+    return null;
+  }
+}
+
 async function telegramSendPhoto(botToken, chatId, photoDataUrlOrBase64, caption = "") {
   if (!botToken || !chatId || !photoDataUrlOrBase64) return null;
   try {
@@ -1307,6 +1331,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "TELEGRAM_CONFIG_UPDATED") {
     checkAndRestartTelegramPoller();
     sendResponse({ status: "ok" });
+    return true;
+  }
+
+  if (message.type === "RESTART_TELEGRAM_BOT") {
+    telegramPollingActive = false;
+    chrome.storage.local.get(['telegram_bot_config']).then(async (data) => {
+      const tgCfg = data.telegram_bot_config;
+      if (tgCfg && tgCfg.bot_token) {
+        try {
+          // Flush pending telegram updates offset
+          const dropRes = await fetch(`https://api.telegram.org/bot${tgCfg.bot_token}/getUpdates?offset=-1`);
+          const dropJson = await dropRes.json();
+          if (dropJson.ok && dropJson.result && dropJson.result.length > 0) {
+            const maxUpId = dropJson.result[dropJson.result.length - 1].update_id;
+            await chrome.storage.local.set({ telegram_last_update_id: maxUpId + 1 });
+          }
+        } catch(e) {}
+      }
+      setTimeout(() => {
+        checkAndRestartTelegramPoller();
+      }, 500);
+    });
+    sendResponse({ status: "ok", message: "Telegram bot restarted successfully" });
     return true;
   }
 });
