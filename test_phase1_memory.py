@@ -204,6 +204,11 @@ class TestPersistentMemoryPhase1(unittest.TestCase):
         # 6. Clean up
         native_host.db_delete_session("sess_pin_test_001")
 
+    def test_09_transcribe_audio_empty_payload(self):
+        res = native_host.transcribe_audio_file("")
+        self.assertEqual(res.get("status"), "error")
+        self.assertIn("No audio data", res.get("error", ""))
+
     @classmethod
     def tearDownClass(cls):
         # Clean up test records

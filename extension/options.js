@@ -3933,10 +3933,10 @@ async function telegramSetMyCommands(botToken) {
   if (!botToken) return false;
   const commands = [
     { command: "start", description: "Buka menu utama dan bantuan Browser Agent" },
+    { command: "thinking", description: "Atur intensitas berpikir AI (Low, Med, High, Xhigh, Extreme)" },
     { command: "history", description: "Daftar riwayat sesi percakapan & pindah sesi" },
     { command: "model", description: "Pilih model AI aktif atau aktifkan auto-routing" },
     { command: "agent", description: "Pilih persona spesialis agent atau delegasi otomatis" },
-    { command: "mode", description: "Ganti mode kerja: Chat, Autonomous Agent, atau Swarm" },
     { command: "screenshot", description: "Ambil screenshot tab Chrome aktif di PC" },
     { command: "screenshot_os", description: "Ambil screenshot Full Desktop OS Linux" },
     { command: "status", description: "Cek tab aktif, model, memory, dan performa" },

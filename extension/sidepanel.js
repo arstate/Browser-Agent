@@ -3431,11 +3431,13 @@ async function executeTool(name, args, assistantBubble = null) {
       try {
         const cmdList = [
           { command: "start", description: "Buka menu utama & instruksi Browser Agent" },
+          { command: "thinking", description: "Atur intensitas berpikir AI (Low, Med, High, Xhigh, Extreme)" },
           { command: "model", description: "Ganti/cek model AI aktif (/model auto)" },
           { command: "agent", description: "Ganti/cek spesialis agent (/agent auto)" },
-          { command: "mode", description: "Ganti mode percakapan (/mode chat atau agent)" },
+          { command: "history", description: "Daftar riwayat sesi percakapan & pindah sesi" },
           { command: "screenshot", description: "Ambil tangkapan layar tab aktif Chrome" },
-          { command: "status", description: "Cek kesehatan daemon & ringkasan memori" },
+          { command: "screenshot_os", description: "Ambil screenshot Full Desktop OS Linux" },
+          { command: "status", description: "Cek tab aktif, thinking mode, dan performa" },
           { command: "new", description: "Mulai sesi percakapan baru" }
         ];
         await fetch(`https://api.telegram.org/bot${botToken}/setMyCommands`, {

@@ -5046,6 +5046,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.69`, build `extension.crx` (681.4 KB).
 
+---
+
+### 🚀 Iterasi 446: Thinking Mode Selector (/thinking) & Configured API Voice-to-Text for Telegram Bot (v2.150.70)
+- **Kebutuhan Pengguna**:
+  - Menambahkan menu perintah `/thinking` pada Bot Telegram agar pengguna dapat memilih intensitas penalaran AI (`Low`, `Medium`, `High`, `Xhigh`, `Extreme`) persis seperti di antarmuka Browser Agent.
+  - Memperbaiki Bot Telegram agar dapat merespons dan mengeksekusi pesan rekaman suara (Voice Audio note) menggunakan AI Voice-to-Text (STT) sesuai dengan API Key yang dikonfigurasi di Pengaturan Browser Agent (API Key yang sama dengan model LLM).
+- **Akar Masalah (Root Cause)**:
+  - Mode Thinking sebelumnya hanya diatur dari tombol dropup UI New Tab/Sidepanel dan belum memiliki slash command & inline button picker di Telegram remote worker.
+  - Pesan bertipe `voice` / `audio` pada polling Telegram belum diekstrak dan ditranskripsi ke teks sebelum dieksekusi oleh pipeline Master Agent.
+- **Implementasi & Peningkatan Sistem**:
+  - **Telegram Thinking Mode Command (`/thinking`, `/think`)**: Menambahkan handler perintah `/thinking` dan callback query `cmd_thinking` / `set_thinking:${level}` pada [background.js](file:///home/arya/browser-agent/extension/background.js) dengan tombol inline interaktif (`Low`, `Medium`, `High`, `Xhigh`, `Extreme`).
+  - **Dynamic Cognitive Directive Injection**: Menginjeksi fungsi `getThinkingDirective(activeThinkingLevel)` ke dalam `systemInstruction` pada `executePromptInBackgroundServiceWorker` sehingga agen Telegram berpikir sesuai level intensitas yang dipilih (hingga 10x Lipat Mikir Keras pada level Extreme).
+  - **Universal Voice-to-Text Engine (`transcribe_audio`)**: Menambahkan RPC `transcribe_audio_file` pada [native_host.py](file:///home/arya/browser-agent/host/native_host.py) yang mengonversi audio Opus Telegram via `ffmpeg` dan mentranskripsikannya secara akurat menggunakan Google Gemini Multimodal Audio atau OpenAI/Groq Whisper API sesuai konfigurasi API Key pengguna.
+  - **Auto-Execution Pipeline**: Suara yang berhasil ditranskripsi otomatis dikonfirmasi ke chat pengguna (`🎙️ Transkrip Suara: "..."`), lalu diteruskan secara mulus ke Master Agent untuk mengeksekusi seluruh tool yang diperintahkan.
+- **Pengujian & Rilis**:
+  - 19/19 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.70`, build `extension.crx` (683.4 KB).
+
 
 
 

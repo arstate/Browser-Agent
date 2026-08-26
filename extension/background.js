@@ -482,6 +482,39 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
       return;
     }
 
+    if (data === 'cmd_thinking') {
+      const storageData = await chrome.storage.local.get(['thinking_level', 'telegram_bot_config']);
+      const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
+      const activeLevel = activeTgCfg.thinking_level || storageData.thinking_level || "high";
+
+      const levels = [
+        { id: "low", label: "Low (Instan & Cepat)" },
+        { id: "medium", label: "Medium (Standar 1x Sanity)" },
+        { id: "high", label: "High (Mendalam Tree-of-Thought)" },
+        { id: "xhigh", label: "Xhigh (Kritik Diri Ketat)" },
+        { id: "extreme", label: "Extreme (10x Mikir Keras)" }
+      ];
+
+      const keyboardRows = levels.map(lvl => ([
+        {
+          text: `${activeLevel === lvl.id ? '🟢 ' : ''}${lvl.label}`,
+          callback_data: `set_thinking:${lvl.id}`
+        }
+      ]));
+
+      const thinkingMsg = `🧠 <b>Pilih Intensitas Penalaran (Thinking Mode):</b>\n\nMode aktif saat ini: <code>${activeLevel.toUpperCase()}</code>\n\n<i>Pilih tingkat intensitas penalaran AI untuk Master Agent di Telegram:</i>`;
+      await telegramSendMessage(botToken, fromId, thinkingMsg, { inline_keyboard: keyboardRows });
+      return;
+    }
+
+    if (data.startsWith('set_thinking:')) {
+      const selectedLevel = data.replace('set_thinking:', '');
+      tgCfg.thinking_level = selectedLevel;
+      await chrome.storage.local.set({ thinking_level: selectedLevel, telegram_bot_config: tgCfg });
+      await telegramSendMessage(botToken, fromId, `🧠 <b>Thinking Mode Berhasil Diubah:</b> <code>${selectedLevel.toUpperCase()}</code>\nMaster Agent sekarang akan mengeksekusi instruksi dengan intensitas penalaran <b>${selectedLevel.toUpperCase()}</b>.`);
+      return;
+    }
+
     if (data.startsWith('clarify_opt:')) {
       const optIdx = parseInt(data.replace('clarify_opt:', ''), 10);
       const storageData = await chrome.storage.local.get(['telegram_active_clarification']);
@@ -543,6 +576,41 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
       if (!text) text = "Tolong analisis, baca teks, dan jelaskan detail gambar ini secara mendalam:";
     }
   }
+  // Handle Voice Notes & Audio Messages (Speech-to-Text via Configured API Key)
+  else if (msg.voice || msg.audio) {
+    const audioObj = msg.voice || msg.audio;
+    telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
+    await telegramSendMessage(botToken, senderId, `🎙️ <i>Mendengarkan & mentranskripsi pesan suara...</i>`);
+    const downloaded = await downloadTelegramFile(botToken, audioObj.file_id);
+    if (downloaded) {
+      const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config']);
+      const cfg = storageData.browser_agent_config || {};
+      const rawEndpoint = cfg.endpoint || cfg.customEndpoint || "";
+      const apiKey = cfg.apiKey;
+
+      try {
+        const rpcRes = await sendNativeRpcInBackground("transcribe_audio", {
+          file_base64: downloaded.base64,
+          mime_type: downloaded.mime || "audio/ogg",
+          api_key: apiKey,
+          endpoint: rawEndpoint,
+          preset: cfg.preset
+        });
+
+        if (rpcRes && rpcRes.status === "ok" && rpcRes.text) {
+          const transcribed = rpcRes.text.trim();
+          await telegramSendMessage(botToken, senderId, `🎙️ <b>Transkrip Suara:</b> <i>"${escapeHtml(transcribed)}"</i>`);
+          text = transcribed;
+        } else {
+          await telegramSendMessage(botToken, senderId, `⚠️ Gagal mentranskripsi pesan suara: ${rpcRes?.error || 'Tidak ada teks yang terdeteksi'}`);
+          return;
+        }
+      } catch (err) {
+        await telegramSendMessage(botToken, senderId, `⚠️ Error transkripsi audio: ${err.message}`);
+        return;
+      }
+    }
+  }
   // Handle Document Attachments (PDF, DOCX, CSV, JSON, TXT, Code, etc.)
   else if (msg.document) {
     const doc = msg.document;
@@ -596,23 +664,51 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
     const cmd = parts[0].toLowerCase();
 
     if (cmd === '/start' || cmd === '/help') {
-      const welcome = `🤖 <b>Browser Agent Remote Control Aktif!</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, Anda dapat mengontrol browser, mengirim gambar/foto untuk dianalisis, mengirim file dokumen (PDF, Word, Excel, CSV, TXT), dan mengeksekusi AI langsung dari chat ini.\n\n<b>Pilihan Perintah:</b>\n• /history - Daftar riwayat sesi chat & pindah sesi\n• /model - Ganti model AI aktif\n• /agent - Ganti spesialis agent\n• /screenshot - Ambil screenshot Tab Chrome\n• /screenshot_os - Ambil screenshot Full Desktop Linux\n• /status - Cek status tab & performa\n• /new - Mulai sesi percakapan baru\n\n<i>Kirim foto, dokumen PDF/Word/TXT, atau ketik instruksi apa saja!</i>`;
+      const welcome = `🤖 <b>Browser Agent Remote Control Aktif!</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, Anda dapat mengontrol browser, mengirim pesan suara (Voice Audio), mengirim gambar/foto, mengirim dokumen (PDF, Word, TXT, CSV), dan mengeksekusi AI langsung dari chat ini.\n\n<b>Pilihan Perintah:</b>\n• /thinking - Atur intensitas berpikir AI (Low, Medium, High, Xhigh, Extreme)\n• /model - Ganti model AI aktif\n• /agent - Ganti spesialis agent\n• /history - Daftar riwayat sesi chat & pindah sesi\n• /screenshot - Ambil screenshot Tab Chrome\n• /screenshot_os - Ambil screenshot Full Desktop Linux\n• /status - Cek status tab & performa\n• /new - Mulai sesi percakapan baru\n\n<i>Kirim pesan suara, foto, dokumen PDF/Word/TXT, atau ketik instruksi apa saja!</i>`;
       await telegramSendMessage(botToken, senderId, welcome, {
         inline_keyboard: [
           [
-            { text: "🗂️ Riwayat Sesi", callback_data: "cmd_history" },
+            { text: "🧠 Thinking Mode", callback_data: "cmd_thinking" },
             { text: "🤖 Model AI", callback_data: "cmd_model" }
           ],
           [
             { text: "👥 Spesialis Agent", callback_data: "cmd_agent" },
-            { text: "📸 Screenshot Tab", callback_data: "cmd_screenshot_tab" }
+            { text: "🗂️ Riwayat Sesi", callback_data: "cmd_history" }
           ],
           [
-            { text: "🖥️ Screenshot OS Linux", callback_data: "cmd_screenshot_os" },
+            { text: "📸 Screenshot Tab", callback_data: "cmd_screenshot_tab" },
+            { text: "🖥️ Screenshot OS", callback_data: "cmd_screenshot_os" }
+          ],
+          [
             { text: "✨ Sesi Baru", callback_data: "cmd_new_session" }
           ]
         ]
       });
+      return;
+    }
+
+    if (cmd === '/thinking' || cmd === '/think') {
+      const storageData = await chrome.storage.local.get(['thinking_level', 'telegram_bot_config']);
+      const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
+      const activeLevel = activeTgCfg.thinking_level || storageData.thinking_level || "high";
+
+      const levels = [
+        { id: "low", label: "Low (Instan & Cepat)" },
+        { id: "medium", label: "Medium (Standar 1x Sanity)" },
+        { id: "high", label: "High (Mendalam Tree-of-Thought)" },
+        { id: "xhigh", label: "Xhigh (Kritik Diri Ketat)" },
+        { id: "extreme", label: "Extreme (10x Mikir Keras)" }
+      ];
+
+      const keyboardRows = levels.map(lvl => ([
+        {
+          text: `${activeLevel === lvl.id ? '🟢 ' : ''}${lvl.label}`,
+          callback_data: `set_thinking:${lvl.id}`
+        }
+      ]));
+
+      const thinkingMsg = `🧠 <b>Pilih Intensitas Penalaran (Thinking Mode):</b>\n\nMode aktif saat ini: <code>${activeLevel.toUpperCase()}</code>\n\n<i>Pilih tingkat intensitas penalaran AI untuk Master Agent di Telegram:</i>`;
+      await telegramSendMessage(botToken, senderId, thinkingMsg, { inline_keyboard: keyboardRows });
       return;
     }
 
@@ -785,8 +881,8 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
       const realActiveModel = activeTgCfg.selected_model || cfg.selectedModelChoice || cfg.model || "gemini-2.5-flash";
       const modelDisplay = activeTgCfg.auto_model ? `AUTO (${realActiveModel})` : realActiveModel;
       const agentDisplay = activeTgCfg.auto_agent ? `AUTO (${agents[0]?.name || 'Master Agent'})` : (agents.find(a => a.id === activeTgCfg.selected_agent)?.name || 'Master Agent');
-
-      const statusMsg = `📊 <b>Status Browser Agent:</b>\n\n• <b>Tab Aktif:</b> ${escapeHtml(activeTab?.title || 'None')}\n• <b>URL:</b> <code>${escapeHtml(activeTab?.url || '-')}</code>\n• <b>Model:</b> <code>${escapeHtml(modelDisplay)}</code>\n• <b>Agent:</b> <code>${escapeHtml(agentDisplay)}</code>\n• <b>Auto-Accept:</b> <code>${activeTgCfg.auto_accept ? 'ON (Otomatis)' : 'OFF (Safe Mode)'}</code>\n• <b>Latensi Engine:</b> <code>Real-Time (<100ms) 🟢</code>`;
+      const thinkingLevel = activeTgCfg.thinking_level || storageData.thinking_level || "high";
+      const statusMsg = `📊 <b>Status Browser Agent:</b>\n\n• <b>Tab Aktif:</b> ${escapeHtml(activeTab?.title || 'None')}\n• <b>URL:</b> <code>${escapeHtml(activeTab?.url || '-')}</code>\n• <b>Thinking Mode:</b> <code>${escapeHtml(thinkingLevel.toUpperCase())}</code>\n• <b>Model:</b> <code>${escapeHtml(modelDisplay)}</code>\n• <b>Agent:</b> <code>${escapeHtml(agentDisplay)}</code>\n• <b>Auto-Accept:</b> <code>${activeTgCfg.auto_accept ? 'ON (Otomatis)' : 'OFF (Safe Mode)'}</code>\n• <b>Latensi Engine:</b> <code>Real-Time (<100ms) 🟢</code>`;
       await telegramSendMessage(botToken, senderId, statusMsg);
       return;
     }
@@ -1698,6 +1794,44 @@ function parseChatCompletionResponse(rawText) {
   return null;
 }
 
+function getThinkingDirective(level) {
+  switch (level) {
+    case "low":
+      return `\n\n=== [AI THINKING LEVEL: LOW (Instan & Cepat — 0x Koreksi Diri)] ===
+- DILARANG membuat rantai penalaran panjang atau draf bertahap.
+- Langsung lakukan pattern-matching dan hasilkan jawaban linier tercepat, ringkas, akurat, dan to-the-point tanpa self-correction.`;
+    case "medium":
+      return `\n\n=== [AI THINKING LEVEL: MEDIUM (Standar — 1x Sanity Check)] ===
+- Buat draf penalaran singkat dan lakukan 1 kali verifikasi validitas logika sebelum menyimpulkan jawaban.
+- Perbaiki kesalahan logika sederhana jika ditemukan.`;
+    case "high":
+      return `\n\n=== [AI THINKING LEVEL: HIGH (Mendalam — Multi-Branch Tree-of-Thought)] ===
+- Eksplorasi 2-3 jalur penalaran paralel di dalam pikiran Anda.
+- Dekomposisi tugas ke langkah-langkah kerja terstruktur (Step 1, Step 2, dst.).
+- Uji kasus ekstrem (edge cases) dan verifikasi konvergensi hasil sebelum menyajikan jawaban terbaik.`;
+    case "xhigh":
+      return `\n\n=== [AI THINKING LEVEL: XHIGH (Kritik Diri Ketat — Adversarial Red-Teaming & Step Planning)] ===
+- 🧠 RENCANAKAN RANGKAIAN LANGKAH EKSEKUSI DETAIL: Petakan rencana kerja bertahap dan jalankan secara komprehensif.
+- 🛡️ Bertindaklah sebagai pengkritik paling tajam terhadap draf Anda sendiri (Devil's Advocate).
+- Cari minimal 3 potensi celah, bug, asumsi keliru, atau kontradiksi logis pada draf Anda, perbaiki seluruh kelemahan tersebut, lalu sajikan solusi yang kokoh tanpa celah.`;
+    case "extreme":
+    case "max":
+      return `\n\n=== [AI THINKING LEVEL: EXTREME 10x (MAXIMUM COGNITIVE CAPACITY & HYPER-DETAILED REASONING)] ===
+- 🧠 KERAHKAN KAPASITAS PENALARAN MAKSIMAL (10x LIPAT BERPIKIR SANGAT KERAS, TAJAM, & DETAIL).
+- 📋 DEKOMPOSISI RENCANA MULTI-LANGKAH MENYELURUH (MULTI-STAGE ACTION PLAN):
+  Sebelum mengeksekusi tindakan atau menyimpulkan jawaban, susun pemetaan rencana kerja granular (Step 1, Step 2, Step 3, dst.) yang komprehensif. Jika tugas rumit atau melibatkan banyak data, pecah menjadi sebanyak mungkin sub-langkah yang diperlukan tanpa memotong proses.
+- 🔬 FIRST PRINCIPLES & MULTI-HYPOTHESIS TREE-OF-THOUGHT:
+  Dekonstruksi setiap masalah dari hukum/prinsip paling dasar. Evaluasi minimal 3 hipotesis atau arsitektur solusi yang berbeda, bedah implikasi dan resiko setiap cabang, lalu pilih lintasan eksekusi yang paling sempurna.
+- 🛡️ ADVERSARIAL STRESS-TESTING & DEVIL'S ADVOCATE AUDIT:
+  Uji secara agresif setiap baris argumen, kode, atau query Anda. Cari potensi kegagalan sistem terburuk (worst-case failure modes), edge cases, race conditions, false assumptions, dan bias data. Lakukan backtracking dan perbaikan total seketika.
+- 📊 KEDALAMAN HASIL AKHIR SUPER MIKROSKOPIS (ULTRA-DEEP COMPREHENSIVE OUTPUT):
+  DILARANG membuat ringkasan dangkal atau melewatkan detail krusial. Sajikan analisis, kode, dan solusi dengan kedalaman mikroskopis mutlak, terstruktur, berbasis bukti empiris, dan siap dieksekusi 100%.`;
+    default:
+      return `\n\n=== [AI THINKING LEVEL: HIGH (Mendalam — Multi-Branch Tree-of-Thought)] ===
+- Eksplorasi alternatif solusi, uji edge cases, dan berikan penalaran terstruktur.`;
+  }
+}
+
 function getToolStepDescription(toolName, args) {
   if (toolName === "generate_image") return `Membuat gambar AI <code>${escapeHtml((args.prompt || '').slice(0, 45))}</code> via model Pengaturan...`;
   if (toolName === "send_file_to_telegram" || toolName === "telegram_send_file") return `Mengunggah & mengirim berkas <code>${escapeHtml(args.file_name || args.file_path || 'dokumen')}</code> ke Telegram...`;
@@ -1873,6 +2007,10 @@ MANDAT EKSEKUTIF UTAMA:
         systemInstruction += `• Skill: ${sk.name} - ${sk.description || ''}\n`;
       });
     }
+
+    // Inject Dynamic AI Cognitive / Thinking Level Directive (Low, Medium, High, Xhigh, Extreme)
+    const activeThinkingLevel = activeTgCfg.thinking_level || storageData.thinking_level || cfg.thinking_level || "high";
+    systemInstruction += getThinkingDirective(activeThinkingLevel);
 
     // 2. Retrieve dedicated Telegram session history
     const cache = storageData.chat_sessions_cache || {};

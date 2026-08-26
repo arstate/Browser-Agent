@@ -649,6 +649,112 @@ def delete_md_item(target_dir, item_id):
         log(f"Error deleting {item_id} in {target_dir}: {e}")
         return {"status": "error", "error": str(e)}
 
+def transcribe_audio_file(file_base64, mime_type="audio/ogg", api_key="", endpoint="", preset=""):
+    try:
+        if not file_base64:
+            return {"status": "error", "error": "No audio data provided"}
+
+        tmp_id = f"voice_{int(time.time() * 1000)}"
+        in_path = f"/tmp/{tmp_id}.ogg"
+        out_mp3_path = f"/tmp/{tmp_id}.mp3"
+
+        raw_bytes = base64.b64decode(file_base64)
+        with open(in_path, "wb") as f:
+            f.write(raw_bytes)
+
+        # Convert to MP3 using ffmpeg for maximum STT compatibility
+        has_mp3 = False
+        try:
+            conv = subprocess.run(["ffmpeg", "-i", in_path, "-vn", "-ar", "44100", "-ac", "1", "-b:a", "128k", out_mp3_path, "-y"], capture_output=True, timeout=10)
+            if conv.returncode == 0 and os.path.exists(out_mp3_path):
+                has_mp3 = True
+        except Exception as fe:
+            log(f"ffmpeg conversion notice: {fe}")
+
+        upload_path = out_mp3_path if has_mp3 else in_path
+        transcribed_text = ""
+
+        # Strategy 1: Google Gemini Multimodal Audio Transcription
+        if api_key and (api_key.startswith("AIza") or "generativelanguage" in endpoint or preset == "gemini" or preset == "9router"):
+            try:
+                gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+                with open(upload_path, "rb") as f_up:
+                    audio_b64 = base64.b64encode(f_up.read()).decode("utf-8")
+                
+                req_body = {
+                    "contents": [{
+                        "parts": [
+                            {
+                                "inline_data": {
+                                    "mime_type": "audio/mp3" if has_mp3 else "audio/ogg",
+                                    "data": audio_b64
+                                }
+                            },
+                            {
+                                "text": "Transkripsikan seluruh isi rekaman suara ini secara akurat dan tepat kata per kata ke dalam teks bahasa Indonesia/Inggris. HANYA berikan hasil transkripnya saja tanpa kata pembuka, penutup, atau tanda kutip."
+                            }
+                        ]
+                    }]
+                }
+                gem_req = urllib.request.Request(
+                    gemini_url,
+                    data=json.dumps(req_body).encode("utf-8"),
+                    headers={"Content-Type": "application/json"}
+                )
+                with urllib.request.urlopen(gem_req, timeout=30) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                    text_parts = resp_data.get("candidates", [])[0].get("content", {}).get("parts", [])
+                    transcribed_text = "".join(p.get("text", "") for p in text_parts).strip()
+            except Exception as ge:
+                log(f"Gemini audio transcription notice: {ge}")
+
+        # Strategy 2: OpenAI / Groq / OpenRouter / Custom Whisper Endpoint
+        if not transcribed_text and api_key:
+            stt_endpoint = ""
+            stt_model = "whisper-1"
+            if preset == "groq" or "api.groq.com" in endpoint:
+                stt_endpoint = "https://api.groq.com/openai/v1/audio/transcriptions"
+                stt_model = "whisper-large-v3-turbo"
+            elif "api.openai.com" in endpoint or preset == "openai":
+                stt_endpoint = "https://api.openai.com/v1/audio/transcriptions"
+                stt_model = "whisper-1"
+            elif endpoint:
+                base = endpoint.rstrip("/").replace("/chat/completions", "")
+                stt_endpoint = f"{base}/audio/transcriptions"
+                stt_model = "whisper-1"
+
+            if stt_endpoint:
+                try:
+                    curl_cmd = [
+                        "curl", "-s", "-X", "POST", stt_endpoint,
+                        "-H", f"Authorization: Bearer {api_key}",
+                        "-F", f"file=@{upload_path}",
+                        "-F", f"model={stt_model}"
+                    ]
+                    curl_res = subprocess.run(curl_cmd, capture_output=True, text=True, timeout=30)
+                    if curl_res.returncode == 0 and curl_res.stdout:
+                        res_json = json.loads(curl_res.stdout)
+                        if "text" in res_json:
+                            transcribed_text = res_json["text"].strip()
+                except Exception as oe:
+                    log(f"OpenAI/Whisper transcription notice: {oe}")
+
+        # Cleanup temp files
+        for p in [in_path, out_mp3_path]:
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                except Exception:
+                    pass
+
+        if transcribed_text:
+            return {"status": "ok", "text": transcribed_text}
+        else:
+            return {"status": "error", "error": "Gagal mentranskripsikan suara dengan API yang terkonfigurasi."}
+    except Exception as e:
+        log(f"Error in transcribe_audio_file: {e}")
+        return {"status": "error", "error": str(e)}
+
 def save_generated_image(image_id, image_data, prompt=""):
     try:
         os.makedirs(IMAGES_DIR, exist_ok=True)
@@ -3720,6 +3826,16 @@ def handle_local_rpc(msg):
                 return {"id": req_id, "status": "ok", "file_name": file_name, "raw_response": res.stdout[:100]}
         except Exception as e:
             return {"id": req_id, "status": "error", "error": str(e)}
+
+    elif action == "transcribe_audio":
+        file_base64 = msg.get("file_base64", "")
+        mime_type = msg.get("mime_type", "audio/ogg")
+        api_key = msg.get("api_key", "")
+        endpoint = msg.get("endpoint", "")
+        preset = msg.get("preset", "")
+        res = transcribe_audio_file(file_base64, mime_type, api_key, endpoint, preset)
+        res["id"] = req_id
+        return res
 
     elif action == "list_dir":
         path = os.path.expanduser(msg.get("path") or os.getcwd())
