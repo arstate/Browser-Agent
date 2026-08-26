@@ -158,7 +158,7 @@
 
       <!-- Sidebar Bottom: App Version (Frameless Clean Typography) -->
       <div class="sidebar-footer">
-        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.77</span>
+        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.78</span>
       </div>
     </aside>
 
@@ -1413,47 +1413,52 @@
         <div class="plugins-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; margin-top: 8px;">
           
           <!-- Plugin Card 1: Ponytail Context Trimmer & Token Optimizer -->
-          <div class="plugin-card bento-glass-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 250px; transition: all 0.2s ease;">
+          <div class="plugin-card bento-glass-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 260px; transition: all 0.25s ease; box-shadow: 0 8px 28px rgba(0,0,0,0.35);">
             <div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                  <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(236, 72, 153, 0.15); color: #ec4899; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(236, 72, 153, 0.3);">
-                    <!-- Ponytail / Scissor Optimizer Icon -->
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="6" cy="6" r="3"/>
-                      <circle cx="6" cy="18" r="3"/>
-                      <line x1="20" y1="4" x2="8.12" y2="15.88"/>
-                      <line x1="14.47" y1="14.48" x2="20" y2="20"/>
-                      <line x1="8.12" y1="8.12" x2="12" y2="12"/>
-                    </svg>
+                  <div style="width: 50px; height: 50px; border-radius: 16px; background: rgba(255, 255, 255, 0.04); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.12); overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.3); backdrop-filter: blur(10px); flex-shrink: 0;">
+                    <img src="icons/plugins/ponytail.png" width="38" height="38" alt="Ponytail" style="object-fit: contain; display: block; border-radius: 10px;">
                   </div>
                   <div>
-                    <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin: 0;">Ponytail</h3>
-                    <span style="font-size: 11px; color: #f472b6; font-weight: 600;">⚡ Smart Context Trimmer &amp; Token Saver</span>
+                    <h3 style="font-size: 16.5px; font-weight: 700; color: #fff; margin: 0; letter-spacing: -0.2px;">Ponytail</h3>
+                    <span style="font-size: 11px; color: #f472b6; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                      <span>⚡</span> Smart Context Trimmer &amp; Token Saver
+                    </span>
                   </div>
                 </div>
                 
-                <!-- Toggle Switch -->
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <input type="checkbox" id="plugin-ponytail-toggle" checked style="width: 18px; height: 18px; accent-color: #ec4899; cursor: pointer;">
-                </div>
+                <!-- Modern iOS / Bento Style Pill Slider Switch -->
+                <label class="custom-pill-switch" title="Aktifkan / Nonaktifkan Plugin Ponytail">
+                  <input type="checkbox" id="plugin-ponytail-toggle" checked>
+                  <span class="pill-switch-track"></span>
+                </label>
               </div>
 
-              <p style="font-size: 12.5px; color: #94a3b8; line-height: 1.5; margin: 0;">
+              <p style="font-size: 12.5px; color: #94a3b8; line-height: 1.55; margin: 0 0 14px 0;">
                 Memotong dan memadatkan konteks riwayat percakapan lama, membersihkan payload raw base64 raksasa dan snapshot DOM duplikat sebelum dikirim ke LLM. Menghemat hingga <b>70% konsumsi token</b> tanpa kehilangan esensi instruksi.
               </p>
 
-              <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
-                <span style="padding: 3px 8px; font-size: 10.5px; font-weight: 600; border-radius: 6px; background: rgba(236, 72, 153, 0.12); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.25);">Context Trimming</span>
-                <span style="padding: 3px 8px; font-size: 10.5px; font-weight: 600; border-radius: 6px; background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25);">DOM Pruner</span>
-                <span style="padding: 3px 8px; font-size: 10.5px; font-weight: 600; border-radius: 6px; background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.25);">Hemat 50-75% Token</span>
+              <!-- Full Rounded Liquid Glass Feature Pills -->
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="plugin-glass-pill" style="background: rgba(236, 72, 153, 0.12); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3);">
+                  <span style="font-size: 10px;">✂️</span> Context Trimming
+                </span>
+                <span class="plugin-glass-pill" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+                  <span style="font-size: 10px;">🌐</span> DOM Pruner
+                </span>
+                <span class="plugin-glass-pill" style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">
+                  <span style="font-size: 10px;">💰</span> Hemat 50–75% Token
+                </span>
               </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px; margin-top: 4px;">
-              <span id="plugin-ponytail-status-text" style="font-size: 11.5px; color: #4ade80; font-weight: 600;">● Aktif (Optimal)</span>
-              <button type="button" class="btn-secondary" id="btn-config-ponytail" style="padding: 7px 16px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 14px; margin-top: 6px;">
+              <span id="plugin-ponytail-status-text" style="font-size: 11.5px; color: #4ade80; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                ● Aktif (Optimal)
+              </span>
+              <button type="button" class="btn-secondary" id="btn-config-ponytail" style="padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.16); backdrop-filter: blur(14px); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="13.5" height="13.5" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 <span>Lihat Pengaturan &amp; Tools</span>
               </button>
             </div>
@@ -1803,79 +1808,79 @@
 
         <form id="form-ponytail-settings" style="padding: 16px 0 0 0;">
           <!-- Parameter Row 1: Max Recent Turns & Max Tool Chars -->
-          <div class="form-row-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+          <div class="form-row-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
             <div class="form-group" style="margin-bottom: 0;">
-              <label for="ponytail-max-turns" style="font-size: 12px; font-weight: 600; color: #e2e8f0; display: flex; justify-content: space-between;">
+              <label for="ponytail-max-turns" style="font-size: 12px; font-weight: 600; color: #e2e8f0; display: flex; justify-content: space-between; margin-bottom: 6px;">
                 <span>Batas Riwayat Utuh (Recent Turns)</span>
-                <span id="ponytail-max-turns-val" style="color: #f472b6; font-weight: 700;">6 Turns</span>
+                <span id="ponytail-max-turns-val" style="color: #CEF128; font-weight: 700;">6 Turns</span>
               </label>
-              <input type="number" id="ponytail-max-turns" min="2" max="30" value="6" style="width: 100%; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); color: #fff; font-size: 13px;">
-              <span style="font-size: 10.5px; color: #64748b; margin-top: 4px; display: block;">Jumlah pesan terbaru yang disimpan dengan resolusi penuh.</span>
+              <input type="number" id="ponytail-max-turns" min="2" max="30" value="6" style="width: 100%; padding: 10px 16px; border-radius: 9999px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.14); color: #fff; font-size: 13px; outline: none; backdrop-filter: blur(8px);">
+              <span style="font-size: 10.5px; color: #71717a; margin-top: 5px; display: block;">Jumlah pesan terbaru yang disimpan dengan resolusi penuh.</span>
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
-              <label for="ponytail-max-tool-chars" style="font-size: 12px; font-weight: 600; color: #e2e8f0; display: flex; justify-content: space-between;">
+              <label for="ponytail-max-tool-chars" style="font-size: 12px; font-weight: 600; color: #e2e8f0; display: flex; justify-content: space-between; margin-bottom: 6px;">
                 <span>Batas Output Tool Lama (Chars)</span>
-                <span id="ponytail-max-tool-chars-val" style="color: #60a5fa; font-weight: 700;">1200 Chars</span>
+                <span id="ponytail-max-tool-chars-val" style="color: #38bdf8; font-weight: 700;">1200 Chars</span>
               </label>
-              <input type="number" id="ponytail-max-tool-chars" min="300" max="10000" step="100" value="1200" style="width: 100%; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); color: #fff; font-size: 13px;">
-              <span style="font-size: 10.5px; color: #64748b; margin-top: 4px; display: block;">Karakter maksimum per output tool riwayat sebelum dipadatkan.</span>
+              <input type="number" id="ponytail-max-tool-chars" min="300" max="10000" step="100" value="1200" style="width: 100%; padding: 10px 16px; border-radius: 9999px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.14); color: #fff; font-size: 13px; outline: none; backdrop-filter: blur(8px);">
+              <span style="font-size: 10.5px; color: #71717a; margin-top: 5px; display: block;">Karakter maksimum per output tool riwayat sebelum dipadatkan.</span>
             </div>
           </div>
 
           <!-- Optimization Rules Toggles -->
-          <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px;">
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12.5px; color: #e2e8f0;">
-              <input type="checkbox" id="ponytail-opt-dom" checked style="accent-color: #ec4899; width: 16px; height: 16px;">
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 16px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: blur(10px);">
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12.5px; color: #e2e8f0;">
+              <input type="checkbox" id="ponytail-opt-dom" checked style="accent-color: #CEF128; width: 17px; height: 17px; cursor: pointer;">
               <span><b>Pangkas Duplikasi Pohon DOM:</b> Hapus snapshot DOM redundan dari langkah tool sebelumnya.</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12.5px; color: #e2e8f0;">
-              <input type="checkbox" id="ponytail-opt-base64" checked style="accent-color: #ec4899; width: 16px; height: 16px;">
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12.5px; color: #e2e8f0;">
+              <input type="checkbox" id="ponytail-opt-base64" checked style="accent-color: #CEF128; width: 17px; height: 17px; cursor: pointer;">
               <span><b>Bersihkan Payload Base64 Raksasa:</b> Ganti string base64 gambar lama di history dengan metadata ringkas.</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12.5px; color: #e2e8f0;">
-              <input type="checkbox" id="ponytail-opt-facts" checked style="accent-color: #ec4899; width: 16px; height: 16px;">
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12.5px; color: #e2e8f0;">
+              <input type="checkbox" id="ponytail-opt-facts" checked style="accent-color: #CEF128; width: 17px; height: 17px; cursor: pointer;">
               <span><b>Proteksi Memori Kognitif:</b> Jangan pernah memangkas System Prompt, Knowledge Graph, &amp; Aturan User.</span>
             </label>
           </div>
 
           <!-- Tool Registry Showcase Section -->
-          <div style="margin-bottom: 18px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span style="font-size: 12px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px;">🛠️ Tools yang Disediakan Plugin Ponytail:</span>
-              <span style="font-size: 10.5px; color: #4ade80; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.25); padding: 2px 6px; border-radius: 4px;">3 Tools Siap Pakai</span>
+              <span style="font-size: 10.5px; color: #CEF128; background: rgba(206, 241, 40, 0.12); border: 1px solid rgba(206, 241, 40, 0.3); padding: 3px 10px; border-radius: 9999px; font-weight: 700;">3 Tools Aktif</span>
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 8px;">
-              <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(8px);">
                 <div>
                   <code style="color: #f472b6; font-size: 12px; font-weight: 700;">ponytail_compress_history</code>
                   <p style="margin: 2px 0 0 0; font-size: 11px; color: #94a3b8;">Memadatkan riwayat chat panjang ke ringkasan semantik otomatis sebelum dikirim ke API model.</p>
                 </div>
-                <span style="font-size: 10px; color: #64748b; background: rgba(255,255,255,0.05); padding: 3px 6px; border-radius: 4px;">Auto-Hook</span>
+                <span style="font-size: 10px; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1);">Auto-Hook</span>
               </div>
 
-              <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(8px);">
                 <div>
-                  <code style="color: #60a5fa; font-size: 12px; font-weight: 700;">ponytail_prune_dom</code>
+                  <code style="color: #38bdf8; font-size: 12px; font-weight: 700;">ponytail_prune_dom</code>
                   <p style="margin: 2px 0 0 0; font-size: 11px; color: #94a3b8;">Menyaring accessibility tree berulang dari browser_snapshot untuk mencegah token overflow.</p>
                 </div>
-                <span style="font-size: 10px; color: #64748b; background: rgba(255,255,255,0.05); padding: 3px 6px; border-radius: 4px;">Auto-Filter</span>
+                <span style="font-size: 10px; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1);">Auto-Filter</span>
               </div>
 
-              <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(8px);">
                 <div>
                   <code style="color: #4ade80; font-size: 12px; font-weight: 700;">ponytail_token_meter</code>
                   <p style="margin: 2px 0 0 0; font-size: 11px; color: #94a3b8;">Menghitung jumlah token awal vs token hasil kompresi dan menampilkan estimasi efisiensi biaya.</p>
                 </div>
-                <span style="font-size: 10px; color: #64748b; background: rgba(255,255,255,0.05); padding: 3px 6px; border-radius: 4px;">Real-Time</span>
+                <span style="font-size: 10px; color: #4ade80; background: rgba(34, 197, 94, 0.12); padding: 3px 8px; border-radius: 9999px; border: 1px solid rgba(34, 197, 94, 0.25); font-weight: 600;">Real-Time</span>
               </div>
             </div>
           </div>
 
-          <div class="modal-footer-actions" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; margin-top: 6px;">
-            <button type="button" class="btn-modal-cancel" id="btn-cancel-ponytail-modal">Batal</button>
-            <button type="submit" class="btn-modal-save" id="btn-save-ponytail-modal" style="background: #ec4899; color: #fff;">Simpan Pengaturan Ponytail</button>
+          <div class="modal-footer-actions" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; margin-top: 6px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn-modal-cancel" id="btn-cancel-ponytail-modal" style="padding: 9px 20px; border-radius: 9999px; font-size: 12px; font-weight: 600;">Batal</button>
+            <button type="submit" class="btn-modal-save" id="btn-save-ponytail-modal" style="padding: 9px 22px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: #CEF128; color: #0E0E11; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(206, 241, 40, 0.35);">Simpan Pengaturan Ponytail</button>
           </div>
         </form>
       </div>

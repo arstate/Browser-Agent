@@ -3360,3 +3360,89 @@ body.graph-fullscreen-active {
 #telegram-logs-container::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* =========================================================================
+   Custom Capsule Pill Slider Switch (iOS / Bento Style)
+   ========================================================================= */
+.custom-pill-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.custom-pill-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.custom-pill-switch .pill-switch-track {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+}
+
+.custom-pill-switch .pill-switch-track:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.custom-pill-switch input:checked + .pill-switch-track {
+  background: #CEF128; /* Accent Lime Green matching reference image */
+  border-color: rgba(206, 241, 40, 0.8);
+  box-shadow: 0 0 14px rgba(206, 241, 40, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.custom-pill-switch input:checked + .pill-switch-track:before {
+  transform: translateX(22px);
+  background: #0E0E11; /* Dark contrasting thumb circle */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.custom-pill-switch:hover .pill-switch-track {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.custom-pill-switch input:checked:hover + .pill-switch-track {
+  box-shadow: 0 0 18px rgba(206, 241, 40, 0.6);
+}
+
+/* Plugin Glass Card & Rounded Elements */
+.plugin-glass-pill {
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+}
+
+.plugin-glass-pill:hover {
+  transform: translateY(-1px);
+}
+

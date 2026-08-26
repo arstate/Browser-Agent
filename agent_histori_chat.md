@@ -5194,6 +5194,29 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.77`, build `extension.crx` (694.5 KB).
 
+---
+
+### 🚀 Iterasi 454: Plugin Folder Icon Assets, Bento Capsule Pill Slider Switch & Full Rounded Liquid Glasses (v2.150.78)
+- **Kebutuhan Pengguna**:
+  - Menggunakan file `/home/arya/Downloads/logo-dark.png` sebagai ikon resmi plugin Ponytail dan menyimpannya di folder aset terorganisir `extension/icons/plugins/ponytail.png`.
+  - Mengganti checkbox centang konvensional menjadi **Bento Capsule Pill Slider Switch (iOS / Bento Style)** dengan thumb contrast gelap pada track lime-green saat ON dan track dark glass saat OFF.
+  - Mempercantik elemen UI (badge feature pills, modal inputs, button Lihat Pengaturan) dengan **Full Rounded Liquid Glasses** (`border-radius: 9999px`, `backdrop-filter: blur(12px)`).
+- **Akar Masalah & Arsitektur (Root Cause & Architecture)**:
+  - Checkbox bawaan browser tampak kaku dan kurang selaras dengan desain Bento Liquid Dark Glass.
+  - Aset ikon plugin sebelumnya masih menggunakan generic inline SVG dan belum memiliki folder modular khusus `/icons/plugins/`.
+- **Implementasi & Peningkatan Sistem**:
+  - **Modular Icon Folder Architecture**: Membuat direktori `extension/icons/plugins/` dan memindahkan `logo-dark.png` menjadi ikon beresolusi tinggi `ponytail.png` di dalam container glass dengan dynamic shadow.
+  - **Bento Capsule Pill Slider Switch**:
+    - Mengganti `<input type="checkbox">` biasa menjadi komponen custom `.custom-pill-switch` dengan `.pill-switch-track` oval capsule.
+    - Animasi transisi halus saat ON (track `#CEF128` lime green dengan dark contrast thumb `.pill-switch-track:before`) dan saat OFF (dark glass track dengan white thumb circle).
+  - **Full Rounded Liquid Glass Elements**:
+    - Mengubah feature tags (`Context Trimming`, `DOM Pruner`, `Hemat 50-75% Token`) menjadi `.plugin-glass-pill` kapsul bulat dengan glass blur.
+    - Mengubah tombol `Lihat Pengaturan & Tools` menjadi full rounded liquid glass button (`border-radius: 9999px; backdrop-filter: blur(14px)`).
+    - Memoles `#modal-plugin-ponytail` dengan input field full rounded, badge pills, dan primary action button beraksen lime `#CEF128`.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.78`, build `extension.crx` (696.8 KB).
+
 
 
 
