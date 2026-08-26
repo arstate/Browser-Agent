@@ -1821,16 +1821,48 @@ MANDAT EKSEKUTIF UTAMA:
     let liveStatusMsgId = null;
     let anyToolExecuted = false;
     const executedToolCalls = [];
-    let lastEditTimestamp = 0;
 
     const STEP_EMOJIS = ["⚡", "⚙️", "🔍", "📂", "✨", "🎯", "🚀", "💡"];
+    const ANIM_FRAMES = [".", "..", "...", "...."];
+    let currentStepNumber = 1;
+    let currentEmoji = "⚡";
+    let currentBaseText = "Menganalisis instruksi & merancang eksekusi";
+    let animFrameIndex = 0;
+    let lastRenderedText = "";
+    let isAgentRunning = true;
 
-    // Send initial status message (Smooth clean animated Step 1 without /5 fraction)
+    // Helper to render and edit live status smoothly with animated loading dots
+    async function renderLiveStatus(force = false) {
+      if (!liveStatusMsgId || !isAgentRunning) return;
+      const cleanBase = currentBaseText.replace(/\.+$/, '').trim();
+      const dotFrame = ANIM_FRAMES[animFrameIndex % ANIM_FRAMES.length];
+      const textToRender = `${currentEmoji} <b>[Langkah ${currentStepNumber}] Master Agent:</b> ${cleanBase}${dotFrame}`;
+      
+      if (textToRender !== lastRenderedText || force) {
+        lastRenderedText = textToRender;
+        await telegramEditMessageText(botToken, senderId, liveStatusMsgId, textToRender).catch(() => {});
+      }
+    }
+
+    // Send initial status message
     const initialStatus = await telegramSendMessage(botToken, senderId, `⚡ <b>[Langkah 1] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
     if (initialStatus && initialStatus.result && initialStatus.result.message_id) {
       liveStatusMsgId = initialStatus.result.message_id;
-      lastEditTimestamp = Date.now();
+      lastRenderedText = `⚡ <b>[Langkah 1] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`;
     }
+
+    // Continuous smooth animation ticker (every 1200ms)
+    const statusAnimTimer = setInterval(() => {
+      if (!isAgentRunning) {
+        clearInterval(statusAnimTimer);
+        return;
+      }
+      animFrameIndex++;
+      renderLiveStatus();
+      if (animFrameIndex % 3 === 0) {
+        telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
+      }
+    }, 1200);
 
     // Multi-turn Autonomous Agent Loop
     while (stepCount < maxSteps) {
@@ -1894,16 +1926,13 @@ MANDAT EKSEKUTIF UTAMA:
           });
 
           const stepDesc = getToolStepDescription(tName, tArgs);
-          const currentEmoji = STEP_EMOJIS[(stepCount) % STEP_EMOJIS.length];
+          currentStepNumber = stepCount + 1;
+          currentEmoji = STEP_EMOJIS[stepCount % STEP_EMOJIS.length];
+          currentBaseText = stepDesc.replace(/\.+$/, '').trim();
+          animFrameIndex = 0;
 
-          // Smooth debounced status update to prevent screen flickering (anti jedug-jedug)
-          if (liveStatusMsgId) {
-            const now = Date.now();
-            if (now - lastEditTimestamp > 800) {
-              await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `${currentEmoji} <b>[Langkah ${stepCount + 1}] Master Agent:</b> ${stepDesc}`).catch(() => {});
-              lastEditTimestamp = Date.now();
-            }
-          }
+          // Immediate render on new step
+          await renderLiveStatus(true);
 
           const toolResult = await executeBackgroundTool(tName, tArgs, senderId, botToken);
 
@@ -1923,6 +1952,10 @@ MANDAT EKSEKUTIF UTAMA:
 
     // If tools were executed but final text is empty, run one synthesis turn to generate the final report
     if (!finalResponseText && anyToolExecuted) {
+      currentBaseText = "Menyusun laporan akhir eksekusi";
+      currentEmoji = "✨";
+      animFrameIndex = 0;
+      await renderLiveStatus(true);
       telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
       try {
         const synthRes = await fetch(endpoint, {
@@ -1944,6 +1977,10 @@ MANDAT EKSEKUTIF UTAMA:
         finalResponseText = synthObj?.choices?.[0]?.message?.content || "";
       } catch (se) {}
     }
+
+    // Stop continuous animation ticker
+    isAgentRunning = false;
+    clearInterval(statusAnimTimer);
 
     if (!finalResponseText) {
       finalResponseText = "✅ Tugas agent telah selesai dijalankan di browser.";
@@ -2005,6 +2042,8 @@ MANDAT EKSEKUTIF UTAMA:
     // 4. Send final response to Telegram
     await telegramSendMessage(botToken, senderId, finalResponseText);
   } catch (err) {
+    isAgentRunning = false;
+    if (typeof statusAnimTimer !== 'undefined') clearInterval(statusAnimTimer);
     await telegramSendMessage(botToken, senderId, `⚠️ Gagal memproses instruksi: ${err.message}`);
   }
 }

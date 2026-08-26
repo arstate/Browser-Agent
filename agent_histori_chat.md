@@ -5013,6 +5013,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.67`, build `extension.crx` (680.8 KB).
 
+---
+
+### 🚀 Iterasi 444: Real-Time Dynamic Loading Dots Ticker for Telegram Status (v2.150.68)
+- **Kebutuhan Pengguna**:
+  - Menambahkan animasi teks loading real-time (dot animation `.` $\to$ `..` $\to$ `...` $\to$ `....`) di akhir teks status langkah eksekusi Master Agent di Telegram secara terus-menerus meskipun masih berada di langkah/step yang sama.
+- **Akar Masalah (Root Cause)**:
+  - Sebelumnya pembaruan status hanya terjadi saat perpindahan tool call atau langkah baru. Saat model berpikir (menunggu API) atau menjalankan tugas terminal yang lama, teks status tampak statis dengan titik `...` yang tidak bergerak.
+- **Implementasi & Peningkatan Sistem**:
+  - **Continuous 1200ms Animated Ticker**: Menambahkan timer interval background pada [background.js](file:///home/arya/browser-agent/extension/background.js) (`statusAnimTimer`) yang memutar frame titik secara dinamis (`ANIM_FRAMES = [".", "..", "...", "...."]`) setiap 1.2 detik.
+  - **Layout Height Invariance**: Panjang string hanya bertambah/berkurang 1-3 karakter tanpa line-break baru sehingga tidak menimbulkan layout bouncing ("anti jedug-jedug").
+  - **Synchronized Heartbeat & Typing Action**: Setiap 3 putaran (3.6s), bot otomatis mengirimkan action `typing` agar status live di aplikasi Telegram pengguna tetap aktif.
+  - **Clean Termination**: Saat agen selesai, ticker otomatis di-clear dan status diubah seketika menjadi `✅ [Selesai] Master Agent: Instruksi berhasil dieksekusi!`.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.68`, build `extension.crx` (680.9 KB).
+
 
 
 
