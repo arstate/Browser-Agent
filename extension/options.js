@@ -3062,11 +3062,8 @@ function renderPersistentBrain(searchQuery = "") {
 
   // Helper for trash delete button
   const makeDeleteBtn = (type, id, title = "Hapus") => `
-    <button type="button" class="brain-delete-btn btn-delete-brain-item" data-type="${escapeHtml(type)}" data-id="${escapeHtml(id)}" title="${escapeHtml(title)}">
-      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"></polyline>
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-      </svg>
+    <button type="button" class="btn-item-del btn-delete-brain-item" data-type="${escapeHtml(type)}" data-id="${escapeHtml(id)}" title="${escapeHtml(title)}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
     </button>
   `;
 
@@ -3081,32 +3078,23 @@ function renderPersistentBrain(searchQuery = "") {
     }
     items.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'brain-card';
+      card.className = 'item-card';
       const isAI = item.source === 'autonomous_ai';
       card.innerHTML = `
-        <div class="brain-card-header">
-          <div class="brain-badge-group">
-            <span class="brain-badge category">${escapeHtml((item.category || 'fact').toUpperCase())}</span>
-            <span class="brain-badge ${isAI ? 'autonomous' : 'user-direct'}">
-              ${isAI ? `
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>
-                Autonomous AI
-              ` : `
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                User Direct
-              `}
-            </span>
+        <div class="item-card-header">
+          <div class="item-title-group">
+            <div class="item-card-title">
+              <span>🧠 ${escapeHtml((item.category || 'Memory').toUpperCase())}</span>
+              <span class="badge-source ${isAI ? 'badge-ai-evolved' : 'badge-user-custom'}">${isAI ? '🤖 Autonomous AI' : '👤 User Direct'}</span>
+            </div>
+            <span class="tag-pill memory-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
+        </div>
+        <p class="item-card-desc">${item.reason ? `Alasan: ${escapeHtml(item.reason)}` : 'Tercatat dalam memori permanen.'}</p>
+        <div class="item-code-preview">${escapeHtml(item.content)}</div>
+        <div class="item-card-actions">
+          <span style="font-size: 11px; color: #64748B; font-family: monospace;">${item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : 'Persistent Fact'}</span>
           ${makeDeleteBtn("memory", item.id, "Hapus Memory")}
-        </div>
-        <div class="brain-card-body">
-          <div class="brain-card-main">${escapeHtml(item.content)}</div>
-        </div>
-        <div class="brain-card-footer">
-          <div class="brain-card-reason" style="border: none; padding: 0; margin: 0;">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>${item.reason ? `Alasan: ${escapeHtml(item.reason)}` : 'Tercatat di persistent memory'}</span>
-          </div>
         </div>
       `;
       container.appendChild(card);
@@ -3122,25 +3110,22 @@ function renderPersistentBrain(searchQuery = "") {
     }
     items.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'brain-card';
+      card.className = 'item-card';
       card.innerHTML = `
-        <div class="brain-card-header">
-          <span class="brain-badge" style="background: rgba(167, 139, 250, 0.12); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.28);">
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            EXPERIENCE LEDGER
-          </span>
-          ${makeDeleteBtn("experience", item.id, "Hapus Pengalaman")}
-        </div>
-        <div class="brain-card-body">
-          <div class="brain-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
-          <div class="brain-exp-markdown">${escapeHtml(item.distilled_markdown)}</div>
-        </div>
-        <div class="brain-card-footer">
-          <div class="brain-card-reason" style="border: none; padding: 0; margin: 0; flex: 1;">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>${item.created_at ? new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'Experience Ledger'}</span>
+        <div class="item-card-header">
+          <div class="item-title-group">
+            <div class="item-card-title">
+              <span>📖 ${escapeHtml(item.title)}</span>
+              <span class="badge-source badge-ai-refined">📖 EXPERIENCE</span>
+            </div>
+            <span class="tag-pill model-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
-          <span class="brain-card-id" title="${escapeHtml(item.id)}">${escapeHtml(item.id)}</span>
+        </div>
+        <p class="item-card-desc">Distilasi sesi dan pembelajaran eksekusi otomatis.</p>
+        <div class="item-code-preview">${escapeHtml(item.distilled_markdown)}</div>
+        <div class="item-card-actions">
+          <span style="font-size: 11px; color: #64748B; font-family: monospace;">${item.created_at ? new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'Experience Ledger'}</span>
+          ${makeDeleteBtn("experience", item.id, "Hapus Pengalaman")}
         </div>
       `;
       container.appendChild(card);
@@ -3156,30 +3141,22 @@ function renderPersistentBrain(searchQuery = "") {
     }
     items.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'brain-card';
-      card.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+      card.className = 'item-card';
       card.innerHTML = `
-        <div class="brain-card-header">
-          <span class="brain-badge anti-pattern">
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            ${escapeHtml(item.target_domain || 'GENERAL')}
-          </span>
+        <div class="item-card-header">
+          <div class="item-title-group">
+            <div class="item-card-title">
+              <span>🛡️ ${escapeHtml(item.target_domain || 'GENERAL')}</span>
+              <span class="badge-source badge-ai-evolved" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.12);">🛡️ ANTI-PATTERN</span>
+            </div>
+            <span class="tag-pill memory-tag"><code>${escapeHtml(item.id)}</code></span>
+          </div>
+        </div>
+        <p class="item-card-desc"><strong style="color: #f87171;">Gejala:</strong> ${escapeHtml(item.mistake_description)}</p>
+        <div class="item-code-preview"># Solusi Permanen (Winning Fix):\n${escapeHtml(item.winning_fix)}\n\n# Aturan Pencegahan:\n${escapeHtml(item.prevention_rule)}</div>
+        <div class="item-card-actions">
+          <span style="font-size: 11px; color: #64748B; font-family: monospace;">Rule Guard</span>
           ${makeDeleteBtn("anti_pattern", item.id, "Hapus Anti-Pattern")}
-        </div>
-        <div class="brain-card-body">
-          <div class="brain-ap-problem">
-            <div style="font-size: 10px; text-transform: uppercase; color: #f87171; font-weight: 700; margin-bottom: 2px;">Penyebab / Gejala:</div>
-            ${escapeHtml(item.mistake_description)}
-          </div>
-          <div class="brain-ap-solution">
-            <div style="font-size: 10px; text-transform: uppercase; color: #4ade80; font-weight: 700; margin-bottom: 2px;">Solusi Permanen (Winning Fix):</div>
-            ${escapeHtml(item.winning_fix)}
-          </div>
-        </div>
-        <div class="brain-card-footer">
-          <div class="brain-card-reason" style="font-style: normal; color: #94a3b8; border: none; padding: 0; margin: 0;">
-            <span style="font-weight: 600; color: #cbd5e1;">Aturan:</span> <span>${escapeHtml(item.prevention_rule)}</span>
-          </div>
         </div>
       `;
       container.appendChild(card);
@@ -3195,32 +3172,22 @@ function renderPersistentBrain(searchQuery = "") {
     }
     skills.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'brain-card';
-      card.style.borderColor = 'rgba(52, 211, 153, 0.3)';
+      card.className = 'item-card';
       card.innerHTML = `
-        <div class="brain-card-header">
-          <div class="brain-badge-group">
-            <span class="brain-badge skill">
-              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              SKILL ${escapeHtml(item.version || 'v1.0.0')}
-            </span>
-            <span class="brain-badge autonomous">
-              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg>
-              Autonomous AI
-            </span>
+        <div class="item-card-header">
+          <div class="item-title-group">
+            <div class="item-card-title">
+              <span>⚡ ${escapeHtml(item.name)}</span>
+              <span class="badge-source badge-ai-evolved">🤖 Autonomous AI</span>
+            </div>
+            <span class="tag-pill skill-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
+        </div>
+        <p class="item-card-desc">${escapeHtml(item.description || 'Autonomous Skill SOP terdistilasi.')}</p>
+        <div class="item-code-preview">${escapeHtml(item.workflow_markdown || '')}</div>
+        <div class="item-card-actions">
+          <span style="font-size: 11px; color: #64748B; font-family: monospace;">Skill ${escapeHtml(item.version || 'v1.0.0')}</span>
           ${makeDeleteBtn("skill", item.id, "Hapus Skill")}
-        </div>
-        <div class="brain-card-body">
-          <div class="brain-card-title">${escapeHtml(item.name)}</div>
-          <div class="brain-card-desc" title="${escapeHtml(item.description)}">${escapeHtml(item.description)}</div>
-        </div>
-        <div class="brain-card-footer">
-          <div class="brain-card-reason" style="border: none; padding: 0; margin: 0; flex: 1;">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span>Autonomous Skill</span>
-          </div>
-          <span class="brain-card-id" title="${escapeHtml(item.id)}">${escapeHtml(item.id)}</span>
         </div>
       `;
       container.appendChild(card);
@@ -3236,47 +3203,22 @@ function renderPersistentBrain(searchQuery = "") {
     }
     agents.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'brain-card';
-      card.style.borderColor = 'rgba(168, 85, 247, 0.3)';
-      
-      const assigned = Array.isArray(item.assigned_skills) ? item.assigned_skills : [];
-      const allSkills = brainData.autonomous_skills || [];
-      const skillsHtml = assigned.length > 0
-        ? assigned.map(skId => {
-            const matchedSkill = allSkills.find(s => s.id === skId);
-            const label = matchedSkill ? matchedSkill.name : skId;
-            return `<span class="brain-badge skill" style="font-size: 10px; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> ${escapeHtml(label)}</span>`;
-          }).join(' ')
-        : '<span class="brain-badge skill" style="font-size: 10px; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Dedicated Skill</span>';
-
+      card.className = 'item-card';
       card.innerHTML = `
-        <div class="brain-card-header">
-          <div class="brain-badge-group">
-            <span class="brain-badge agent">
-              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              SPECIALIST AGENT
-            </span>
-            <span class="brain-badge autonomous">
-              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg>
-              Autonomous AI
-            </span>
+        <div class="item-card-header">
+          <div class="item-title-group">
+            <div class="item-card-title">
+              <span>👥 ${escapeHtml(item.name)}</span>
+              <span class="badge-source badge-ai-evolved">🤖 Specialist Agent</span>
+            </div>
+            <span class="tag-pill memory-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
+        </div>
+        <p class="item-card-desc">${escapeHtml(item.role_description || 'Autonomous Specialist Agent.')}</p>
+        <div class="item-code-preview">${escapeHtml(item.system_prompt || '')}</div>
+        <div class="item-card-actions">
+          <span style="font-size: 11px; color: #64748B; font-family: monospace;">Specialist Agent</span>
           ${makeDeleteBtn("agent", item.id, "Hapus Agent")}
-        </div>
-        <div class="brain-card-body">
-          <div class="brain-card-title">${escapeHtml(item.name)}</div>
-          <div class="brain-card-desc" title="${escapeHtml(item.role_description)}">${escapeHtml(item.role_description)}</div>
-          <div style="margin-top: 6px; padding: 6px 10px; background: rgba(0,0,0,0.25); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 10px; font-weight: 700; color: #a78bfa; text-transform: uppercase; margin-bottom: 4px;">🔗 Connected Skills:</div>
-            <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">${skillsHtml}</div>
-          </div>
-        </div>
-        <div class="brain-card-footer">
-          <div class="brain-card-reason" style="border: none; padding: 0; margin: 0; flex: 1;">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span>Autonomous Agent</span>
-          </div>
-          <span class="brain-card-id" title="${escapeHtml(item.id)}">${escapeHtml(item.id)}</span>
         </div>
       `;
       container.appendChild(card);
@@ -3297,32 +3239,22 @@ function renderPersistentBrain(searchQuery = "") {
     }
     items.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'brain-card';
-      card.style.borderColor = 'rgba(251, 191, 36, 0.25)';
+      card.className = 'item-card';
       card.innerHTML = `
-        <div class="brain-card-header">
-          <div class="brain-badge-group">
-            <span class="brain-badge" style="background: rgba(251, 191, 36, 0.12); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.28);">
-              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-              TRAINING CORPUS
-            </span>
-            <span class="brain-badge" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.28);">
-              Saved ~${item.token_saved_estimate || 0} tokens
-            </span>
+        <div class="item-card-header">
+          <div class="item-title-group">
+            <div class="item-card-title">
+              <span>🎯 ${escapeHtml(item.title)}</span>
+              <span class="badge-source badge-ai-refined">Saved ~${item.token_saved_estimate || 0} tokens</span>
+            </div>
+            <span class="tag-pill model-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
+        </div>
+        <p class="item-card-desc">Model Target: <code>${escapeHtml(item.model || 'auto')}</code></p>
+        <div class="item-code-preview">${escapeHtml(item.distilled_points_md)}</div>
+        <div class="item-card-actions">
+          <span style="font-size: 11px; color: #64748B; font-family: monospace;">Training Corpus</span>
           ${makeDeleteBtn("training", item.id, "Hapus Data Training")}
-        </div>
-        <div class="brain-card-body">
-          <div class="brain-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
-          <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Model: <code>${escapeHtml(item.model || 'Unknown')}</code></div>
-          <div class="brain-exp-markdown">${escapeHtml(item.distilled_points_md)}</div>
-        </div>
-        <div class="brain-card-footer">
-          <div class="brain-card-reason" style="border: none; padding: 0; margin: 0; flex: 1;">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-            <span>Saved ~${item.token_saved_estimate || 0} tokens</span>
-          </div>
-          <span class="brain-card-id" title="${escapeHtml(item.id)}">${escapeHtml(item.id)}</span>
         </div>
       `;
       container.appendChild(card);
@@ -3340,33 +3272,24 @@ function renderPersistentBrain(searchQuery = "") {
     }
     items.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'brain-card';
+      card.className = 'item-card';
       const isNeg = item.negative_constraint === 1;
       const liveC = item.decayed_confidence !== undefined ? item.decayed_confidence : item.confidence;
-      card.style.borderColor = isNeg ? 'rgba(239, 68, 68, 0.35)' : 'rgba(6, 182, 212, 0.35)';
       card.innerHTML = `
-        <div class="brain-card-header">
-          <div class="brain-badge-group">
-            <span class="brain-badge" style="background: ${isNeg ? 'rgba(239, 68, 68, 0.12)' : 'rgba(6, 182, 212, 0.12)'}; color: ${isNeg ? '#ef4444' : '#06b6d4'}; border: 1px solid ${isNeg ? 'rgba(239, 68, 68, 0.28)' : 'rgba(6, 182, 212, 0.28)'};">
-              ${isNeg ? 'NEGATIVE' : 'EPISTEMIC'}
-            </span>
-            <span class="brain-badge" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.28);">
-              Confidence: ${(liveC * 100).toFixed(0)}%
-            </span>
+        <div class="item-card-header">
+          <div class="item-title-group">
+            <div class="item-card-title">
+              <span>🌐 ${escapeHtml(item.subject)}</span>
+              <span class="badge-source ${isNeg ? 'badge-ai-refined' : 'badge-ai-evolved'}" style="${isNeg ? 'color: #ef4444; border-color: rgba(239, 68, 68, 0.35);' : ''}">${isNeg ? 'NEGATIVE' : 'EPISTEMIC'}</span>
+            </div>
+            <span class="tag-pill model-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
+        </div>
+        <p class="item-card-desc">Confidence: ${(liveC * 100).toFixed(0)}% | Source: ${escapeHtml(item.source_kappa || 'user_chat')}</p>
+        <div class="item-code-preview">${escapeHtml(item.subject)} ──[${escapeHtml(item.predicate)}]──► ${escapeHtml(item.object)}</div>
+        <div class="item-card-actions">
+          <span style="font-size: 11px; color: #64748B; font-family: monospace;">Epistemic Graph</span>
           ${makeDeleteBtn("epistemic", item.id, "Hapus Triplet")}
-        </div>
-        <div class="brain-card-body" style="justify-content: center;">
-          <div style="font-size: 14px; font-weight: 700; color: #f1f5f9; line-height: 1.4; word-break: break-word;">
-            <span style="color: #67e8f9;">${escapeHtml(item.subject)}</span>
-            <span style="color: ${isNeg ? '#ef4444' : '#38bdf8'}; font-weight: 500; font-family: monospace; font-size: 12px; margin: 0 4px;">──[${escapeHtml(item.predicate)}]──►</span>
-            <span style="color: #a5f3fc;">${escapeHtml(item.object)}</span>
-          </div>
-        </div>
-        <div class="brain-card-footer">
-          <div class="brain-card-reason" style="border: none; padding: 0; margin: 0;">
-            <span>Source: <code>${escapeHtml(item.source_kappa || 'user_chat')}</code> | Tau: ${item.decay_tau || 2592000}s</span>
-          </div>
         </div>
       `;
       container.appendChild(card);

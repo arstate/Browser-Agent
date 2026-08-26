@@ -4369,6 +4369,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.24`, build `extension.crx` (480.0 KB).
 
+---
+
+### 🚀 Iterasi 401: Unified Item-Card Style for All Persistent Brain Cards (v2.150.25)
+- **Kebutuhan Pengguna**:
+  - Menyamakan style warna, kontainer, header, monospace tag pill, deskripsi, dark code preview container, dan action row seluruh kartu Persistent Brain (Experiences, Anti-Patterns, Autonomous Skills, Specialist Agents, Training Corpus, Epistemic Triplets) persis 100% seperti kartu SOP Skills/Agents (`.item-card`).
+- **Implementasi & Peningkatan UI**:
+  - **Penyelarasan Kontainer**: Menghapus seluruh inline `borderColor` berwarna neon mencolok pada kontainer kartu di [options.js](file:///home/arya/browser-agent/extension/options.js). Seluruh kartu Persistent Brain kini menggunakan `.item-card` dengan `background: var(--bg-card)`, `border: 1px solid var(--border-card)`, `border-radius: var(--radius-card)`, dan `height: 280px`.
+  - **Header & Tag Pill**: Menyusun header dengan `.item-title-group`, `.item-card-title`, badge sumber (`.badge-source`), dan monospace ID tag pill (`.tag-pill`).
+  - **Dark Neutral Preview Container**: Mengarahkan seluruh blok preview konten/markdown ke `.item-code-preview` (`background: #141416; border: 1px solid rgba(255, 255, 255, 0.05); font-family: 'JetBrains Mono'; font-size: 11px; color: #A1A1AA;`).
+  - **Footer & Action Row**: Menggunakan `.item-card-actions` dengan timestamp/label di kiri dan tombol hapus `.btn-item-del` di kanan.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.25`, build `extension.crx` (478.0 KB).
+
 
 
 
