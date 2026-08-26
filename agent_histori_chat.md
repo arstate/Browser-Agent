@@ -5029,6 +5029,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.68`, build `extension.crx` (680.9 KB).
 
+---
+
+### 🚀 Iterasi 445: Unified Configured API Image Generation for Telegram Bot & Master Agent (v2.150.69)
+- **Kebutuhan Pengguna**:
+  - Memastikan pembuatan gambar AI (`generate image`) di Telegram Bot dan Master Agent berjalan secara otomatis sesuai dengan pengaturan API dan Model yang disetting pengguna di menu Pengaturan Browser Agent (`Model Name Image Generation`, misal `ag/gemini-3.1-flash-image`, DALL-E 3, Flux, Imagen 3, dll).
+  - Hasil foto/gambar yang di-generate langsung dikirimkan ke chat Telegram pengguna secara instan dan rapi.
+- **Akar Masalah (Root Cause)**:
+  - Tool `generate_image` sebelumnya baru terdaftar di UI sidepanel, namun belum diekspos ke `BACKGROUND_AGENT_TOOLS` dan `executeBackgroundTool` pada Service Worker Telegram remote bot.
+- **Implementasi & Peningkatan Sistem**:
+  - **`generate_image` Background Tool Integration**: Menambahkan skema tool `generate_image` pada [background.js](file:///home/arya/browser-agent/extension/background.js) `BACKGROUND_AGENT_TOOLS`.
+  - **Dynamic Config Model & Endpoint Execution**: `executeBackgroundTool` membaca `cfg.imageModel` (default `ag/gemini-3.1-flash-image`), `cfg.endpoint`, dan `cfg.apiKey`. Mencoba endpoint OpenAI-compatible `/images/generations` terlebih dahulu, dengan fallback berkinerja tinggi ke Pollinations AI (Flux/SDXL).
+  - **Auto-Save & Direct Telegram Photo Transmission**: Gambar yang berhasil digenerate otomatis disimpan ke disk lokal melalui `save_generated_image` di [native_host.py](file:///home/arya/browser-agent/host/native_host.py), lalu diunggah dan dikirimkan langsung ke chat Telegram pengguna via `telegram_send_file` (`media_type: "photo"`).
+  - **Master Agent System Prompt Directive**: Membekali agen dengan mandat utama: jika pengguna meminta membuat/menggambar/men-generate gambar, wajib langsung memanggil tool `generate_image`.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.69`, build `extension.crx` (681.4 KB).
+
 
 
 

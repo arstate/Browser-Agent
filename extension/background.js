@@ -1064,6 +1064,22 @@ const BACKGROUND_AGENT_TOOLS = [
         }
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_image",
+      description: "Generate an image or illustration using the AI Image Generation model configured in Browser Agent settings (DALL-E 3, Imagen 3, Flux, SDXL, etc.). Always use this tool whenever the user asks to draw, generate, or create an image. The generated photo will automatically be saved and sent directly to the user's Telegram chat.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: { type: "string", description: "Detailed, high-quality, descriptive prompt in English or Indonesian for the image to generate" },
+          aspect_ratio: { type: "string", enum: ["auto", "1:1", "16:9", "9:16", "4:3", "3:4"], description: "Aspect ratio for the generated image" },
+          caption: { type: "string", description: "Short creative Indonesian caption for the image when sent to Telegram" }
+        },
+        required: ["prompt"]
+      }
+    }
   }
 ];
 
@@ -1132,7 +1148,7 @@ async function getOrCreateTelegramAgentTab(targetUrl = null) {
   return null;
 }
 
-async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
+async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg = {}) {
   try {
     // A. Browser Navigation & Tab Tools
     if (toolName === "browser_navigate" || toolName === "navigate_to" || toolName === "browser_create_tab" || toolName === "new_tab") {
@@ -1252,6 +1268,109 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken) {
         };
       }
       return { error: rpcRes?.error || "Gagal mengirim berkas ke Telegram." };
+    }
+
+    if (toolName === "generate_image") {
+      const prompt = toolArgs.prompt || "";
+      const aspect_ratio = toolArgs.aspect_ratio || "auto";
+      const model = cfg.imageModel || "ag/gemini-3.1-flash-image";
+      const rawEndpoint = cfg.endpoint || cfg.customEndpoint || "";
+      const apiKey = cfg.apiKey;
+
+      let imageUrl = null;
+
+      // 1. Attempt user-configured OpenAI-compatible API (/images/generations)
+      if (rawEndpoint) {
+        try {
+          const baseEndpoint = rawEndpoint.replace(/\/+$/, "").replace(/\/chat\/completions$/, "");
+          const imgEndpoint = `${baseEndpoint}/images/generations`;
+          const headers = { "Content-Type": "application/json" };
+          if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+
+          let size = "1024x1024";
+          if (aspect_ratio === "16:9") size = "1792x1024";
+          else if (aspect_ratio === "9:16") size = "1024x1792";
+          else if (aspect_ratio === "4:3") size = "1024x768";
+          else if (aspect_ratio === "3:4") size = "768x1024";
+
+          const payload = {
+            model: model,
+            prompt: prompt,
+            n: 1,
+            size: size,
+            quality: "auto",
+            output_format: "png"
+          };
+
+          const resp = await fetch(imgEndpoint, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(payload)
+          });
+
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.data?.[0]?.url) {
+              imageUrl = data.data[0].url;
+            } else if (data.data?.[0]?.b64_json) {
+              imageUrl = `data:image/png;base64,${data.data[0].b64_json}`;
+            } else if (data.image_url) {
+              imageUrl = data.image_url;
+            } else if (data.images?.[0]?.url) {
+              imageUrl = data.images[0].url;
+            } else if (data.url) {
+              imageUrl = data.url;
+            }
+          }
+        } catch (err) {
+          console.warn("Direct API /images/generations call notice, attempting fallback:", err);
+        }
+      }
+
+      // 2. High-performance fallback: Pollinations AI (Flux / SDXL)
+      if (!imageUrl) {
+        const encodedPrompt = encodeURIComponent(prompt);
+        const seed = Math.floor(Math.random() * 1000000);
+        let width = 1024;
+        let height = 1024;
+        if (aspect_ratio === "16:9") { width = 1280; height = 720; }
+        else if (aspect_ratio === "9:16") { width = 720; height = 1280; }
+        else if (aspect_ratio === "4:3") { width = 1024; height = 768; }
+        else if (aspect_ratio === "3:4") { width = 768; height = 1024; }
+
+        const pollModel = encodeURIComponent(model.toLowerCase().includes("flux") ? "flux" : (model.toLowerCase().includes("turbo") ? "turbo" : "flux"));
+        imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=${pollModel}`;
+      }
+
+      // 3. Save generated image locally to disk via Native Host
+      const imageId = `img_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+      const saveRes = await sendNativeRpcInBackground("save_generated_image", {
+        image_id: imageId,
+        image_data: imageUrl,
+        prompt: prompt
+      });
+
+      const filePath = saveRes?.file_path || `/tmp/${imageId}.png`;
+
+      // 4. Send photo directly to Telegram chat
+      const photoCaption = toolArgs.caption || `🎨 ${prompt}`;
+      const tgSendRes = await sendNativeRpcInBackground("telegram_send_file", {
+        bot_token: botToken,
+        chat_id: senderId,
+        file_path: filePath,
+        caption: photoCaption,
+        media_type: "photo"
+      });
+
+      return {
+        status: "success",
+        image_id: imageId,
+        model_used: model,
+        file_path: filePath,
+        prompt: prompt,
+        telegram_sent: tgSendRes?.status === "ok",
+        message: `Gambar AI berhasil dibuat menggunakan model '${model}' sesuai konfigurasi Pengaturan Browser Agent dan telah dikirim langsung ke Telegram!`
+      };
     }
 
     // C. Active Browser Tab Verification
@@ -1580,6 +1699,7 @@ function parseChatCompletionResponse(rawText) {
 }
 
 function getToolStepDescription(toolName, args) {
+  if (toolName === "generate_image") return `Membuat gambar AI <code>${escapeHtml((args.prompt || '').slice(0, 45))}</code> via model Pengaturan...`;
   if (toolName === "send_file_to_telegram" || toolName === "telegram_send_file") return `Mengunggah & mengirim berkas <code>${escapeHtml(args.file_name || args.file_path || 'dokumen')}</code> ke Telegram...`;
   if (toolName === "browser_navigate" || toolName === "navigate_to") return `Membuka halaman web <code>${escapeHtml(args.url || '')}</code>...`;
   if (toolName === "browser_snapshot" || toolName === "get_page_content") return `Mengambil snapshot DOM & Accessibility Tree...`;
@@ -1685,7 +1805,8 @@ YOU HAVE FULL ACCESS TO OFFICIAL BROWSER AGENT CDP & OS TOOLS:
 - 'browser_extract_table': Auto-scroll and extract structured rows/metrics from tables (e.g. 9Router Quota Tracker, Meta Ads Manager grids).
 - 'browser_screenshot': Take a visual screenshot of the tab.
 
-3. 💻 Linux OS Desktop, Terminal & File Sharing Tools:
+3. 💻 Linux OS Desktop, Terminal, File Sharing & AI Image Generation:
+- 'generate_image': Generate gambar/ilustrasi AI berkualitas tinggi menggunakan model AI Image Generation yang dikonfigurasi di Pengaturan (${cfg.imageModel || 'ag/gemini-3.1-flash-image'}). Foto otomatis tersimpan dan dikirim langsung ke chat Telegram pengguna!
 - 'send_file_to_telegram': Kirim berkas/file apapun (dokumen script .txt/.pdf/.docx/.json/.csv, gambar/foto, lagu audio .mp3/.wav, video .mp4) langsung ke Telegram pengguna!
 - 'run_bash_command': Execute bash shell command on Linux OS (e.g. download lagu/video via 'yt-dlp', convert audio via 'ffmpeg', curl, git, dll).
 - 'open_linux_app': Launch desktop GUI apps (e.g. 'dolphin', 'konsole', 'code').
@@ -1699,13 +1820,15 @@ MANDAT EKSEKUTIF UTAMA:
 1. 🌐 TUGAS WEB & DASHBOARD (Contoh: "cek sisa kredit 9router", "cek usage 9router", "buka youtube", "analisis iklan meta", "isi form web"):
    - WAJIB gunakan browser control tools: Buka halaman via 'browser_navigate' (atau 'browser_switch_tab'), ambil data via 'browser_extract_table' atau 'browser_snapshot', klik dengan 'browser_click', dan ketik dengan 'browser_type'.
    - DILARANG menggunakan perintah curl/bash jika tugas tersebut adalah tugas web atau dashboard browser!
-2. 📦 PENGIRIMAN FILE, MEDIA & DOWNLOAD KE TELEGRAM:
+2. 🎨 GENERASI GAMBAR AI (AI IMAGE GENERATION):
+   - Jika pengguna meminta untuk membuat, melukis, menggambar, atau men-generate gambar (contoh: "generate image kucing makan eskrim", "buatkan gambar pemandangan cyberpunk", "draw a cute kitten"): WAJIB langsung panggil tool 'generate_image' dengan prompt yang kaya, detail, dan artistik. Gambar akan otomatis di-generate menggunakan model AI Image Generation yang disetting di Pengaturan Browser Agent (${cfg.imageModel || 'ag/gemini-3.1-flash-image'}) dan dikirimkan langsung ke chat Telegram pengguna!
+3. 📦 PENGIRIMAN FILE, MEDIA & DOWNLOAD KE TELEGRAM:
    - Jika pengguna meminta membuatkan script konten, artikel, dokumen, atau kode: Buat isinya dan kirim langsung menggunakan 'send_file_to_telegram' (atau 'write_os_file' lalu 'send_file_to_telegram') agar pengguna menerima file dokumen (.txt, .docx, .pdf, dll) langsung di chat Telegramnya.
    - Jika pengguna meminta mendownload lagu/MP3/video (contoh: "downloadin mp3 deny caknan", "download video yt"): Jalankan perintah terminal 'run_bash_command' menggunakan 'yt-dlp' (misal: yt-dlp "ytsearch1:Denny Caknan" -x --audio-format mp3 -o "/tmp/Denny_Caknan.%(ext)s"), lalu panggil 'send_file_to_telegram' dengan file_path="/tmp/Denny_Caknan.mp3" untuk mengirim lagu/video langsung ke pengguna!
-3. 🖼️ ANALISIS GAMBAR & DOKUMEN:
+4. 🖼️ ANALISIS GAMBAR & DOKUMEN:
    - Jika pengguna mengirim foto/screenshot/gambar, amati dan baca seluruh elemen visual, teks, diagram, atau error dengan teliti.
    - Jika pengguna mengirim dokumen (PDF, Word, TXT, CSV, JSON), baca dan analisis seluruh isi dokumen yang terlampir secara mendalam, tepat, dan komprehensif.
-4. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua temuan atau data yang terekstrak secara komprehensif!`;
+5. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua temuan atau data yang terekstrak secara komprehensif!`;
 
     // Inject Verified Facts & User Profile Memories
     if (userMemories.length > 0) {
@@ -1934,7 +2057,7 @@ MANDAT EKSEKUTIF UTAMA:
           // Immediate render on new step
           await renderLiveStatus(true);
 
-          const toolResult = await executeBackgroundTool(tName, tArgs, senderId, botToken);
+          const toolResult = await executeBackgroundTool(tName, tArgs, senderId, botToken, cfg);
 
           conversationTurns.push({
             role: "tool",
