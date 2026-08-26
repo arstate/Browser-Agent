@@ -4268,6 +4268,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.16`, build `extension.crx` (480.1 KB).
 
+---
+
+### 🚀 Iterasi 393: Fix & Activate "Tampilan & UI" View Display (v2.150.17)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki tampilan tab **"Tampilan & UI"** agar kartu pengaturan UI (*Animasi Stickman Swarm, Floating Button Web, dan Dark Luxury Theme Aesthetics*) muncul penuh dan responsif saat tab navigasi diklik di Newtab maupun halaman Options.
+- **Implementasi & Peningkatan UI**:
+  - **Grid System CSS Support**: Menambahkan definisi class responsif `.bento-grid-2col` di [options.css](file:///home/arya/browser-agent/extension/options.css) untuk menampung kedua kartu preferensi UI berdampingan secara presisi.
+  - **Iframe & State Hydration**: Memastikan delegasi event dan `tabViews.ui` di [options.js](file:///home/arya/browser-agent/extension/options.js) langsung menampilkan container saat tab `ui` diaktifkan.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.17`, build `extension.crx` (480.1 KB).
+
 
 
 

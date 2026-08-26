@@ -469,6 +469,18 @@ body.options-body::before,
   width: 100%;
 }
 
+.bento-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 960px) {
+  .bento-grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Bento Card Design System */
 .bento-card {
   background: var(--bg-card);
