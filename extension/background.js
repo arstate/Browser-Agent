@@ -139,6 +139,20 @@ async function telegramSendPhoto(botToken, chatId, photoDataUrlOrBase64, caption
   }
 }
 
+async function telegramSendChatAction(botToken, chatId, action = "typing") {
+  if (!botToken || !chatId) return null;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendChatAction`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, action: action })
+    });
+    return await res.json();
+  } catch (e) {
+    return null;
+  }
+}
+
 function sendNativeRpcInBackground(action, payload = {}) {
   return new Promise((resolve) => {
     try {
@@ -387,21 +401,8 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
 
       await telegramSendMessage(botToken, fromId, `👉 <b>Anda Memilih Opsi ${optIdx + 1}:</b>\n<i>"${escapeHtml(selectedText)}"</i>\n\nMemulai eksekusi arahan...`);
 
-      chrome.runtime.sendMessage({
-        type: "TELEGRAM_PROMPT_EXECUTE",
-        text: selectedText,
-        senderId: fromId,
-        senderName: cb.from?.first_name || 'User',
-        botToken
-      }, async (res) => {
-        if (chrome.runtime.lastError || !res || res.status !== "handled_by_sidepanel") {
-          try {
-            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (tabs && tabs[0]) {
-              await chrome.sidePanel.open({ tabId: tabs[0].id }).catch(() => {});
-            }
-          } catch(e) {}
-        }
+      executePromptInBackgroundServiceWorker(selectedText, fromId, cb.from?.first_name || 'User', botToken, tgCfg).catch(err => {
+        console.error("Error executing clarification choice:", err);
       });
       return;
     }
@@ -494,8 +495,29 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
     }
 
     if (cmd === '/new') {
-      chrome.runtime.sendMessage({ type: "START_NEW_CHAT_DIRECT" }).catch(() => {});
-      await telegramSendMessage(botToken, senderId, `✨ <b>Sesi Percakapan Baru Dimulai!</b> Memori sementara telah di-reset.`);
+      const storageData = await chrome.storage.local.get(['chat_sessions_cache']);
+      const cache = storageData.chat_sessions_cache || {};
+      const sessId = `sess_tg_${senderId}`;
+      if (cache[sessId] && Array.isArray(cache[sessId].messages) && cache[sessId].messages.length > 0) {
+        const archivedId = `sess_tg_${senderId}_${Date.now()}`;
+        cache[archivedId] = {
+          ...cache[sessId],
+          id: archivedId,
+          title: `📱 Telegram: ${senderName} (${new Date().toLocaleDateString('id-ID')})`
+        };
+      }
+      cache[sessId] = {
+        id: sessId,
+        title: `📱 Telegram: ${senderName}`,
+        model: tgCfg.selected_model || "gemini-2.5-flash",
+        is_telegram: true,
+        created_at: Date.now(),
+        updated_at: Date.now(),
+        messages: []
+      };
+      await chrome.storage.local.set({ chat_sessions_cache: cache });
+      chrome.runtime.sendMessage({ type: "TELEGRAM_HISTORY_UPDATED" }).catch(() => {});
+      await telegramSendMessage(botToken, senderId, `✨ <b>Sesi Percakapan Telegram Baru Dimulai!</b>\nMemori riwayat percakapan telah di-reset.`);
       return;
     }
 
@@ -602,7 +624,7 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
     }
   }
 
-  // 3. User Prompt Execution -> Forward to Open Sidepanel / NewTab
+  // 3. User Prompt Execution -> Always Execute via Fast Independent Background Engine
   let effectiveText = text;
   const storageData = await chrome.storage.local.get(['telegram_active_clarification']);
   const clarState = storageData.telegram_active_clarification;
@@ -619,28 +641,23 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
   }
 
   const now = Date.now();
-  if (lastProcessedTelegramPrompt.text === effectiveText && (now - lastProcessedTelegramPrompt.time < 3000)) {
+  if (lastProcessedTelegramPrompt.text === effectiveText && (now - lastProcessedTelegramPrompt.time < 2000)) {
     return;
   }
   lastProcessedTelegramPrompt = { text: effectiveText, time: now };
 
-  chrome.runtime.sendMessage({
-    type: "TELEGRAM_PROMPT_EXECUTE",
-    text: effectiveText,
-    senderId,
-    senderName,
-    botToken
-  }, async (res) => {
-    if (chrome.runtime.lastError || !res || res.status !== "handled_by_sidepanel") {
-      // If sidepanel is closed or new tab is not open, execute AI directly in background service worker
-      await executePromptInBackgroundServiceWorker(effectiveText, senderId, senderName, botToken, tgCfg);
-    }
+  // Execute directly and independently in background
+  executePromptInBackgroundServiceWorker(effectiveText, senderId, senderName, botToken, tgCfg).catch(err => {
+    console.error("Error executing background prompt:", err);
   });
 }
 
-// Standalone Direct AI Processing in Background Service Worker
+// Standalone Direct AI Processing in Background Service Worker (Fast, Dedicated Session)
 async function executePromptInBackgroundServiceWorker(text, senderId, senderName, botToken, tgCfg) {
   try {
+    // 1. Send instant typing indicator so Telegram shows 'typing...' immediately
+    telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
+
     const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config', 'custom_agents', 'chat_sessions_cache']);
     const cfg = storageData.browser_agent_config || {};
     const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
@@ -655,13 +672,44 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
       return;
     }
 
+    // 2. Retrieve dedicated Telegram session history
+    const cache = storageData.chat_sessions_cache || {};
+    const sessId = `sess_tg_${senderId}`;
+    let tgSession = cache[sessId];
+    if (!tgSession) {
+      tgSession = {
+        id: sessId,
+        title: `📱 Telegram: ${senderName}`,
+        model: model,
+        is_telegram: true,
+        created_at: Date.now(),
+        updated_at: Date.now(),
+        messages: []
+      };
+    }
+
+    // Build context history (last 10 messages)
+    const history = Array.isArray(tgSession.messages) ? tgSession.messages.slice(-10) : [];
+    
     let responseText = "";
 
     if (preset === "gemini" || (!preset && !customEndpoint)) {
+      const contents = [];
+      for (const m of history) {
+        if (m.role === 'user' || m.role === 'assistant') {
+          contents.push({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content || '' }]
+          });
+        }
+      }
+      contents.push({
+        role: "user",
+        parts: [{ text: text }]
+      });
+
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const payload = {
-        contents: [{ role: "user", parts: [{ text: text }] }]
-      };
+      const payload = { contents };
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -684,12 +732,25 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
       const headers = { "Content-Type": "application/json" };
       if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
+      const messages = [
+        { role: "system", content: "You are Browser Agent AI assistant responding directly to the user via Telegram remote chat. Be helpful, concise, accurate, and format with clean markdown." }
+      ];
+      for (const m of history) {
+        if (m.role === 'user' || m.role === 'assistant') {
+          messages.push({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: m.content || ''
+          });
+        }
+      }
+      messages.push({ role: "user", content: text });
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers,
         body: JSON.stringify({
           model: model,
-          messages: [{ role: "user", content: text }]
+          messages
         })
       });
       const json = await res.json();
@@ -704,24 +765,21 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
       responseText = "⚠️ Tidak ada respons yang dihasilkan oleh model AI.";
     }
 
-    // Save conversation to chat sessions cache
-    const cache = storageData.chat_sessions_cache || {};
-    const sessId = 'sess_' + Date.now();
-    cache[sessId] = {
-      id: sessId,
-      title: text.slice(0, 40).trim(),
-      created_at: Date.now(),
-      updated_at: Date.now(),
-      messages: [
-        { role: 'user', content: text, timestamp: Date.now() },
-        { role: 'assistant', content: responseText, timestamp: Date.now() }
-      ]
-    };
+    // 3. Update dedicated Telegram session in cache
+    tgSession.updated_at = Date.now();
+    tgSession.model = model;
+    tgSession.messages.push({ role: 'user', content: text, timestamp: Date.now() });
+    tgSession.messages.push({ role: 'assistant', content: responseText, timestamp: Date.now() });
+    cache[sessId] = tgSession;
     await chrome.storage.local.set({ chat_sessions_cache: cache });
 
+    // Notify UI if history sidebar is open
+    chrome.runtime.sendMessage({ type: "TELEGRAM_HISTORY_UPDATED" }).catch(() => {});
+
+    // 4. Send formatted response to Telegram
     await telegramSendMessage(botToken, senderId, responseText);
   } catch (err) {
-    await telegramSendMessage(botToken, senderId, `⚠️ Gagal memproses instruksi di latar belakang: ${err.message}`);
+    await telegramSendMessage(botToken, senderId, `⚠️ Gagal memproses instruksi: ${err.message}`);
   }
 }
 

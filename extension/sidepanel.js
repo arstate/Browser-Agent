@@ -4441,21 +4441,9 @@ try {
       return true;
     }
 
-    if (msg.type === "TELEGRAM_PROMPT_EXECUTE") {
-      const { text, senderId, senderName, botToken } = msg;
-      if (text) {
-        activeTelegramSession = { senderId, senderName, botToken, statusMessageId: null };
-        updateTelegramLiveStatus(`⏳ <b>Browser Agent:</b> Memulai eksekusi instruksi...`).catch(() => {});
-        
-        hideClarificationDock();
-
-        if (chatInput) {
-          chatInput.value = text;
-          adjustChatInputHeight();
-          handleSendMessage();
-        }
-      }
-      sendResponse({ status: "handled_by_sidepanel" });
+    if (msg.type === "TELEGRAM_HISTORY_UPDATED") {
+      loadHistorySessions();
+      sendResponse({ status: "ok" });
       return true;
     }
 
@@ -9011,6 +8999,7 @@ async function loadHistoryList(searchQuery = "") {
       id: s.id,
       title: s.title,
       model: s.model,
+      is_telegram: s.is_telegram || String(s.id || '').startsWith('sess_tg_'),
       is_pinned: s.is_pinned ? 1 : 0,
       message_count: s.messages ? s.messages.length : 0,
       preview: s.messages && s.messages[0] ? (s.messages[0].content || "").slice(0, 120) : "",
@@ -9047,16 +9036,20 @@ async function loadHistoryList(searchQuery = "") {
   sessions.forEach(sess => {
     const isActive = sess.id === currentSessionId;
     const isPinned = !!sess.is_pinned;
+    const isTelegram = sess.is_telegram || String(sess.id || '').startsWith('sess_tg_');
     const timeStr = formatTimeAgo(sess.updated_at || sess.created_at);
+    const badgeHtml = isTelegram
+      ? `<span class="history-model-badge history-telegram-badge" style="background:rgba(0,136,204,0.18);color:#29b6f6;border:1px solid rgba(0,136,204,0.4);font-size:10px;padding:2px 6px;border-radius:6px;font-weight:600;">📱 Telegram</span>`
+      : `<span class="history-model-badge">${escapeHtml(sess.model || 'Model')}</span>`;
 
     const card = document.createElement('div');
-    card.className = `history-item-card ${isActive ? 'active-session' : ''} ${isPinned ? 'is-pinned' : ''}`;
+    card.className = `history-item-card ${isActive ? 'active-session' : ''} ${isPinned ? 'is-pinned' : ''} ${isTelegram ? 'is-telegram-session' : ''}`;
     card.setAttribute('data-session-id', sess.id);
     card.innerHTML = `
       <div class="history-item-content">
         <div class="history-item-header">
           <span class="history-item-title" title="${escapeHtml(sess.title || 'New Chat')}">${escapeHtml(sess.title || 'New Chat')}</span>
-          <span class="history-model-badge">${escapeHtml(sess.model || 'Model')}</span>
+          ${badgeHtml}
         </div>
         <div class="history-item-meta">
           <span>${timeStr}</span>

@@ -4693,6 +4693,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.47`, build `extension.crx` (677.9 KB).
 
+---
+
+### 🚀 Iterasi 424: Dedicated Telegram Session Isolation & Ultra-Fast Real-Time Background Execution (v2.150.48)
+- **Kebutuhan Pengguna**:
+  - Memisahkan riwayat percakapan Telegram bot agar tidak bercampur atau menimpa sesi chat aktif yang sedang dibuka di browser agent.
+  - Memastikan bot berjalan 100% di latar belakang (background) secara mandiri tanpa mengganggu tab aktif.
+  - Mempercepat latensi respons chat Telegram ke level real-time (sub-detik) dan memberikan indikator pengetikan (*typing status*) instan.
+- **Akar Masalah (Root Cause)**:
+  - Sebelumnya saat prompt Telegram masuk, `background.js` mengirim pesan `TELEGRAM_PROMPT_EXECUTE` ke `sidepanel.js` yang membajak form input aktif dan menjalankan *full agent loop* (perencanaan DOM, web analysis, dll.) sehingga merespons lambat (10-30 detik) dan mengacaukan chat aktif pengguna di browser.
+- **Implementasi & Peningkatan Sistem**:
+  - **Dedicated Telegram Session (`sess_tg_<senderId>`)**: Seluruh percakapan via Telegram disimpan dalam sesi terpisah dengan tag identitas khusus `is_telegram: true` dan badge `📱 Telegram` di daftar riwayat sidebar. Percakapan di browser tidak akan pernah terganggu atau tertimpa.
+  - **Instant `sendChatAction` Typing Feedback**: Begitu prompt diterima dari Telegram, Service Worker langsung mengirim sinyal `typing` ke Telegram API dalam waktu < 30ms sehingga status "sedang mengetik..." muncul secara instan.
+  - **Direct Background LLM Execution**: Memproses prompt langsung di Service Worker menggunakan multi-turn conversation memory (10 pesan terakhir) dengan API Gemini / OpenAI / Groq / OpenRouter / Ollama sehingga jawaban terkirim kembali ke Telegram dalam hitungan detik.
+  - **Live Sidebar History Sync**: Mengirim event `TELEGRAM_HISTORY_UPDATED` untuk memperbarui list riwayat percakapan secara halus jika pengguna sedang membuka panel sidebar.
+  - **Telegram-Specific `/new` Command**: Perintah `/new` di Telegram mereset memori sesi Telegram tanpa menghapus riwayat percakapan browser yang lain.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.48`, build `extension.crx` (678.6 KB).
+
 
 
 
