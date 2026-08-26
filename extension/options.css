@@ -265,6 +265,14 @@ body.options-body::before,
   text-align: left;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto !important;
+  user-select: none;
+}
+
+.sidebar-tab-btn *, .sidebar-accordion-header * {
+  pointer-events: none;
 }
 
 .sidebar-tab-btn:hover:not(.active) {

@@ -307,6 +307,9 @@ async function sendNativeRpc(action, params = {}, retryCount = 0) {
 // Initial Load & Config Management
 // =========================================================================
 async function init() {
+  // 1. Setup Event Listeners synchronously FIRST so all sidebar clicks & buttons work in 0ms!
+  setupEventListeners();
+
   try {
     const manifestVersion = chrome?.runtime?.getManifest?.()?.version;
     if (manifestVersion) {
@@ -316,12 +319,11 @@ async function init() {
   } catch (e) {}
 
   connectNativeHost();
-  await loadConfig();
-  // 1. Instant Cache Hydration: Render UI in 0ms without waiting for Native Host IPC
-  await hydrateFromLocalStorage();
-  setupEventListeners();
+  await loadConfig().catch(e => console.warn("Load config notice:", e));
+  // 2. Instant Cache Hydration: Render UI in 0ms without waiting for Native Host IPC
+  await hydrateFromLocalStorage().catch(e => console.warn("Hydrate notice:", e));
   checkPCBridgeStatus();
-  // 2. Non-blocking Background Sync with Native Host
+  // 3. Non-blocking Background Sync with Native Host
   loadAllData().catch(e => console.warn("Background sync notice:", e));
 }
 
@@ -2417,52 +2419,106 @@ function setupEventListeners() {
   const brainAccordionGroup = document.getElementById('sidebar-brain-group');
   const brainAccordionSubmenu = document.getElementById('sidebar-brain-submenu');
 
-  brainAccordionHeader?.addEventListener('click', () => {
+  brainAccordionHeader?.addEventListener('click', (e) => {
+    e.preventDefault();
     const willOpen = !brainAccordionGroup?.classList.contains('is-open');
     brainAccordionGroup?.classList.toggle('is-open', willOpen);
     brainAccordionSubmenu?.classList.toggle('is-open', willOpen);
   });
 
-  // Navigation Tabs Switching (with Scroll Target support)
-  navTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
+  // Global Tab Switching Function (Zero-latency & 100% reliable)
+  window.switchOptionsTab = function(tabName, targetId = null) {
+    if (!tabName) return;
+
+    const allTabBtns = document.querySelectorAll('.sidebar-tab-btn[data-tab], .nav-tab[data-tab]');
+    allTabBtns.forEach(t => {
+      if (t.getAttribute('data-tab') === tabName) {
+        t.classList.add('active');
+      } else {
+        t.classList.remove('active');
+      }
+    });
+
+    const bGroup = document.getElementById('sidebar-brain-group');
+    const bSubmenu = document.getElementById('sidebar-brain-submenu');
+    const bHeader = document.getElementById('btn-toggle-brain-accordion');
+
+    const isBrainTab = ['agents', 'skills', 'memories', 'persistent-brain'].includes(tabName);
+    if (isBrainTab) {
+      bGroup?.classList.add('is-open');
+      bSubmenu?.classList.add('is-open');
+      bHeader?.classList.add('has-active-child');
+    } else {
+      bHeader?.classList.remove('has-active-child');
+    }
+
+    // Hide all options-view elements first
+    document.querySelectorAll('.options-view').forEach(view => {
+      view.style.display = 'none';
+    });
+
+    // Show the selected view by ID lookup
+    const targetView = document.getElementById(`tab-view-${tabName}`) || tabViews[tabName];
+    if (targetView) {
+      targetView.style.display = 'flex';
+    } else {
+      const fallbackView = document.getElementById('tab-view-ai');
+      if (fallbackView) fallbackView.style.display = 'flex';
+    }
+
+    if (targetId) {
+      setTimeout(() => {
+        document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  };
+
+  // Direct Tab Click Listeners
+  document.querySelectorAll('.sidebar-tab-btn[data-tab], .nav-tab[data-tab]').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      e.preventDefault();
       const tabName = tab.getAttribute('data-tab');
       const targetId = tab.getAttribute('data-target');
-
-      navTabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      const isBrainTab = ['agents', 'skills', 'memories', 'persistent-brain'].includes(tabName);
-      if (isBrainTab) {
-        brainAccordionGroup?.classList.add('is-open');
-        brainAccordionSubmenu?.classList.add('is-open');
-        brainAccordionHeader?.classList.add('has-active-child');
-      } else {
-        brainAccordionHeader?.classList.remove('has-active-child');
-      }
-
-      // Hide all options-view elements first
-      document.querySelectorAll('.options-view').forEach(view => {
-        view.style.display = 'none';
-      });
-
-      // Show the selected view by tabViews or direct ID lookup
-      const targetView = tabViews[tabName] || document.getElementById(`tab-view-${tabName}`);
-      if (targetView) {
-        targetView.style.display = 'flex';
-      }
-
-      if (targetId) {
-        setTimeout(() => {
-          document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 50);
-      }
+      window.switchOptionsTab(tabName, targetId);
     });
   });
 
+  // Delegated Click Fallback for dynamic / iframe / nested event contexts
+  document.addEventListener('click', (e) => {
+    const tabBtn = e.target.closest('.sidebar-tab-btn[data-tab], .nav-tab[data-tab]');
+    if (tabBtn) {
+      e.preventDefault();
+      const tabName = tabBtn.getAttribute('data-tab');
+      const targetId = tabBtn.getAttribute('data-target');
+      if (tabName) window.switchOptionsTab(tabName, targetId);
+      return;
+    }
+
+    const accordionBtn = e.target.closest('#btn-toggle-brain-accordion');
+    if (accordionBtn) {
+      e.preventDefault();
+      const bGroup = document.getElementById('sidebar-brain-group');
+      const bSubmenu = document.getElementById('sidebar-brain-submenu');
+      const willOpen = !bGroup?.classList.contains('is-open');
+      bGroup?.classList.toggle('is-open', willOpen);
+      bSubmenu?.classList.toggle('is-open', willOpen);
+      return;
+    }
+
+    const backBtn = e.target.closest('#btn-back-chat, #btn-sidebar-brand');
+    if (backBtn) {
+      e.preventDefault();
+      try {
+        window.parent.postMessage({ action: 'closeSettings' }, '*');
+      } catch (err) {}
+      if (window.history.length > 1) {
+        window.history.back();
+      }
+    }
+  });
+
   function activateTabByName(tabName) {
-    const tabBtn = document.querySelector(`.sidebar-tab-btn[data-tab="${tabName}"]`);
-    if (tabBtn) tabBtn.click();
+    window.switchOptionsTab(tabName);
   }
 
   if (window.location.hash) {

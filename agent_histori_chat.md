@@ -5374,6 +5374,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.87`, build `extension.crx` (838.6 KB).
 
+---
+
+### 🚀 Iterasi 464: Instant 0ms Sidebar Tab Switching & Document Click Delegation in Settings (v2.150.88)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug menu sidebar di halaman Pengaturan (`options.html`) yang tidak bisa diklik saat dibuka di iframe newtab maupun tab penuh.
+- **Implementasi & Peningkatan Sistem**:
+  - Di [options.js](file:///home/arya/browser-agent/extension/options.js):
+    - **Synchronous Init**: Memindahkan pemanggilan `setupEventListeners()` ke baris pertama fungsi `init()` agar seluruh tombol dan event listener terpasang instan (0ms) tanpa menunggu async storage atau Native Host IPC.
+    - **Global Tab Switching Function (`switchOptionsTab`)**: Membuat fungsi perpindahan tab yang robust dengan sinkronisasi kelas `.active`, pembukaan otomatis accordion Brain, dan visibilitas view instan.
+    - **Document Click Delegation**: Menambahkan event delegation di level `document` untuk menangkap seluruh klik pada `.sidebar-tab-btn[data-tab]`, accordion toggle, dan tombol kembali (`btn-back-chat`), sehingga klik tidak pernah terblokir oleh iframe atau dynamic rendering.
+  - Di [options.css](file:///home/arya/browser-agent/extension/options.css):
+    - Menambahkan `pointer-events: auto !important; position: relative; z-index: 10;` pada tombol sidebar dan `pointer-events: none` pada elemen anak (ikon, label, badge) untuk memastikan target klik selalu tepat pada tombol induk.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.88`, build `extension.crx` (839.2 KB).
+
 
 
 
