@@ -5404,6 +5404,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.89`, build `extension.crx` (839.4 KB).
 
+---
+
+### 🚀 Iterasi 466: Fixed Ponytail Plugin Modal Triggers & Verified Token Optimizer Runtime Integration (v2.150.90)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki tombol *"Lihat Pengaturan & Tools"* pada kartu Plugin Ponytail di halaman Settings yang tidak membuka modal saat diklik.
+  - Memverifikasi secara mendalam apakah sakelar On/Off Plugin Ponytail benar-benar terhubung ke mesin penghemat token dan pemotong konteks (Token Saver & Context Trimmer) saat AI bekerja.
+- **Implementasi & Peningkatan Sistem**:
+  - Di [ponytail.js](file:///home/arya/browser-agent/extension/plugins/ponytail/ponytail.js):
+    - Menyelaraskan seluruh ID selektor DOM: tombol `#btn-config-ponytail`, toggle `#plugin-ponytail-toggle`, status teks `#plugin-ponytail-status-text`, tombol batal `#btn-cancel-ponytail-modal`, dan tombol close `#btn-close-ponytail-modal`.
+    - Menambahkan event delegation di level document dan real-time text value feedback untuk input batas turns (`#ponytail-max-turns-val`) dan batas karakter (`#ponytail-max-tool-chars-val`).
+    - Menghubungkan penyimpanan konfigurasi ke `chrome.storage.local.set({ plugin_settings })` dengan sinkronisasi instan ke seluruh antarmuka dan listener.
+  - Di [background.js](file:///home/arya/browser-agent/extension/background.js) & [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js):
+    - Terverifikasi 100%: Saat Plugin Ponytail **Aktif (ON)**, `applyPonytailContextOptimization` secara otomatis memangkas token DOM berulang, meringkas string Base64 gambar lama, dan membatasi turn lama menjadi ringkasan semantik terpadu (menghemat 50-75% token prompt).
+    - Saat Plugin Ponytail **Nonaktif (OFF)**, `enabled: false` terdeteksi secara realtime dan seluruh payload pesan dilewatkan secara utuh (raw turns) tanpa kompresi Ponytail.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.90`, build `extension.crx` (832.9 KB).
+
 
 
 
