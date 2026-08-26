@@ -4597,6 +4597,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.41`, build `extension.crx` (669.7 KB).
 
+---
+
+### 🚀 Iterasi 418: Anti-Duplicate Polling & Concurrency Spam Elimination (v2.150.42)
+- **Kebutuhan Pengguna**:
+  - Mengatasi bug di mana chat yang dikirim dari Telegram masuk berulang-ulang (spamming) dan memicu banyak loop eksekusi simultan di Browser Agent.
+- **Akar Masalah (Root Cause)**:
+  1. `telegram_last_update_id` baru disimpan ke storage *setelah* `runAgentLoop` selesai (yang memakan waktu 10–30 detik), sehingga selama proses berlangsung poller lain atau poller tick berikutnya mengambil ulang update Telegram yang sama.
+  2. Terjadi persaingan antara poller `options.js` dan `sidepanel.js` karena masa sewa leader (lease) habis saat eksekusi async panjang berlangsung tanpa heartbeat aktif.
+  3. Belum adanya deduplication set ID update dan throttling pesan duplikat identik yang masuk dalam rentang waktu singkat.
+- **Implementasi & Peningkatan Sistem**:
+  - **Immediate Offset Advance (`telegram_last_update_id`)**: Segera setelah respons `getUpdates` diterima, `maxUpdateId` langsung dikalkulasi dan disimpan secara sinkron ke `chrome.storage.local` *sebelum* memproses pesan.
+  - **Active Lease Heartbeat (2000ms)**: Side Panel/New Tab poller memancarkan detak jantung setiap 2 detik agar lease lock tidak pernah kedaluwarsa selama tab aktif.
+  - **Poller Delegation & Mutual Arbitration**: Poller `options.js` secara otomatis standby (yield) jika mendeteksi Sidepanel/NewTab aktif melalui pesan `PING_SIDEPANEL_ALIVE`.
+  - **In-Memory & Storage Deduplication Set**: Menggunakan `processedTelegramUpdateIds = new Set()` untuk memfilter `update_id` yang pernah diproses.
+  - **Execution Concurrency Lock (`isExecuting` & Throttling)**: Memblokir duplicate trigger teks yang sama dalam 4 detik dan menolak eksekusi ganda saat agen sedang aktif bekerja.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.42`, build `extension.crx` (670.6 KB).
+
 
 
 

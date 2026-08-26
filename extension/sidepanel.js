@@ -3934,6 +3934,21 @@ async function telegramSendPhotoFromSidepanel(botToken, chatId, photoDataUrlOrBa
 // =========================================================================
 const sidepanelPollerInstanceId = 'sp_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
 let telegramRemoteDaemonStarted = false;
+const processedTelegramUpdateIds = new Set();
+let lastProcessedTelegramPrompt = { text: '', time: 0 };
+
+// Keep poller lease active continuously while this tab/panel is open
+setInterval(async () => {
+  try {
+    const storageData = await chrome.storage.local.get(['telegram_poller_lease']);
+    const lease = storageData.telegram_poller_lease;
+    if (lease && lease.id === sidepanelPollerInstanceId) {
+      await chrome.storage.local.set({
+        telegram_poller_lease: { id: sidepanelPollerInstanceId, time: Date.now() }
+      });
+    }
+  } catch (e) {}
+}, 2000);
 
 // Fetch Recent Sessions for Telegram History Command
 async function getTelegramRecentSessions() {
@@ -4314,6 +4329,18 @@ async function handleTelegramIncomingUpdateInSidepanel(update, tgCfg) {
   }
 
   // 3. User Prompt Execution (Direct Ingestion into Browser Agent)
+  const now = Date.now();
+  if (lastProcessedTelegramPrompt.text === text && (now - lastProcessedTelegramPrompt.time < 4000)) {
+    // Duplicate identical prompt within 4 seconds, ignore
+    return;
+  }
+  lastProcessedTelegramPrompt = { text, time: now };
+
+  if (isExecuting) {
+    await telegramSendMessageFromSidepanel(botToken, senderId, `⏳ <b>Browser Agent Sedang Bekerja:</b> Mohon tunggu hingga instruksi sebelumnya selesai dijalankan.`);
+    return;
+  }
+
   activeTelegramSession = { senderId, senderName, botToken, statusMessageId: null };
   updateTelegramLiveStatus(`⏳ <b>Browser Agent:</b> Memulai eksekusi instruksi...`).catch(() => {});
 
@@ -4360,7 +4387,7 @@ async function startTelegramPollingDaemonFromSidepanel() {
       const now = Date.now();
       const lease = storageData.telegram_poller_lease;
       const isLeader = (lease && lease.id === sidepanelPollerInstanceId);
-      const isExpired = (!lease || (now - (lease.time || 0) > 7000));
+      const isExpired = (!lease || (now - (lease.time || 0) > 8000));
 
       if (!isLeader && !isExpired) {
         // Another instance is currently leader, standby
@@ -4379,12 +4406,29 @@ async function startTelegramPollingDaemonFromSidepanel() {
       const json = await res.json();
 
       if (json.ok && Array.isArray(json.result) && json.result.length > 0) {
+        // 1. Immediately advance offset to prevent any duplicate fetch
         let maxUpdateId = lastId;
         for (const update of json.result) {
           if (update.update_id > maxUpdateId) maxUpdateId = update.update_id;
-          await handleTelegramIncomingUpdateInSidepanel(update, tgCfg);
         }
         await chrome.storage.local.set({ telegram_last_update_id: maxUpdateId });
+
+        // 2. Dispatch updates ensuring no duplicate processing
+        for (const update of json.result) {
+          if (processedTelegramUpdateIds.has(update.update_id)) {
+            continue;
+          }
+          processedTelegramUpdateIds.add(update.update_id);
+          if (processedTelegramUpdateIds.size > 200) {
+            const firstItem = processedTelegramUpdateIds.values().next().value;
+            processedTelegramUpdateIds.delete(firstItem);
+          }
+
+          // Handle update
+          handleTelegramIncomingUpdateInSidepanel(update, tgCfg).catch(err => {
+            console.error("Error handling Telegram update:", err);
+          });
+        }
       }
     } catch (err) {
       await new Promise(r => setTimeout(r, 3000));
@@ -4392,10 +4436,30 @@ async function startTelegramPollingDaemonFromSidepanel() {
   }
 }
 
-// Global listener for stop/pause execution
+// Global listener for stop/pause execution and options delegation
 try {
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (msg && (msg.type === "ABORT_AGENT_EXECUTION" || msg.type === "PAUSE_AGENT_EXECUTION")) {
+    if (!msg) return;
+    if (msg.type === "PING_SIDEPANEL_ALIVE") {
+      sendResponse({ status: "alive" });
+      return true;
+    }
+    if (msg.type === "TELEGRAM_PROMPT_EXECUTE") {
+      const { text, senderId, senderName, botToken } = msg;
+      chrome.storage.local.get(['telegram_bot_config']).then(data => {
+        const tgCfg = data.telegram_bot_config || {};
+        handleTelegramIncomingUpdateInSidepanel({
+          update_id: Date.now(),
+          message: {
+            from: { id: senderId, first_name: senderName },
+            text: text
+          }
+        }, tgCfg);
+      });
+      sendResponse({ status: "handled_by_sidepanel" });
+      return true;
+    }
+    if (msg.type === "ABORT_AGENT_EXECUTION" || msg.type === "PAUSE_AGENT_EXECUTION") {
       cancelExecution();
       sendResponse({ status: "aborted" });
       return true;
