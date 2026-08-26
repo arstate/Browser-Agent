@@ -8491,14 +8491,25 @@ async function loadHistoryList(searchQuery = "") {
       if (res && res.status === "ok" && Array.isArray(res.sessions)) {
         sessions = res.sessions;
         fetchedFromNative = true;
-        // Keep cache strictly in sync with SQLite
-        if (!searchQuery.trim()) {
-          const cacheMap = {};
-          for (const s of sessions) {
-            cacheMap[s.id] = s;
+        // Merge telegram sessions from cache if not already in SQLite list
+        const cRes = await chrome.storage.local.get(['chat_sessions_cache']);
+        const cache = cRes.chat_sessions_cache || {};
+        Object.values(cache).forEach(cs => {
+          if ((cs.is_telegram || String(cs.id || '').startsWith('sess_tg_')) && !sessions.some(s => s.id === cs.id)) {
+            sessions.push({
+              id: cs.id,
+              title: cs.title,
+              model: cs.model,
+              is_telegram: true,
+              is_pinned: cs.is_pinned ? 1 : 0,
+              message_count: cs.messages ? cs.messages.length : 0,
+              preview: cs.messages && cs.messages[0] ? (cs.messages[0].content || "").slice(0, 120) : "",
+              created_at: cs.created_at,
+              updated_at: cs.updated_at || cs.created_at
+            });
           }
-          await chrome.storage.local.set({ chat_sessions_cache: cacheMap });
-        }
+        });
+        sessions.sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0) || (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
       }
     } catch (e) {
       console.warn("SQLite get error, fallback to cache:", e);

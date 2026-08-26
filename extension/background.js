@@ -575,11 +575,23 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
     if (cmd === '/screenshot' || cmd === '/screenshot_tab') {
       await telegramSendMessage(botToken, senderId, `📸 <i>Mengambil tangkapan layar tab Chrome...</i>`);
       try {
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-        const activeTab = tabs[0];
-        const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
+        const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
+        let dataUrl = null;
+        if (activeTab && activeTab.windowId) {
+          try {
+            dataUrl = await chrome.tabs.captureVisibleTab(activeTab.windowId, { format: "png" });
+          } catch (e) {}
+        }
+        if (!dataUrl) {
+          // Fallback to Native OS Screenshot if tab capture is restricted (e.g. activeTab permission or chrome:// page)
+          const rpcRes = await sendNativeRpcInBackground("capture_os_screenshot", {});
+          if (rpcRes && rpcRes.status === "ok" && rpcRes.data_url) {
+            dataUrl = rpcRes.data_url;
+          }
+        }
         if (dataUrl) {
-          const caption = `📸 <b>Screenshot Tab Chrome</b>\n<i>${escapeHtml(activeTab?.title || 'Chrome Tab')}</i>\nURL: <code>${escapeHtml(activeTab?.url || '-')}</code>`;
+          const caption = `📸 <b>Screenshot Layar Aktif</b>\n<i>${escapeHtml(activeTab?.title || 'Desktop / Chrome Tab')}</i>\nURL: <code>${escapeHtml(activeTab?.url || '-')}</code>`;
           await telegramSendPhoto(botToken, senderId, dataUrl, caption);
         } else {
           await telegramSendMessage(botToken, senderId, `⚠️ Gagal mengambil screenshot tab.`);
@@ -658,12 +670,32 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
     // 1. Send instant typing indicator so Telegram shows 'typing...' immediately
     telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
 
-    const storageData = await chrome.storage.local.get(['browser_agent_config', 'telegram_bot_config', 'custom_agents', 'chat_sessions_cache']);
+    const storageData = await chrome.storage.local.get([
+      'browser_agent_config',
+      'telegram_bot_config',
+      'custom_agents',
+      'custom_skills',
+      'custom_memories',
+      'cached_persistent_brain',
+      'chat_sessions_cache'
+    ]);
     const cfg = storageData.browser_agent_config || {};
     const activeTgCfg = storageData.telegram_bot_config || tgCfg || {};
-    const preset = cfg.preset || "gemini";
+    let preset = cfg.preset || "gemini";
     const customEndpoint = cfg.customEndpoint || "";
-    const apiKey = cfg.apiKey;
+    let apiKey = cfg.apiKey;
+
+    // Auto-detect Provider if API key format matches standard prefixes
+    if (apiKey && typeof apiKey === 'string') {
+      const trimmedKey = apiKey.trim();
+      if (trimmedKey.startsWith("AIzaSy") || trimmedKey.startsWith("AIza")) {
+        preset = "gemini";
+      } else if (trimmedKey.startsWith("gsk_")) {
+        preset = "groq";
+      } else if (trimmedKey.startsWith("sk-or-")) {
+        preset = "openrouter";
+      }
+    }
 
     let model = activeTgCfg.selected_model;
     if (!model || model === "auto") {
@@ -680,6 +712,18 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
     if (!apiKey && preset !== "ollama" && preset !== "9router") {
       await telegramSendMessage(botToken, senderId, `⚠️ <b>API Key Belum Dikonfigurasi:</b> Silakan buka menu Pengaturan Browser Agent di Chrome untuk memasukkan API Key Anda.`);
       return;
+    }
+
+    // Build rich System Instruction with Brain facts and Skills
+    let systemInstruction = "You are Browser Agent (Antigravity Neural Core) AI assistant responding via Telegram remote control. Be helpful, concise, accurate, and format with clean markdown.\n";
+    if (storageData.cached_persistent_brain && Array.isArray(storageData.cached_persistent_brain.facts)) {
+      const facts = storageData.cached_persistent_brain.facts.slice(0, 15);
+      if (facts.length > 0) {
+        systemInstruction += "\n[Memory & Brain Facts]:\n" + facts.map(f => `• ${f.text || f}`).join('\n') + "\n";
+      }
+    }
+    if (Array.isArray(storageData.custom_skills) && storageData.custom_skills.length > 0) {
+      systemInstruction += "\n[Available Skills]:\n" + storageData.custom_skills.slice(0, 8).map(s => `• ${s.name}: ${s.description || ''}`).join('\n') + "\n";
     }
 
     // 2. Retrieve dedicated Telegram session history
@@ -719,7 +763,10 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
       });
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const payload = { contents };
+      const payload = {
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents
+      };
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -743,7 +790,7 @@ async function executePromptInBackgroundServiceWorker(text, senderId, senderName
       if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
       const messages = [
-        { role: "system", content: "You are Browser Agent AI assistant responding directly to the user via Telegram remote chat. Be helpful, concise, accurate, and format with clean markdown." }
+        { role: "system", content: systemInstruction }
       ];
       for (const m of history) {
         if (m.role === 'user' || m.role === 'assistant') {

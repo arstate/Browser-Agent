@@ -4730,6 +4730,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.49`, build `extension.crx` (673.9 KB).
 
+---
+
+### 🚀 Iterasi 426: Auto Provider Key Detection, Brain Memory Injection, & Bulletproof Fallbacks (v2.150.50)
+- **Kebutuhan Pengguna**:
+  - Mengintegrasikan seluruh pengaturan AI provider, database Brain (`cached_persistent_brain`), skills, dan memori agar langsung digunakan oleh background Telegram engine.
+  - Memperbaiki bug `The 'activeTab' permission is not in effect` saat eksekusi command `/screenshot` di background.
+  - Memastikan sesi percakapan Telegram selalu muncul di daftar riwayat sidebar dengan badge `📱 Telegram`.
+- **Akar Masalah (Root Cause)**:
+  - `chrome.tabs.captureVisibleTab` tanpa `windowId` memerlukan user gesture pada tab yang aktif saat dipanggil via background network webhook.
+  - Kunci API yang tersimpan dengan format khusus (misal Google Gemini `AIzaSy...`) belum otomatis mengubah preset jika preset di storage sebelumnya tertinggal di `openai`.
+- **Implementasi & Peningkatan Sistem**:
+  - **Auto Provider Key Detection**: Mendeteksi awalan format API key secara cerdas (`AIzaSy...` $\to$ Gemini, `gsk_...` $\to$ Groq, `sk-or-...` $\to$ OpenRouter) sehingga mencegah salah kirim format ke endpoint provider yang keliru.
+  - **Brain & Skills Injection**: Menyuntikkan seluruh fakta memori jangka panjang (`cached_persistent_brain.facts`) dan Custom Skills ke dalam System Instruction saat AI memproses pesan Telegram di latar belakang.
+  - **Native OS Fallback for Tab Screenshot**: Jika pemanggilan screenshot tab Chrome terhambat izin `activeTab` atau berada di halaman internal (`chrome://`), sistem secara otomatis beralih ke *native screen capture* melalui Native Host OS RPC tanpa memunculkan error ke pengguna.
+  - **Persistent Telegram History Merge**: Memastikan seluruh sesi Telegram di `chat_sessions_cache` selalu dimerge ke daftar riwayat sesi New Tab dan Sidepanel dengan badge visual `📱 Telegram`.
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.50`, build `extension.crx` (674.7 KB).
+
 
 
 
