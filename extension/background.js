@@ -56,11 +56,34 @@ function formatMarkdownForTelegram(rawText) {
     return placeholder;
   });
 
-  // 3. Escape raw HTML characters without double-escaping valid Telegram HTML tags
+  // 3. Convert Markdown Tables into clean structured key-value bullet points
+  str = str.replace(/((?:^[ \t]*\|.+?\|[ \t]*(?:\n|$))+)/gm, (match) => {
+    const lines = match.trim().split("\n").map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) return match;
+    const isDivider = /^\|?(\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?$/.test(lines[1]);
+    const parseRow = (line) => line.replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim());
+    const headers = parseRow(lines[0]);
+    const dataLines = isDivider ? lines.slice(2) : lines.slice(1);
+    const formattedRows = [];
+    for (const dLine of dataLines) {
+      if (/^\|?(\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?$/.test(dLine)) continue;
+      const cols = parseRow(dLine);
+      if (cols.length === 0 || (cols.length === 1 && !cols[0])) continue;
+      if (cols.length === 2) {
+        formattedRows.push(`• <b>${cols[0]}:</b> ${cols[1]}`);
+      } else {
+        const parts = cols.map((col, idx) => `<b>${headers[idx] || ("Kolom " + (idx + 1))}:</b> ${col}`);
+        formattedRows.push(`• ${parts.join(" | ")}`);
+      }
+    }
+    return formattedRows.length > 0 ? formattedRows.join("\n") + "\n" : match;
+  });
+
+  // 4. Escape raw HTML characters without double-escaping valid Telegram HTML tags
   str = str.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;');
   str = str.replace(/<(?!\/?(?:b|i|u|s|strong|em|ins|strike|del|code|pre|a|blockquote)(?:\s+[^>]+)?>)/gi, '&lt;');
 
-  // 4. Convert Markdown syntax
+  // 5. Convert Markdown syntax
   str = str.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2">$1</a>');
   str = str.replace(/^#{1,6}\s+(.+)$/gm, '<b>$1</b>');
   str = str.replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>');
@@ -70,9 +93,10 @@ function formatMarkdownForTelegram(rawText) {
   str = str.replace(/^[ \t]*[\*\-\+][ \t]+/gm, '• ');
   str = str.replace(/(^|[^\*])\*([^*\n\s](?:[^*\n]*[^*\n\s])?)\*(?!\*)/g, '$1<i>$2</i>');
   str = str.replace(/(^|[^_])_([^_\n\s](?:[^_\n]*[^_\n\s])?)_(?!_)/g, '$1<i>$2</i>');
+  str = str.replace(/^[ \t]*---[ \t]*$/gm, '');
   str = str.replace(/\n{3,}/g, '\n\n');
 
-  // 5. Restore preserved code elements
+  // 6. Restore preserved code elements
   inlineCodes.forEach((codeHtml, idx) => {
     str = str.replace(`@@@TGINLINECODE${idx}@@@`, codeHtml);
   });
@@ -2086,7 +2110,12 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
 5. 🖼️ ANALISIS GAMBAR & DOKUMEN:
    - Jika pengguna mengirim foto/screenshot/gambar, amati dan baca seluruh elemen visual, teks, diagram, atau error dengan teliti.
    - Jika pengguna mengirim dokumen (PDF, Word, TXT, CSV, JSON), baca dan analisis seluruh isi dokumen yang terlampir secara mendalam, tepat, dan komprehensif.
-6. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua temuan atau data yang terekstrak secara komprehensif!`;
+6. 📝 SETELAH MENJALANKAN TOOL: WAJIB MEMBUAT LAPORAN TERTULIS YANG LENGKAP, JELAS, DAN TERSTRUKTUR DALAM FORMAT MARKDOWN KEPADA PENGGUNA. Rincikan semua temuan atau data yang terekstrak secara komprehensif!
+7. 💬 ATURAN FORMAT PESAN TELEGRAM (BERSIH & ESTETIK):
+   - DILARANG menggunakan Markdown Pipe Tables (| Kolom 1 | Kolom 2 |) karena Telegram tidak mendukung rendering tabel secara visual dan akan terlihat berantakan!
+   - Gunakan format list bullet point dengan ikon emoji yang rapi (contoh: • <b>Parameter:</b> Nilai).
+   - Jangan gunakan garis pemisah '---' berlebihan.
+   - Sajikan laporan yang bersih, terstruktur, estetik, dan rapi agar nyaman dibaca di Telegram.`;
 
     // Inject Verified Facts & User Profile Memories
     if (userMemories.length > 0) {
@@ -2208,20 +2237,19 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     const executedToolCalls = [];
 
     const STEP_EMOJIS = ["⚡", "⚙️", "🔍", "📂", "✨", "🎯", "🚀", "💡"];
-    const ANIM_FRAMES = [".", "..", "...", "...."];
-    let currentStepNumber = 1;
+    const ANIM_SPINNERS = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
     let currentEmoji = "⚡";
     let currentBaseText = "Menganalisis instruksi & merancang eksekusi";
     let animFrameIndex = 0;
     let lastRenderedText = "";
     let isAgentRunning = true;
 
-    // Helper to render and edit live status smoothly with animated loading dots
+    // Helper to render and edit live status smoothly with animated loading spinner
     async function renderLiveStatus(force = false) {
       if (!liveStatusMsgId || !isAgentRunning) return;
       const cleanBase = currentBaseText.replace(/\.+$/, '').trim();
-      const dotFrame = ANIM_FRAMES[animFrameIndex % ANIM_FRAMES.length];
-      const textToRender = `${currentEmoji} <b>[Langkah ${currentStepNumber}] Master Agent:</b> ${cleanBase}${dotFrame}`;
+      const spinner = ANIM_SPINNERS[animFrameIndex % ANIM_SPINNERS.length];
+      const textToRender = `${currentEmoji} <b>Master Agent:</b> ${cleanBase} <i>[ ${spinner} ]</i>`;
       
       if (textToRender !== lastRenderedText || force) {
         lastRenderedText = textToRender;
@@ -2230,13 +2258,13 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     }
 
     // Send initial status message
-    const initialStatus = await telegramSendMessage(botToken, senderId, `⚡ <b>[Langkah 1] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`);
+    const initialStatus = await telegramSendMessage(botToken, senderId, `⚡ <b>Master Agent:</b> Menganalisis instruksi & merancang eksekusi <i>[ ⠋ ]</i>`);
     if (initialStatus && initialStatus.result && initialStatus.result.message_id) {
       liveStatusMsgId = initialStatus.result.message_id;
-      lastRenderedText = `⚡ <b>[Langkah 1] Master Agent:</b> Menganalisis instruksi & merancang eksekusi...`;
+      lastRenderedText = `⚡ <b>Master Agent:</b> Menganalisis instruksi & merancang eksekusi <i>[ ⠋ ]</i>`;
     }
 
-    // Continuous smooth animation ticker (every 1200ms)
+    // Continuous smooth animation ticker (every 900ms)
     const statusAnimTimer = setInterval(() => {
       if (!isAgentRunning) {
         clearInterval(statusAnimTimer);
@@ -2244,10 +2272,10 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       }
       animFrameIndex++;
       renderLiveStatus();
-      if (animFrameIndex % 3 === 0) {
+      if (animFrameIndex % 4 === 0) {
         telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
       }
-    }, 1200);
+    }, 900);
 
     // Multi-turn Autonomous Agent Loop
     while (stepCount < maxSteps) {
@@ -2311,7 +2339,6 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
           });
 
           const stepDesc = getToolStepDescription(tName, tArgs);
-          currentStepNumber = stepCount + 1;
           currentEmoji = STEP_EMOJIS[stepCount % STEP_EMOJIS.length];
           currentBaseText = stepDesc.replace(/\.+$/, '').trim();
           animFrameIndex = 0;
@@ -2373,7 +2400,7 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
 
     // Update status to finished smoothly
     if (liveStatusMsgId) {
-      await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `✅ <b>[Selesai] Master Agent:</b> Instruksi berhasil dieksekusi!`).catch(() => {});
+      await telegramEditMessageText(botToken, senderId, liveStatusMsgId, `✅ <b>Master Agent:</b> Instruksi berhasil dieksekusi!`).catch(() => {});
     }
 
     // 3. Update dedicated Telegram session in cache & SQLite

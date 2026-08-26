@@ -5097,6 +5097,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.72`, build `extension.crx` (687.2 KB).
 
+---
+
+### 🚀 Iterasi 449: Removal of [Langkah X] Tags, High-End CLI Spinner Animation & Markdown Table Auto-Formatter (v2.150.73)
+- **Kebutuhan Pengguna**:
+  - Menghilangkan teks awalan `[Langkah 1]`, `[Langkah 2]`, dst. pada gelembung status progres eksekusi di Telegram.
+  - Mempercantik animasi loading status di Telegram agar lebih halus, estetik, dan elegan (menggunakan indikator modern spinner frame `[ ⠋ ]`, `[ ⠙ ]`, `[ ⠹ ]` tanpa jeda kasar).
+  - Merapikan format chat Telegram yang sebelumnya berantakan ketika menampilkan tabel markdown (`| Parameter | Keterangan |` yang tidak didukung secara visual oleh Telegram) sehingga otomatis dikonversi menjadi key-value bullet list yang rapi dan elegan.
+- **Akar Masalah (Root Cause)**:
+  - String status proses sebelumnya masih memuat format `[Langkah ${currentStepNumber}]` dan frame animasi titik sederhana.
+  - `formatMarkdownForTelegram` belum mengonversi format Markdown Pipe Tables (`| ... |`) sehingga Telegram merendernya sebagai teks mentah berkarakter pipa (`|`) yang berantakan dan wrap tidak beraturan.
+- **Implementasi & Peningkatan Sistem**:
+  - **Clean Frameless Status**: Menghilangkan seluruh teks prefix `[Langkah X]` dan `[Selesai]` sehingga status tampil bersih: `⚡ <b>Master Agent:</b> <Deskripsi Tugas> <i>[ ⠋ ]</i>` $\to$ `✅ <b>Master Agent:</b> Instruksi berhasil dieksekusi!`.
+  - **High-End Animated Spinner Engine**: Mengimplementasikan `ANIM_SPINNERS` (`⠋`, `⠙`, `⠹`, `⠸`, `⠼`, `⠴`, `⠦`, `⠧`, `⠇`, `⠏`) dengan interval 900ms yang sangat halus dan ramah limit edit Telegram.
+  - **Markdown Table Auto-Converter**: Menambahkan regex transformer tabel Markdown pada [background.js](file:///home/arya/browser-agent/extension/background.js) `formatMarkdownForTelegram` yang secara cerdas mendeteksi baris tabel dan divider, lalu mengubahnya menjadi daftar key-value berpoin rapi (`• <b>Parameter:</b> Nilai`).
+  - **Telegram Visual Prompt Mandate**: Menginstruksikan LLM untuk selalu memformat output Telegram menggunakan bullet point bersih dan menghindari pipe table mentah.
+- **Pengujian & Rilis**:
+  - 20/20 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.73`, build `extension.crx` (688.0 KB).
+
 
 
 
