@@ -2404,6 +2404,17 @@ function setupEventListeners() {
     }
   });
 
+  // Brain Architecture Collapsible Accordion Toggle
+  const brainAccordionHeader = document.getElementById('btn-toggle-brain-accordion');
+  const brainAccordionGroup = document.getElementById('sidebar-brain-group');
+  const brainAccordionSubmenu = document.getElementById('sidebar-brain-submenu');
+
+  brainAccordionHeader?.addEventListener('click', () => {
+    const willOpen = !brainAccordionGroup?.classList.contains('is-open');
+    brainAccordionGroup?.classList.toggle('is-open', willOpen);
+    brainAccordionSubmenu?.classList.toggle('is-open', willOpen);
+  });
+
   // Navigation Tabs Switching (with Scroll Target support)
   navTabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -2412,6 +2423,15 @@ function setupEventListeners() {
 
       navTabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
+
+      const isBrainTab = ['agents', 'skills', 'memories', 'persistent-brain'].includes(tabName);
+      if (isBrainTab) {
+        brainAccordionGroup?.classList.add('is-open');
+        brainAccordionSubmenu?.classList.add('is-open');
+        brainAccordionHeader?.classList.add('has-active-child');
+      } else {
+        brainAccordionHeader?.classList.remove('has-active-child');
+      }
 
       Object.keys(tabViews).forEach(k => {
         if (tabViews[k]) {

@@ -4229,6 +4229,19 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 18/18 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.13`, build `extension.crx` (478.9 KB).
 
+---
+
+### 🚀 Iterasi 390: Brain Architecture Collapsible Accordion Submenu (v2.150.14)
+- **Kebutuhan Pengguna**:
+  - Menyatukan 4 menu pengaturan (*Multi-Agent Persona, Skills/Kemampuan, Memory & Aturan, Persistent Brain*) ke dalam 1 induk menu bernama **"Brain"** dengan mekanisme klik buka-tutup halus (*smooth collapsible accordion*) ke bawah agar tampilan sidebar lebih clean, rapi, dan modern.
+- **Implementasi & Peningkatan UI**:
+  - **Brain Accordion Group**: Menambahkan parent header `.sidebar-accordion-header` dengan ikon Brain neon blue dan panah chevron halus `.accordion-chevron` yang berotasi otomatis 90° saat dibuka/ditutup di [options.html](file:///home/arya/browser-agent/extension/options.html).
+  - **Smooth Submenu Transition**: Membuat container `.sidebar-submenu` beranimasi halus (*max-height + opacity transition*) dengan border vertikal pemandu tipis di [options.css](file:///home/arya/browser-agent/extension/options.css).
+  - **Smart Active State Tracking**: Menghubungkan interaksi klik accordion dan mendeteksi otomatis jika salah satu submenu aktif (`.has-active-child`) di [options.js](file:///home/arya/browser-agent/extension/options.js).
+- **Pengujian & Rilis**:
+  - 18/18 Unit Tests lulus 100% (Zero Bug).
+  - Bump manifest to `v2.150.14`, build `extension.crx` (479.6 KB).
+
 
 
 
