@@ -1,0 +1,133 @@
+/* =========================================================================
+   Plugin Ecosystem - Caveman Output Compressor & Token Shrinker Styles
+   ========================================================================= */
+
+/* Caveman Settings Modal */
+#modal-plugin-caveman .custom-modal-dialog {
+  max-width: 760px;
+  width: 92%;
+  background: #111116;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 26px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75), 0 0 30px rgba(245, 158, 11, 0.1);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#modal-plugin-caveman .modal-body-scroll {
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+#modal-plugin-caveman .modal-body-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+#modal-plugin-caveman .modal-body-scroll::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.25);
+  border-radius: 9999px;
+}
+
+/* Caveman Mode Radio Cards */
+.caveman-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.caveman-mode-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.caveman-mode-card:hover {
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.caveman-mode-card.active {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: #f59e0b;
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.2);
+}
+
+.caveman-mode-card input[type="radio"] {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  accent-color: #f59e0b;
+}
+
+.caveman-mode-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.caveman-mode-desc {
+  font-size: 10.5px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* Tab Navigation in Modal */
+.caveman-tabs-bar {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+}
+
+.caveman-tab-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.caveman-tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.caveman-tab-btn.active {
+  color: #0E0E11;
+  background: #f59e0b;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.35);
+}
+
+/* Code Preview Box */
+.caveman-code-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 14px;
+  padding: 14px;
+  font-family: 'Fira Code', monospace;
+  font-size: 11.5px;
+  color: #e2e8f0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-height: 320px;
+  overflow-y: auto;
+}

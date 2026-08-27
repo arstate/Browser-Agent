@@ -2520,6 +2520,11 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       systemInstruction += `• [PLUGIN: KV CACHE OPTIMIZER (AKTIF - MODE: ${(kvcache.mode || 'aggressive').toUpperCase()})]: Prefix Pinning & Dynamic Suffix Relocation aktif. Seluruh skema tools telah diurutkan alfabetis dan prefix dijaga 100% deterministik untuk mencapai target 90% KV Cache Hit Ratio.\n`;
     }
 
+    const caveman = pluginSettings.caveman || { enabled: true, mode: 'terse' };
+    if (caveman.enabled !== false) {
+      systemInstruction += `• [PLUGIN: CAVEMAN (AKTIF - MODE: ${(caveman.mode || 'terse').toUpperCase()})]: "why use many token when few do trick". Jawab secara telegrafik padat, eliminasi kata pengantar/penutup basa-basi, namun pertahankan kode dan error 100% presisi byte-exact.\n`;
+    }
+
     // Inject Dynamic AI Cognitive / Thinking Level Directive (Low, Medium, High, Xhigh, Extreme)
     const activeThinkingLevel = activeTgCfg.thinking_level || storageData.thinking_level || cfg.thinking_level || "high";
     systemInstruction += getThinkingDirective(activeThinkingLevel);

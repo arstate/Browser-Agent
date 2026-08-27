@@ -706,6 +706,12 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
     prompt += `• [PLUGIN: KV CACHE OPTIMIZER (AKTIF - MODE: ${kvMode})]: Prefix Pinning & Dynamic Suffix Relocation aktif. Seluruh skema tools telah diurutkan alfabetis dan prefix dijaga 100% deterministik untuk mencapai target 90% KV Cache Hit Ratio.\n`;
   }
 
+  const caveman = cachedPluginSettings?.caveman || { enabled: true, mode: 'terse' };
+  if (caveman.enabled !== false) {
+    const cmMode = (caveman.mode || 'terse').toUpperCase();
+    prompt += `• [PLUGIN: CAVEMAN (AKTIF - MODE: ${cmMode})]: "why use many token when few do trick". Jawab secara telegrafik padat, eliminasi kata pengantar/penutup basa-basi, namun pertahankan kode dan error 100% presisi byte-exact.\n`;
+  }
+
   // 7. Inject Dynamic AI Cognitive / Thinking Level Directive (Hacked Client-Side without API dependency)
   prompt += getThinkingDirective(currentThinkingLevel);
 

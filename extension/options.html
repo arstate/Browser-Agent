@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="connected-apps/telegram/telegram.css">
   <link rel="stylesheet" href="plugins/ponytail/ponytail.css">
   <link rel="stylesheet" href="plugins/kvcache/kvcache.css">
+  <link rel="stylesheet" href="plugins/caveman/caveman.css">
 </head>
 <body class="options-body">
   <div class="options-app-shell">
@@ -1530,7 +1531,55 @@
             </div>
           </div>
 
-          <!-- Plugin Card 3: Neural Memory Graph Expander -->
+          <!-- Plugin Card 3: Caveman Output Compressor & Token Shrinker -->
+          <div class="plugin-card bento-glass-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 260px; transition: all 0.25s ease; box-shadow: 0 8px 28px rgba(0,0,0,0.35);">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 50px; height: 50px; border-radius: 16px; background: rgba(245, 158, 11, 0.08); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(245, 158, 11, 0.28); overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.3); backdrop-filter: blur(10px); flex-shrink: 0;">
+                    <img src="icons/plugins/caveman.png" width="38" height="38" alt="Caveman" style="object-fit: contain; display: block; border-radius: 10px;">
+                  </div>
+                  <div>
+                    <h3 style="font-size: 16.5px; font-weight: 700; color: #fff; margin: 0; letter-spacing: -0.2px;">Caveman</h3>
+                    <span style="font-size: 11px; color: #f59e0b; font-weight: 600;">Telegraphic Output &amp; Token Shrinker</span>
+                  </div>
+                </div>
+                
+                <label class="custom-pill-switch" title="Aktifkan / Nonaktifkan Plugin Caveman">
+                  <input type="checkbox" id="plugin-caveman-toggle" checked>
+                  <span class="pill-switch-track"></span>
+                </label>
+              </div>
+
+              <p style="font-size: 12.5px; color: #94a3b8; line-height: 1.55; margin: 0 0 14px 0;">
+                <i>"Why use many token when few do trick"</i>. Memangkas basa-basi kata pengantar/penutup, mempercepat respons AI, dan menghemat hingga <b>60%–75% output token</b> dengan gaya telegrafik presisi.
+              </p>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="plugin-glass-pill" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">
+                  Telegraphic Speak
+                </span>
+                <span class="plugin-glass-pill" style="background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                  Zero Fluff
+                </span>
+                <span class="plugin-glass-pill" style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">
+                  Hemat 60–75% Output
+                </span>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 14px; margin-top: 6px;">
+              <span id="plugin-caveman-status-text" style="font-size: 11.5px; color: #f59e0b; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                ● Aktif (Terse Mode)
+              </span>
+              <button type="button" class="btn-secondary" id="btn-config-caveman" style="padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: rgba(245, 158, 11, 0.08); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.28); backdrop-filter: blur(14px); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="13.5" height="13.5" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span>Lihat Pengaturan &amp; Tools</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Plugin Card 4: Neural Memory Graph Expander -->
           <div class="plugin-card bento-glass-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 250px; opacity: 0.85;">
             <div>
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
@@ -2176,6 +2225,169 @@
       </div>
     </div>
 
+    <!-- ======================================================== -->
+    <!-- MODAL: Pengaturan & Tool Katalog Plugin Caveman          -->
+    <!-- ======================================================== -->
+    <div class="custom-modal-overlay" id="modal-plugin-caveman" style="display: none;">
+      <div class="custom-modal-dialog modal-wide" style="max-width: 740px;">
+        <div class="modal-header">
+          <div class="modal-title-box">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); padding: 2px 8px; font-size: 10px; font-weight: 700; border-radius: 6px;">
+                OUTPUT COMPRESSOR
+              </span>
+              <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #fff;">Caveman Settings &amp; Skills</h3>
+            </div>
+            <p style="margin: 0; font-size: 12px; color: #94a3b8;">"Why use many token when few do trick" - Kompresi teks telegrafik hemat 60-75% output token</p>
+          </div>
+          <button type="button" class="btn-modal-close" id="btn-close-caveman-modal" title="Tutup Modal">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="caveman-tabs-bar" style="margin-top: 14px;">
+          <button type="button" class="caveman-tab-btn active" data-tab="settings">🪨 Parameter &amp; Modes</button>
+          <button type="button" class="caveman-tab-btn" data-tab="docs">📚 Dokumentasi SKILL.md</button>
+        </div>
+
+        <div class="modal-body-scroll" style="max-height: 65vh; overflow-y: auto; padding-right: 4px;">
+          <!-- TAB 1: PARAMETER & MODES -->
+          <div id="caveman-tab-section-settings">
+            <form id="form-caveman-settings">
+              <!-- Mode Selector -->
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 8px;">
+                  TINGKAT INTENSITAS CAVEMAN-SPEAK:
+                </label>
+                <div class="caveman-mode-grid">
+                  <div class="caveman-mode-card active" data-mode="terse">
+                    <input type="radio" name="caveman_mode_radio" value="terse" checked>
+                    <div class="caveman-mode-title">
+                      <span>💬 Terse (Default)</span>
+                    </div>
+                    <div class="caveman-mode-desc">
+                      Lugas &amp; to-the-point, buang basa-basi sopan santun.
+                    </div>
+                  </div>
+
+                  <div class="caveman-mode-card" data-mode="ultra">
+                    <input type="radio" name="caveman_mode_radio" value="ultra">
+                    <div class="caveman-mode-title">
+                      <span>🔥 Ultra-Caveman</span>
+                    </div>
+                    <div class="caveman-mode-desc">
+                      Gaya telegram ekstrem 1-2 baris, hapus kata hubung.
+                    </div>
+                  </div>
+
+                  <div class="caveman-mode-card" data-mode="code-only">
+                    <input type="radio" name="caveman_mode_radio" value="code-only">
+                    <div class="caveman-mode-title">
+                      <span>💻 Code-Only</span>
+                    </div>
+                    <div class="caveman-mode-desc">
+                      Langsung hasil kode tanpa penjelasan pengantar.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Optimization Rules Toggles -->
+              <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 14px 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 11px; backdrop-filter: blur(10px);">
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="caveman-opt-output" checked style="accent-color: #f59e0b; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Kompresi Output Teks:</b> Model menjawab secara telegrafik padat untuk menghemat token keluaran.</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="caveman-opt-code" checked style="accent-color: #f59e0b; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Proteksi Presisi Kode (Byte-Exact):</b> DILARANG menyingkat kode, perintah terminal, dan pesan error.</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="caveman-opt-fluff" checked style="accent-color: #f59e0b; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Eliminasi Basa-Basi:</b> Hapus kata pengantar ("Tentu saja...") dan penutup ("Semoga membantu...").</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="caveman-opt-proof" checked style="accent-color: #f59e0b; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Wajib Bukti Verifikasi (Verify and Stop):</b> Buktikan hasil kerja selesai lalu langsung berhenti.</span>
+                </label>
+              </div>
+
+              <!-- Tools Showcase Section -->
+              <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 11.5px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px;">🛠️ Tools &amp; Commands Caveman:</span>
+                  <span style="font-size: 10px; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 8px; border-radius: 9999px; font-weight: 700;">7 Skills Tersedia</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <code style="color: #f59e0b; font-size: 11.5px; font-weight: 700;">/caveman</code>
+                      <span style="font-size: 9.5px; color: #f59e0b; background: rgba(245,158,11,0.12); padding: 2px 6px; border-radius: 9999px;">Speak</span>
+                    </div>
+                    <p style="margin: 3px 0 0 0; font-size: 10.5px; color: #94a3b8;">Set mode telegrafik (terse | ultra | code-only).</p>
+                  </div>
+
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <code style="color: #38bdf8; font-size: 11.5px; font-weight: 700;">/investigate-first</code>
+                      <span style="font-size: 9.5px; color: #38bdf8; background: rgba(56,189,248,0.12); padding: 2px 6px; border-radius: 9999px;">Diagnosis</span>
+                    </div>
+                    <p style="margin: 3px 0 0 0; font-size: 10.5px; color: #94a3b8;">Kumpulkan bukti sebelum mengubah kode produk.</p>
+                  </div>
+
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <code style="color: #4ade80; font-size: 11.5px; font-weight: 700;">/surgical-patch</code>
+                      <span style="font-size: 9.5px; color: #4ade80; background: rgba(34,197,94,0.12); padding: 2px 6px; border-radius: 9999px;">Fix</span>
+                    </div>
+                    <p style="margin: 3px 0 0 0; font-size: 10.5px; color: #94a3b8;">Perbaikan bug pada layer tersempit.</p>
+                  </div>
+
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <code style="color: #c084fc; font-size: 11.5px; font-weight: 700;">/verify-and-stop</code>
+                      <span style="font-size: 9.5px; color: #c084fc; background: rgba(168,85,247,0.12); padding: 2px 6px; border-radius: 9999px;">Verify</span>
+                    </div>
+                    <p style="margin: 3px 0 0 0; font-size: 10.5px; color: #94a3b8;">Buktikan hasil kerja dan stop tanpa scope creep.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer-actions" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; margin-top: 6px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-modal-cancel" id="btn-cancel-caveman-modal" style="padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 600;">Batal</button>
+                <button type="submit" class="btn-modal-save" id="btn-save-caveman-modal" style="padding: 8px 22px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: #f59e0b; color: #0E0E11; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">Simpan Pengaturan Caveman</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- TAB 2: SKILL.MD DOCUMENTATION VIEWER -->
+          <div id="caveman-tab-section-docs" style="display: none;">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+              <button type="button" class="caveman-skill-nav-btn active" data-skill="caveman" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🪨 /caveman</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="investigate-first" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🔍 /investigate-first</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="surgical-patch" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🩹 /surgical-patch</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="safe-refactor" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🛡️ /safe-refactor</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="verify-and-stop" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🛑 /verify-and-stop</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="lean-build" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🏗️ /lean-build</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="migration" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🔄 /migration</button>
+            </div>
+
+            <div class="caveman-code-box" id="caveman-doc-preview-box">
+              Memuat dokumentasi skill...
+            </div>
+            
+            <p style="margin: 10px 0 0 0; font-size: 11px; color: #71717a; text-align: right;">
+              Sumber: <code>extension/plugins/caveman/SKILL.md</code> &amp; <a href="https://github.com/JuliusBrussee/caveman" target="_blank" style="color: #f59e0b; text-decoration: none;">GitHub JuliusBrussee/caveman</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Save Toast -->
     <div class="save-toast" id="save-toast" style="display: none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2191,6 +2403,8 @@
   <script src="plugins/ponytail/ponytail_optimizer.js"></script>
   <script src="plugins/kvcache/kvcache.js"></script>
   <script src="plugins/kvcache/kvcache_optimizer.js"></script>
+  <script src="plugins/caveman/caveman.js"></script>
+  <script src="plugins/caveman/caveman_optimizer.js"></script>
   <script src="options.js"></script>
 </body>
 </html>
