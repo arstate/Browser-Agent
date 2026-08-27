@@ -5846,5 +5846,28 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
   box-shadow: 0 0 8px var(--accent-lime);
 }
 
+/* =========================================================================
+   GLOBAL ULTRA-LIGHTWEIGHT NO-SHADOWS PERFORMANCE MODE
+   ========================================================================= */
+body.no-shadows,
+body.no-shadows *,
+html.no-shadows,
+html.no-shadows * {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.no-shadows img,
+body.no-shadows svg,
+body.no-shadows .icon,
+body.no-shadows .glow,
+body.no-shadows .tab-btn-icon,
+body.no-shadows .toast-pulse,
+body.no-shadows .bento-card {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
 
 

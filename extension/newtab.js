@@ -6,6 +6,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const recentSitesGrid = document.getElementById('recent-sites-grid');
   const chatInput = document.getElementById('chat-input');
 
+  // Synchronize Global Shadows Performance Mode
+  function applyShadowModeToNewtab(enabled) {
+    if (enabled === false) {
+      document.body.classList.add('no-shadows');
+      document.documentElement.classList.add('no-shadows');
+    } else {
+      document.body.classList.remove('no-shadows');
+      document.documentElement.classList.remove('no-shadows');
+    }
+  }
+
+  chrome.storage.local.get(['setting_enable_shadows', 'browser_agent_config'], (res) => {
+    const shadowsEnabled = res?.setting_enable_shadows !== undefined
+      ? res.setting_enable_shadows
+      : (res?.browser_agent_config?.enableShadows !== false);
+    applyShadowModeToNewtab(shadowsEnabled !== false);
+  });
+
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local') {
+      if (changes.setting_enable_shadows !== undefined) {
+        applyShadowModeToNewtab(changes.setting_enable_shadows.newValue !== false);
+      } else if (changes.browser_agent_config?.newValue?.enableShadows !== undefined) {
+        applyShadowModeToNewtab(changes.browser_agent_config.newValue.enableShadows !== false);
+      }
+    }
+  });
+
   // Populate dynamic version badge from manifest
   try {
     const manifestVersion = chrome?.runtime?.getManifest?.()?.version;

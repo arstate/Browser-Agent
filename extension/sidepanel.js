@@ -103,15 +103,36 @@ let cachedPluginSettings = {
   }
 };
 
-chrome.storage.local.get(['plugin_settings'], (res) => {
+chrome.storage.local.get(['plugin_settings', 'setting_enable_shadows', 'browser_agent_config'], (res) => {
   if (res && res.plugin_settings) {
     cachedPluginSettings = { ...cachedPluginSettings, ...res.plugin_settings };
   }
+  const shadowsEnabled = res?.setting_enable_shadows !== undefined
+    ? res.setting_enable_shadows
+    : (res?.browser_agent_config?.enableShadows !== false);
+  applyShadowModeToSidepanel(shadowsEnabled !== false);
 });
 
+function applyShadowModeToSidepanel(enabled) {
+  if (enabled === false) {
+    document.body.classList.add('no-shadows');
+    document.documentElement.classList.add('no-shadows');
+  } else {
+    document.body.classList.remove('no-shadows');
+    document.documentElement.classList.remove('no-shadows');
+  }
+}
+
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.plugin_settings) {
-    cachedPluginSettings = { ...cachedPluginSettings, ...(changes.plugin_settings.newValue || {}) };
+  if (area === 'local') {
+    if (changes.plugin_settings) {
+      cachedPluginSettings = { ...cachedPluginSettings, ...(changes.plugin_settings.newValue || {}) };
+    }
+    if (changes.setting_enable_shadows !== undefined) {
+      applyShadowModeToSidepanel(changes.setting_enable_shadows.newValue !== false);
+    } else if (changes.browser_agent_config?.newValue?.enableShadows !== undefined) {
+      applyShadowModeToSidepanel(changes.browser_agent_config.newValue.enableShadows !== false);
+    }
   }
 });
 

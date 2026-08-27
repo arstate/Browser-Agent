@@ -373,7 +373,7 @@ async function hydrateFromLocalStorage() {
 }
 
 async function loadConfig() {
-  const res = await chrome.storage.local.get(['browser_agent_config', 'active_agent_id', 'show_floating_button', 'setting_stickman_animation']);
+  const res = await chrome.storage.local.get(['browser_agent_config', 'active_agent_id', 'show_floating_button', 'setting_stickman_animation', 'setting_enable_shadows']);
   if (res && res.browser_agent_config) {
     config = { ...config, ...res.browser_agent_config };
   }
@@ -383,11 +383,27 @@ async function loadConfig() {
   if (res && typeof res.setting_stickman_animation === 'boolean') {
     config.stickmanAnimation = res.setting_stickman_animation;
   }
+  if (res && typeof res.setting_enable_shadows === 'boolean') {
+    config.enableShadows = res.setting_enable_shadows;
+  } else if (typeof config.enableShadows !== 'boolean') {
+    config.enableShadows = true;
+  }
   if (res && res.active_agent_id) {
     activeAgentId = res.active_agent_id;
   }
+  applyShadowMode(config.enableShadows !== false);
   applyConfigToUI();
   renderModelsRows();
+}
+
+function applyShadowMode(enabled) {
+  if (enabled === false) {
+    document.body.classList.add('no-shadows');
+    document.documentElement.classList.add('no-shadows');
+  } else {
+    document.body.classList.remove('no-shadows');
+    document.documentElement.classList.remove('no-shadows');
+  }
 }
 
 function normalizeModelItem(item) {
@@ -454,6 +470,10 @@ function applyConfigToUI() {
   const settingFloatingBtn = document.getElementById('setting-floating-button');
   if (settingFloatingBtn) {
     settingFloatingBtn.checked = (config.showFloatingButton !== false);
+  }
+  const settingShadows = document.getElementById('setting-ui-shadows');
+  if (settingShadows) {
+    settingShadows.checked = (config.enableShadows !== false);
   }
 }
 
@@ -611,6 +631,9 @@ async function saveAllConfig(silent = false) {
   config.stickmanAnimation = settingStickman ? settingStickman.checked : (config.stickmanAnimation !== false);
   const settingFloatingBtn = document.getElementById('setting-floating-button');
   config.showFloatingButton = settingFloatingBtn ? settingFloatingBtn.checked : (config.showFloatingButton !== false);
+  const settingShadows = document.getElementById('setting-ui-shadows');
+  config.enableShadows = settingShadows ? settingShadows.checked : (config.enableShadows !== false);
+  applyShadowMode(config.enableShadows !== false);
   config.models = models.length > 0 ? models : [
     { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" }
   ];
@@ -628,7 +651,8 @@ async function saveAllConfig(silent = false) {
     browser_agent_config: config, 
     active_agent_id: activeAgentId,
     setting_stickman_animation: config.stickmanAnimation,
-    show_floating_button: config.showFloatingButton
+    show_floating_button: config.showFloatingButton,
+    setting_enable_shadows: config.enableShadows
   });
 
   // 2. Persist to SQLite Database via Native Host (Separate Model Table + Settings Table)
@@ -2766,6 +2790,21 @@ function setupEventListeners() {
       browser_agent_config: config 
     });
     triggerAutoSave(0);
+  });
+
+  // UI Shadows Performance Mode Toggle (No-Shadows)
+  document.getElementById('setting-ui-shadows')?.addEventListener('change', (e) => {
+    const isEnabled = e.target.checked;
+    config.enableShadows = isEnabled;
+    applyShadowMode(isEnabled);
+    chrome.storage.local.set({ 
+      setting_enable_shadows: isEnabled,
+      browser_agent_config: config 
+    });
+    triggerAutoSave(0);
+    if (typeof showSaveToast === 'function') {
+      showSaveToast(isEnabled ? "Efek Bayangan (Shadows) Diaktifkan" : "Efek Bayangan Dimatikan (Mode Ringan Aktif)");
+    }
   });
 
   // Temperature Slider

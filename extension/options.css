@@ -3490,3 +3490,27 @@ body.graph-fullscreen-active {
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* =========================================================================
+   GLOBAL ULTRA-LIGHTWEIGHT NO-SHADOWS PERFORMANCE MODE
+   ========================================================================= */
+body.no-shadows,
+body.no-shadows *,
+html.no-shadows,
+html.no-shadows * {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.no-shadows img,
+body.no-shadows svg,
+body.no-shadows .tab-btn-icon,
+body.no-shadows .sidebar-accordion-header .tab-btn-icon,
+body.no-shadows .pill-switch-track,
+body.no-shadows .bento-card,
+body.no-shadows .plugin-card,
+body.no-shadows .custom-modal-dialog {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
