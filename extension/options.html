@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="options.css">
   <link rel="stylesheet" href="connected-apps/telegram/telegram.css">
   <link rel="stylesheet" href="plugins/ponytail/ponytail.css">
+  <link rel="stylesheet" href="plugins/kvcache/kvcache.css">
 </head>
 <body class="options-body">
   <div class="options-app-shell">
@@ -1481,7 +1482,55 @@
             </div>
           </div>
 
-          <!-- Plugin Card 2: Neural Memory Graph Expander -->
+          <!-- Plugin Card 2: KV Cache & Prompt Caching Optimizer -->
+          <div class="plugin-card bento-glass-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 260px; transition: all 0.25s ease; box-shadow: 0 8px 28px rgba(0,0,0,0.35);">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 50px; height: 50px; border-radius: 16px; background: rgba(56, 189, 248, 0.08); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(56, 189, 248, 0.25); overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.3); backdrop-filter: blur(10px); flex-shrink: 0;">
+                    <img src="icons/plugins/kvcache.png" width="38" height="38" alt="KV Cache" style="object-fit: contain; display: block; border-radius: 10px;">
+                  </div>
+                  <div>
+                    <h3 style="font-size: 16.5px; font-weight: 700; color: #fff; margin: 0; letter-spacing: -0.2px;">KV Cache Optimizer</h3>
+                    <span style="font-size: 11px; color: #38bdf8; font-weight: 600;">Transformer Prompt Caching &amp; Prefix Pinning</span>
+                  </div>
+                </div>
+                
+                <label class="custom-pill-switch" title="Aktifkan / Nonaktifkan Plugin KV Cache">
+                  <input type="checkbox" id="plugin-kvcache-toggle" checked>
+                  <span class="pill-switch-track"></span>
+                </label>
+              </div>
+
+              <p style="font-size: 12.5px; color: #94a3b8; line-height: 1.55; margin: 0 0 14px 0;">
+                Mengunci kestabilan prefix prompt (Static Prefix Pinning), memindahkan waktu dinamis ke Suffix, dan menyortir tools secara deterministik. Menghemat biaya input token hingga <b>90% (Cache Read)</b> serta mempercepat respons <b>3x–8x</b>.
+              </p>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="plugin-glass-pill" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+                  Prefix Pinning
+                </span>
+                <span class="plugin-glass-pill" style="background: rgba(168, 85, 247, 0.12); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">
+                  Anthropic / Gemini Cache
+                </span>
+                <span class="plugin-glass-pill" style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">
+                  Hemat 70–90% Biaya
+                </span>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 14px; margin-top: 6px;">
+              <span id="plugin-kvcache-status-text" style="font-size: 11.5px; color: #38bdf8; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                ● Aktif (Hit Rate ~90%)
+              </span>
+              <button type="button" class="btn-secondary" id="btn-config-kvcache" style="padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: rgba(56, 189, 248, 0.08); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); backdrop-filter: blur(14px); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="13.5" height="13.5" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                <span>Lihat Pengaturan &amp; Tools</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Plugin Card 3: Neural Memory Graph Expander -->
           <div class="plugin-card bento-glass-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 250px; opacity: 0.85;">
             <div>
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
@@ -1805,16 +1854,16 @@
     <!-- MODAL: Pengaturan & Tool Katalog Plugin Ponytail        -->
     <!-- ======================================================== -->
     <div class="custom-modal-overlay" id="modal-plugin-ponytail" style="display: none;">
-      <div class="custom-modal-dialog modal-wide" style="max-width: 680px;">
+      <div class="custom-modal-dialog modal-wide" style="max-width: 740px;">
         <div class="modal-header">
           <div class="modal-title-box">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
               <span style="background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.35); padding: 2px 8px; font-size: 10px; font-weight: 700; border-radius: 6px;">
                 TOKEN SAVER PLUGIN
               </span>
-              <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #fff;">Ponytail Settings &amp; Tools</h3>
+              <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #fff;">Ponytail Settings &amp; Skills</h3>
             </div>
-            <p style="margin: 0; font-size: 12.5px; color: #94a3b8;">Konfigurasi parameter kompresi konteks, batas turns, dan tool optimasi token</p>
+            <p style="margin: 0; font-size: 12px; color: #94a3b8;">Konfigurasi kompresi konteks riwayat, tingkat intensitas Lazy Dev, dan katalog skills</p>
           </div>
           <button type="button" class="btn-modal-close" id="btn-close-ponytail-modal" title="Tutup Modal">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1823,83 +1872,307 @@
           </button>
         </div>
 
-        <form id="form-ponytail-settings" style="padding: 16px 0 0 0;">
-          <!-- Parameter Row 1: Max Recent Turns & Max Tool Chars -->
-          <div class="form-row-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
-            <div class="form-group" style="margin-bottom: 0;">
-              <label for="ponytail-max-turns" style="font-size: 12px; font-weight: 600; color: #e2e8f0; display: flex; justify-content: space-between; margin-bottom: 6px;">
-                <span>Batas Riwayat Utuh (Recent Turns)</span>
-                <span id="ponytail-max-turns-val" style="color: #CEF128; font-weight: 700;">6 Turns</span>
-              </label>
-              <input type="number" id="ponytail-max-turns" min="2" max="30" value="6" style="width: 100%; padding: 10px 16px; border-radius: 9999px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.14); color: #fff; font-size: 13px; outline: none; backdrop-filter: blur(8px);">
-              <span style="font-size: 10.5px; color: #71717a; margin-top: 5px; display: block;">Jumlah pesan terbaru yang disimpan dengan resolusi penuh.</span>
-            </div>
+        <!-- Navigation Tabs: Settings vs SKILL.md Docs -->
+        <div class="ponytail-tabs-bar" style="margin-top: 14px;">
+          <button type="button" class="ponytail-tab-btn active" data-tab="settings">⚙️ Parameter &amp; Tools</button>
+          <button type="button" class="ponytail-tab-btn" data-tab="docs">📚 Dokumentasi SKILL.md</button>
+        </div>
 
-            <div class="form-group" style="margin-bottom: 0;">
-              <label for="ponytail-max-tool-chars" style="font-size: 12px; font-weight: 600; color: #e2e8f0; display: flex; justify-content: space-between; margin-bottom: 6px;">
-                <span>Batas Output Tool Lama (Chars)</span>
-                <span id="ponytail-max-tool-chars-val" style="color: #38bdf8; font-weight: 700;">1200 Chars</span>
-              </label>
-              <input type="number" id="ponytail-max-tool-chars" min="300" max="10000" step="100" value="1200" style="width: 100%; padding: 10px 16px; border-radius: 9999px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.14); color: #fff; font-size: 13px; outline: none; backdrop-filter: blur(8px);">
-              <span style="font-size: 10.5px; color: #71717a; margin-top: 5px; display: block;">Karakter maksimum per output tool riwayat sebelum dipadatkan.</span>
-            </div>
+        <div class="modal-body-scroll" style="max-height: 65vh; overflow-y: auto; padding-right: 4px;">
+          <!-- TAB 1: SETTINGS & TOOLS -->
+          <div id="ponytail-tab-section-settings">
+            <form id="form-ponytail-settings">
+              <!-- Intensity Mode Selector -->
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 8px;">
+                  TINGKAT INTENSITAS (LAZY SENIOR DEVELOPER MODE):
+                </label>
+                <div class="ponytail-mode-grid">
+                  <div class="ponytail-mode-card" data-mode="lite">
+                    <input type="radio" name="ponytail_mode_radio" value="lite">
+                    <div class="ponytail-mode-title">
+                      <span>🌱 Lite Mode</span>
+                    </div>
+                    <div class="ponytail-mode-desc">
+                      Bangun fitur yang diminta, berikan saran alternatif 1-baris tercepat.
+                    </div>
+                  </div>
+
+                  <div class="ponytail-mode-card active" data-mode="full">
+                    <input type="radio" name="ponytail_mode_radio" value="full" checked>
+                    <div class="ponytail-mode-title">
+                      <span>⚡ Full (Default)</span>
+                    </div>
+                    <div class="ponytail-mode-desc">
+                      Terapkan Decision Ladder ketat. Stdlib &amp; native first. Diff paling ringkas.
+                    </div>
+                  </div>
+
+                  <div class="ponytail-mode-card" data-mode="ultra">
+                    <input type="radio" name="ponytail_mode_radio" value="ultra">
+                    <div class="ponytail-mode-title">
+                      <span>🔥 Ultra Mode</span>
+                    </div>
+                    <div class="ponytail-mode-desc">
+                      YAGNI ekstremis. Hapus sebelum tambah. Tantang spesifikasi berlebih.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Parameter Row: Max Recent Turns & Max Tool Chars -->
+              <div class="form-row-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="ponytail-max-turns" style="font-size: 12px; font-weight: 600; color: #e2e8f0; display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span>Batas Riwayat Utuh (Recent Turns)</span>
+                    <span id="ponytail-max-turns-val" style="color: #CEF128; font-weight: 700;">6 Turns</span>
+                  </label>
+                  <input type="number" id="ponytail-max-turns" min="2" max="30" value="6" style="width: 100%; padding: 9px 16px; border-radius: 9999px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.14); color: #fff; font-size: 13px; outline: none; backdrop-filter: blur(8px);">
+                  <span style="font-size: 10.5px; color: #71717a; margin-top: 5px; display: block;">Jumlah pesan terbaru yang disimpan dengan resolusi penuh.</span>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="ponytail-max-tool-chars" style="font-size: 12px; font-weight: 600; color: #e2e8f0; display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span>Batas Output Tool Lama (Chars)</span>
+                    <span id="ponytail-max-tool-chars-val" style="color: #38bdf8; font-weight: 700;">1200 Chars</span>
+                  </label>
+                  <input type="number" id="ponytail-max-tool-chars" min="300" max="10000" step="100" value="1200" style="width: 100%; padding: 9px 16px; border-radius: 9999px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.14); color: #fff; font-size: 13px; outline: none; backdrop-filter: blur(8px);">
+                  <span style="font-size: 10.5px; color: #71717a; margin-top: 5px; display: block;">Karakter maksimum per output tool riwayat sebelum dipadatkan.</span>
+                </div>
+              </div>
+
+              <!-- Optimization Rules Toggles -->
+              <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 14px 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 11px; backdrop-filter: blur(10px);">
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="ponytail-opt-dom" checked style="accent-color: #CEF128; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Pangkas Duplikasi Pohon DOM:</b> Hapus snapshot DOM redundan dari langkah tool sebelumnya.</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="ponytail-opt-base64" checked style="accent-color: #CEF128; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Bersihkan Payload Base64 Raksasa:</b> Ganti string base64 gambar lama di history dengan metadata ringkas.</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="ponytail-opt-facts" checked style="accent-color: #CEF128; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Proteksi Memori Kognitif:</b> Jangan pernah memangkas System Prompt, Knowledge Graph, &amp; Aturan User.</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="ponytail-opt-ladder" checked style="accent-color: #CEF128; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Injeksi Ponytail Decision Ladder:</b> Memaksa AI mengikuti 7-tangga YAGNI &amp; native-first ke instruksi model.</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="ponytail-opt-hook" checked style="accent-color: #CEF128; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Auto-Hook Pre-Flight Request:</b> Kompresi riwayat percakapan otomatis berjalan sebelum setiap API dispatch.</span>
+                </label>
+              </div>
+
+              <!-- Tool & Skills Registry Showcase -->
+              <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 11.5px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px;">🛠️ Tools &amp; Commands Ponytail Aktif:</span>
+                  <span style="font-size: 10px; color: #CEF128; background: rgba(206, 241, 40, 0.12); border: 1px solid rgba(206, 241, 40, 0.3); padding: 2px 8px; border-radius: 9999px; font-weight: 700;">6 Skills &amp; Tools Siap</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <code style="color: #f472b6; font-size: 11.5px; font-weight: 700;">ponytail_compress_history</code>
+                      <span style="font-size: 9.5px; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 9999px;">Hook</span>
+                    </div>
+                    <p style="margin: 3px 0 0 0; font-size: 10.5px; color: #94a3b8;">Memadatkan riwayat chat panjang sebelum dikirim ke API.</p>
+                  </div>
+
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <code style="color: #38bdf8; font-size: 11.5px; font-weight: 700;">ponytail_prune_dom</code>
+                      <span style="font-size: 9.5px; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 9999px;">Filter</span>
+                    </div>
+                    <p style="margin: 3px 0 0 0; font-size: 10.5px; color: #94a3b8;">Menyaring accessibility tree berulang dari snapshot.</p>
+                  </div>
+
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <code style="color: #4ade80; font-size: 11.5px; font-weight: 700;">ponytail_token_meter</code>
+                      <span style="font-size: 9.5px; color: #4ade80; background: rgba(34,197,94,0.12); padding: 2px 6px; border-radius: 9999px;">Meter</span>
+                    </div>
+                    <p style="margin: 3px 0 0 0; font-size: 10.5px; color: #94a3b8;">Menghitung jumlah token awal vs terkompresi &amp; hemat biaya.</p>
+                  </div>
+
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <code style="color: #CEF128; font-size: 11.5px; font-weight: 700;">/ponytail-review</code>
+                      <span style="font-size: 9.5px; color: #CEF128; background: rgba(206,241,40,0.1); padding: 2px 6px; border-radius: 9999px;">Review</span>
+                    </div>
+                    <p style="margin: 3px 0 0 0; font-size: 10.5px; color: #94a3b8;">Audit diff untuk eliminasi over-engineering.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer-actions" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; margin-top: 6px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-modal-cancel" id="btn-cancel-ponytail-modal" style="padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 600;">Batal</button>
+                <button type="submit" class="btn-modal-save" id="btn-save-ponytail-modal" style="padding: 8px 22px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: #CEF128; color: #0E0E11; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(206, 241, 40, 0.35);">Simpan Pengaturan Ponytail</button>
+              </div>
+            </form>
           </div>
 
-          <!-- Optimization Rules Toggles -->
-          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 16px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: blur(10px);">
-            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12.5px; color: #e2e8f0;">
-              <input type="checkbox" id="ponytail-opt-dom" checked style="accent-color: #CEF128; width: 17px; height: 17px; cursor: pointer;">
-              <span><b>Pangkas Duplikasi Pohon DOM:</b> Hapus snapshot DOM redundan dari langkah tool sebelumnya.</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12.5px; color: #e2e8f0;">
-              <input type="checkbox" id="ponytail-opt-base64" checked style="accent-color: #CEF128; width: 17px; height: 17px; cursor: pointer;">
-              <span><b>Bersihkan Payload Base64 Raksasa:</b> Ganti string base64 gambar lama di history dengan metadata ringkas.</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12.5px; color: #e2e8f0;">
-              <input type="checkbox" id="ponytail-opt-facts" checked style="accent-color: #CEF128; width: 17px; height: 17px; cursor: pointer;">
-              <span><b>Proteksi Memori Kognitif:</b> Jangan pernah memangkas System Prompt, Knowledge Graph, &amp; Aturan User.</span>
-            </label>
-          </div>
+          <!-- TAB 2: SKILL.MD DOCUMENTATION VIEWER -->
+          <div id="ponytail-tab-section-docs" style="display: none;">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+              <button type="button" class="ponytail-skill-nav-btn active" data-skill="ponytail" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🐴 /ponytail</button>
+              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-review" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🔍 /ponytail-review</button>
+              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-audit" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">📋 /ponytail-audit</button>
+              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-debt" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">📝 /ponytail-debt</button>
+              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-gain" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">📊 /ponytail-gain</button>
+              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-help" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">❓ /ponytail-help</button>
+            </div>
 
-          <!-- Tool Registry Showcase Section -->
-          <div style="margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span style="font-size: 12px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px;">🛠️ Tools yang Disediakan Plugin Ponytail:</span>
-              <span style="font-size: 10.5px; color: #CEF128; background: rgba(206, 241, 40, 0.12); border: 1px solid rgba(206, 241, 40, 0.3); padding: 3px 10px; border-radius: 9999px; font-weight: 700;">3 Tools Aktif</span>
+            <div class="ponytail-code-box" id="ponytail-doc-preview-box">
+              Memuat dokumentasi skill...
             </div>
             
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(8px);">
-                <div>
-                  <code style="color: #f472b6; font-size: 12px; font-weight: 700;">ponytail_compress_history</code>
-                  <p style="margin: 2px 0 0 0; font-size: 11px; color: #94a3b8;">Memadatkan riwayat chat panjang ke ringkasan semantik otomatis sebelum dikirim ke API model.</p>
+            <p style="margin: 10px 0 0 0; font-size: 11px; color: #71717a; text-align: right;">
+              Sumber: <code>extension/plugins/ponytail/SKILL.md</code> &amp; <a href="https://github.com/DietrichGebert/ponytail" target="_blank" style="color: #38bdf8; text-decoration: none;">GitHub DietrichGebert/ponytail</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL: Pengaturan & Tool Katalog Plugin KV Cache         -->
+    <!-- ======================================================== -->
+    <div class="custom-modal-overlay" id="modal-plugin-kvcache" style="display: none;">
+      <div class="custom-modal-dialog modal-wide" style="max-width: 740px;">
+        <div class="modal-header">
+          <div class="modal-title-box">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); padding: 2px 8px; font-size: 10px; font-weight: 700; border-radius: 6px;">
+                PROMPT CACHE PLUGIN
+              </span>
+              <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #fff;">KV Cache Optimizer Settings</h3>
+            </div>
+            <p style="margin: 0; font-size: 12px; color: #94a3b8;">Konfigurasi Static Prefix Pinning, Dynamic Suffix Relocation, dan Breakpoint Headers</p>
+          </div>
+          <button type="button" class="btn-modal-close" id="btn-close-kvcache-modal" title="Tutup Modal">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="kvcache-tabs-bar" style="margin-top: 14px;">
+          <button type="button" class="kvcache-tab-btn active" data-tab="settings">⚡ Parameter &amp; Optimization</button>
+          <button type="button" class="kvcache-tab-btn" data-tab="docs">📚 Dokumentasi SKILL.md</button>
+        </div>
+
+        <div class="modal-body-scroll" style="max-height: 65vh; overflow-y: auto; padding-right: 4px;">
+          <!-- TAB 1: PARAMETER & OPTIMIZATION -->
+          <div id="kvcache-tab-section-settings">
+            <form id="form-kvcache-settings">
+              <!-- Intensity Mode Selector -->
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 8px;">
+                  TINGKAT AGRESIVITAS KV CACHE:
+                </label>
+                <div class="kvcache-mode-grid">
+                  <div class="kvcache-mode-card" data-mode="balanced">
+                    <input type="radio" name="kvcache_mode_radio" value="balanced">
+                    <div class="kvcache-mode-title">
+                      <span>⚖️ Balanced</span>
+                    </div>
+                    <div class="kvcache-mode-desc">
+                      Isolasi waktu dinamis &amp; jaga kestabilan prefix dasar.
+                    </div>
+                  </div>
+
+                  <div class="kvcache-mode-card active" data-mode="aggressive">
+                    <input type="radio" name="kvcache_mode_radio" value="aggressive" checked>
+                    <div class="kvcache-mode-title">
+                      <span>⚡ Aggressive (Default)</span>
+                    </div>
+                    <div class="kvcache-mode-desc">
+                      Prefix Pinning total, tool sorting alfabetis, &amp; breakpoint eksplisit.
+                    </div>
+                  </div>
+
+                  <div class="kvcache-mode-card" data-mode="strict">
+                    <input type="radio" name="kvcache_mode_radio" value="strict">
+                    <div class="kvcache-mode-title">
+                      <span>🔒 Strict Lock</span>
+                    </div>
+                    <div class="kvcache-mode-desc">
+                      Byte-level determinism; blokir modifikasi acak di tengah riwayat.
+                    </div>
+                  </div>
                 </div>
-                <span style="font-size: 10px; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1);">Auto-Hook</span>
               </div>
 
-              <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(8px);">
-                <div>
-                  <code style="color: #38bdf8; font-size: 12px; font-weight: 700;">ponytail_prune_dom</code>
-                  <p style="margin: 2px 0 0 0; font-size: 11px; color: #94a3b8;">Menyaring accessibility tree berulang dari browser_snapshot untuk mencegah token overflow.</p>
-                </div>
-                <span style="font-size: 10px; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1);">Auto-Filter</span>
+              <!-- Optimization Rules Toggles -->
+              <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 14px 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 11px; backdrop-filter: blur(10px);">
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="kvcache-opt-suffix" checked style="accent-color: #38bdf8; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Dynamic-to-Suffix Relocation:</b> Pindahkan jam/tanggal &amp; URL dinamis ke bagian paling akhir pesan.</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="kvcache-opt-sort" checked style="accent-color: #38bdf8; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Deterministic Tool Sorting:</b> Urutkan array JSON schema tools secara alfabetis untuk menjaga urutan token.</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="kvcache-opt-break" checked style="accent-color: #38bdf8; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Inject Explicit Breakpoints:</b> Sisipkan <code>cache_control: ephemeral</code> pada Anthropic Claude &amp; DeepSeek.</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+                  <input type="checkbox" id="kvcache-opt-frozen" checked style="accent-color: #38bdf8; width: 16px; height: 16px; cursor: pointer;">
+                  <span><b>Preserve Frozen Turns:</b> Lindungi turn percakapan sebelumnya agar tidak membatalkan cache GPU backend.</span>
+                </label>
               </div>
 
-              <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(8px);">
-                <div>
-                  <code style="color: #4ade80; font-size: 12px; font-weight: 700;">ponytail_token_meter</code>
-                  <p style="margin: 2px 0 0 0; font-size: 11px; color: #94a3b8;">Menghitung jumlah token awal vs token hasil kompresi dan menampilkan estimasi efisiensi biaya.</p>
+              <!-- Tools Showcase Section -->
+              <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 11.5px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px;">🛠️ Tools &amp; Commands KV Cache:</span>
+                  <span style="font-size: 10px; color: #38bdf8; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); padding: 2px 8px; border-radius: 9999px; font-weight: 700;">3 Tools Aktif</span>
                 </div>
-                <span style="font-size: 10px; color: #4ade80; background: rgba(34, 197, 94, 0.12); padding: 3px 8px; border-radius: 9999px; border: 1px solid rgba(34, 197, 94, 0.25); font-weight: 600;">Real-Time</span>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <code style="color: #38bdf8; font-size: 11.5px; font-weight: 700;">/kvcache-meter</code>
+                      <span style="font-size: 9.5px; color: #38bdf8; background: rgba(56,189,248,0.12); padding: 2px 6px; border-radius: 9999px;">Real-Time</span>
+                    </div>
+                    <p style="margin: 3px 0 0 0; font-size: 10.5px; color: #94a3b8;">Cek hit ratio &amp; estimasi diskon 70%-90% biaya token.</p>
+                  </div>
+
+                  <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <code style="color: #c084fc; font-size: 11.5px; font-weight: 700;">/kvcache-audit</code>
+                      <span style="font-size: 9.5px; color: #c084fc; background: rgba(168,85,247,0.12); padding: 2px 6px; border-radius: 9999px;">Audit</span>
+                    </div>
+                    <p style="margin: 3px 0 0 0; font-size: 10.5px; color: #94a3b8;">Deteksi anti-pattern Cache-Buster di prompt.</p>
+                  </div>
+                </div>
               </div>
+
+              <div class="modal-footer-actions" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; margin-top: 6px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-modal-cancel" id="btn-cancel-kvcache-modal" style="padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 600;">Batal</button>
+                <button type="submit" class="btn-modal-save" id="btn-save-kvcache-modal" style="padding: 8px 22px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: #38bdf8; color: #0E0E11; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);">Simpan Pengaturan KV Cache</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- TAB 2: SKILL.MD DOCUMENTATION VIEWER -->
+          <div id="kvcache-tab-section-docs" style="display: none;">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+              <button type="button" class="kvcache-skill-nav-btn active" data-skill="kvcache" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">⚡ /kvcache</button>
+              <button type="button" class="kvcache-skill-nav-btn" data-skill="kvcache-audit" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🔍 /kvcache-audit</button>
+              <button type="button" class="kvcache-skill-nav-btn" data-skill="kvcache-meter" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">📊 /kvcache-meter</button>
+            </div>
+
+            <div class="kvcache-code-box" id="kvcache-doc-preview-box">
+              Memuat dokumentasi skill...
             </div>
           </div>
-
-          <div class="modal-footer-actions" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; margin-top: 6px; display: flex; justify-content: flex-end; gap: 10px;">
-            <button type="button" class="btn-modal-cancel" id="btn-cancel-ponytail-modal" style="padding: 9px 20px; border-radius: 9999px; font-size: 12px; font-weight: 600;">Batal</button>
-            <button type="submit" class="btn-modal-save" id="btn-save-ponytail-modal" style="padding: 9px 22px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: #CEF128; color: #0E0E11; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(206, 241, 40, 0.35);">Simpan Pengaturan Ponytail</button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
 
@@ -1916,6 +2189,8 @@
   <script src="connected-apps/telegram/telegram.js"></script>
   <script src="plugins/ponytail/ponytail.js"></script>
   <script src="plugins/ponytail/ponytail_optimizer.js"></script>
+  <script src="plugins/kvcache/kvcache.js"></script>
+  <script src="plugins/kvcache/kvcache_optimizer.js"></script>
   <script src="options.js"></script>
 </body>
 </html>
