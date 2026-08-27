@@ -13,12 +13,12 @@ echo "📦 Menyiapkan perubahan untuk staging git..."
 git add \
   "CORE SKILLS/" \
   "extension/icons/plugins/" \
-  "extension/plugins/ponytail/" \
-  "extension/plugins/kvcache/" \
-  "extension/plugins/caveman/" \
+  "extension/plugins/" \
   "extension/background.js" \
   "extension/sidepanel.js" \
   "extension/options.html" \
+  "extension/options.js" \
+  "extension/options.css" \
   "push_to_github.sh"
 
 COMMIT_MSG="feat(plugins): add Caveman output compressor plugin & ensure KV Cache visibility

@@ -2419,11 +2419,24 @@ function setupEventListeners() {
   const brainAccordionGroup = document.getElementById('sidebar-brain-group');
   const brainAccordionSubmenu = document.getElementById('sidebar-brain-submenu');
 
+  window.toggleBrainAccordion = function(forceState = null) {
+    if (!brainAccordionGroup) return;
+    const isCurrentlyOpen = brainAccordionGroup.classList.contains('is-open');
+    const willOpen = forceState !== null ? forceState : !isCurrentlyOpen;
+    
+    if (willOpen) {
+      brainAccordionGroup.classList.add('is-open');
+      brainAccordionSubmenu?.classList.add('is-open');
+    } else {
+      brainAccordionGroup.classList.remove('is-open');
+      brainAccordionSubmenu?.classList.remove('is-open');
+    }
+  };
+
   brainAccordionHeader?.addEventListener('click', (e) => {
     e.preventDefault();
-    const willOpen = !brainAccordionGroup?.classList.contains('is-open');
-    brainAccordionGroup?.classList.toggle('is-open', willOpen);
-    brainAccordionSubmenu?.classList.toggle('is-open', willOpen);
+    e.stopPropagation();
+    window.toggleBrainAccordion();
   });
 
   // Global Tab Switching Function (Zero-latency & 100% reliable)
@@ -2439,14 +2452,11 @@ function setupEventListeners() {
       }
     });
 
-    const bGroup = document.getElementById('sidebar-brain-group');
-    const bSubmenu = document.getElementById('sidebar-brain-submenu');
     const bHeader = document.getElementById('btn-toggle-brain-accordion');
-
     const isBrainTab = ['agents', 'skills', 'memories', 'persistent-brain'].includes(tabName);
+    
     if (isBrainTab) {
-      bGroup?.classList.add('is-open');
-      bSubmenu?.classList.add('is-open');
+      window.toggleBrainAccordion(true);
       bHeader?.classList.add('has-active-child');
     } else {
       bHeader?.classList.remove('has-active-child');
@@ -2497,11 +2507,7 @@ function setupEventListeners() {
     const accordionBtn = e.target.closest('#btn-toggle-brain-accordion');
     if (accordionBtn) {
       e.preventDefault();
-      const bGroup = document.getElementById('sidebar-brain-group');
-      const bSubmenu = document.getElementById('sidebar-brain-submenu');
-      const willOpen = !bGroup?.classList.contains('is-open');
-      bGroup?.classList.toggle('is-open', willOpen);
-      bSubmenu?.classList.toggle('is-open', willOpen);
+      window.toggleBrainAccordion();
       return;
     }
 
