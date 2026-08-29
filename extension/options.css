@@ -3903,12 +3903,37 @@ body.no-glass-blur {
 
 .telegram-action-buttons-wrap {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.telegram-btn-row-1 {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.telegram-btn-row-1 button:first-child {
+  flex: 1.4;
+}
+
+.telegram-btn-row-1 button:last-child {
+  flex: 1;
+}
+
+.telegram-btn-row-2 {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.telegram-btn-row-2 button {
+  flex: 1;
 }
 
 .telegram-action-buttons-wrap button {
@@ -3918,19 +3943,47 @@ body.no-glass-blur {
   justify-content: center;
   gap: 6px;
   border-radius: 9999px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   box-sizing: border-box;
   transition: all 0.2s ease;
   white-space: nowrap;
+  padding: 0 12px !important;
+}
+
+.telegram-pref-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.telegram-pref-pill-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9999px !important;
+  transition: all 0.2s ease;
+}
+
+.telegram-pref-pill-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .btn-lime-pill {
   background: var(--accent-lime) !important;
   color: #0E0E11 !important;
   font-weight: 700 !important;
-  padding: 0 20px !important;
+  padding: 0 16px !important;
   border: none !important;
   box-shadow: 0 4px 14px rgba(206, 241, 40, 0.3) !important;
 }
@@ -3944,7 +3997,7 @@ body.no-glass-blur {
   background: rgba(255, 255, 255, 0.06) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   color: #F1F5F9 !important;
-  padding: 0 16px !important;
+  padding: 0 14px !important;
 }
 
 .btn-secondary-pill:hover {

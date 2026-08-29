@@ -1424,29 +1424,29 @@
                 </div>
 
                 <!-- Preferences Switches -->
-                <div class="ui-pref-list" style="margin-top: 14px; margin-bottom: 0; display: flex; flex-direction: column; gap: 8px;">
-                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 0 16px; height: 42px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+                <div class="telegram-pref-list">
+                  <div class="telegram-pref-pill-row">
                     <span class="ui-pref-label" style="font-size: 12px; font-weight: 500;">Aktifkan Listener Bot Telegram</span>
                     <label class="custom-pill-switch">
                       <input type="checkbox" id="setting-telegram-enabled">
                       <span class="pill-switch-track"></span>
                     </label>
                   </div>
-                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 0 16px; height: 42px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+                  <div class="telegram-pref-pill-row">
                     <span class="ui-pref-label" style="font-size: 12px; font-weight: 500;">Auto Dynamic Model Routing (/model auto)</span>
                     <label class="custom-pill-switch">
                       <input type="checkbox" id="setting-telegram-auto-model" checked>
                       <span class="pill-switch-track"></span>
                     </label>
                   </div>
-                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 0 16px; height: 42px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+                  <div class="telegram-pref-pill-row">
                     <span class="ui-pref-label" style="font-size: 12px; font-weight: 500;">Auto Smart Agent Routing (/agent auto)</span>
                     <label class="custom-pill-switch">
                       <input type="checkbox" id="setting-telegram-auto-agent" checked>
                       <span class="pill-switch-track"></span>
                     </label>
                   </div>
-                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 0 16px; height: 42px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+                  <div class="telegram-pref-pill-row">
                     <span class="ui-pref-label" style="font-size: 12px; font-weight: 500;">Auto-Accept Web Actions Tanpa Konfirmasi</span>
                     <label class="custom-pill-switch">
                       <input type="checkbox" id="setting-telegram-auto-accept" checked>
@@ -1456,25 +1456,29 @@
                 </div>
               </div>
 
-              <!-- Action Buttons -->
+              <!-- Action Buttons (Organized in 2 balanced rows) -->
               <div class="telegram-action-buttons-wrap">
-                <button type="button" class="btn-lime-pill" id="btn-save-telegram-config">
-                  Simpan Pengaturan
-                </button>
-                <button type="button" class="btn-secondary-pill" id="btn-test-telegram-ping">
-                  Test Koneksi
-                </button>
-                <button type="button" class="btn-lime-outline-pill" id="btn-set-telegram-avatar">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg>
-                  <span>Set Foto Profil Bot</span>
-                </button>
-                <button type="button" class="btn-secondary-pill" id="btn-register-telegram-commands">
-                  Daftarkan Menu Perintah
-                </button>
-                <button type="button" class="btn-sky-outline-pill" id="btn-restart-telegram-bot">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                  <span>Restart Bot &amp; Fresh Chat</span>
-                </button>
+                <div class="telegram-btn-row-1">
+                  <button type="button" class="btn-lime-pill" id="btn-save-telegram-config">
+                    Simpan Pengaturan
+                  </button>
+                  <button type="button" class="btn-secondary-pill" id="btn-test-telegram-ping">
+                    Test Koneksi
+                  </button>
+                </div>
+                <div class="telegram-btn-row-2">
+                  <button type="button" class="btn-lime-outline-pill" id="btn-set-telegram-avatar">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg>
+                    <span>Set Avatar Bot</span>
+                  </button>
+                  <button type="button" class="btn-secondary-pill" id="btn-register-telegram-commands">
+                    Daftarkan Menu
+                  </button>
+                  <button type="button" class="btn-sky-outline-pill" id="btn-restart-telegram-bot">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    <span>Restart Bot</span>
+                  </button>
+                </div>
               </div>
             </div>
 
