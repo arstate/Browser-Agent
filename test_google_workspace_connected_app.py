@@ -55,5 +55,24 @@ class TestGoogleWorkspaceConnectedApp(unittest.TestCase):
         out = self.run_node_eval(script)
         self.assertIn("PASS_DEFAULT_CREDENTIALS", out)
 
+    def test_service_methods_exist(self):
+        script = """
+        const { GoogleWorkspaceService } = require('./extension/connected-apps/google_workspace/google_workspace_service.js');
+        const svc = new GoogleWorkspaceService();
+
+        if (typeof svc.appendSpreadsheetRow !== 'function') process.exit(1);
+        if (typeof svc.updateSpreadsheetRange !== 'function') process.exit(2);
+        if (typeof svc.readSpreadsheet !== 'function') process.exit(3);
+        if (typeof svc.createSpreadsheet !== 'function') process.exit(4);
+        if (typeof svc.createDocument !== 'function') process.exit(5);
+        if (typeof svc.appendDocumentText !== 'function') process.exit(6);
+        if (typeof svc.replaceDocumentContent !== 'function') process.exit(7);
+        if (typeof svc.readDocument !== 'function') process.exit(8);
+
+        console.log('PASS_SERVICE_METHODS');
+        """
+        out = self.run_node_eval(script)
+        self.assertIn("PASS_SERVICE_METHODS", out)
+
 if __name__ == '__main__':
     unittest.main()

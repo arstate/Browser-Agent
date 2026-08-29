@@ -587,6 +587,7 @@ ATURAN KRUSIAL:
 4. 🎨 AI Image Generation: generate_image(prompt, size).
 5. 💬 Interactive Clarification & Sub-Agent Analysis: ask_clarification, agent_subtask_analysis.
 6. 📱 Built-in Connected Apps & Telegram Bot Remote: configure_telegram_bot, get_telegram_bot_status. Browser Agent memiliki mesin Telegram Bot bawaan. Ketika mendeteksi Bot Token & Chat ID (misal dari chat @BotFather di tab Telegram Web) atau ketika user meminta koneksi Telegram, Master Agent WAJIB LANGSUNG MEMANGGIL configure_telegram_bot({ bot_token, authorized_chat_id, enabled: true }) untuk mengaktifkan bot secara otomatis tanpa menyuruh pengguna setting manual!
+7. 📑 Google Workspace (Google Docs & Sheets) Direct Link Editing: gsuite_create_doc, gsuite_append_doc_text, gsuite_replace_doc_content, gsuite_read_doc, gsuite_create_sheet, gsuite_append_sheet_row, gsuite_update_sheet_range, gsuite_read_sheet, gsuite_get_status. Ketika pengguna memberikan link Google Docs (https://docs.google.com/document/d/...) atau link Google Sheets (https://docs.google.com/spreadsheets/d/...) di prompt, Master Agent WAJIB langsung mengekstrak Document ID atau Spreadsheet ID tersebut dan mengeksekusi pengeditan / penulisan data langsung ke dokumen / spreadsheet tersebut menggunakan tool Connected Apps Google Workspace!
 
 Always provide clear, comprehensive final answers in clean Markdown.`;
 
@@ -1468,6 +1469,21 @@ const AGENT_TOOLS = [
   {
     type: "function",
     function: {
+      name: "gsuite_replace_doc_content",
+      description: "Replace and overwrite the full text content of an existing Google Docs document from a URL or Document ID with new text/report.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_id_or_url: { type: "string", description: "The Google Docs full URL or Document ID provided by user" },
+          new_content: { type: "string", description: "The new replacement text/report to write into the document" }
+        },
+        required: ["document_id_or_url", "new_content"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "gsuite_read_sheet",
       description: "Read rows and columns of data from a Google Spreadsheet.",
       parameters: {
@@ -1477,6 +1493,26 @@ const AGENT_TOOLS = [
           range: { type: "string", description: "Range of cells to read, e.g. 'Sheet1!A1:Z50' (default 'Sheet1!A1:Z100')" }
         },
         required: ["spreadsheet_id_or_url"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_update_sheet_range",
+      description: "Update or overwrite specific cells or range of rows in a Google Spreadsheet from a URL or Spreadsheet ID.",
+      parameters: {
+        type: "object",
+        properties: {
+          spreadsheet_id_or_url: { type: "string", description: "The Google Spreadsheet full URL or ID provided by user" },
+          range: { type: "string", description: "The target cell range to update (e.g. 'Sheet1!A1:E1' or 'Sheet1!A2')" },
+          row_values: {
+            type: "array",
+            items: { type: "string" },
+            description: "Array of cell values (or array of rows) to write into the range"
+          }
+        },
+        required: ["spreadsheet_id_or_url", "range", "row_values"]
       }
     }
   },
@@ -3894,6 +3930,25 @@ async function executeTool(name, args, assistantBubble = null) {
       }
     }
 
+    case "gsuite_replace_doc_content": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      try {
+        const docId = args.document_id_or_url;
+        const newContent = args.new_content || "";
+        const res = await googleWorkspaceService.replaceDocumentContent(docId, newContent);
+        return {
+          success: true,
+          message: `Berhasil menulis ulang & mengupdate isi Google Doc!`,
+          document_id: res.documentId,
+          document_url: res.documentUrl
+        };
+      } catch (err) {
+        return { error: `Gagal mengupdate Google Doc: ${err.message}` };
+      }
+    }
+
     case "gsuite_read_sheet": {
       if (typeof googleWorkspaceService === 'undefined') {
         return { error: "Google Workspace service belum dimuat." };
@@ -3911,6 +3966,28 @@ async function executeTool(name, args, assistantBubble = null) {
         };
       } catch (err) {
         return { error: `Gagal membaca Google Sheet: ${err.message}` };
+      }
+    }
+
+    case "gsuite_update_sheet_range": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      try {
+        const sheetId = args.spreadsheet_id_or_url;
+        const range = args.range || "Sheet1!A1";
+        const rowValues = args.row_values || [];
+        const res = await googleWorkspaceService.updateSpreadsheetRange(sheetId, range, rowValues);
+        return {
+          success: true,
+          message: `Berhasil mengupdate cell / range data di Google Sheet!`,
+          spreadsheet_id: res.spreadsheetId,
+          spreadsheet_url: res.spreadsheetUrl,
+          updated_range: res.updatedRange,
+          updated_rows: res.updatedRows
+        };
+      } catch (err) {
+        return { error: `Gagal mengupdate Google Sheet: ${err.message}` };
       }
     }
 

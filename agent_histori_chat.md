@@ -5504,6 +5504,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Menulis test suite baru `test_google_workspace_connected_app.py` (28/28 Unit Tests lulus 100%).
   - Bump version to `v2.150.95`, build `extension.crx` (959.8 KB).
 
+---
+
+### 🚀 Iterasi 471: Direct Link Sensing & Full In-Place Editing for Google Docs and Google Sheets (v2.150.96)
+- **Kebutuhan Pengguna**:
+  - Ketika pengguna menyertakan URL link Google Sheets (`https://docs.google.com/spreadsheets/d/...`) atau link Google Docs (`https://docs.google.com/document/d/...`) di dalam prompt percakapan, AI harus secara otomatis mengenali link tersebut, mengekstrak Document ID / Spreadsheet ID, dan langsung mengedit, memperbarui baris/cell, atau menulis isi laporan langsung ke file dokumen/sheet tersebut via fitur Connected Apps Google Workspace.
+- **Implementasi & Peningkatan Sistem**:
+  - **Penambahan Fitur di [google_workspace_service.js](file:///home/arya/browser-agent/extension/connected-apps/google_workspace/google_workspace_service.js)**:
+    - Menambahkan `updateSpreadsheetRange(spreadsheetIdOrUrl, range, rowValues)` untuk memperbarui rentang cell / baris spesifik di Google Sheet secara in-place via Google Sheets API v4.
+    - Menambahkan `replaceDocumentContent(documentIdOrUrl, newContentText)` untuk mengosongkan dan menulis ulang isi dokumen Google Docs secara bersih via Google Docs API v1 batchUpdate.
+  - **Penambahan Tool AI di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js) & [background.js](file:///home/arya/browser-agent/extension/background.js)**:
+    - Mendaftarkan tool baru: `gsuite_update_sheet_range` dan `gsuite_replace_doc_content`.
+    - Menyuntikkan direktif kognitif otomatis ke Master System Prompt: jika mendeteksi URL Google Docs / Sheets di dalam user prompt, AI wajib memprioritaskan pemanggilan tools `gsuite_*` untuk memodifikasi dokumen tersebut secara langsung dan memberikan konfirmasi rapi dengan tautan dokumen yang telah diperbarui.
+- **Pengujian & Rilis**:
+  - Seluruh Unit Tests lulus 100% ([test_google_workspace_connected_app.py](file:///home/arya/browser-agent/test_google_workspace_connected_app.py)).
+  - Bump version to `v2.150.96`, build `extension.crx` (970.4 KB).
+
 
 
 

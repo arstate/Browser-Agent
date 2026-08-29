@@ -1821,6 +1821,12 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
       return { status: "success", message: `Berhasil menambahkan teks ke Google Doc!`, document_id: res.documentId, document_url: res.documentUrl };
     }
 
+    if (toolName === "gsuite_replace_doc_content") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.replaceDocumentContent(toolArgs.document_id_or_url, toolArgs.new_content || "");
+      return { status: "success", message: `Berhasil menulis ulang isi Google Doc!`, document_id: res.documentId, document_url: res.documentUrl };
+    }
+
     if (toolName === "gsuite_read_doc") {
       if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
       const res = await googleWorkspaceService.readDocument(toolArgs.document_id_or_url);
@@ -1842,6 +1848,12 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
 
       const res = await googleWorkspaceService.appendSpreadsheetRow(targetSheet, toolArgs.row_values || [], toolArgs.sheet_name || "Sheet1");
       return { status: "success", message: `Berhasil menambahkan baris data ke Google Sheet!`, spreadsheet_id: res.spreadsheetId, spreadsheet_url: res.spreadsheetUrl };
+    }
+
+    if (toolName === "gsuite_update_sheet_range") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.updateSpreadsheetRange(toolArgs.spreadsheet_id_or_url, toolArgs.range || "Sheet1!A1", toolArgs.row_values || []);
+      return { status: "success", message: `Berhasil mengupdate cell / range data di Google Sheet!`, spreadsheet_id: res.spreadsheetId, spreadsheet_url: res.spreadsheetUrl, updated_range: res.updatedRange };
     }
 
     if (toolName === "gsuite_read_sheet") {

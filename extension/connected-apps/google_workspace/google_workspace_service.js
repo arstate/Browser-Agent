@@ -259,6 +259,43 @@ class GoogleWorkspaceService {
   }
 
   /**
+   * Update or overwrite a specific cell range in a Google Spreadsheet
+   */
+  async updateSpreadsheetRange(spreadsheetIdOrUrl, range = 'Sheet1!A1', rowValues = []) {
+    const spreadsheetId = this.parseSpreadsheetId(spreadsheetIdOrUrl);
+    if (!spreadsheetId) throw new Error("Spreadsheet ID atau URL tidak valid.");
+    const token = await this.getValidAccessToken();
+
+    const values = Array.isArray(rowValues[0]) ? rowValues : [rowValues];
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ values })
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Sheets API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    this.logActivity('SHEETS_UPDATE', `Berhasil mengupdate range ${range} di Sheet ID: ${spreadsheetId.substring(0, 8)}...`);
+    return {
+      success: true,
+      spreadsheetId,
+      updatedRange: data.updatedRange || range,
+      updatedRows: data.updatedRows || values.length,
+      updatedColumns: data.updatedColumns,
+      updatedCells: data.updatedCells,
+      spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`
+    };
+  }
+
+  /**
    * Read values from a Google Spreadsheet range
    */
   async readSpreadsheet(spreadsheetIdOrUrl, range = 'Sheet1!A1:Z100') {
@@ -428,6 +465,73 @@ class GoogleWorkspaceService {
     }
 
     this.logActivity('DOCS_APPEND', `Menambahkan teks ke Dokumen ID: ${documentId.substring(0, 8)}...`);
+    return {
+      success: true,
+      documentId,
+      documentUrl: `https://docs.google.com/document/d/${documentId}/edit`
+    };
+  }
+
+  /**
+   * Replace/Overwrite entire content of a Google Document with new text
+   */
+  async replaceDocumentContent(documentIdOrUrl, newContentText) {
+    const documentId = this.parseDocumentId(documentIdOrUrl);
+    if (!documentId) throw new Error("Document ID atau URL tidak valid.");
+    const token = await this.getValidAccessToken();
+
+    // 1. Fetch current document end index
+    const getRes = await fetch(`https://docs.googleapis.com/v1/documents/${encodeURIComponent(documentId)}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const docData = await getRes.json();
+    if (docData.error) throw new Error(`Google Docs Error: ${docData.error.message}`);
+
+    let endIndex = 1;
+    if (docData.body && Array.isArray(docData.body.content)) {
+      const lastElement = docData.body.content[docData.body.content.length - 1];
+      if (lastElement && lastElement.endIndex) {
+        endIndex = Math.max(1, lastElement.endIndex - 1);
+      }
+    }
+
+    const requests = [];
+    // Delete existing content if endIndex > 1
+    if (endIndex > 1) {
+      requests.push({
+        deleteContentRange: {
+          range: {
+            startIndex: 1,
+            endIndex: endIndex
+          }
+        }
+      });
+    }
+
+    const cleanText = (typeof newContentText === 'string' ? newContentText : JSON.stringify(newContentText, null, 2)) + "\n";
+    requests.push({
+      insertText: {
+        location: { index: 1 },
+        text: cleanText
+      }
+    });
+
+    const updateUrl = `https://docs.googleapis.com/v1/documents/${encodeURIComponent(documentId)}:batchUpdate`;
+    const res = await fetch(updateUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ requests })
+    });
+
+    const updateData = await res.json();
+    if (updateData.error) {
+      throw new Error(`Google Docs API Error: ${updateData.error.message || JSON.stringify(updateData.error)}`);
+    }
+
+    this.logActivity('DOCS_REPLACE', `Menulis ulang isi Dokumen ID: ${documentId.substring(0, 8)}...`);
     return {
       success: true,
       documentId,
