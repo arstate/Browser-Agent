@@ -2908,7 +2908,7 @@ body.options-body::before,
    Persistent Memory & Autonomous Brain (Clean Glassmorphism Full Rounded UI)
    ========================================================================= */
 .brain-hero-card {
-  margin-bottom: 24px;
+  margin: 0;
   background: radial-gradient(130% 130% at 50% 0%, rgba(26, 26, 32, 0.7) 0%, rgba(12, 12, 16, 0.95) 100%);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);

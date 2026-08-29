@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.130`
+- **Versi Terkini:** `v2.150.131`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -130,7 +130,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 8. **Ultra-Clarity High-Contrast Frosted Glass:** Dropdown filter menggunakan backdrop blur `40px saturate(220%)` dengan background `rgba(10, 10, 14, 0.96)`, inner border highlight, dan text-shadow tajam agar teks selalu terbaca jernih di atas animasi node canvas.
 9. **Universal Search Glasses & Normalized 48px Layout Across All Menus:** Standar kapsul pencarian bulat penuh (`border-radius: 9999px`, tinggi `48px`, padding simetris, jarak vertikal atas-bawah identik `20px`) dengan live real-time filtering terpasang di 7 menu Pengaturan: Multi-Agent, Skills, Memories, Persistent Brain, Tampilan & UI, Connected Apps, dan Plugins (terdokumentasi lengkap di `design.md`).
 10. **Vector SVG Filter Icons (No Bullets/Emoticons):** Setiap opsi filter cluster pada dropdown dilengkapi ikon Vector SVG presisi tinggi (Brain, Multi-Agent, Tools, Rules, Ledger, Anti-Patterns, Corpus, Graph, Chip) untuk tampilan profesional tanpa bullet dot atau emoticon.
-11. **Harmonized Connected Apps Action Buttons & Clean Whitelist Count:** Menyeragamkan seluruh tombol aksi kartu Connected Apps menjadi `Pengaturan`, serta menyederhanakan indikator whitelist menjadi format ringkas `Whitelist: N User ID` tanpa deretan digit ID mentah yang panjang.
+11. **Clean 'Settings' Action Button & Normalized Search Container Vertical Rhythm:** Mengubah teks tombol aksi kartu Connected Apps menjadi `Settings` murni tanpa ikon panah/chevron, serta menghapus margin luar pada `.brain-hero-card` agar jarak atas dan bawah container search bar pada Persistent Brain dan semua menu menjadi 100% presisi dan identik (20px).
 12. **1-Click Auto Update & Universal PC Bridge Fixer:** Indikator update pill di header (`#chip-check-update`) mengecek repository GitHub `arstate/Browser-Agent` secara otomatis, menyediakan modal 1-klik auto pull & reload via RPC Native Host dengan label ringkas `Update Now`, serta modal Universal Fixer All-OS (Linux, Windows, macOS) dengan navigasi folder absolut otomatis (`cd ~/browser-agent && ./install.sh`).
 13. **Official Google 4-Color Vector Icon:** Memperbarui aset ikon Google Workspace di Connected Apps (`extension/icons/connected-apps/google_workspace.svg`) menggunakan logo Vector SVG 4-warna resmi beresolusi tinggi.
 14. **Quiet Executive Dark Luxury Update Pill:** Menghilangkan seluruh animasi kedip/glow yang norak pada badge update pill, menggantinya dengan desain static frosted glass yang tenang, elegan, dan profesional setara Linear/Apple.

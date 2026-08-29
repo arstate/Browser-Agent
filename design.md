@@ -263,9 +263,11 @@ Katalog kartu DILARANG disusun dalam bentuk 1 kolom tunggal (stack block), melai
    - `display: grid; grid-template-columns: 1fr 1fr; gap: 18px; width: 100%; box-sizing: border-box;` (Mobile: `1fr`).
 5. **Main Content Container Frame (`.options-main-content`)**:
    - `max-width: 1240px; margin: 0 auto; padding: 28px 36px 60px; width: 100%; box-sizing: border-box;`
-6. **Harmonisasi Gap Vertikal**:
+6. **Harmonisasi Gap Vertikal (100% Identik Atas & Bawah)**:
    - Semua `.options-view` dan `.connected-apps-view-section` menggunakan `display: flex; flex-direction: column; gap: 20px; width: 100%; box-sizing: border-box; margin: 0;`.
-   - DILARANG menambahkan inline `margin-bottom: 20px` atau `margin-top: 8px` pada hero card atau grid yang dapat membuat jarak atas-bawah search bar menjadi tidak seimbang.
+   - Seluruh hero card (termasuk `.brain-hero-card` dan `.bento-hero-provider-card`) dan wrapper search bar (`.catalog-search-wrapper`) wajib menggunakan `margin: 0;` sehingga jarak vertikal atas (dari kartu header) dan jarak bawah (ke kartu grid) adalah **persis 20px sama rata tanpa deviasi**.
+7. **Clean Text Action Buttons (No Icon Standard)**:
+   - Tombol aksi pada kartu Connected Apps (`.btn-glass-action`) menggunakan teks ringkas **`Settings`** murni tanpa icon chevron/panah (`>`), dengan padding simetris `8px 18px` dan border-radius `9999px`.
 
 ### E. Universal Search Bar Deployment Across All Settings Menus (7 Menu Standar)
 Seluruh 7 menu utama di halaman Pengaturan dilengkapi Search Bar Full Rounded (`height: 48px`, symmetric `padding: 0 10px 0 18px`, equal `20px` top & bottom distance, live real-time filtering):
