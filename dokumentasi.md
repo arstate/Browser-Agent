@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.128`
+- **Versi Terkini:** `v2.150.129`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -128,7 +128,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 6. **Sleek Single Dropdown Filter for Neural Graph:** Mengganti deretan tombol filter horizontal yang memakan tempat menjadi satu tombol dropdown compact (`.graph-filter-dropdown-btn`) dengan popover glassmorphism (`.graph-filter-dropdown-menu`).
 7. **Clean Non-Nested View Buttons:** Menghilangkan container border luar pada switcher view mode sehingga tombol `Grid Cards` & `Neural Graph` menyatu langsung setinggi kapsul pencarian tanpa lapisan border ganda.
 8. **Ultra-Clarity High-Contrast Frosted Glass:** Dropdown filter menggunakan backdrop blur `40px saturate(220%)` dengan background `rgba(10, 10, 14, 0.96)`, inner border highlight, dan text-shadow tajam agar teks selalu terbaca jernih di atas animasi node canvas.
-9. **Search Glasses Full Rounded & Normalized Grid Margin System:** Standar kapsul pencarian bulat penuh (`border-radius: 9999px`) dengan live real-time filtering dan sinkronisasi margin kanan-kiri 100% presisi di seluruh tab Pengaturan (terdokumentasi lengkap di `design.md`).
+9. **Universal Search Glasses & Normalized 48px Layout Across All Menus:** Standar kapsul pencarian bulat penuh (`border-radius: 9999px`, tinggi `48px`, padding simetris, jarak vertikal atas-bawah identik `20px`) dengan live real-time filtering terpasang di 7 menu Pengaturan: Multi-Agent, Skills, Memories, Persistent Brain, Tampilan & UI, Connected Apps, dan Plugins (terdokumentasi lengkap di `design.md`).
 10. **Vector SVG Filter Icons (No Bullets/Emoticons):** Setiap opsi filter cluster pada dropdown dilengkapi ikon Vector SVG presisi tinggi (Brain, Multi-Agent, Tools, Rules, Ledger, Anti-Patterns, Corpus, Graph, Chip) untuk tampilan profesional tanpa bullet dot atau emoticon.
 11. **Harmonized Connected Apps Action Buttons & Clean Whitelist Count:** Menyeragamkan seluruh tombol aksi kartu Connected Apps menjadi `Pengaturan`, serta menyederhanakan indikator whitelist menjadi format ringkas `Whitelist: N User ID` tanpa deretan digit ID mentah yang panjang.
 12. **1-Click Auto Update & Universal PC Bridge Fixer:** Indikator update pill di header (`#chip-check-update`) mengecek repository GitHub `arstate/Browser-Agent` secara otomatis, menyediakan modal 1-klik auto pull & reload via RPC Native Host dengan label ringkas `Update Now`, serta modal Universal Fixer All-OS (Linux, Windows, macOS) dengan navigasi folder absolut otomatis (`cd ~/browser-agent && ./install.sh`).

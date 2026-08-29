@@ -267,3 +267,13 @@ Katalog kartu DILARANG disusun dalam bentuk 1 kolom tunggal (stack block), melai
    - Semua `.options-view` dan `.connected-apps-view-section` menggunakan `display: flex; flex-direction: column; gap: 20px; width: 100%; box-sizing: border-box; margin: 0;`.
    - DILARANG menambahkan inline `margin-bottom: 20px` atau `margin-top: 8px` pada hero card atau grid yang dapat membuat jarak atas-bawah search bar menjadi tidak seimbang.
 
+### E. Universal Search Bar Deployment Across All Settings Menus (7 Menu Standar)
+Seluruh 7 menu utama di halaman Pengaturan dilengkapi Search Bar Full Rounded (`height: 48px`, symmetric `padding: 0 10px 0 18px`, equal `20px` top & bottom distance, live real-time filtering):
+1. **Multi-Agent Management (`#search-agents-input`)**: Live search sub-agent, nama, peran, dan prompt spesialis.
+2. **Skills Catalog (`#search-skills-input`)**: Live search katalog skill, SOP, dan procedural tools.
+3. **Memories Management (`#search-memories-input`)**: Live search aturan permanen & preferensi pengguna.
+4. **Persistent Brain Vault (`#search-brain-input`)**: Unified search + embedded dual view switcher capsule (`Grid Cards` & `Neural Graph`).
+5. **Tampilan & UI (`#search-ui-input`)**: Live search preferensi tema, animasi, efek glass blur, shadow, glow, dan switch interaktif.
+6. **Connected Apps Hub (`#search-connected-apps-input`)**: Live search aplikasi terhubung (Telegram Bot, Google Workspace, WhatsApp, Webhook, Companion).
+7. **Plugin Ecosystem (`#search-plugins-input`)**: Live search plugin modular & token optimizer (Ponytail, KV Cache, Caveman, Claude Fable).
+

@@ -3007,6 +3007,59 @@ function setupEventListeners() {
     }
   });
 
+  // Live Client-Side Search Filter for Tampilan & UI Preferences
+  function filterUIPreferences(query) {
+    const q = (query || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#tab-view-ui .ui-pref-pill-row');
+    const cards = document.querySelectorAll('#tab-view-ui .bento-glass-card');
+    const clearBtn = document.getElementById('btn-clear-ui-search');
+    const statsEl = document.getElementById('stats-search-ui');
+
+    if (clearBtn) {
+      clearBtn.style.display = q ? 'flex' : 'none';
+    }
+
+    let visibleRowCount = 0;
+    rows.forEach(row => {
+      const text = (row.innerText || '').toLowerCase();
+      const isMatch = !q || text.includes(q);
+      row.style.display = isMatch ? 'flex' : 'none';
+      if (isMatch) visibleRowCount++;
+    });
+
+    cards.forEach(card => {
+      const headerText = (card.querySelector('.card-header')?.innerText || '').toLowerCase();
+      const visibleChildRows = card.querySelectorAll('.ui-pref-pill-row:not([style*="display: none"])');
+      const shouldShowCard = !q || visibleChildRows.length > 0 || headerText.includes(q);
+      card.style.display = shouldShowCard ? 'block' : 'none';
+      if (shouldShowCard && headerText.includes(q) && q) {
+        card.querySelectorAll('.ui-pref-pill-row').forEach(r => r.style.display = 'flex');
+      }
+    });
+
+    if (statsEl) {
+      if (q) {
+        statsEl.style.display = 'block';
+        statsEl.innerHTML = `Menampilkan <strong style="color: var(--accent-lime);">${visibleRowCount}</strong> opsi preferensi`;
+      } else {
+        statsEl.style.display = 'none';
+      }
+    }
+  }
+
+  const searchUiInput = document.getElementById('search-ui-input');
+  const btnClearSearchUi = document.getElementById('btn-clear-ui-search');
+  searchUiInput?.addEventListener('input', (e) => {
+    filterUIPreferences(e.target.value);
+  });
+  btnClearSearchUi?.addEventListener('click', () => {
+    if (searchUiInput) {
+      searchUiInput.value = '';
+      filterUIPreferences('');
+      searchUiInput.focus();
+    }
+  });
+
   // Test connection button
   document.getElementById('btn-test-connection')?.addEventListener('click', checkPCBridgeStatus);
 
