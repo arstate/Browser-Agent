@@ -158,9 +158,12 @@ def configure_silent_debugger_flags():
         # 1. Linux Flags Conf
         conf_files = [
             os.path.expanduser("~/.config/chrome-flags.conf"),
+            os.path.expanduser("~/.config/google-chrome-flags.conf"),
+            os.path.expanduser("~/.config/google-chrome-stable-flags.conf"),
             os.path.expanduser("~/.config/chromium-flags.conf"),
             os.path.expanduser("~/.config/brave-flags.conf"),
-            os.path.expanduser("~/.config/microsoft-edge-flags.conf")
+            os.path.expanduser("~/.config/microsoft-edge-flags.conf"),
+            os.path.expanduser("~/.config/vivaldi-flags.conf")
         ]
         for cf in conf_files:
             try:
@@ -182,7 +185,18 @@ def configure_silent_debugger_flags():
         local_apps = os.path.expanduser("~/.local/share/applications")
         os.makedirs(local_apps, exist_ok=True)
         search_dirs = ["/usr/share/applications", "/var/lib/flatpak/exports/share/applications", local_apps]
-        desktop_names = ["google-chrome.desktop", "google-chrome-stable.desktop", "chromium.desktop", "brave-browser.desktop", "microsoft-edge.desktop"]
+        desktop_names = [
+            "google-chrome.desktop",
+            "google-chrome-stable.desktop",
+            "google-chrome-beta.desktop",
+            "google-chrome-unstable.desktop",
+            "chromium.desktop",
+            "chromium-browser.desktop",
+            "brave-browser.desktop",
+            "microsoft-edge.desktop",
+            "microsoft-edge-dev.desktop",
+            "vivaldi-stable.desktop"
+        ]
         
         for dname in desktop_names:
             for sdir in search_dirs:
@@ -193,7 +207,7 @@ def configure_silent_debugger_flags():
                         with open(src, "r", encoding="utf-8") as f:
                             content = f.read()
                         
-                        # Replace Exec lines with flag if not present
+                        # Replace all Exec= lines with flag if not present
                         new_lines = []
                         for line in content.splitlines():
                             if line.startswith("Exec=") and flag not in line:
@@ -214,6 +228,22 @@ def configure_silent_debugger_flags():
             subprocess.run(["update-desktop-database", local_apps], capture_output=True, check=False)
         except Exception:
             pass
+
+        # 3. Transparent Command-Line Wrappers (~/.local/bin)
+        local_bin = os.path.expanduser("~/.local/bin")
+        os.makedirs(local_bin, exist_ok=True)
+        binaries = ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "brave-browser", "microsoft-edge"]
+        for b in binaries:
+            system_bin = shutil.which(b)
+            if system_bin and not system_bin.startswith(local_bin):
+                wrapper_path = os.path.join(local_bin, b)
+                try:
+                    with open(wrapper_path, "w", encoding="utf-8") as wf:
+                        wf.write(f"#!/bin/sh\nexec {system_bin} {flag} \"$@\"\n")
+                    os.chmod(wrapper_path, 0o755)
+                    print(f"  • CLI wrapper aktif: {wrapper_path}")
+                except Exception:
+                    pass
 
     elif IS_MAC:
         # macOS: Shell alias + Command Launcher

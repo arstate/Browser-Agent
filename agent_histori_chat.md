@@ -5543,6 +5543,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Seluruh Unit Tests lulus 100% ([test_google_workspace_connected_app.py](file:///home/arya/browser-agent/test_google_workspace_connected_app.py)).
   - Bump version to `v2.150.97`, build `extension.crx` (972.1 KB).
 
+---
+
+### 🚀 Iterasi 473: Automated Permanent Silent Debugger Configuration via 1-Click Installer (v2.150.98)
+- **Kebutuhan Pengguna**:
+  - Mengotomatiskan penghilangan notifikasi banner Chrome debugging (*"Browser Agent started debugging this browser"*) secara permanen dan otomatis cukup dengan menjalankan 1 perintah `./install.sh`.
+- **Implementasi & Peningkatan Sistem**:
+  - **Penyempurnaan [setup.py](file:///home/arya/browser-agent/setup.py) & [install.sh](file:///home/arya/browser-agent/install.sh)**:
+    - Menambahkan konfigurasi multi-channel flag browser Linux (`~/.config/chrome-flags.conf`, `~/.config/google-chrome-flags.conf`, `~/.config/chromium-flags.conf`, `~/.config/brave-flags.conf`, `~/.config/microsoft-edge-flags.conf`, `~/.config/vivaldi-flags.conf`).
+    - Melakukan patching otomatis pada semua file launcher `.desktop` di `~/.local/share/applications/` agar semua perintah `Exec=` menyertakan `--silent-debugger-extension-api`.
+    - Membuat CLI wrapper transparan di `~/.local/bin/` (`google-chrome`, `google-chrome-stable`, `chromium`, `brave-browser`, `microsoft-edge`).
+    - Otomasi patching shortcut Windows (`.lnk`) dan launcher macOS (`.command` & zshrc alias).
+- **Pengujian & Rilis**:
+  - Menjalankan `./install.sh` dan memverifikasi pendaftaran manifest serta file konfigurasi silent debugger.
+  - Bump version to `v2.150.98`, build `extension.crx` (974.2 KB).
+
 
 
 
