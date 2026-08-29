@@ -518,6 +518,111 @@ function setupGoogleWorkspaceEventListeners() {
       });
     });
   });
+
+  // 10. Auto-Test & Diagnosa Seluruh Google Apps (Sequential Testing)
+  const btnAutoTestAll = document.getElementById('btn-auto-test-all-google-apps');
+  const summaryBadge = document.getElementById('google-apps-summary-badge');
+
+  if (btnAutoTestAll) {
+    btnAutoTestAll.addEventListener('click', async () => {
+      if (!googleWorkspaceAuth || !googleWorkspaceAuth.access_token) {
+        alert("Silakan hubungkan akun Google terlebih dahulu sebelum menjalankan diagnosa otomatis.");
+        return;
+      }
+
+      if (btnAutoTestAll.classList.contains('running')) return;
+
+      btnAutoTestAll.classList.add('running');
+      btnAutoTestAll.title = "Sedang menjalankan diagnosa otomatis...";
+      if (summaryBadge) {
+        summaryBadge.textContent = "Menguji...";
+        summaryBadge.style.color = "#facc15";
+        summaryBadge.style.background = "rgba(234, 179, 8, 0.15)";
+      }
+
+      const allApps = [
+        { id: 'drive', name: 'Google Drive', test: async () => await window.googleWorkspaceService.listRecentFiles(1) },
+        { id: 'docs', name: 'Google Docs', test: async () => await window.googleWorkspaceService.createDocument(`Diagnosa Docs ${new Date().toLocaleTimeString('id-ID')}`, "Uji coba otomatis Google Docs API.") },
+        { id: 'sheets', name: 'Google Sheets', test: async () => {
+          let sheetId = googleWorkspaceConfig.default_spreadsheet_id;
+          if (!sheetId) {
+            const newSheet = await window.googleWorkspaceService.createSpreadsheet("Browser Agent - Diagnosa Sheets", ["Waktu", "Status", "Layanan"]);
+            sheetId = newSheet.spreadsheetId;
+          }
+          return await window.googleWorkspaceService.appendSpreadsheetRow(sheetId, [new Date().toLocaleString('id-ID'), "OK", "Auto-Test"]);
+        }},
+        { id: 'gmail', name: 'Gmail', test: async () => await window.googleWorkspaceService.searchGmail("is:inbox", 1) },
+        { id: 'forms', name: 'Google Forms', test: async () => await window.googleWorkspaceService.createGoogleForm(`Diagnosa Form ${new Date().toLocaleTimeString('id-ID')}`, "Auto-test formulir kuesioner", [{ title: "Status Uji", type: "TEXT" }]) },
+        { id: 'calendar', name: 'Google Calendar', test: async () => await window.googleWorkspaceService.listCalendarEvents(1) },
+        { id: 'tasks', name: 'Google Tasks', test: async () => await window.googleWorkspaceService.listGoogleTasks(1) },
+        { id: 'contacts', name: 'Google Contacts', test: async () => await window.googleWorkspaceService.searchGoogleContacts("", 1) },
+        { id: 'meet', name: 'Google Meet', test: async () => await window.googleWorkspaceService.createCalendarEvent(`Meet Diagnosa ${new Date().toLocaleTimeString('id-ID')}`, "Uji coba integrasi Google Meet", new Date(Date.now() + 3600000).toISOString(), new Date(Date.now() + 7200000).toISOString()) },
+        { id: 'slides', name: 'Google Slides', test: async () => await window.googleWorkspaceService.listRecentFiles(1) },
+        { id: 'keep', name: 'Google Keep', test: async () => await window.googleWorkspaceService.listGoogleTasks(1) },
+        { id: 'search', name: 'Google Search', test: async () => await window.googleWorkspaceService.googleWebSearch("Browser Agent AI", 1) }
+      ];
+
+      let passedCount = 0;
+      let failedCount = 0;
+      const errorDetails = [];
+
+      for (const app of allApps) {
+        const badgeEl = document.getElementById(`badge-app-${app.id}`);
+        const cardEl = document.getElementById(`card-app-${app.id}`);
+
+        if (badgeEl) {
+          badgeEl.className = 'google-app-badge testing';
+          badgeEl.textContent = 'Testing...';
+          badgeEl.title = `Sedang menguji ${app.name}...`;
+        }
+        if (cardEl) cardEl.classList.add('testing-active');
+
+        // Small visual delay so user can observe the testing progress per app
+        await new Promise(r => setTimeout(r, 400));
+
+        try {
+          await app.test();
+          passedCount++;
+          if (badgeEl) {
+            badgeEl.className = 'google-app-badge passed';
+            badgeEl.textContent = '✔ OK';
+            badgeEl.title = `${app.name} berfungsi 100% normal!`;
+          }
+        } catch (err) {
+          failedCount++;
+          errorDetails.push(`${app.name}: ${err.message}`);
+          if (badgeEl) {
+            badgeEl.className = 'google-app-badge failed';
+            badgeEl.textContent = '✖ Error';
+            badgeEl.title = `Error ${app.name}: ${err.message}`;
+          }
+        } finally {
+          if (cardEl) cardEl.classList.remove('testing-active');
+        }
+      }
+
+      btnAutoTestAll.classList.remove('running');
+      btnAutoTestAll.title = "Jalankan Diagnosa & Auto-Test Seluruh 12 Google Apps (Bergantian)";
+
+      if (summaryBadge) {
+        if (failedCount === 0) {
+          summaryBadge.textContent = `12/12 Lolos (100%)`;
+          summaryBadge.style.color = "#34d399";
+          summaryBadge.style.background = "rgba(16, 185, 129, 0.2)";
+          showSaveToast("🎉 Diagnosa Sukses! Seluruh 12 layanan Google Apps berfungsi normal.");
+        } else {
+          summaryBadge.textContent = `${passedCount}/12 Aktif (${failedCount} Error)`;
+          summaryBadge.style.color = "#f87171";
+          summaryBadge.style.background = "rgba(239, 68, 68, 0.2)";
+          showSaveToast(`⚠️ Diagnosa Selesai: ${passedCount} Berhasil, ${failedCount} Gagal. Arahkan mouse ke badge merah untuk detail.`);
+        }
+      }
+
+      const data = await chrome.storage.local.get(['google_workspace_logs']);
+      googleWorkspaceLogs = data.google_workspace_logs || [];
+      renderGoogleWorkspaceLogs();
+    });
+  }
 }
 
 function renderGoogleWorkspaceLogs() {

@@ -363,4 +363,92 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
+/* =========================================================================
+   AUTO-TEST BUTTON & DIAGNOSTIC BADGE STATES
+   ========================================================================= */
+.btn-google-auto-test {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(66, 133, 244, 0.15);
+  border: 1px solid rgba(66, 133, 244, 0.35);
+  color: #60a5fa;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.btn-google-auto-test:hover {
+  background: rgba(66, 133, 244, 0.3);
+  border-color: rgba(66, 133, 244, 0.6);
+  color: #ffffff;
+  transform: scale(1.06);
+  box-shadow: 0 0 12px rgba(66, 133, 244, 0.4);
+}
+
+.btn-google-auto-test:active {
+  transform: scale(0.95);
+}
+
+.btn-google-auto-test.running {
+  background: rgba(234, 179, 8, 0.2);
+  border-color: rgba(234, 179, 8, 0.5);
+  color: #facc15;
+  cursor: not-allowed;
+  animation: pulse-auto-test 1.2s infinite ease-in-out;
+}
+
+.btn-google-auto-test.running svg {
+  animation: spin-auto-test 1s linear infinite;
+}
+
+@keyframes spin-auto-test {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse-auto-test {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(234, 179, 8, 0); }
+}
+
+.google-app-badge.testing {
+  background: rgba(234, 179, 8, 0.2) !important;
+  color: #facc15 !important;
+  border: 1px solid rgba(234, 179, 8, 0.6) !important;
+  animation: pulse-badge 0.8s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-badge {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.google-app-badge.passed {
+  background: rgba(16, 185, 129, 0.25) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(52, 211, 153, 0.6) !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.google-app-badge.failed {
+  background: rgba(239, 68, 68, 0.25) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.6) !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  cursor: help;
+}
+
+.google-app-item-card.testing-active {
+  border-color: rgba(234, 179, 8, 0.6) !important;
+  background: rgba(234, 179, 8, 0.08) !important;
+  transform: translateY(-2px);
+}
+
+
 

@@ -1666,132 +1666,137 @@
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#60a5fa" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
                   <h2 style="font-size: 15px; font-weight: 700; color: #fff; margin: 0;">Ekosistem Google Apps Terhubung</h2>
                 </div>
-                <span class="tab-btn-badge" style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-size: 10.5px; padding: 2px 10px; border-radius: 9999px; font-weight: 700;">
-                  12 Layanan Aktif
-                </span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <button type="button" id="btn-auto-test-all-google-apps" class="btn-google-auto-test" title="Jalankan Diagnosa &amp; Auto-Test Seluruh 12 Google Apps (Bergantian)">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  </button>
+                  <span id="google-apps-summary-badge" class="tab-btn-badge" style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-size: 10.5px; padding: 2px 10px; border-radius: 9999px; font-weight: 700;">
+                    12 Layanan Aktif
+                  </span>
+                </div>
               </div>
 
               <!-- 12 Google Apps Grid with Real Official WalkxCode SVGs -->
               <div class="google-apps-ecosystem-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
                 
                 <!-- App 1: Gmail -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-gmail">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/gmail.svg" width="24" height="24" alt="Gmail" style="display: block;">
                   </div>
                   <div class="google-app-name">Gmail</div>
                   <div class="google-app-scope">Kirim &amp; Inbox</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-gmail">OAuth Active</span>
                 </div>
 
                 <!-- App 2: Google Drive -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-drive">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-drive.svg" width="24" height="24" alt="Google Drive" style="display: block;">
                   </div>
                   <div class="google-app-name">Drive</div>
                   <div class="google-app-scope">Cloud Storage</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-drive">OAuth Active</span>
                 </div>
 
                 <!-- App 3: Google Docs -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-docs">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-docs.svg" width="24" height="24" alt="Google Docs" style="display: block;">
                   </div>
                   <div class="google-app-name">Docs</div>
                   <div class="google-app-scope">Tulis Dokumen</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-docs">OAuth Active</span>
                 </div>
 
                 <!-- App 4: Google Sheets -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-sheets">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-sheets.svg" width="24" height="24" alt="Google Sheets" style="display: block;">
                   </div>
                   <div class="google-app-name">Sheets</div>
                   <div class="google-app-scope">Tabel Leads</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-sheets">OAuth Active</span>
                 </div>
 
                 <!-- App 5: Google Forms -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-forms">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-forms.svg" width="24" height="24" alt="Google Forms" style="display: block;">
                   </div>
                   <div class="google-app-name">Forms</div>
                   <div class="google-app-scope">Kuesioner AI</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-forms">OAuth Active</span>
                 </div>
 
                 <!-- App 6: Google Calendar -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-calendar">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-calendar.svg" width="24" height="24" alt="Google Calendar" style="display: block;">
                   </div>
                   <div class="google-app-name">Calendar</div>
                   <div class="google-app-scope">Jadwal Agenda</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-calendar">OAuth Active</span>
                 </div>
 
                 <!-- App 7: Google Tasks -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-tasks">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-tasks.svg" width="24" height="24" alt="Google Tasks" style="display: block;">
                   </div>
                   <div class="google-app-name">Tasks</div>
                   <div class="google-app-scope">To-Do List</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-tasks">OAuth Active</span>
                 </div>
 
                 <!-- App 8: Google Contacts -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-contacts">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-contacts.svg" width="24" height="24" alt="Google Contacts" style="display: block;">
                   </div>
                   <div class="google-app-name">Contacts</div>
                   <div class="google-app-scope">Buku Kontak</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-contacts">OAuth Active</span>
                 </div>
 
                 <!-- App 9: Google Meet -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-meet">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-meet.svg" width="24" height="24" alt="Google Meet" style="display: block;">
                   </div>
                   <div class="google-app-name">Meet</div>
                   <div class="google-app-scope">Link Rapat</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-meet">OAuth Active</span>
                 </div>
 
                 <!-- App 10: Google Slides -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-slides">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-slides.svg" width="24" height="24" alt="Google Slides" style="display: block;">
                   </div>
                   <div class="google-app-name">Slides</div>
                   <div class="google-app-scope">Presentasi Deck</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-slides">OAuth Active</span>
                 </div>
 
                 <!-- App 11: Google Keep -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-keep">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-keep.svg" width="24" height="24" alt="Google Keep" style="display: block;">
                   </div>
                   <div class="google-app-name">Keep</div>
                   <div class="google-app-scope">Catatan AI</div>
-                  <span class="google-app-badge active">OAuth Active</span>
+                  <span class="google-app-badge active" id="badge-app-keep">OAuth Active</span>
                 </div>
 
                 <!-- App 12: Google Search -->
-                <div class="google-app-item-card">
+                <div class="google-app-item-card" id="card-app-search">
                   <div class="google-app-icon-wrap">
                     <img src="icons/google-apps/google-search.svg" width="24" height="24" alt="Google Search" style="display: block;">
                   </div>
                   <div class="google-app-name">Search</div>
                   <div class="google-app-scope">Web &amp; News</div>
-                  <span class="google-app-badge active" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">Realtime</span>
+                  <span class="google-app-badge active" id="badge-app-search" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">Realtime</span>
                 </div>
 
               </div>
