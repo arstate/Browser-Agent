@@ -621,7 +621,7 @@
         </div>
 
         <!-- Dedicated Backup & Restore Settings Card (Full Width Span) -->
-        <div class="bento-card full-width-card" id="card-backup-restore" style="margin-top: 20px;">
+        <div class="bento-card full-width-card" id="card-backup-restore">
           <div class="card-header">
             <div class="header-icon-box backup-icon-box">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1424,54 +1424,54 @@
                 </div>
 
                 <!-- Preferences Switches -->
-                <div class="ui-pref-list" style="margin-top: 14px; margin-bottom: 14px;">
-                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 9px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); margin-bottom: 6px;">
-                    <span class="ui-pref-label" style="font-size: 12px;">Aktifkan Listener Bot Telegram</span>
-                    <label class="toggle-switch">
+                <div class="ui-pref-list" style="margin-top: 14px; margin-bottom: 0; display: flex; flex-direction: column; gap: 8px;">
+                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 0 16px; height: 42px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+                    <span class="ui-pref-label" style="font-size: 12px; font-weight: 500;">Aktifkan Listener Bot Telegram</span>
+                    <label class="custom-pill-switch">
                       <input type="checkbox" id="setting-telegram-enabled">
-                      <span class="toggle-slider"></span>
+                      <span class="pill-switch-track"></span>
                     </label>
                   </div>
-                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 9px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); margin-bottom: 6px;">
-                    <span class="ui-pref-label" style="font-size: 12px;">Auto Dynamic Model Routing (/model auto)</span>
-                    <label class="toggle-switch">
+                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 0 16px; height: 42px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+                    <span class="ui-pref-label" style="font-size: 12px; font-weight: 500;">Auto Dynamic Model Routing (/model auto)</span>
+                    <label class="custom-pill-switch">
                       <input type="checkbox" id="setting-telegram-auto-model" checked>
-                      <span class="toggle-slider"></span>
+                      <span class="pill-switch-track"></span>
                     </label>
                   </div>
-                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 9px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); margin-bottom: 6px;">
-                    <span class="ui-pref-label" style="font-size: 12px;">Auto Smart Agent Routing (/agent auto)</span>
-                    <label class="toggle-switch">
+                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 0 16px; height: 42px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+                    <span class="ui-pref-label" style="font-size: 12px; font-weight: 500;">Auto Smart Agent Routing (/agent auto)</span>
+                    <label class="custom-pill-switch">
                       <input type="checkbox" id="setting-telegram-auto-agent" checked>
-                      <span class="toggle-slider"></span>
+                      <span class="pill-switch-track"></span>
                     </label>
                   </div>
-                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 9px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
-                    <span class="ui-pref-label" style="font-size: 12px;">Auto-Accept Web Actions Tanpa Konfirmasi</span>
-                    <label class="toggle-switch">
+                  <div class="ui-pref-pill-row" style="border-radius: 9999px; padding: 0 16px; height: 42px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+                    <span class="ui-pref-label" style="font-size: 12px; font-weight: 500;">Auto-Accept Web Actions Tanpa Konfirmasi</span>
+                    <label class="custom-pill-switch">
                       <input type="checkbox" id="setting-telegram-auto-accept" checked>
-                      <span class="toggle-slider"></span>
+                      <span class="pill-switch-track"></span>
                     </label>
                   </div>
                 </div>
               </div>
 
               <!-- Action Buttons -->
-              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px;">
-                <button type="button" class="btn-primary" id="btn-save-telegram-config" style="padding: 9px 22px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: var(--accent-lime); color: #000; border: none; cursor: pointer;">
+              <div class="telegram-action-buttons-wrap">
+                <button type="button" class="btn-lime-pill" id="btn-save-telegram-config">
                   Simpan Pengaturan
                 </button>
-                <button type="button" class="btn-secondary" id="btn-test-telegram-ping" style="padding: 9px 18px; border-radius: 9999px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer;">
+                <button type="button" class="btn-secondary-pill" id="btn-test-telegram-ping">
                   Test Koneksi
                 </button>
-                <button type="button" class="btn-secondary" id="btn-set-telegram-avatar" style="padding: 9px 18px; border-radius: 9999px; font-size: 12px; font-weight: 600; background: rgba(206, 241, 40, 0.12); border: 1px solid rgba(206, 241, 40, 0.3); color: var(--accent-lime); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <button type="button" class="btn-lime-outline-pill" id="btn-set-telegram-avatar">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg>
                   <span>Set Foto Profil Bot</span>
                 </button>
-                <button type="button" class="btn-secondary" id="btn-register-telegram-commands" style="padding: 9px 18px; border-radius: 9999px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer;">
+                <button type="button" class="btn-secondary-pill" id="btn-register-telegram-commands">
                   Daftarkan Menu Perintah
                 </button>
-                <button type="button" class="btn-secondary" id="btn-restart-telegram-bot" style="padding: 9px 18px; border-radius: 9999px; font-size: 12px; font-weight: 600; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <button type="button" class="btn-sky-outline-pill" id="btn-restart-telegram-bot">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                   <span>Restart Bot &amp; Fresh Chat</span>
                 </button>
@@ -1479,8 +1479,8 @@
             </div>
 
             <!-- Card 2: Dedicated Telegram Chat History & Live Stream Logs -->
-            <div class="bento-card bento-glass-card" id="card-telegram-logs" style="display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
+            <div class="bento-card bento-glass-card" id="card-telegram-logs" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; box-sizing: border-box;">
+              <div style="display: flex; flex-direction: column; height: 100%;">
                 <div class="card-header" style="justify-content: space-between; margin-bottom: 14px; flex-shrink: 0;">
                   <div style="display: flex; align-items: center; gap: 12px;">
                     <div class="header-icon-box" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-radius: 12px;">
@@ -1503,7 +1503,7 @@
                 </div>
 
                 <!-- Dedicated Log Stream Container (Fixed Max Height with Smooth Scroll) -->
-                <div id="telegram-logs-container" style="min-height: 250px; max-height: 480px; overflow-y: auto; background: rgba(18, 18, 22, 0.65); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                <div id="telegram-logs-container" style="flex: 1; min-height: 380px; max-height: 520px; overflow-y: auto; background: rgba(18, 18, 22, 0.65); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box;">
                   <div style="margin: auto; padding: 36px 16px; text-align: center; color: #64748b; font-size: 12px;">
                     <p>Belum ada riwayat percakapan dari Bot Telegram.</p>
                     <p style="margin-top: 6px; font-size: 11px; color: #475569;">Pesan yang Anda kirim dari Telegram ke bot akan tampil di sini secara real-time.</p>
@@ -1514,7 +1514,7 @@
           </div>
 
           <!-- Card 3: Quick Setup Guide & Shortcut Cheat Sheet -->
-          <div class="bento-card bento-glass-card" style="margin-top: 24px;">
+          <div class="bento-card bento-glass-card">
             <div class="card-header">
               <div class="header-icon-box" style="background: rgba(206, 241, 40, 0.12); color: var(--accent-lime); border-radius: 12px;">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1829,7 +1829,7 @@
           </div>
 
           <!-- Bottom Unified Horizontal Container (Tabs: Logs, Commands, Setup Tutorial) -->
-          <div class="bento-card bento-glass-card" style="margin-top: 10px; padding: 22px 26px;">
+          <div class="bento-card bento-glass-card" style="padding: 22px 26px;">
             <!-- Tab Switcher Navigation -->
             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 16px; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
               <div class="google-bottom-nav" style="display: flex; align-items: center; gap: 8px;">
