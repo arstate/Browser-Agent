@@ -3703,6 +3703,9 @@ def handle_local_rpc(msg):
                 "stderr": proc.stderr,
                 "exit_code": proc.returncode
             }
+        except Exception as e:
+            return {"id": req_id, "status": "error", "error": str(e)}
+
     elif action == "auto_update":
         repo_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         try:

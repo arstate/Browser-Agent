@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.133`
+- **Versi Terkini:** `v2.150.134`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -138,4 +138,5 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 16. **Full Google Apps Ecosystem Hub & Unified Bottom Container:** Redesain total panel konfigurasi Google Workspace dengan katalog 12 Layanan Google resmi (Gmail, Drive, Docs, Sheets, Forms, Calendar, Tasks, Contacts, Keep, Meet, Slides, Search) menggunakan ikon Vector SVG asli Google, serta 1 container horizontal full-width di bagian bawah dengan 3 Tab interaktif (Log Aktivitas, Arsenal Perintah AI, dan Panduan Setup Google Cloud Console).
 17. **Opaque Low-Spec Performance Mode Switch:** Menambahkan switch toggle on/off untuk **Efek Kaca Transparan (Liquid Glass Blur - `#setting-ui-glass-blur`)** di menu Tampilan & UI. Saat dimatikan (OFF), seluruh efek blur dan transparansi kaca diganti menjadi solid opaque fill (`#141419` / `#0B0B0E`) sehingga rendering sangat ringan dan lancar bebas lag pada perangkat PC berspesifikasi rendah.
 18. **Connected Apps Sub-Views & Layout Spacing Normalization:** Menghapus seluruh margin berlebih yang saling bertabrakan pada sub-view Telegram Bot dan Google Workspace, menata tombol aksi Telegram dalam `.telegram-action-buttons-wrap` (`height: 38px`, pills `9999px`), menyelaraskan seluruh switch ke format `.custom-pill-switch`, menyeimbangkan tinggi kolom kiri dan kanan, serta mengunci jarak vertikal 20px yang 100% harmonis dan rapi.
+19. **Clean & Modular Extension Architecture Validation:** Audit menyeluruh integritas seluruh pohon direktori ekstensi (`core/`, `connected-apps/`, `plugins/`, `content-scripts/`, `stickman-animation/`, `ai-stickman-animation/`, `icons/`), memvalidasi 100% path import script & CSS di Manifest V3, serta memperbaiki blok penanganan exception pada Native Host daemon dengan tingkat kelulusan test suite 27/27 unit test (100% OK).
 
