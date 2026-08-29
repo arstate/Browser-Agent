@@ -612,6 +612,133 @@ async function handleTelegramIncomingUpdate(update, tgCfg) {
       await telegramSendMessage(botToken, fromId, `✏️ <b>Ketik Arahan Kustom:</b>\nSilakan ketik langsung perintah Anda di chat ini.`);
       return;
     }
+
+    if (data === 'menu_main') {
+      const welcome = `🤖 <b>Browser Agent Master Control Hub</b>\n\nPilih kategori fitur di bawah ini untuk melihat perintah cepat atau klik aksi:`;
+      await telegramSendMessage(botToken, fromId, welcome, {
+        inline_keyboard: [
+          [
+            { text: "🌐 Web & Browsing", callback_data: "menu_browse" },
+            { text: "📂 Google Workspace", callback_data: "menu_google" }
+          ],
+          [
+            { text: "🛠️ Media, QR & PDF", callback_data: "menu_media" },
+            { text: "🤖 AI, Model & Agent", callback_data: "menu_ai" }
+          ],
+          [
+            { text: "📸 Screenshot Tab", callback_data: "cmd_screenshot_tab" },
+            { text: "🖥️ Screenshot OS", callback_data: "cmd_screenshot_os" }
+          ],
+          [
+            { text: "📊 Status Sistem", callback_data: "cmd_sysinfo" },
+            { text: "✨ Sesi Baru", callback_data: "cmd_new_session" }
+          ]
+        ]
+      });
+      return;
+    }
+
+    if (data === 'menu_browse') {
+      const msgText = `🌐 <b>Menu Web & Browsing Remote:</b>\n\n• <code>/search &lt;query&gt;</code> - Cari web & rangkum ringkas\n• <code>/news &lt;topik&gt;</code> - Pantau berita viral terkini\n• <code>/browse &lt;url&gt;</code> - Buka web, ambil teks & screenshot\n• <code>/tabs</code> - Lihat & pindah tab Chrome terbuka`;
+      await telegramSendMessage(botToken, fromId, msgText, {
+        inline_keyboard: [
+          [
+            { text: "📑 Daftar Tab Chrome", callback_data: "cmd_tabs" },
+            { text: "📸 Screenshot Tab", callback_data: "cmd_screenshot_tab" }
+          ],
+          [
+            { text: "🔙 Kembali ke Menu Utama", callback_data: "menu_main" }
+          ]
+        ]
+      });
+      return;
+    }
+
+    if (data === 'menu_google') {
+      const msgText = `📂 <b>Menu Google Workspace Suite:</b>\n\n• <code>/gmail penerima | subjek | pesan</code> - Kirim email\n• <code>/docs judul | konten</code> - Buat dokumen Docs\n• <code>/sheets data1, data2</code> - Tulis baris baru ke Sheet\n• <code>/form judul | q1, q2</code> - Buat Google Form AI\n• <code>/calendar judul | waktu</code> - Jadwal Google Calendar\n• <code>/tasks judul</code> - Buat to-do di Google Tasks\n• <code>/contacts query</code> - Cari nomor/email kontak`;
+      await telegramSendMessage(botToken, fromId, msgText, {
+        inline_keyboard: [
+          [
+            { text: "🔙 Kembali ke Menu Utama", callback_data: "menu_main" }
+          ]
+        ]
+      });
+      return;
+    }
+
+    if (data === 'menu_media') {
+      const msgText = `🛠️ <b>Menu Media, QR & File Tools:</b>\n\n• <b>Kirim Foto:</b> AI auto rembg (hapus background) / convert PDF\n• <b>Kirim Voice Note:</b> Transkrip suara pintar & auto-eksekusi\n• <b>Kirim Dokumen:</b> Baca PDF, Word, CSV, JSON instan\n• <code>/qr &lt;teks/link&gt;</code> - Generate QR Code PNG siap scan\n• <code>/pdf judul | isi</code> - Generate dokumen PDF rapi\n• <code>/sysinfo</code> - Cek CPU, RAM, & Uptime PC`;
+      await telegramSendMessage(botToken, fromId, msgText, {
+        inline_keyboard: [
+          [
+            { text: "🖥️ Screenshot OS", callback_data: "cmd_screenshot_os" },
+            { text: "📊 Sysinfo PC", callback_data: "cmd_sysinfo" }
+          ],
+          [
+            { text: "🔙 Kembali ke Menu Utama", callback_data: "menu_main" }
+          ]
+        ]
+      });
+      return;
+    }
+
+    if (data === 'menu_ai') {
+      const msgText = `🤖 <b>Menu AI Model, Thinking & Agent:</b>\n\n• <code>/model</code> - Pilih model AI\n• <code>/thinking</code> - Atur level penalaran AI\n• <code>/agent</code> - Pilih spesialis agent\n• <code>/history</code> - Riwayat percakapan\n• <code>/tiar &lt;pesan&gt;</code> - Summon AI Tiar Property`;
+      await telegramSendMessage(botToken, fromId, msgText, {
+        inline_keyboard: [
+          [
+            { text: "🧠 Thinking Mode", callback_data: "cmd_thinking" },
+            { text: "🤖 Model AI", callback_data: "cmd_model" }
+          ],
+          [
+            { text: "👥 Spesialis Agent", callback_data: "cmd_agent" },
+            { text: "🗂️ Riwayat Sesi", callback_data: "cmd_history" }
+          ],
+          [
+            { text: "🔙 Kembali ke Menu Utama", callback_data: "menu_main" }
+          ]
+        ]
+      });
+      return;
+    }
+
+    if (data === 'cmd_tabs') {
+      const allTabs = await chrome.tabs.query({});
+      let tabMsg = `📑 <b>Daftar Tab Chrome Terbuka (${allTabs.length}):</b>\n\n`;
+      const keyboardRows = [];
+      allTabs.slice(0, 8).forEach((t, i) => {
+        const title = (t.title || 'Untitled').slice(0, 30);
+        tabMsg += `${i + 1}. ${t.active ? '🟢 ' : ''}<b>${escapeHtml(title)}</b>\n   <code>${escapeHtml((t.url || '').slice(0, 45))}</code>\n\n`;
+        keyboardRows.push([{ text: `${t.active ? '🟢 ' : ''}Tab ${i + 1}: ${title}`, callback_data: `switch_tab:${t.id}` }]);
+      });
+      keyboardRows.push([{ text: "🔙 Menu Utama", callback_data: "menu_main" }]);
+      await telegramSendMessage(botToken, fromId, tabMsg, { inline_keyboard: keyboardRows });
+      return;
+    }
+
+    if (data.startsWith('switch_tab:')) {
+      const targetId = Number(data.replace('switch_tab:', ''));
+      try {
+        await chrome.tabs.update(targetId, { active: true });
+        telegramAgentWorkerTabId = targetId;
+        const tab = await chrome.tabs.get(targetId);
+        await telegramSendMessage(botToken, fromId, `✅ <b>Berhasil Beralih ke Tab:</b>\n<i>${escapeHtml(tab.title || '')}</i>`);
+      } catch (e) {
+        await telegramSendMessage(botToken, fromId, `⚠️ Gagal beralih tab: ${e.message}`);
+      }
+      return;
+    }
+
+    if (data === 'cmd_sysinfo') {
+      const rpcRes = await sendNativeRpcInBackground("run_command", {
+        command: `echo "⏱️ Uptime: $(uptime -p)" && echo "🧠 RAM: $(free -h | awk '/^Mem:/ {print $3 "/" $2}')" && echo "💾 Disk: $(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')" && echo "🐧 OS: $(uname -srm)"`
+      });
+      const info = rpcRes?.stdout || "Gagal mengambil data sistem.";
+      await telegramSendMessage(botToken, fromId, `📊 <b>Status Sistem Linux PC:</b>\n\n<pre>${escapeHtml(info)}</pre>`, {
+        inline_keyboard: [[{ text: "🔙 Menu Utama", callback_data: "menu_main" }]]
+      });
+      return;
+    }
     return;
   }
 
@@ -894,28 +1021,253 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
     const parts = text.split(' ');
     const cmd = parts[0].toLowerCase();
 
-    if (cmd === '/start' || cmd === '/help') {
-      const welcome = `🤖 <b>Browser Agent Remote Control Aktif!</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, Anda dapat mengontrol browser, mengirim pesan suara (Voice Audio), mengirim gambar/foto, mengirim dokumen (PDF, Word, TXT, CSV), dan mengeksekusi AI langsung dari chat ini.\n\n<b>Pilihan Perintah:</b>\n• /thinking - Atur intensitas berpikir AI (Low, Medium, High, Xhigh, Extreme)\n• /model - Ganti model AI aktif\n• /agent - Ganti spesialis agent\n• /history - Daftar riwayat sesi chat & pindah sesi\n• /screenshot - Ambil screenshot Tab Chrome\n• /screenshot_os - Ambil screenshot Full Desktop Linux\n• /status - Cek status tab & performa\n• /new - Mulai sesi percakapan baru\n\n<i>Kirim pesan suara, foto, dokumen PDF/Word/TXT, atau ketik instruksi apa saja!</i>`;
+    if (cmd === '/start' || cmd === '/help' || cmd === '/menu') {
+      const welcome = `🤖 <b>Browser Agent Master Remote Hub</b>\n\nHalo <b>${escapeHtml(senderName)}</b>, selamat datang di remote kontrol browser & AI multi-modal terlengkap.\n\n<b>⚡ Kategori Fitur Utama:</b>\n• <b>🌐 Web & Browsing:</b> <code>/search</code>, <code>/news</code>, <code>/browse</code>, <code>/tabs</code>\n• <b>📂 Google Suite:</b> <code>/gmail</code>, <code>/docs</code>, <code>/sheets</code>, <code>/form</code>, <code>/calendar</code>, <code>/tasks</code>, <code>/contacts</code>\n• <b>🛠️ Media & Tools:</b> <code>/qr</code>, <code>/pdf</code>, <code>/screenshot</code>, <code>/screenshot_os</code>, <code>/sysinfo</code>\n• <b>🤖 AI Control:</b> <code>/thinking</code>, <code>/model</code>, <code>/agent</code>, <code>/history</code>, <code>/new</code>, <code>/tiar</code>\n\n<i>Klik menu di bawah atau kirim foto/audio/dokumen secara langsung:</i>`;
       await telegramSendMessage(botToken, senderId, welcome, {
         inline_keyboard: [
           [
-            { text: "🧠 Thinking Mode", callback_data: "cmd_thinking" },
-            { text: "🤖 Model AI", callback_data: "cmd_model" }
+            { text: "🌐 Web & Browsing", callback_data: "menu_browse" },
+            { text: "📂 Google Workspace", callback_data: "menu_google" }
           ],
           [
-            { text: "👥 Spesialis Agent", callback_data: "cmd_agent" },
-            { text: "🗂️ Riwayat Sesi", callback_data: "cmd_history" }
+            { text: "🛠️ Media, QR & PDF", callback_data: "menu_media" },
+            { text: "🤖 AI, Model & Agent", callback_data: "menu_ai" }
           ],
           [
             { text: "📸 Screenshot Tab", callback_data: "cmd_screenshot_tab" },
             { text: "🖥️ Screenshot OS", callback_data: "cmd_screenshot_os" }
           ],
           [
+            { text: "📊 Sysinfo PC", callback_data: "cmd_sysinfo" },
             { text: "✨ Sesi Baru", callback_data: "cmd_new_session" }
           ]
         ]
       });
       return;
+    }
+
+    if (cmd === '/search') {
+      const q = text.replace(/^\/search\s*/i, '').trim();
+      if (!q) {
+        await telegramSendMessage(botToken, senderId, `🔍 <b>Format Perintah Pencarian Web:</b>\n<code>/search &lt;kata kunci&gt;</code>\n\n<i>Contoh: /search harga properti sidoarjo 2026</i>`);
+        return;
+      }
+      await telegramSendMessage(botToken, senderId, `🔍 <i>Mencari di Google / Web untuk "${escapeHtml(q)}"...</i>`);
+      const searchRes = await executeBackgroundTool("web_search", { query: q }, senderId, botToken, tgCfg);
+      if (searchRes && searchRes.status === "success" && Array.isArray(searchRes.results)) {
+        let out = `🔍 <b>Hasil Pencarian Web (${searchRes.count}):</b>\n\n`;
+        searchRes.results.slice(0, 5).forEach((r, idx) => {
+          out += `${idx + 1}. <b><a href="${r.link}">${escapeHtml(r.title)}</a></b>\n${escapeHtml(r.snippet || '')}\n\n`;
+        });
+        await telegramSendMessage(botToken, senderId, out);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Pencarian web gagal atau tidak ada hasil.`);
+      }
+      return;
+    }
+
+    if (cmd === '/news') {
+      const q = text.replace(/^\/news\s*/i, '').trim() || "indonesia properti teknologi";
+      await telegramSendMessage(botToken, senderId, `📰 <i>Mengambil berita terbaru untuk "${escapeHtml(q)}"...</i>`);
+      const newsRes = await executeBackgroundTool("google_news_search", { query: q }, senderId, botToken, tgCfg);
+      if (newsRes && newsRes.status === "success" && Array.isArray(newsRes.articles)) {
+        let out = `📰 <b>Berita Terkini (${escapeHtml(q)}):</b>\n\n`;
+        newsRes.articles.slice(0, 5).forEach((art, idx) => {
+          out += `${idx + 1}. <b><a href="${art.link}">${escapeHtml(art.title)}</a></b>\n<i>${escapeHtml(art.source || '')} • ${escapeHtml(art.pubDate || '')}</i>\n\n`;
+        });
+        await telegramSendMessage(botToken, senderId, out);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal mengambil berita terkini.`);
+      }
+      return;
+    }
+
+    if (cmd === '/browse') {
+      let targetUrl = text.replace(/^\/browse\s*/i, '').trim();
+      if (!targetUrl) {
+        await telegramSendMessage(botToken, senderId, `🌐 <b>Format Perintah Browse Web:</b>\n<code>/browse &lt;url&gt;</code>\n\n<i>Contoh: /browse https://detik.com</i>`);
+        return;
+      }
+      if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) targetUrl = 'https://' + targetUrl;
+      await telegramSendMessage(botToken, senderId, `🌐 <i>Membuka dan mengambil screenshot ${escapeHtml(targetUrl)}...</i>`);
+      const navRes = await executeBackgroundTool("browser_navigate", { url: targetUrl }, senderId, botToken, tgCfg);
+      await new Promise(r => setTimeout(r, 2000));
+      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      const activeTab = tabs && tabs[0] ? tabs[0] : (await chrome.tabs.query({ active: true }))[0];
+      if (activeTab && activeTab.windowId) {
+        try {
+          const dataUrl = await chrome.tabs.captureVisibleTab(activeTab.windowId, { format: "png" });
+          if (dataUrl) {
+            await telegramSendPhoto(botToken, senderId, dataUrl, `🌐 <b>Halaman Web Berhasil Dibuka:</b>\n<i>${escapeHtml(activeTab.title || '')}</i>\n<code>${escapeHtml(activeTab.url || '')}</code>`);
+            return;
+          }
+        } catch (e) {}
+      }
+      await telegramSendMessage(botToken, senderId, `✅ Tab web berhasil dibuka: ${escapeHtml(targetUrl)}`);
+      return;
+    }
+
+    if (cmd === '/tabs') {
+      const allTabs = await chrome.tabs.query({});
+      let tabMsg = `📑 <b>Daftar Tab Chrome Terbuka (${allTabs.length}):</b>\n\n`;
+      const keyboardRows = [];
+      allTabs.slice(0, 8).forEach((t, i) => {
+        const title = (t.title || 'Untitled').slice(0, 30);
+        tabMsg += `${i + 1}. ${t.active ? '🟢 ' : ''}<b>${escapeHtml(title)}</b>\n   <code>${escapeHtml((t.url || '').slice(0, 45))}</code>\n\n`;
+        keyboardRows.push([{ text: `${t.active ? '🟢 ' : ''}Tab ${i + 1}: ${title}`, callback_data: `switch_tab:${t.id}` }]);
+      });
+      await telegramSendMessage(botToken, senderId, tabMsg, { inline_keyboard: keyboardRows });
+      return;
+    }
+
+    if (cmd === '/qr') {
+      const qrData = text.replace(/^\/qr\s*/i, '').trim();
+      if (!qrData) {
+        await telegramSendMessage(botToken, senderId, `📱 <b>Format Pembuatan QR Code:</b>\n<code>/qr &lt;link atau teks&gt;</code>\n\n<i>Contoh: /qr https://tiarproperty.com</i>`);
+        return;
+      }
+      await telegramSendMessage(botToken, senderId, `📱 <i>Membuat QR code untuk "${escapeHtml(qrData)}"...</i>`);
+      await executeBackgroundTool("generate_qr_code", { data: qrData }, senderId, botToken, tgCfg);
+      return;
+    }
+
+    if (cmd === '/pdf') {
+      const rawPdf = text.replace(/^\/pdf\s*/i, '').trim();
+      if (!rawPdf) {
+        await telegramSendMessage(botToken, senderId, `📄 <b>Format Pembuatan Dokumen PDF:</b>\n<code>/pdf Judul Dokumen | Isi teks / markdown</code>`);
+        return;
+      }
+      const splitPdf = rawPdf.split('|');
+      const pdfTitle = splitPdf[0].trim();
+      const pdfBody = splitPdf.slice(1).join('|').trim() || pdfTitle;
+      await telegramSendMessage(botToken, senderId, `📄 <i>Membuat file dokumen PDF "${escapeHtml(pdfTitle)}"...</i>`);
+      await executeBackgroundTool("generate_pdf_document", { title: pdfTitle, content: pdfBody }, senderId, botToken, tgCfg);
+      return;
+    }
+
+    if (cmd === '/sysinfo') {
+      const rpcRes = await sendNativeRpcInBackground("run_command", {
+        command: `echo "⏱️ Uptime: $(uptime -p)" && echo "🧠 RAM: $(free -h | awk '/^Mem:/ {print $3 "/" $2}')" && echo "💾 Disk: $(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')" && echo "🐧 OS: $(uname -srm)"`
+      });
+      const info = rpcRes?.stdout || "Gagal mengambil data sistem.";
+      await telegramSendMessage(botToken, senderId, `📊 <b>Status Sistem Linux PC:</b>\n\n<pre>${escapeHtml(info)}</pre>`);
+      return;
+    }
+
+    if (cmd === '/gmail') {
+      const rawGmail = text.replace(/^\/gmail\s*/i, '').trim();
+      const parts = rawGmail.split('|');
+      if (parts.length < 3) {
+        await telegramSendMessage(botToken, senderId, `✉️ <b>Format Kirim Gmail:</b>\n<code>/gmail penerima@email.com | Subjek Email | Pesan isi email</code>`);
+        return;
+      }
+      const to = parts[0].trim();
+      const subject = parts[1].trim();
+      const body = parts.slice(2).join('|').trim();
+      await telegramSendMessage(botToken, senderId, `✉️ <i>Mengirim email ke ${escapeHtml(to)} via Gmail...</i>`);
+      const gRes = await executeBackgroundTool("gmail_send_email", { to, subject, body }, senderId, botToken, tgCfg);
+      if (gRes && gRes.status === "success") {
+        await telegramSendMessage(botToken, senderId, `✅ <b>Email Berhasil Terkirim!</b>\n• <b>Ke:</b> <code>${escapeHtml(to)}</code>\n• <b>Subjek:</b> ${escapeHtml(subject)}`);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal kirim email: ${gRes?.error || 'Periksa otorisasi Google Workspace'}`);
+      }
+      return;
+    }
+
+    if (cmd === '/docs') {
+      const rawDocs = text.replace(/^\/docs\s*/i, '').trim();
+      const parts = rawDocs.split('|');
+      const title = parts[0].trim() || "Dokumen Baru";
+      const content = parts.slice(1).join('|').trim() || "Dibuat via Telegram Remote Browser Agent.";
+      await telegramSendMessage(botToken, senderId, `📄 <i>Membuat Google Doc "${escapeHtml(title)}"...</i>`);
+      const docRes = await executeBackgroundTool("gsuite_create_doc", { title, content }, senderId, botToken, tgCfg);
+      if (docRes && docRes.status === "success") {
+        await telegramSendMessage(botToken, senderId, `✅ <b>Google Doc Berhasil Dibuat!</b>\n📄 <b>${escapeHtml(title)}</b>\n👉 <a href="${docRes.document_url}">Buka Dokumen Google Docs</a>`);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal membuat Google Doc: ${docRes?.error || 'Error'}`);
+      }
+      return;
+    }
+
+    if (cmd === '/sheets') {
+      const rawSheets = text.replace(/^\/sheets\s*/i, '').trim();
+      if (!rawSheets) {
+        await telegramSendMessage(botToken, senderId, `📊 <b>Format Tulis Google Sheet:</b>\n<code>/sheets Kolom 1, Kolom 2, Kolom 3</code>`);
+        return;
+      }
+      const values = rawSheets.split(',').map(s => s.trim());
+      await telegramSendMessage(botToken, senderId, `📊 <i>Menambahkan baris ke Google Sheet...</i>`);
+      const sheetRes = await executeBackgroundTool("gsuite_append_sheet_row", { row_values: values }, senderId, botToken, tgCfg);
+      if (sheetRes && sheetRes.status === "success") {
+        await telegramSendMessage(botToken, senderId, `✅ <b>Data Berhasil Ditambahkan ke Google Sheet!</b>\n👉 <a href="${sheetRes.spreadsheet_url}">Buka Google Sheets</a>`);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal tulis ke Google Sheet: ${sheetRes?.error || 'Pastikan default spreadsheet ID telah diset di Pengaturan'}`);
+      }
+      return;
+    }
+
+    if (cmd === '/form') {
+      const rawForm = text.replace(/^\/form\s*/i, '').trim();
+      const parts = rawForm.split('|');
+      const title = parts[0].trim() || "Formulir Pendaftaran";
+      const qList = parts.slice(1).map(q => ({ title: q.trim(), type: "TEXT" }));
+      await telegramSendMessage(botToken, senderId, `📝 <i>Membuat Google Form "${escapeHtml(title)}"...</i>`);
+      const formRes = await executeBackgroundTool("google_forms_create_form", { title, questions: qList }, senderId, botToken, tgCfg);
+      if (formRes && formRes.status === "success") {
+        await telegramSendMessage(botToken, senderId, `✅ <b>Google Form Berhasil Dibuat!</b>\n📝 <b>${escapeHtml(title)}</b>\n👉 <a href="${formRes.form_url}">Link Formulir Pengisi</a>\n👉 <a href="${formRes.edit_url}">Link Edit Form</a>`);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal membuat form: ${formRes?.error || 'Error'}`);
+      }
+      return;
+    }
+
+    if (cmd === '/tasks') {
+      const title = text.replace(/^\/tasks\s*/i, '').trim();
+      if (!title) {
+        await telegramSendMessage(botToken, senderId, `☑️ <b>Format Buat Task:</b>\n<code>/tasks Judul To-Do Item</code>`);
+        return;
+      }
+      await telegramSendMessage(botToken, senderId, `☑️ <i>Menambahkan ke Google Tasks...</i>`);
+      const tRes = await executeBackgroundTool("google_tasks_create_task", { title }, senderId, botToken, tgCfg);
+      if (tRes && tRes.status === "success") {
+        await telegramSendMessage(botToken, senderId, `✅ <b>Task Berhasil Dibuat!</b>\n☑️ <b>${escapeHtml(title)}</b>`);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal membuat task: ${tRes?.error || 'Error'}`);
+      }
+      return;
+    }
+
+    if (cmd === '/contacts') {
+      const q = text.replace(/^\/contacts\s*/i, '').trim();
+      if (!q) {
+        await telegramSendMessage(botToken, senderId, `👤 <b>Format Cari Kontak:</b>\n<code>/contacts &lt;nama atau nomor&gt;</code>`);
+        return;
+      }
+      await telegramSendMessage(botToken, senderId, `👤 <i>Mencari kontak "${escapeHtml(q)}"...</i>`);
+      const cRes = await executeBackgroundTool("google_contacts_search", { query: q }, senderId, botToken, tgCfg);
+      if (cRes && cRes.status === "success" && Array.isArray(cRes.contacts)) {
+        if (cRes.contacts.length === 0) {
+          await telegramSendMessage(botToken, senderId, `ℹ️ Tidak ditemukan kontak dengan nama "${escapeHtml(q)}".`);
+        } else {
+          let out = `👤 <b>Hasil Kontak (${cRes.total_found}):</b>\n\n`;
+          cRes.contacts.slice(0, 5).forEach((c, idx) => {
+            out += `${idx + 1}. <b>${escapeHtml(c.name || 'No Name')}</b>\n   📞 ${escapeHtml(c.phone || '-')}\n   ✉️ ${escapeHtml(c.email || '-')}\n\n`;
+          });
+          await telegramSendMessage(botToken, senderId, out);
+        }
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal mencari kontak: ${cRes?.error || 'Error'}`);
+      }
+      return;
+    }
+
+    if (cmd === '/tiar') {
+      const prompt = text.replace(/^\/tiar\s*/i, '').trim();
+      if (!prompt) {
+        await telegramSendMessage(botToken, senderId, `🏢 <b>Tiar Property AI Assistant:</b>\nKetik instruksi setelah perintah, contoh:\n<code>/tiar tolong buatkan balasan chat prospek yang nanya rumah 500 jutaan di Sidoarjo</code>`);
+        return;
+      }
+      text = `[PERSONA: Master Real Estate Consultant & Sales Closer Tiar Property Mbak Ningsih. Gunakan SOP 3-balon, DP 0%, cicilan 1-2 jt-an, dan dorong booking survei lokasi.]\n\n${prompt}`;
     }
 
     if (cmd === '/thinking' || cmd === '/think') {
@@ -1117,6 +1469,7 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
       await telegramSendMessage(botToken, senderId, statusMsg);
       return;
     }
+  }
   }
 
   // 3. User Prompt Execution -> Always Execute via Fast Independent Background Engine
@@ -1473,6 +1826,156 @@ const BACKGROUND_AGENT_TOOLS = [
           caption: { type: "string", description: "Deskripsi pesan pengantar untuk gambar PNG transparan di Telegram" }
         },
         required: ["input_path"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gmail_send_email",
+      description: "Send an official email through the user's connected Gmail account to any recipient.",
+      parameters: {
+        type: "object",
+        properties: {
+          to: { type: "string", description: "Recipient email address (e.g. 'client@example.com')" },
+          subject: { type: "string", description: "Email subject" },
+          body: { type: "string", description: "Email content in HTML or plain text" }
+        },
+        required: ["to", "subject", "body"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gmail_search_emails",
+      description: "Search emails in user's Gmail inbox by keyword, sender, or subject query.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Gmail search query (e.g. 'from:lead', 'is:unread', 'subject:properti')" },
+          max_results: { type: "integer", description: "Max emails to retrieve (default: 5)", default: 5 }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_forms_create_form",
+      description: "Create a new Google Form questionnaire with automated title, description, and list of questions.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Form title" },
+          description: { type: "string", description: "Form description" },
+          questions: { 
+            type: "array", 
+            items: { 
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                type: { type: "string", enum: ["TEXT", "PARAGRAPH", "CHOICE", "CHECKBOX"] },
+                options: { type: "array", items: { type: "string" } }
+              },
+              required: ["title"]
+            },
+            description: "List of questions to include" 
+          }
+        },
+        required: ["title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_calendar_create_event",
+      description: "Schedule a new event, meeting, or property site survey to Google Calendar.",
+      parameters: {
+        type: "object",
+        properties: {
+          summary: { type: "string", description: "Event title / summary" },
+          description: { type: "string", description: "Event details or notes" },
+          start_time: { type: "string", description: "ISO date string or datetime (e.g. '2026-08-31T10:00:00+07:00')" },
+          end_time: { type: "string", description: "ISO date string or datetime (e.g. '2026-08-31T11:00:00+07:00')" },
+          attendees: { type: "array", items: { type: "string" }, description: "Attendee emails" }
+        },
+        required: ["summary", "start_time", "end_time"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_tasks_create_task",
+      description: "Create a new to-do task in Google Tasks.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Task title" },
+          notes: { type: "string", description: "Task notes or description" },
+          due: { type: "string", description: "Due date in RFC 3339 format" }
+        },
+        required: ["title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_contacts_search",
+      description: "Search Google Contacts for people, phone numbers, or email addresses.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Name, email, or phone number to search" },
+          pageSize: { type: "integer", description: "Max results (default: 10)", default: 10 }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_qr_code",
+      description: "Generate a high-resolution QR code image for any URL or text, and send the image directly to Telegram.",
+      parameters: {
+        type: "object",
+        properties: {
+          data: { type: "string", description: "The URL or text content to encode in the QR code" },
+          caption: { type: "string", description: "Optional caption for the QR code photo" }
+        },
+        required: ["data"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_pdf_document",
+      description: "Generate a formatted PDF document from text or markdown and send the file directly to Telegram.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Title of the document" },
+          content: { type: "string", description: "Text or markdown content of the document" },
+          file_name: { type: "string", description: "Optional filename (default: 'dokumen.pdf')" }
+        },
+        required: ["title", "content"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_system_info",
+      description: "Get detailed Linux OS system diagnostics including CPU usage, RAM memory, disk space, and system uptime.",
+      parameters: {
+        type: "object",
+        properties: {}
       }
     }
   }
@@ -1898,6 +2401,146 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
       if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
       const { config: gwCfg, auth: gwAuth } = await googleWorkspaceService.getConfig();
       return { status: "success", connected: !!(gwAuth && gwAuth.access_token), email: gwAuth?.user?.email || null, default_spreadsheet_id: gwCfg.default_spreadsheet_id || null };
+    }
+
+    if (toolName === "gmail_send_email" || toolName === "google_gmail_send") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.sendGmail(toolArgs.to, toolArgs.subject, toolArgs.body, toolArgs.body);
+      return { status: "success", message: `Email berhasil dikirim ke ${toolArgs.to}!`, message_id: res.id, thread_id: res.threadId };
+    }
+
+    if (toolName === "gmail_search_emails" || toolName === "google_gmail_search") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.searchGmail(toolArgs.query || "", toolArgs.max_results || 5);
+      return { status: "success", total_found: res.totalFound, emails: res.emails };
+    }
+
+    if (toolName === "google_forms_create_form") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.createGoogleForm(toolArgs.title || "Formulir Baru", toolArgs.description || "", toolArgs.questions || []);
+      return { status: "success", message: `Form "${res.title}" berhasil dibuat!`, form_id: res.formId, form_url: res.responderUri, edit_url: res.editUrl };
+    }
+
+    if (toolName === "google_forms_get_responses") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.getGoogleFormResponses(toolArgs.form_id || toolArgs.formId);
+      return { status: "success", total_responses: res.total_responses, responses: res.responses };
+    }
+
+    if (toolName === "google_calendar_create_event") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.createCalendarEvent(toolArgs.summary, toolArgs.description, toolArgs.start_time, toolArgs.end_time, toolArgs.attendees || []);
+      return { status: "success", message: `Agenda "${res.summary}" berhasil ditambahkan ke Google Calendar!`, event_id: res.id, html_link: res.htmlLink, start: res.start };
+    }
+
+    if (toolName === "google_calendar_list_events") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.listCalendarEvents(toolArgs.max_results || 10);
+      return { status: "success", total_events: res.totalEvents, events: res.events };
+    }
+
+    if (toolName === "google_tasks_create_task") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.createGoogleTask(toolArgs.title, toolArgs.notes || "", toolArgs.due || null);
+      return { status: "success", message: `Task "${res.title}" berhasil dibuat di Google Tasks!`, task_id: res.id };
+    }
+
+    if (toolName === "google_tasks_list_tasks") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.listGoogleTasks(toolArgs.max_results || 10);
+      return { status: "success", total_tasks: res.totalTasks, tasks: res.tasks };
+    }
+
+    if (toolName === "google_contacts_search") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.searchGoogleContacts(toolArgs.query || "", toolArgs.pageSize || 10);
+      return { status: "success", total_found: res.totalFound, contacts: res.contacts };
+    }
+
+    if (toolName === "generate_qr_code") {
+      const qrData = (toolArgs.data || "").trim();
+      if (!qrData) return { error: "Konten atau link untuk QR code tidak boleh kosong." };
+      const outPath = `/tmp/qrcode_${Date.now()}.png`;
+      try {
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=15&format=png&data=${encodeURIComponent(qrData)}`;
+        const qrRes = await fetch(qrUrl);
+        const arrayBuf = await qrRes.arrayBuffer();
+        let binary = '';
+        const bytes = new Uint8Array(arrayBuf);
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        const base64 = btoa(binary);
+
+        await sendNativeRpcInBackground("write_file", {
+          path: outPath,
+          content: base64,
+          is_base64: true
+        });
+
+        const caption = toolArgs.caption || `📱 <b>QR Code Siap Digunakan:</b>\n<code>${escapeHtml(qrData)}</code>`;
+        await sendNativeRpcInBackground("telegram_send_file", {
+          bot_token: botToken,
+          chat_id: senderId,
+          file_path: outPath,
+          caption: caption,
+          media_type: "photo"
+        });
+        return { status: "success", file_path: outPath, data: qrData, message: `QR Code berhasil dibuat dan dikirim ke Telegram!` };
+      } catch (err) {
+        return { error: `Gagal membuat QR code: ${err.message}` };
+      }
+    }
+
+    if (toolName === "generate_pdf_document") {
+      const title = toolArgs.title || "Dokumen";
+      const content = toolArgs.content || "";
+      const fileName = toolArgs.file_name || `dokumen_${Date.now()}.pdf`;
+      const outPath = `/tmp/${fileName.endsWith('.pdf') ? fileName : fileName + '.pdf'}`;
+      
+      const mdHtml = formatMarkdownForTelegram(content).replace(/\n/g, '<br/>');
+      const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; }
+h1 { color: #0f172a; border-bottom: 2px solid #3b82f6; padding-bottom: 8px; font-size: 24px; }
+h2 { color: #1e293b; margin-top: 24px; font-size: 18px; }
+pre { background: #f1f5f9; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 13px; }
+code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+</style>
+</head>
+<body>
+<h1>${escapeHtml(title)}</h1>
+<div>${mdHtml}</div>
+</body>
+</html>`;
+      const tempHtmlPath = `/tmp/temp_doc_${Date.now()}.html`;
+      await sendNativeRpcInBackground("write_file", { path: tempHtmlPath, content: htmlContent });
+      
+      await sendNativeRpcInBackground("run_command", {
+        command: `google-chrome --headless --disable-gpu --print-to-pdf="${outPath}" "${tempHtmlPath}"`
+      });
+
+      const caption = `📄 <b>Dokumen PDF Selesai Dibuat:</b>\n<b>${escapeHtml(title)}</b>`;
+      await sendNativeRpcInBackground("telegram_send_file", {
+        bot_token: botToken,
+        chat_id: senderId,
+        file_path: outPath,
+        file_name: fileName,
+        caption: caption,
+        media_type: "document"
+      });
+      return { status: "success", file_path: outPath, message: `Dokumen PDF "${title}" berhasil dibuat dan dikirim ke Telegram!` };
+    }
+
+    if (toolName === "get_system_info") {
+      const rpcRes = await sendNativeRpcInBackground("run_command", {
+        command: `echo "=== UPTIME ===" && uptime -p && echo "=== MEMORY ===" && free -h && echo "=== DISK ===" && df -h / && echo "=== CPU / OS ===" && uname -srm`
+      });
+      if (rpcRes && rpcRes.status === "ok") {
+        return { status: "success", system_report: rpcRes.stdout };
+      }
+      return { error: "Gagal mengambil data sistem OS." };
     }
 
     // C. Active Browser Tab Verification
@@ -3010,15 +3653,30 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
 async function telegramSetMyCommands(botToken) {
   if (!botToken) return false;
   const commands = [
-    { command: "start", description: "Buka menu utama & instruksi Browser Agent" },
-    { command: "thinking", description: "Atur mode berpikir AI (Low, Med, High, Xhigh, Extreme)" },
-    { command: "model", description: "Pilih model AI aktif atau aktifkan auto-routing" },
-    { command: "agent", description: "Pilih persona spesialis agent atau delegasi otomatis" },
-    { command: "history", description: "Daftar riwayat sesi percakapan & pindah sesi" },
-    { command: "screenshot", description: "Ambil screenshot tab Chrome aktif di PC" },
-    { command: "screenshot_os", description: "Ambil screenshot Full Desktop OS Linux" },
-    { command: "status", description: "Cek tab aktif, model, memory, dan performa" },
-    { command: "new", description: "Mulai sesi baru dan bersihkan tampilan chat" }
+    { command: "start", description: "Buka menu utama & remote hub" },
+    { command: "menu", description: "Tampilkan menu interaktif 4 kategori" },
+    { command: "search", description: "Cari web Google & rangkum ringkas" },
+    { command: "news", description: "Pantau berita terkini real-time" },
+    { command: "browse", description: "Buka web, screenshot & ringkas" },
+    { command: "tabs", description: "Lihat & beralih tab Chrome aktif" },
+    { command: "gmail", description: "Kirim email cepat via Gmail" },
+    { command: "docs", description: "Buat dokumen baru di Google Docs" },
+    { command: "sheets", description: "Tulis baris baru di Google Sheets" },
+    { command: "form", description: "Buat formulir kuesioner Google Form" },
+    { command: "tasks", description: "Buat to-do task di Google Tasks" },
+    { command: "contacts", description: "Cari kontak & nomor telepon" },
+    { command: "qr", description: "Generate QR code PNG siap scan" },
+    { command: "pdf", description: "Generate dokumen PDF siap download" },
+    { command: "screenshot", description: "Screenshot tab Chrome aktif" },
+    { command: "screenshot_os", description: "Screenshot Full Desktop PC Linux" },
+    { command: "sysinfo", description: "Cek performa RAM, CPU & Disk PC" },
+    { command: "thinking", description: "Atur intensitas penalaran AI" },
+    { command: "model", description: "Pilih model AI aktif" },
+    { command: "agent", description: "Pilih spesialis agent AI" },
+    { command: "tiar", description: "Panggil AI Tiar Property / Sales Closer" },
+    { command: "history", description: "Daftar riwayat sesi percakapan" },
+    { command: "status", description: "Cek tab aktif & status sistem" },
+    { command: "new", description: "Mulai sesi baru (reset memory)" }
   ];
   try {
     const res = await fetch(`https://api.telegram.org/bot${botToken}/setMyCommands`, {

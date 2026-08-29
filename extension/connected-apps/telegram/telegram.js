@@ -199,13 +199,30 @@ function escapeHtml(str) {
 async function telegramSetMyCommands(botToken) {
   if (!botToken) return false;
   const commands = [
-    { command: "model", description: "Pilih model AI (/model gemini-2.5-pro, /model auto)" },
-    { command: "agent", description: "Pilih persona (/agent coder, /agent closer, /agent auto)" },
-    { command: "mode", description: "Ganti mode eksekusi (/mode autonomous, /mode standard)" },
-    { command: "screenshot", description: "Ambil screenshot tab browser aktif & kirim ke chat" },
-    { command: "status", description: "Cek model aktif, persona, tab browser, & status kognitif" },
-    { command: "clear", description: "Bersihkan riwayat konteks percakapan bot Telegram" },
-    { command: "help", description: "Panduan lengkap sintaks & kemampuan Master Agent" }
+    { command: "start", description: "Buka menu utama & remote hub" },
+    { command: "menu", description: "Tampilkan menu interaktif 4 kategori" },
+    { command: "search", description: "Cari web Google & rangkum ringkas" },
+    { command: "news", description: "Pantau berita terkini real-time" },
+    { command: "browse", description: "Buka web, screenshot & ringkas" },
+    { command: "tabs", description: "Lihat & beralih tab Chrome aktif" },
+    { command: "gmail", description: "Kirim email cepat via Gmail" },
+    { command: "docs", description: "Buat dokumen baru di Google Docs" },
+    { command: "sheets", description: "Tulis baris baru di Google Sheets" },
+    { command: "form", description: "Buat formulir kuesioner Google Form" },
+    { command: "tasks", description: "Buat to-do task di Google Tasks" },
+    { command: "contacts", description: "Cari kontak & nomor telepon" },
+    { command: "qr", description: "Generate QR code PNG siap scan" },
+    { command: "pdf", description: "Generate dokumen PDF siap download" },
+    { command: "screenshot", description: "Screenshot tab Chrome aktif" },
+    { command: "screenshot_os", description: "Screenshot Full Desktop PC Linux" },
+    { command: "sysinfo", description: "Cek performa RAM, CPU & Disk PC" },
+    { command: "thinking", description: "Atur intensitas penalaran AI" },
+    { command: "model", description: "Pilih model AI aktif" },
+    { command: "agent", description: "Pilih spesialis agent AI" },
+    { command: "tiar", description: "Panggil AI Tiar Property / Sales Closer" },
+    { command: "history", description: "Daftar riwayat sesi percakapan" },
+    { command: "status", description: "Cek tab aktif & status sistem" },
+    { command: "new", description: "Mulai sesi baru (reset memory)" }
   ];
 
   try {
