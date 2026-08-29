@@ -281,7 +281,7 @@ function setupGoogleWorkspaceEventListeners() {
     btnTestDoc.addEventListener('click', async () => {
       try {
         btnTestDoc.disabled = true;
-        btnTestDoc.textContent = 'Membuat Dokumen...';
+        btnTestDoc.textContent = 'Membuat Doc...';
 
         const sampleText = `Halo! Ini adalah dokumen uji coba yang dibuat otomatis oleh Browser Agent AI pada ${new Date().toLocaleString('id-ID')}.\n\nFitur integrasi Google Workspace telah berhasil aktif dan siap digunakan untuk menulis laporan dan mengekspor data otomatis.`;
         const res = await window.googleWorkspaceService.createDocument(`Laporan Browser Agent — ${new Date().toLocaleDateString('id-ID')}`, sampleText);
@@ -296,7 +296,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal membuat dokumen: ${err.message}`);
       } finally {
         btnTestDoc.disabled = false;
-        btnTestDoc.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg><span>Buat Doc Uji Coba</span>`;
+        btnTestDoc.innerHTML = `<svg viewBox="0 0 48 48" width="14" height="14"><path fill="#4285F4" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/><path fill="#A1C2FA" d="M30 4v12h12L30 4z"/></svg><span>Buat Doc</span>`;
       }
     });
   }
@@ -307,11 +307,10 @@ function setupGoogleWorkspaceEventListeners() {
     btnTestSheet.addEventListener('click', async () => {
       try {
         btnTestSheet.disabled = true;
-        btnTestSheet.textContent = 'Menulis ke Sheet...';
+        btnTestSheet.textContent = 'Menulis Sheet...';
 
         let targetSheetId = googleWorkspaceConfig.default_spreadsheet_id;
 
-        // If no default spreadsheet set, create one automatically
         if (!targetSheetId) {
           const newSheet = await window.googleWorkspaceService.createSpreadsheet("Browser Agent - Database Leads & Log", [
             "Waktu", "Kategori", "Nama Prospek / Catatan", "Status", "Agen AI"
@@ -341,7 +340,94 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal menulis ke Google Sheet: ${err.message}`);
       } finally {
         btnTestSheet.disabled = false;
-        btnTestSheet.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span>Tulis ke Sheet</span>`;
+        btnTestSheet.innerHTML = `<svg viewBox="0 0 48 48" width="14" height="14"><path fill="#0F9D58" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/><path fill="#87CEAC" d="M30 4v12h12L30 4z"/></svg><span>Tulis Sheet</span>`;
+      }
+    });
+  }
+
+  // 5b. Quick Test: Test Kirim Gmail
+  const btnTestGmail = document.getElementById('btn-test-send-gmail');
+  if (btnTestGmail) {
+    btnTestGmail.addEventListener('click', async () => {
+      const myEmail = googleWorkspaceAuth?.user?.email;
+      if (!myEmail) {
+        alert("Silakan hubungkan akun Google terlebih dahulu.");
+        return;
+      }
+      try {
+        btnTestGmail.disabled = true;
+        btnTestGmail.textContent = 'Kirim Email...';
+        const res = await window.googleWorkspaceService.sendGmail(
+          myEmail,
+          `[Browser Agent] Uji Coba Integrasi Gmail API — ${new Date().toLocaleTimeString('id-ID')}`,
+          `<h2>Halo dari Browser Agent AI!</h2><p>Integrasi Gmail API telah berhasil terhubung dan siap digunakan untuk otomatisasi kirim email laporan & follow-up prospek.</p><p><i>Waktu Uji: ${new Date().toLocaleString('id-ID')}</i></p>`
+        );
+        showSaveToast(`Email uji coba berhasil dikirim ke ${myEmail}!`);
+        const data = await chrome.storage.local.get(['google_workspace_logs']);
+        googleWorkspaceLogs = data.google_workspace_logs || [];
+        renderGoogleWorkspaceLogs();
+      } catch (err) {
+        alert(`Gagal mengirim Gmail: ${err.message}`);
+      } finally {
+        btnTestGmail.disabled = false;
+        btnTestGmail.innerHTML = `<svg viewBox="0 0 48 48" width="14" height="14"><path fill="#EA4335" d="M45,16.2l-8,6.2L24,31.7L11,22.4l-8-6.2c-0.64-0.49-1-1.25-1-2.06c0-1.71,1.64-2.88,3.2-2.26L24,19.5l18.8-7.66c1.56-0.62,3.2,0.55,3.2,2.26C46,14.95,45.64,15.71,45,16.2z"/></svg><span>Test Gmail</span>`;
+      }
+    });
+  }
+
+  // 5c. Quick Test: Buat Google Form
+  const btnTestForm = document.getElementById('btn-test-create-form');
+  if (btnTestForm) {
+    btnTestForm.addEventListener('click', async () => {
+      try {
+        btnTestForm.disabled = true;
+        btnTestForm.textContent = 'Membuat Form...';
+        const res = await window.googleWorkspaceService.createGoogleForm(
+          `Formulir Minat Prospek — ${new Date().toLocaleDateString('id-ID')}`,
+          "Silakan isi data untuk konsultasi gratis properti dan simulasi KPR",
+          [
+            { title: "Nama Lengkap Anda", type: "TEXT", required: true },
+            { title: "Nomor WhatsApp", type: "TEXT", required: true },
+            { title: "Pilihan Area Properti", type: "CHOICE", options: ["Surabaya Timur / MERR", "Sidoarjo / Juanda", "Surabaya Selatan"], required: true }
+          ]
+        );
+        showSaveToast("Google Form berhasil dibuat!");
+        window.open(res.editUri, '_blank');
+        const data = await chrome.storage.local.get(['google_workspace_logs']);
+        googleWorkspaceLogs = data.google_workspace_logs || [];
+        renderGoogleWorkspaceLogs();
+      } catch (err) {
+        alert(`Gagal membuat Google Form: ${err.message}`);
+      } finally {
+        btnTestForm.disabled = false;
+        btnTestForm.innerHTML = `<svg viewBox="0 0 48 48" width="14" height="14"><path fill="#7248B9" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/><path fill="#B39DDB" d="M30 4v12h12L30 4z"/></svg><span>Test Form</span>`;
+      }
+    });
+  }
+
+  // 5d. Quick Test: Jadwalkan Google Calendar Event
+  const btnTestCalendar = document.getElementById('btn-test-calendar-event');
+  if (btnTestCalendar) {
+    btnTestCalendar.addEventListener('click', async () => {
+      try {
+        btnTestCalendar.disabled = true;
+        btnTestCalendar.textContent = 'Jadwal Kalender...';
+        const res = await window.googleWorkspaceService.createCalendarEvent(
+          "Survei Lokasi Properti (Browser Agent Test)",
+          "Agenda survei lokasi properti dampingan Tiar Property / Browser Agent",
+          new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+          new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString()
+        );
+        showSaveToast("Agenda berhasil ditambahkan ke Google Calendar!");
+        window.open(res.htmlLink, '_blank');
+        const data = await chrome.storage.local.get(['google_workspace_logs']);
+        googleWorkspaceLogs = data.google_workspace_logs || [];
+        renderGoogleWorkspaceLogs();
+      } catch (err) {
+        alert(`Gagal membuat agenda kalender: ${err.message}`);
+      } finally {
+        btnTestCalendar.disabled = false;
+        btnTestCalendar.innerHTML = `<svg viewBox="0 0 48 48" width="14" height="14"><rect width="36" height="36" x="6" y="6" rx="8" fill="#4285F4"/></svg><span>Test Kalender</span>`;
       }
     });
   }
@@ -362,28 +448,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal mengakses Google Drive: ${err.message}`);
       } finally {
         btnTestDrive.disabled = false;
-        btnTestDrive.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg><span>Cek File Drive</span>`;
-      }
-    });
-  }
-
-  // 7. Quick Test: Uji Google Web Search
-  const btnTestSearch = document.getElementById('btn-test-web-search');
-  if (btnTestSearch) {
-    btnTestSearch.addEventListener('click', async () => {
-      try {
-        btnTestSearch.disabled = true;
-        btnTestSearch.textContent = 'Mencari Web...';
-        const res = await window.googleWorkspaceService.googleWebSearch('Google Workspace AI agent update 2026', 4);
-        showSaveToast(`Pencarian Web Google Berhasil (${res.total_results} hasil)!`);
-        const data = await chrome.storage.local.get(['google_workspace_logs']);
-        googleWorkspaceLogs = data.google_workspace_logs || [];
-        renderGoogleWorkspaceLogs();
-      } catch (err) {
-        alert(`Gagal web search: ${err.message}`);
-      } finally {
-        btnTestSearch.disabled = false;
-        btnTestSearch.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Uji Web Search</span>`;
+        btnTestDrive.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg><span>Cek Drive</span>`;
       }
     });
   }
@@ -398,6 +463,91 @@ function setupGoogleWorkspaceEventListeners() {
       showSaveToast("Log aktivitas Google Workspace berhasil dibersihkan.");
     });
   }
+
+  // 8. Bottom Unified Tab Switcher Navigation
+  const tabBtnLogs = document.getElementById('tab-btn-google-logs');
+  const tabBtnCommands = document.getElementById('tab-btn-google-commands');
+  const tabBtnTutorial = document.getElementById('tab-btn-google-tutorial');
+  const panelLogs = document.getElementById('google-tab-content-logs');
+  const panelCommands = document.getElementById('google-tab-content-commands');
+  const panelTutorial = document.getElementById('google-tab-content-tutorial');
+  const logsActions = document.getElementById('google-logs-actions');
+
+  function switchGoogleTab(activeTab) {
+    [tabBtnLogs, tabBtnCommands, tabBtnTutorial].forEach(btn => {
+      if (btn) btn.classList.remove('active');
+    });
+    [panelLogs, panelCommands, panelTutorial].forEach(p => {
+      if (p) p.style.display = 'none';
+    });
+
+    if (activeTab === 'logs') {
+      if (tabBtnLogs) tabBtnLogs.classList.add('active');
+      if (panelLogs) panelLogs.style.display = 'block';
+      if (logsActions) logsActions.style.display = 'flex';
+    } else if (activeTab === 'commands') {
+      if (tabBtnCommands) tabBtnCommands.classList.add('active');
+      if (panelCommands) panelCommands.style.display = 'block';
+      if (logsActions) logsActions.style.display = 'none';
+    } else if (activeTab === 'tutorial') {
+      if (tabBtnTutorial) tabBtnTutorial.classList.add('active');
+      if (panelTutorial) panelTutorial.style.display = 'block';
+      if (logsActions) logsActions.style.display = 'none';
+    }
+  }
+
+  if (tabBtnLogs) tabBtnLogs.addEventListener('click', () => switchGoogleTab('logs'));
+  if (tabBtnCommands) tabBtnCommands.addEventListener('click', () => switchGoogleTab('commands'));
+  if (tabBtnTutorial) tabBtnTutorial.addEventListener('click', () => switchGoogleTab('tutorial'));
+
+  // 9. Command Category Filter Pills
+  const filterBtns = document.querySelectorAll('.google-cmd-filter');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.getAttribute('data-filter');
+      const cards = document.querySelectorAll('.google-tool-card');
+      cards.forEach(card => {
+        const cat = card.getAttribute('data-category');
+        if (filter === 'all' || cat === filter) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+}
+
+function renderGoogleWorkspaceLogs() {
+  const container = document.getElementById('google-workspace-logs-container');
+  const countBadge = document.getElementById('google-logs-count-badge');
+  if (!container) return;
+
+  if (countBadge) {
+    countBadge.textContent = String(googleWorkspaceLogs ? googleWorkspaceLogs.length : 0);
+  }
+
+  if (!googleWorkspaceLogs || googleWorkspaceLogs.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; color: #64748b; font-size: 11.5px; padding: 32px 10px;">
+        Belum ada aktivitas Google Workspace tercatat. Jalankan salah satu Uji Coba Cepat di atas untuk melihat log aktivitas secara langsung.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = googleWorkspaceLogs.map(log => {
+    const badgeClass = (log.type || '').toLowerCase();
+    return `
+      <div class="google-log-item">
+        <span style="color: #64748b; font-family: monospace; font-size: 10px;">${escapeHtml(log.time || '')}</span>
+        <span class="google-log-badge ${badgeClass}">${escapeHtml(log.type || 'LOG')}</span>
+        <span style="color: #cbd5e1; flex: 1;">${escapeHtml(log.message || '')}</span>
+      </div>
+    `;
+  }).join('');
 }
 
 // Helper escapeHtml

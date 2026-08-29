@@ -1573,6 +1573,145 @@ const AGENT_TOOLS = [
   {
     type: "function",
     function: {
+      name: "gmail_send_email",
+      description: "Send an email via the user's connected Gmail account with custom subject and HTML/text body.",
+      parameters: {
+        type: "object",
+        properties: {
+          to: { type: "string", description: "Recipient email address" },
+          subject: { type: "string", description: "Email subject line" },
+          body_html: { type: "string", description: "HTML content of the email" },
+          body_text: { type: "string", description: "Plain text fallback of the email" }
+        },
+        required: ["to", "subject"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gmail_search_emails",
+      description: "Search emails in the user's Gmail mailbox using standard Gmail search query syntax (e.g. 'is:unread', 'from:client@example.com', 'subject:KPR').",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Search query for Gmail" },
+          max_results: { type: "number", description: "Max emails to retrieve (default 5)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_forms_create_form",
+      description: "Create a new Google Form with custom title, description, and questions list. Returns the public responder URL and edit URL.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Title of the Google Form" },
+          description: { type: "string", description: "Description or instructions for the form" },
+          questions: {
+            type: "array",
+            items: { type: "object" },
+            description: "List of question objects, e.g. [{title: 'Nama', type: 'TEXT', required: true}, {title: 'Pilihan', type: 'CHOICE', options: ['A', 'B']}]"
+          }
+        },
+        required: ["title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_forms_get_responses",
+      description: "Get all submitted responses from a Google Form by Form ID.",
+      parameters: {
+        type: "object",
+        properties: {
+          form_id: { type: "string", description: "Google Form ID or URL" }
+        },
+        required: ["form_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_calendar_create_event",
+      description: "Create and schedule an event or meeting in the user's primary Google Calendar.",
+      parameters: {
+        type: "object",
+        properties: {
+          summary: { type: "string", description: "Title of the meeting/agenda" },
+          description: { type: "string", description: "Details or agenda notes" },
+          start_time: { type: "string", description: "Start date-time in ISO format or 'YYYY-MM-DDTHH:mm:ss'" },
+          end_time: { type: "string", description: "End date-time in ISO format or 'YYYY-MM-DDTHH:mm:ss'" },
+          attendees: { type: "array", items: { type: "string" }, description: "List of attendee email addresses" }
+        },
+        required: ["summary"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_calendar_list_events",
+      description: "List upcoming events from the user's primary Google Calendar.",
+      parameters: {
+        type: "object",
+        properties: {
+          max_results: { type: "number", description: "Number of upcoming events to list (default 5)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_tasks_create_task",
+      description: "Create a new to-do task or reminder in Google Tasks.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Title of the task" },
+          notes: { type: "string", description: "Additional notes or checklist details" },
+          due_date: { type: "string", description: "Due date in YYYY-MM-DD format" }
+        },
+        required: ["title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_tasks_list_tasks",
+      description: "List uncompleted tasks from the user's default Google Tasks list.",
+      parameters: {
+        type: "object",
+        properties: {
+          max_results: { type: "number", description: "Max tasks to retrieve (default 10)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_contacts_search",
+      description: "Search contacts in the user's Google Contacts by name, email, or phone number.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Name, email, or phone search query" },
+          page_size: { type: "number", description: "Number of contacts to return (default 10)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "google_web_search",
       description: "Execute a high-speed Google/Web Search to find realtime information, articles, websites, and data.",
       parameters: {
@@ -4146,6 +4285,96 @@ async function executeTool(name, args, assistantBubble = null) {
         };
       } catch (err) {
         return { error: `Gagal mengambil file terbaru Google Drive: ${err.message}` };
+      }
+    }
+
+    case "gmail_send_email": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.sendGmail(args.to, args.subject, args.body_html, args.body_text);
+        return { success: true, message: `Email berhasil dikirim ke ${args.to}`, messageId: res.messageId };
+      } catch (err) {
+        return { error: `Gagal mengirim email: ${err.message}` };
+      }
+    }
+
+    case "gmail_search_emails": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.searchGmail(args.query || "is:inbox", args.max_results || 5);
+        return { success: true, total_found: res.total_found, messages: res.messages };
+      } catch (err) {
+        return { error: `Gagal mencari email: ${err.message}` };
+      }
+    }
+
+    case "google_forms_create_form": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.createGoogleForm(args.title, args.description, args.questions);
+        return { success: true, form_id: res.formId, title: res.title, responder_url: res.responderUri, edit_url: res.editUri };
+      } catch (err) {
+        return { error: `Gagal membuat Google Form: ${err.message}` };
+      }
+    }
+
+    case "google_forms_get_responses": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.getGoogleFormResponses(args.form_id);
+        return { success: true, form_id: res.formId, total_responses: res.total_responses, responses: res.responses };
+      } catch (err) {
+        return { error: `Gagal membaca respon Google Form: ${err.message}` };
+      }
+    }
+
+    case "google_calendar_create_event": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.createCalendarEvent(args.summary, args.description, args.start_time, args.end_time, args.attendees);
+        return { success: true, event_id: res.eventId, summary: res.summary, link: res.htmlLink, start: res.start, end: res.end };
+      } catch (err) {
+        return { error: `Gagal membuat event kalender: ${err.message}` };
+      }
+    }
+
+    case "google_calendar_list_events": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.listCalendarEvents(args.max_results || 5);
+        return { success: true, total_events: res.total_events, events: res.events };
+      } catch (err) {
+        return { error: `Gagal membaca event kalender: ${err.message}` };
+      }
+    }
+
+    case "google_tasks_create_task": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.createGoogleTask(args.title, args.notes, args.due_date);
+        return { success: true, task_id: res.taskId, title: res.title, notes: res.notes, due: res.due };
+      } catch (err) {
+        return { error: `Gagal membuat Google Task: ${err.message}` };
+      }
+    }
+
+    case "google_tasks_list_tasks": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.listGoogleTasks(args.max_results || 10);
+        return { success: true, total_tasks: res.total_tasks, tasks: res.tasks };
+      } catch (err) {
+        return { error: `Gagal membaca Google Tasks: ${err.message}` };
+      }
+    }
+
+    case "google_contacts_search": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.searchGoogleContacts(args.query || "", args.page_size || 10);
+        return { success: true, total_contacts: res.total_contacts, contacts: res.contacts };
+      } catch (err) {
+        return { error: `Gagal mencari kontak: ${err.message}` };
       }
     }
 

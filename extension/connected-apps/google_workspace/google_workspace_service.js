@@ -9,8 +9,18 @@ const GOOGLE_OAUTH_SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile',
   'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/spreadsheets',
-  'https://www.googleapis.com/auth/documents'
+  'https://www.googleapis.com/auth/documents',
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.modify',
+  'https://www.googleapis.com/auth/forms.body',
+  'https://www.googleapis.com/auth/forms.responses.readonly',
+  'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/calendar.readonly',
+  'https://www.googleapis.com/auth/tasks',
+  'https://www.googleapis.com/auth/contacts.readonly'
 ];
 
 const DEFAULT_GOOGLE_CLIENT_ID = "526037622722" + "-" + "9cgadbuhopl5dq7lnpcpe61kkpo5rjda" + "." + "apps.googleusercontent.com";
@@ -667,6 +677,443 @@ class GoogleWorkspaceService {
    */
   async listRecentFiles(maxResults = 10) {
     return this.searchDrive("", null, maxResults);
+  }
+
+  // =========================================================================
+  // GMAIL API
+  // =========================================================================
+
+  /**
+   * Send an email via Gmail API
+   */
+  async sendGmail(to, subject, bodyHtml, bodyText = "") {
+    if (!to) throw new Error("Alamat email penerima (to) wajib diisi.");
+    const token = await this.getValidAccessToken();
+
+    const textContent = bodyText || (typeof bodyHtml === 'string' ? bodyHtml.replace(/<[^>]+>/g, ' ') : '');
+    const htmlContent = bodyHtml || `<p>${bodyText}</p>`;
+
+    const boundary = "==_mime_boundary_" + Date.now();
+    const emailLines = [
+      `To: ${to}`,
+      `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
+      `MIME-Version: 1.0`,
+      `Content-Type: multipart/alternative; boundary="${boundary}"`,
+      ``,
+      `--${boundary}`,
+      `Content-Type: text/plain; charset="UTF-8"`,
+      `Content-Transfer-Encoding: 7bit`,
+      ``,
+      textContent,
+      ``,
+      `--${boundary}`,
+      `Content-Type: text/html; charset="UTF-8"`,
+      `Content-Transfer-Encoding: 7bit`,
+      ``,
+      htmlContent,
+      ``,
+      `--${boundary}--`
+    ];
+
+    const rawEmail = emailLines.join("\r\n");
+    const encodedEmail = btoa(unescape(encodeURIComponent(rawEmail)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    const url = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send';
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ raw: encodedEmail })
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Gmail API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    this.logActivity('GMAIL_SEND', `Berhasil mengirim email ke: ${to} (Subjek: "${subject}")`);
+    return {
+      success: true,
+      messageId: data.id,
+      threadId: data.threadId,
+      to,
+      subject
+    };
+  }
+
+  /**
+   * Search emails in Gmail mailbox
+   */
+  async searchGmail(query = "is:inbox", maxResults = 5) {
+    const token = await this.getValidAccessToken();
+    const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=${maxResults}`;
+
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Gmail API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    const messages = [];
+    if (Array.isArray(data.messages)) {
+      for (const msg of data.messages) {
+        try {
+          const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const detail = await detailRes.json();
+          const headers = detail.payload?.headers || [];
+          const subject = headers.find(h => h.name.toLowerCase() === 'subject')?.value || '(Tanpa Subjek)';
+          const from = headers.find(h => h.name.toLowerCase() === 'from')?.value || 'Unknown';
+          const date = headers.find(h => h.name.toLowerCase() === 'date')?.value || '';
+          messages.push({
+            id: msg.id,
+            threadId: msg.threadId,
+            subject,
+            from,
+            date,
+            snippet: detail.snippet || ''
+          });
+        } catch (e) {}
+      }
+    }
+
+    this.logActivity('GMAIL_SEARCH', `Pencarian Gmail: "${query}" (${messages.length} email ditemukan)`);
+    return {
+      success: true,
+      query,
+      total_found: messages.length,
+      messages
+    };
+  }
+
+  // =========================================================================
+  // GOOGLE FORMS API
+  // =========================================================================
+
+  /**
+   * Create a new Google Form with title, description, and initial questions
+   */
+  async createGoogleForm(title = "Kuesioner Survey Prospek", description = "Dibuat oleh Browser Agent AI", questions = []) {
+    const token = await this.getValidAccessToken();
+    const createUrl = 'https://forms.googleapis.com/v1/forms';
+
+    const createRes = await fetch(createUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        info: {
+          title: title || "Kuesioner Survey Prospek",
+          description: description || "Formulir dibuat otomatis oleh AI"
+        }
+      })
+    });
+
+    const formData = await createRes.json();
+    if (formData.error) {
+      throw new Error(`Google Forms API Error: ${formData.error.message || JSON.stringify(formData.error)}`);
+    }
+
+    const formId = formData.formId;
+
+    if (Array.isArray(questions) && questions.length > 0) {
+      const requests = questions.map((q, idx) => {
+        const qTitle = typeof q === 'string' ? q : (q.title || `Pertanyaan ${idx + 1}`);
+        const qType = q.type || 'TEXT';
+        const qOptions = Array.isArray(q.options) ? q.options : ["Opsi 1", "Opsi 2"];
+
+        if (qType === 'CHOICE') {
+          return {
+            createItem: {
+              item: {
+                title: qTitle,
+                questionItem: {
+                  question: {
+                    required: !!q.required,
+                    choiceQuestion: {
+                      type: 'RADIO',
+                      options: qOptions.map(opt => ({ value: String(opt) }))
+                    }
+                  }
+                }
+              },
+              location: { index: idx }
+            }
+          };
+        } else {
+          return {
+            createItem: {
+              item: {
+                title: qTitle,
+                questionItem: {
+                  question: {
+                    required: !!q.required,
+                    textQuestion: { paragraph: qType === 'PARAGRAPH' }
+                  }
+                }
+              },
+              location: { index: idx }
+            }
+          };
+        }
+      });
+
+      const batchUrl = `https://forms.googleapis.com/v1/forms/${encodeURIComponent(formId)}:batchUpdate`;
+      await fetch(batchUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ requests })
+      });
+    }
+
+    const responderUri = formData.responderUri || `https://docs.google.com/forms/d/e/${formId}/viewform`;
+    const editUri = `https://docs.google.com/forms/d/${formId}/edit`;
+
+    this.logActivity('FORMS_CREATE', `Berhasil membuat Google Form: "${title}" (ID: ${formId})`);
+    return {
+      success: true,
+      formId,
+      title,
+      responderUri,
+      editUri
+    };
+  }
+
+  /**
+   * Get responses from a Google Form
+   */
+  async getGoogleFormResponses(formId) {
+    if (!formId) throw new Error("Form ID tidak boleh kosong.");
+    const token = await this.getValidAccessToken();
+    const url = `https://forms.googleapis.com/v1/forms/${encodeURIComponent(formId)}/responses`;
+
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Forms API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    const responses = data.responses || [];
+    this.logActivity('FORMS_RESPONSES', `Membaca respon Google Form (${responses.length} respon diterima)`);
+    return {
+      success: true,
+      formId,
+      total_responses: responses.length,
+      responses
+    };
+  }
+
+  // =========================================================================
+  // GOOGLE CALENDAR API
+  // =========================================================================
+
+  /**
+   * Create an event in Google Calendar
+   */
+  async createCalendarEvent(summary = "Survei Lokasi Properti", description = "", startDateTime = "", endDateTime = "", attendees = []) {
+    const token = await this.getValidAccessToken();
+    const url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+
+    const now = new Date();
+    const start = startDateTime ? new Date(startDateTime) : new Date(now.getTime() + 60 * 60 * 1000);
+    const end = endDateTime ? new Date(endDateTime) : new Date(start.getTime() + 60 * 60 * 1000);
+
+    const eventPayload = {
+      summary: summary || "Meeting Agenda",
+      description: description || "Dibuat otomatis oleh Browser Agent AI",
+      start: { dateTime: start.toISOString() },
+      end: { dateTime: end.toISOString() }
+    };
+
+    if (Array.isArray(attendees) && attendees.length > 0) {
+      eventPayload.attendees = attendees.map(email => ({ email: String(email).trim() }));
+    }
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(eventPayload)
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Calendar API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    this.logActivity('CALENDAR_EVENT', `Jadwal Kalender Dibuat: "${summary}" (${start.toLocaleDateString('id-ID')})`);
+    return {
+      success: true,
+      eventId: data.id,
+      summary: data.summary,
+      htmlLink: data.htmlLink || `https://calendar.google.com/calendar/event?eid=${data.id}`,
+      start: data.start?.dateTime || start.toISOString(),
+      end: data.end?.dateTime || end.toISOString()
+    };
+  }
+
+  /**
+   * List upcoming Google Calendar events
+   */
+  async listCalendarEvents(maxResults = 5) {
+    const token = await this.getValidAccessToken();
+    const nowIso = new Date().toISOString();
+    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(nowIso)}&maxResults=${maxResults}&singleEvents=true&orderBy=startTime`;
+
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Calendar API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    const events = (data.items || []).map(evt => ({
+      id: evt.id,
+      summary: evt.summary || '(Tanpa Judul)',
+      description: evt.description || '',
+      start: evt.start?.dateTime || evt.start?.date || '',
+      end: evt.end?.dateTime || evt.end?.date || '',
+      link: evt.htmlLink || ''
+    }));
+
+    this.logActivity('CALENDAR_LIST', `Membaca ${events.length} jadwal Google Calendar mendatang`);
+    return {
+      success: true,
+      total_events: events.length,
+      events
+    };
+  }
+
+  // =========================================================================
+  // GOOGLE TASKS API
+  // =========================================================================
+
+  /**
+   * Create a new task in Google Tasks
+   */
+  async createGoogleTask(title = "Follow-up Prospek KPR", notes = "", dueDate = "") {
+    const token = await this.getValidAccessToken();
+    const url = 'https://tasks.googleapis.com/tasks/v1/lists/@default/tasks';
+
+    const taskPayload = {
+      title: title || "Tugas Baru",
+      notes: notes || "Dibuat oleh Browser Agent"
+    };
+
+    if (dueDate) {
+      taskPayload.due = new Date(dueDate).toISOString();
+    }
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(taskPayload)
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Tasks API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    this.logActivity('TASKS_CREATE', `Berhasil membuat Task: "${title}"`);
+    return {
+      success: true,
+      taskId: data.id,
+      title: data.title,
+      notes: data.notes,
+      due: data.due
+    };
+  }
+
+  /**
+   * List active Google Tasks
+   */
+  async listGoogleTasks(maxResults = 10) {
+    const token = await this.getValidAccessToken();
+    const url = `https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?maxResults=${maxResults}&showCompleted=false`;
+
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Tasks API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    const tasks = (data.items || []).map(t => ({
+      id: t.id,
+      title: t.title || '(Tanpa Judul)',
+      notes: t.notes || '',
+      due: t.due || '',
+      status: t.status
+    }));
+
+    this.logActivity('TASKS_LIST', `Membaca ${tasks.length} daftar Google Tasks`);
+    return {
+      success: true,
+      total_tasks: tasks.length,
+      tasks
+    };
+  }
+
+  // =========================================================================
+  // GOOGLE CONTACTS (PEOPLE) API
+  // =========================================================================
+
+  /**
+   * Search contacts by name, email, or phone number
+   */
+  async searchGoogleContacts(query = "", pageSize = 10) {
+    const token = await this.getValidAccessToken();
+    const url = query
+      ? `https://people.googleapis.com/v1/people:searchContacts?query=${encodeURIComponent(query)}&readMask=names,emailAddresses,phoneNumbers,organizations&pageSize=${pageSize}`
+      : `https://people.googleapis.com/v1/people/me/connections?personFields=names,emailAddresses,phoneNumbers,organizations&pageSize=${pageSize}`;
+
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Contacts API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    const rawList = data.results ? data.results.map(r => r.person) : (data.connections || []);
+    const contacts = rawList.map(p => {
+      const name = p.names?.[0]?.displayName || '(Tanpa Nama)';
+      const email = p.emailAddresses?.[0]?.value || '';
+      const phone = p.phoneNumbers?.[0]?.value || '';
+      const org = p.organizations?.[0]?.name || '';
+      return { name, email, phone, organization: org };
+    });
+
+    this.logActivity('CONTACTS_SEARCH', `Pencarian Kontak Google: "${query}" (${contacts.length} kontak)`);
+    return {
+      success: true,
+      query,
+      total_contacts: contacts.length,
+      contacts
+    };
   }
 
   // =========================================================================

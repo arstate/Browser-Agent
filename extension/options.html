@@ -1561,8 +1561,9 @@
             </div>
           </div>
 
-          <div class="bento-grid-2col" style="align-items: stretch;">
-            <!-- Card 1: Google OAuth Auth & Settings -->
+          <!-- Top Grid: 2 Columns (Left: Auth Status & Test, Right: Google Apps Ecosystem Grid) -->
+          <div class="bento-grid-2col" style="align-items: stretch; margin-bottom: 20px;">
+            <!-- Left Card: Google OAuth Auth & Quick Tests -->
             <div class="bento-card bento-glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
               <div>
                 <div class="card-header" style="justify-content: space-between;">
@@ -1583,7 +1584,7 @@
                 <!-- Disconnected State -->
                 <div id="google-workspace-logged-out" style="padding: 18px 0; text-align: center;">
                   <p style="font-size: 12.5px; color: #94a3b8; line-height: 1.6; margin: 0 0 16px 0;">
-                    Klik tombol di bawah untuk login ke akun Google Anda. Ekstensi akan meminta izin resmi untuk mengakses Google Drive, Docs, dan Sheets milik Anda.
+                    Klik tombol di bawah untuk login ke akun Google Anda. Ekstensi akan meminta izin resmi OAuth 2.0 untuk menghubungkan ekosistem Google Apps (Gmail, Drive, Docs, Sheets, Forms, Calendar, Tasks, Contacts).
                   </p>
                   <button type="button" class="btn-google-login" id="btn-google-workspace-connect">
                     <img src="icons/connected-apps/google_workspace.svg" width="18" height="18" alt="Google">
@@ -1595,7 +1596,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                       <span style="font-size: 11px; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
                         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-1.5 1.5L16 7m-1.5 1.5L13 10m-1.5 1.5L10 13m-2-4 4-4a5.66 5.66 0 0 1 8 8l-4 4a5.66 5.66 0 0 1-8-8z"/><path d="M3 21l6-6"/></svg>
-                        <span>Authorized Redirect URI (Google Cloud Console):</span>
+                        <span>Authorized Redirect URI:</span>
                       </span>
                       <button type="button" id="btn-copy-google-redirect-uri" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 6px; background: rgba(66, 133, 244, 0.2); border: 1px solid rgba(66, 133, 244, 0.4); color: #93c5fd; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
                         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
@@ -1606,7 +1607,7 @@
                       Memuat Redirect URI...
                     </code>
                     <p style="font-size: 10.5px; color: #94a3b8; line-height: 1.4; margin: 6px 0 0 0;">
-                      <b>Wajib:</b> Masukkan URI di atas ke dalam menu <i>"Authorized redirect URIs"</i> pada OAuth 2.0 Client ID di <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #60a5fa; text-decoration: underline;">Google Cloud Console</a> agar login diizinkan.
+                      <b>Wajib:</b> Masukkan URI di atas ke dalam menu <i>"Authorized redirect URIs"</i> pada OAuth 2.0 Client ID di <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #60a5fa; text-decoration: underline;">Google Cloud Console</a>.
                     </p>
                   </div>
                 </div>
@@ -1630,22 +1631,30 @@
                       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                       <span>Uji Coba Cepat (Test Action):</span>
                     </span>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                      <button type="button" class="btn-secondary" id="btn-test-create-doc" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(66, 133, 244, 0.12); border: 1px solid rgba(66, 133, 244, 0.3); color: #60a5fa; cursor: pointer; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>Buat Doc Uji Coba</span>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                      <button type="button" class="btn-secondary" id="btn-test-create-doc" style="font-size: 11px; font-weight: 600; padding: 8px 10px; border-radius: 10px; background: rgba(66, 133, 244, 0.12); border: 1px solid rgba(66, 133, 244, 0.3); color: #60a5fa; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px;">
+                        <svg viewBox="0 0 48 48" width="14" height="14"><path fill="#4285F4" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/><path fill="#A1C2FA" d="M30 4v12h12L30 4z"/></svg>
+                        <span>Buat Doc</span>
                       </button>
-                      <button type="button" class="btn-secondary" id="btn-test-append-sheet" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(15, 157, 88, 0.12); border: 1px solid rgba(15, 157, 88, 0.3); color: #34d399; cursor: pointer; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
-                        <span>Tulis ke Sheet</span>
+                      <button type="button" class="btn-secondary" id="btn-test-append-sheet" style="font-size: 11px; font-weight: 600; padding: 8px 10px; border-radius: 10px; background: rgba(15, 157, 88, 0.12); border: 1px solid rgba(15, 157, 88, 0.3); color: #34d399; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px;">
+                        <svg viewBox="0 0 48 48" width="14" height="14"><path fill="#0F9D58" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/><path fill="#87CEAC" d="M30 4v12h12L30 4z"/></svg>
+                        <span>Tulis Sheet</span>
                       </button>
-                      <button type="button" class="btn-secondary" id="btn-test-drive-search" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.3); color: #facc15; cursor: pointer; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
-                        <span>Cek File Drive</span>
+                      <button type="button" class="btn-secondary" id="btn-test-send-gmail" style="font-size: 11px; font-weight: 600; padding: 8px 10px; border-radius: 10px; background: rgba(234, 67, 53, 0.12); border: 1px solid rgba(234, 67, 53, 0.3); color: #f87171; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px;">
+                        <svg viewBox="0 0 48 48" width="14" height="14"><path fill="#EA4335" d="M45,16.2l-8,6.2L24,31.7L11,22.4l-8-6.2c-0.64-0.49-1-1.25-1-2.06c0-1.71,1.64-2.88,3.2-2.26L24,19.5l18.8-7.66c1.56-0.62,3.2,0.55,3.2,2.26C46,14.95,45.64,15.71,45,16.2z"/></svg>
+                        <span>Test Gmail</span>
                       </button>
-                      <button type="button" class="btn-secondary" id="btn-test-web-search" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; cursor: pointer; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <span>Uji Web Search</span>
+                      <button type="button" class="btn-secondary" id="btn-test-create-form" style="font-size: 11px; font-weight: 600; padding: 8px 10px; border-radius: 10px; background: rgba(114, 72, 185, 0.12); border: 1px solid rgba(114, 72, 185, 0.3); color: #c084fc; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px;">
+                        <svg viewBox="0 0 48 48" width="14" height="14"><path fill="#7248B9" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/><path fill="#B39DDB" d="M30 4v12h12L30 4z"/></svg>
+                        <span>Test Form</span>
+                      </button>
+                      <button type="button" class="btn-secondary" id="btn-test-calendar-event" style="font-size: 11px; font-weight: 600; padding: 8px 10px; border-radius: 10px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px;">
+                        <svg viewBox="0 0 48 48" width="14" height="14"><rect width="36" height="36" x="6" y="6" rx="8" fill="#4285F4"/></svg>
+                        <span>Test Kalender</span>
+                      </button>
+                      <button type="button" class="btn-secondary" id="btn-test-drive-search" style="font-size: 11px; font-weight: 600; padding: 8px 10px; border-radius: 10px; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.3); color: #facc15; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+                        <span>Cek Drive</span>
                       </button>
                     </div>
                   </div>
@@ -1653,65 +1662,431 @@
               </div>
             </div>
 
-            <!-- Card 2: Live Activity Logs & AI Tool Commands -->
-            <div class="bento-card bento-glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div class="card-header" style="justify-content: space-between; margin-bottom: 12px;">
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#60a5fa" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                    <h2 style="font-size: 15px; font-weight: 700; color: #fff; margin: 0;">Log Aktivitas &amp; Dokumen</h2>
-                  </div>
-                  <button type="button" class="btn-secondary" id="btn-clear-google-logs" style="font-size: 10.5px; padding: 3px 10px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; cursor: pointer;">
-                    Bersihkan Log
-                  </button>
+            <!-- Right Card: Google Apps Ecosystem Grid (12 Official Connected Apps) -->
+            <div class="bento-card bento-glass-card" style="display: flex; flex-direction: column;">
+              <div class="card-header" style="justify-content: space-between; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#60a5fa" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                  <h2 style="font-size: 15px; font-weight: 700; color: #fff; margin: 0;">Ekosistem Google Apps Terhubung</h2>
                 </div>
-
-                <!-- Logs Box -->
-                <div id="google-workspace-logs-container" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; max-height: 190px; overflow-y: auto; margin-bottom: 16px;">
-                  <!-- Dynamically rendered -->
-                </div>
-
-                <!-- AI Tools Showcase -->
-                <span style="font-size: 11px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#60a5fa" stroke-width="2"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M9 13v-2M15 13v-2M12 2v4M2 12h1M21 12h1"/></svg>
-                  <span>Arsenal Perintah &amp; AI Tools Google:</span>
+                <span class="tab-btn-badge" style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-size: 10.5px; padding: 2px 10px; border-radius: 9999px;">
+                  12 Layanan Siap Pakai
                 </span>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                  <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 9px 10px;">
-                    <code style="font-size: 11px; font-weight: 700; color: #60a5fa; display: block;">gsuite_append_doc_text</code>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Edit / tulis teks langsung ke link Google Doc.</div>
+              </div>
+
+              <!-- 12 Google Apps Grid with Real Official Icons -->
+              <div class="google-apps-ecosystem-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 10px; overflow-y: auto; max-height: 320px; padding-right: 4px;">
+                
+                <!-- App 1: Gmail -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <path fill="#4285F4" d="M45,16.2l-5,2.75l-0.5,4.72L45,34V16.2z"/>
+                      <path fill="#34A853" d="M3,34l5.5-10.33l-0.5-4.72L3,16.2V34z"/>
+                      <path fill="#EA4335" d="M45,16.2l-8,6.2L24,31.7L11,22.4l-8-6.2c-0.64-0.49-1-1.25-1-2.06c0-1.71,1.64-2.88,3.2-2.26L24,19.5l18.8-7.66c1.56-0.62,3.2,0.55,3.2,2.26C46,14.95,45.64,15.71,45,16.2z"/>
+                      <path fill="#FBBC05" d="M3,16.2V34c0,1.66,1.34,3,3,3h6V23.7L3,16.2z"/>
+                      <path fill="#4285F4" d="M45,16.2l-9,7.5V37h6c1.66,0,3-1.34,3-3V16.2z"/>
+                    </svg>
                   </div>
-                  <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 9px 10px;">
-                    <code style="font-size: 11px; font-weight: 700; color: #34d399; display: block;">gsuite_append_sheet_row</code>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Tambah baris tabel/leads ke link Google Sheet.</div>
+                  <div class="google-app-name">Gmail</div>
+                  <div class="google-app-scope">Kirim &amp; Baca Email</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 2: Google Drive -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 87.3 78" width="24" height="24">
+                      <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+                      <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
+                      <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/>
+                      <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+                      <path d="m57.4 1.2-13.75 23.8 13.75 23.8h27.5c0-1.55-.4-3.1-1.2-4.5l-21.75-37.7c-.8-1.4-1.95-2.5-3.3-3.3z" fill="#ffba00"/>
+                      <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l-13.75-23.8h-39.6l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h54.7c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+                    </svg>
                   </div>
-                  <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 9px 10px;">
-                    <code style="font-size: 11px; font-weight: 700; color: #38bdf8; display: block;">gsuite_update_sheet_range</code>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Update / timpa cell rentang data di Google Sheet.</div>
+                  <div class="google-app-name">Google Drive</div>
+                  <div class="google-app-scope">File &amp; Storage</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 3: Google Docs -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <path fill="#4285F4" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/>
+                      <path fill="#A1C2FA" d="M30 4v12h12L30 4z"/>
+                      <path fill="#FFFFFF" d="M14 22h20v3H14zm0 6h20v3H14zm0 6h13v3H14z"/>
+                    </svg>
                   </div>
-                  <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 9px 10px;">
-                    <code style="font-size: 11px; font-weight: 700; color: #facc15; display: block;">gsuite_replace_doc_content</code>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Tulis ulang / timpa isi dokumen Google Doc.</div>
+                  <div class="google-app-name">Google Docs</div>
+                  <div class="google-app-scope">Tulis Dokumen &amp; Laporan</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 4: Google Sheets -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <path fill="#0F9D58" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/>
+                      <path fill="#87CEAC" d="M30 4v12h12L30 4z"/>
+                      <path fill="#FFFFFF" d="M14 20h20v18H14zm2 2v4h7v-4h-7zm9 0v4h7v-4h-7zm-9 6v4h7v-4h-7zm9 0v4h7v-4h-7zm-9 6v4h7v-4h-7zm9 0v4h7v-4h-7z"/>
+                    </svg>
                   </div>
-                  <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 9px 10px;">
-                    <code style="font-size: 11px; font-weight: 700; color: #fb7185; display: block;">gsuite_search_drive</code>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Cari file/dokumen di Google Drive user.</div>
+                  <div class="google-app-name">Google Sheets</div>
+                  <div class="google-app-scope">Database &amp; Tabel Leads</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 5: Google Forms -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <path fill="#7248B9" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/>
+                      <path fill="#B39DDB" d="M30 4v12h12L30 4z"/>
+                      <path fill="#FFFFFF" d="M19 22h15v2.5H19zm0 6h15v2.5H19zm0 6h15v2.5H19zM14 22h2.5v2.5H14zm0 6h2.5v2.5H14zm0 6h2.5v2.5H14z"/>
+                    </svg>
                   </div>
-                  <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 9px 10px;">
-                    <code style="font-size: 11px; font-weight: 700; color: #c084fc; display: block;">google_web_search</code>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Pencarian Google Web instan berkecepatan tinggi.</div>
+                  <div class="google-app-name">Google Forms</div>
+                  <div class="google-app-scope">Kuesioner &amp; Survey AI</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 6: Google Calendar -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <rect width="36" height="36" x="6" y="6" rx="8" fill="#FFFFFF"/>
+                      <path fill="#4285F4" d="M42 14c0-4.42-3.58-8-8-8H14c-4.42 0-8 3.58-8 8v4h36v-4z"/>
+                      <text x="24" y="33" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#4285F4" text-anchor="middle">31</text>
+                      <path fill="#EA4335" d="M14 4v4M34 4v4" stroke="#EA4335" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
                   </div>
-                  <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 9px 10px;">
-                    <code style="font-size: 11px; font-weight: 700; color: #a78bfa; display: block;">google_news_search</code>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Cari berita &amp; isu viral terkini di Google News.</div>
+                  <div class="google-app-name">Calendar</div>
+                  <div class="google-app-scope">Jadwal &amp; Agenda Survei</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 7: Google Tasks -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <circle cx="24" cy="24" r="20" fill="#4285F4"/>
+                      <path d="M16 24.5l5.5 5.5L32 19" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="34" cy="14" r="4" fill="#FBBC05"/>
+                    </svg>
                   </div>
-                  <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 9px 10px;">
-                    <code style="font-size: 11px; font-weight: 700; color: #4ade80; display: block;">gsuite_create_doc / sheet</code>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Buat dokumen / spreadsheet baru otomatis.</div>
+                  <div class="google-app-name">Google Tasks</div>
+                  <div class="google-app-scope">To-Do &amp; Reminder</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 8: Google Contacts -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <circle cx="24" cy="24" r="20" fill="#1A73E8"/>
+                      <circle cx="24" cy="18" r="7" fill="#FFFFFF"/>
+                      <path d="M12 37c0-6.63 5.37-12 12-12s12 5.37 12 12" fill="#FFFFFF"/>
+                    </svg>
                   </div>
+                  <div class="google-app-name">Google Contacts</div>
+                  <div class="google-app-scope">Buku Kontak &amp; CRM</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 9: Google Meet -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <rect x="4" y="10" width="28" height="28" rx="6" fill="#00832D"/>
+                      <path d="M44 16.5L32 24l12 7.5V16.5z" fill="#00AC47"/>
+                      <path d="M4 16c0-3.31 2.69-6 6-6h16c3.31 0 6 2.69 6 6v3H4v-3z" fill="#2684FC"/>
+                      <path d="M4 32c0 3.31 2.69 6 6 6h16c3.31 0 6-2.69 6-6v-3H4v3z" fill="#FFBA00"/>
+                      <path d="M26 19l6-4.5v19l-6-4.5V19z" fill="#EA4335"/>
+                    </svg>
+                  </div>
+                  <div class="google-app-name">Google Meet</div>
+                  <div class="google-app-scope">Link Rapat Video</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 10: Google Slides -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <path fill="#F4B400" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/>
+                      <path fill="#FFE082" d="M30 4v12h12L30 4z"/>
+                      <rect x="14" y="22" width="20" height="14" rx="2" fill="#FFFFFF"/>
+                      <rect x="16" y="24" width="16" height="10" rx="1" fill="#F4B400"/>
+                    </svg>
+                  </div>
+                  <div class="google-app-name">Google Slides</div>
+                  <div class="google-app-scope">Presentasi &amp; Deck</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 11: Google Keep -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <rect width="36" height="36" x="6" y="6" rx="8" fill="#FBBC04"/>
+                      <path d="M24 13c-4.42 0-8 3.58-8 8 0 2.8 1.45 5.27 3.66 6.72V30c0 .55.45 1 1 1h6.68c.55 0 1-.45 1-1v-2.28C30.55 26.27 32 23.8 32 21c0-4.42-3.58-8-8-8zm-2 19h4v1h-4v-1zm0 2h4v1h-4v-1z" fill="#FFFFFF"/>
+                    </svg>
+                  </div>
+                  <div class="google-app-name">Google Keep</div>
+                  <div class="google-app-scope">Catatan &amp; Memo AI</div>
+                  <span class="google-app-badge active">OAuth Active</span>
+                </div>
+
+                <!-- App 12: Web & News Search -->
+                <div class="google-app-item-card">
+                  <div class="google-app-icon-wrap">
+                    <svg viewBox="0 0 48 48" width="24" height="24">
+                      <path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                      <path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                      <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                  </div>
+                  <div class="google-app-name">Google Search</div>
+                  <div class="google-app-scope">Web &amp; News Intelligence</div>
+                  <span class="google-app-badge active" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">Realtime</span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Unified Horizontal Container (Tabs: Logs, Commands, Setup Tutorial) -->
+          <div class="bento-card bento-glass-card" style="margin-top: 10px; padding: 20px 24px;">
+            <!-- Tab Switcher Navigation -->
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+              <div class="google-bottom-nav" style="display: flex; align-items: center; gap: 8px;">
+                <button type="button" class="google-tab-btn active" id="tab-btn-google-logs">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  <span>Log Aktivitas &amp; Dokumen</span>
+                  <span id="google-logs-count-badge" class="google-tab-pill-badge">0</span>
+                </button>
+                <button type="button" class="google-tab-btn" id="tab-btn-google-commands">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M9 13v-2M15 13v-2M12 2v4M2 12h1M21 12h1"/></svg>
+                  <span>Arsenal Perintah &amp; AI Tools</span>
+                  <span class="google-tab-pill-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">14 Tools</span>
+                </button>
+                <button type="button" class="google-tab-btn" id="tab-btn-google-tutorial">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                  <span>Tutorial Setup Google Cloud</span>
+                </button>
+              </div>
+
+              <!-- Action button for active tab -->
+              <div id="google-logs-actions" style="display: flex; align-items: center; gap: 8px;">
+                <button type="button" class="btn-secondary" id="btn-clear-google-logs" style="font-size: 11px; font-weight: 600; padding: 5px 14px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  <span>Bersihkan Log</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Content Area 1: Activity Logs -->
+            <div id="google-tab-content-logs" class="google-tab-panel" style="display: block;">
+              <div id="google-workspace-logs-container" style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; max-height: 260px; min-height: 140px; overflow-y: auto;">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+
+            <!-- Content Area 2: Arsenal AI Commands Showcase -->
+            <div id="google-tab-content-commands" class="google-tab-panel" style="display: none;">
+              <!-- Filter Pills -->
+              <div style="display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;">
+                <button type="button" class="google-cmd-filter active" data-filter="all">Semua Tools</button>
+                <button type="button" class="google-cmd-filter" data-filter="docs_sheets">Docs &amp; Sheets</button>
+                <button type="button" class="google-cmd-filter" data-filter="gmail_forms">Gmail &amp; Forms</button>
+                <button type="button" class="google-cmd-filter" data-filter="calendar_tasks">Calendar &amp; Tasks</button>
+                <button type="button" class="google-cmd-filter" data-filter="drive_search">Drive &amp; Search</button>
+              </div>
+
+              <!-- Tools Grid -->
+              <div class="google-tools-catalog-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">
+                <!-- 1. append doc -->
+                <div class="google-tool-card" data-category="docs_sheets">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #60a5fa;">gsuite_append_doc_text</code>
+                    <span class="tool-tag">Docs</span>
+                  </div>
+                  <div class="tool-desc">Menulis atau menambahkan paragraf teks langsung ke Google Docs target.</div>
+                </div>
+
+                <!-- 2. append sheet -->
+                <div class="google-tool-card" data-category="docs_sheets">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #34d399;">gsuite_append_sheet_row</code>
+                    <span class="tool-tag">Sheets</span>
+                  </div>
+                  <div class="tool-desc">Menambahkan baris data tabel / CRM prospek ke Google Sheet secara real-time.</div>
+                </div>
+
+                <!-- 3. update sheet range -->
+                <div class="google-tool-card" data-category="docs_sheets">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #38bdf8;">gsuite_update_sheet_range</code>
+                    <span class="tool-tag">Sheets</span>
+                  </div>
+                  <div class="tool-desc">Update / menimpa cell spesifik pada rentang koordinat (misal: 'Sheet1!A1:D5').</div>
+                </div>
+
+                <!-- 4. create doc -->
+                <div class="google-tool-card" data-category="docs_sheets">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #60a5fa;">gsuite_create_doc</code>
+                    <span class="tool-tag">Docs</span>
+                  </div>
+                  <div class="tool-desc">Membuat dokumen Google Docs baru dengan judul dan isi otomatis dari AI.</div>
+                </div>
+
+                <!-- 5. create sheet -->
+                <div class="google-tool-card" data-category="docs_sheets">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #34d399;">gsuite_create_sheet</code>
+                    <span class="tool-tag">Sheets</span>
+                  </div>
+                  <div class="tool-desc">Membuat spreadsheet Google Sheets baru lengkap dengan header kolom awal.</div>
+                </div>
+
+                <!-- 6. send gmail -->
+                <div class="google-tool-card" data-category="gmail_forms">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #f87171;">gmail_send_email</code>
+                    <span class="tool-tag">Gmail</span>
+                  </div>
+                  <div class="tool-desc">Kirim email resmi via akun Gmail pengguna dengan format HTML / teks rapi.</div>
+                </div>
+
+                <!-- 7. search gmail -->
+                <div class="google-tool-card" data-category="gmail_forms">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #f87171;">gmail_search_emails</code>
+                    <span class="tool-tag">Gmail</span>
+                  </div>
+                  <div class="tool-desc">Mencari email masuk / keluar berdasarkan kata kunci pencarian mailbox.</div>
+                </div>
+
+                <!-- 8. create form -->
+                <div class="google-tool-card" data-category="gmail_forms">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #c084fc;">google_forms_create_form</code>
+                    <span class="tool-tag">Forms</span>
+                  </div>
+                  <div class="tool-desc">Membuat form kuesioner / pendaftaran otomatis lengkap dengan pertanyaan kuis.</div>
+                </div>
+
+                <!-- 9. get form responses -->
+                <div class="google-tool-card" data-category="gmail_forms">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #c084fc;">google_forms_get_responses</code>
+                    <span class="tool-tag">Forms</span>
+                  </div>
+                  <div class="tool-desc">Membaca respon dan jawaban pengguna yang sudah masuk ke Google Form.</div>
+                </div>
+
+                <!-- 10. create calendar event -->
+                <div class="google-tool-card" data-category="calendar_tasks">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #38bdf8;">google_calendar_create_event</code>
+                    <span class="tool-tag">Calendar</span>
+                  </div>
+                  <div class="tool-desc">Menjadwalkan agenda survei lokasi / meeting langsung ke Google Calendar.</div>
+                </div>
+
+                <!-- 11. create task -->
+                <div class="google-tool-card" data-category="calendar_tasks">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #facc15;">google_tasks_create_task</code>
+                    <span class="tool-tag">Tasks</span>
+                  </div>
+                  <div class="tool-desc">Membuat checklist to-do dan reminder tindak lanjut prospek ke Google Tasks.</div>
+                </div>
+
+                <!-- 12. search contacts -->
+                <div class="google-tool-card" data-category="calendar_tasks">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #60a5fa;">google_contacts_search</code>
+                    <span class="tool-tag">Contacts</span>
+                  </div>
+                  <div class="tool-desc">Mencari nomor telepon, nama, atau email prospek di Google Contacts.</div>
+                </div>
+
+                <!-- 13. search drive -->
+                <div class="google-tool-card" data-category="drive_search">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #fb7185;">gsuite_search_drive</code>
+                    <span class="tool-tag">Drive</span>
+                  </div>
+                  <div class="tool-desc">Mencari dokumen, spreadsheet, atau folder di Google Drive pengguna.</div>
+                </div>
+
+                <!-- 14. web & news search -->
+                <div class="google-tool-card" data-category="drive_search">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <code class="tool-name" style="color: #a78bfa;">google_web_search &amp; news</code>
+                    <span class="tool-tag">Search</span>
+                  </div>
+                  <div class="tool-desc">Pencarian web Google dan berita viral real-time tanpa batas token.</div>
                 </div>
               </div>
             </div>
+
+            <!-- Content Area 3: Setup Tutorial Step-by-Step -->
+            <div id="google-tab-content-tutorial" class="google-tab-panel" style="display: none;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                
+                <!-- Step 1 -->
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px;">
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 26px; height: 26px; border-radius: 50%; background: #4285F4; color: #fff; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;">1</div>
+                    <h3 style="font-size: 13.5px; font-weight: 700; color: #fff; margin: 0;">Buka Google Cloud Console</h3>
+                  </div>
+                  <p style="font-size: 11.5px; color: #94a3b8; line-height: 1.5; margin: 0 0 10px 0;">
+                    Kunjungi <a href="https://console.cloud.google.com/" target="_blank" style="color: #60a5fa; text-decoration: underline;">console.cloud.google.com</a>, buat Project baru (misal: <i>"Browser Agent Workspace"</i>).
+                  </p>
+                </div>
+
+                <!-- Step 2 -->
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px;">
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 26px; height: 26px; border-radius: 50%; background: #0F9D58; color: #fff; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;">2</div>
+                    <h3 style="font-size: 13.5px; font-weight: 700; color: #fff; margin: 0;">Aktifkan Google APIs</h3>
+                  </div>
+                  <p style="font-size: 11.5px; color: #94a3b8; line-height: 1.5; margin: 0 0 10px 0;">
+                    Di menu <b>APIs &amp; Services &gt; Library</b>, aktifkan API: <i>Google Sheets API</i>, <i>Google Docs API</i>, <i>Google Drive API</i>, <i>Gmail API</i>, <i>Google Forms API</i>, <i>Google Calendar API</i>, <i>Tasks API</i>, dan <i>People API</i>.
+                  </p>
+                </div>
+
+                <!-- Step 3 -->
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px;">
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 26px; height: 26px; border-radius: 50%; background: #F4B400; color: #fff; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;">3</div>
+                    <h3 style="font-size: 13.5px; font-weight: 700; color: #fff; margin: 0;">Buat OAuth 2.0 Client ID</h3>
+                  </div>
+                  <p style="font-size: 11.5px; color: #94a3b8; line-height: 1.5; margin: 0 0 10px 0;">
+                    Buka <b>Credentials &gt; Create Credentials &gt; OAuth client ID</b>. Pilih tipe <b>Web application</b>.
+                  </p>
+                </div>
+
+                <!-- Step 4 -->
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px;">
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 26px; height: 26px; border-radius: 50%; background: #EA4335; color: #fff; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center;">4</div>
+                    <h3 style="font-size: 13.5px; font-weight: 700; color: #fff; margin: 0;">Masukkan Redirect URI</h3>
+                  </div>
+                  <p style="font-size: 11.5px; color: #94a3b8; line-height: 1.5; margin: 0 0 10px 0;">
+                    Pada kolom <b>Authorized redirect URIs</b>, tempelkan link ekstensi Anda (misal: <code>https://lifodpllfgehiendpgpomfjbejhfffik.chromiumapp.org/</code>) lalu klik Simpan. Klik <b>Hubungkan Akun Google</b> dan selesai!
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
           </div>
 
         </div>
