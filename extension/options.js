@@ -21,6 +21,21 @@ let memoriesList = [];
 let activeAgentId = null;
 let nativePort = null;
 
+// Clean Vector SVG Icons (Zero Emoji Protocol)
+const UI_ICONS = {
+  brain: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/></svg>`,
+  sparkle: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`,
+  robot: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M9 13v-2M15 13v-2M12 2v4M2 12h1M21 12h1"/></svg>`,
+  user: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  book: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>`,
+  shield: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  bolt: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  users: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  target: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+  globe: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+  crown: `<svg class="ui-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5v-2z"/></svg>`
+};
+
 const PRESET_CONFIGS = {
   gemini: {
     endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
@@ -1655,12 +1670,12 @@ function renderAgentsCards(searchQuery = currentSearchAgents) {
   if (bossContainer && bossAgent && bossMatches) {
     const bossSkillChips = (bossAgent.skills || []).map(sId => {
       const found = skillsList.find(s => s.id === sId);
-      return `<span class="boss-tag-pill highlight">⚡ ${escapeHtml(found ? found.name : sId)}</span>`;
+      return `<span class="boss-tag-pill highlight">${UI_ICONS.bolt} ${escapeHtml(found ? found.name : sId)}</span>`;
     }).join('');
 
     const bossMemoryChips = (bossAgent.memories || []).map(mId => {
       const found = memoriesList.find(m => m.id === mId);
-      return `<span class="boss-tag-pill">🧠 ${escapeHtml(found ? found.name : mId)}</span>`;
+      return `<span class="boss-tag-pill">${UI_ICONS.brain} ${escapeHtml(found ? found.name : mId)}</span>`;
     }).join('');
 
     const cleanModel = (bossAgent.model || '').trim().replace(/^["']|["']$/g, '').trim();
@@ -1686,13 +1701,13 @@ function renderAgentsCards(searchQuery = currentSearchAgents) {
         </div>
         <p class="boss-hero-desc">${escapeHtml(bossAgent.description || 'Koordinator utama dan direktur ekosistem AI. Menerima instruksi pengguna, mendelegasikan tugas ke sub-agent, menginspeksi hasil kerja, dan menyajikan laporan final yang komprehensif dan profesional.')}</p>
         <div class="boss-hero-tags">
-          <span class="boss-tag-pill highlight">👑 Frontline Communicator &amp; Delegator</span>
-          <span class="boss-tag-pill highlight">🛡️ Quality Auditor &amp; Inspector</span>
+          <span class="boss-tag-pill highlight">${UI_ICONS.crown} Frontline Communicator &amp; Delegator</span>
+          <span class="boss-tag-pill highlight">${UI_ICONS.shield} Quality Auditor &amp; Inspector</span>
           ${bossSkillChips}
           ${bossMemoryChips}
         </div>
         <div class="boss-hero-actions">
-          <span class="boss-hero-actions-info">🔒 Master Agent selalu aktif otomatis pada mode "Auto (Agent)" dan tidak dapat dinonaktifkan.</span>
+          <span class="boss-hero-actions-info">Master Agent selalu aktif otomatis pada mode "Auto (Agent)" dan tidak dapat dinonaktifkan.</span>
           <button type="button" class="btn-edit-boss" id="btn-edit-boss-agent">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -1721,11 +1736,11 @@ function renderAgentsCards(searchQuery = currentSearchAgents) {
     if (isBuiltin) {
       sourceBadge = '<span class="badge-builtin">Bawaan</span>';
     } else if (isAI) {
-      sourceBadge = '<span class="badge-source badge-ai-evolved">🤖 AI Auto-Evolved</span>';
+      sourceBadge = `<span class="badge-source badge-ai-evolved">${UI_ICONS.sparkle} AI Auto-Evolved</span>`;
     } else if (isRefined) {
-      sourceBadge = '<span class="badge-source badge-ai-refined" title="Telah dipelajari &amp; disempurnakan oleh AI">⚡ AI Refined</span>';
+      sourceBadge = `<span class="badge-source badge-ai-refined" title="Telah dipelajari &amp; disempurnakan oleh AI">${UI_ICONS.bolt} AI Refined</span>`;
     } else {
-      sourceBadge = '<span class="badge-source badge-user-custom">👤 User Custom</span>';
+      sourceBadge = `<span class="badge-source badge-user-custom">${UI_ICONS.user} User Custom</span>`;
     }
 
     const card = document.createElement('div');
@@ -1733,12 +1748,12 @@ function renderAgentsCards(searchQuery = currentSearchAgents) {
 
     const skillChips = (ag.skills || []).map(sId => {
       const found = skillsList.find(s => s.id === sId);
-      return `<span class="tag-pill skill-tag">⚡ ${escapeHtml(found ? found.name : sId)}</span>`;
+      return `<span class="tag-pill skill-tag">${UI_ICONS.bolt} ${escapeHtml(found ? found.name : sId)}</span>`;
     }).join('');
 
     const memoryChips = (ag.memories || []).map(mId => {
       const found = memoriesList.find(m => m.id === mId);
-      return `<span class="tag-pill memory-tag">🧠 ${escapeHtml(found ? found.name : mId)}</span>`;
+      return `<span class="tag-pill memory-tag">${UI_ICONS.brain} ${escapeHtml(found ? found.name : mId)}</span>`;
     }).join('');
 
     const cleanModel = (ag.model || '').trim().replace(/^["']|["']$/g, '').trim();
@@ -1828,11 +1843,11 @@ function renderSkillsCards(searchQuery = currentSearchSkills) {
     if (isBuiltin) {
       sourceBadge = '<span class="badge-builtin">Bawaan</span>';
     } else if (isAI) {
-      sourceBadge = '<span class="badge-source badge-ai-evolved">🤖 AI Auto-Evolved</span>';
+      sourceBadge = `<span class="badge-source badge-ai-evolved">${UI_ICONS.sparkle} AI Auto-Evolved</span>`;
     } else if (isRefined) {
-      sourceBadge = '<span class="badge-source badge-ai-refined" title="Telah dipelajari &amp; disempurnakan oleh AI">⚡ AI Refined</span>';
+      sourceBadge = `<span class="badge-source badge-ai-refined" title="Telah dipelajari &amp; disempurnakan oleh AI">${UI_ICONS.bolt} AI Refined</span>`;
     } else {
-      sourceBadge = '<span class="badge-source badge-user-custom">👤 User Custom</span>';
+      sourceBadge = `<span class="badge-source badge-user-custom">${UI_ICONS.user} User Custom</span>`;
     }
 
     const card = document.createElement('div');
@@ -1841,7 +1856,7 @@ function renderSkillsCards(searchQuery = currentSearchSkills) {
       <div class="item-card-header">
         <div class="item-title-group">
           <div class="item-card-title">
-            <span>⚡ ${escapeHtml(sk.name || 'Untitled Skill')}</span>
+            <span>${UI_ICONS.bolt} ${escapeHtml(sk.name || 'Untitled Skill')}</span>
             ${sourceBadge}
           </div>
           <span class="tag-pill skill-tag"><code>${escapeHtml(sk.id)}</code></span>
@@ -1917,11 +1932,11 @@ function renderMemoriesCards(searchQuery = currentSearchMemories) {
     if (isBuiltin) {
       sourceBadge = '<span class="badge-builtin">Bawaan</span>';
     } else if (isAI) {
-      sourceBadge = '<span class="badge-source badge-ai-evolved">🤖 AI Auto-Evolved</span>';
+      sourceBadge = `<span class="badge-source badge-ai-evolved">${UI_ICONS.sparkle} AI Auto-Evolved</span>`;
     } else if (isRefined) {
-      sourceBadge = '<span class="badge-source badge-ai-refined" title="Telah dipelajari &amp; disempurnakan oleh AI">⚡ AI Refined</span>';
+      sourceBadge = `<span class="badge-source badge-ai-refined" title="Telah dipelajari &amp; disempurnakan oleh AI">${UI_ICONS.bolt} AI Refined</span>`;
     } else {
-      sourceBadge = '<span class="badge-source badge-user-custom">👤 User Custom</span>';
+      sourceBadge = `<span class="badge-source badge-user-custom">${UI_ICONS.user} User Custom</span>`;
     }
 
     const card = document.createElement('div');
@@ -1930,7 +1945,7 @@ function renderMemoriesCards(searchQuery = currentSearchMemories) {
       <div class="item-card-header">
         <div class="item-title-group">
           <div class="item-card-title">
-            <span>🧠 ${escapeHtml(mem.name || 'Untitled Memory')}</span>
+            <span>${UI_ICONS.brain} ${escapeHtml(mem.name || 'Untitled Memory')}</span>
             ${sourceBadge}
           </div>
           <span class="tag-pill memory-tag"><code>${escapeHtml(mem.id)}</code></span>
@@ -2296,7 +2311,7 @@ function openAgentModal(agent = null) {
         label.className = 'checkbox-chip-label';
         label.innerHTML = `
           <input type="checkbox" name="agent_skill_checkbox" value="${sk.id}" ${isChecked ? 'checked' : ''}>
-          <span>⚡ ${escapeHtml(sk.name)}</span>
+          <span>${UI_ICONS.bolt} ${escapeHtml(sk.name)}</span>
         `;
         skillsContainer.appendChild(label);
       });
@@ -2316,7 +2331,7 @@ function openAgentModal(agent = null) {
         label.className = 'checkbox-chip-label';
         label.innerHTML = `
           <input type="checkbox" name="agent_memory_checkbox" value="${mem.id}" ${isChecked ? 'checked' : ''}>
-          <span>🧠 ${escapeHtml(mem.name)}</span>
+          <span>${UI_ICONS.brain} ${escapeHtml(mem.name)}</span>
         `;
         memoriesContainer.appendChild(label);
       });
@@ -3192,8 +3207,8 @@ function renderPersistentBrain(searchQuery = "") {
         <div class="item-card-header">
           <div class="item-title-group">
             <div class="item-card-title">
-              <span>🧠 ${escapeHtml((item.category || 'Memory').toUpperCase())}</span>
-              <span class="badge-source ${isAI ? 'badge-ai-evolved' : 'badge-user-custom'}">${isAI ? '🤖 Autonomous AI' : '👤 User Direct'}</span>
+              <span>${UI_ICONS.brain} ${escapeHtml((item.category || 'Memory').toUpperCase())}</span>
+              <span class="badge-source ${isAI ? 'badge-ai-evolved' : 'badge-user-custom'}">${isAI ? `${UI_ICONS.sparkle} Autonomous AI` : `${UI_ICONS.user} User Direct`}</span>
             </div>
             <span class="tag-pill memory-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
@@ -3223,8 +3238,8 @@ function renderPersistentBrain(searchQuery = "") {
         <div class="item-card-header">
           <div class="item-title-group">
             <div class="item-card-title">
-              <span>📖 ${escapeHtml(item.title)}</span>
-              <span class="badge-source badge-ai-refined">📖 EXPERIENCE</span>
+              <span>${UI_ICONS.book} ${escapeHtml(item.title)}</span>
+              <span class="badge-source badge-ai-refined">${UI_ICONS.book} Experience</span>
             </div>
             <span class="tag-pill model-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
@@ -3254,8 +3269,8 @@ function renderPersistentBrain(searchQuery = "") {
         <div class="item-card-header">
           <div class="item-title-group">
             <div class="item-card-title">
-              <span>🛡️ ${escapeHtml(item.target_domain || 'GENERAL')}</span>
-              <span class="badge-source badge-ai-evolved" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.12);">🛡️ ANTI-PATTERN</span>
+              <span>${UI_ICONS.shield} ${escapeHtml(item.target_domain || 'GENERAL')}</span>
+              <span class="badge-source badge-ai-evolved" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.12);">${UI_ICONS.shield} Anti-Pattern</span>
             </div>
             <span class="tag-pill memory-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
@@ -3285,8 +3300,8 @@ function renderPersistentBrain(searchQuery = "") {
         <div class="item-card-header">
           <div class="item-title-group">
             <div class="item-card-title">
-              <span>⚡ ${escapeHtml(item.name)}</span>
-              <span class="badge-source badge-ai-evolved">🤖 Autonomous AI</span>
+              <span>${UI_ICONS.bolt} ${escapeHtml(item.name)}</span>
+              <span class="badge-source badge-ai-evolved">${UI_ICONS.sparkle} Autonomous AI</span>
             </div>
             <span class="tag-pill skill-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
@@ -3316,8 +3331,8 @@ function renderPersistentBrain(searchQuery = "") {
         <div class="item-card-header">
           <div class="item-title-group">
             <div class="item-card-title">
-              <span>👥 ${escapeHtml(item.name)}</span>
-              <span class="badge-source badge-ai-evolved">🤖 Specialist Agent</span>
+              <span>${UI_ICONS.users} ${escapeHtml(item.name)}</span>
+              <span class="badge-source badge-ai-evolved">${UI_ICONS.robot} Specialist Agent</span>
             </div>
             <span class="tag-pill memory-tag"><code>${escapeHtml(item.id)}</code></span>
           </div>
@@ -3352,7 +3367,7 @@ function renderPersistentBrain(searchQuery = "") {
         <div class="item-card-header">
           <div class="item-title-group">
             <div class="item-card-title">
-              <span>🎯 ${escapeHtml(item.title)}</span>
+              <span>${UI_ICONS.target} ${escapeHtml(item.title)}</span>
               <span class="badge-source badge-ai-refined">Saved ~${item.token_saved_estimate || 0} tokens</span>
             </div>
             <span class="tag-pill model-tag"><code>${escapeHtml(item.id)}</code></span>
@@ -3387,7 +3402,7 @@ function renderPersistentBrain(searchQuery = "") {
         <div class="item-card-header">
           <div class="item-title-group">
             <div class="item-card-title">
-              <span>🌐 ${escapeHtml(item.subject)}</span>
+              <span>${UI_ICONS.globe} ${escapeHtml(item.subject)}</span>
               <span class="badge-source ${isNeg ? 'badge-ai-refined' : 'badge-ai-evolved'}" style="${isNeg ? 'color: #ef4444; border-color: rgba(239, 68, 68, 0.35);' : ''}">${isNeg ? 'NEGATIVE' : 'EPISTEMIC'}</span>
             </div>
             <span class="tag-pill model-tag"><code>${escapeHtml(item.id)}</code></span>

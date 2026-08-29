@@ -4,9 +4,12 @@ Dokumen ini mendefinisikan standar visual **Clean, Elegant, Rounded Bento UI** b
 
 ---
 
-## ⛔ ATURAN MUTLAK IKON: ZERO EMOJI PROTOCOL
-- **DILARANG KERAS menggunakan icon emoji/emotikon** di seluruh antarmuka.
-- **Semua ikon wajib menggunakan Vector SVG murni** (stroke/fill terdefinisi rapi, scalable, modern, clean, dan profesional).
+## ⛔ ATURAN MUTLAK IKON: ZERO EMOJI PROTOCOL (HARAM HUKUMNYA MEMAKAI ICON EMOTICON / EMOJI)
+- **HARAM HUKUMNYA MENGGUNAKAN ICON EMOTICON / EMOJI DI SELURUH ANTARMUKA & UI:** Penggunaan karakter emoji (🧠, 🤖, ⚡, 📄, 📊, 📁, 🔍, 💡, 🛡️, 👤, dll.) pada label, tombol, kartu, badge, modal, dan elemen UI apapun **DILARANG KERAS** karena terlihat tidak profesional.
+- **SEMUA IKON WAJIB MENGGUNAKAN VECTOR SVG MURNI:**
+  - Seluruh ikon wajib menggunakan format vector SVG yang tajam, presisi, scalable, ber-stroke modern 1.8px - 2.0px, dan elegan.
+  - **Direktori Ikon Resmi:** Seluruh file icon SVG disimpan rapi dan terorganisir di dalam folder [`extension/icons/svg/`](file:///home/arya/browser-agent/extension/icons/svg/) (misal: `brain.svg`, `robot.svg`, `sparkle.svg`, `user.svg`, `book.svg`, `shield.svg`, `bolt.svg`, `users.svg`, `file_doc.svg`, `file_sheet.svg`, `folder.svg`, `search.svg`).
+  - Untuk rendering dinamis pada JavaScript, gunakan helper function / inline SVG murni dengan class `.ui-svg-icon` agar terintegrasi sempurna dengan CSS tema Dark Luxury.
 
 ---
 

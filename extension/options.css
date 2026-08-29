@@ -3560,3 +3560,20 @@ body.no-shadows .custom-modal-dialog {
   transform: translateX(2px);
 }
 
+/* Zero Emoji Protocol - Pure Vector SVG UI Icons */
+.ui-svg-icon {
+  display: inline-block;
+  vertical-align: -2px;
+  flex-shrink: 0;
+  margin-right: 5px;
+  stroke: currentColor;
+}
+
+.badge-source .ui-svg-icon,
+.badge-builtin .ui-svg-icon,
+.tag-pill .ui-svg-icon {
+  vertical-align: -1.5px;
+  margin-right: 4px;
+}
+
+

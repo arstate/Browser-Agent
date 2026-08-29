@@ -5573,6 +5573,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Seluruh Unit Tests lulus 100% ([test_google_workspace_connected_app.py](file:///home/arya/browser-agent/test_google_workspace_connected_app.py)).
   - Bump version to `v2.150.99`, build `extension.crx` (974.8 KB).
 
+---
+
+### 🚀 Iterasi 475: Zero Emoji Protocol & Dedicated SVG Vector Icon Storage (v2.150.100)
+- **Kebutuhan Pengguna**:
+  - Menghilangkan seluruh karakter emoticon/emoji dari antarmuka pengguna (UI) karena terlihat tidak profesional.
+  - Memasukkan larangan mutlak (*Haram hukumnya memakai icon emoticon/emoji*) ke dalam [design.md](file:///home/arya/browser-agent/design.md).
+  - Menyimpan seluruh berkas vector SVG ke folder tersendiri secara rapi di [`extension/icons/svg/`](file:///home/arya/browser-agent/extension/icons/svg/).
+- **Implementasi & Peningkatan Sistem**:
+  - **Pembaruan Dokumen Standar Desain di [design.md](file:///home/arya/browser-agent/design.md)**:
+    - Menetapkan aturan wajib: *HARAM HUKUMNYA MENGGUNAKAN ICON EMOTICON / EMOJI DI SELURUH ANTARMUKA & UI*.
+    - Mewajibkan pemakaian Vector SVG murni dari direktori `extension/icons/svg/`.
+  - **Pembuatan Koleksi Ikon SVG di [extension/icons/svg/](file:///home/arya/browser-agent/extension/icons/svg/)**:
+    - Membuat berkas icon vector: `brain.svg`, `sparkle.svg`, `robot.svg`, `user.svg`, `book.svg`, `shield.svg`, `bolt.svg`, `users.svg`, `target.svg`, `globe.svg`, `file_doc.svg`, `file_sheet.svg`, `folder.svg`, `search.svg`.
+  - **Refactoring Antarmuka di [options.js](file:///home/arya/browser-agent/extension/options.js), [options.html](file:///home/arya/browser-agent/extension/options.html), [sidepanel.html](file:///home/arya/browser-agent/extension/sidepanel.html), & [telegram.js](file:///home/arya/browser-agent/extension/connected-apps/telegram/telegram.js)**:
+    - Menghapus emoji `🧠`, `🤖`, `👤`, `⚡`, `📖`, `🛡️`, `👥`, `🎯`, `🌐`, `📄`, `📊`, `📁`, `🔍` dari seluruh kartu Persistent Memory, Brain Vault, Agent, Skill, dan log chat.
+    - Mengintegrasikan konstanta `UI_ICONS` dengan SVG vector murni dan styling `.ui-svg-icon` yang presisi.
+- **Pengujian & Rilis**:
+  - Seluruh Unit Tests lulus 100% ([test_google_workspace_connected_app.py](file:///home/arya/browser-agent/test_google_workspace_connected_app.py)).
+  - Bump version to `v2.150.100`, build `extension.crx` (975.4 KB).
+
 
 
 

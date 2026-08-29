@@ -164,7 +164,7 @@
 
       <!-- Sidebar Bottom: App Version (Frameless Clean Typography) -->
       <div class="sidebar-footer">
-        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.99</span>
+        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.100</span>
       </div>
     </aside>
 
@@ -1541,19 +1541,26 @@
 
                   <!-- Quick Testing Buttons -->
                   <div style="margin-top: 16px;">
-                    <span style="font-size: 11px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">⚡ Uji Coba Cepat (Test Action):</span>
+                    <span style="font-size: 11px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                      <span>Uji Coba Cepat (Test Action):</span>
+                    </span>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                      <button type="button" class="btn-secondary" id="btn-test-create-doc" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(66, 133, 244, 0.12); border: 1px solid rgba(66, 133, 244, 0.3); color: #60a5fa; cursor: pointer; text-align: center;">
-                        📄 Buat Doc Uji Coba
+                      <button type="button" class="btn-secondary" id="btn-test-create-doc" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(66, 133, 244, 0.12); border: 1px solid rgba(66, 133, 244, 0.3); color: #60a5fa; cursor: pointer; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>Buat Doc Uji Coba</span>
                       </button>
-                      <button type="button" class="btn-secondary" id="btn-test-append-sheet" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(15, 157, 88, 0.12); border: 1px solid rgba(15, 157, 88, 0.3); color: #34d399; cursor: pointer; text-align: center;">
-                        📊 Tulis ke Sheet
+                      <button type="button" class="btn-secondary" id="btn-test-append-sheet" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(15, 157, 88, 0.12); border: 1px solid rgba(15, 157, 88, 0.3); color: #34d399; cursor: pointer; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+                        <span>Tulis ke Sheet</span>
                       </button>
-                      <button type="button" class="btn-secondary" id="btn-test-drive-search" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.3); color: #facc15; cursor: pointer; text-align: center;">
-                        📁 Cek File Drive
+                      <button type="button" class="btn-secondary" id="btn-test-drive-search" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.3); color: #facc15; cursor: pointer; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+                        <span>Cek File Drive</span>
                       </button>
-                      <button type="button" class="btn-secondary" id="btn-test-web-search" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; cursor: pointer; text-align: center;">
-                        🔍 Uji Web Search
+                      <button type="button" class="btn-secondary" id="btn-test-web-search" style="font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 10px; background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; cursor: pointer; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <span>Uji Web Search</span>
                       </button>
                     </div>
                   </div>
@@ -1580,7 +1587,10 @@
                 </div>
 
                 <!-- AI Tools Showcase -->
-                <span style="font-size: 11px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">🤖 Arsenal Perintah &amp; AI Tools Google:</span>
+                <span style="font-size: 11px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#60a5fa" stroke-width="2"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M9 13v-2M15 13v-2M12 2v4M2 12h1M21 12h1"/></svg>
+                  <span>Arsenal Perintah &amp; AI Tools Google:</span>
+                </span>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                   <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 9px 10px;">
                     <code style="font-size: 11px; font-weight: 700; color: #60a5fa; display: block;">gsuite_append_doc_text</code>
@@ -2676,11 +2686,26 @@
           <!-- Documentation Tabs & Viewer -->
           <div style="margin-bottom: 14px;">
             <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
-              <button type="button" class="fable-doc-tab active" data-skill="claude-fable">🏛️ /claude-fable</button>
-              <button type="button" class="fable-doc-tab" data-skill="epistemic-memory">🧠 /epistemic-memory</button>
-              <button type="button" class="fable-doc-tab" data-skill="horizon-test">⏳ /horizon-test</button>
-              <button type="button" class="fable-doc-tab" data-skill="reasoning-effort">⚡ /reasoning-effort</button>
-              <button type="button" class="fable-doc-tab" data-skill="dignified-prose">👑 /dignified-prose</button>
+              <button type="button" class="fable-doc-tab active" data-skill="claude-fable">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                <span>/claude-fable</span>
+              </button>
+              <button type="button" class="fable-doc-tab" data-skill="epistemic-memory">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/></svg>
+                <span>/epistemic-memory</span>
+              </button>
+              <button type="button" class="fable-doc-tab" data-skill="horizon-test">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>/horizon-test</span>
+              </button>
+              <button type="button" class="fable-doc-tab" data-skill="reasoning-effort">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>/reasoning-effort</span>
+              </button>
+              <button type="button" class="fable-doc-tab" data-skill="dignified-prose">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5v-2z"/></svg>
+                <span>/dignified-prose</span>
+              </button>
             </div>
             <div class="fable-doc-viewer" id="fable-doc-viewer">
               Memuat dokumentasi Claude Fable 5...

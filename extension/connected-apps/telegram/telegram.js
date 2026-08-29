@@ -166,8 +166,8 @@ function renderTelegramLogs() {
 
     html += `
       <div class="telegram-log-entry ${isInbound ? 'telegram-log-inbound' : 'telegram-log-outbound'}">
-        <div style="flex-shrink: 0; font-size: 16px; margin-top: 2px;">
-          ${isInbound ? '👤' : '🤖'}
+        <div style="flex-shrink: 0; margin-top: 2px; color: ${isInbound ? '#38bdf8' : '#cef128'};">
+          ${isInbound ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M9 13v-2M15 13v-2M12 2v4M2 12h1M21 12h1"/></svg>'}
         </div>
         <div style="flex: 1; min-width: 0;">
           <div class="telegram-log-meta">
