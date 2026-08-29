@@ -3771,6 +3771,50 @@ body.no-shadows .custom-modal-dialog {
 }
 
 /* =========================================================================
+   GLOBAL ULTRA-LIGHTWEIGHT NO-GLASS-BLUR (OPAQUE LOW-SPEC PERFORMANCE MODE)
+   ========================================================================= */
+body.no-glass-blur,
+body.no-glass-blur *,
+html.no-glass-blur,
+html.no-glass-blur * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.no-glass-blur .bento-glass-card,
+body.no-glass-blur .bento-hero-provider-card,
+body.no-glass-blur .glass-rounded-search-box,
+body.no-glass-blur .brain-search-unified-box,
+body.no-glass-blur .search-input-box,
+body.no-glass-blur .connected-app-card,
+body.no-glass-blur .plugin-card,
+body.no-glass-blur .brain-card,
+body.no-glass-blur .bento-card,
+body.no-glass-blur .sidebar,
+body.no-glass-blur .options-header,
+body.no-glass-blur .custom-modal-dialog,
+body.no-glass-blur .ui-pref-pill-row,
+body.no-glass-blur .btn-glass-action,
+body.no-glass-blur .item-card,
+body.no-glass-blur .agent-card,
+body.no-glass-blur .skill-card,
+body.no-glass-blur .memory-card,
+body.no-glass-blur .header-pill-btn,
+body.no-glass-blur .sidebar-nav-item,
+body.no-glass-blur .sidebar-tab-btn,
+body.no-glass-blur .sidebar-accordion-header {
+  background: #141419 !important;
+  background-color: #141419 !important;
+}
+
+body.no-glass-blur .options-main-container,
+body.no-glass-blur .options-layout-body,
+body.no-glass-blur {
+  background: #0B0B0E !important;
+  background-color: #0B0B0E !important;
+}
+
+/* =========================================================================
    DARK LUXURY GLASSMORPHISM ACTION BUTTONS (CONNECTED APPS & HUBS)
    ========================================================================= */
 .btn-glass-action {

@@ -277,3 +277,15 @@ Seluruh 7 menu utama di halaman Pengaturan dilengkapi Search Bar Full Rounded (`
 6. **Connected Apps Hub (`#search-connected-apps-input`)**: Live search aplikasi terhubung (Telegram Bot, Google Workspace, WhatsApp, Webhook, Companion).
 7. **Plugin Ecosystem (`#search-plugins-input`)**: Live search plugin modular & token optimizer (Ponytail, KV Cache, Caveman, Claude Fable).
 
+---
+
+## ⚡ 8. Dual Performance Optimization Switches (Low-Spec Hardware Mode)
+
+Untuk menjamin performa super lancar dan bebas lag pada perangkat PC / laptop dengan spesifikasi rendah atau akselerasi hardware terbatas:
+1. **Efek Bayangan (Box Shadows & Glow - `#setting-ui-shadows`)**:
+   - **ON (Default)**: Visualisasi efek neon glow `#CEF128`, ambient card shadow, dan elevation depth.
+   - **OFF**: Mengaktifkan kelas `.no-shadows` di `body` & `html` (`box-shadow: none !important; text-shadow: none !important; filter: none !important;`).
+2. **Efek Kaca Transparan (Liquid Glass Blur - `#setting-ui-glass-blur`)**:
+   - **ON (Default)**: Material Liquid Glassmorphism dengan `backdrop-filter: blur(16px)` dan transparansi kaca `rgba(18, 18, 22, 0.72)`.
+   - **OFF (Opaque Low-Spec Mode)**: Mengaktifkan kelas `.no-glass-blur` di `body` & `html` (`backdrop-filter: none !important;`), mengganti seluruh permukaan kartu kaca menjadi warna solid gelap matte (`background: #141419 !important; background-color: #141419 !important;`), menghilangkan beban GPU rasterization/compositing secara total sehingga rendering 100% ringan, instan, dan bebas lag.
+

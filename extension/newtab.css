@@ -5949,6 +5949,31 @@ body.no-shadows .bento-card {
 }
 
 /* =========================================================================
+   GLOBAL ULTRA-LIGHTWEIGHT NO-GLASS-BLUR (OPAQUE LOW-SPEC PERFORMANCE MODE)
+   ========================================================================= */
+body.no-glass-blur,
+body.no-glass-blur *,
+html.no-glass-blur,
+html.no-glass-blur * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.no-glass-blur .bento-card,
+body.no-glass-blur .newtab-header,
+body.no-glass-blur .chat-input-container,
+body.no-glass-blur .recent-site-card,
+body.no-glass-blur .dock-item {
+  background: #141419 !important;
+  background-color: #141419 !important;
+}
+
+body.no-glass-blur {
+  background: #0B0B0E !important;
+  background-color: #0B0B0E !important;
+}
+
+/* =========================================================================
    CHECK UPDATES & UNIVERSAL PC BRIDGE FIXER STYLING
    ========================================================================= */
 .bento-status-chip.chip-update {

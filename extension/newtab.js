@@ -17,11 +17,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  chrome.storage.local.get(['setting_enable_shadows', 'browser_agent_config'], (res) => {
+  function applyGlassModeToNewtab(enabled) {
+    if (enabled === false) {
+      document.body.classList.add('no-glass-blur');
+      document.documentElement.classList.add('no-glass-blur');
+    } else {
+      document.body.classList.remove('no-glass-blur');
+      document.documentElement.classList.remove('no-glass-blur');
+    }
+  }
+
+  chrome.storage.local.get(['setting_enable_shadows', 'setting_enable_glass_blur', 'browser_agent_config'], (res) => {
     const shadowsEnabled = res?.setting_enable_shadows !== undefined
       ? res.setting_enable_shadows
       : (res?.browser_agent_config?.enableShadows !== false);
     applyShadowModeToNewtab(shadowsEnabled !== false);
+
+    const glassEnabled = res?.setting_enable_glass_blur !== undefined
+      ? res.setting_enable_glass_blur
+      : (res?.browser_agent_config?.enableGlassBlur !== false);
+    applyGlassModeToNewtab(glassEnabled !== false);
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -30,6 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
         applyShadowModeToNewtab(changes.setting_enable_shadows.newValue !== false);
       } else if (changes.browser_agent_config?.newValue?.enableShadows !== undefined) {
         applyShadowModeToNewtab(changes.browser_agent_config.newValue.enableShadows !== false);
+      }
+      if (changes.setting_enable_glass_blur !== undefined) {
+        applyGlassModeToNewtab(changes.setting_enable_glass_blur.newValue !== false);
+      } else if (changes.browser_agent_config?.newValue?.enableGlassBlur !== undefined) {
+        applyGlassModeToNewtab(changes.browser_agent_config.newValue.enableGlassBlur !== false);
       }
     }
   });

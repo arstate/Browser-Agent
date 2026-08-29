@@ -407,6 +407,10 @@ async function loadConfig() {
     activeAgentId = res.active_agent_id;
   }
   applyShadowMode(config.enableShadows !== false);
+  const glassEnabled = res?.setting_enable_glass_blur !== undefined
+    ? res.setting_enable_glass_blur
+    : (config.enableGlassBlur !== false);
+  applyGlassMode(glassEnabled !== false);
   applyConfigToUI();
   renderModelsRows();
 }
@@ -418,6 +422,16 @@ function applyShadowMode(enabled) {
   } else {
     document.body.classList.remove('no-shadows');
     document.documentElement.classList.remove('no-shadows');
+  }
+}
+
+function applyGlassMode(enabled) {
+  if (enabled === false) {
+    document.body.classList.add('no-glass-blur');
+    document.documentElement.classList.add('no-glass-blur');
+  } else {
+    document.body.classList.remove('no-glass-blur');
+    document.documentElement.classList.remove('no-glass-blur');
   }
 }
 
@@ -489,6 +503,10 @@ function applyConfigToUI() {
   const settingShadows = document.getElementById('setting-ui-shadows');
   if (settingShadows) {
     settingShadows.checked = (config.enableShadows !== false);
+  }
+  const settingGlassBlur = document.getElementById('setting-ui-glass-blur');
+  if (settingGlassBlur) {
+    settingGlassBlur.checked = (config.enableGlassBlur !== false);
   }
 }
 
@@ -649,6 +667,9 @@ async function saveAllConfig(silent = false) {
   const settingShadows = document.getElementById('setting-ui-shadows');
   config.enableShadows = settingShadows ? settingShadows.checked : (config.enableShadows !== false);
   applyShadowMode(config.enableShadows !== false);
+  const settingGlassBlur = document.getElementById('setting-ui-glass-blur');
+  config.enableGlassBlur = settingGlassBlur ? settingGlassBlur.checked : (config.enableGlassBlur !== false);
+  applyGlassMode(config.enableGlassBlur !== false);
   config.models = models.length > 0 ? models : [
     { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" }
   ];
@@ -2819,6 +2840,21 @@ function setupEventListeners() {
     triggerAutoSave(0);
     if (typeof showSaveToast === 'function') {
       showSaveToast(isEnabled ? "Efek Bayangan (Shadows) Diaktifkan" : "Efek Bayangan Dimatikan (Mode Ringan Aktif)");
+    }
+  });
+
+  // UI Glass Blur Performance Mode Toggle (No-Glass-Blur / Opaque Mode for Low-Spec Hardware)
+  document.getElementById('setting-ui-glass-blur')?.addEventListener('change', (e) => {
+    const isEnabled = e.target.checked;
+    config.enableGlassBlur = isEnabled;
+    applyGlassMode(isEnabled);
+    chrome.storage.local.set({ 
+      setting_enable_glass_blur: isEnabled,
+      browser_agent_config: config 
+    });
+    triggerAutoSave(0);
+    if (typeof showSaveToast === 'function') {
+      showSaveToast(isEnabled ? "Efek Kaca Transparan (Glass Blur) Diaktifkan" : "Efek Kaca Dimatikan (Mode Opaque Spek Rendah Aktif)");
     }
   });
 

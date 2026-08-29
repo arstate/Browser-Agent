@@ -111,6 +111,10 @@ chrome.storage.local.get(['plugin_settings', 'setting_enable_shadows', 'browser_
     ? res.setting_enable_shadows
     : (res?.browser_agent_config?.enableShadows !== false);
   applyShadowModeToSidepanel(shadowsEnabled !== false);
+  const glassEnabled = res?.setting_enable_glass_blur !== undefined
+    ? res.setting_enable_glass_blur
+    : (res?.browser_agent_config?.enableGlassBlur !== false);
+  applyGlassModeToSidepanel(glassEnabled !== false);
 });
 
 function applyShadowModeToSidepanel(enabled) {
@@ -123,6 +127,16 @@ function applyShadowModeToSidepanel(enabled) {
   }
 }
 
+function applyGlassModeToSidepanel(enabled) {
+  if (enabled === false) {
+    document.body.classList.add('no-glass-blur');
+    document.documentElement.classList.add('no-glass-blur');
+  } else {
+    document.body.classList.remove('no-glass-blur');
+    document.documentElement.classList.remove('no-glass-blur');
+  }
+}
+
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local') {
     if (changes.plugin_settings) {
@@ -132,6 +146,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
       applyShadowModeToSidepanel(changes.setting_enable_shadows.newValue !== false);
     } else if (changes.browser_agent_config?.newValue?.enableShadows !== undefined) {
       applyShadowModeToSidepanel(changes.browser_agent_config.newValue.enableShadows !== false);
+    }
+    if (changes.setting_enable_glass_blur !== undefined) {
+      applyGlassModeToSidepanel(changes.setting_enable_glass_blur.newValue !== false);
+    } else if (changes.browser_agent_config?.newValue?.enableGlassBlur !== undefined) {
+      applyGlassModeToSidepanel(changes.browser_agent_config.newValue.enableGlassBlur !== false);
     }
   }
 });
