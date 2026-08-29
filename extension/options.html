@@ -941,17 +941,54 @@
         <!-- 2. Obsidian Neural Graph Canvas Container -->
         <div id="brain-graph-view" class="brain-graph-container" style="display: none;">
           <div class="brain-graph-toolbar">
-            <div class="brain-graph-legend">
-              <span class="legend-item active" data-filter="all"><span class="legend-dot" style="background: #3B82F6;"></span> Semua Otak</span>
-              <span class="legend-item" data-filter="agent"><span class="legend-dot" style="background: #C084FC;"></span> Multi-Agent</span>
-              <span class="legend-item" data-filter="skill"><span class="legend-dot" style="background: #34D399;"></span> Skills &amp; Tools</span>
-              <span class="legend-item" data-filter="memory"><span class="legend-dot" style="background: #38BDF8;"></span> Memory &amp; Rules</span>
-              <span class="legend-item" data-filter="experience"><span class="legend-dot" style="background: #A78BFA;"></span> Experience</span>
-              <span class="legend-item" data-filter="antipattern"><span class="legend-dot" style="background: #FB7185;"></span> Anti-Patterns</span>
-              <span class="legend-item" data-filter="training"><span class="legend-dot" style="background: #FBBF24;"></span> Training</span>
-              <span class="legend-item" data-filter="epistemic"><span class="legend-dot" style="background: #06B6D4;"></span> Epistemic Graph</span>
-              <span class="legend-item" data-filter="model"><span class="legend-dot" style="background: #818CF8;"></span> AI Models</span>
+            <!-- Dropdown Filter Menu Cluster -->
+            <div class="brain-graph-filter-dropdown-container">
+              <button type="button" class="graph-filter-dropdown-btn" id="btn-graph-filter-dropdown" title="Pilih filter cluster otak">
+                <span class="legend-dot" id="current-filter-dot" style="background: #3B82F6;"></span>
+                <span id="current-filter-label">Filter: Semua Otak</span>
+                <svg class="dropdown-chevron-svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              
+              <div class="graph-filter-dropdown-menu" id="graph-filter-dropdown-menu" style="display: none;">
+                <div class="dropdown-filter-item active" data-filter="all" data-color="#3B82F6" data-label="Semua Otak">
+                  <span class="legend-dot" style="background: #3B82F6;"></span>
+                  <span>Semua Otak</span>
+                </div>
+                <div class="dropdown-filter-item" data-filter="agent" data-color="#C084FC" data-label="Multi-Agent">
+                  <span class="legend-dot" style="background: #C084FC;"></span>
+                  <span>Multi-Agent</span>
+                </div>
+                <div class="dropdown-filter-item" data-filter="skill" data-color="#34D399" data-label="Skills & Tools">
+                  <span class="legend-dot" style="background: #34D399;"></span>
+                  <span>Skills &amp; Tools</span>
+                </div>
+                <div class="dropdown-filter-item" data-filter="memory" data-color="#38BDF8" data-label="Memory & Rules">
+                  <span class="legend-dot" style="background: #38BDF8;"></span>
+                  <span>Memory &amp; Rules</span>
+                </div>
+                <div class="dropdown-filter-item" data-filter="experience" data-color="#A78BFA" data-label="Experience">
+                  <span class="legend-dot" style="background: #A78BFA;"></span>
+                  <span>Experience Ledger</span>
+                </div>
+                <div class="dropdown-filter-item" data-filter="antipattern" data-color="#FB7185" data-label="Anti-Patterns">
+                  <span class="legend-dot" style="background: #FB7185;"></span>
+                  <span>Anti-Patterns</span>
+                </div>
+                <div class="dropdown-filter-item" data-filter="training" data-color="#FBBF24" data-label="Training">
+                  <span class="legend-dot" style="background: #FBBF24;"></span>
+                  <span>Training Corpus</span>
+                </div>
+                <div class="dropdown-filter-item" data-filter="epistemic" data-color="#06B6D4" data-label="Epistemic Graph">
+                  <span class="legend-dot" style="background: #06B6D4;"></span>
+                  <span>Epistemic Graph</span>
+                </div>
+                <div class="dropdown-filter-item" data-filter="model" data-color="#818CF8" data-label="AI Models">
+                  <span class="legend-dot" style="background: #818CF8;"></span>
+                  <span>AI Models</span>
+                </div>
+              </div>
             </div>
+
             <div class="brain-graph-actions">
               <button type="button" class="graph-btn graph-btn-pill" id="btn-graph-labels" title="Toggle Tampilkan Label (Smart / Semua)">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 3px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>

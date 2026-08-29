@@ -792,11 +792,47 @@ class BrainGraphEngine {
       }
     });
 
-    document.querySelectorAll('.brain-graph-legend .legend-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.brain-graph-legend .legend-item').forEach(b => b.classList.remove('active'));
+    // Filter dropdown toggle
+    const filterDropdownBtn = document.getElementById('btn-graph-filter-dropdown');
+    const filterDropdownMenu = document.getElementById('graph-filter-dropdown-menu');
+    const filterDropdownContainer = document.querySelector('.brain-graph-filter-dropdown-container');
+
+    if (filterDropdownBtn && filterDropdownMenu) {
+      filterDropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = filterDropdownMenu.style.display !== 'none';
+        filterDropdownMenu.style.display = isOpen ? 'none' : 'flex';
+        filterDropdownContainer?.classList.toggle('open', !isOpen);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!filterDropdownContainer?.contains(e.target)) {
+          filterDropdownMenu.style.display = 'none';
+          filterDropdownContainer?.classList.remove('open');
+        }
+      });
+    }
+
+    // Filter selection
+    document.querySelectorAll('.dropdown-filter-item, .legend-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.dropdown-filter-item, .legend-item').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        this.filterType = btn.getAttribute('data-filter') || 'all';
+
+        const filterVal = btn.getAttribute('data-filter') || 'all';
+        const colorVal = btn.getAttribute('data-color') || '#3B82F6';
+        const labelVal = btn.getAttribute('data-label') || btn.textContent.trim();
+
+        const currentDot = document.getElementById('current-filter-dot');
+        const currentLabel = document.getElementById('current-filter-label');
+        if (currentDot) currentDot.style.background = colorVal;
+        if (currentLabel) currentLabel.textContent = `Filter: ${labelVal}`;
+
+        if (filterDropdownMenu) filterDropdownMenu.style.display = 'none';
+        if (filterDropdownContainer) filterDropdownContainer.classList.remove('open');
+
+        this.filterType = filterVal;
         this.applyFilter();
       });
     });
