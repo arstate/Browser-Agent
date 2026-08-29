@@ -3514,3 +3514,49 @@ body.no-shadows .custom-modal-dialog {
   -webkit-filter: none !important;
 }
 
+/* =========================================================================
+   DARK LUXURY GLASSMORPHISM ACTION BUTTONS (CONNECTED APPS & HUBS)
+   ========================================================================= */
+.btn-glass-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-glass-action:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.btn-glass-action:active {
+  transform: translateY(0) scale(0.98);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-glass-action svg {
+  transition: transform 0.2s ease;
+}
+
+.btn-glass-action:hover svg {
+  transform: translateX(2px);
+}
+

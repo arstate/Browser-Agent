@@ -5558,6 +5558,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Menjalankan `./install.sh` dan memverifikasi pendaftaran manifest serta file konfigurasi silent debugger.
   - Bump version to `v2.150.98`, build `extension.crx` (974.2 KB).
 
+---
+
+### 🚀 Iterasi 474: Unified Dark Luxury Glassmorphism Buttons for Connected Apps Hub (v2.150.99)
+- **Kebutuhan Pengguna**:
+  - Merapikan dan menyelaraskan antarmuka tombol pada kartu Connected Apps Hub (Telegram Bot, Google Workspace, WhatsApp Gateway, Webhook) agar tidak berbeda-beda warna (tidak ada tombol kuning lime mencolok atau biru solid kaku), dan menyeragamkan semuanya ke gaya Dark Luxury Glassmorphism (*Frosted Glasses*).
+- **Implementasi & Peningkatan Sistem**:
+  - **Pembaruan Gaya CSS di [options.css](file:///home/arya/browser-agent/extension/options.css)**:
+    - Menambahkan class baru `.btn-glass-action` dengan efek frosted glass `backdrop-filter: blur(12px)`, background `rgba(255, 255, 255, 0.06)`, border halus `1px solid rgba(255, 255, 255, 0.12)`, font typography clean 12px, border-radius 9999px pill, dan hover lighting animation.
+  - **Harmonisasi Antarmuka di [options.html](file:///home/arya/browser-agent/extension/options.html)**:
+    - Mengganti styling tombol pada kartu **Telegram Bot** dan **Google Workspace** menjadi `.btn-glass-action` seragam.
+    - Menyeragamkan seluruh border kartu Connected Apps menjadi `1px solid var(--border-card)` yang konsisten.
+- **Pengujian & Rilis**:
+  - Seluruh Unit Tests lulus 100% ([test_google_workspace_connected_app.py](file:///home/arya/browser-agent/test_google_workspace_connected_app.py)).
+  - Bump version to `v2.150.99`, build `extension.crx` (974.8 KB).
+
 
 
 
