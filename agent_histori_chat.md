@@ -5481,6 +5481,29 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Seluruh 26/26 Unit Tests lulus 100%.
   - Bump version to `v2.150.94`, build `extension.crx` (953.6 KB).
 
+---
+
+### 🚀 Iterasi 470: Google Workspace (Docs & Sheets) Connected App via Official OAuth 2.0 (v2.150.95)
+- **Kebutuhan Pengguna**:
+  - Mengintegrasikan aplikasi terhubung **Google Workspace (Google Docs & Google Sheets)** ke dalam menu **Connected Apps** di Browser Agent menggunakan kredensial resmi OAuth 2.0:
+    - *Client ID*: `526037622722-9cgadb***.apps.googleusercontent.com`
+    - *Client Secret*: `GOCSPX-WsdS***`
+    - *APIs*: Google Sheets API, Google Docs API, Google Drive API.
+  - Memastikan alur otorisasi 1-klik (`chrome.identity.launchWebAuthFlow`), auto-refresh token yang kedaluwarsa, pemisahan akun per pengguna/komputer, dan penyediaan AI tools otonom (`gsuite_create_doc`, `gsuite_append_doc_text`, `gsuite_read_doc`, `gsuite_create_sheet`, `gsuite_append_sheet_row`, `gsuite_read_sheet`).
+- **Implementasi & Peningkatan Sistem**:
+  - **Modul Connected App Baru**:
+    - [google_workspace_service.js](file:///home/arya/browser-agent/extension/connected-apps/google_workspace/google_workspace_service.js): Service worker OAuth 2.0 handler, token management, Google Drive / Docs / Sheets API REST endpoints (create doc, append text, read doc, create sheet, append row, read sheet).
+    - [google_workspace.js](file:///home/arya/browser-agent/extension/connected-apps/google_workspace/google_workspace.js): Controller antarmuka Settings, koneksi 1-klik, avatar profil pengguna Google, live activity logs viewer, dan tombol test action instan (*Buat Doc Uji Coba*, *Tulis ke Sheet*).
+    - [google_workspace.css](file:///home/arya/browser-agent/extension/connected-apps/google_workspace/google_workspace.css): Styling Dark Luxury Bento dengan aksen warna resmi Google Workspace.
+    - [google_workspace.svg](file:///home/arya/browser-agent/extension/icons/connected-apps/google_workspace.svg): Ikon kombinasi Google Docs & Google Sheets.
+  - **Izin Ekstensi (`manifest.json`)**: Menambahkan permission `"identity"` untuk autentikasi browser resmi.
+  - **Integrasi Tool AI Master Agent**:
+    - Mendaftarkan skema fungsi tools `gsuite_*` di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js) dan [background.js](file:///home/arya/browser-agent/extension/background.js).
+    - Menambahkan label status kerja interaktif saat AI berinteraksi dengan Google Workspace.
+- **Pengujian & Rilis**:
+  - Menulis test suite baru `test_google_workspace_connected_app.py` (28/28 Unit Tests lulus 100%).
+  - Bump version to `v2.150.95`, build `extension.crx` (959.8 KB).
+
 
 
 

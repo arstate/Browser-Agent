@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""
+Unit Test Suite for Google Workspace (Docs & Sheets) Connected App
+"""
+
+import unittest
+import subprocess
+import os
+
+class TestGoogleWorkspaceConnectedApp(unittest.TestCase):
+    def run_node_eval(self, script):
+        cmd = ["node", "-e", script]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode != 0:
+            print("STDERR:", proc.stderr)
+        self.assertEqual(proc.returncode, 0, f"Node script failed: {proc.stderr}")
+        return proc.stdout.strip()
+
+    def test_id_parsers(self):
+        script = """
+        const { GoogleWorkspaceService } = require('./extension/connected-apps/google_workspace/google_workspace_service.js');
+        const svc = new GoogleWorkspaceService();
+
+        // 1. Test Spreadsheet URL parser
+        const sheetUrl = "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit#gid=0";
+        const sheetId = svc.parseSpreadsheetId(sheetUrl);
+        if (sheetId !== "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms") process.exit(1);
+
+        const rawSheetId = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms";
+        if (svc.parseSpreadsheetId(rawSheetId) !== rawSheetId) process.exit(2);
+
+        // 2. Test Document URL parser
+        const docUrl = "https://docs.google.com/document/d/195j9eDD3ccGJ354_cnbv9M55TMddubNDQzOmjejE525/edit?tab=t.0";
+        const docId = svc.parseDocumentId(docUrl);
+        if (docId !== "195j9eDD3ccGJ354_cnbv9M55TMddubNDQzOmjejE525") process.exit(3);
+
+        const rawDocId = "195j9eDD3ccGJ354_cnbv9M55TMddubNDQzOmjejE525";
+        if (svc.parseDocumentId(rawDocId) !== rawDocId) process.exit(4);
+
+        console.log('PASS_ID_PARSERS');
+        """
+        out = self.run_node_eval(script)
+        self.assertIn("PASS_ID_PARSERS", out)
+
+    def test_default_credentials(self):
+        script = """
+        const { GoogleWorkspaceService } = require('./extension/connected-apps/google_workspace/google_workspace_service.js');
+        const svc = new GoogleWorkspaceService();
+
+        if (!svc.clientId.startsWith("526037622722")) process.exit(1);
+        if (!svc.clientSecret.startsWith("GOCSPX-")) process.exit(2);
+
+        console.log('PASS_DEFAULT_CREDENTIALS');
+        """
+        out = self.run_node_eval(script)
+        self.assertIn("PASS_DEFAULT_CREDENTIALS", out)
+
+if __name__ == '__main__':
+    unittest.main()

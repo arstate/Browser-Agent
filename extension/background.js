@@ -6,6 +6,7 @@ try {
   importScripts(
     'core/self_correction_engine.js',
     'core/goal_tracker.js',
+    'connected-apps/google_workspace/google_workspace_service.js',
     'plugins/ponytail/ponytail_optimizer.js',
     'plugins/kvcache/kvcache_optimizer.js',
     'plugins/caveman/caveman_optimizer.js',
@@ -1805,6 +1806,54 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
         telegram_sent: tgSendRes?.status === "ok",
         message: `Gambar AI berhasil dibuat menggunakan model '${model}' sesuai konfigurasi Pengaturan Browser Agent dan telah dikirim langsung ke Telegram!`
       };
+    }
+
+    // Google Workspace Tools (Sheets & Docs)
+    if (toolName === "gsuite_create_doc") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.createDocument(toolArgs.title || "Dokumen Browser Agent", toolArgs.content || "");
+      return { status: "success", message: `Dokumen "${res.title}" berhasil dibuat di Google Drive!`, document_id: res.documentId, document_url: res.documentUrl };
+    }
+
+    if (toolName === "gsuite_append_doc_text") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.appendDocumentText(toolArgs.document_id_or_url, toolArgs.text || "");
+      return { status: "success", message: `Berhasil menambahkan teks ke Google Doc!`, document_id: res.documentId, document_url: res.documentUrl };
+    }
+
+    if (toolName === "gsuite_read_doc") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.readDocument(toolArgs.document_id_or_url);
+      return { status: "success", document_id: res.documentId, title: res.title, text: res.text, document_url: res.documentUrl };
+    }
+
+    if (toolName === "gsuite_create_sheet") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.createSpreadsheet(toolArgs.title || "Spreadsheet Browser Agent", toolArgs.headers || []);
+      return { status: "success", message: `Spreadsheet "${res.title}" berhasil dibuat di Google Drive!`, spreadsheet_id: res.spreadsheetId, spreadsheet_url: res.spreadsheetUrl };
+    }
+
+    if (toolName === "gsuite_append_sheet_row") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const storage = await chrome.storage.local.get(['google_workspace_config']);
+      const defaultSheet = storage.google_workspace_config?.default_spreadsheet_id || "";
+      const targetSheet = toolArgs.spreadsheet_id_or_url || defaultSheet;
+      if (!targetSheet) return { error: "Spreadsheet ID/URL belum ditentukan di Pengaturan." };
+
+      const res = await googleWorkspaceService.appendSpreadsheetRow(targetSheet, toolArgs.row_values || [], toolArgs.sheet_name || "Sheet1");
+      return { status: "success", message: `Berhasil menambahkan baris data ke Google Sheet!`, spreadsheet_id: res.spreadsheetId, spreadsheet_url: res.spreadsheetUrl };
+    }
+
+    if (toolName === "gsuite_read_sheet") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.readSpreadsheet(toolArgs.spreadsheet_id_or_url, toolArgs.range || "Sheet1!A1:Z100");
+      return { status: "success", spreadsheet_id: res.spreadsheetId, range: res.range, rows: res.values, row_count: res.rowCount };
+    }
+
+    if (toolName === "gsuite_get_status") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const { config: gwCfg, auth: gwAuth } = await googleWorkspaceService.getConfig();
+      return { status: "success", connected: !!(gwAuth && gwAuth.access_token), email: gwAuth?.user?.email || null, default_spreadsheet_id: gwCfg.default_spreadsheet_id || null };
     }
 
     // C. Active Browser Tab Verification

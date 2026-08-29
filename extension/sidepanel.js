@@ -1385,6 +1385,115 @@ const AGENT_TOOLS = [
   {
     type: "function",
     function: {
+      name: "gsuite_create_doc",
+      description: "Create a brand new Google Docs document in the user's Google Drive with optional title and initial formatted text content/report. Returns the document ID and shareable URL.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Title of the new Google Doc (e.g. 'Laporan Analisis Meta Ads — 29 Agustus 2026')" },
+          content: { type: "string", description: "The text/report content to insert into the document" }
+        },
+        required: ["title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_append_doc_text",
+      description: "Append paragraphs or report sections to an existing Google Docs document.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_id_or_url: { type: "string", description: "The Google Docs full URL or Document ID" },
+          text: { type: "string", description: "The text content to append" }
+        },
+        required: ["document_id_or_url", "text"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_read_doc",
+      description: "Read the full text content of a Google Docs document.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_id_or_url: { type: "string", description: "The Google Docs full URL or Document ID" }
+        },
+        required: ["document_id_or_url"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_create_sheet",
+      description: "Create a brand new Google Spreadsheet in the user's Google Drive with custom title and column headers. Returns the spreadsheet ID and URL.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Title of the spreadsheet (e.g. 'Database Leads & Tracking')" },
+          headers: {
+            type: "array",
+            items: { type: "string" },
+            description: "List of column header titles, e.g. ['Tanggal', 'Nama', 'No WhatsApp', 'Status', 'Catatan']"
+          }
+        },
+        required: ["title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_append_sheet_row",
+      description: "Append one or multiple rows of data to a Google Sheet (e.g. saving leads, marketing records, audit data). If spreadsheet_id_or_url is omitted, uses the default spreadsheet configured in settings.",
+      parameters: {
+        type: "object",
+        properties: {
+          spreadsheet_id_or_url: { type: "string", description: "The Google Spreadsheet full URL or ID. If omitted, uses default spreadsheet." },
+          row_values: {
+            type: "array",
+            items: { type: "string" },
+            description: "Array of cell values for the row, e.g. ['2026-08-29', 'Budi Santoso', '08123456789', 'Survei Lokasi', 'Minat Rumah Sukodono']"
+          },
+          sheet_name: { type: "string", description: "Sheet tab name (default 'Sheet1')" }
+        },
+        required: ["row_values"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_read_sheet",
+      description: "Read rows and columns of data from a Google Spreadsheet.",
+      parameters: {
+        type: "object",
+        properties: {
+          spreadsheet_id_or_url: { type: "string", description: "The Google Spreadsheet full URL or ID" },
+          range: { type: "string", description: "Range of cells to read, e.g. 'Sheet1!A1:Z50' (default 'Sheet1!A1:Z100')" }
+        },
+        required: ["spreadsheet_id_or_url"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_get_status",
+      description: "Check if the Google Workspace integration is connected, active user email, and default spreadsheet ID.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "ponytail_token_meter",
       description: "Ponytail Token Saver Plugin: Check active token optimization status, context turn count, and token compression savings estimate.",
       parameters: {
@@ -3680,6 +3789,145 @@ async function executeTool(name, args, assistantBubble = null) {
       };
     }
 
+    case "gsuite_create_doc": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      try {
+        const title = args.title || "Dokumen Browser Agent";
+        const content = args.content || "";
+        const res = await googleWorkspaceService.createDocument(title, content);
+        return {
+          success: true,
+          message: `Dokumen Google Docs "${title}" berhasil dibuat!`,
+          document_id: res.documentId,
+          document_url: res.documentUrl
+        };
+      } catch (err) {
+        return { error: `Gagal membuat Google Doc: ${err.message}` };
+      }
+    }
+
+    case "gsuite_append_doc_text": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      try {
+        const docId = args.document_id_or_url;
+        const text = args.text || "";
+        const res = await googleWorkspaceService.appendDocumentText(docId, text);
+        return {
+          success: true,
+          message: `Berhasil menambahkan teks ke Google Doc!`,
+          document_id: res.documentId,
+          document_url: res.documentUrl
+        };
+      } catch (err) {
+        return { error: `Gagal menambahkan teks ke Google Doc: ${err.message}` };
+      }
+    }
+
+    case "gsuite_read_doc": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      try {
+        const docId = args.document_id_or_url;
+        const res = await googleWorkspaceService.readDocument(docId);
+        return {
+          success: true,
+          document_id: res.documentId,
+          title: res.title,
+          content: res.text,
+          document_url: res.documentUrl
+        };
+      } catch (err) {
+        return { error: `Gagal membaca Google Doc: ${err.message}` };
+      }
+    }
+
+    case "gsuite_create_sheet": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      try {
+        const title = args.title || "Spreadsheet Browser Agent";
+        const headers = Array.isArray(args.headers) ? args.headers : [];
+        const res = await googleWorkspaceService.createSpreadsheet(title, headers);
+        return {
+          success: true,
+          message: `Spreadsheet Google Sheet "${title}" berhasil dibuat!`,
+          spreadsheet_id: res.spreadsheetId,
+          spreadsheet_url: res.spreadsheetUrl
+        };
+      } catch (err) {
+        return { error: `Gagal membuat Google Sheet: ${err.message}` };
+      }
+    }
+
+    case "gsuite_append_sheet_row": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      try {
+        const storage = await chrome.storage.local.get(['google_workspace_config']);
+        const defaultSheet = storage.google_workspace_config?.default_spreadsheet_id || "";
+        const targetSheet = args.spreadsheet_id_or_url || defaultSheet;
+
+        if (!targetSheet) {
+          return { error: "Spreadsheet ID/URL belum ditentukan dan belum ada default spreadsheet di pengaturan." };
+        }
+
+        const rowValues = args.row_values || [];
+        const sheetName = args.sheet_name || "Sheet1";
+        const res = await googleWorkspaceService.appendSpreadsheetRow(targetSheet, rowValues, sheetName);
+        return {
+          success: true,
+          message: `Berhasil menambahkan baris ke Google Sheet!`,
+          spreadsheet_id: res.spreadsheetId,
+          spreadsheet_url: res.spreadsheetUrl,
+          updated_range: res.updatedRange,
+          updated_rows: res.updatedRows
+        };
+      } catch (err) {
+        return { error: `Gagal menambahkan baris ke Google Sheet: ${err.message}` };
+      }
+    }
+
+    case "gsuite_read_sheet": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      try {
+        const sheetId = args.spreadsheet_id_or_url;
+        const range = args.range || "Sheet1!A1:Z100";
+        const res = await googleWorkspaceService.readSpreadsheet(sheetId, range);
+        return {
+          success: true,
+          spreadsheet_id: res.spreadsheetId,
+          range: res.range,
+          rows: res.values,
+          row_count: res.rowCount
+        };
+      } catch (err) {
+        return { error: `Gagal membaca Google Sheet: ${err.message}` };
+      }
+    }
+
+    case "gsuite_get_status": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      const { config, auth } = await googleWorkspaceService.getConfig();
+      return {
+        success: true,
+        connected: !!(auth && auth.access_token),
+        user_email: auth?.user?.email || null,
+        user_name: auth?.user?.name || null,
+        default_spreadsheet_id: config.default_spreadsheet_id || null
+      };
+    }
+
     case "generate_image": {
       const prompt = args.prompt || "";
       const size = args.size || args.aspect_ratio || "auto";
@@ -4648,6 +4896,8 @@ Tugas Anda:
             else if (toolName === "browser_snapshot") userFriendlyAction = `🔍 Memeriksa tampilan halaman...`;
             else if (toolName === "local_run_command") userFriendlyAction = `💻 Menjalankan perintah terminal...`;
             else if (toolName.startsWith("manage_") || toolName.startsWith("db_")) userFriendlyAction = `🧠 Mengakses memori agen...`;
+            else if (toolName.startsWith("gsuite_doc") || toolName.includes("doc")) userFriendlyAction = `📄 Mengakses Google Docs...`;
+            else if (toolName.startsWith("gsuite_sheet") || toolName.includes("sheet")) userFriendlyAction = `📊 Mengakses Google Sheets...`;
             else userFriendlyAction = `⚡ Menjalankan aksi (${badgeActionName})...`;
             
             const statusText = `⏳ <b>${escapeHtml(workerName)}:</b> ${userFriendlyAction} (<i>${stepStr}</i>)`;
