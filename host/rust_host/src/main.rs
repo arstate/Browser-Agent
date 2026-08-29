@@ -1,11 +1,11 @@
 // ==============================================================================
 //  BROWSER AGENT - HIGH PERFORMANCE RUST NATIVE MESSAGING HOST & PERSISTENT BRAIN
 //  Author: Arya <arstate>
-//  Version: 2.150.113
+//  Version: 2.150.114
 //  Architecture: Zero-GC, Multithreaded, Bundled SQLite, Zero-Emoji Dark Luxury
 // ==============================================================================
 
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, OpenOptions};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -13,11 +13,7 @@ use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use chrono::Local;
-use flate2::read::GzDecoder;
-use flate2::write::GzEncoder;
-use flate2::Compression;
-use rusqlite::{params, Connection};
-use serde::{Deserialize, Serialize};
+use rusqlite::{params, Connection, Row};
 use serde_json::{json, Value};
 
 const CHUNK_SIZE: usize = 500 * 1024; // 500 KB limit per message chunk
@@ -233,6 +229,15 @@ fn now_millis() -> i64 {
         .unwrap_or(0)
 }
 
+fn calculate_epistemic_decay(confidence: f64, last_updated_ms: i64, decay_tau: f64) -> f64 {
+    let now_ms = now_millis();
+    let delta_sec = ((now_ms - last_updated_ms) as f64 / 1000.0).max(0.0);
+    let tau = decay_tau.max(60.0);
+    let factor = (- (2.0f64.ln() / tau) * delta_sec).exp();
+    let decayed = confidence * factor;
+    (decayed.min(1.0).max(0.01) * 10000.0).round() / 10000.0
+}
+
 // Read Native Messaging format (4-byte length + UTF-8 JSON)
 fn read_message<R: Read>(reader: &mut R) -> Option<Value> {
     let mut len_bytes = [0u8; 4];
@@ -266,20 +271,34 @@ fn write_message<W: Write>(writer: &mut W, value: &Value) {
     };
 
     if serialized.len() > CHUNK_SIZE {
-        if let Some(req_id) = value.get("id").and_then(|v| v.as_str()) {
+        if let Some(req_id) = value.get("id") {
             if value.get("is_chunk").is_none() {
                 let raw_str = String::from_utf8_lossy(&serialized);
-                let total_chunks = (raw_str.len() + CHUNK_SIZE - 1) / CHUNK_SIZE;
-                for i in 0..total_chunks {
-                    let start = i * CHUNK_SIZE;
-                    let end = (start + CHUNK_SIZE).min(raw_str.len());
-                    let chunk_slice = &raw_str[start..end];
+                let mut chunks: Vec<String> = Vec::new();
+                let mut current_idx = 0;
+                while current_idx < raw_str.len() {
+                    let mut end = (current_idx + CHUNK_SIZE).min(raw_str.len());
+                    while end > current_idx && !raw_str.is_char_boundary(end) {
+                        end -= 1;
+                    }
+                    if end == current_idx {
+                        end = (current_idx + 4).min(raw_str.len());
+                        while end < raw_str.len() && !raw_str.is_char_boundary(end) {
+                            end += 1;
+                        }
+                    }
+                    chunks.push(raw_str[current_idx..end].to_string());
+                    current_idx = end;
+                }
+
+                let total_chunks = chunks.len();
+                for (i, chunk_data) in chunks.into_iter().enumerate() {
                     let chunk_msg = json!({
                         "id": req_id,
                         "is_chunk": true,
                         "chunk_index": i,
                         "total_chunks": total_chunks,
-                        "chunk_data": chunk_slice
+                        "chunk_data": chunk_data
                     });
                     if let Ok(chunk_bytes) = serde_json::to_vec(&chunk_msg) {
                         let len_bytes = (chunk_bytes.len() as u32).to_ne_bytes();
@@ -338,26 +357,117 @@ fn parse_md_file(path: &Path) -> Option<(Value, String)> {
     Some((meta, content))
 }
 
-// Write markdown file with YAML frontmatter
-fn write_md_file(path: &Path, meta: &Value, content: &str) -> io::Result<()> {
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
-    }
+fn map_user_memory(r: &Row) -> rusqlite::Result<Value> {
+    Ok(json!({
+        "id": r.get::<_, String>(0)?,
+        "category": r.get::<_, String>(1)?,
+        "content": r.get::<_, String>(2)?,
+        "source": r.get::<_, String>(3)?,
+        "reason": r.get::<_, String>(4)?,
+        "confidence": r.get::<_, f64>(5)?,
+        "created_at": r.get::<_, i64>(6)?,
+        "updated_at": r.get::<_, i64>(7)?
+    }))
+}
 
-    let mut out = String::from("---\n");
-    if let Some(obj) = meta.as_object() {
-        for (k, v) in obj {
-            match v {
-                Value::String(s) => out.push_str(&format!("{}: \"{}\"\n", k, s)),
-                _ => out.push_str(&format!("{}: {}\n", k, v)),
-            }
-        }
-    }
-    out.push_str("---\n\n");
-    out.push_str(content.trim());
-    out.push('\n');
+fn map_experience_ledger(r: &Row) -> rusqlite::Result<Value> {
+    let kl_str: String = r.get(4).unwrap_or_else(|_| "[]".to_string());
+    let kl_val: Value = serde_json::from_str(&kl_str).unwrap_or(json!([]));
+    Ok(json!({
+        "id": r.get::<_, String>(0)?,
+        "session_id": r.get::<_, String>(1)?,
+        "title": r.get::<_, String>(2)?,
+        "distilled_markdown": r.get::<_, String>(3)?,
+        "key_learnings": kl_val,
+        "key_learnings_json": kl_str,
+        "tags": r.get::<_, String>(5)?,
+        "created_at": r.get::<_, i64>(6)?
+    }))
+}
 
-    fs::write(path, out)
+fn map_anti_pattern(r: &Row) -> rusqlite::Result<Value> {
+    Ok(json!({
+        "id": r.get::<_, String>(0)?,
+        "target_domain": r.get::<_, String>(1)?,
+        "mistake_description": r.get::<_, String>(2)?,
+        "root_cause": r.get::<_, String>(3)?,
+        "winning_fix": r.get::<_, String>(4)?,
+        "prevention_rule": r.get::<_, String>(5)?,
+        "created_at": r.get::<_, i64>(6)?
+    }))
+}
+
+fn map_autonomous_skill(r: &Row) -> rusqlite::Result<Value> {
+    Ok(json!({
+        "id": r.get::<_, String>(0)?,
+        "name": r.get::<_, String>(1)?,
+        "description": r.get::<_, String>(2)?,
+        "workflow_markdown": r.get::<_, String>(3)?,
+        "version": r.get::<_, String>(4)?,
+        "source": r.get::<_, String>(5)?,
+        "success_count": r.get::<_, i64>(6)?,
+        "failure_count": r.get::<_, i64>(7)?,
+        "changelog": r.get::<_, String>(8)?,
+        "created_at": r.get::<_, i64>(9)?,
+        "updated_at": r.get::<_, i64>(10)?
+    }))
+}
+
+fn map_autonomous_agent(r: &Row) -> rusqlite::Result<Value> {
+    let ask_str: String = r.get(4).unwrap_or_else(|_| "[]".to_string());
+    let ask_val: Value = serde_json::from_str(&ask_str).unwrap_or(json!([]));
+    Ok(json!({
+        "id": r.get::<_, String>(0)?,
+        "name": r.get::<_, String>(1)?,
+        "role_description": r.get::<_, String>(2)?,
+        "system_prompt": r.get::<_, String>(3)?,
+        "assigned_skills": ask_val,
+        "assigned_skills_json": ask_str,
+        "source": r.get::<_, String>(5)?,
+        "reason": r.get::<_, String>(6)?,
+        "created_at": r.get::<_, i64>(7)?,
+        "updated_at": r.get::<_, i64>(8)?
+    }))
+}
+
+fn map_training_corpus(r: &Row) -> rusqlite::Result<Value> {
+    let ki_str: String = r.get(5).unwrap_or_else(|_| "[]".to_string());
+    let tw_str: String = r.get(6).unwrap_or_else(|_| "[]".to_string());
+    let ln_str: String = r.get(7).unwrap_or_else(|_| "[]".to_string());
+    Ok(json!({
+        "id": r.get::<_, String>(0)?,
+        "session_id": r.get::<_, String>(1)?,
+        "title": r.get::<_, String>(2)?,
+        "model": r.get::<_, String>(3)?,
+        "distilled_points_md": r.get::<_, String>(4)?,
+        "key_intents": serde_json::from_str::<Value>(&ki_str).unwrap_or(json!([])),
+        "tool_workflows": serde_json::from_str::<Value>(&tw_str).unwrap_or(json!([])),
+        "learnings": serde_json::from_str::<Value>(&ln_str).unwrap_or(json!([])),
+        "token_saved_estimate": r.get::<_, i64>(8)?,
+        "created_at": r.get::<_, i64>(9)?,
+        "updated_at": r.get::<_, i64>(10)?
+    }))
+}
+
+fn map_epistemic_triplet(r: &Row) -> rusqlite::Result<Value> {
+    let conf: f64 = r.get(4)?;
+    let tau: f64 = r.get(5)?;
+    let up_ms: i64 = r.get(10)?;
+    let decayed = calculate_epistemic_decay(conf, up_ms, tau);
+    Ok(json!({
+        "id": r.get::<_, String>(0)?,
+        "subject": r.get::<_, String>(1)?,
+        "predicate": r.get::<_, String>(2)?,
+        "object": r.get::<_, String>(3)?,
+        "confidence": conf,
+        "decay_tau": tau,
+        "source_kappa": r.get::<_, String>(6)?,
+        "negative_constraint": r.get::<_, i64>(7)?,
+        "status": r.get::<_, String>(8)?,
+        "created_at": r.get::<_, i64>(9)?,
+        "updated_at": up_ms,
+        "decayed_confidence": decayed
+    }))
 }
 
 fn handle_rpc(msg: Value, conn: &Connection) -> Value {
@@ -368,7 +478,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         "ping" => json!({
             "status": "ok",
             "message": "Rust Native Host Online",
-            "version": "2.150.113",
+            "version": "2.150.114",
             "runtime": "Rust 1.98 (Zero-GC, Native Binary)",
             "os": std::env::consts::OS,
             "arch": std::env::consts::ARCH
@@ -468,13 +578,33 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         // SESSIONS RPC HANDLERS
         // ==========================================
         "db_save_session" => {
-            let sid = msg.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
-            let title = msg.get("title").and_then(|v| v.as_str()).unwrap_or("Percakapan Baru");
-            let model = msg.get("model").and_then(|v| v.as_str()).unwrap_or("");
-            let count = msg.get("message_count").and_then(|v| v.as_i64()).unwrap_or(0);
-            let preview = msg.get("preview").and_then(|v| v.as_str()).unwrap_or("");
-            let messages = msg.get("messages_json").and_then(|v| v.as_str()).unwrap_or("[]");
-            let is_pinned = msg.get("is_pinned").and_then(|v| v.as_i64()).unwrap_or(0);
+            let session_obj = msg.get("session").cloned().unwrap_or(json!({}));
+            let sid = session_obj.get("id").and_then(|v| v.as_str())
+                .or_else(|| msg.get("session_id").and_then(|v| v.as_str()))
+                .unwrap_or("");
+            let title = session_obj.get("title").and_then(|v| v.as_str())
+                .or_else(|| msg.get("title").and_then(|v| v.as_str()))
+                .unwrap_or("Percakapan Baru");
+            let model = session_obj.get("model").and_then(|v| v.as_str())
+                .or_else(|| msg.get("model").and_then(|v| v.as_str()))
+                .unwrap_or("");
+            let count = session_obj.get("message_count").and_then(|v| v.as_i64())
+                .or_else(|| msg.get("message_count").and_then(|v| v.as_i64()))
+                .unwrap_or(0);
+            let preview = session_obj.get("preview").and_then(|v| v.as_str())
+                .or_else(|| msg.get("preview").and_then(|v| v.as_str()))
+                .unwrap_or("");
+            let messages = if let Some(m) = session_obj.get("messages") {
+                serde_json::to_string(m).unwrap_or_else(|_| "[]".to_string())
+            } else {
+                session_obj.get("messages_json").and_then(|v| v.as_str())
+                    .or_else(|| msg.get("messages_json").and_then(|v| v.as_str()))
+                    .unwrap_or("[]")
+                    .to_string()
+            };
+            let is_pinned = session_obj.get("is_pinned").and_then(|v| v.as_i64())
+                .or_else(|| msg.get("is_pinned").and_then(|v| v.as_i64()))
+                .unwrap_or(0);
             let now = now_millis();
 
             let res = conn.execute(
@@ -498,13 +628,11 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         }
 
         "db_get_sessions" => {
-            let mut stmt = conn.prepare(
-                "SELECT id, title, model, message_count, preview, is_pinned, created_at, updated_at
-                 FROM sessions ORDER BY is_pinned DESC, updated_at DESC",
-            );
-            match stmt {
-                Ok(mut s) => {
-                    let rows = s.query_map([], |r| {
+            let search = msg.get("search").and_then(|v| v.as_str()).unwrap_or("").trim().to_lowercase();
+            let mut list = vec![];
+            if search.is_empty() {
+                if let Ok(mut stmt) = conn.prepare("SELECT id, title, model, message_count, preview, is_pinned, created_at, updated_at FROM sessions ORDER BY is_pinned DESC, updated_at DESC") {
+                    if let Ok(iter) = stmt.query_map([], |r| {
                         Ok(json!({
                             "id": r.get::<_, String>(0)?,
                             "title": r.get::<_, String>(1)?,
@@ -515,12 +643,30 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                             "created_at": r.get::<_, i64>(6)?,
                             "updated_at": r.get::<_, i64>(7)?
                         }))
-                    });
-                    let list: Vec<Value> = rows.map(|iter| iter.filter_map(|x| x.ok()).collect()).unwrap_or_default();
-                    json!({ "status": "ok", "sessions": list })
+                    }) {
+                        list = iter.flatten().collect();
+                    }
                 }
-                Err(e) => json!({ "status": "error", "error": e.to_string() }),
+            } else {
+                let q = format!("%{}%", search);
+                if let Ok(mut stmt) = conn.prepare("SELECT id, title, model, message_count, preview, is_pinned, created_at, updated_at FROM sessions WHERE LOWER(title) LIKE ?1 OR LOWER(preview) LIKE ?1 ORDER BY is_pinned DESC, updated_at DESC") {
+                    if let Ok(iter) = stmt.query_map(params![q], |r| {
+                        Ok(json!({
+                            "id": r.get::<_, String>(0)?,
+                            "title": r.get::<_, String>(1)?,
+                            "model": r.get::<_, String>(2)?,
+                            "message_count": r.get::<_, i64>(3)?,
+                            "preview": r.get::<_, String>(4)?,
+                            "is_pinned": r.get::<_, i64>(5)?,
+                            "created_at": r.get::<_, i64>(6)?,
+                            "updated_at": r.get::<_, i64>(7)?
+                        }))
+                    }) {
+                        list = iter.flatten().collect();
+                    }
+                }
             }
+            json!({ "status": "ok", "sessions": list })
         }
 
         "db_get_session" => {
@@ -559,8 +705,24 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
 
         "db_pin_session" => {
             let sid = msg.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
-            let pin = msg.get("is_pinned").and_then(|v| v.as_i64()).unwrap_or(0);
+            let pin = msg.get("is_pinned").and_then(|v| {
+                if let Some(b) = v.as_bool() {
+                    Some(if b { 1 } else { 0 })
+                } else {
+                    v.as_i64()
+                }
+            }).unwrap_or(0);
             let res = conn.execute("UPDATE sessions SET is_pinned = ?1 WHERE id = ?2", params![pin, sid]);
+            match res {
+                Ok(_) => json!({ "status": "ok", "session_id": sid }),
+                Err(e) => json!({ "status": "error", "error": e.to_string() }),
+            }
+        }
+
+        "db_rename_session" => {
+            let sid = msg.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
+            let title = msg.get("title").and_then(|v| v.as_str()).unwrap_or("Percakapan Baru");
+            let res = conn.execute("UPDATE sessions SET title = ?1 WHERE id = ?2", params![title, sid]);
             match res {
                 Ok(_) => json!({ "status": "ok", "session_id": sid }),
                 Err(e) => json!({ "status": "error", "error": e.to_string() }),
@@ -595,126 +757,151 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         }
 
         "db_get_all_settings" => {
-            let mut stmt = conn.prepare("SELECT key, value_json FROM settings");
-            match stmt {
-                Ok(mut s) => {
-                    let mut settings_map = serde_json::Map::new();
-                    let rows = s.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)));
-                    if let Ok(iter) = rows {
-                        for pair in iter.flatten() {
-                            if let Ok(v) = serde_json::from_str::<Value>(&pair.1) {
-                                settings_map.insert(pair.0, v);
-                            } else {
-                                settings_map.insert(pair.0, json!(pair.1));
-                            }
+            let mut settings_map = serde_json::Map::new();
+            if let Ok(mut s) = conn.prepare("SELECT key, value_json FROM settings") {
+                if let Ok(iter) = s.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))) {
+                    for pair in iter.flatten() {
+                        if let Ok(v) = serde_json::from_str::<Value>(&pair.1) {
+                            settings_map.insert(pair.0, v);
+                        } else {
+                            settings_map.insert(pair.0, json!(pair.1));
                         }
                     }
-                    json!({ "status": "ok", "settings": settings_map })
                 }
-                Err(e) => json!({ "status": "error", "error": e.to_string() }),
             }
+            json!({ "status": "ok", "settings": settings_map })
         }
 
         // ==========================================
-        // PERSISTENT MEMORY RPC HANDLERS
+        // PERSISTENT MEMORY & BRAIN RPC HANDLERS
         // ==========================================
         "db_get_persistent_memory" => {
-            // Load user_memories
-            let mut memories = vec![];
-            if let Ok(mut s) = conn.prepare("SELECT id, category, content, source, reason, confidence, created_at, updated_at FROM user_memories ORDER BY updated_at DESC") {
-                if let Ok(iter) = s.query_map([], |r| Ok(json!({
-                    "id": r.get::<_, String>(0)?,
-                    "category": r.get::<_, String>(1)?,
-                    "content": r.get::<_, String>(2)?,
-                    "source": r.get::<_, String>(3)?,
-                    "reason": r.get::<_, String>(4)?,
-                    "confidence": r.get::<_, f64>(5)?,
-                    "created_at": r.get::<_, i64>(6)?,
-                    "updated_at": r.get::<_, i64>(7)?
-                }))) {
-                    memories = iter.flatten().collect();
+            let search = msg.get("search").and_then(|v| v.as_str()).unwrap_or("").trim().to_lowercase();
+            let has_search = !search.is_empty();
+            let q = format!("%{}%", search);
+
+            // 1. User Memories
+            let mut user_memories = vec![];
+            if has_search {
+                if let Ok(mut s) = conn.prepare("SELECT id, category, content, source, reason, confidence, created_at, updated_at FROM user_memories WHERE LOWER(content) LIKE ?1 OR LOWER(category) LIKE ?1 ORDER BY updated_at DESC") {
+                    if let Ok(iter) = s.query_map(params![q], map_user_memory) {
+                        user_memories = iter.flatten().collect();
+                    }
+                }
+            } else if let Ok(mut s) = conn.prepare("SELECT id, category, content, source, reason, confidence, created_at, updated_at FROM user_memories ORDER BY updated_at DESC") {
+                if let Ok(iter) = s.query_map([], map_user_memory) {
+                    user_memories = iter.flatten().collect();
                 }
             }
 
-            // Load experience_ledger
-            let mut ledger = vec![];
-            if let Ok(mut s) = conn.prepare("SELECT id, session_id, title, distilled_markdown, key_learnings_json, tags, created_at FROM experience_ledger ORDER BY created_at DESC") {
-                if let Ok(iter) = s.query_map([], |r| Ok(json!({
-                    "id": r.get::<_, String>(0)?,
-                    "session_id": r.get::<_, String>(1)?,
-                    "title": r.get::<_, String>(2)?,
-                    "distilled_markdown": r.get::<_, String>(3)?,
-                    "key_learnings_json": r.get::<_, String>(4)?,
-                    "tags": r.get::<_, String>(5)?,
-                    "created_at": r.get::<_, i64>(6)?
-                }))) {
-                    ledger = iter.flatten().collect();
+            // 2. Experience Ledger
+            let mut experience_ledger = vec![];
+            if has_search {
+                if let Ok(mut s) = conn.prepare("SELECT id, session_id, title, distilled_markdown, key_learnings_json, tags, created_at FROM experience_ledger WHERE LOWER(title) LIKE ?1 OR LOWER(distilled_markdown) LIKE ?1 ORDER BY created_at DESC") {
+                    if let Ok(iter) = s.query_map(params![q], map_experience_ledger) {
+                        experience_ledger = iter.flatten().collect();
+                    }
+                }
+            } else if let Ok(mut s) = conn.prepare("SELECT id, session_id, title, distilled_markdown, key_learnings_json, tags, created_at FROM experience_ledger ORDER BY created_at DESC") {
+                if let Ok(iter) = s.query_map([], map_experience_ledger) {
+                    experience_ledger = iter.flatten().collect();
                 }
             }
 
-            // Load anti_patterns
+            // 3. Anti Patterns
             let mut anti_patterns = vec![];
-            if let Ok(mut s) = conn.prepare("SELECT id, target_domain, mistake_description, root_cause, winning_fix, prevention_rule, created_at FROM anti_patterns ORDER BY created_at DESC") {
-                if let Ok(iter) = s.query_map([], |r| Ok(json!({
-                    "id": r.get::<_, String>(0)?,
-                    "target_domain": r.get::<_, String>(1)?,
-                    "mistake_description": r.get::<_, String>(2)?,
-                    "root_cause": r.get::<_, String>(3)?,
-                    "winning_fix": r.get::<_, String>(4)?,
-                    "prevention_rule": r.get::<_, String>(5)?,
-                    "created_at": r.get::<_, i64>(6)?
-                }))) {
+            if has_search {
+                if let Ok(mut s) = conn.prepare("SELECT id, target_domain, mistake_description, root_cause, winning_fix, prevention_rule, created_at FROM anti_patterns WHERE LOWER(target_domain) LIKE ?1 OR LOWER(mistake_description) LIKE ?1 OR LOWER(winning_fix) LIKE ?1 ORDER BY created_at DESC") {
+                    if let Ok(iter) = s.query_map(params![q], map_anti_pattern) {
+                        anti_patterns = iter.flatten().collect();
+                    }
+                }
+            } else if let Ok(mut s) = conn.prepare("SELECT id, target_domain, mistake_description, root_cause, winning_fix, prevention_rule, created_at FROM anti_patterns ORDER BY created_at DESC") {
+                if let Ok(iter) = s.query_map([], map_anti_pattern) {
                     anti_patterns = iter.flatten().collect();
                 }
             }
 
-            // Load autonomous_skills
-            let mut skills = vec![];
-            if let Ok(mut s) = conn.prepare("SELECT id, name, description, workflow_markdown, version, source, success_count, failure_count, changelog, created_at, updated_at FROM autonomous_skills ORDER BY updated_at DESC") {
-                if let Ok(iter) = s.query_map([], |r| Ok(json!({
-                    "id": r.get::<_, String>(0)?,
-                    "name": r.get::<_, String>(1)?,
-                    "description": r.get::<_, String>(2)?,
-                    "workflow_markdown": r.get::<_, String>(3)?,
-                    "version": r.get::<_, String>(4)?,
-                    "source": r.get::<_, String>(5)?,
-                    "success_count": r.get::<_, i64>(6)?,
-                    "failure_count": r.get::<_, i64>(7)?,
-                    "changelog": r.get::<_, String>(8)?,
-                    "created_at": r.get::<_, i64>(9)?,
-                    "updated_at": r.get::<_, i64>(10)?
-                }))) {
-                    skills = iter.flatten().collect();
+            // 4. Autonomous Skills
+            let mut autonomous_skills = vec![];
+            if has_search {
+                if let Ok(mut s) = conn.prepare("SELECT id, name, description, workflow_markdown, version, source, success_count, failure_count, changelog, created_at, updated_at FROM autonomous_skills WHERE LOWER(name) LIKE ?1 OR LOWER(description) LIKE ?1 OR LOWER(workflow_markdown) LIKE ?1 ORDER BY updated_at DESC") {
+                    if let Ok(iter) = s.query_map(params![q], map_autonomous_skill) {
+                        autonomous_skills = iter.flatten().collect();
+                    }
+                }
+            } else if let Ok(mut s) = conn.prepare("SELECT id, name, description, workflow_markdown, version, source, success_count, failure_count, changelog, created_at, updated_at FROM autonomous_skills ORDER BY updated_at DESC") {
+                if let Ok(iter) = s.query_map([], map_autonomous_skill) {
+                    autonomous_skills = iter.flatten().collect();
                 }
             }
 
-            // Load autonomous_agents
-            let mut agents = vec![];
-            if let Ok(mut s) = conn.prepare("SELECT id, name, role_description, system_prompt, assigned_skills_json, source, reason, created_at, updated_at FROM autonomous_agents ORDER BY updated_at DESC") {
-                if let Ok(iter) = s.query_map([], |r| Ok(json!({
-                    "id": r.get::<_, String>(0)?,
-                    "name": r.get::<_, String>(1)?,
-                    "role_description": r.get::<_, String>(2)?,
-                    "system_prompt": r.get::<_, String>(3)?,
-                    "assigned_skills_json": r.get::<_, String>(4)?,
-                    "source": r.get::<_, String>(5)?,
-                    "reason": r.get::<_, String>(6)?,
-                    "created_at": r.get::<_, i64>(7)?,
-                    "updated_at": r.get::<_, i64>(8)?
-                }))) {
-                    agents = iter.flatten().collect();
+            // 5. Autonomous Agents
+            let mut autonomous_agents = vec![];
+            if has_search {
+                if let Ok(mut s) = conn.prepare("SELECT id, name, role_description, system_prompt, assigned_skills_json, source, reason, created_at, updated_at FROM autonomous_agents WHERE LOWER(name) LIKE ?1 OR LOWER(role_description) LIKE ?1 ORDER BY updated_at DESC") {
+                    if let Ok(iter) = s.query_map(params![q], map_autonomous_agent) {
+                        autonomous_agents = iter.flatten().collect();
+                    }
+                }
+            } else if let Ok(mut s) = conn.prepare("SELECT id, name, role_description, system_prompt, assigned_skills_json, source, reason, created_at, updated_at FROM autonomous_agents ORDER BY updated_at DESC") {
+                if let Ok(iter) = s.query_map([], map_autonomous_agent) {
+                    autonomous_agents = iter.flatten().collect();
                 }
             }
+
+            // 6. Chat Training Corpus
+            let mut training_corpus = vec![];
+            if has_search {
+                if let Ok(mut s) = conn.prepare("SELECT id, session_id, title, model, distilled_points_md, key_intents_json, tool_workflows_json, learnings_json, token_saved_estimate, created_at, updated_at FROM chat_training_corpus WHERE LOWER(title) LIKE ?1 OR LOWER(distilled_points_md) LIKE ?1 ORDER BY updated_at DESC") {
+                    if let Ok(iter) = s.query_map(params![q], map_training_corpus) {
+                        training_corpus = iter.flatten().collect();
+                    }
+                }
+            } else if let Ok(mut s) = conn.prepare("SELECT id, session_id, title, model, distilled_points_md, key_intents_json, tool_workflows_json, learnings_json, token_saved_estimate, created_at, updated_at FROM chat_training_corpus ORDER BY updated_at DESC") {
+                if let Ok(iter) = s.query_map([], map_training_corpus) {
+                    training_corpus = iter.flatten().collect();
+                }
+            }
+
+            // 7. Epistemic Triplets (Live Decayed Confidence)
+            let mut epistemic_triplets = vec![];
+            if has_search {
+                if let Ok(mut s) = conn.prepare("SELECT id, subject, predicate, object, confidence, decay_tau, source_kappa, negative_constraint, status, created_at, updated_at FROM graph_epistemic_triplets WHERE (LOWER(subject) LIKE ?1 OR LOWER(predicate) LIKE ?1 OR LOWER(object) LIKE ?1) AND status = 'active' ORDER BY negative_constraint ASC, updated_at DESC") {
+                    if let Ok(iter) = s.query_map(params![q], map_epistemic_triplet) {
+                        epistemic_triplets = iter.flatten().collect();
+                    }
+                }
+            } else if let Ok(mut s) = conn.prepare("SELECT id, subject, predicate, object, confidence, decay_tau, source_kappa, negative_constraint, status, created_at, updated_at FROM graph_epistemic_triplets WHERE status = 'active' ORDER BY negative_constraint ASC, updated_at DESC") {
+                if let Ok(iter) = s.query_map([], map_epistemic_triplet) {
+                    epistemic_triplets = iter.flatten().collect();
+                }
+            }
+
+            let counts = json!({
+                "user_memories": user_memories.len(),
+                "experience_ledger": experience_ledger.len(),
+                "anti_patterns": anti_patterns.len(),
+                "autonomous_skills": autonomous_skills.len(),
+                "autonomous_agents": autonomous_agents.len(),
+                "training_corpus": training_corpus.len(),
+                "epistemic_triplets": epistemic_triplets.len(),
+                "total": user_memories.len() + experience_ledger.len() + anti_patterns.len() + autonomous_skills.len() + autonomous_agents.len() + training_corpus.len()
+            });
+
+            let total_count = user_memories.len() + experience_ledger.len() + anti_patterns.len() + autonomous_skills.len() + autonomous_agents.len() + training_corpus.len();
 
             json!({
                 "status": "ok",
-                "vault": {
-                    "user_memories": memories,
-                    "experience_ledger": ledger,
-                    "anti_patterns": anti_patterns,
-                    "autonomous_skills": skills,
-                    "autonomous_agents": agents
-                }
+                "user_memories": user_memories,
+                "experience_ledger": experience_ledger,
+                "anti_patterns": anti_patterns,
+                "autonomous_skills": autonomous_skills,
+                "autonomous_agents": autonomous_agents,
+                "training_corpus": training_corpus,
+                "epistemic_triplets": epistemic_triplets,
+                "counts": counts,
+                "count": total_count
             })
         }
 
@@ -739,6 +926,91 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             }
         }
 
+        "db_save_experience_distillation" => {
+            let id = msg.get("id").and_then(|v| v.as_str()).unwrap_or("");
+            let sid = msg.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
+            let title = msg.get("title").and_then(|v| v.as_str()).unwrap_or("");
+            let md = msg.get("distilled_markdown").and_then(|v| v.as_str()).unwrap_or("");
+            let kl = msg.get("key_learnings_json").and_then(|v| v.as_str()).unwrap_or("[]");
+            let tags = msg.get("tags").and_then(|v| v.as_str()).unwrap_or("");
+            let now = now_millis();
+
+            let res = conn.execute(
+                "INSERT INTO experience_ledger (id, session_id, title, distilled_markdown, key_learnings_json, tags, created_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                 ON CONFLICT(id) DO UPDATE SET title = excluded.title, distilled_markdown = excluded.distilled_markdown, key_learnings_json = excluded.key_learnings_json, tags = excluded.tags",
+                params![id, sid, title, md, kl, tags, now],
+            );
+            match res {
+                Ok(_) => json!({ "status": "ok", "id": id }),
+                Err(e) => json!({ "status": "error", "error": e.to_string() }),
+            }
+        }
+
+        "db_save_anti_pattern" => {
+            let id = msg.get("id").and_then(|v| v.as_str()).unwrap_or("");
+            let domain = msg.get("target_domain").and_then(|v| v.as_str()).unwrap_or("");
+            let mistake = msg.get("mistake_description").and_then(|v| v.as_str()).unwrap_or("");
+            let root = msg.get("root_cause").and_then(|v| v.as_str()).unwrap_or("");
+            let fix = msg.get("winning_fix").and_then(|v| v.as_str()).unwrap_or("");
+            let rule = msg.get("prevention_rule").and_then(|v| v.as_str()).unwrap_or("");
+            let now = now_millis();
+
+            let res = conn.execute(
+                "INSERT INTO anti_patterns (id, target_domain, mistake_description, root_cause, winning_fix, prevention_rule, created_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                 ON CONFLICT(id) DO UPDATE SET target_domain = excluded.target_domain, mistake_description = excluded.mistake_description, root_cause = excluded.root_cause, winning_fix = excluded.winning_fix, prevention_rule = excluded.prevention_rule",
+                params![id, domain, mistake, root, fix, rule, now],
+            );
+            match res {
+                Ok(_) => json!({ "status": "ok", "id": id }),
+                Err(e) => json!({ "status": "error", "error": e.to_string() }),
+            }
+        }
+
+        "db_save_autonomous_skill" => {
+            let id = msg.get("id").and_then(|v| v.as_str()).unwrap_or("");
+            let name = msg.get("name").and_then(|v| v.as_str()).unwrap_or("");
+            let desc = msg.get("description").and_then(|v| v.as_str()).unwrap_or("");
+            let md = msg.get("workflow_markdown").and_then(|v| v.as_str()).unwrap_or("");
+            let ver = msg.get("version").and_then(|v| v.as_str()).unwrap_or("v1.0.0");
+            let src = msg.get("source").and_then(|v| v.as_str()).unwrap_or("autonomous_ai");
+            let now = now_millis();
+
+            let res = conn.execute(
+                "INSERT INTO autonomous_skills (id, name, description, workflow_markdown, version, source, created_at, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7)
+                 ON CONFLICT(id) DO UPDATE SET name = excluded.name, description = excluded.description, workflow_markdown = excluded.workflow_markdown, version = excluded.version, updated_at = excluded.updated_at",
+                params![id, name, desc, md, ver, src, now],
+            );
+            match res {
+                Ok(_) => json!({ "status": "ok", "id": id }),
+                Err(e) => json!({ "status": "error", "error": e.to_string() }),
+            }
+        }
+
+        "db_save_autonomous_agent" => {
+            let id = msg.get("id").and_then(|v| v.as_str()).unwrap_or("");
+            let name = msg.get("name").and_then(|v| v.as_str()).unwrap_or("");
+            let desc = msg.get("role_description").and_then(|v| v.as_str()).unwrap_or("");
+            let prompt = msg.get("system_prompt").and_then(|v| v.as_str()).unwrap_or("");
+            let skills = msg.get("assigned_skills_json").and_then(|v| v.as_str()).unwrap_or("[]");
+            let src = msg.get("source").and_then(|v| v.as_str()).unwrap_or("autonomous_ai");
+            let reason = msg.get("reason").and_then(|v| v.as_str()).unwrap_or("");
+            let now = now_millis();
+
+            let res = conn.execute(
+                "INSERT INTO autonomous_agents (id, name, role_description, system_prompt, assigned_skills_json, source, reason, created_at, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)
+                 ON CONFLICT(id) DO UPDATE SET name = excluded.name, role_description = excluded.role_description, system_prompt = excluded.system_prompt, assigned_skills_json = excluded.assigned_skills_json, updated_at = excluded.updated_at",
+                params![id, name, desc, prompt, skills, src, reason, now],
+            );
+            match res {
+                Ok(_) => json!({ "status": "ok", "id": id }),
+                Err(e) => json!({ "status": "error", "error": e.to_string() }),
+            }
+        }
+
         "db_delete_persistent_item" => {
             let itype = msg.get("item_type").and_then(|v| v.as_str()).unwrap_or("");
             let id = msg.get("item_id").and_then(|v| v.as_str()).unwrap_or("");
@@ -748,6 +1020,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 "anti_patterns" => "anti_patterns",
                 "autonomous_skills" => "autonomous_skills",
                 "autonomous_agents" => "autonomous_agents",
+                "chat_training_corpus" => "chat_training_corpus",
                 _ => "",
             };
 
@@ -787,32 +1060,13 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         }
 
         "db_get_epistemic_graph" => {
-            let mut stmt = conn.prepare(
-                "SELECT id, subject, predicate, object, confidence, decay_tau, source_kappa, negative_constraint, status, created_at, updated_at
-                 FROM graph_epistemic_triplets ORDER BY updated_at DESC",
-            );
-            match stmt {
-                Ok(mut s) => {
-                    let rows = s.query_map([], |r| {
-                        Ok(json!({
-                            "id": r.get::<_, String>(0)?,
-                            "subject": r.get::<_, String>(1)?,
-                            "predicate": r.get::<_, String>(2)?,
-                            "object": r.get::<_, String>(3)?,
-                            "confidence": r.get::<_, f64>(4)?,
-                            "decay_tau": r.get::<_, f64>(5)?,
-                            "source_kappa": r.get::<_, String>(6)?,
-                            "negative_constraint": r.get::<_, i64>(7)?,
-                            "status": r.get::<_, String>(8)?,
-                            "created_at": r.get::<_, i64>(9)?,
-                            "updated_at": r.get::<_, i64>(10)?
-                        }))
-                    });
-                    let triplets: Vec<Value> = rows.map(|iter| iter.filter_map(|x| x.ok()).collect()).unwrap_or_default();
-                    json!({ "status": "ok", "triplets": triplets })
+            let mut triplets = vec![];
+            if let Ok(mut s) = conn.prepare("SELECT id, subject, predicate, object, confidence, decay_tau, source_kappa, negative_constraint, status, created_at, updated_at FROM graph_epistemic_triplets WHERE status = 'active' ORDER BY negative_constraint ASC, updated_at DESC") {
+                if let Ok(iter) = s.query_map([], map_epistemic_triplet) {
+                    triplets = iter.flatten().collect();
                 }
-                Err(e) => json!({ "status": "error", "error": e.to_string() }),
             }
+            json!({ "status": "ok", "triplets": triplets })
         }
 
         // ==========================================
@@ -886,7 +1140,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
 
 fn main() {
     log_msg("=========================================================");
-    log_msg("  Browser Agent Rust Native Host v2.150.113 starting...");
+    log_msg("  Browser Agent Rust Native Host v2.150.114 starting...");
     log_msg("=========================================================");
 
     let conn = match init_db() {
