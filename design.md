@@ -170,3 +170,26 @@ Semua icon SVG diintegrasikan dengan standar CSS:
   flex-shrink: 0;
 }
 ```
+
+---
+
+## 6. Unified Bento Hero Header Architecture (100% Consistent Across Tabs)
+
+Seluruh view dan tab dalam halaman Pengaturan (`#tab-view-ai`, `#tab-view-agents`, `#tab-view-skills`, `#tab-view-memories`, `#tab-view-persistent-brain`, `#tab-view-ui`, `#tab-view-connected-apps`, `#tab-view-plugins`) wajib menggunakan standar container header yang seragam:
+
+### A. Container Geometry & Material (`.bento-hero-provider-card`)
+- **Background**: `rgba(18, 18, 22, 0.72)` dengan `backdrop-filter: blur(28px) saturate(180%)`.
+- **Border**: `1px solid rgba(255, 255, 255, 0.08)`.
+- **Border Radius**: `20px` (Squircle Glass Card).
+- **Padding**: `20px 24px`.
+- **Box Shadow**: `0 10px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)`.
+- **Margin Bottom**: `20px`.
+
+### B. Typography & Brand Grouping
+- **Title (`.hero-provider-title`)**: `font-size: 20px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em; line-height: 1.25;`.
+- **Description (`.hero-provider-desc`)**: `font-size: 12.5px; color: #94A3B8; margin-top: 3px; line-height: 1.4;`.
+
+### C. Actions & Pill Buttons
+- **Action Group (`.hero-provider-actions`)**: `display: flex; align-items: center; gap: 8px; flex-wrap: wrap;`.
+- **Primary Add Pill (`.btn-add-primary`)**: `height: 34px; padding: 0 16px; border-radius: 9999px; font-weight: 700; font-size: 12.5px; background: var(--accent-lime); color: #0F172A; box-shadow: 0 2px 10px rgba(206, 241, 40, 0.25);`.
+
