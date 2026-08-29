@@ -9640,7 +9640,17 @@ async function resumeSession(sessionId) {
   currentSessionTitle = session.title;
   currentSessionIsPinned = !!session.is_pinned;
   currentSessionCreatedAt = session.created_at;
-  conversationHistory = session.messages || [];
+  if (Array.isArray(session.messages)) {
+    conversationHistory = session.messages;
+  } else if (typeof session.messages_json === 'string') {
+    try {
+      conversationHistory = JSON.parse(session.messages_json);
+    } catch (e) {
+      conversationHistory = [];
+    }
+  } else {
+    conversationHistory = [];
+  }
 
   if (session.model) {
     config.model = session.model;
@@ -9791,12 +9801,13 @@ function startNewChat() {
 
 function openHistoryModal() {
   const modal = document.getElementById('history-modal');
-  if (modal) {
-    modal.style.display = 'flex';
-    const searchInput = document.getElementById('input-search-history');
-    if (searchInput) searchInput.value = '';
-    loadHistoryList();
+  if (modal) modal.style.display = 'flex';
+  const searchInput = document.getElementById('input-search-history');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.focus();
   }
+  loadHistoryList("");
 }
 
 function hideHistoryModal() {
@@ -9881,7 +9892,7 @@ async function confirmDeleteSession() {
     return;
   }
 
-  if (!sessionToDeleteId) return;
+  if (sessionToDeleteId === null || sessionToDeleteId === undefined) return;
   const sid = sessionToDeleteId;
 
   // 1. Delete from SQLite

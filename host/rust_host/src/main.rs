@@ -470,6 +470,49 @@ fn map_epistemic_triplet(r: &Row) -> rusqlite::Result<Value> {
     }))
 }
 
+fn prune_messages_for_rpc(messages: &[Value]) -> Vec<Value> {
+    let mut pruned = Vec::with_capacity(messages.len());
+    for m in messages {
+        let role = m.get("role").and_then(|v| v.as_str()).unwrap_or("");
+        if role == "tool" {
+            let mut clean = json!({
+                "role": "tool",
+                "content": "{\"status\":\"success\"}"
+            });
+            if let Some(name) = m.get("name") {
+                clean["name"] = name.clone();
+            }
+            if let Some(tcid) = m.get("tool_call_id") {
+                clean["tool_call_id"] = tcid.clone();
+            }
+            pruned.push(clean);
+            continue;
+        }
+
+        let mut clean = json!({
+            "role": role,
+            "content": m.get("content").cloned().unwrap_or(json!(""))
+        });
+        if let Some(v) = m.get("displayContent") {
+            clean["displayContent"] = v.clone();
+        }
+        if let Some(v) = m.get("attachments") {
+            clean["attachments"] = v.clone();
+        }
+        if let Some(v) = m.get("tool_calls") {
+            clean["tool_calls"] = v.clone();
+        }
+        if let Some(v) = m.get("agentInfo") {
+            clean["agentInfo"] = v.clone();
+        }
+        if let Some(v) = m.get("name") {
+            clean["name"] = v.clone();
+        }
+        pruned.push(clean);
+    }
+    pruned
+}
+
 fn handle_rpc(msg: Value, conn: &Connection) -> Value {
     let req_id = msg.get("id").cloned().unwrap_or(json!(null));
     let action = msg.get("action").and_then(|v| v.as_str()).unwrap_or("");
@@ -478,7 +521,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         "ping" => json!({
             "status": "ok",
             "message": "Rust Native Host Online",
-            "version": "2.150.114",
+            "version": "2.150.115",
             "runtime": "Rust 1.98 (Zero-GC, Native Binary)",
             "os": std::env::consts::OS,
             "arch": std::env::consts::ARCH
@@ -579,9 +622,15 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         // ==========================================
         "db_save_session" => {
             let session_obj = msg.get("session").cloned().unwrap_or(json!({}));
-            let sid = session_obj.get("id").and_then(|v| v.as_str())
+            let mut sid = session_obj.get("id").and_then(|v| v.as_str())
                 .or_else(|| msg.get("session_id").and_then(|v| v.as_str()))
-                .unwrap_or("");
+                .unwrap_or("")
+                .trim()
+                .to_string();
+            let now = now_millis();
+            if sid.is_empty() {
+                sid = format!("sess_{}", now);
+            }
             let title = session_obj.get("title").and_then(|v| v.as_str())
                 .or_else(|| msg.get("title").and_then(|v| v.as_str()))
                 .unwrap_or("Percakapan Baru");
@@ -605,7 +654,6 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             let is_pinned = session_obj.get("is_pinned").and_then(|v| v.as_i64())
                 .or_else(|| msg.get("is_pinned").and_then(|v| v.as_i64()))
                 .unwrap_or(0);
-            let now = now_millis();
 
             let res = conn.execute(
                 "INSERT INTO sessions (id, title, model, message_count, preview, messages_json, is_pinned, created_at, updated_at)
@@ -631,7 +679,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             let search = msg.get("search").and_then(|v| v.as_str()).unwrap_or("").trim().to_lowercase();
             let mut list = vec![];
             if search.is_empty() {
-                if let Ok(mut stmt) = conn.prepare("SELECT id, title, model, message_count, preview, is_pinned, created_at, updated_at FROM sessions ORDER BY is_pinned DESC, updated_at DESC") {
+                if let Ok(mut stmt) = conn.prepare("SELECT id, title, model, message_count, preview, is_pinned, created_at, updated_at FROM sessions WHERE id != '' AND id IS NOT NULL ORDER BY is_pinned DESC, updated_at DESC") {
                     if let Ok(iter) = stmt.query_map([], |r| {
                         Ok(json!({
                             "id": r.get::<_, String>(0)?,
@@ -649,7 +697,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 }
             } else {
                 let q = format!("%{}%", search);
-                if let Ok(mut stmt) = conn.prepare("SELECT id, title, model, message_count, preview, is_pinned, created_at, updated_at FROM sessions WHERE LOWER(title) LIKE ?1 OR LOWER(preview) LIKE ?1 ORDER BY is_pinned DESC, updated_at DESC") {
+                if let Ok(mut stmt) = conn.prepare("SELECT id, title, model, message_count, preview, is_pinned, created_at, updated_at FROM sessions WHERE id != '' AND id IS NOT NULL AND (LOWER(title) LIKE ?1 OR LOWER(preview) LIKE ?1) ORDER BY is_pinned DESC, updated_at DESC") {
                     if let Ok(iter) = stmt.query_map(params![q], |r| {
                         Ok(json!({
                             "id": r.get::<_, String>(0)?,
@@ -670,16 +718,21 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         }
 
         "db_get_session" => {
-            let sid = msg.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
+            let sid = msg.get("session_id").and_then(|v| v.as_str())
+                .or_else(|| msg.get("id").and_then(|v| v.as_str()))
+                .unwrap_or("");
             let mut stmt = conn.prepare("SELECT id, title, model, messages_json, is_pinned, created_at, updated_at FROM sessions WHERE id = ?1");
             match stmt {
                 Ok(mut s) => {
                     let session = s.query_row(params![sid], |r| {
+                        let msgs_str: String = r.get(3).unwrap_or_else(|_| "[]".to_string());
+                        let raw_msgs: Vec<Value> = serde_json::from_str(&msgs_str).unwrap_or_default();
+                        let pruned_msgs = prune_messages_for_rpc(&raw_msgs);
                         Ok(json!({
                             "id": r.get::<_, String>(0)?,
                             "title": r.get::<_, String>(1)?,
                             "model": r.get::<_, String>(2)?,
-                            "messages_json": r.get::<_, String>(3)?,
+                            "messages": pruned_msgs,
                             "is_pinned": r.get::<_, i64>(4)?,
                             "created_at": r.get::<_, i64>(5)?,
                             "updated_at": r.get::<_, i64>(6)?
@@ -695,10 +748,24 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         }
 
         "db_delete_session" => {
-            let sid = msg.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
-            let res = conn.execute("DELETE FROM sessions WHERE id = ?1", params![sid]);
+            let sid = msg.get("session_id").and_then(|v| v.as_str())
+                .or_else(|| msg.get("id").and_then(|v| v.as_str()))
+                .unwrap_or("");
+            let res = if sid.trim().is_empty() {
+                conn.execute("DELETE FROM sessions WHERE id = '' OR id IS NULL", [])
+            } else {
+                conn.execute("DELETE FROM sessions WHERE id = ?1", params![sid])
+            };
             match res {
-                Ok(_) => json!({ "status": "ok", "session_id": sid }),
+                Ok(count) => json!({ "status": "ok", "session_id": sid, "deleted_count": count }),
+                Err(e) => json!({ "status": "error", "error": e.to_string() }),
+            }
+        }
+
+        "db_clear_all" => {
+            let res = conn.execute("DELETE FROM sessions", []);
+            match res {
+                Ok(count) => json!({ "status": "ok", "cleared_count": count }),
                 Err(e) => json!({ "status": "error", "error": e.to_string() }),
             }
         }
