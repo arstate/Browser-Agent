@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="plugins/ponytail/ponytail.css">
   <link rel="stylesheet" href="plugins/kvcache/kvcache.css">
   <link rel="stylesheet" href="plugins/caveman/caveman.css">
+  <link rel="stylesheet" href="plugins/claude_fable/claude_fable.css">
 </head>
 <body class="options-body">
   <div class="options-app-shell">
@@ -162,7 +163,7 @@
 
       <!-- Sidebar Bottom: App Version (Frameless Clean Typography) -->
       <div class="sidebar-footer">
-        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.91</span>
+        <span class="sidebar-version-text" id="sidebar-app-version">v2.150.92</span>
       </div>
     </aside>
 
@@ -1578,43 +1579,48 @@
             </div>
           </div>
 
-          <!-- Plugin Card 4: Neural Memory Graph Expander -->
-          <div class="plugin-card bento-glass-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 250px; opacity: 0.85;">
+          <!-- Plugin Card 4: Claude Fable 5 Cognitive Distillation -->
+          <div class="plugin-card bento-glass-card plugin-card-fable" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 260px; transition: all 0.25s ease; box-shadow: 0 8px 28px rgba(0,0,0,0.35);">
             <div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                  <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(168, 85, 247, 0.15); color: #a855f7; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(168, 85, 247, 0.3);">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="3"/>
-                      <circle cx="19" cy="6" r="2"/>
-                      <circle cx="5" cy="6" r="2"/>
-                      <circle cx="19" cy="18" r="2"/>
-                      <circle cx="5" cy="18" r="2"/>
-                      <line x1="12" y1="9" x2="12" y2="15"/>
-                      <line x1="7" y1="7" x2="10" y2="10"/>
-                      <line x1="17" y1="7" x2="14" y2="10"/>
-                      <line x1="7" y1="17" x2="10" y2="14"/>
-                      <line x1="17" y1="17" x2="14" y2="14"/>
-                    </svg>
+                  <div style="width: 50px; height: 50px; border-radius: 16px; background: rgba(168, 85, 247, 0.1); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(168, 85, 247, 0.35); overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.3); backdrop-filter: blur(10px); flex-shrink: 0;">
+                    <img src="icons/plugins/claude_fable.png" width="38" height="38" alt="Claude Fable 5" style="object-fit: contain; display: block; border-radius: 10px;">
                   </div>
                   <div>
-                    <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin: 0;">Epistemic Graph Sync</h3>
-                    <span style="font-size: 11px; color: #c084fc; font-weight: 600;">Knowledge Graph Expander</span>
+                    <h3 style="font-size: 16.5px; font-weight: 700; color: #fff; margin: 0; letter-spacing: -0.2px;">Claude Fable 5</h3>
+                    <span style="font-size: 11px; color: #c084fc; font-weight: 600;">Cognitive &amp; Memory Distillation</span>
                   </div>
                 </div>
-                <span style="padding: 4px 10px; font-size: 10.5px; border-radius: 9999px; background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.2); color: #94a3b8; font-weight: 600;">Bawaan Inti</span>
+                
+                <label class="custom-pill-switch" title="Aktifkan / Nonaktifkan Plugin Claude Fable 5">
+                  <input type="checkbox" id="plugin-claude-fable-toggle" checked>
+                  <span class="pill-switch-track"></span>
+                </label>
               </div>
 
-              <p style="font-size: 12.5px; color: #94a3b8; line-height: 1.5; margin: 0;">
-                Secara otomatis mengekstrak relasi fakta semantik (Subject-Predicate-Object) ke dalam database graf SQLite untuk ingatan jangka panjang antar sesi.
+              <p style="font-size: 12.5px; color: #94a3b8; line-height: 1.55; margin: 0 0 14px 0;">
+                Distilasi arsitektur kognitif <b>Anthropic Mythos-tier</b>: Taksonomi memori modular (<code>/profile.md</code>, <code>[stated]</code>, <code>[[wiki-links]]</code>), <b>Horizon Test 30 hari</b>, dan adaptive reasoning effort.
               </p>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="plugin-glass-pill" style="background: rgba(168, 85, 247, 0.12); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">
+                  Mythos Reasoning
+                </span>
+                <span class="plugin-glass-pill" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+                  Horizon Test 30D
+                </span>
+                <span class="plugin-glass-pill" style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">
+                  Obsidian Taxonomy
+                </span>
+              </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px; margin-top: 4px;">
-              <span style="font-size: 11px; color: #64748b;">Terintegrasi dengan Persistent Brain</span>
-              <button type="button" class="btn-secondary" disabled style="padding: 7px 16px; border-radius: 9999px; font-size: 11.5px; font-weight: 600; opacity: 0.6; cursor: default;">
-                Active by Default
-              </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 14px; margin-top: 6px;">
+              <span id="plugin-claude-fable-status-text" style="font-size: 11.5px; color: #c084fc; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                ● Aktif (Balanced Tier)
+              </span>
+              <button type="button" class="btn-plugin-config" id="btn-config-claude-fable">Settings</button>
             </div>
           </div>
 
@@ -2387,6 +2393,105 @@
       </div>
     </div>
 
+    <!-- ======================================================== -->
+    <!-- MODAL: Plugin Claude Fable 5 Cognitive Distillation -->
+    <!-- ======================================================== -->
+    <div class="custom-modal-overlay" id="modal-claude-fable-config" style="display: none;">
+      <div class="custom-modal-dialog modal-wide" style="max-width: 740px;">
+        <div class="modal-header fable-modal-header">
+          <div class="modal-title-box">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.35); padding: 2px 8px; font-size: 10px; font-weight: 700; border-radius: 6px;">
+                MYTHOS TIER
+              </span>
+              <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #fff;">Claude Fable 5 Distillation Settings</h3>
+            </div>
+            <p style="margin: 0; font-size: 12px; color: #94a3b8;">Distilasi arsitektur kognitif Anthropic: Taksonomi Memori, Horizon Test 30 Hari &amp; Reasoning Effort Control</p>
+          </div>
+          <button type="button" class="btn-modal-close" id="btn-close-claude-fable-modal" title="Tutup Modal">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body-scroll" style="max-height: 65vh; overflow-y: auto; padding: 16px 4px 4px 4px;">
+          <!-- Mode Selector -->
+          <div style="margin-bottom: 18px;">
+            <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 8px;">
+              TINGKAT INTENSITAS DISTILASI (TIER):
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <button type="button" class="fable-mode-btn" data-mode="lite">
+                <b>Lite</b><br><span style="font-size: 11px; opacity: 0.8;">[stated] tag &amp; no fluff</span>
+              </button>
+              <button type="button" class="fable-mode-btn active" data-mode="balanced">
+                <b>Balanced (Default)</b><br><span style="font-size: 11px; opacity: 0.8;">Horizon Test + Effort</span>
+              </button>
+              <button type="button" class="fable-mode-btn" data-mode="mythos">
+                <b>Mythos Tier</b><br><span style="font-size: 11px; opacity: 0.8;">Multi-hop &amp; Artifacts</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Reasoning Effort Slider -->
+          <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 16px; padding: 14px 16px; margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label style="font-size: 12px; font-weight: 700; color: #f3e8ff;">
+                REASONING EFFORT (&lt;antml:reasoning_effort&gt;):
+              </label>
+              <span id="fable-effort-val" style="font-size: 13px; font-weight: 800; color: #c084fc; background: rgba(168, 85, 247, 0.2); padding: 2px 10px; border-radius: 9999px;">60</span>
+            </div>
+            <input type="range" id="fable-effort-slider" min="10" max="100" step="5" value="60" style="width: 100%; accent-color: #a855f7; cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; margin-top: 4px;">
+              <span>10 (Cepat/Rutin)</span>
+              <span>50 (Standar)</span>
+              <span>100 (Deep Multi-Hop)</span>
+            </div>
+          </div>
+
+          <!-- Directives Checklist -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px 16px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 11px;">
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+              <input type="checkbox" id="fable-opt-taxonomy" checked style="accent-color: #a855f7; width: 16px; height: 16px;">
+              <span><b>Epistemic Memory Taxonomy:</b> Gunakan taksonomi modular (<code>/profile.md</code>, <code>[stated]</code>, <code>[[wiki-links]]</code>).</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+              <input type="checkbox" id="fable-opt-horizon" checked style="accent-color: #a855f7; width: 16px; height: 16px;">
+              <span><b>Horizon Test 30 Hari:</b> Filter fakta sementara agar tidak mencemari ingatan jangka panjang.</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+              <input type="checkbox" id="fable-opt-dignity" checked style="accent-color: #a855f7; width: 16px; height: 16px;">
+              <span><b>High-Dignity &amp; Anti-Submissive:</b> Komunikasi berwibawa, zero-fluff, dan perbaiki error tanpa minta maaf berlebih.</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+              <input type="checkbox" id="fable-opt-memory-first" checked style="accent-color: #a855f7; width: 16px; height: 16px;">
+              <span><b>Check Memory First:</b> Cek memori Brain terlebih dahulu sebelum bertanya ulang kepada pengguna.</span>
+            </label>
+          </div>
+
+          <!-- Documentation Tabs & Viewer -->
+          <div style="margin-bottom: 14px;">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+              <button type="button" class="fable-doc-tab active" data-skill="claude-fable">🏛️ /claude-fable</button>
+              <button type="button" class="fable-doc-tab" data-skill="epistemic-memory">🧠 /epistemic-memory</button>
+              <button type="button" class="fable-doc-tab" data-skill="horizon-test">⏳ /horizon-test</button>
+              <button type="button" class="fable-doc-tab" data-skill="reasoning-effort">⚡ /reasoning-effort</button>
+              <button type="button" class="fable-doc-tab" data-skill="dignified-prose">👑 /dignified-prose</button>
+            </div>
+            <div class="fable-doc-viewer" id="fable-doc-viewer">
+              Memuat dokumentasi Claude Fable 5...
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; margin-top: 6px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn-modal-cancel" id="btn-cancel-claude-fable-modal" style="padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 600;">Batal</button>
+            <button type="button" class="btn-modal-save" id="btn-save-claude-fable-modal" style="padding: 8px 22px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(168, 85, 247, 0.4);">Simpan Pengaturan Claude Fable</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Save Toast -->
     <div class="save-toast" id="save-toast" style="display: none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2404,6 +2509,8 @@
   <script src="plugins/kvcache/kvcache_optimizer.js"></script>
   <script src="plugins/caveman/caveman.js"></script>
   <script src="plugins/caveman/caveman_optimizer.js"></script>
+  <script src="plugins/claude_fable/claude_fable.js"></script>
+  <script src="plugins/claude_fable/claude_fable_optimizer.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

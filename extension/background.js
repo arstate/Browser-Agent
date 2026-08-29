@@ -8,7 +8,8 @@ try {
     'core/goal_tracker.js',
     'plugins/ponytail/ponytail_optimizer.js',
     'plugins/kvcache/kvcache_optimizer.js',
-    'plugins/caveman/caveman_optimizer.js'
+    'plugins/caveman/caveman_optimizer.js',
+    'plugins/claude_fable/claude_fable_optimizer.js'
   );
 } catch (e) {
   console.warn("Background ServiceWorker importScripts notice:", e);
@@ -2535,6 +2536,11 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     const caveman = pluginSettings.caveman || { enabled: true, mode: 'terse' };
     if (caveman.enabled !== false) {
       systemInstruction += `• [PLUGIN: CAVEMAN (AKTIF - MODE: ${(caveman.mode || 'terse').toUpperCase()})]: "why use many token when few do trick". Jawab secara telegrafik padat, eliminasi kata pengantar/penutup basa-basi, namun pertahankan kode dan error 100% presisi byte-exact.\n`;
+    }
+
+    const claudeFable = pluginSettings.claude_fable || { enabled: true, mode: 'balanced', reasoningEffort: 60 };
+    if (claudeFable.enabled !== false && typeof getClaudeFableSystemDirective === 'function') {
+      systemInstruction += getClaudeFableSystemDirective(claudeFable);
     }
 
     // Inject Dynamic AI Cognitive / Thinking Level Directive (Low, Medium, High, Xhigh, Extreme)

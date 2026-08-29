@@ -1,0 +1,90 @@
+/**
+ * =========================================================================
+ * Browser Agent - Plugin: Claude Fable 5 Styles (Dark Luxury Mythos Theme)
+ * =========================================================================
+ */
+
+.plugin-card-fable {
+  background: linear-gradient(135deg, rgba(30, 20, 50, 0.4) 0%, rgba(15, 10, 30, 0.6) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.08);
+}
+
+.plugin-card-fable:hover {
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 8px 30px rgba(168, 85, 247, 0.15);
+}
+
+.plugin-card-fable .plugin-icon-glow {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, transparent 70%);
+}
+
+.fable-modal-header {
+  border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.fable-mode-btn {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fable-mode-btn:hover {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.3);
+  color: #f3e8ff;
+}
+
+.fable-mode-btn.active {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(147, 51, 234, 0.4) 100%);
+  border-color: #a855f7;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+}
+
+.fable-doc-tab {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fable-doc-tab:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fable-doc-tab.active {
+  color: #d8b4fe;
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.3);
+  font-weight: 600;
+}
+
+.fable-doc-viewer {
+  background: #090611;
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+
+.fable-doc-viewer h1, .fable-doc-viewer h2, .fable-doc-viewer h3 {
+  color: #f3e8ff;
+  margin-top: 0;
+  margin-bottom: 8px;
+}

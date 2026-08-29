@@ -733,6 +733,11 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
     prompt += `• [PLUGIN: CAVEMAN (AKTIF - MODE: ${cmMode})]: "why use many token when few do trick". Jawab secara telegrafik padat, eliminasi kata pengantar/penutup basa-basi, namun pertahankan kode dan error 100% presisi byte-exact.\n`;
   }
 
+  const claudeFable = cachedPluginSettings?.claude_fable || { enabled: true, mode: 'balanced', reasoningEffort: 60 };
+  if (claudeFable.enabled !== false && typeof getClaudeFableSystemDirective === 'function') {
+    prompt += getClaudeFableSystemDirective(claudeFable);
+  }
+
   // 7. Inject Dynamic AI Cognitive / Thinking Level Directive (Hacked Client-Side without API dependency)
   prompt += getThinkingDirective(currentThinkingLevel);
 
