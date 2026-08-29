@@ -108,11 +108,18 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.100`
+- **Versi Terkini:** `v2.150.101`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
   - `./restore.sh list`: Menampilkan seluruh daftar versi dan restore point yang tersedia.
   - `./restore.sh <VERSION_TAG>`: Rollback instan 1-klik ke versi stabil pilihan.
 - **Mandat Agent:** Selalu menyebutkan versi terbaru yang aktif di setiap balasan akhir.
+
+---
+
+## 🎨 7. Zero-Emoji Architecture & Vector SVG Asset Standard
+
+1. **Aturan Mutlak:** Seluruh antarmuka Pengaturan (`options.html`), Panel Samping (`sidepanel.html`), kartu Persistent Memory (`options.js`), modal dialog plugin (Ponytail, KV Cache, Caveman, Claude Fable), modul Connected Apps (Telegram, Google Workspace), dan generator Markdown **100% bebas dari emoji / emoticon Unicode**.
+2. **Dedicated SVG Library (`extension/icons/svg/`):** Semua simbol visual menggunakan Vector SVG murni dengan rendering tajam, responsif, dan konsisten dengan tema Dark Luxury Glassmorphism.
 

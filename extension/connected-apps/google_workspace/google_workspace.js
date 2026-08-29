@@ -214,9 +214,9 @@ function setupGoogleWorkspaceEventListeners() {
         if (typeof showSaveToast === 'function') {
           showSaveToast("Redirect URI berhasil disalin ke clipboard!");
         }
-        btnCopyUri.innerHTML = `<span>✔ Tersalin!</span>`;
+        btnCopyUri.innerHTML = `<span>Tersalin!</span>`;
         setTimeout(() => {
-          btnCopyUri.innerHTML = `<span>📋 Salin URI</span>`;
+          btnCopyUri.innerHTML = `<span>Salin URI</span>`;
         }, 2000);
       } catch (err) {
         prompt("Salin URI ini:", redirectUri);
@@ -296,7 +296,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal membuat dokumen: ${err.message}`);
       } finally {
         btnTestDoc.disabled = false;
-        btnTestDoc.innerHTML = `<span>📄 Buat Doc Uji Coba</span>`;
+        btnTestDoc.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg><span>Buat Doc Uji Coba</span>`;
       }
     });
   }
@@ -341,7 +341,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal menulis ke Google Sheet: ${err.message}`);
       } finally {
         btnTestSheet.disabled = false;
-        btnTestSheet.innerHTML = `<span>📊 Tulis ke Sheet</span>`;
+        btnTestSheet.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span>Tulis ke Sheet</span>`;
       }
     });
   }
@@ -362,7 +362,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal mengakses Google Drive: ${err.message}`);
       } finally {
         btnTestDrive.disabled = false;
-        btnTestDrive.innerHTML = `<span>📁 Cek File Drive</span>`;
+        btnTestDrive.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg><span>Cek File Drive</span>`;
       }
     });
   }
@@ -383,7 +383,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal web search: ${err.message}`);
       } finally {
         btnTestSearch.disabled = false;
-        btnTestSearch.innerHTML = `<span>🔍 Uji Web Search</span>`;
+        btnTestSearch.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Uji Web Search</span>`;
       }
     });
   }

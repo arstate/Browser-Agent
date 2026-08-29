@@ -934,11 +934,16 @@
               <span class="legend-item" data-filter="model"><span class="legend-dot" style="background: #818CF8;"></span> AI Models</span>
             </div>
             <div class="brain-graph-actions">
-              <button type="button" class="graph-btn graph-btn-pill" id="btn-graph-labels" title="Toggle Tampilkan Label (Smart / Semua)">🏷️ Label: Smart</button>
+              <button type="button" class="graph-btn graph-btn-pill" id="btn-graph-labels" title="Toggle Tampilkan Label (Smart / Semua)">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 3px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                <span>Label: Smart</span>
+              </button>
               <button type="button" class="graph-btn" id="btn-graph-zoom-in" title="Perbesar (Zoom In)">+</button>
               <button type="button" class="graph-btn" id="btn-graph-zoom-out" title="Perkecil (Zoom Out)">−</button>
               <button type="button" class="graph-btn" id="btn-graph-reset" title="Pusatkan Tampilan (Reset View)">⟲</button>
-              <button type="button" class="graph-btn" id="btn-graph-freeze" title="Bekukan / Jalankan Fisika">⏸</button>
+              <button type="button" class="graph-btn" id="btn-graph-freeze" title="Bekukan / Jalankan Fisika">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              </button>
               <button type="button" class="graph-btn graph-btn-pill graph-btn-fullscreen" id="btn-graph-fullscreen" title="Perluas ke Layar Penuh (Fullscreen Graph)">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
@@ -1512,16 +1517,20 @@
                   <!-- Authorized Redirect URI Display Box -->
                   <div style="margin-top: 20px; background: rgba(0,0,0,0.35); border: 1px solid rgba(66, 133, 244, 0.25); border-radius: 12px; padding: 12px 14px; text-align: left;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                      <span style="font-size: 11px; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.5px;">🔑 Authorized Redirect URI (Google Cloud Console):</span>
+                      <span style="font-size: 11px; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-1.5 1.5L16 7m-1.5 1.5L13 10m-1.5 1.5L10 13m-2-4 4-4a5.66 5.66 0 0 1 8 8l-4 4a5.66 5.66 0 0 1-8-8z"/><path d="M3 21l6-6"/></svg>
+                        <span>Authorized Redirect URI (Google Cloud Console):</span>
+                      </span>
                       <button type="button" id="btn-copy-google-redirect-uri" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 6px; background: rgba(66, 133, 244, 0.2); border: 1px solid rgba(66, 133, 244, 0.4); color: #93c5fd; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-                        <span>📋 Salin URI</span>
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                        <span>Salin URI</span>
                       </button>
                     </div>
                     <code id="google-detected-redirect-uri" style="display: block; font-family: monospace; font-size: 11px; color: #a5f3fc; background: rgba(255,255,255,0.04); padding: 6px 10px; border-radius: 8px; word-break: break-all; border: 1px solid rgba(255,255,255,0.06);">
                       Memuat Redirect URI...
                     </code>
                     <p style="font-size: 10.5px; color: #94a3b8; line-height: 1.4; margin: 6px 0 0 0;">
-                      💡 <b>Wajib:</b> Masukkan URI di atas ke dalam menu <i>"Authorized redirect URIs"</i> pada OAuth 2.0 Client ID di <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #60a5fa; text-decoration: underline;">Google Cloud Console</a> agar login diizinkan.
+                      <b>Wajib:</b> Masukkan URI di atas ke dalam menu <i>"Authorized redirect URIs"</i> pada OAuth 2.0 Client ID di <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #60a5fa; text-decoration: underline;">Google Cloud Console</a> agar login diizinkan.
                     </p>
                   </div>
                 </div>
@@ -2141,8 +2150,14 @@
 
         <!-- Navigation Tabs: Settings vs SKILL.md Docs -->
         <div class="ponytail-tabs-bar" style="margin-top: 14px;">
-          <button type="button" class="ponytail-tab-btn active" data-tab="settings">⚙️ Parameter &amp; Tools</button>
-          <button type="button" class="ponytail-tab-btn" data-tab="docs">📚 Dokumentasi SKILL.md</button>
+          <button type="button" class="ponytail-tab-btn active" data-tab="settings">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Parameter &amp; Tools</span>
+          </button>
+          <button type="button" class="ponytail-tab-btn" data-tab="docs">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+            <span>Dokumentasi SKILL.md</span>
+          </button>
         </div>
 
         <div class="modal-body-scroll" style="max-height: 65vh; overflow-y: auto; padding-right: 4px;">
@@ -2158,7 +2173,8 @@
                   <div class="ponytail-mode-card" data-mode="lite">
                     <input type="radio" name="ponytail_mode_radio" value="lite">
                     <div class="ponytail-mode-title">
-                      <span>🌱 Lite Mode</span>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12c0-2.76 1.12-5.26 2.93-7.07L12 2z"/></svg>
+                      <span>Lite Mode</span>
                     </div>
                     <div class="ponytail-mode-desc">
                       Bangun fitur yang diminta, berikan saran alternatif 1-baris tercepat.
@@ -2168,7 +2184,8 @@
                   <div class="ponytail-mode-card active" data-mode="full">
                     <input type="radio" name="ponytail_mode_radio" value="full" checked>
                     <div class="ponytail-mode-title">
-                      <span>⚡ Full (Default)</span>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                      <span>Full (Default)</span>
                     </div>
                     <div class="ponytail-mode-desc">
                       Terapkan Decision Ladder ketat. Stdlib &amp; native first. Diff paling ringkas.
@@ -2178,7 +2195,8 @@
                   <div class="ponytail-mode-card" data-mode="ultra">
                     <input type="radio" name="ponytail_mode_radio" value="ultra">
                     <div class="ponytail-mode-title">
-                      <span>🔥 Ultra Mode</span>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                      <span>Ultra Mode</span>
                     </div>
                     <div class="ponytail-mode-desc">
                       YAGNI ekstremis. Hapus sebelum tambah. Tantang spesifikasi berlebih.
@@ -2235,7 +2253,10 @@
               <!-- Tool & Skills Registry Showcase -->
               <div style="margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <span style="font-size: 11.5px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px;">🛠️ Tools &amp; Commands Ponytail Aktif:</span>
+                  <span style="font-size: 11.5px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <span>Tools &amp; Commands Ponytail Aktif:</span>
+                  </span>
                   <span style="font-size: 10px; color: #CEF128; background: rgba(206, 241, 40, 0.12); border: 1px solid rgba(206, 241, 40, 0.3); padding: 2px 8px; border-radius: 9999px; font-weight: 700;">6 Skills &amp; Tools Siap</span>
                 </div>
                 
@@ -2284,12 +2305,12 @@
           <!-- TAB 2: SKILL.MD DOCUMENTATION VIEWER -->
           <div id="ponytail-tab-section-docs" style="display: none;">
             <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
-              <button type="button" class="ponytail-skill-nav-btn active" data-skill="ponytail" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🐴 /ponytail</button>
-              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-review" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🔍 /ponytail-review</button>
-              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-audit" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">📋 /ponytail-audit</button>
-              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-debt" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">📝 /ponytail-debt</button>
-              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-gain" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">📊 /ponytail-gain</button>
-              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-help" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">❓ /ponytail-help</button>
+              <button type="button" class="ponytail-skill-nav-btn active" data-skill="ponytail" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/ponytail</button>
+              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-review" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/ponytail-review</button>
+              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-audit" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/ponytail-audit</button>
+              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-debt" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/ponytail-debt</button>
+              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-gain" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/ponytail-gain</button>
+              <button type="button" class="ponytail-skill-nav-btn" data-skill="ponytail-help" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/ponytail-help</button>
             </div>
 
             <div class="ponytail-code-box" id="ponytail-doc-preview-box">
@@ -2328,8 +2349,14 @@
 
         <!-- Navigation Tabs -->
         <div class="kvcache-tabs-bar" style="margin-top: 14px;">
-          <button type="button" class="kvcache-tab-btn active" data-tab="settings">⚡ Parameter &amp; Optimization</button>
-          <button type="button" class="kvcache-tab-btn" data-tab="docs">📚 Dokumentasi SKILL.md</button>
+          <button type="button" class="kvcache-tab-btn active" data-tab="settings">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Parameter &amp; Optimization</span>
+          </button>
+          <button type="button" class="kvcache-tab-btn" data-tab="docs">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+            <span>Dokumentasi SKILL.md</span>
+          </button>
         </div>
 
         <div class="modal-body-scroll" style="max-height: 65vh; overflow-y: auto; padding-right: 4px;">
@@ -2345,7 +2372,8 @@
                   <div class="kvcache-mode-card" data-mode="balanced">
                     <input type="radio" name="kvcache_mode_radio" value="balanced">
                     <div class="kvcache-mode-title">
-                      <span>⚖️ Balanced</span>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><line x1="12" y1="3" x2="12" y2="21"/><path d="M3 6h18"/><path d="M3 6l3 7h-6l3-7zm15 0l3 7h-6l3-7z"/></svg>
+                      <span>Balanced</span>
                     </div>
                     <div class="kvcache-mode-desc">
                       Isolasi waktu dinamis &amp; jaga kestabilan prefix dasar.
@@ -2355,7 +2383,8 @@
                   <div class="kvcache-mode-card active" data-mode="aggressive">
                     <input type="radio" name="kvcache_mode_radio" value="aggressive" checked>
                     <div class="kvcache-mode-title">
-                      <span>⚡ Aggressive (Default)</span>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                      <span>Aggressive (Default)</span>
                     </div>
                     <div class="kvcache-mode-desc">
                       Prefix Pinning total, tool sorting alfabetis, &amp; breakpoint eksplisit.
@@ -2365,7 +2394,8 @@
                   <div class="kvcache-mode-card" data-mode="strict">
                     <input type="radio" name="kvcache_mode_radio" value="strict">
                     <div class="kvcache-mode-title">
-                      <span>🔒 Strict Lock</span>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      <span>Strict Lock</span>
                     </div>
                     <div class="kvcache-mode-desc">
                       Byte-level determinism; blokir modifikasi acak di tengah riwayat.
@@ -2397,7 +2427,10 @@
               <!-- Tools Showcase Section -->
               <div style="margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <span style="font-size: 11.5px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px;">🛠️ Tools &amp; Commands KV Cache:</span>
+                  <span style="font-size: 11.5px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <span>Tools &amp; Commands KV Cache:</span>
+                  </span>
                   <span style="font-size: 10px; color: #38bdf8; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); padding: 2px 8px; border-radius: 9999px; font-weight: 700;">3 Tools Aktif</span>
                 </div>
                 
@@ -2430,9 +2463,9 @@
           <!-- TAB 2: SKILL.MD DOCUMENTATION VIEWER -->
           <div id="kvcache-tab-section-docs" style="display: none;">
             <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
-              <button type="button" class="kvcache-skill-nav-btn active" data-skill="kvcache" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">⚡ /kvcache</button>
-              <button type="button" class="kvcache-skill-nav-btn" data-skill="kvcache-audit" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🔍 /kvcache-audit</button>
-              <button type="button" class="kvcache-skill-nav-btn" data-skill="kvcache-meter" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">📊 /kvcache-meter</button>
+              <button type="button" class="kvcache-skill-nav-btn active" data-skill="kvcache" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/kvcache</button>
+              <button type="button" class="kvcache-skill-nav-btn" data-skill="kvcache-audit" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/kvcache-audit</button>
+              <button type="button" class="kvcache-skill-nav-btn" data-skill="kvcache-meter" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/kvcache-meter</button>
             </div>
 
             <div class="kvcache-code-box" id="kvcache-doc-preview-box">
@@ -2467,8 +2500,14 @@
 
         <!-- Navigation Tabs -->
         <div class="caveman-tabs-bar" style="margin-top: 14px;">
-          <button type="button" class="caveman-tab-btn active" data-tab="settings">🪨 Parameter &amp; Modes</button>
-          <button type="button" class="caveman-tab-btn" data-tab="docs">📚 Dokumentasi SKILL.md</button>
+          <button type="button" class="caveman-tab-btn active" data-tab="settings">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Parameter &amp; Modes</span>
+          </button>
+          <button type="button" class="caveman-tab-btn" data-tab="docs">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+            <span>Dokumentasi SKILL.md</span>
+          </button>
         </div>
 
         <div class="modal-body-scroll" style="max-height: 65vh; overflow-y: auto; padding-right: 4px;">
@@ -2484,7 +2523,8 @@
                   <div class="caveman-mode-card active" data-mode="terse">
                     <input type="radio" name="caveman_mode_radio" value="terse" checked>
                     <div class="caveman-mode-title">
-                      <span>💬 Terse (Default)</span>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      <span>Terse (Default)</span>
                     </div>
                     <div class="caveman-mode-desc">
                       Lugas &amp; to-the-point, buang basa-basi sopan santun.
@@ -2494,7 +2534,8 @@
                   <div class="caveman-mode-card" data-mode="ultra">
                     <input type="radio" name="caveman_mode_radio" value="ultra">
                     <div class="caveman-mode-title">
-                      <span>🔥 Ultra-Caveman</span>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                      <span>Ultra-Caveman</span>
                     </div>
                     <div class="caveman-mode-desc">
                       Gaya telegram ekstrem 1-2 baris, hapus kata hubung.
@@ -2504,7 +2545,8 @@
                   <div class="caveman-mode-card" data-mode="code-only">
                     <input type="radio" name="caveman_mode_radio" value="code-only">
                     <div class="caveman-mode-title">
-                      <span>💻 Code-Only</span>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                      <span>Code-Only</span>
                     </div>
                     <div class="caveman-mode-desc">
                       Langsung hasil kode tanpa penjelasan pengantar.
@@ -2536,7 +2578,10 @@
               <!-- Tools Showcase Section -->
               <div style="margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <span style="font-size: 11.5px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px;">🛠️ Tools &amp; Commands Caveman:</span>
+                  <span style="font-size: 11.5px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <span>Tools &amp; Commands Caveman:</span>
+                  </span>
                   <span style="font-size: 10px; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 8px; border-radius: 9999px; font-weight: 700;">7 Skills Tersedia</span>
                 </div>
                 
@@ -2585,13 +2630,13 @@
           <!-- TAB 2: SKILL.MD DOCUMENTATION VIEWER -->
           <div id="caveman-tab-section-docs" style="display: none;">
             <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
-              <button type="button" class="caveman-skill-nav-btn active" data-skill="caveman" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🪨 /caveman</button>
-              <button type="button" class="caveman-skill-nav-btn" data-skill="investigate-first" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🔍 /investigate-first</button>
-              <button type="button" class="caveman-skill-nav-btn" data-skill="surgical-patch" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🩹 /surgical-patch</button>
-              <button type="button" class="caveman-skill-nav-btn" data-skill="safe-refactor" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🛡️ /safe-refactor</button>
-              <button type="button" class="caveman-skill-nav-btn" data-skill="verify-and-stop" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🛑 /verify-and-stop</button>
-              <button type="button" class="caveman-skill-nav-btn" data-skill="lean-build" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🏗️ /lean-build</button>
-              <button type="button" class="caveman-skill-nav-btn" data-skill="migration" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">🔄 /migration</button>
+              <button type="button" class="caveman-skill-nav-btn active" data-skill="caveman" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/caveman</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="investigate-first" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/investigate-first</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="surgical-patch" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/surgical-patch</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="safe-refactor" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/safe-refactor</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="verify-and-stop" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/verify-and-stop</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="lean-build" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/lean-build</button>
+              <button type="button" class="caveman-skill-nav-btn" data-skill="migration" style="padding: 5px 12px; font-size: 11px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; cursor: pointer;">/migration</button>
             </div>
 
             <div class="caveman-code-box" id="caveman-doc-preview-box">

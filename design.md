@@ -136,5 +136,37 @@ Standar visual kartu preferensi antarmuka pada view **Tampilan & UI** (`#tab-vie
 - **Height & Spacing**: `height: 52px; min-height: 52px; padding: 0 22px; margin-bottom: 0;`.
 - **Surface**: `background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.07); backdrop-filter: blur(14px);`.
 - **Interactive Hover**: `background: rgba(255, 255, 255, 0.065); border-color: rgba(255, 255, 255, 0.14); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); transform: translateY(-1px);`.
-- **Typography (`.ui-pref-label`)**: `font-size: 13.5px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.01em; line-height: 1; display: inline-flex; align-items: center;`.
+## 5. Zero-Emoji Mandate & Vector SVG Asset Architecture
 
+### A. Aturan Baku Desain (Zero-Emoji Policy)
+- **Haram Emoticon/Emoji Unicode**: Seluruh komponen antarmuka pengguna (UI), modal dialog, kartu metrik, badge, tombol kontrol, generator markdown, template preset, dan notifikasi sistem **DILARANG KERAS** menggunakan emoji Unicode (`🧠`, `🤖`, `⚡`, `⚙️`, `📚`, `⚖️`, `🔒`, `🌱`, `🔥`, `🪨`, `💬`, `💻`, `🛠️`, `🎯`, `🌐`, `📖`, `🛡️`, dll.). Penggunaan emoticon dinilai tidak profesional dan merusak estetika desain modern Dark Luxury.
+- **Standar Grafis Vector SVG**: Setiap representasi grafis, icon penanda tipe data, dan tombol aksi wajib menggunakan **Vector SVG murni** (inline SVG atau file terisolasi di folder `extension/icons/svg/`).
+
+### B. Dedicated Asset Directory (`extension/icons/svg/`)
+Aset vector SVG disimpan secara modular dan terstruktur rapi:
+- `brain.svg`: Simbol representasi Memori Utama / Obsidian Graph.
+- `sparkle.svg`: Simbol AI / Autonomous Reasoning.
+- `robot.svg`: Simbol Specialist & Autonomous Agents.
+- `user.svg`: Simbol User Experience / Persona.
+- `book.svg`: Simbol Training Corpus / Knowledge Base.
+- `shield.svg`: Simbol Anti-Patterns / Guardrails.
+- `bolt.svg`: Simbol Skills & Procedural Actions.
+- `target.svg`: Simbol Goal Checklist Matrix & Milestone.
+- `globe.svg`: Simbol Web Search & Browser Navigation.
+- `file_doc.svg`: Simbol Dokumen / Google Docs.
+- `file_sheet.svg`: Simbol Spreadsheet / Google Sheets.
+- `folder.svg`: Simbol Direktori & Manajemen Berkas Lokal.
+- `search.svg`: Simbol Riset & Filter Pencarian.
+
+### C. Standard SVG Styling & Alignment
+Semua icon SVG diintegrasikan dengan standar CSS:
+```css
+.ui-svg-icon {
+  vertical-align: -1px;
+  margin-right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+```

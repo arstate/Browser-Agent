@@ -768,7 +768,7 @@ async function exportAllDatabase() {
 
       setAutoSaveStatus('saved');
       const destInfo = dbRes.saved_file_path ? ` (Tersimpan di ${dbRes.saved_file_path})` : '';
-      showToast(`✅ Seluruh Database SQLite, Skills, Memori, Gambar & Screenshot (${sizeMb} MB) berhasil diekspor!${destInfo}`);
+      showToast(`Seluruh Database SQLite, Skills, Memori, Gambar & Screenshot (${sizeMb} MB) berhasil diekspor!${destInfo}`);
       return;
     } else {
       throw new Error(dbRes?.error || "Gagal membuat tar.gz backup");
@@ -923,7 +923,7 @@ async function importAllDatabase(file) {
             updateBadges();
 
             setAutoSaveStatus('saved');
-            showToast(`✅ Sukses! ${res.extracted_count || 'Semua'} file database, sesi chat, skills, memori, screenshot & gambar AI berhasil dipulihkan!`);
+            showToast(`Sukses! ${res.extracted_count || 'Semua'} file database, sesi chat, skills, memori, screenshot & gambar AI berhasil dipulihkan!`);
           } else {
             throw new Error(res?.error || "Gagal mengekstrak arsip tar.gz");
           }
@@ -1090,17 +1090,17 @@ const MASTER_AGENT = {
   ],
   is_boss: true,
   is_default: true,
-  content: `# 👑 MASTER AGENT (SUPREME ORCHESTRATOR & SYSTEM COORDINATOR)
+  content: `# MASTER AGENT (SUPREME ORCHESTRATOR & SYSTEM COORDINATOR)
 
 Anda adalah **Master Agent**, direktur utama dan koordinator tertinggi dari seluruh sub-agent AI dalam sistem ini.
 
-## 🎯 1. PERAN & TANGGUNG JAWAB UTAMA:
+## 1. PERAN & TANGGUNG JAWAB UTAMA:
 1. **Frontline Communicator**: Anda adalah pihak yang berkomunikasi langsung dengan pengguna secara profesional, cerdas, sigap, dan solutif.
 2. **Task Delegation & Swarm Command**: 
    - Analisis prompt pengguna dan tentukan sub-agent spesialis yang harus bekerja:
-     - 🔍 **Deep Web Researcher**: Ditugaskan mencari jurnal, riset data, scraping web, dan menemukan tautan unduhan.
-     - 💻 **Coding & System Engineer**: Ditugaskan mengeksekusi terminal command (curl, wget, python, file operations) dan menyimpan berkas ke lokal PC ($HOME/Downloads/).
-     - 🌐 **General Browser Assistant**: Ditugaskan mengontrol browser, mengisi formulir, memutar video/media, dan mengelola tab.
+     - **Deep Web Researcher**: Ditugaskan mencari jurnal, riset data, scraping web, dan menemukan tautan unduhan.
+     - **Coding & System Engineer**: Ditugaskan mengeksekusi terminal command (curl, wget, python, file operations) dan menyimpan berkas ke lokal PC ($HOME/Downloads/).
+     - **General Browser Assistant**: Ditugaskan mengontrol browser, mengisi formulir, memutar video/media, dan mengelola tab.
 3. **Strict Quality Assurance & Audit**:
    - Setelah sub-agent mengeksekusi tools, **Master Agent WAJIB mengaudit dan memeriksa hasil kerja mereka**:
      - Apakah sub-agent berhasil mengunduh file yang diminta?
@@ -1108,9 +1108,9 @@ Anda adalah **Master Agent**, direktur utama dan koordinator tertinggi dari selu
      - Jika sub-agent berhenti sebelum selesai, malas, atau menghasilkan teks kosong, **Master Agent WAJIB mengevaluasi dan mengambil alih tindakan untuk menyelesaikannya sampai tuntas!**
 4. **Final Comprehensive Delivery**:
    - Master Agent menyajikan laporan akhir yang lengkap, terstruktur rapi, dan mudah dipahami dalam format Markdown:
-     - 📊 Rangkuman dan jumlah hasil yang ditemukan/dikerjakan.
-     - 📄 Daftar judul, poin analisis penting, dan temuan utama.
-     - 📁 Path lokasi file di PC lokal secara presisi (misal: \`/home/arya/Downloads/<nama_file>.pdf\`) beserta petunjuk cara membukanya.
+     - Rangkuman dan jumlah hasil yang ditemukan/dikerjakan.
+     - Daftar judul, poin analisis penting, dan temuan utama.
+     - Path lokasi file di PC lokal secara presisi (misal: \`/home/arya/Downloads/<nama_file>.pdf\`) beserta petunjuk cara membukanya.
 
 DILARANG KERAS memberikan balasan singkat tanpa hasil. Pastikan seluruh pekerjaan sub-agent telah selesai 100% sebelum melapor ke pengguna!`
 };
@@ -1184,7 +1184,7 @@ const DEFAULT_AGENTS = [
     ],
     memories: ["mem_user_guidelines", "mem_response_terse"],
     is_default: false,
-    content: `# 🌐 GENERAL BROWSER ASSISTANT & CONTROL (EXPERT BROWSER WORKER)
+    content: `# GENERAL BROWSER ASSISTANT & CONTROL (EXPERT BROWSER WORKER)
 
 You are General Browser Assistant & Control working under Master Agent.
 You specialize in controlling the web browser with 100% precision and handling slow networks/rendering delays.
@@ -1270,7 +1270,7 @@ const DEFAULT_SKILLS = [
     "id": "skill_find_alternatives",
     "name": "Find Alternatives",
     "description": "Find alternative products to something the user is looking at or considering. Searches across retailers and review sites, compares options, and delivers a ranked HTML report with ratings, pricing, and direct links. Use when the user asks for alternatives, similar products, or \"something like this but...\"",
-    "content": "# Find Alternatives\n\nSearch for alternative products across retailers and review sites, save research data incrementally to disk, rank the top 5 alternatives on a 1–5 scale, and deliver a clean HTML comparison report with direct product links.\n\n## When to Apply\n\nActivate when the user:\n\n- Asks for alternatives to a product they're viewing or considering\n- Says \"something like this but cheaper / better / different\"\n- Wants to explore options before buying\n- Asks \"what else is out there\" for a product category\n\n## Workflow\n\n### Phase 1 — Understand the Product\n\n1. **Identify the reference product.** Use `get_active_page` and `get_page_content` to understand what the user is currently looking at — product name, brand, price, key features, category.\n2. **Confirm with the user:**\n   - **Price range** — same range, cheaper, or open budget? If unclear, default to ±30% of the reference product's price.\n   - **Key criteria** — what matters most? (e.g., price, quality, brand, specific features)\n   - **Any exclusions** — brands or stores to skip\n3. **Create output directory.** Use `evaluate_script` to create in your working directory:\n   ```\n   alternatives-<product-slug>/\n   ├── raw/              ← per-source research data\n   ├── findings.md       ← running notes and rankings\n   └── report.html       ← final HTML report\n   ```\n\n### Phase 2 — Research Alternatives\n\n| Step | Tool | Detail |\n|------|------|--------|\n| Open hidden window | `create_hidden_window` | Dedicated research workspace |\n| Search in parallel | `new_hidden_page` | Open up to **10 tabs** concurrently across search targets |\n\n**Search targets** (adapt to product category):\n\n| Tab | Target | Query |\n|-----|--------|-------|\n| 1 | Google Shopping | `{product category} alternatives under ${budget}` |\n| 2 | Google Search | `best {product category} alternatives {year} reddit` |\n| 3 | Google Search | `{product category} vs comparison {year}` |\n| 4 | Amazon | `{product category}` filtered to price range |\n| 5 | Walmart | `{product category}` in price range |\n| 6 | Best Buy / category retailer | `{product category}` |\n| 7–10 | Review sites, Reddit threads, or niche retailers relevant to the category |\n\nFor **each tab**:\n\n| Step | Tool | Detail |\n|------|------|--------|\n| Navigate | `navigate_page` | Go to the search URL |\n| Read results | `get_page_content` | Extract search results as markdown |\n| Visit promising results | `navigate_page` | Click through to individual product pages and review articles |\n| Extract data | `get_page_content` | Pull product details — name, price, features, ratings, reviews |\n| **Save immediately** | `evaluate_script` | Write to `raw/{n}-{source-slug}.json` (see format below) |\n| Close tab | `close_page` | Free the tab after saving |\n\n#### Raw Data Format (`raw/{n}-{source-slug}.json`)\n\n```json\n{\n  \"source\": \"Amazon\",\n  \"source_url\": \"https://www.amazon.com/...\",\n  \"products\": [\n    {\n      \"name\": \"Product Name\",\n      \"brand\": \"Brand\",\n      \"product_url\": \"https://...\",\n      \"price\": 149.99,\n      \"currency\": \"USD\",\n      \"rating\": \"4.3/5\",\n      \"review_count\": 1250,\n      \"key_features\": [\"feature 1\", \"feature 2\"],\n      \"availability\": \"In Stock\",\n      \"image_url\": \"https://...\"\n    }\n  ],\n  \"extracted_at\": \"2025-03-11T10:30:00Z\"\n}\n```\n\n### Phase 3 — Rank & Synthesize\n\nAfter all sources are saved:\n\n1. **Read each raw file** from `raw/` using `evaluate_script`.\n2. **Deduplicate** — the same product may appear across multiple retailers. Group by product, keep the best price.\n3. **Select the top 5 alternatives** based on:\n   - Price relative to budget\n   - User ratings and review volume\n   - Feature match to the user's criteria\n   - Availability\n4. **Rate each alternative 1–5** on a composite scale:\n\n| Rating | Meaning |\n|--------|---------|\n| ⭐⭐⭐⭐⭐ 5 | Excellent match — great price, high ratings, strong features |\n| ⭐⭐⭐⭐ 4 | Very good — minor trade-offs |\n| ⭐⭐⭐ 3 | Decent — good in some areas, weaker in others |\n| ⭐⭐ 2 | Fair — notable compromises |\n| ⭐ 1 | Marginal — only worth considering for a specific reason |\n\n5. **Write `findings.md`** with the full ranking, reasoning, and source references:\n\n```markdown\n# Alternatives for: {Reference Product}\n\n**Reference price:** $X\n**Budget range:** $X – $Y\n**Date:** {current date}\n\n## Top 5 Alternatives\n\n### 1. {Product Name} — ⭐⭐⭐⭐⭐ (5/5)\n- **Price:** $X at {Retailer}\n- **Why:** {1–2 sentence justification}\n- **Link:** {product URL}\n- _Source: raw/{n}-{slug}.json_\n\n### 2. {Product Name} — ⭐⭐⭐⭐ (4/5)\n...\n\n## Comparison vs Reference\n\n| Feature | Reference | Alt 1 | Alt 2 | Alt 3 | Alt 4 | Alt 5 |\n|---------|-----------|-------|-------|-------|-------|-------|\n| Price   | $X        | $X    | $X    | $X    | $X    | $X    |\n| Rating  | 4.2/5     | 4.5/5 | 4.3/5 | 4.1/5 | 3.9/5 | 4.0/5 |\n```\n\n### Phase 4 — HTML Report\n\nGenerate a self-contained `report.html` in the output directory:\n\n| Requirement | Detail |\n|-------------|--------|\n| **Theme** | Light background (`#ffffff`), clean sans-serif typography, generous whitespace |\n| **Header** | \"Alternatives for: {Product Name}\", date, budget range |\n| **Reference product card** | Show the original product with its price, rating, and link as the baseline |\n| **Top 5 cards** | Each alternative as a card showing: rank, name, rating (star visualization), price, key features, and a clickable \"View Product\" link to the actual product page |\n| **Comparison table** | Side-by-side table with the reference product and all 5 alternatives — price, rating, key features, pros/cons |\n| **Rating explanation** | Brief note on how the 1–5 rating was determined |\n| **Product links** | Every product name and \"View Product\" button must be a clickable link to the actual product URL |\n| **Source references** | Footer section listing all sources consulted with links |\n| **Self-contained** | All styles in a style block — no external CSS or JS |\n| **Responsive** | Readable on desktop and mobile |\n| **Footer** | \"Generated by BrowserOS Find Alternatives\" with date |\n\nUse `evaluate_script` to write the HTML file.\n\n### Phase 5 — Open & Notify\n\n| Step | Tool | Detail |\n|------|------|--------|\n| Close hidden window | `close_window` | Clean up the research workspace |\n| Open report | `new_page` | Open `file://{path}/report.html` in the user's active window |\n| Notify user | — | Summarize the top pick, mention the report path, and highlight any standout findings |\n\n## Tool Reference\n\n| Category | Tools Used |\n|----------|-----------|\n| Page info | `get_active_page` |\n| Window management | `create_hidden_window`, `close_window` |\n| Tab management | `new_hidden_page`, `close_page`, `new_page` |\n| Navigation | `navigate_page` |\n| Content extraction | `get_page_content` |\n| Data & file I/O | `evaluate_script` |\n\n## Tips\n\n- **Save after every source.** Never accumulate all research data in memory.\n- **10 tabs max** at a time. Batch if there are more sources.\n- **Deduplicate across retailers** — the same product on Amazon and Walmart should appear once with the best price noted.\n- If the reference product is niche, broaden the search to the general category rather than exact alternatives.\n- Include at least one budget option and one premium option to give the user a range.\n- If a product has very few reviews (under 50), note the low confidence in the rating."
+    "content": "# Find Alternatives\n\nSearch for alternative products across retailers and review sites, save research data incrementally to disk, rank the top 5 alternatives on a 1–5 scale, and deliver a clean HTML comparison report with direct product links.\n\n## When to Apply\n\nActivate when the user:\n\n- Asks for alternatives to a product they're viewing or considering\n- Says \"something like this but cheaper / better / different\"\n- Wants to explore options before buying\n- Asks \"what else is out there\" for a product category\n\n## Workflow\n\n### Phase 1 — Understand the Product\n\n1. **Identify the reference product.** Use `get_active_page` and `get_page_content` to understand what the user is currently looking at — product name, brand, price, key features, category.\n2. **Confirm with the user:**\n   - **Price range** — same range, cheaper, or open budget? If unclear, default to ±30% of the reference product's price.\n   - **Key criteria** — what matters most? (e.g., price, quality, brand, specific features)\n   - **Any exclusions** — brands or stores to skip\n3. **Create output directory.** Use `evaluate_script` to create in your working directory:\n   ```\n   alternatives-<product-slug>/\n   ├── raw/              ← per-source research data\n   ├── findings.md       ← running notes and rankings\n   └── report.html       ← final HTML report\n   ```\n\n### Phase 2 — Research Alternatives\n\n| Step | Tool | Detail |\n|------|------|--------|\n| Open hidden window | `create_hidden_window` | Dedicated research workspace |\n| Search in parallel | `new_hidden_page` | Open up to **10 tabs** concurrently across search targets |\n\n**Search targets** (adapt to product category):\n\n| Tab | Target | Query |\n|-----|--------|-------|\n| 1 | Google Shopping | `{product category} alternatives under ${budget}` |\n| 2 | Google Search | `best {product category} alternatives {year} reddit` |\n| 3 | Google Search | `{product category} vs comparison {year}` |\n| 4 | Amazon | `{product category}` filtered to price range |\n| 5 | Walmart | `{product category}` in price range |\n| 6 | Best Buy / category retailer | `{product category}` |\n| 7–10 | Review sites, Reddit threads, or niche retailers relevant to the category |\n\nFor **each tab**:\n\n| Step | Tool | Detail |\n|------|------|--------|\n| Navigate | `navigate_page` | Go to the search URL |\n| Read results | `get_page_content` | Extract search results as markdown |\n| Visit promising results | `navigate_page` | Click through to individual product pages and review articles |\n| Extract data | `get_page_content` | Pull product details — name, price, features, ratings, reviews |\n| **Save immediately** | `evaluate_script` | Write to `raw/{n}-{source-slug}.json` (see format below) |\n| Close tab | `close_page` | Free the tab after saving |\n\n#### Raw Data Format (`raw/{n}-{source-slug}.json`)\n\n```json\n{\n  \"source\": \"Amazon\",\n  \"source_url\": \"https://www.amazon.com/...\",\n  \"products\": [\n    {\n      \"name\": \"Product Name\",\n      \"brand\": \"Brand\",\n      \"product_url\": \"https://...\",\n      \"price\": 149.99,\n      \"currency\": \"USD\",\n      \"rating\": \"4.3/5\",\n      \"review_count\": 1250,\n      \"key_features\": [\"feature 1\", \"feature 2\"],\n      \"availability\": \"In Stock\",\n      \"image_url\": \"https://...\"\n    }\n  ],\n  \"extracted_at\": \"2025-03-11T10:30:00Z\"\n}\n```\n\n### Phase 3 — Rank & Synthesize\n\nAfter all sources are saved:\n\n1. **Read each raw file** from `raw/` using `evaluate_script`.\n2. **Deduplicate** — the same product may appear across multiple retailers. Group by product, keep the best price.\n3. **Select the top 5 alternatives** based on:\n   - Price relative to budget\n   - User ratings and review volume\n   - Feature match to the user's criteria\n   - Availability\n4. **Rate each alternative 1–5** on a composite scale:\n\n| Rating | Meaning |\n|--------|---------|\n| [5/5] Score 5 | Excellent match — great price, high ratings, strong features |\n| [4/5] Score 4 | Very good — minor trade-offs |\n| [3/5] Score 3 | Decent — good in some areas, weaker in others |\n| [2/5] Score 2 | Fair — notable compromises |\n| [1/5] Score 1 | Marginal — only worth considering for a specific reason |\n\n5. **Write `findings.md`** with the full ranking, reasoning, and source references:\n\n```markdown\n# Alternatives for: {Reference Product}\n\n**Reference price:** $X\n**Budget range:** $X – $Y\n**Date:** {current date}\n\n## Top 5 Alternatives\n\n### 1. {Product Name} — [5/5] (5/5)\n- **Price:** $X at {Retailer}\n- **Why:** {1–2 sentence justification}\n- **Link:** {product URL}\n- _Source: raw/{n}-{slug}.json_\n\n### 2. {Product Name} — [4/5] (4/5)\n...\n\n## Comparison vs Reference\n\n| Feature | Reference | Alt 1 | Alt 2 | Alt 3 | Alt 4 | Alt 5 |\n|---------|-----------|-------|-------|-------|-------|-------|\n| Price   | $X        | $X    | $X    | $X    | $X    | $X    |\n| Rating  | 4.2/5     | 4.5/5 | 4.3/5 | 4.1/5 | 3.9/5 | 4.0/5 |\n```\n\n### Phase 4 — HTML Report\n\nGenerate a self-contained `report.html` in the output directory:\n\n| Requirement | Detail |\n|-------------|--------|\n| **Theme** | Light background (`#ffffff`), clean sans-serif typography, generous whitespace |\n| **Header** | \"Alternatives for: {Product Name}\", date, budget range |\n| **Reference product card** | Show the original product with its price, rating, and link as the baseline |\n| **Top 5 cards** | Each alternative as a card showing: rank, name, rating (star visualization), price, key features, and a clickable \"View Product\" link to the actual product page |\n| **Comparison table** | Side-by-side table with the reference product and all 5 alternatives — price, rating, key features, pros/cons |\n| **Rating explanation** | Brief note on how the 1–5 rating was determined |\n| **Product links** | Every product name and \"View Product\" button must be a clickable link to the actual product URL |\n| **Source references** | Footer section listing all sources consulted with links |\n| **Self-contained** | All styles in a style block — no external CSS or JS |\n| **Responsive** | Readable on desktop and mobile |\n| **Footer** | \"Generated by BrowserOS Find Alternatives\" with date |\n\nUse `evaluate_script` to write the HTML file.\n\n### Phase 5 — Open & Notify\n\n| Step | Tool | Detail |\n|------|------|--------|\n| Close hidden window | `close_window` | Clean up the research workspace |\n| Open report | `new_page` | Open `file://{path}/report.html` in the user's active window |\n| Notify user | — | Summarize the top pick, mention the report path, and highlight any standout findings |\n\n## Tool Reference\n\n| Category | Tools Used |\n|----------|-----------|\n| Page info | `get_active_page` |\n| Window management | `create_hidden_window`, `close_window` |\n| Tab management | `new_hidden_page`, `close_page`, `new_page` |\n| Navigation | `navigate_page` |\n| Content extraction | `get_page_content` |\n| Data & file I/O | `evaluate_script` |\n\n## Tips\n\n- **Save after every source.** Never accumulate all research data in memory.\n- **10 tabs max** at a time. Batch if there are more sources.\n- **Deduplicate across retailers** — the same product on Amazon and Walmart should appear once with the best price noted.\n- If the reference product is niche, broaden the search to the general category rather than exact alternatives.\n- Include at least one budget option and one premium option to give the user a range.\n- If a product has very few reviews (under 50), note the low confidence in the rating."
   },
   {
     "id": "skill_save_page",
@@ -1288,7 +1288,7 @@ const DEFAULT_SKILLS = [
     "id": "skill_read_later",
     "name": "Read Later",
     "description": "Bookmark the current page to a \"Read Later\" folder and save a PDF copy for offline reading. Use when the user wants to save a page for later, bookmark it for reading, or keep an offline copy.",
-    "content": "# Read Later\n\nQuick-save the current page: bookmark it into a dedicated \"📚 Read Later\" folder and download a PDF copy for offline reading.\n\n## When to Apply\n\nActivate when the user asks to save a page for later, read it later, bookmark something to come back to, or keep an offline copy of an article.\n\n## Workflow\n\n| Step | Tool | Detail |\n|------|------|--------|\n| Get current page | `get_active_page` | Identify the page URL and title |\n| Check for folder | `get_bookmarks` | Look for an existing folder named \"📚 Read Later\" in the bookmark bar |\n| Create folder (if needed) | `create_bookmark` | If the folder doesn't exist, create \"📚 Read Later\" in the bookmark bar |\n| Add bookmark | `create_bookmark` | Save the current page URL and title into the \"📚 Read Later\" folder |\n| Save PDF | `save_pdf` | Download the full page as a PDF to the user's default downloads directory |\n| Notify user | — | Tell the user the page has been saved with the bookmark location and PDF file path |\n\n## Notification Format\n\n```\nSaved to 📚 Read Later\nTitle: <page title>\nURL: <page url>\nPDF: <download path>\n```\n\n## Tool Reference\n\n| Category | Tools Used |\n|----------|-----------|\n| Page info | `get_active_page` |\n| Bookmarks | `get_bookmarks`, `create_bookmark` |\n| Export | `save_pdf` |\n\n## Tips\n\n- Always check if \"📚 Read Later\" already exists before creating it — avoid duplicate folders.\n- If the page title is empty or generic, use the domain + path as the bookmark title.\n- The PDF captures the page as-is, including the current scroll position and expanded sections."
+    "content": "# Read Later\n\nQuick-save the current page: bookmark it into a dedicated \"Read Later\" folder and download a PDF copy for offline reading.\n\n## When to Apply\n\nActivate when the user asks to save a page for later, read it later, bookmark something to come back to, or keep an offline copy of an article.\n\n## Workflow\n\n| Step | Tool | Detail |\n|------|------|--------|\n| Get current page | `get_active_page` | Identify the page URL and title |\n| Check for folder | `get_bookmarks` | Look for an existing folder named \"Read Later\" in the bookmark bar |\n| Create folder (if needed) | `create_bookmark` | If the folder doesn't exist, create \"Read Later\" in the bookmark bar |\n| Add bookmark | `create_bookmark` | Save the current page URL and title into the \"Read Later\" folder |\n| Save PDF | `save_pdf` | Download the full page as a PDF to the user's default downloads directory |\n| Notify user | — | Tell the user the page has been saved with the bookmark location and PDF file path |\n\n## Notification Format\n\n```\nSaved to Read Later\nTitle: <page title>\nURL: <page url>\nPDF: <download path>\n```\n\n## Tool Reference\n\n| Category | Tools Used |\n|----------|-----------|\n| Page info | `get_active_page` |\n| Bookmarks | `get_bookmarks`, `create_bookmark` |\n| Export | `save_pdf` |\n\n## Tips\n\n- Always check if \"Read Later\" already exists before creating it — avoid duplicate folders.\n- If the page title is empty or generic, use the domain + path as the bookmark title.\n- The PDF captures the page as-is, including the current scroll position and expanded sections."
   },
   {
     "id": "skill_manage_bookmarks",
@@ -1306,7 +1306,7 @@ const DEFAULT_SKILLS = [
     "id": "ask_internal",
     "name": "BrowserOS Internal Architecture (ask-internal)",
     "description": "Panduan arsitektur internal BrowserOS, inspeksi submodule .internal-docs/, Electron lifecycle, release packaging, dan VM OpenClaw",
-    "content": "# 🏗️ SOP BrowserOS Internal Architecture (ask-internal)\n\n## 1. Ruang Lingkup Topik:\n- Electron Main/Preload/Renderer lifecycle & context isolation.\n- Native Messaging host stdio communication protocol (length-prefixed JSON).\n- Submodule .internal-docs/ untuk ADR dan catatan arsitektur rahasia.\n- Release signing (macOS Notarization, Windows EV Certificate, Linux AppImage).\n- OpenClaw VM isolation & snapshotting.\n\n## 2. Aturan Eksekusi:\n1. Periksa folder .internal-docs/ terlebih dahulu menggunakan local_list_dir / local_read_file.\n2. Telusuri codebase jika dokumentasi belum mencukupi.\n3. Wajib menyertakan kutipan path berkas dan nomor baris presisi (file.ts:line).\n4. Jalankan perintah terminal secara bertahap (per-command review) via local_run_command."
+    "content": "# SOP BrowserOS Internal Architecture (ask-internal)\n\n## 1. Ruang Lingkup Topik:\n- Electron Main/Preload/Renderer lifecycle & context isolation.\n- Native Messaging host stdio communication protocol (length-prefixed JSON).\n- Submodule .internal-docs/ untuk ADR dan catatan arsitektur rahasia.\n- Release signing (macOS Notarization, Windows EV Certificate, Linux AppImage).\n- OpenClaw VM isolation & snapshotting.\n\n## 2. Aturan Eksekusi:\n1. Periksa folder .internal-docs/ terlebih dahulu menggunakan local_list_dir / local_read_file.\n2. Telusuri codebase jika dokumentasi belum mencukupi.\n3. Wajib menyertakan kutipan path berkas dan nomor baris presisi (file.ts:line).\n4. Jalankan perintah terminal secara bertahap (per-command review) via local_run_command."
   }
 ];
 
@@ -1339,7 +1339,7 @@ const DEFAULT_MEMORIES = [
     id: "mem_response_super_detail",
     name: "Gaya Respon: Super Detail & Komprehensif",
     description: "Analisis mendalam 360 derajat, rincian teknis lengkap, metodologi, dan perbandingan",
-    content: `[PREFERENSI GAYA RESPON: SUPER DETAIL & KOMPREHENSIF]\n- Berikan analisis dan jawaban dengan tingkat kedalaman maksimal (Deep Comprehensive Breakdown).\n- Struktur respon lengkap:\n  1. 📌 Rangkuman Eksekutif & Intisari Jawaban.\n  2. 🔍 Analisis Mendalam & Pembahasan Komprehensif (Metodologi, Latar Belakang, & Rincian Teknis/Faktual).\n  3. 📊 Tabel Komparasi / Matriks Data / Parameter Lengkap.\n  4. ⚠️ Batasan, Potensi Risiko, & Pertimbangan Edge Cases.\n  5. 💡 Rekomendasi Solusi & Action Plan Berurutan.\n- Gunakan data angka presisi, kutipan sumber, dan penjelasan menyeluruh.`
+    content: `[PREFERENSI GAYA RESPON: SUPER DETAIL & KOMPREHENSIF]\n- Berikan analisis dan jawaban dengan tingkat kedalaman maksimal (Deep Comprehensive Breakdown).\n- Struktur respon lengkap:\n  1. Rangkuman Eksekutif & Intisari Jawaban.\n  2. Analisis Mendalam & Pembahasan Komprehensif (Metodologi, Latar Belakang, & Rincian Teknis/Faktual).\n  3. Tabel Komparasi / Matriks Data / Parameter Lengkap.\n  4. Batasan, Potensi Risiko, & Pertimbangan Edge Cases.\n  5. Rekomendasi Solusi & Action Plan Berurutan.\n- Gunakan data angka presisi, kutipan sumber, dan penjelasan menyeluruh.`
   },
   {
     id: "mem_academic_journal_analyst",
@@ -1357,13 +1357,13 @@ const DEFAULT_MEMORIES = [
     id: "mem_market_business_analyst",
     name: "Gaya Analis: Bisnis & Intelijen Pasar",
     description: "Analisis tren pasar, perbandingan produk/harga e-commerce, SWOT, dan rekomendasi bisnis",
-    content: `[PREFERENSI GAYA ANALIS: BISNIS & INTELIJEN PASAR]\n- Persona: Strategic Business & Market Intelligence Analyst.\n- Gaya komunikasi eksekutif yang fokus pada nilai bisnis (Business Value), analisis komparatif, dan tren pasar.\n- Format analisis:\n  1. 📈 Analisis Lanskap & Tren Pasar.\n  2. ⚖️ Perbandingan Fitur, Harga, & Value Proposition.\n  3. 🔍 Analisis Kelebihan & Kekurangan (Pros & Cons / SWOT).\n  4. 🎯 Rekomendasi Keputusan Pembelian atau Strategi Bisnis.\n- Tampilkan angka dalam format finansial/persentase yang jelas.`
+    content: `[PREFERENSI GAYA ANALIS: BISNIS & INTELIJEN PASAR]\n- Persona: Strategic Business & Market Intelligence Analyst.\n- Gaya komunikasi eksekutif yang fokus pada nilai bisnis (Business Value), analisis komparatif, dan tren pasar.\n- Format analisis:\n  1. Analisis Lanskap & Tren Pasar.\n  2. Perbandingan Fitur, Harga, & Value Proposition.\n  3. Analisis Kelebihan & Kekurangan (Pros & Cons / SWOT).\n  4. Rekomendasi Keputusan Pembelian atau Strategi Bisnis.\n- Tampilkan angka dalam format finansial/persentase yang jelas.`
   },
   {
     id: "mem_root_cause_debugger",
     name: "Gaya Analis: Debugging & Root Cause Investigator",
     description: "Investigasi log, penelusuran akar masalah (5-Whys), verifikasi empiris, dan mitigasi",
-    content: `[PREFERENSI GAYA ANALIS: DEBUGGING & ROOT CAUSE INVESTIGATOR]\n- Persona: Principal Systems Debugger & Root Cause Investigator.\n- Metode pemecahan masalah sistematis:\n  1. 🚨 Identifikasi Gejala & Error Message / Log Traceback yang sebenarnya.\n  2. 🔬 Investigasi Akar Masalah (Root Cause Analysis - Mengapa kontrak/aliran data rusak).\n  3. 🛠️ Solusi Perbaikan Kode / Konfigurasi yang Tepat Sasaran (Tanpa tambal sulam gejala).\n  4. ✅ Verifikasi Empiris & Pengujian Hasil.\n  5. 🛡️ Mitigasi Pencegahan untuk Menghindari Regresi di Masa Depan.`
+    content: `[PREFERENSI GAYA ANALIS: DEBUGGING & ROOT CAUSE INVESTIGATOR]\n- Persona: Principal Systems Debugger & Root Cause Investigator.\n- Metode pemecahan masalah sistematis:\n  1. Identifikasi Gejala & Error Message / Log Traceback yang sebenarnya.\n  2. Investigasi Akar Masalah (Root Cause Analysis - Mengapa kontrak/aliran data rusak).\n  3. Solusi Perbaikan Kode / Konfigurasi yang Tepat Sasaran (Tanpa tambal sulam gejala).\n  4. Verifikasi Empiris & Pengujian Hasil.\n  5. Mitigasi Pencegahan untuk Menghindari Regresi di Masa Depan.`
   }
 ];
 
@@ -3465,12 +3465,12 @@ success_count: ${item.success_count || 1}
 failure_count: ${item.failure_count || 0}
 ---
 
-# ⚡ ${item.name} (${item.version || 'v1.0.0'})
+# ${item.name} (${item.version || 'v1.0.0'})
 
-## 🎯 Trigger & Deskripsi:
+## Trigger & Deskripsi:
 ${item.description || ''}
 
-## 📋 Prosedur Langkah demi Langkah (SOP / Workflow):
+## Prosedur Langkah demi Langkah (SOP / Workflow):
 ${item.workflow_markdown || '(Tidak ada alur kerja spesifik)'}`;
           modal.style.display = 'flex';
         }
@@ -3494,15 +3494,15 @@ source: "${item.source || 'autonomous_ai'}"
 assigned_skills: ${JSON.stringify(assigned)}
 ---
 
-# 🤖 ${item.name} (Specialist Autonomous Agent)
+# ${item.name} (Specialist Autonomous Agent)
 
-## 🎭 Persona & Role Target:
+## Persona & Role Target:
 ${item.role_description || ''}
 
-## 🔗 Connected Skills (Autonomous Routing):
+## Connected Skills (Autonomous Routing):
 ${skillsListMd}
 
-## 📜 System Prompt & Instruksi Operasional:
+## System Prompt & Instruksi Operasional:
 ${item.system_prompt || '(Tidak ada custom system prompt)'}`;
           modal.style.display = 'flex';
         }
@@ -3554,7 +3554,7 @@ ${item.system_prompt || '(Tidak ada custom system prompt)'}`;
     const codeEl = document.getElementById('modal-brain-detail-code');
     if (codeEl && codeEl.textContent) {
       navigator.clipboard.writeText(codeEl.textContent);
-      showToast("✅ Format Markdown berhasil disalin ke clipboard!");
+      showToast("Format Markdown berhasil disalin ke clipboard!");
     }
   }
 });
@@ -3568,7 +3568,7 @@ document.getElementById('search-brain-input')?.addEventListener('input', (e) => 
 });
 
 // =========================================================================
-// 🕸️ Obsidian Neural Brain Graph Visualizer (Loaded from brain-graph.js)
+// Obsidian Neural Brain Graph Visualizer (Loaded from brain-graph.js)
 // =========================================================================
 let currentBrainViewMode = "cards"; // "cards" | "graph"
 let brainGraphEngine = null;

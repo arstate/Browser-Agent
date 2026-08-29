@@ -296,12 +296,12 @@ function setupTelegramEventListeners() {
       const res = await fetch(`https://api.telegram.org/bot${token}/getMe`);
       const json = await res.json();
       if (json.ok) {
-        alert(`✅ Koneksi Berhasil!\n\nNama Bot: @${json.result.username} (${json.result.first_name})\nID: ${json.result.id}`);
+        alert(`Koneksi Berhasil!\n\nNama Bot: @${json.result.username} (${json.result.first_name})\nID: ${json.result.id}`);
       } else {
-        alert(`❌ Gagal terhubung: ${json.description || 'Token tidak valid'}`);
+        alert(`Gagal terhubung: ${json.description || 'Token tidak valid'}`);
       }
     } catch (err) {
-      alert(`❌ Error koneksi: ${err.message}`);
+      alert(`Error koneksi: ${err.message}`);
     }
   });
 
@@ -316,9 +316,9 @@ function setupTelegramEventListeners() {
     const success = await telegramSetMyCommands(token);
     if (success) {
       if (typeof showSaveToast === 'function') showSaveToast("Daftar perintah shortcut berhasil didaftarkan!");
-      alert("✅ Seluruh perintah shortcut (/model, /agent, /mode, /screenshot, /status) berhasil didaftarkan ke Telegram API!");
+      alert("Seluruh perintah shortcut (/model, /agent, /mode, /screenshot, /status) berhasil didaftarkan ke Telegram API!");
     } else {
-      alert("❌ Gagal mendaftarkan menu perintah ke Telegram.");
+      alert("Gagal mendaftarkan menu perintah ke Telegram.");
     }
   });
 
@@ -338,12 +338,12 @@ function setupTelegramEventListeners() {
       const ok = await telegramSetBotProfilePhoto(token);
       if (ok) {
         if (typeof showSaveToast === 'function') showSaveToast("Foto profil Bot Telegram berhasil diatur!");
-        alert("🎉 Foto profil Bot Telegram Anda telah berhasil diperbarui menggunakan Icon resmi Browser Agent!");
+        alert("Foto profil Bot Telegram Anda telah berhasil diperbarui menggunakan Icon resmi Browser Agent!");
       } else {
-        alert("⚠️ Gagal mengatur foto profil bot. Pastikan Bot Token valid.");
+        alert("Gagal mengatur foto profil bot. Pastikan Bot Token valid.");
       }
     } catch (err) {
-      alert("❌ Error: " + err.message);
+      alert("Error: " + err.message);
     } finally {
       if (btn) btn.innerHTML = origHtml;
     }
@@ -383,9 +383,9 @@ function setupTelegramEventListeners() {
             await chrome.storage.local.set({ telegram_bot_config: telegramConfig });
             updateTelegramStatusUI();
             if (typeof showSaveToast === 'function') showSaveToast(`ID Akun ${detectedName} (${detectedId}) ditambahkan!`);
-            alert(`✅ ID Berhasil Dideteksi & Ditambahkan ke Whitelist!\n\nNama: ${detectedName}\nID Telegram: ${detectedId}\n\nTotal User Whitelist: ${existingIds.length} akun (${newIdsStr})`);
+            alert(`ID Berhasil Dideteksi & Ditambahkan ke Whitelist!\n\nNama: ${detectedName}\nID Telegram: ${detectedId}\n\nTotal User Whitelist: ${existingIds.length} akun (${newIdsStr})`);
           } else {
-            alert(`ℹ️ ID Telegram ${detectedId} (${detectedName}) sudah terdaftar dalam whitelist.`);
+            alert(`ID Telegram ${detectedId} (${detectedName}) sudah terdaftar dalam whitelist.`);
           }
           return;
         }
@@ -429,7 +429,7 @@ function setupTelegramEventListeners() {
     try {
       await chrome.storage.local.remove(['telegram_active_clarification']);
       chrome.runtime.sendMessage({ type: "RESTART_TELEGRAM_BOT" }, () => {
-        if (typeof showSaveToast === 'function') showSaveToast("🎉 Bot Telegram berhasil di-restart dan siap untuk chat baru!");
+        if (typeof showSaveToast === 'function') showSaveToast("Bot Telegram berhasil di-restart dan siap untuk chat baru!");
         renderTelegramLogs();
         updateTelegramStatusUI();
       });

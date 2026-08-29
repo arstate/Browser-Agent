@@ -5116,19 +5116,19 @@ Tugas Anda:
           // Broadcast live step progress to Telegram remote chat via in-place message edit (NO SPAM)
           if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
             let userFriendlyAction = badgeActionName;
-            if (toolName === "browser_navigate") userFriendlyAction = `🌐 Membuka halaman web...`;
-            else if (toolName === "browser_click") userFriendlyAction = `👆 Mengklik elemen pada layar...`;
-            else if (toolName === "browser_type") userFriendlyAction = `⌨️ Mengetik teks...`;
-            else if (toolName === "browser_control_media") userFriendlyAction = `▶️ Mengontrol pemutar media...`;
-            else if (toolName === "browser_screenshot") userFriendlyAction = `📸 Mengambil screenshot visual...`;
-            else if (toolName === "browser_snapshot") userFriendlyAction = `🔍 Memeriksa tampilan halaman...`;
-            else if (toolName === "local_run_command") userFriendlyAction = `💻 Menjalankan perintah terminal...`;
-            else if (toolName.startsWith("manage_") || toolName.startsWith("db_")) userFriendlyAction = `🧠 Mengakses memori agen...`;
-            else if (toolName.startsWith("gsuite_doc") || toolName.includes("doc")) userFriendlyAction = `📄 Mengakses Google Docs...`;
-            else if (toolName.startsWith("gsuite_sheet") || toolName.includes("sheet")) userFriendlyAction = `📊 Mengakses Google Sheets...`;
-            else userFriendlyAction = `⚡ Menjalankan aksi (${badgeActionName})...`;
+            if (toolName === "browser_navigate") userFriendlyAction = `Membuka halaman web...`;
+            else if (toolName === "browser_click") userFriendlyAction = `Mengklik elemen pada layar...`;
+            else if (toolName === "browser_type") userFriendlyAction = `Mengetik teks...`;
+            else if (toolName === "browser_control_media") userFriendlyAction = `Mengontrol pemutar media...`;
+            else if (toolName === "browser_screenshot") userFriendlyAction = `Mengambil screenshot visual...`;
+            else if (toolName === "browser_snapshot") userFriendlyAction = `Memeriksa tampilan halaman...`;
+            else if (toolName === "local_run_command") userFriendlyAction = `Menjalankan perintah terminal...`;
+            else if (toolName.startsWith("manage_") || toolName.startsWith("db_")) userFriendlyAction = `Mengakses memori agen...`;
+            else if (toolName.startsWith("gsuite_doc") || toolName.includes("doc")) userFriendlyAction = `Mengakses Google Docs...`;
+            else if (toolName.startsWith("gsuite_sheet") || toolName.includes("sheet")) userFriendlyAction = `Mengakses Google Sheets...`;
+            else userFriendlyAction = `Menjalankan aksi (${badgeActionName})...`;
             
-            const statusText = `⏳ <b>${escapeHtml(workerName)}:</b> ${userFriendlyAction} (<i>${stepStr}</i>)`;
+            const statusText = `<b>${escapeHtml(workerName)}:</b> ${userFriendlyAction} (<i>${stepStr}</i>)`;
             updateTelegramLiveStatus(statusText).catch(() => {});
           }
 
@@ -5187,7 +5187,7 @@ Tugas Anda:
                 role: "user",
                 content: reflectionPrompt
               });
-              updateAssistantActiveAgent(assistantBubble, workerName, `⚠️ Koreksi Mandiri: Mendiagnosa ${badgeActionName} (#${retryCount})...`, isBossWorker, false);
+              updateAssistantActiveAgent(assistantBubble, workerName, `Koreksi Mandiri: Mendiagnosa ${badgeActionName} (#${retryCount})...`, isBossWorker, false);
             }
           } else {
             if (failureTracker) failureTracker.reset(toolName, toolArgs);
@@ -5196,7 +5196,7 @@ Tugas Anda:
               const gStatus = GoalTracker.getGoalStatusString(activeGoalMilestones);
               if (gStatus) {
                 const plainStatus = gStatus.replace(/<[^>]+>/g, '').replace(/\n/g, ' ');
-                updateFooterStatus(`🎯 ${plainStatus}`);
+                updateFooterStatus(plainStatus);
               }
             }
           }
@@ -5215,8 +5215,8 @@ Tugas Anda:
             role: "user",
             content: contPrompt
           });
-          updateAssistantActiveAgent(assistantBubble, "Master Agent", "🎯 Melanjutkan milestone yang tertunda...", true, false);
-          updateFooterStatus("🎯 Master Agent: Melanjutkan milestone sasaran...");
+          updateAssistantActiveAgent(assistantBubble, "Master Agent", "Melanjutkan milestone yang tertunda...", true, false);
+          updateFooterStatus("Master Agent: Melanjutkan milestone sasaran...");
           continue;
         }
 
@@ -5235,7 +5235,7 @@ Tugas Anda:
     const hasClarification = activeClarificationState !== null || (document.getElementById('clarification-dock-container')?.style.display !== 'none' && document.getElementById('clarification-dock-container')?.innerHTML !== '');
     if (hasClarification) {
       updateAssistantActiveAgent(assistantBubble, "Master Agent", "Menunggu arahan Anda...", true, true);
-      updateFooterStatus("💡 Master Agent: Menunggu pilihan arahan di atas input prompt...");
+      updateFooterStatus("Master Agent: Menunggu pilihan arahan di atas input prompt...");
       notifyActiveTabExecutionState(false);
       isExecuting = false;
       updateSendButtonState(false);
@@ -5253,7 +5253,7 @@ Tugas Anda:
       try {
         const stepStr = `Step ${currentStep}`;
         updateAssistantActiveAgent(assistantBubble, "Master Agent", `Menyusun laporan akhir (${stepStr})...`, true, false);
-        updateFooterStatus(`👑 Master Agent: Menyusun laporan akhir (${stepStr})...`);
+        updateFooterStatus(`Master Agent: Menyusun laporan akhir (${stepStr})...`);
         notifyActiveTabExecutionState(true, currentStep, maxSteps, `Master Agent: Menyusun laporan akhir (${stepStr})`);
         if (contentEl) {
           contentEl.innerHTML = '';
@@ -5263,25 +5263,22 @@ Tugas Anda:
         // 1. Build a clean, universal textual history of previous tool actions (100% LLM API compatible)
         const cleanTextHistory = conversationHistory.map(msg => {
           if (msg.role === 'tool') {
-            const rawContent = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
             return {
-              role: 'user',
-              content: `[Hasil Eksekusi Tool ${msg.name || 'tool'}]:\n${rawContent.slice(0, 4000)}`
+              role: "user",
+              content: `[Hasil Eksekusi Tool '${msg.name || 'tool'}']:\n${typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)}`
             };
           }
-          if (msg.role === 'assistant' && msg.tool_calls) {
-            const callsDesc = msg.tool_calls.map(tc => `${tc.function?.name || tc.name}(${tc.function?.arguments || ''})`).join(', ');
+          if (msg.role === 'assistant' && Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
+            const callsSummary = msg.tool_calls.map(tc => `${tc.function?.name || 'tool'}(${tc.function?.arguments || ''})`).join(", ");
             return {
-              role: 'assistant',
-              content: `[Mengeksekusi Tindakan: ${callsDesc}]`
+              role: "assistant",
+              content: `Mengeksekusi tool: ${callsSummary}`
             };
           }
-          return {
-            role: msg.role,
-            content: typeof msg.content === 'string' ? msg.content : (msg.displayContent || JSON.stringify(msg.content))
-          };
-        }).filter(m => m && m.content && (m.role === 'user' || m.role === 'assistant'));
+          return msg;
+        });
 
+        // 2. Generate final answer with strict Master Agent recap prompt
         const cleanUserPrompt = typeof userMessage === 'string' ? userMessage.trim() : "permintaan saya";
         const synthesisMessages = [
           { 
@@ -5289,11 +5286,11 @@ Tugas Anda:
             content: buildDynamicSystemPrompt(resolvedAgents) + 
             "\n\n=== TUGAS LAPORAN HASIL AKHIR & AUDIT REKAPITULASI KARYAWAN OLEH MASTER AGENT ===\n" +
             "Anda bertindak sebagai Master Agent (Supreme Commander) yang menyajikan LAPORAN HASIL AKHIR setelah menginterogasi, mengkoreksi super detail, dan merekapitulasi seluruh tindakan agen karyawan bawahan Anda:\n" +
-            "1. 📸 Verifikasi Audit Walkthrough: Jelaskan hasil verifikasi keadaan layar terakhir secara akurat (apakah seluruh form, modal 'Pilih format kampanye', tombol 'Lanjutkan', 'Tinjau & Terbitkan', atau data berhasil tuntas 100%).\n" +
-            "2. 👥 Rekapitulasi Kinerja Tim Karyawan: Uraikan secara singkat kontribusi dari tiap agen karyawan bawahan (misal: telaah metrik oleh Meta Ads Strategist, eksekusi kontrol oleh General Browser Assistant, formula teks oleh Copywriter).\n" +
-            "3. 📊 Analisis Komprehensif & Evaluasi Metrik: Sajikan tabel/ringkasan terstruktur (CTR, CPR, CPC, Leads, dll.) beserta alasan di balik temuan tersebut.\n" +
-            "4. 📁 Berkas Lokal: Jika ada berkas yang diunduh/dibuat di PC lokal, sebutkan lokasinya secara presisi (contoh: `/home/arya/Downloads/<nama_file>`).\n" +
-            "5. 💡 Kesimpulan & Rekomendasi Strategis: Berikan langkah aksi konkret terbaik bagi pengguna."
+            "1. Verifikasi Audit Walkthrough: Jelaskan hasil verifikasi keadaan layar terakhir secara akurat (apakah seluruh form, modal 'Pilih format kampanye', tombol 'Lanjutkan', 'Tinjau & Terbitkan', atau data berhasil tuntas 100%).\n" +
+            "2. Rekapitulasi Kinerja Tim Karyawan: Uraikan secara singkat kontribusi dari tiap agen karyawan bawahan (misal: telaah metrik oleh Meta Ads Strategist, eksekusi kontrol oleh General Browser Assistant, formula teks oleh Copywriter).\n" +
+            "3. Analisis Komprehensif & Evaluasi Metrik: Sajikan tabel/ringkasan terstruktur (CTR, CPR, CPC, Leads, dll.) beserta alasan di balik temuan tersebut.\n" +
+            "4. Berkas Lokal: Jika ada berkas yang diunduh/dibuat di PC lokal, sebutkan lokasinya secara presisi (contoh: `/home/arya/Downloads/<nama_file>`).\n" +
+            "5. Kesimpulan & Rekomendasi Strategis: Berikan langkah aksi konkret terbaik bagi pengguna."
           },
           ...cleanTextHistory,
           { 
@@ -6309,7 +6306,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 
   if (!config.apiKey && config.preset !== "ollama" && config.preset !== "9router") {
     openSettingsPage();
-    appendAssistantMessage("⚠️ API Key belum diatur. Membuka halaman Pengaturan di tab baru untuk mengatur Provider AI Anda.");
+    appendAssistantMessage("API Key belum diatur. Membuka halaman Pengaturan di tab baru untuk mengatur Provider AI Anda.");
     return;
   }
 
@@ -6483,7 +6480,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
             if (isRetryableAIError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
               const nextModel = candidateModels[mIdx + 1];
               console.warn(`[Auto-Rotate Chat] Model '${activeModelChoice}' error (${resp.status}: ${errorMsg}). Rotating to '${nextModel}'...`);
-              updateAssistantText(assistantBubble, `*🔄 Model \`${activeModelChoice}\` mengalami kendala. Otomatis beralih ke \`${nextModel}\`...*\n\n`, true);
+              updateAssistantText(assistantBubble, `*Model \`${activeModelChoice}\` mengalami kendala. Otomatis beralih ke \`${nextModel}\`...*\n\n`, true);
               continue;
             }
 
@@ -6503,7 +6500,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
           if (isRetryableAIError(0, fetchErr.message) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
             const nextModel = candidateModels[mIdx + 1];
             console.warn(`[Auto-Rotate Chat] Connection Exception on '${activeModelChoice}'. Rotating to '${nextModel}'...`, fetchErr);
-            updateAssistantText(assistantBubble, `*🔄 Kendala koneksi pada \`${activeModelChoice}\`. Mencoba \`${nextModel}\`...*\n\n`, true);
+            updateAssistantText(assistantBubble, `*Kendala koneksi pada \`${activeModelChoice}\`. Mencoba \`${nextModel}\`...*\n\n`, true);
             continue;
           }
           throw fetchErr;
@@ -9423,7 +9420,7 @@ async function loadHistoryList(searchQuery = "") {
     const isTelegram = sess.is_telegram || String(sess.id || '').startsWith('sess_tg_');
     const timeStr = formatTimeAgo(sess.updated_at || sess.created_at);
     const badgeHtml = isTelegram
-      ? `<span class="history-model-badge history-telegram-badge" style="background:rgba(0,136,204,0.18);color:#29b6f6;border:1px solid rgba(0,136,204,0.4);font-size:10px;padding:2px 6px;border-radius:6px;font-weight:600;">📱 Telegram</span>`
+      ? `<span class="history-model-badge history-telegram-badge" style="background:rgba(0,136,204,0.18);color:#29b6f6;border:1px solid rgba(0,136,204,0.4);font-size:10px;padding:2px 6px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:3px;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>Telegram</span>`
       : `<span class="history-model-badge">${escapeHtml(sess.model || 'Model')}</span>`;
 
     const card = document.createElement('div');
