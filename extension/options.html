@@ -1149,8 +1149,20 @@
             </div>
           </div>
 
+          <!-- Full Rounded Glassmorphism Search Bar -->
+          <div class="catalog-search-wrapper" style="margin-bottom: 20px;">
+            <div class="glass-rounded-search-box">
+              <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="search-connected-apps-input" class="glass-rounded-search-input" placeholder="Cari aplikasi atau integrasi terhubung (Telegram, Google Workspace, WhatsApp, Webhook, Companion)..." spellcheck="false">
+              <button type="button" class="btn-clear-search" id="btn-clear-connected-apps-search" style="display: none;" title="Hapus pencarian">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div id="stats-search-connected-apps" class="search-result-stats" style="display: none; margin-top: 8px; margin-left: 18px;"></div>
+          </div>
+
           <!-- Apps Grid Catalog -->
-          <div class="connected-apps-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; margin-top: 8px;">
+          <div class="connected-apps-grid" id="connected-apps-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; margin-top: 8px;">
             
             <!-- App Card 1: Telegram Bot Remote Control -->
             <div class="connected-app-card bento-glass-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 220px; transition: all 0.2s ease;">
@@ -2057,8 +2069,20 @@
           </div>
         </div>
 
+        <!-- Full Rounded Glassmorphism Search Bar -->
+        <div class="catalog-search-wrapper" style="margin-bottom: 20px;">
+          <div class="glass-rounded-search-box">
+            <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="search-plugins-input" class="glass-rounded-search-input" placeholder="Cari plugin atau token optimizer (Ponytail, KV Cache, Caveman, Claude Fable 5)..." spellcheck="false">
+            <button type="button" class="btn-clear-search" id="btn-clear-plugins-search" style="display: none;" title="Hapus pencarian">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div id="stats-search-plugins" class="search-result-stats" style="display: none; margin-top: 8px; margin-left: 18px;"></div>
+        </div>
+
         <!-- Plugins Grid Catalog -->
-        <div class="plugins-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; margin-top: 8px;">
+        <div class="plugins-grid" id="plugins-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; margin-top: 8px;">
           
           <!-- Plugin Card 1: Ponytail Context Trimmer & Token Optimizer -->
           <div class="plugin-card bento-glass-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 260px; transition: all 0.25s ease; box-shadow: 0 8px 28px rgba(0,0,0,0.35);">

@@ -2923,6 +2923,90 @@ function setupEventListeners() {
     }
   });
 
+  // Filter Connected Apps Cards
+  function filterConnectedApps(query = '') {
+    const q = query.trim().toLowerCase();
+    const cards = document.querySelectorAll('#connected-apps-grid .connected-app-card');
+    const clearBtn = document.getElementById('btn-clear-connected-apps-search');
+    const statsEl = document.getElementById('stats-search-connected-apps');
+    let visibleCount = 0;
+
+    if (clearBtn) {
+      clearBtn.style.display = q ? 'flex' : 'none';
+    }
+
+    cards.forEach(card => {
+      const text = (card.innerText || '').toLowerCase();
+      const isMatch = !q || text.includes(q);
+      card.style.display = isMatch ? 'flex' : 'none';
+      if (isMatch) visibleCount++;
+    });
+
+    if (statsEl) {
+      if (q) {
+        statsEl.style.display = 'block';
+        statsEl.innerHTML = `Menampilkan <strong style="color: #38bdf8;">${visibleCount}</strong> dari ${cards.length} aplikasi`;
+      } else {
+        statsEl.style.display = 'none';
+      }
+    }
+  }
+
+  const searchConnectedAppsInput = document.getElementById('search-connected-apps-input');
+  const btnClearSearchConnectedApps = document.getElementById('btn-clear-connected-apps-search');
+  searchConnectedAppsInput?.addEventListener('input', (e) => {
+    filterConnectedApps(e.target.value);
+  });
+  btnClearSearchConnectedApps?.addEventListener('click', () => {
+    if (searchConnectedAppsInput) {
+      searchConnectedAppsInput.value = '';
+      filterConnectedApps('');
+      searchConnectedAppsInput.focus();
+    }
+  });
+
+  // Filter Plugins Cards
+  function filterPlugins(query = '') {
+    const q = query.trim().toLowerCase();
+    const cards = document.querySelectorAll('#plugins-grid .plugin-card');
+    const clearBtn = document.getElementById('btn-clear-plugins-search');
+    const statsEl = document.getElementById('stats-search-plugins');
+    let visibleCount = 0;
+
+    if (clearBtn) {
+      clearBtn.style.display = q ? 'flex' : 'none';
+    }
+
+    cards.forEach(card => {
+      const text = (card.innerText || '').toLowerCase();
+      const isMatch = !q || text.includes(q);
+      card.style.display = isMatch ? 'flex' : 'none';
+      if (isMatch) visibleCount++;
+    });
+
+    if (statsEl) {
+      if (q) {
+        statsEl.style.display = 'block';
+        statsEl.innerHTML = `Menampilkan <strong style="color: #f472b6;">${visibleCount}</strong> dari ${cards.length} plugin & optimizer`;
+      } else {
+        statsEl.style.display = 'none';
+      }
+    }
+  }
+
+  const searchPluginsInput = document.getElementById('search-plugins-input');
+  const btnClearSearchPlugins = document.getElementById('btn-clear-plugins-search');
+  searchPluginsInput?.addEventListener('input', (e) => {
+    filterPlugins(e.target.value);
+  });
+  btnClearSearchPlugins?.addEventListener('click', () => {
+    if (searchPluginsInput) {
+      searchPluginsInput.value = '';
+      filterPlugins('');
+      searchPluginsInput.focus();
+    }
+  });
+
   // Test connection button
   document.getElementById('btn-test-connection')?.addEventListener('click', checkPCBridgeStatus);
 

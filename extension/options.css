@@ -1863,6 +1863,75 @@ body.options-body::before,
   align-items: center;
 }
 
+/* Premium Dark Luxury Glassmorphism Search Bar (Image 3 Aesthetic) */
+.glass-rounded-search-box {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 9999px;
+  padding: 4px 14px 4px 18px;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-rounded-search-box:focus-within {
+  border-color: var(--accent-lime);
+  box-shadow: 0 0 0 2px rgba(206, 241, 40, 0.15), 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.glass-rounded-search-box .search-icon-svg {
+  position: static;
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-right: 12px;
+  pointer-events: none;
+}
+
+.glass-rounded-search-input {
+  flex: 1;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 10px 12px 10px 0 !important;
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none !important;
+  min-width: 120px;
+}
+
+.glass-rounded-search-input::placeholder {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.glass-rounded-search-box .btn-clear-search {
+  position: static;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.glass-rounded-search-box .btn-clear-search:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .search-icon-svg {
   position: absolute;
   left: 14px;
