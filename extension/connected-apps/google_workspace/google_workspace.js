@@ -34,15 +34,6 @@ async function initGoogleWorkspaceSettings() {
       googleWorkspaceLogs = data.google_workspace_logs;
     }
 
-    // Populate Input fields in options.html
-    const inputClientId = document.getElementById('input-google-client-id');
-    const inputClientSecret = document.getElementById('input-google-client-secret');
-    const inputDefaultSheet = document.getElementById('input-google-default-sheet');
-    const chkAutoExport = document.getElementById('setting-google-auto-export');
-
-    if (inputClientId) inputClientId.value = googleWorkspaceConfig.client_id || '';
-    if (inputClientSecret) inputClientSecret.value = googleWorkspaceConfig.client_secret || '';
-    if (inputDefaultSheet) inputDefaultSheet.value = googleWorkspaceConfig.default_spreadsheet_id || '';
     // Fetch and display detected Redirect URI
     let redirectUri = "https://lifodpllfgehiendpgpomfjbejhfffik.chromiumapp.org/";
     if (window.googleWorkspaceService && typeof window.googleWorkspaceService.getRedirectUrl === 'function') {
@@ -284,27 +275,7 @@ function setupGoogleWorkspaceEventListeners() {
     });
   }
 
-  // 4. Save Settings Form
-  const formSettings = document.getElementById('form-google-workspace-settings');
-  if (formSettings) {
-    formSettings.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const inputClientId = document.getElementById('input-google-client-id');
-      const inputClientSecret = document.getElementById('input-google-client-secret');
-      const inputDefaultSheet = document.getElementById('input-google-default-sheet');
-      const chkAutoExport = document.getElementById('setting-google-auto-export');
-
-      googleWorkspaceConfig.client_id = (inputClientId?.value || '').trim();
-      googleWorkspaceConfig.client_secret = (inputClientSecret?.value || '').trim();
-      googleWorkspaceConfig.default_spreadsheet_id = (inputDefaultSheet?.value || '').trim();
-      googleWorkspaceConfig.auto_export_reports = !!chkAutoExport?.checked;
-
-      await window.googleWorkspaceService.saveConfig(googleWorkspaceConfig);
-      showSaveToast("Pengaturan Google Workspace berhasil disimpan!");
-    });
-  }
-
-  // 5. Quick Test: Buat Dokumen Google Docs Baru
+  // 4. Quick Test: Buat Dokumen Google Docs Baru
   const btnTestDoc = document.getElementById('btn-test-create-doc');
   if (btnTestDoc) {
     btnTestDoc.addEventListener('click', async () => {
@@ -325,12 +296,12 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal membuat dokumen: ${err.message}`);
       } finally {
         btnTestDoc.disabled = false;
-        btnTestDoc.innerHTML = `<span>Buat Google Doc Uji Coba</span>`;
+        btnTestDoc.innerHTML = `<span>📄 Buat Doc Uji Coba</span>`;
       }
     });
   }
 
-  // 6. Quick Test: Tambah Baris ke Spreadsheet
+  // 5. Quick Test: Tambah Baris ke Spreadsheet
   const btnTestSheet = document.getElementById('btn-test-append-sheet');
   if (btnTestSheet) {
     btnTestSheet.addEventListener('click', async () => {
@@ -347,8 +318,6 @@ function setupGoogleWorkspaceEventListeners() {
           ]);
           targetSheetId = newSheet.spreadsheetId;
           googleWorkspaceConfig.default_spreadsheet_id = targetSheetId;
-          const inputDefaultSheet = document.getElementById('input-google-default-sheet');
-          if (inputDefaultSheet) inputDefaultSheet.value = targetSheetId;
           await window.googleWorkspaceService.saveConfig(googleWorkspaceConfig);
         }
 
@@ -372,7 +341,49 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal menulis ke Google Sheet: ${err.message}`);
       } finally {
         btnTestSheet.disabled = false;
-        btnTestSheet.innerHTML = `<span>Tulis Baris ke Google Sheet</span>`;
+        btnTestSheet.innerHTML = `<span>📊 Tulis ke Sheet</span>`;
+      }
+    });
+  }
+
+  // 6. Quick Test: Cek File Google Drive
+  const btnTestDrive = document.getElementById('btn-test-drive-search');
+  if (btnTestDrive) {
+    btnTestDrive.addEventListener('click', async () => {
+      try {
+        btnTestDrive.disabled = true;
+        btnTestDrive.textContent = 'Mencari Drive...';
+        const res = await window.googleWorkspaceService.listRecentFiles(5);
+        showSaveToast(`Ditemukan ${res.total_found} file di Google Drive Anda.`);
+        const data = await chrome.storage.local.get(['google_workspace_logs']);
+        googleWorkspaceLogs = data.google_workspace_logs || [];
+        renderGoogleWorkspaceLogs();
+      } catch (err) {
+        alert(`Gagal mengakses Google Drive: ${err.message}`);
+      } finally {
+        btnTestDrive.disabled = false;
+        btnTestDrive.innerHTML = `<span>📁 Cek File Drive</span>`;
+      }
+    });
+  }
+
+  // 7. Quick Test: Uji Google Web Search
+  const btnTestSearch = document.getElementById('btn-test-web-search');
+  if (btnTestSearch) {
+    btnTestSearch.addEventListener('click', async () => {
+      try {
+        btnTestSearch.disabled = true;
+        btnTestSearch.textContent = 'Mencari Web...';
+        const res = await window.googleWorkspaceService.googleWebSearch('Google Workspace AI agent update 2026', 4);
+        showSaveToast(`Pencarian Web Google Berhasil (${res.total_results} hasil)!`);
+        const data = await chrome.storage.local.get(['google_workspace_logs']);
+        googleWorkspaceLogs = data.google_workspace_logs || [];
+        renderGoogleWorkspaceLogs();
+      } catch (err) {
+        alert(`Gagal web search: ${err.message}`);
+      } finally {
+        btnTestSearch.disabled = false;
+        btnTestSearch.innerHTML = `<span>🔍 Uji Web Search</span>`;
       }
     });
   }

@@ -577,6 +577,200 @@ class GoogleWorkspaceService {
     };
   }
 
+  /**
+   * Clear contents of a range in Google Spreadsheet
+   */
+  async clearSpreadsheetRange(spreadsheetIdOrUrl, range = 'Sheet1!A1:Z100') {
+    const spreadsheetId = this.parseSpreadsheetId(spreadsheetIdOrUrl);
+    if (!spreadsheetId) throw new Error("Spreadsheet ID atau URL tidak valid.");
+    const token = await this.getValidAccessToken();
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}:clear`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Sheets Clear Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    this.logActivity('SHEETS_CLEAR', `Mengosongkan range ${range} di Sheet ID: ${spreadsheetId.substring(0, 8)}...`);
+    return {
+      success: true,
+      spreadsheetId,
+      clearedRange: data.clearedRange || range
+    };
+  }
+
+  // =========================================================================
+  // GOOGLE DRIVE API
+  // =========================================================================
+
+  /**
+   * Search files (Docs, Sheets, Folders) in user's Google Drive
+   */
+  async searchDrive(query = "", mimeType = null, maxResults = 10) {
+    const token = await this.getValidAccessToken();
+    let q = "trashed = false";
+
+    if (query && query.trim()) {
+      const sanitized = String(query).replace(/'/g, "\\'");
+      q += " and (name contains '" + sanitized + "' or fullText contains '" + sanitized + "')";
+    }
+
+    if (mimeType) {
+      if (mimeType === 'doc' || mimeType === 'docs') {
+        q += " and mimeType = 'application/vnd.google-apps.document'";
+      } else if (mimeType === 'sheet' || mimeType === 'sheets') {
+        q += " and mimeType = 'application/vnd.google-apps.spreadsheet'";
+      } else if (mimeType === 'folder') {
+        q += " and mimeType = 'application/vnd.google-apps.folder'";
+      } else {
+        q += ` and mimeType = '${mimeType}'`;
+      }
+    }
+
+    const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,webViewLink,iconLink,modifiedTime)&pageSize=${Math.min(30, maxResults || 10)}&orderBy=modifiedTime desc`;
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Drive API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    const files = (data.files || []).map(f => ({
+      id: f.id,
+      name: f.name,
+      type: f.mimeType?.includes('document') ? 'Google Doc' : (f.mimeType?.includes('spreadsheet') ? 'Google Sheet' : f.mimeType),
+      url: f.webViewLink || `https://drive.google.com/file/d/${f.id}/view`,
+      modifiedTime: f.modifiedTime
+    }));
+
+    this.logActivity('DRIVE_SEARCH', `Pencarian Drive "${query}": ditemukan ${files.length} file`);
+    return {
+      success: true,
+      query,
+      total_found: files.length,
+      files
+    };
+  }
+
+  /**
+   * List recent Google Docs & Sheets from user's Google Drive
+   */
+  async listRecentFiles(maxResults = 10) {
+    return this.searchDrive("", null, maxResults);
+  }
+
+  // =========================================================================
+  // GOOGLE WEB SEARCH & NEWS INTELLIGENCE ENGINE
+  // =========================================================================
+
+  /**
+   * High-speed web search using Google/DuckDuckGo instant search
+   */
+  async googleWebSearch(query, numResults = 8) {
+    if (!query) throw new Error("Query pencarian tidak boleh kosong.");
+    const limit = Math.min(20, Math.max(1, Number(numResults) || 8));
+
+    try {
+      // 1. Fetch via DuckDuckGo HTML Lite / Instant Engine
+      const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+      const res = await fetch(searchUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      const html = await res.text();
+
+      const results = [];
+      const linkRegex = /<a class="result__snippet[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>|<h2 class="result__title">[\s\S]*?<a class="result__url" href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+      
+      // Parse results using DOMParser if in browser context
+      if (typeof DOMParser !== 'undefined') {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const rows = doc.querySelectorAll('.result');
+        rows.forEach((r, idx) => {
+          if (idx >= limit) return;
+          const titleElem = r.querySelector('.result__title');
+          const snippetElem = r.querySelector('.result__snippet');
+          const linkElem = r.querySelector('.result__url');
+          if (titleElem) {
+            let href = linkElem?.getAttribute('href') || titleElem.querySelector('a')?.getAttribute('href') || '';
+            if (href.includes('uddg=')) {
+              try {
+                const match = href.match(/uddg=([^&]+)/);
+                if (match) href = decodeURIComponent(match[1]);
+              } catch(e) {}
+            }
+            results.push({
+              title: titleElem.textContent?.trim() || 'No Title',
+              snippet: snippetElem?.textContent?.trim() || '',
+              url: href
+            });
+          }
+        });
+      }
+
+      this.logActivity('WEB_SEARCH', `Pencarian Web Google: "${query}" (${results.length} hasil)`);
+      return {
+        success: true,
+        query,
+        total_results: results.length,
+        results: results.slice(0, limit)
+      };
+    } catch (err) {
+      throw new Error(`Gagal melakukan web search: ${err.message}`);
+    }
+  }
+
+  /**
+   * Search Google News for latest articles and trends
+   */
+  async googleNewsSearch(query, language = 'id') {
+    if (!query) throw new Error("Query berita tidak boleh kosong.");
+    try {
+      const hl = language === 'en' ? 'en-US' : 'id-ID';
+      const gl = language === 'en' ? 'US' : 'ID';
+      const ceid = language === 'en' ? 'US:en' : 'ID:id';
+      const newsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=${hl}&gl=${gl}&ceid=${ceid}`;
+
+      const res = await fetch(newsUrl);
+      const xmlText = await res.text();
+
+      const items = [];
+      if (typeof DOMParser !== 'undefined') {
+        const xmlDoc = new DOMParser().parseFromString(xmlText, 'text/xml');
+        const itemNodes = xmlDoc.querySelectorAll('item');
+        itemNodes.forEach((item, idx) => {
+          if (idx >= 10) return;
+          const title = item.querySelector('title')?.textContent || '';
+          const link = item.querySelector('link')?.textContent || '';
+          const pubDate = item.querySelector('pubDate')?.textContent || '';
+          const source = item.querySelector('source')?.textContent || '';
+          items.push({ title, link, pubDate, source });
+        });
+      }
+
+      this.logActivity('NEWS_SEARCH', `Google News: "${query}" (${items.length} berita)`);
+      return {
+        success: true,
+        query,
+        total_articles: items.length,
+        articles: items
+      };
+    } catch (err) {
+      throw new Error(`Gagal mencari berita di Google News: ${err.message}`);
+    }
+  }
+
   // =========================================================================
   // ACTIVITY LOGGING
   // =========================================================================

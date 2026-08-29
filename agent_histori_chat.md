@@ -5520,6 +5520,29 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Seluruh Unit Tests lulus 100% ([test_google_workspace_connected_app.py](file:///home/arya/browser-agent/test_google_workspace_connected_app.py)).
   - Bump version to `v2.150.96`, build `extension.crx` (970.4 KB).
 
+---
+
+### 🚀 Iterasi 472: Supercharged Google Workspace & Google Web Intelligence Suite with Clean Bento UI (v2.150.97)
+- **Kebutuhan Pengguna**:
+  - Menghapus form konfigurasi mentah (`DEFAULT SPREADSHEET ID`, `GOOGLE CLIENT ID`, `GOOGLE CLIENT SECRET`, dan tombol `Simpan Pengaturan`) yang tidak diperlukan dari antarmuka Google Workspace agar tampilan bersih dan bebas distraksi.
+  - Memperluas secara masif seluruh perintah (*commands*) dan alat bantu AI (*tools*) Google Workspace & Google Web Search agar Browser Agent menjadi sangat canggih dan mampu melakukan segala tugas otonom di web dan Google Workspace.
+- **Implementasi & Peningkatan Sistem**:
+  - **Penyederhanaan UI di [options.html](file:///home/arya/browser-agent/extension/options.html) & [google_workspace.js](file:///home/arya/browser-agent/extension/connected-apps/google_workspace/google_workspace.js)**:
+    - Menghapus elemen form input mentah yang redundan.
+    - Menambahkan tombol aksi uji coba baru: `📁 Cek File Drive` dan `🔍 Uji Web Search`.
+    - Memperbarui Bento Card AI Tools & Commands Showcase dengan 8 perintah unggulan.
+  - **Penambahan Mesin & Tools Google & Web Intelligence di [google_workspace_service.js](file:///home/arya/browser-agent/extension/connected-apps/google_workspace/google_workspace_service.js)**:
+    - `gsuite_clear_sheet_range`: Mengosongkan isi range data di Google Sheet.
+    - `gsuite_search_drive`: Pencarian cerdas dokumen/file di Google Drive pengguna.
+    - `gsuite_list_recent_files`: Mengambil file Google Docs & Sheets yang baru diubah.
+    - `google_web_search`: Mesin pencarian web instan berkecepatan tinggi dengan ekstraksi snippet dan link bersih.
+    - `google_news_search`: Pencarian berita terhangat dan topik viral di Google News.
+  - **Integrasi Master Agent di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js) & [background.js](file:///home/arya/browser-agent/extension/background.js)**:
+    - Mendaftarkan skema fungsi baru untuk seluruh tools pencarian web & drive.
+- **Pengujian & Rilis**:
+  - Seluruh Unit Tests lulus 100% ([test_google_workspace_connected_app.py](file:///home/arya/browser-agent/test_google_workspace_connected_app.py)).
+  - Bump version to `v2.150.97`, build `extension.crx` (972.1 KB).
+
 
 
 

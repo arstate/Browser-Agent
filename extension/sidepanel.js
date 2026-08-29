@@ -1530,6 +1530,79 @@ const AGENT_TOOLS = [
   {
     type: "function",
     function: {
+      name: "gsuite_clear_sheet_range",
+      description: "Clear data contents from a specific cell range in a Google Spreadsheet.",
+      parameters: {
+        type: "object",
+        properties: {
+          spreadsheet_id_or_url: { type: "string", description: "The Google Spreadsheet full URL or ID" },
+          range: { type: "string", description: "Range of cells to clear, e.g. 'Sheet1!A2:Z100'" }
+        },
+        required: ["spreadsheet_id_or_url", "range"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_search_drive",
+      description: "Search for files, Google Docs, Google Sheets, or folders in the user's Google Drive by filename or content keyword.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Keyword or filename to search for in Google Drive" },
+          mime_type: { type: "string", description: "Optional filter: 'doc', 'sheet', 'folder', or full mimeType" },
+          max_results: { type: "number", description: "Max results to return (default 10, max 30)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_list_recent_files",
+      description: "List recently edited or created Google Docs, Sheets, and files in the user's Google Drive.",
+      parameters: {
+        type: "object",
+        properties: {
+          max_results: { type: "number", description: "Number of recent files to list (default 10)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_web_search",
+      description: "Execute a high-speed Google/Web Search to find realtime information, articles, websites, and data.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Search query keywords" },
+          num_results: { type: "number", description: "Number of search results to return (default 8, max 20)" }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "google_news_search",
+      description: "Search Google News for breaking news, trending updates, and recent articles on any topic.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Topic or keywords to search in Google News" },
+          language: { type: "string", description: "Language code ('id' for Indonesian, 'en' for English)" }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "ponytail_token_meter",
       description: "Ponytail Token Saver Plugin: Check active token optimization status, context turn count, and token compression savings estimate.",
       parameters: {
@@ -3995,14 +4068,92 @@ async function executeTool(name, args, assistantBubble = null) {
       if (typeof googleWorkspaceService === 'undefined') {
         return { error: "Google Workspace service belum dimuat." };
       }
-      const { config, auth } = await googleWorkspaceService.getConfig();
-      return {
-        success: true,
-        connected: !!(auth && auth.access_token),
-        user_email: auth?.user?.email || null,
-        user_name: auth?.user?.name || null,
-        default_spreadsheet_id: config.default_spreadsheet_id || null
-      };
+      try {
+        const { config, auth } = await googleWorkspaceService.getConfig();
+        const isConnected = !!(auth && auth.access_token);
+        return {
+          status: "success",
+          connected: isConnected,
+          user: auth?.user || null,
+          default_spreadsheet_id: config?.default_spreadsheet_id || null
+        };
+      } catch (err) {
+        return { error: `Gagal membaca status Google Workspace: ${err.message}` };
+      }
+    }
+
+    case "gsuite_clear_sheet_range": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const sheetId = args.spreadsheet_id_or_url;
+        const range = args.range || "Sheet1!A2:Z100";
+        const res = await googleWorkspaceService.clearSpreadsheetRange(sheetId, range);
+        return {
+          success: true,
+          message: `Berhasil mengosongkan range ${range} di Google Sheet!`,
+          spreadsheet_id: res.spreadsheetId,
+          cleared_range: res.clearedRange
+        };
+      } catch (err) {
+        return { error: `Gagal mengosongkan Google Sheet: ${err.message}` };
+      }
+    }
+
+    case "gsuite_search_drive": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.searchDrive(args.query || "", args.mime_type || null, args.max_results || 10);
+        return {
+          success: true,
+          query: res.query,
+          total_found: res.total_found,
+          files: res.files
+        };
+      } catch (err) {
+        return { error: `Gagal mencari di Google Drive: ${err.message}` };
+      }
+    }
+
+    case "gsuite_list_recent_files": {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service belum dimuat." };
+      try {
+        const res = await googleWorkspaceService.listRecentFiles(args.max_results || 10);
+        return {
+          success: true,
+          total_found: res.total_found,
+          files: res.files
+        };
+      } catch (err) {
+        return { error: `Gagal mengambil file terbaru Google Drive: ${err.message}` };
+      }
+    }
+
+    case "google_web_search": {
+      try {
+        const q = args.query || "";
+        const limit = args.num_results || 8;
+        if (typeof googleWorkspaceService !== 'undefined' && typeof googleWorkspaceService.googleWebSearch === 'function') {
+          const res = await googleWorkspaceService.googleWebSearch(q, limit);
+          return res;
+        }
+        return { error: "Google Web Search engine belum dimuat." };
+      } catch (err) {
+        return { error: `Gagal melakukan pencarian web Google: ${err.message}` };
+      }
+    }
+
+    case "google_news_search": {
+      try {
+        const q = args.query || "";
+        const lang = args.language || "id";
+        if (typeof googleWorkspaceService !== 'undefined' && typeof googleWorkspaceService.googleNewsSearch === 'function') {
+          const res = await googleWorkspaceService.googleNewsSearch(q, lang);
+          return res;
+        }
+        return { error: "Google News engine belum dimuat." };
+      } catch (err) {
+        return { error: `Gagal mencari berita di Google News: ${err.message}` };
+      }
     }
 
     case "generate_image": {

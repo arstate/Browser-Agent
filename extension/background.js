@@ -1862,6 +1862,38 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
       return { status: "success", spreadsheet_id: res.spreadsheetId, range: res.range, rows: res.values, row_count: res.rowCount };
     }
 
+    if (toolName === "gsuite_clear_sheet_range") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.clearSpreadsheetRange(toolArgs.spreadsheet_id_or_url, toolArgs.range || "Sheet1!A2:Z100");
+      return { status: "success", message: `Berhasil mengosongkan range ${toolArgs.range} di Google Sheet!`, spreadsheet_id: res.spreadsheetId, cleared_range: res.clearedRange };
+    }
+
+    if (toolName === "gsuite_search_drive") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.searchDrive(toolArgs.query || "", toolArgs.mime_type || null, toolArgs.max_results || 10);
+      return { status: "success", query: res.query, total_found: res.total_found, files: res.files };
+    }
+
+    if (toolName === "gsuite_list_recent_files") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.listRecentFiles(toolArgs.max_results || 10);
+      return { status: "success", total_found: res.total_found, files: res.files };
+    }
+
+    if (toolName === "google_web_search") {
+      if (typeof googleWorkspaceService === 'undefined' || typeof googleWorkspaceService.googleWebSearch !== 'function') {
+        return { error: "Google Web Search service belum aktif di background." };
+      }
+      return await googleWorkspaceService.googleWebSearch(toolArgs.query, toolArgs.num_results || 8);
+    }
+
+    if (toolName === "google_news_search") {
+      if (typeof googleWorkspaceService === 'undefined' || typeof googleWorkspaceService.googleNewsSearch !== 'function') {
+        return { error: "Google News service belum aktif di background." };
+      }
+      return await googleWorkspaceService.googleNewsSearch(toolArgs.query, toolArgs.language || "id");
+    }
+
     if (toolName === "gsuite_get_status") {
       if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
       const { config: gwCfg, auth: gwAuth } = await googleWorkspaceService.getConfig();
