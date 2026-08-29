@@ -5462,9 +5462,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - **Integrasi Runtime**:
     - Di [background.js](file:///home/arya/browser-agent/extension/background.js) & [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js): Otomatis membaca `plugin_settings.claude_fable` dan menyuntikkan standar kognitif Fable 5 ke Master Agent saat ON, serta tetap menjaga pemahaman Brain SQLite secara utuh saat ON maupun OFF.
   - **Antarmuka Pengaturan (`options.html`)**: Menambahkan Kartu Plugin Claude Fable 5 dan modal konfigurasi interaktif.
+### 🚀 Iterasi 469: Smart Collapsible Minimizer for Long User Chat Bubbles (v2.150.94)
+- **Kebutuhan Pengguna**:
+  - Mengoptimalkan tampilan bubble chat pengguna (*User Message Bubble*) ketika teks instruksi / prompt sangat panjang atau berisi banyak baris / blok kode agar UI percakapan tetap rapi, bersih (*clean*), dan estetik.
+  - Menyediakan tombol interaktif *Lihat Selengkapnya* (Show All Full) dan *Ciutkan Pesan* (Collapse) dengan efek visual gradient fade halus.
+- **Implementasi & Peningkatan Sistem**:
+  - **Peningkatan di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js)**:
+    - Di `appendUserMessage()`: Menerapkan deteksi ganda (threshold panjang karakter >260 atau baris baru >=4, plus deteksi tinggi render alami `scrollHeight > 140px`).
+    - Membungkus pesan panjang ke dalam struktur `.user-collapsible.is-collapsed` dengan overlay `.user-collapse-fade`.
+    - Menyematkan tombol pill elegan `.btn-user-expand-toggle` (*Lihat Selengkapnya* / *Ciutkan Pesan*) dengan icon chevron responsif.
+    - Menghubungkan interaksi klik baik pada tombol expand maupun area fade transparan bubble.
+    - Menjamin fungsi tombol copy tetap menyalin 100% teks asli secara utuh (*Full Raw Text*).
+  - **Peningkatan di [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css) & [newtab.css](file:///home/arya/browser-agent/extension/newtab.css)**:
+    - Menambahkan transisi `max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)`.
+    - Menambahkan gradient fade bawah yang menyatu sempurna dengan background capsule hijau-lime (`#cef128`).
+    - Menambahkan styling pill button neon lime glow saat hover.
 - **Pengujian & Rilis**:
-  - Menulis test suite baru `test_claude_fable_plugin.py` (26/26 Unit Tests lulus 100%).
-  - Bump manifest to `v2.150.92`, build `extension.crx` (928.4 KB).
+  - Seluruh 26/26 Unit Tests lulus 100%.
+  - Bump version to `v2.150.94`, build `extension.crx` (953.6 KB).
 
 
 
