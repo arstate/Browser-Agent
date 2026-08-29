@@ -1,7 +1,7 @@
 {
   "name": "com.antigravity.chrome.agent",
   "description": "Browser Agent Native Messaging Host (Local PC, Terminal & SQLite Bridge)",
-  "path": "/home/arya/browser-agent/host/native_host.py",
+  "path": "/home/arya/browser-agent/host/browser_agent_host",
   "type": "stdio",
   "allowed_origins": [
     "chrome-extension://lifodpllfgehiendpgpomfjbejhfffik/",

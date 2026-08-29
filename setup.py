@@ -39,25 +39,39 @@ for sub in ["agents", "skills", "memories", "generated_images"]:
     os.makedirs(dpath, exist_ok=True)
 print("[✔] Direktori lokal ~/.browser-agent/ siap.")
 
-# 2. Prepare Host Executable & Wrapper
+# 2. Prepare Host Executable & Wrapper (Rust Native Binary preferred, Python fallback)
+rust_bin_linux = os.path.join(host_dir, "browser_agent_host")
+rust_bin_win = os.path.join(host_dir, "browser_agent_host.exe")
+
 if IS_WINDOWS:
-    # On Windows, Chrome invokes a .bat wrapper that runs python with the script
-    python_exe = sys.executable
-    bat_content = f'@echo off\n"{python_exe}" "{host_script}" %*\n'
-    try:
-        with open(host_bat, "w", encoding="utf-8") as f:
-            f.write(bat_content)
-        print(f"[✔] Dibuat batch launcher: {host_bat}")
-    except Exception as e:
-        print(f"[!] Warning writing host.bat: {e}")
-    target_path = host_bat
+    if os.path.exists(rust_bin_win):
+        target_path = rust_bin_win
+        print(f"[✔] Menggunakan Native Binary Rust (Ultra-Fast): {target_path}")
+    else:
+        python_exe = sys.executable
+        bat_content = f'@echo off\n"{python_exe}" "{host_script}" %*\n'
+        try:
+            with open(host_bat, "w", encoding="utf-8") as f:
+                f.write(bat_content)
+            print(f"[✔] Dibuat batch launcher Python: {host_bat}")
+        except Exception as e:
+            print(f"[!] Warning writing host.bat: {e}")
+        target_path = host_bat
 else:
-    try:
-        os.chmod(host_script, 0o755)
-        print(f"[✔] Set izin eksekusi chmod +x: {host_script}")
-    except Exception as e:
-        print(f"[!] Warning setting chmod permissions: {e}")
-    target_path = host_script
+    if os.path.exists(rust_bin_linux):
+        try:
+            os.chmod(rust_bin_linux, 0o755)
+        except Exception:
+            pass
+        target_path = rust_bin_linux
+        print(f"[✔] Menggunakan Native Binary Rust (Zero-GC, 2MB RAM): {target_path}")
+    else:
+        try:
+            os.chmod(host_script, 0o755)
+            print(f"[✔] Set izin eksekusi chmod +x: {host_script}")
+        except Exception as e:
+            print(f"[!] Warning setting chmod permissions: {e}")
+        target_path = host_script
 
 # 3. Check Dependencies (Python, Node.js/npx)
 print("\n🔍 Memeriksa Dependensi Sistem:")
