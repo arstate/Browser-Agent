@@ -2299,6 +2299,8 @@ async function sendNativeRpc(action, params = {}, retryCount = 0) {
 function updateHostStatus(status) {
   const chip = document.getElementById('host-status-indicator');
   const text = document.getElementById('host-status-text');
+  const chipNewtab = document.getElementById('chip-pc-bridge');
+  const textNewtab = document.getElementById('pc-bridge-text');
   const diagDot = document.getElementById('diag-pc-bridge');
   const diagText = document.getElementById('diag-pc-text');
 
@@ -2306,12 +2308,31 @@ function updateHostStatus(status) {
     if (status === 'connected') {
       chip.className = 'bento-status-chip chip-dark connected';
       text.textContent = 'PC Bridge: Online';
+      chip.title = 'Local PC Access Bridge: Online';
     } else if (status === 'connecting') {
       chip.className = 'bento-status-chip chip-dark';
       text.textContent = 'PC Bridge: Connecting...';
+      chip.title = 'Menghubungkan ke PC Bridge...';
     } else {
-      chip.className = 'bento-status-chip chip-dark disconnected';
-      text.textContent = 'PC Bridge: Offline';
+      chip.className = 'bento-status-chip chip-dark disconnected is-clickable-fix';
+      text.textContent = 'PC Bridge: Offline (Fix)';
+      chip.title = 'PC Bridge: Offline — Klik untuk Buka Universal Fix Quick Installer';
+    }
+  }
+
+  if (chipNewtab && textNewtab) {
+    if (status === 'connected') {
+      chipNewtab.className = 'bento-status-chip chip-dark connected';
+      textNewtab.textContent = 'Online';
+      chipNewtab.title = 'PC Bridge: Online (Native Host Python terhubung)';
+    } else if (status === 'connecting') {
+      chipNewtab.className = 'bento-status-chip chip-dark';
+      textNewtab.textContent = 'Connecting...';
+      chipNewtab.title = 'Menghubungkan ke PC Bridge...';
+    } else {
+      chipNewtab.className = 'bento-status-chip chip-dark disconnected is-clickable-fix';
+      textNewtab.textContent = 'Offline (Fix)';
+      chipNewtab.title = 'PC Bridge: Offline — Klik untuk Buka Universal Fix Quick Installer';
     }
   }
 

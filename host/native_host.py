@@ -3703,8 +3703,28 @@ def handle_local_rpc(msg):
                 "stderr": proc.stderr,
                 "exit_code": proc.returncode
             }
-        except subprocess.TimeoutExpired:
-            return {"id": req_id, "status": "error", "error": f"Command timed out after {timeout}s"}
+    elif action == "auto_update":
+        repo_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        try:
+            log(f"Auto-updating Browser Agent repository via git pull in {repo_dir}...")
+            proc = subprocess.run("git pull origin master", shell=True, cwd=repo_dir, capture_output=True, text=True, timeout=30)
+            pull_output = proc.stdout + proc.stderr
+            log(f"Git pull result: {pull_output}")
+            
+            if os.path.exists(os.path.join(repo_dir, "build_crx.py")):
+                subprocess.run("python3 build_crx.py", shell=True, cwd=repo_dir, capture_output=True, text=True, timeout=15)
+                
+            return {
+                "id": req_id,
+                "status": "ok",
+                "success": proc.returncode == 0,
+                "output": pull_output,
+                "returncode": proc.returncode
+            }
+        except Exception as e:
+            log(f"Auto-update error: {e}")
+            return {"id": req_id, "status": "error", "error": str(e)}
+
     elif action == "open_application":
         app_name = msg.get("app_name") or msg.get("command") or msg.get("app")
         args = msg.get("args", "")
