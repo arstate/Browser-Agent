@@ -195,23 +195,23 @@ Seluruh view dan tab dalam halaman Pengaturan (`#tab-view-ai`, `#tab-view-agents
 
 ---
 
-## 🔍 7. Search Glasses Full Rounded Bar & Container Grid Alignment Specification
+## 🔍 7. Search Glasses Full Rounded Bar & Multi-Column Grid Architecture
 
-Standar visual, ukuran presisi, tata letak (*margins & paddings*), dan sistem keseragaman kontainer untuk seluruh bar pencarian (*search bar*) serta grid antarmuka di halaman Pengaturan:
+Standar visual, ukuran presisi, tata letak (*margins & paddings*), simetri vertikal, dan sistem keseragaman kontainer multi-kolom di halaman Pengaturan:
 
 ### A. Geometri & Dimensi Kapsul Penuh (`border-radius: 9999px`)
 - **Container Box (`.glass-rounded-search-box` / `.brain-search-unified-box`)**:
   - `width: 100%;`
   - `box-sizing: border-box;`
   - `border-radius: 9999px !important;` (Bentuk Kapsul/Pill Penuh).
-  - `padding: 4px 14px 4px 18px;` (atau `4px 6px 4px 16px` jika menyertakan embedded view switcher).
-  - `min-height: 46px;`
+  - `height: 48px; min-height: 48px; max-height: 48px;`
+  - `padding: 0 10px 0 18px;` (atau `0 6px 0 18px` jika menyertakan embedded view switcher).
   - `display: flex; align-items: center;`
   - `transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);`
 - **Search Wrapper (`.catalog-search-wrapper`)**:
   - `width: 100%;`
   - `box-sizing: border-box;`
-  - `margin: 0;` (Jarak vertikal dikendalikan secara deterministik via `gap: 20px` pada parent `.options-view` / `.connected-apps-view-section`).
+  - `margin: 0;` (Jarak vertikal atas dan bawah dikendalikan secara deterministik via `gap: 20px` pada parent `.options-view` / `.connected-apps-view-section` sehingga jarak atas dan bawah selalu identik 20px).
 
 ### B. Material Kaca & Efek Interaktif (Liquid Glassmorphism)
 - **Surface**: `background: rgba(18, 18, 22, 0.72);` dengan `backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);`.
@@ -221,41 +221,49 @@ Standar visual, ukuran presisi, tata letak (*margins & paddings*), dan sistem ke
   - Border: `border-color: var(--accent-lime) !important;` (`#CEF128`).
   - Glow: `box-shadow: 0 0 0 2px rgba(206, 241, 40, 0.15), 0 6px 20px rgba(0, 0, 0, 0.35) !important;`.
 
-### C. Elemen Internal Search Bar
+### C. Elemen Internal & Simetri Vertikal Presisi (100% Zero-Bias)
 1. **Search Icon SVG (`.search-icon-svg`)**:
    - Dimensi: `16px x 16px` murni vector SVG (`stroke-width: 2.2`).
    - Warna: `color: var(--text-muted);` (`#94A3B8`).
-   - Margin & Alignment: `margin-right: 12px; flex-shrink: 0; pointer-events: none;`.
-2. **Text Input (`.glass-rounded-search-input` / `.catalog-search-input`)**:
+   - Margin & Alignment: `margin-right: 12px; flex-shrink: 0; pointer-events: none; display: flex; align-items: center; justify-content: center;`.
+2. **Text Input (`.glass-rounded-search-input` / `.brain-search-unified-input`)**:
    - `flex: 1;`
    - `background: transparent !important;`
    - `border: none !important;`
    - `outline: none !important;`
-   - `padding: 10px 12px 10px 0 !important;`
+   - `padding: 0 12px 0 0 !important;`
+   - `height: 100% !important;`
+   - `line-height: 48px !important;` (Menjamin teks input berada persis di titik tengah sumbu vertikal container).
    - `font-size: 13px;`
    - `color: #FFFFFF;`
    - `font-family: inherit;`
    - Placeholder: `color: var(--text-muted); font-size: 13px;`.
-3. **Clear Button (`.btn-clear-search`)**:
+3. **Embedded View Switcher (`.brain-view-switcher-embedded .brain-view-mode-btn`)**:
+   - `height: 36px;`
+   - `padding: 0 16px;`
+   - `border-radius: 9999px;`
+   - `margin: auto 0;` (Menciptakan ruang simetris atas-bawah persis $(48\text{px} - 36\text{px})/2 = 6\text{px}$).
+4. **Clear Button (`.btn-clear-search`)**:
    - `width: 28px; height: 28px; padding: 0;`
    - `border-radius: 9999px;`
    - `background: transparent; border: none; color: var(--text-muted); cursor: pointer;`
    - Hover: `color: #FFFFFF; background: rgba(255, 255, 255, 0.08);`.
-4. **Statistik Hasil Pencarian (`.search-result-stats`)**:
+5. **Statistik Hasil Pencarian (`.search-result-stats`)**:
    - `font-size: 11.5px; color: var(--text-muted); margin-top: 8px; margin-left: 18px;`
 
-### D. Standar Presisi Margin Kanan-Kiri & Simetri Layout 100%
-Untuk memastikan tidak ada perbedaan margin kanan-kiri antar tab:
-1. **Main Frame (`.options-main-content`)**:
-   - `max-width: 1240px;`
-   - `margin: 0 auto;`
-   - `padding: 28px 36px 60px;`
-   - `width: 100%; box-sizing: border-box;`
-2. **View Containers (`.options-view`, `.connected-apps-view-section`)**:
-   - `width: 100%; box-sizing: border-box; margin: 0;`
-   - `display: flex; flex-direction: column; gap: 20px;`
-3. **Grid Layouts (`.connected-apps-grid`, `.plugins-grid`, `.brain-cards-grid`, `.item-cards-grid`, `.bento-grid-2col`)**:
-   - `width: 100%; box-sizing: border-box; margin: 0;`
-   - `gap: 18px;` (atau `16px` untuk brain cards).
-   - **DILARANG KERAS** menambahkan inline `margin-bottom: 20px` atau `margin-top: 8px` yang bertabrakan dengan flex gap parent.
+### D. Standar Multi-Column Responsive Grid (Anti 1-Baris Kebawah)
+Katalog kartu DILARANG disusun dalam bentuk 1 kolom tunggal (stack block), melainkan wajib menggunakan responsive multi-column grid:
+1. **Connected Apps & Integrations (`.connected-apps-grid`)**:
+   - `display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; width: 100%; box-sizing: border-box;`
+2. **Plugin Ecosystem & Optimizers (`.plugins-grid`)**:
+   - `display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; width: 100%; box-sizing: border-box;`
+3. **Brain Cards & Management (`.brain-cards-grid`, `.items-cards-grid`, `.item-cards-grid`)**:
+   - `display: grid; grid-template-columns: repeat(auto-fill, minmax(285px, 1fr)); gap: 16px; width: 100%; box-sizing: border-box; align-items: stretch;`
+4. **Bento 2-Columns Preferences (`.bento-grid-2col`)**:
+   - `display: grid; grid-template-columns: 1fr 1fr; gap: 18px; width: 100%; box-sizing: border-box;` (Mobile: `1fr`).
+5. **Main Content Container Frame (`.options-main-content`)**:
+   - `max-width: 1240px; margin: 0 auto; padding: 28px 36px 60px; width: 100%; box-sizing: border-box;`
+6. **Harmonisasi Gap Vertikal**:
+   - Semua `.options-view` dan `.connected-apps-view-section` menggunakan `display: flex; flex-direction: column; gap: 20px; width: 100%; box-sizing: border-box; margin: 0;`.
+   - DILARANG menambahkan inline `margin-bottom: 20px` atau `margin-top: 8px` pada hero card atau grid yang dapat membuat jarak atas-bawah search bar menjadi tidak seimbang.
 
