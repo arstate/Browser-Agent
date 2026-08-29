@@ -43,7 +43,13 @@ async function initGoogleWorkspaceSettings() {
     if (inputClientId) inputClientId.value = googleWorkspaceConfig.client_id || '';
     if (inputClientSecret) inputClientSecret.value = googleWorkspaceConfig.client_secret || '';
     if (inputDefaultSheet) inputDefaultSheet.value = googleWorkspaceConfig.default_spreadsheet_id || '';
-    if (chkAutoExport) chkAutoExport.checked = !!googleWorkspaceConfig.auto_export_reports;
+    // Fetch and display detected Redirect URI
+    let redirectUri = "https://lifodpllfgehiendpgpomfjbejhfffik.chromiumapp.org/";
+    if (window.googleWorkspaceService && typeof window.googleWorkspaceService.getRedirectUrl === 'function') {
+      redirectUri = await window.googleWorkspaceService.getRedirectUrl();
+    }
+    const redirectCodeElem = document.getElementById('google-detected-redirect-uri');
+    if (redirectCodeElem) redirectCodeElem.textContent = redirectUri;
 
     updateGoogleWorkspaceUI();
     renderGoogleWorkspaceLogs();
@@ -201,6 +207,29 @@ function setupGoogleWorkspaceEventListeners() {
       detailView.style.display = 'none';
       hubView.style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  // 1b. Copy Detected Redirect URI
+  const btnCopyUri = document.getElementById('btn-copy-google-redirect-uri');
+  if (btnCopyUri) {
+    btnCopyUri.addEventListener('click', async () => {
+      let redirectUri = "https://lifodpllfgehiendpgpomfjbejhfffik.chromiumapp.org/";
+      if (window.googleWorkspaceService && typeof window.googleWorkspaceService.getRedirectUrl === 'function') {
+        redirectUri = await window.googleWorkspaceService.getRedirectUrl();
+      }
+      try {
+        await navigator.clipboard.writeText(redirectUri);
+        if (typeof showSaveToast === 'function') {
+          showSaveToast("Redirect URI berhasil disalin ke clipboard!");
+        }
+        btnCopyUri.innerHTML = `<span>✔ Tersalin!</span>`;
+        setTimeout(() => {
+          btnCopyUri.innerHTML = `<span>📋 Salin URI</span>`;
+        }, 2000);
+      } catch (err) {
+        prompt("Salin URI ini:", redirectUri);
+      }
     });
   }
 

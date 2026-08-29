@@ -1508,6 +1508,22 @@
                     <img src="icons/connected-apps/google_workspace.svg" width="18" height="18" alt="Google">
                     <span>Hubungkan Akun Google</span>
                   </button>
+
+                  <!-- Authorized Redirect URI Display Box -->
+                  <div style="margin-top: 20px; background: rgba(0,0,0,0.35); border: 1px solid rgba(66, 133, 244, 0.25); border-radius: 12px; padding: 12px 14px; text-align: left;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                      <span style="font-size: 11px; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.5px;">🔑 Authorized Redirect URI (Google Cloud Console):</span>
+                      <button type="button" id="btn-copy-google-redirect-uri" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 6px; background: rgba(66, 133, 244, 0.2); border: 1px solid rgba(66, 133, 244, 0.4); color: #93c5fd; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                        <span>📋 Salin URI</span>
+                      </button>
+                    </div>
+                    <code id="google-detected-redirect-uri" style="display: block; font-family: monospace; font-size: 11px; color: #a5f3fc; background: rgba(255,255,255,0.04); padding: 6px 10px; border-radius: 8px; word-break: break-all; border: 1px solid rgba(255,255,255,0.06);">
+                      Memuat Redirect URI...
+                    </code>
+                    <p style="font-size: 10.5px; color: #94a3b8; line-height: 1.4; margin: 6px 0 0 0;">
+                      💡 <b>Wajib:</b> Masukkan URI di atas ke dalam menu <i>"Authorized redirect URIs"</i> pada OAuth 2.0 Client ID di <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #60a5fa; text-decoration: underline;">Google Cloud Console</a> agar login diizinkan.
+                    </p>
+                  </div>
                 </div>
 
                 <!-- Connected State -->
