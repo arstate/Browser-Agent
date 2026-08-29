@@ -17,6 +17,7 @@ const GOOGLE_OAUTH_SCOPES = [
   'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/forms.body',
   'https://www.googleapis.com/auth/forms.responses.readonly',
+  'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/calendar.events',
   'https://www.googleapis.com/auth/calendar.readonly',
   'https://www.googleapis.com/auth/tasks',
@@ -68,13 +69,16 @@ class GoogleWorkspaceService {
     const clientSecret = (config.client_secret || DEFAULT_GOOGLE_CLIENT_SECRET).trim();
     const redirectUrl = await this.getRedirectUrl();
 
+    // Clear old cached token before opening fresh OAuth consent
+    await chrome.storage.local.remove(['google_workspace_auth']);
+
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('redirect_uri', redirectUrl);
     authUrl.searchParams.set('scope', GOOGLE_OAUTH_SCOPES.join(' '));
     authUrl.searchParams.set('access_type', 'offline');
-    authUrl.searchParams.set('prompt', 'consent');
+    authUrl.searchParams.set('prompt', 'consent select_account');
 
     return new Promise((resolve, reject) => {
       chrome.identity.launchWebAuthFlow({
@@ -231,6 +235,17 @@ class GoogleWorkspaceService {
   }
 
   /**
+   * Helper: Handle API errors with friendly scope update message
+   */
+  handleApiError(serviceName, errorObj) {
+    const msg = errorObj?.message || (typeof errorObj === 'string' ? errorObj : JSON.stringify(errorObj));
+    if (msg.includes("insufficient authentication scopes") || msg.includes("ACCESS_TOKEN_SCOPE_INSUFFICIENT") || msg.includes("insufficient_scope")) {
+      throw new Error(`Izin ${serviceName} belum aktif (Token lama). Silakan klik tombol 'Putus' di atas lalu klik 'Hubungkan Akun Google' kembali untuk menyetujui izin fitur baru (Gmail, Forms, Calendar, Tasks).`);
+    }
+    throw new Error(`${serviceName} Error: ${msg}`);
+  }
+
+  /**
    * Append one or multiple rows to a Google Spreadsheet
    */
   async appendSpreadsheetRow(spreadsheetIdOrUrl, rowValues = [], sheetName = 'Sheet1') {
@@ -255,7 +270,7 @@ class GoogleWorkspaceService {
 
     const data = await res.json();
     if (data.error) {
-      throw new Error(`Google Sheets API Error: ${data.error.message || JSON.stringify(data.error)}`);
+      this.handleApiError('Google Sheets API', data.error);
     }
 
     this.logActivity('SHEETS_APPEND', `Berhasil menambahkan ${values.length} baris ke Sheet ID: ${spreadsheetId.substring(0, 8)}...`);
@@ -733,7 +748,7 @@ class GoogleWorkspaceService {
 
     const data = await res.json();
     if (data.error) {
-      throw new Error(`Gmail API Error: ${data.error.message || JSON.stringify(data.error)}`);
+      this.handleApiError('Gmail API', data.error);
     }
 
     this.logActivity('GMAIL_SEND', `Berhasil mengirim email ke: ${to} (Subjek: "${subject}")`);
@@ -758,7 +773,7 @@ class GoogleWorkspaceService {
     });
     const data = await res.json();
     if (data.error) {
-      throw new Error(`Gmail API Error: ${data.error.message || JSON.stringify(data.error)}`);
+      this.handleApiError('Gmail API', data.error);
     }
 
     const messages = [];
@@ -805,6 +820,7 @@ class GoogleWorkspaceService {
     const token = await this.getValidAccessToken();
     const createUrl = 'https://forms.googleapis.com/v1/forms';
 
+    // Google Forms API v1 POST /forms only allows info.title
     const createRes = await fetch(createUrl, {
       method: 'POST',
       headers: {
@@ -813,27 +829,39 @@ class GoogleWorkspaceService {
       },
       body: JSON.stringify({
         info: {
-          title: title || "Kuesioner Survey Prospek",
-          description: description || "Formulir dibuat otomatis oleh AI"
+          title: title || "Kuesioner Survey Prospek"
         }
       })
     });
 
     const formData = await createRes.json();
     if (formData.error) {
-      throw new Error(`Google Forms API Error: ${formData.error.message || JSON.stringify(formData.error)}`);
+      this.handleApiError('Google Forms API', formData.error);
     }
 
     const formId = formData.formId;
+    const requests = [];
+
+    // Set description via updateFormInfo in batchUpdate
+    if (description) {
+      requests.push({
+        updateFormInfo: {
+          info: {
+            description: String(description)
+          },
+          updateMask: "description"
+        }
+      });
+    }
 
     if (Array.isArray(questions) && questions.length > 0) {
-      const requests = questions.map((q, idx) => {
+      questions.forEach((q, idx) => {
         const qTitle = typeof q === 'string' ? q : (q.title || `Pertanyaan ${idx + 1}`);
         const qType = q.type || 'TEXT';
         const qOptions = Array.isArray(q.options) ? q.options : ["Opsi 1", "Opsi 2"];
 
         if (qType === 'CHOICE') {
-          return {
+          requests.push({
             createItem: {
               item: {
                 title: qTitle,
@@ -849,9 +877,9 @@ class GoogleWorkspaceService {
               },
               location: { index: idx }
             }
-          };
+          });
         } else {
-          return {
+          requests.push({
             createItem: {
               item: {
                 title: qTitle,
@@ -864,12 +892,14 @@ class GoogleWorkspaceService {
               },
               location: { index: idx }
             }
-          };
+          });
         }
       });
+    }
 
+    if (requests.length > 0) {
       const batchUrl = `https://forms.googleapis.com/v1/forms/${encodeURIComponent(formId)}:batchUpdate`;
-      await fetch(batchUrl, {
+      const batchRes = await fetch(batchUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -877,6 +907,10 @@ class GoogleWorkspaceService {
         },
         body: JSON.stringify({ requests })
       });
+      const batchData = await batchRes.json();
+      if (batchData.error) {
+        this.handleApiError('Google Forms API (batchUpdate)', batchData.error);
+      }
     }
 
     const responderUri = formData.responderUri || `https://docs.google.com/forms/d/e/${formId}/viewform`;
@@ -905,7 +939,7 @@ class GoogleWorkspaceService {
     });
     const data = await res.json();
     if (data.error) {
-      throw new Error(`Google Forms API Error: ${data.error.message || JSON.stringify(data.error)}`);
+      this.handleApiError('Google Forms API', data.error);
     }
 
     const responses = data.responses || [];
@@ -955,7 +989,7 @@ class GoogleWorkspaceService {
 
     const data = await res.json();
     if (data.error) {
-      throw new Error(`Google Calendar API Error: ${data.error.message || JSON.stringify(data.error)}`);
+      this.handleApiError('Google Calendar API', data.error);
     }
 
     this.logActivity('CALENDAR_EVENT', `Jadwal Kalender Dibuat: "${summary}" (${start.toLocaleDateString('id-ID')})`);
@@ -982,7 +1016,7 @@ class GoogleWorkspaceService {
     });
     const data = await res.json();
     if (data.error) {
-      throw new Error(`Google Calendar API Error: ${data.error.message || JSON.stringify(data.error)}`);
+      this.handleApiError('Google Calendar API', data.error);
     }
 
     const events = (data.items || []).map(evt => ({
@@ -1033,7 +1067,7 @@ class GoogleWorkspaceService {
 
     const data = await res.json();
     if (data.error) {
-      throw new Error(`Google Tasks API Error: ${data.error.message || JSON.stringify(data.error)}`);
+      this.handleApiError('Google Tasks API', data.error);
     }
 
     this.logActivity('TASKS_CREATE', `Berhasil membuat Task: "${title}"`);
@@ -1058,7 +1092,7 @@ class GoogleWorkspaceService {
     });
     const data = await res.json();
     if (data.error) {
-      throw new Error(`Google Tasks API Error: ${data.error.message || JSON.stringify(data.error)}`);
+      this.handleApiError('Google Tasks API', data.error);
     }
 
     const tasks = (data.items || []).map(t => ({
@@ -1095,7 +1129,7 @@ class GoogleWorkspaceService {
     });
     const data = await res.json();
     if (data.error) {
-      throw new Error(`Google Contacts API Error: ${data.error.message || JSON.stringify(data.error)}`);
+      this.handleApiError('Google Contacts API', data.error);
     }
 
     const rawList = data.results ? data.results.map(r => r.person) : (data.connections || []);
