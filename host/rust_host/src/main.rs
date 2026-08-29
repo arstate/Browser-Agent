@@ -1,17 +1,18 @@
 // ==============================================================================
 //  BROWSER AGENT - HIGH PERFORMANCE RUST NATIVE MESSAGING HOST & PERSISTENT BRAIN
 //  Author: Arya <arstate>
-//  Version: 2.150.114
+//  Version: 2.150.116
 //  Architecture: Zero-GC, Multithreaded, Bundled SQLite, Zero-Emoji Dark Luxury
 // ==============================================================================
 
-use std::fs::{self, OpenOptions};
+use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use base64::prelude::*;
 use chrono::Local;
 use rusqlite::{params, Connection, Row};
 use serde_json::{json, Value};
@@ -53,6 +54,24 @@ fn get_db_path() -> PathBuf {
     get_db_dir().join("chat_history.db")
 }
 
+fn expand_path(raw: &str) -> PathBuf {
+    let clean = raw.trim();
+    if clean.starts_with("~/") || clean == "~" {
+        let home = if cfg!(windows) {
+            std::env::var("USERPROFILE").unwrap_or_else(|_| "C:\\".to_string())
+        } else {
+            std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string())
+        };
+        if clean == "~" {
+            PathBuf::from(home)
+        } else {
+            PathBuf::from(home).join(&clean[2..])
+        }
+    } else {
+        PathBuf::from(clean)
+    }
+}
+
 fn init_db() -> Result<Connection, rusqlite::Error> {
     let db_dir = get_db_dir();
     let _ = fs::create_dir_all(&db_dir);
@@ -75,7 +94,7 @@ fn init_db() -> Result<Connection, rusqlite::Error> {
 
     let conn = Connection::open(get_db_path())?;
 
-    // Enable WAL mode for high concurrent read/write throughput
+    // Enable WAL mode for ultra fast concurrent read/write throughput
     let _ = conn.execute_batch("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;");
 
     conn.execute_batch(
@@ -259,7 +278,7 @@ fn read_message<R: Read>(reader: &mut R) -> Option<Value> {
     serde_json::from_slice(&buf).ok()
 }
 
-// Write Native Messaging format (4-byte length + UTF-8 JSON) with 500KB Chunking
+// Write Native Messaging format (4-byte length + UTF-8 JSON) with Safe UTF-8 500KB Chunking
 fn write_message<W: Write>(writer: &mut W, value: &Value) {
     let _lock = STDOUT_MUTEX.lock().unwrap();
     let serialized = match serde_json::to_vec(value) {
@@ -355,6 +374,49 @@ fn parse_md_file(path: &Path) -> Option<(Value, String)> {
     }
 
     Some((meta, content))
+}
+
+fn save_md_item(dir: &Path, item: &Value) -> Result<String, String> {
+    let id = item.get("id").and_then(|v| v.as_str()).unwrap_or("").trim();
+    if id.is_empty() {
+        return Err("Item ID is required".to_string());
+    }
+
+    let _ = fs::create_dir_all(dir);
+    let file_path = dir.join(format!("{}.md", id));
+
+    let content = item.get("content").and_then(|v| v.as_str())
+        .or_else(|| item.get("prompt").and_then(|v| v.as_str()))
+        .unwrap_or("");
+
+    let mut frontmatter = String::from("---\n");
+    if let Some(obj) = item.as_object() {
+        for (k, v) in obj {
+            if k != "content" && k != "file_path" {
+                if let Some(s) = v.as_str() {
+                    frontmatter.push_str(&format!("{}: \"{}\"\n", k, s.replace('"', "\\\"")));
+                } else {
+                    frontmatter.push_str(&format!("{}: {}\n", k, v));
+                }
+            }
+        }
+    }
+    frontmatter.push_str("---\n\n");
+    frontmatter.push_str(content);
+
+    fs::write(&file_path, frontmatter).map_err(|e| e.to_string())?;
+    Ok(file_path.to_string_lossy().to_string())
+}
+
+fn delete_md_item(dir: &Path, id: &str) -> Result<(), String> {
+    if id.trim().is_empty() {
+        return Err("ID required".to_string());
+    }
+    let file_path = dir.join(format!("{}.md", id.trim()));
+    if file_path.exists() {
+        fs::remove_file(file_path).map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 fn map_user_memory(r: &Row) -> rusqlite::Result<Value> {
@@ -521,10 +583,13 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         "ping" => json!({
             "status": "ok",
             "message": "Rust Native Host Online",
-            "version": "2.150.115",
+            "version": "2.150.116",
             "runtime": "Rust 1.98 (Zero-GC, Native Binary)",
             "os": std::env::consts::OS,
-            "arch": std::env::consts::ARCH
+            "arch": std::env::consts::ARCH,
+            "platform": std::env::consts::OS,
+            "db_path": get_db_path().to_string_lossy(),
+            "cwd": std::env::current_dir().unwrap_or_default().to_string_lossy()
         }),
 
         "auto_update" => {
@@ -567,7 +632,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             let cwd = msg
                 .get("cwd")
                 .and_then(|v| v.as_str())
-                .map(PathBuf::from)
+                .map(expand_path)
                 .unwrap_or_else(|| {
                     if cfg!(windows) {
                         PathBuf::from("C:\\")
@@ -609,11 +674,197 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 .or_else(|| msg.get("command"))
                 .and_then(|v| v.as_str())
                 .unwrap_or("");
+            let args = msg.get("args").and_then(|v| v.as_str()).unwrap_or("");
             if app.is_empty() {
                 json!({ "status": "error", "error": "No application specified" })
             } else {
-                let _ = Command::new(app).spawn();
+                let full_cmd = if args.is_empty() { app.to_string() } else { format!("{} {}", app, args) };
+                if cfg!(windows) {
+                    let _ = Command::new("cmd").args(["/C", "start", "", &full_cmd]).spawn();
+                } else {
+                    let _ = Command::new("bash").args(["-c", &format!("{} &", full_cmd)]).spawn();
+                }
                 json!({ "status": "ok", "message": format!("Application '{}' launched", app) })
+            }
+        }
+
+        // ==========================================
+        // FILE & LOCAL DISK RPC HANDLERS
+        // ==========================================
+        "read_file" => {
+            let raw_path = msg.get("path").and_then(|v| v.as_str()).unwrap_or("");
+            if raw_path.is_empty() {
+                json!({ "status": "error", "error": "No file path provided" })
+            } else {
+                let p = expand_path(raw_path);
+                match fs::read_to_string(&p) {
+                    Ok(content) => json!({
+                        "status": "ok",
+                        "content": content,
+                        "path": p.to_string_lossy(),
+                        "size": content.len()
+                    }),
+                    Err(e) => json!({ "status": "error", "error": format!("Read error: {}", e) }),
+                }
+            }
+        }
+
+        "write_file" => {
+            let raw_path = msg.get("path").and_then(|v| v.as_str()).unwrap_or("");
+            let is_base64 = msg.get("is_base64").and_then(|v| v.as_bool()).unwrap_or(false);
+            if raw_path.is_empty() {
+                json!({ "status": "error", "error": "No file path provided" })
+            } else {
+                let p = expand_path(raw_path);
+                if let Some(parent) = p.parent() {
+                    let _ = fs::create_dir_all(parent);
+                }
+
+                if is_base64 {
+                    let mut b64_str = msg.get("content").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                    if let Some(comma_pos) = b64_str.find(',') {
+                        b64_str = b64_str[comma_pos + 1..].to_string();
+                    }
+                    match BASE64_STANDARD.decode(b64_str.trim()) {
+                        Ok(bytes) => match fs::write(&p, &bytes) {
+                            Ok(_) => json!({ "status": "ok", "path": p.to_string_lossy(), "bytes_written": bytes.len() }),
+                            Err(e) => json!({ "status": "error", "error": e.to_string() }),
+                        },
+                        Err(e) => json!({ "status": "error", "error": format!("Base64 decode error: {}", e) }),
+                    }
+                } else {
+                    let content = msg.get("content").and_then(|v| v.as_str()).unwrap_or("");
+                    match fs::write(&p, content) {
+                        Ok(_) => json!({ "status": "ok", "path": p.to_string_lossy(), "bytes_written": content.len() }),
+                        Err(e) => json!({ "status": "error", "error": e.to_string() }),
+                    }
+                }
+            }
+        }
+
+        "read_file_binary" => {
+            let raw_path = msg.get("path").and_then(|v| v.as_str()).unwrap_or("");
+            if raw_path.is_empty() {
+                json!({ "status": "error", "error": "No file path provided" })
+            } else {
+                let p = expand_path(raw_path);
+                match fs::read(&p) {
+                    Ok(bytes) => {
+                        let b64 = BASE64_STANDARD.encode(&bytes);
+                        let file_name = p.file_name().and_then(|s| s.to_str()).unwrap_or("file");
+                        json!({
+                            "status": "ok",
+                            "file_name": file_name,
+                            "file_size": bytes.len(),
+                            "base64": b64,
+                            "path": p.to_string_lossy()
+                        })
+                    }
+                    Err(e) => json!({ "status": "error", "error": format!("Read binary error: {}", e) }),
+                }
+            }
+        }
+
+        "list_dir" => {
+            let raw_path = msg.get("path").and_then(|v| v.as_str()).unwrap_or(".");
+            let p = expand_path(raw_path);
+            match fs::read_dir(&p) {
+                Ok(entries) => {
+                    let mut items = vec![];
+                    for entry in entries.flatten() {
+                        let ep = entry.path();
+                        let is_dir = ep.is_dir();
+                        let name = ep.file_name().and_then(|s| s.to_str()).unwrap_or("").to_string();
+                        let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
+                        items.push(json!({
+                            "name": name,
+                            "path": ep.to_string_lossy(),
+                            "is_dir": is_dir,
+                            "size": size
+                        }));
+                    }
+                    json!({ "status": "ok", "path": p.to_string_lossy(), "items": items })
+                }
+                Err(e) => json!({ "status": "error", "error": format!("List dir error: {}", e) }),
+            }
+        }
+
+        "open_file" => {
+            let raw_path = msg.get("path").and_then(|v| v.as_str()).unwrap_or("");
+            let p = expand_path(raw_path);
+            if cfg!(windows) {
+                let _ = Command::new("cmd").args(["/C", "start", "", &p.to_string_lossy()]).spawn();
+            } else if cfg!(target_os = "macos") {
+                let _ = Command::new("open").arg(&p).spawn();
+            } else {
+                let _ = Command::new("xdg-open").arg(&p).spawn();
+            }
+            json!({ "status": "ok", "path": p.to_string_lossy() })
+        }
+
+        "reveal_file" => {
+            let raw_path = msg.get("path").and_then(|v| v.as_str()).unwrap_or("");
+            let p = expand_path(raw_path);
+            let parent = p.parent().unwrap_or(&p);
+            if cfg!(windows) {
+                let _ = Command::new("explorer").args(["/select,", &p.to_string_lossy()]).spawn();
+            } else if cfg!(target_os = "macos") {
+                let _ = Command::new("open").args(["-R", &p.to_string_lossy()]).spawn();
+            } else {
+                let _ = Command::new("xdg-open").arg(parent).spawn();
+            }
+            json!({ "status": "ok", "path": p.to_string_lossy() })
+        }
+
+        "save_screenshot" => {
+            let mut data = msg.get("image_data").or_else(|| msg.get("data")).and_then(|v| v.as_str()).unwrap_or("").to_string();
+            let sid = msg.get("screenshot_id").and_then(|v| v.as_str())
+                .unwrap_or(&format!("shot_{}", now_millis()))
+                .to_string();
+            if let Some(comma_pos) = data.find(',') {
+                data = data[comma_pos + 1..].to_string();
+            }
+            let target_path = get_db_dir().join("walkthrough_screenshots").join(format!("{}.png", sid));
+            match BASE64_STANDARD.decode(data.trim()) {
+                Ok(bytes) => match fs::write(&target_path, &bytes) {
+                    Ok(_) => json!({ "status": "ok", "screenshot_id": sid, "path": target_path.to_string_lossy() }),
+                    Err(e) => json!({ "status": "error", "error": e.to_string() }),
+                },
+                Err(e) => json!({ "status": "error", "error": format!("Base64 decode error: {}", e) }),
+            }
+        }
+
+        "save_generated_image" => {
+            let mut data = msg.get("image_data").and_then(|v| v.as_str()).unwrap_or("").to_string();
+            let img_id = msg.get("image_id").and_then(|v| v.as_str())
+                .unwrap_or(&format!("img_{}", now_millis()))
+                .to_string();
+            if let Some(comma_pos) = data.find(',') {
+                data = data[comma_pos + 1..].to_string();
+            }
+            let target_path = get_db_dir().join("generated_images").join(format!("{}.png", img_id));
+            match BASE64_STANDARD.decode(data.trim()) {
+                Ok(bytes) => match fs::write(&target_path, &bytes) {
+                    Ok(_) => json!({ "status": "ok", "image_id": img_id, "path": target_path.to_string_lossy() }),
+                    Err(e) => json!({ "status": "error", "error": e.to_string() }),
+                },
+                Err(e) => json!({ "status": "error", "error": format!("Base64 decode error: {}", e) }),
+            }
+        }
+
+        "get_generated_image" => {
+            let img_id = msg.get("image_id").and_then(|v| v.as_str()).unwrap_or("");
+            let p = get_db_dir().join("generated_images").join(format!("{}.png", img_id));
+            if p.exists() {
+                match fs::read(&p) {
+                    Ok(bytes) => {
+                        let b64 = BASE64_STANDARD.encode(&bytes);
+                        json!({ "status": "ok", "image_id": img_id, "data_url": format!("data:image/png;base64,{}", b64) })
+                    }
+                    Err(e) => json!({ "status": "error", "error": e.to_string() }),
+                }
+            } else {
+                json!({ "status": "error", "error": "Image not found" })
             }
         }
 
@@ -812,6 +1063,34 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 Ok(_) => json!({ "status": "ok", "key": key }),
                 Err(e) => json!({ "status": "error", "error": e.to_string() }),
             }
+        }
+
+        "db_save_all_settings" => {
+            let settings_obj = msg.get("settings").cloned().unwrap_or(json!({}));
+            let now = now_millis();
+            if let Some(map) = settings_obj.as_object() {
+                for (k, v) in map {
+                    let val_str = serde_json::to_string(v).unwrap_or_else(|_| "{}".to_string());
+                    let _ = conn.execute(
+                        "INSERT INTO settings (key, value_json, updated_at) VALUES (?1, ?2, ?3)
+                         ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at",
+                        params![k, val_str, now],
+                    );
+                }
+            }
+            json!({ "status": "ok", "message": "All settings saved" })
+        }
+
+        "db_save_models" => {
+            let models_arr = msg.get("models").cloned().unwrap_or(json!([]));
+            let val_str = serde_json::to_string(&models_arr).unwrap_or_else(|_| "[]".to_string());
+            let now = now_millis();
+            let _ = conn.execute(
+                "INSERT INTO settings (key, value_json, updated_at) VALUES ('models', ?1, ?2)
+                 ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at",
+                params![val_str, now],
+            );
+            json!({ "status": "ok", "message": "Models saved" })
         }
 
         "db_get_setting" => {
@@ -1082,12 +1361,12 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             let itype = msg.get("item_type").and_then(|v| v.as_str()).unwrap_or("");
             let id = msg.get("item_id").and_then(|v| v.as_str()).unwrap_or("");
             let table = match itype {
-                "user_profile" | "user_memories" => "user_memories",
-                "experience_ledger" => "experience_ledger",
-                "anti_patterns" => "anti_patterns",
-                "autonomous_skills" => "autonomous_skills",
-                "autonomous_agents" => "autonomous_agents",
-                "chat_training_corpus" => "chat_training_corpus",
+                "user_profile" | "user_memories" | "memory" => "user_memories",
+                "experience_ledger" | "experiences" => "experience_ledger",
+                "anti_patterns" | "antipatterns" => "anti_patterns",
+                "autonomous_skills" | "skills" => "autonomous_skills",
+                "autonomous_agents" | "agents" => "autonomous_agents",
+                "chat_training_corpus" | "training" => "chat_training_corpus",
                 _ => "",
             };
 
@@ -1136,6 +1415,18 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             json!({ "status": "ok", "triplets": triplets })
         }
 
+        "db_traverse_knowledge_graph" => {
+            let entity = msg.get("entity").and_then(|v| v.as_str()).unwrap_or("").to_lowercase();
+            let q = format!("%{}%", entity);
+            let mut triplets = vec![];
+            if let Ok(mut s) = conn.prepare("SELECT id, subject, predicate, object, confidence, decay_tau, source_kappa, negative_constraint, status, created_at, updated_at FROM graph_epistemic_triplets WHERE (LOWER(subject) LIKE ?1 OR LOWER(object) LIKE ?1) AND status = 'active' ORDER BY confidence DESC") {
+                if let Ok(iter) = s.query_map(params![q], map_epistemic_triplet) {
+                    triplets = iter.flatten().collect();
+                }
+            }
+            json!({ "status": "ok", "entity": entity, "triplets": triplets })
+        }
+
         // ==========================================
         // MD FILES (SKILLS, AGENTS, MEMORIES) RPCs
         // ==========================================
@@ -1157,6 +1448,24 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             json!({ "status": "ok", "items": items })
         }
 
+        "save_skill" => {
+            let skill_obj = msg.get("skill").cloned().unwrap_or(json!({}));
+            let skills_dir = get_db_dir().join("skills");
+            match save_md_item(&skills_dir, &skill_obj) {
+                Ok(path) => json!({ "status": "ok", "file_path": path }),
+                Err(e) => json!({ "status": "error", "error": e }),
+            }
+        }
+
+        "delete_skill" => {
+            let sid = msg.get("skill_id").and_then(|v| v.as_str()).unwrap_or("");
+            let skills_dir = get_db_dir().join("skills");
+            match delete_md_item(&skills_dir, sid) {
+                Ok(_) => json!({ "status": "ok", "skill_id": sid }),
+                Err(e) => json!({ "status": "error", "error": e }),
+            }
+        }
+
         "list_agents" => {
             let agents_dir = get_db_dir().join("agents");
             let mut items = vec![];
@@ -1173,6 +1482,24 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 }
             }
             json!({ "status": "ok", "items": items })
+        }
+
+        "save_agent" => {
+            let agent_obj = msg.get("agent").cloned().unwrap_or(json!({}));
+            let agents_dir = get_db_dir().join("agents");
+            match save_md_item(&agents_dir, &agent_obj) {
+                Ok(path) => json!({ "status": "ok", "file_path": path }),
+                Err(e) => json!({ "status": "error", "error": e }),
+            }
+        }
+
+        "delete_agent" => {
+            let aid = msg.get("agent_id").and_then(|v| v.as_str()).unwrap_or("");
+            let agents_dir = get_db_dir().join("agents");
+            match delete_md_item(&agents_dir, aid) {
+                Ok(_) => json!({ "status": "ok", "agent_id": aid }),
+                Err(e) => json!({ "status": "error", "error": e }),
+            }
         }
 
         "list_memories" => {
@@ -1193,6 +1520,24 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             json!({ "status": "ok", "items": items })
         }
 
+        "save_memory" => {
+            let mem_obj = msg.get("memory").cloned().unwrap_or(json!({}));
+            let mem_dir = get_db_dir().join("memories");
+            match save_md_item(&mem_dir, &mem_obj) {
+                Ok(path) => json!({ "status": "ok", "file_path": path }),
+                Err(e) => json!({ "status": "error", "error": e }),
+            }
+        }
+
+        "delete_memory" => {
+            let mid = msg.get("memory_id").and_then(|v| v.as_str()).unwrap_or("");
+            let mem_dir = get_db_dir().join("memories");
+            match delete_md_item(&mem_dir, mid) {
+                Ok(_) => json!({ "status": "ok", "memory_id": mid }),
+                Err(e) => json!({ "status": "error", "error": e }),
+            }
+        }
+
         _ => json!({
             "status": "ok",
             "message": format!("Action '{}' handled by Rust Native Host", action)
@@ -1207,7 +1552,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
 
 fn main() {
     log_msg("=========================================================");
-    log_msg("  Browser Agent Rust Native Host v2.150.114 starting...");
+    log_msg("  Browser Agent Rust Native Host v2.150.116 starting...");
     log_msg("=========================================================");
 
     let conn = match init_db() {
