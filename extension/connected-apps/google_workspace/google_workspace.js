@@ -296,7 +296,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal membuat dokumen: ${err.message}`);
       } finally {
         btnTestDoc.disabled = false;
-        btnTestDoc.innerHTML = `<svg viewBox="0 0 48 48" width="14" height="14"><path fill="#4285F4" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/><path fill="#A1C2FA" d="M30 4v12h12L30 4z"/></svg><span>Buat Doc</span>`;
+        btnTestDoc.innerHTML = `<img src="icons/google-apps/google-docs.svg" width="16" height="16" alt="Docs"><span>Buat Doc</span>`;
       }
     });
   }
@@ -340,7 +340,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal menulis ke Google Sheet: ${err.message}`);
       } finally {
         btnTestSheet.disabled = false;
-        btnTestSheet.innerHTML = `<svg viewBox="0 0 48 48" width="14" height="14"><path fill="#0F9D58" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/><path fill="#87CEAC" d="M30 4v12h12L30 4z"/></svg><span>Tulis Sheet</span>`;
+        btnTestSheet.innerHTML = `<img src="icons/google-apps/google-sheets.svg" width="16" height="16" alt="Sheets"><span>Tulis Sheet</span>`;
       }
     });
   }
@@ -370,7 +370,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal mengirim Gmail: ${err.message}`);
       } finally {
         btnTestGmail.disabled = false;
-        btnTestGmail.innerHTML = `<svg viewBox="0 0 48 48" width="14" height="14"><path fill="#EA4335" d="M45,16.2l-8,6.2L24,31.7L11,22.4l-8-6.2c-0.64-0.49-1-1.25-1-2.06c0-1.71,1.64-2.88,3.2-2.26L24,19.5l18.8-7.66c1.56-0.62,3.2,0.55,3.2,2.26C46,14.95,45.64,15.71,45,16.2z"/></svg><span>Test Gmail</span>`;
+        btnTestGmail.innerHTML = `<img src="icons/google-apps/gmail.svg" width="16" height="16" alt="Gmail"><span>Test Gmail</span>`;
       }
     });
   }
@@ -400,7 +400,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal membuat Google Form: ${err.message}`);
       } finally {
         btnTestForm.disabled = false;
-        btnTestForm.innerHTML = `<svg viewBox="0 0 48 48" width="14" height="14"><path fill="#7248B9" d="M30 4H10C7.79 4 6 5.79 6 8v32c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V16L30 4z"/><path fill="#B39DDB" d="M30 4v12h12L30 4z"/></svg><span>Test Form</span>`;
+        btnTestForm.innerHTML = `<img src="icons/google-apps/google-forms.svg" width="16" height="16" alt="Forms"><span>Test Form</span>`;
       }
     });
   }
@@ -427,7 +427,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal membuat agenda kalender: ${err.message}`);
       } finally {
         btnTestCalendar.disabled = false;
-        btnTestCalendar.innerHTML = `<svg viewBox="0 0 48 48" width="14" height="14"><rect width="36" height="36" x="6" y="6" rx="8" fill="#4285F4"/></svg><span>Test Kalender</span>`;
+        btnTestCalendar.innerHTML = `<img src="icons/google-apps/google-calendar.svg" width="16" height="16" alt="Calendar"><span>Kalender</span>`;
       }
     });
   }
@@ -448,7 +448,7 @@ function setupGoogleWorkspaceEventListeners() {
         alert(`Gagal mengakses Google Drive: ${err.message}`);
       } finally {
         btnTestDrive.disabled = false;
-        btnTestDrive.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg><span>Cek Drive</span>`;
+        btnTestDrive.innerHTML = `<img src="icons/google-apps/google-drive.svg" width="16" height="16" alt="Drive"><span>Cek Drive</span>`;
       }
     });
   }

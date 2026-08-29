@@ -284,3 +284,83 @@
 .google-log-badge.web_search, .google-log-badge.news_search { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
 .google-log-badge.logout { background: rgba(239, 68, 68, 0.15); color: #f87171; }
 
+/* =========================================================================
+   QUICK TEST BUTTONS & TUTORIAL STEP CARDS
+   ========================================================================= */
+.btn-google-quick-test {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: all 0.15s ease;
+}
+
+.btn-google-quick-test:hover {
+  background: rgba(66, 133, 244, 0.12);
+  border-color: rgba(66, 133, 244, 0.35);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-google-quick-test:active {
+  transform: translateY(0);
+}
+
+.google-tutorial-step-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.google-tutorial-step-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(66, 133, 244, 0.3);
+  transform: translateY(-1px);
+}
+
+.google-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+#google-workspace-logs-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+#google-workspace-logs-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+#google-workspace-logs-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+
+#google-workspace-logs-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+
