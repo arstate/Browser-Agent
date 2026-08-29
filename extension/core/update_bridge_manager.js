@@ -228,7 +228,7 @@
                 </a>
                 <button type="button" class="btn-modal-primary" id="btn-do-auto-update">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  <span>Update Sekarang (1-Klik Auto Pull)</span>
+                  <span>Update Now</span>
                 </button>
               </div>
             </div>
@@ -282,9 +282,9 @@
                 <!-- OS Instructions Container -->
                 <div class="fix-os-instructions-box">
                   <div id="fix-inst-linux" class="fix-inst-panel" style="${this.detectedOS === 'linux' ? 'display:block;' : 'display:none;'}">
-                    <p class="fix-step-desc">Buka terminal di folder repository Browser Agent, lalu jalankan perintah 1-baris ini:</p>
+                    <p class="fix-step-desc">Buka terminal di komputer Anda, lalu jalankan perintah 1-baris ini:</p>
                     <div class="fix-command-box">
-                      <code id="cmd-text-linux">./install.sh</code>
+                      <code id="cmd-text-linux">cd ~/browser-agent && ./install.sh</code>
                       <button type="button" class="btn-copy-cmd" data-target="cmd-text-linux" title="Salin Perintah">
                         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         <span>Salin</span>
@@ -293,9 +293,9 @@
                   </div>
 
                   <div id="fix-inst-windows" class="fix-inst-panel" style="${this.detectedOS === 'windows' ? 'display:block;' : 'display:none;'}">
-                    <p class="fix-step-desc">Buka PowerShell / Command Prompt di folder Browser Agent, lalu jalankan:</p>
+                    <p class="fix-step-desc">Buka PowerShell / Command Prompt di komputer Anda, lalu jalankan:</p>
                     <div class="fix-command-box">
-                      <code id="cmd-text-windows">powershell -ExecutionPolicy Bypass -File install_windows.ps1</code>
+                      <code id="cmd-text-windows">cd $HOME\browser-agent ; powershell -ExecutionPolicy Bypass -File install_windows.ps1</code>
                       <button type="button" class="btn-copy-cmd" data-target="cmd-text-windows" title="Salin Perintah">
                         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         <span>Salin</span>
@@ -304,9 +304,9 @@
                   </div>
 
                   <div id="fix-inst-mac" class="fix-inst-panel" style="${this.detectedOS === 'mac' ? 'display:block;' : 'display:none;'}">
-                    <p class="fix-step-desc">Buka Terminal di macOS pada folder Browser Agent, lalu jalankan:</p>
+                    <p class="fix-step-desc">Buka Terminal di macOS Anda, lalu jalankan:</p>
                     <div class="fix-command-box">
-                      <code id="cmd-text-mac">bash install_mac.sh</code>
+                      <code id="cmd-text-mac">cd ~/browser-agent && bash install_mac.sh</code>
                       <button type="button" class="btn-copy-cmd" data-target="cmd-text-mac" title="Salin Perintah">
                         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         <span>Salin</span>
@@ -504,7 +504,7 @@
         this.isUpdating = false;
         if (btnUpdate) {
           btnUpdate.disabled = false;
-          btnUpdate.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Update Selesai</span>`;
+          btnUpdate.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Update Now</span>`;
         }
       }
     }
