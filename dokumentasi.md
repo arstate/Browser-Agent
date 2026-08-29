@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.108`
+- **Versi Terkini:** `v2.150.109`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -129,4 +129,5 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 7. **Clean Non-Nested View Buttons:** Menghilangkan container border luar pada switcher view mode sehingga tombol `Grid Cards` & `Neural Graph` menyatu langsung setinggi kapsul pencarian tanpa lapisan border ganda.
 8. **Ultra-Clarity High-Contrast Frosted Glass:** Dropdown filter menggunakan backdrop blur `40px saturate(220%)` dengan background `rgba(10, 10, 14, 0.96)`, inner border highlight, dan text-shadow tajam agar teks selalu terbaca jernih di atas animasi node canvas.
 9. **Vector SVG Filter Icons (No Bullets/Emoticons):** Setiap opsi filter cluster pada dropdown dilengkapi ikon Vector SVG presisi tinggi (Brain, Multi-Agent, Tools, Rules, Ledger, Anti-Patterns, Corpus, Graph, Chip) untuk tampilan profesional tanpa bullet dot atau emoticon.
+10. **Harmonized Connected Apps Action Buttons & Clean Whitelist Count:** Menyeragamkan seluruh tombol aksi kartu Connected Apps menjadi `Pengaturan`, serta menyederhanakan indikator whitelist menjadi format ringkas `Whitelist: N User ID` tanpa deretan digit ID mentah yang panjang.
 

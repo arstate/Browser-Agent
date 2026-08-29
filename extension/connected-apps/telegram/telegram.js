@@ -134,9 +134,9 @@ function updateTelegramStatusUI() {
   if (hubUserInfo) {
     const authList = getAuthorizedTelegramIds(telegramConfig.authorized_chat_id);
     if (authList.length > 0) {
-      hubUserInfo.innerText = `Whitelist: ${authList.length} User ID (${authList.join(', ')})`;
+      hubUserInfo.innerHTML = `Whitelist: <code style="color: #cbd5e1; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 9999px;">${authList.length} User ID</code>`;
     } else {
-      hubUserInfo.innerText = 'Belum ada ID terdaftar';
+      hubUserInfo.innerHTML = `Whitelist: <code style="color: #cbd5e1; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 9999px;">Belum Diset</code>`;
     }
   }
 }
