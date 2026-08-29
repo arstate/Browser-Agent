@@ -2,6 +2,18 @@
 // Browser Agent - Background Service Worker & Master Telegram Engine
 // =========================================================================
 
+try {
+  importScripts(
+    'core/self_correction_engine.js',
+    'core/goal_tracker.js',
+    'plugins/ponytail/ponytail_optimizer.js',
+    'plugins/kvcache/kvcache_optimizer.js',
+    'plugins/caveman/caveman_optimizer.js'
+  );
+} catch (e) {
+  console.warn("Background ServiceWorker importScripts notice:", e);
+}
+
 // --- State Variables (Initialized First to Prevent TDZ Errors) ---
 let isSidePanelOpen = false;
 let telegramPollingActive = false;
@@ -2563,6 +2575,18 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     const headers = { "Content-Type": "application/json" };
     if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
+    // 2. Goal Decomposition & Tracking (Option 3)
+    const isGoalTaskActive = (typeof GoalTracker !== 'undefined') && GoalTracker.isGoalTask(text);
+    let activeGoalMilestones = isGoalTaskActive ? GoalTracker.extractGoalMilestones(text) : null;
+    if (activeGoalMilestones && activeGoalMilestones.length > 0) {
+      systemInstruction += GoalTracker.buildGoalPromptDirective(activeGoalMilestones);
+    }
+
+    // Initialize Action Failure Tracker for Self-Correction & Reflection (Option 1)
+    const failureTracker = (typeof SelfCorrectionEngine !== 'undefined') 
+      ? SelfCorrectionEngine.createFailureTracker() 
+      : null;
+
     const conversationTurns = [
       { role: "system", content: systemInstruction }
     ];
@@ -2603,8 +2627,8 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
     const STEP_EMOJIS = ["⚡", "⚙️", "🔍", "📂", "✨", "🎯", "🚀", "💡"];
     let spinnerIdx = 0;
-    let currentEmoji = "⚡";
-    let currentBaseText = "Menganalisis instruksi & merancang eksekusi";
+    let currentEmoji = isGoalTaskActive ? "🎯" : "⚡";
+    let currentBaseText = isGoalTaskActive ? "Menyusun Goal Matrix & menganalisis instruksi" : "Menganalisis instruksi & merancang eksekusi";
     let lastRenderedText = "";
     let lastEditTime = 0;
     let isAgentRunning = true;
@@ -2630,7 +2654,7 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
     }
 
     // Send initial status message
-    const initialText = `${currentEmoji} <b>Master Agent</b> <code>[⠋]</code>\n<i>Menganalisis instruksi & merancang eksekusi...</i>`;
+    const initialText = `${currentEmoji} <b>Master Agent</b> <code>[⠋]</code>\n<i>${currentBaseText}...</i>`;
     const initialStatus = await telegramSendMessage(botToken, senderId, initialText);
     if (initialStatus && initialStatus.result && initialStatus.result.message_id) {
       liveStatusMsgId = initialStatus.result.message_id;
@@ -2735,9 +2759,44 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
             name: tName,
             content: JSON.stringify(toolResult)
           });
+
+          // Option 1: Self-Correction & Reflection Interceptor
+          if (typeof SelfCorrectionEngine !== 'undefined' && SelfCorrectionEngine.isToolExecutionFailure(tName, toolResult)) {
+            const retryCount = failureTracker ? failureTracker.recordFailure(tName, tArgs) : 1;
+            if (failureTracker && !failureTracker.hasExceededMaxRetries(tName, tArgs)) {
+              const reflectionPrompt = SelfCorrectionEngine.generateReflectionPrompt(tName, tArgs, toolResult, retryCount);
+              conversationTurns.push({
+                role: "user",
+                content: reflectionPrompt
+              });
+              currentEmoji = "⚠️";
+              currentBaseText = `Koreksi Mandiri: Mendiagnosa error ${tName} (#${retryCount})`;
+              await renderLiveStatus(true);
+            }
+          } else {
+            if (failureTracker) failureTracker.reset(tName, tArgs);
+            if (activeGoalMilestones && typeof GoalTracker !== 'undefined') {
+              GoalTracker.updateMilestonesFromTurns(activeGoalMilestones, conversationTurns);
+              const gStatus = GoalTracker.getGoalStatusString(activeGoalMilestones);
+              if (gStatus) currentBaseText = gStatus;
+            }
+          }
         }
       } else {
-        // Final text answer reached
+        // Final text answer reached: Option 3 Completion Guard check
+        if (activeGoalMilestones && typeof GoalTracker !== 'undefined' && GoalTracker.hasPendingMilestones(activeGoalMilestones) && stepCount < maxSteps - 2) {
+          conversationTurns.push(message);
+          const contPrompt = GoalTracker.generateGoalContinuationPrompt(activeGoalMilestones);
+          conversationTurns.push({
+            role: "user",
+            content: contPrompt
+          });
+          currentEmoji = "🎯";
+          currentBaseText = "Melanjutkan milestone yang belum selesai";
+          await renderLiveStatus(true);
+          continue;
+        }
+
         finalResponseText = message.content || "";
         break;
       }

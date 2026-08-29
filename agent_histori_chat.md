@@ -5422,6 +5422,28 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - 20/20 Unit Tests lulus 100% (Zero Bug).
   - Bump manifest to `v2.150.90`, build `extension.crx` (832.9 KB).
 
+---
+
+### 🚀 Iterasi 467: Self-Correction & Reflection Loop (Opsi 1) and Goal-Driven Milestone Tracker Loop (Opsi 3) (v2.150.91)
+- **Kebutuhan Pengguna**:
+  - Mengimplementasikan **Self-Correction & Reflection Loop** (Opsi 1): AI secara mandiri mendiagnosa kegagalan eksekusi tool (klik terhalang, selector berubah, form error, CLI error), menyusun strategi pemulihan kontekstual, dan mencoba alternatif secara otomatis tanpa menyerah dini.
+  - Mengimplementasikan **Goal-Driven Deep Reasoning Loop** (Opsi 3): Mendekomposisi instruksi kompleks multi-langkah / `/goal` menjadi Goal Matrix Checklist, melacak status milestone secara realtime, dan melarang AI keluar sebelum seluruh target 100% `[x]` selesai.
+- **Implementasi & Peningkatan Sistem**:
+  - **Modul Inti Baru**:
+    - [self_correction_engine.js](file:///home/arya/browser-agent/extension/core/self_correction_engine.js): Evaluator failure detector, generator prompt refleksi diagnosis kontekstual per jenis tool (click, input, navigate, bash), dan failure tracker dengan batas retry aman (3x).
+    - [goal_tracker.js](file:///home/arya/browser-agent/extension/core/goal_tracker.js): Goal decomposition parser, milestone checklist matrix injector, live status formatter, dan strict completion guard.
+  - Di [background.js](file:///home/arya/browser-agent/extension/background.js):
+    - Menyematkan `importScripts` modul core.
+    - Mengintegrasikan deteksi kegagalan tool dan penyisipan refleksi mandiri secara dinamis.
+    - Mengintegrasikan pelacakan goal checklist dengan live progress streaming ke pesan status Telegram (`🎯 Goal Progress [2/3]`).
+    - Menyematkan *Completion Guard* untuk mencegah penghentian dini sebelum semua milestone tuntas.
+  - Di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js), [sidepanel.html](file:///home/arya/browser-agent/extension/sidepanel.html), [newtab.html](file:///home/arya/browser-agent/extension/newtab.html):
+    - Mengintegrasikan Goal Matrix ke dalam `buildDynamicSystemPrompt`.
+    - Menyematkan Self-Correction interceptor dan Goal Completion Guard pada autonomous while loop.
+- **Pengujian & Rilis**:
+  - Menulis test suite baru `test_agentic_loop_engines.py` (23/23 Unit Tests lulus 100%).
+  - Bump manifest to `v2.150.91`, build `extension.crx` (836.8 KB).
+
 
 
 

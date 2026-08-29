@@ -4314,6 +4314,13 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     updateAssistantActiveAgent(assistantBubble, "Master Agent", `Menemukan ${workerAgents.length} Agen Spesialis`, true, false);
   }
 
+  // Option 1 & 3: Goal Decomposition & Self-Correction Initializers
+  const isGoalTaskActive = (typeof GoalTracker !== 'undefined') && GoalTracker.isGoalTask(userMessage);
+  let activeGoalMilestones = isGoalTaskActive ? GoalTracker.extractGoalMilestones(userMessage) : null;
+  const failureTracker = (typeof SelfCorrectionEngine !== 'undefined') 
+    ? SelfCorrectionEngine.createFailureTracker() 
+    : null;
+
   try {
     while (currentStep < maxSteps && isExecuting) {
       currentStep++;
@@ -4331,6 +4338,12 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
 
       // Prepare sanitized payload for API with dynamic agent persona & skills
       let dynamicSystemPrompt = buildDynamicSystemPrompt(resolvedAgents);
+
+      // Inject Goal Checklist Matrix if active
+      if (activeGoalMilestones && activeGoalMilestones.length > 0 && typeof GoalTracker !== 'undefined') {
+        dynamicSystemPrompt += GoalTracker.buildGoalPromptDirective(activeGoalMilestones);
+      }
+
       const isPlanningTurn = (currentExecutionMode === 'planning' && !isPlanApprovedRun);
       if (isPlanningTurn) {
         dynamicSystemPrompt += `\n\n[PLANNING WORKFLOW MODE ACTIVE]:
@@ -4674,6 +4687,37 @@ Tugas Anda:
             content: toolOutput
           });
 
+          // Option 1: Self-Correction & Reflection Interceptor
+          let isFailure = false;
+          try {
+            const parsedRes = JSON.parse(toolOutput);
+            isFailure = (typeof SelfCorrectionEngine !== 'undefined') && SelfCorrectionEngine.isToolExecutionFailure(toolName, parsedRes);
+          } catch(e) {
+            isFailure = (typeof SelfCorrectionEngine !== 'undefined') && SelfCorrectionEngine.isToolExecutionFailure(toolName, toolOutput);
+          }
+
+          if (isFailure) {
+            const retryCount = failureTracker ? failureTracker.recordFailure(toolName, toolArgs) : 1;
+            if (failureTracker && !failureTracker.hasExceededMaxRetries(toolName, toolArgs)) {
+              const reflectionPrompt = SelfCorrectionEngine.generateReflectionPrompt(toolName, toolArgs, toolOutput, retryCount);
+              conversationHistory.push({
+                role: "user",
+                content: reflectionPrompt
+              });
+              updateAssistantActiveAgent(assistantBubble, workerName, `⚠️ Koreksi Mandiri: Mendiagnosa ${badgeActionName} (#${retryCount})...`, isBossWorker, false);
+            }
+          } else {
+            if (failureTracker) failureTracker.reset(toolName, toolArgs);
+            if (activeGoalMilestones && typeof GoalTracker !== 'undefined') {
+              GoalTracker.updateMilestonesFromTurns(activeGoalMilestones, conversationHistory);
+              const gStatus = GoalTracker.getGoalStatusString(activeGoalMilestones);
+              if (gStatus) {
+                const plainStatus = gStatus.replace(/<[^>]+>/g, '').replace(/\n/g, ' ');
+                updateFooterStatus(`🎯 ${plainStatus}`);
+              }
+            }
+          }
+
           // If clarification requested, stop loop and wait for user's interactive bubble choice
           if (toolName === "ask_clarification") {
             shouldStopTurn = true;
@@ -4681,7 +4725,19 @@ Tugas Anda:
           }
         }
       } else {
-        // No more tool calls, task finished!
+        // No more tool calls: Option 3 Completion Guard check
+        if (activeGoalMilestones && typeof GoalTracker !== 'undefined' && GoalTracker.hasPendingMilestones(activeGoalMilestones) && currentStep < maxSteps - 2) {
+          const contPrompt = GoalTracker.generateGoalContinuationPrompt(activeGoalMilestones);
+          conversationHistory.push({
+            role: "user",
+            content: contPrompt
+          });
+          updateAssistantActiveAgent(assistantBubble, "Master Agent", "🎯 Melanjutkan milestone yang tertunda...", true, false);
+          updateFooterStatus("🎯 Master Agent: Melanjutkan milestone sasaran...");
+          continue;
+        }
+
+        // Task finished!
         break;
       }
 
