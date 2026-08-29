@@ -124,6 +124,10 @@ async function updateClaudeFableUI() {
   if (optHorizon) optHorizon.checked = settings.enableHorizonTest !== false;
   if (optDignity) optDignity.checked = settings.enableDignifiedTone !== false;
   if (optMemoryFirst) optMemoryFirst.checked = settings.enableCheckMemoryFirst !== false;
+
+  if (typeof updateGlobalPluginsBadge === 'function') {
+    updateGlobalPluginsBadge();
+  }
 }
 
 function renderClaudeFableDoc(skillKey) {

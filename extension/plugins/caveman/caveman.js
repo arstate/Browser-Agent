@@ -104,24 +104,34 @@ async function updateCavemanUI() {
   }
 
   // Active Badges Count in Header
-  try {
-    const pData = await chrome.storage.local.get(['plugin_settings']);
-    const p = pData.plugin_settings || {};
-    let activeCount = 0;
-    if (p.ponytail?.enabled !== false) activeCount++;
-    if (p.kvcache?.enabled !== false) activeCount++;
-    if (p.caveman?.enabled !== false) activeCount++;
+  if (typeof updateGlobalPluginsBadge === 'function') {
+    updateGlobalPluginsBadge();
+  } else {
+    try {
+      const pData = await chrome.storage.local.get(['plugin_settings']);
+      const p = pData.plugin_settings || {};
+      let activeCount = 0;
+      if (p.ponytail?.enabled !== false) activeCount++;
+      if (p.kvcache?.enabled !== false) activeCount++;
+      if (p.caveman?.enabled !== false) activeCount++;
+      if (p.claude_fable?.enabled !== false) activeCount++;
 
-    const totalBadge = document.getElementById('plugins-total-active-badge');
-    const sidebarBadge = document.getElementById('badge-status-plugins');
-    if (totalBadge) totalBadge.innerText = `${activeCount} Plugin Aktif`;
-    if (sidebarBadge) {
-      sidebarBadge.innerText = `${activeCount} Aktif`;
-      sidebarBadge.style.background = activeCount > 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(100, 116, 139, 0.15)';
-      sidebarBadge.style.color = activeCount > 0 ? '#f59e0b' : '#94a3b8';
-      sidebarBadge.style.borderColor = activeCount > 0 ? 'rgba(245, 158, 11, 0.35)' : 'rgba(100, 116, 139, 0.3)';
-    }
-  } catch (e) {}
+      const totalBadge = document.getElementById('plugins-total-active-badge');
+      const sidebarBadge = document.getElementById('badge-status-plugins');
+      if (totalBadge) {
+        totalBadge.innerText = `${activeCount} Plugin Aktif`;
+        totalBadge.style.background = activeCount > 0 ? 'rgba(236, 72, 153, 0.15)' : 'rgba(100, 116, 139, 0.15)';
+        totalBadge.style.color = activeCount > 0 ? '#f472b6' : '#94a3b8';
+        totalBadge.style.borderColor = activeCount > 0 ? 'rgba(236, 72, 153, 0.35)' : 'rgba(100, 116, 139, 0.3)';
+      }
+      if (sidebarBadge) {
+        sidebarBadge.innerText = `${activeCount} Aktif`;
+        sidebarBadge.style.background = activeCount > 0 ? 'rgba(236, 72, 153, 0.15)' : 'rgba(100, 116, 139, 0.15)';
+        sidebarBadge.style.color = activeCount > 0 ? '#f472b6' : '#94a3b8';
+        sidebarBadge.style.borderColor = activeCount > 0 ? 'rgba(236, 72, 153, 0.35)' : 'rgba(100, 116, 139, 0.3)';
+      }
+    } catch (e) {}
+  }
 
   // Mode Selection Radio Cards
   const activeMode = cm.mode || 'terse';
