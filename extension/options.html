@@ -915,23 +915,21 @@
           </div>
         </div>
 
-        <!-- Search Bar & View Mode Toggle (Grid Cards vs Obsidian Neural Graph) -->
-        <div class="brain-toolbar-row">
-          <div class="catalog-search-wrapper" style="flex: 1; margin-bottom: 0;">
-            <div class="search-input-box">
-              <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="search-brain-input" class="catalog-search-input" placeholder="Cari dalam Persistent Memory &amp; Brain vault (nama, domain, kesalahan, fakta, skill)..." spellcheck="false">
+        <!-- Unified Search Bar & View Mode Toggle (Grid Cards vs Obsidian Neural Graph) -->
+        <div class="catalog-search-wrapper" style="margin-bottom: 20px;">
+          <div class="search-input-box brain-search-unified-box">
+            <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="search-brain-input" class="catalog-search-input brain-search-unified-input" placeholder="Cari dalam Persistent Memory &amp; Brain vault (nama, domain, kesalahan, fakta, skill)..." spellcheck="false">
+            <div class="brain-view-switcher brain-view-switcher-embedded">
+              <button type="button" class="brain-view-mode-btn active" id="btn-view-mode-cards" data-mode="cards" title="Tampilan Kartu Grid">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span>Grid Cards</span>
+              </button>
+              <button type="button" class="brain-view-mode-btn" id="btn-view-mode-graph" data-mode="graph" title="Tampilan Obsidian Neural Graph View">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="6" cy="18" r="3"/><line x1="8.5" y1="7.5" x2="15.5" y2="16.5"/><line x1="8.5" y1="6" x2="15.5" y2="6"/><line x1="6" y1="8.5" x2="6" y2="15.5"/></svg>
+                <span>Neural Graph</span>
+              </button>
             </div>
-          </div>
-          <div class="brain-view-switcher">
-            <button type="button" class="brain-view-mode-btn active" id="btn-view-mode-cards" data-mode="cards" title="Tampilan Kartu Grid">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              <span>Grid Cards</span>
-            </button>
-            <button type="button" class="brain-view-mode-btn" id="btn-view-mode-graph" data-mode="graph" title="Tampilan Obsidian Neural Graph View">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="6" cy="18" r="3"/><line x1="8.5" y1="7.5" x2="15.5" y2="16.5"/><line x1="8.5" y1="6" x2="15.5" y2="6"/><line x1="6" y1="8.5" x2="6" y2="15.5"/></svg>
-              <span>Neural Graph</span>
-            </button>
           </div>
         </div>
 
