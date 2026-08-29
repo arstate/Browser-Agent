@@ -3719,22 +3719,22 @@ body.no-shadows .custom-modal-dialog {
 }
 
 .bento-status-chip.chip-update.has-update {
-  background: rgba(206, 241, 40, 0.12);
-  border-color: rgba(206, 241, 40, 0.35);
+  background: rgba(206, 241, 40, 0.08);
+  border: 1px solid rgba(206, 241, 40, 0.28);
   color: #CEF128;
-  font-weight: 700;
-  box-shadow: 0 0 14px rgba(206, 241, 40, 0.25);
-  animation: updatePulseGlow 2s infinite ease-in-out;
+  font-weight: 600;
+}
+
+.bento-status-chip.chip-update.has-update:hover {
+  background: rgba(206, 241, 40, 0.16);
+  border-color: rgba(206, 241, 40, 0.45);
+  color: #E2FFA8;
+  transform: translateY(-1px);
 }
 
 .bento-status-chip.chip-update.has-update .status-dot {
   background: #CEF128;
-  box-shadow: 0 0 8px #CEF128;
-}
-
-@keyframes updatePulseGlow {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(206, 241, 40, 0.2); }
-  50% { transform: scale(1.03); box-shadow: 0 0 18px rgba(206, 241, 40, 0.45); }
+  box-shadow: 0 0 6px rgba(206, 241, 40, 0.5);
 }
 
 .bento-status-chip.is-clickable-fix {
