@@ -821,12 +821,12 @@ class BrainGraphEngine {
         btn.classList.add('active');
 
         const filterVal = btn.getAttribute('data-filter') || 'all';
-        const colorVal = btn.getAttribute('data-color') || '#3B82F6';
         const labelVal = btn.getAttribute('data-label') || btn.textContent.trim();
+        const iconSvg = btn.querySelector('.filter-item-icon')?.innerHTML;
 
-        const currentDot = document.getElementById('current-filter-dot');
+        const currentIconBox = document.getElementById('current-filter-icon');
         const currentLabel = document.getElementById('current-filter-label');
-        if (currentDot) currentDot.style.background = colorVal;
+        if (currentIconBox && iconSvg) currentIconBox.innerHTML = iconSvg;
         if (currentLabel) currentLabel.textContent = `Filter: ${labelVal}`;
 
         if (filterDropdownMenu) filterDropdownMenu.style.display = 'none';

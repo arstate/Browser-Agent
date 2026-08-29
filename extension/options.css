@@ -3214,12 +3214,19 @@ body.graph-fullscreen-active {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.current-filter-icon-box,
+.filter-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
-  box-shadow: 0 0 8px currentColor;
+}
+
+.current-filter-icon-box svg,
+.filter-item-icon svg {
+  display: block;
 }
 
 .brain-graph-actions {
