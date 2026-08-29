@@ -240,7 +240,11 @@ class GoogleWorkspaceService {
   handleApiError(serviceName, errorObj) {
     const msg = errorObj?.message || (typeof errorObj === 'string' ? errorObj : JSON.stringify(errorObj));
     if (msg.includes("insufficient authentication scopes") || msg.includes("ACCESS_TOKEN_SCOPE_INSUFFICIENT") || msg.includes("insufficient_scope")) {
-      throw new Error(`Izin ${serviceName} belum aktif (Token lama). Silakan klik tombol 'Putus' di atas lalu klik 'Hubungkan Akun Google' kembali untuk menyetujui izin fitur baru (Gmail, Forms, Calendar, Tasks).`);
+      throw new Error(`Izin ${serviceName} belum aktif (Token lama). Silakan klik tombol 'Putus' di atas lalu klik 'Hubungkan Akun Google' kembali untuk menyetujui izin fitur baru.`);
+    }
+    if (msg.includes("has not been used in project") || msg.includes("is disabled") || msg.includes("Access Not Configured")) {
+      const apiName = serviceName.includes("Contacts") || serviceName.includes("People") ? "Google People API" : serviceName;
+      throw new Error(`Layanan '${apiName}' belum aktif di Google Cloud Console. Buka Library di console.cloud.google.com lalu klik 'Enable' pada '${apiName}'.`);
     }
     throw new Error(`${serviceName} Error: ${msg}`);
   }
