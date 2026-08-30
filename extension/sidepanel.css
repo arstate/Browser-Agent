@@ -1708,35 +1708,13 @@ body.stickman-active .chat-messages {
 
 .agent-tree-item {
   position: relative;
-  display: flex;
+  display: flex !important;
   align-items: center;
   width: 100%;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.agent-tree-branch-container.is-revealed .agent-tree-item {
-  animation: agentCardStaggerIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.agent-tree-branch-container.is-revealed .agent-tree-item:nth-child(1) { animation-delay: 0.03s; }
-.agent-tree-branch-container.is-revealed .agent-tree-item:nth-child(2) { animation-delay: 0.08s; }
-.agent-tree-branch-container.is-revealed .agent-tree-item:nth-child(3) { animation-delay: 0.13s; }
-.agent-tree-branch-container.is-revealed .agent-tree-item:nth-child(4) { animation-delay: 0.18s; }
-.agent-tree-branch-container.is-revealed .agent-tree-item:nth-child(5) { animation-delay: 0.23s; }
-.agent-tree-branch-container.is-revealed .agent-tree-item:nth-child(6) { animation-delay: 0.28s; }
-.agent-tree-branch-container.is-revealed .agent-tree-item:nth-child(7) { animation-delay: 0.33s; }
-.agent-tree-branch-container.is-revealed .agent-tree-item:nth-child(8) { animation-delay: 0.38s; }
-
-@keyframes agentCardStaggerIn {
-  0% {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  box-sizing: border-box;
 }
 
 .agent-tree-item .tree-stem {
@@ -1747,17 +1725,6 @@ body.stickman-active .chat-messages {
   height: 2px;
   background: rgba(255, 255, 255, 0.12);
   transition: background 0.2s ease;
-}
-
-@keyframes stemGrowIn {
-  0% {
-    transform: scaleX(0);
-    opacity: 0;
-  }
-  100% {
-    transform: scaleX(1);
-    opacity: 1;
-  }
 }
 
 .tree-agent-card {
