@@ -455,7 +455,145 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     }
   }
 
-  // 0c. If user is performing a direct GSuite / Telegram API action and did NOT explicitly select other agent chips
+  // 1. Design, Slide, Visuals, 16:9, Dark/Light Mode, Presentation, SVG, Art Director
+  const designKeywords = [
+    "desain", "design", "slide", "ppt", "slides", "visual", "layout", "tema", "warna", 
+    "font", "tipografi", "vektor", "svg", "image", "png", "presentasi", "deck", 
+    "grafis", "art director", "light mode", "dark mode", "estetika", "poster", "feed"
+  ];
+  const isDesignIntent = designKeywords.some(kw => text.includes(kw));
+  if (isDesignIntent) {
+    const designAgents = customAgents.filter(a => {
+      const id = String(a.id || '').toLowerCase();
+      const name = String(a.name || '').toLowerCase();
+      const desc = String(a.description || '').toLowerCase();
+      return (id.includes('visual') || id.includes('desain') || id.includes('design') || id.includes('art') || 
+              name.includes('visual') || name.includes('desain') || name.includes('design') || name.includes('art') || name.includes('grafis') ||
+              desc.includes('visual') || desc.includes('desain') || desc.includes('layout'));
+    });
+    designAgents.forEach(da => {
+      if (!matchedWorkers.some(m => String(m.id || '') === String(da.id || ''))) {
+        matchedWorkers.push(da);
+      }
+    });
+  }
+
+  // 2. Copywriting, Gen-Z, Caption, Hooks, Script, Storyboard, Sales
+  const copyKeywords = [
+    "copy", "copywriter", "copywriting", "caption", "naskah", "hook", "skrip", "konten", 
+    "reels", "tiktok", "skena", "genz", "closer", "sales", "headline", "aida", "cta"
+  ];
+  const isCopyIntent = copyKeywords.some(kw => text.includes(kw));
+  if (isCopyIntent) {
+    const copyAgents = customAgents.filter(a => {
+      const id = String(a.id || '').toLowerCase();
+      const name = String(a.name || '').toLowerCase();
+      return (id.includes('copy') || id.includes('genz') || id.includes('sales') || id.includes('closer') ||
+              name.includes('copy') || name.includes('genz') || name.includes('sales') || name.includes('closer'));
+    });
+    copyAgents.forEach(ca => {
+      if (!matchedWorkers.some(m => String(m.id || '') === String(ca.id || ''))) {
+        matchedWorkers.push(ca);
+      }
+    });
+  }
+
+  // 3. Real Estate, Tiar Property, KPR, Rumah, Surabaya, Sidoarjo
+  const propertyKeywords = [
+    "tiar", "property", "properti", "rumah", "kpr", "surabaya", "sidoarjo", "perumahan", "dp 0", "utj", "cicilan"
+  ];
+  const isPropertyIntent = propertyKeywords.some(kw => text.includes(kw));
+  if (isPropertyIntent) {
+    const propertyAgents = customAgents.filter(a => {
+      const id = String(a.id || '').toLowerCase();
+      const name = String(a.name || '').toLowerCase();
+      return (id.includes('tiar') || id.includes('property') || name.includes('tiar') || name.includes('property'));
+    });
+    propertyAgents.forEach(pa => {
+      if (!matchedWorkers.some(m => String(m.id || '') === String(pa.id || ''))) {
+        matchedWorkers.push(pa);
+      }
+    });
+  }
+
+  // 4. Academic / Thesis / Research (UNESA, D4, Thesis, Skripsi, Tugas Akhir, Metodologi)
+  const thesisKeywords = [
+    "unesa", "d4", "thesis", "skripsi", "tugas akhir", "ta", "metodologi", "academic", "kuliah", "sidang"
+  ];
+  const isThesisIntent = thesisKeywords.some(kw => text.includes(kw));
+  if (isThesisIntent) {
+    const thesisAgents = customAgents.filter(a => {
+      const id = String(a.id || '').toLowerCase();
+      const name = String(a.name || '').toLowerCase();
+      return (id.includes('unesa') || id.includes('thesis') || id.includes('tugas') || id.includes('arya') ||
+              name.includes('unesa') || name.includes('thesis') || name.includes('tugas') || name.includes('arya'));
+    });
+    thesisAgents.forEach(ta => {
+      if (!matchedWorkers.some(m => String(m.id || '') === String(ta.id || ''))) {
+        matchedWorkers.push(ta);
+      }
+    });
+  }
+
+  // 5. Research / Journal / Scraping / Data extraction
+  const researchKeywords = [
+    "riset", "research", "jurnal", "paper", "artikel", "cari data", "scraping", "scrape", 
+    "ekstrak", "extract", "bandingkan", "komparasi", "compare", "analisis", "analisa", 
+    "rangkum", "summarize", "summary", "harga", "produk", "pasar", "review", "studi", 
+    "literatur", "tabel data", "berita", "news", "trend", "tren", "searching web", "cari jurnal", "baca web"
+  ];
+  const isResearchIntent = researchKeywords.some(kw => text.includes(kw));
+  if (isResearchIntent) {
+    const researchAgent = customAgents.find(a => String(a.id || '') === "web_researcher_agent" || String(a.name || '').toLowerCase().includes("research") || String(a.name || '').toLowerCase().includes("riset"));
+    if (researchAgent && !matchedWorkers.some(m => String(m.id || '') === String(researchAgent.id || ''))) {
+      matchedWorkers.push(researchAgent);
+    }
+  }
+
+  // 6. Coding / System Engineering / Terminal / Scripts
+  const codeKeywords = [
+    "code", "koding", "coding", "script", "terminal", "command", "bash", "shell", 
+    "python", "javascript", "typescript", "html", "css", "git", "repo", "commit", 
+    "bug", "error", "traceback", "exception", "fix", "debug", "refactor", 
+    "file", "folder", "directory", "dir", "cat", "ls", "grep", "npm", "pip", "docker",
+    "lokal pc", "download masukin ke folder", "simpan ke lokal", "save to folder", "download ke pc", "lokal", "download"
+  ];
+  const isCodingIntent = codeKeywords.some(kw => text.includes(kw));
+  if (isCodingIntent) {
+    const codingAgent = customAgents.find(a => String(a.id || '') === "coding_engineer_agent" || String(a.name || '').toLowerCase().includes("coding") || String(a.name || '').toLowerCase().includes("engineer"));
+    if (codingAgent && !matchedWorkers.some(m => String(m.id || '') === String(codingAgent.id || ''))) {
+      matchedWorkers.push(codingAgent);
+    }
+  }
+
+  // 7. General browser navigation / Web control
+  const generalKeywords = [
+    "buka", "play", "putar", "youtube", "video", "musik", "lagu", "klik", "scroll", "tonton", "isi formulir", "login", "website", "tab", "link", "url"
+  ];
+  const isGeneralIntent = generalKeywords.some(kw => text.includes(kw));
+  if (isGeneralIntent && !isResearchIntent) {
+    const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent");
+    if (defaultAgent && !matchedWorkers.some(m => String(m.id || '') === String(defaultAgent.id || ''))) {
+      matchedWorkers.push(defaultAgent);
+    }
+  }
+
+  // 8. Check other custom agents by keyword match in description or name
+  for (const ag of customAgents) {
+    const agIdStr = String(ag.id || '');
+    if (agIdStr === "master_agent" || agIdStr === "boss_agent" || agIdStr === "default_agent" || agIdStr === "web_researcher_agent" || agIdStr === "coding_engineer_agent") continue;
+    const agNameStr = String(ag.name || '');
+    const nameMatch = agNameStr && text.includes(agNameStr.toLowerCase());
+    const descWords = String(ag.description || "").toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    const descMatch = descWords.some(w => text.includes(w));
+    if (nameMatch || descMatch) {
+      if (!matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
+        matchedWorkers.push(ag);
+      }
+    }
+  }
+
+  // Fallback worker if none matched and not purely an API action
   const isDirectGSuiteAction = text.startsWith('[/slides]') || text.startsWith('/slides') ||
                                text.startsWith('[/gmail]') || text.startsWith('/gmail') ||
                                text.startsWith('[/drive]') || text.startsWith('/drive') ||
@@ -467,70 +605,9 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
                                text.startsWith('[/contacts]') || text.startsWith('/contacts') ||
                                text.startsWith('[/telegram]') || text.startsWith('/telegram');
 
-  if (!isDirectGSuiteAction || (Array.isArray(explicitMentionAgents) && explicitMentionAgents.length > 0)) {
-    // 1. Check for research / journal / scraping / analysis intent (Pipeline Phase 1)
-    const researchKeywords = [
-      "riset", "research", "jurnal", "paper", "artikel", "cari data", "scraping", "scrape", 
-      "ekstrak", "extract", "bandingkan", "komparasi", "compare", "analisis", "analisa", 
-      "rangkum", "summarize", "summary", "harga", "produk", "pasar", "review", "studi", 
-      "literatur", "tabel data", "berita", "news", "trend", "tren", "searching web", "cari jurnal", "baca web"
-    ];
-    const isResearch = researchKeywords.some(kw => text.includes(kw));
-    if (isResearch) {
-      const researchAgent = customAgents.find(a => String(a.id || '') === "web_researcher_agent" || String(a.name || '').toLowerCase().includes("research") || String(a.name || '').toLowerCase().includes("riset"));
-      if (researchAgent && !matchedWorkers.some(m => String(m.id || '') === String(researchAgent.id || ''))) {
-        matchedWorkers.push(researchAgent);
-      }
-    }
-
-    // 2. Check for browser navigation / interaction / media (Pipeline Phase 2)
-    const generalKeywords = [
-      "buka", "play", "putar", "youtube", "video", "musik", "lagu", "klik", "scroll", "tonton", "isi formulir", "login", "website", "tab", "link", "url"
-    ];
-    const isGeneral = generalKeywords.some(kw => text.includes(kw));
-    if (isGeneral && !isResearch) {
-      const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent");
-      if (defaultAgent && !matchedWorkers.some(m => String(m.id || '') === String(defaultAgent.id || ''))) {
-        matchedWorkers.push(defaultAgent);
-      }
-    }
-
-    // 3. Check for coding / system engineering / local file intent (Pipeline Phase 3)
-    const codeKeywords = [
-      "code", "koding", "coding", "script", "terminal", "command", "bash", "shell", 
-      "python", "javascript", "typescript", "html", "css", "git", "repo", "commit", 
-      "bug", "error", "traceback", "exception", "fix", "debug", "refactor", 
-      "file", "folder", "directory", "dir", "cat", "ls", "grep", "npm", "pip", "docker",
-      "lokal pc", "download masukin ke folder", "simpan ke lokal", "save to folder", "download ke pc", "lokal", "download"
-    ];
-    const isCoding = codeKeywords.some(kw => text.includes(kw));
-    if (isCoding) {
-      const codingAgent = customAgents.find(a => String(a.id || '') === "coding_engineer_agent" || String(a.name || '').toLowerCase().includes("coding") || String(a.name || '').toLowerCase().includes("engineer"));
-      if (codingAgent && !matchedWorkers.some(m => String(m.id || '') === String(codingAgent.id || ''))) {
-        matchedWorkers.push(codingAgent);
-      }
-    }
-
-    // 4. Check custom agents by keyword in description or name
-    for (const ag of customAgents) {
-      const agIdStr = String(ag.id || '');
-      if (agIdStr === "master_agent" || agIdStr === "boss_agent" || agIdStr === "default_agent" || agIdStr === "web_researcher_agent" || agIdStr === "coding_engineer_agent") continue;
-      const agNameStr = String(ag.name || '');
-      const nameMatch = agNameStr && text.includes(agNameStr.toLowerCase());
-      const descWords = String(ag.description || "").toLowerCase().split(/\s+/).filter(w => w.length > 3);
-      const descMatch = descWords.some(w => text.includes(w));
-      if (nameMatch || descMatch) {
-        if (!matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
-          matchedWorkers.push(ag);
-        }
-      }
-    }
-
-    // Fallback worker if none matched
-    if (matchedWorkers.length === 0) {
-      const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent") || customAgents[0];
-      if (defaultAgent) matchedWorkers.push(defaultAgent);
-    }
+  if (matchedWorkers.length === 0 && !isDirectGSuiteAction) {
+    const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent") || customAgents[0];
+    if (defaultAgent) matchedWorkers.push(defaultAgent);
   }
 
   const sortedWorkers = sortAgentsByPipeline(matchedWorkers);
@@ -653,14 +730,31 @@ ATURAN KRUSIAL:
     prompt += "\n";
   }
 
-  prompt += `=== CAPABILITIES & TOOLS AVAILABLE ===
+  // Inject Available Ecosystem Catalog for Hermes Dynamic Multi-Agent Swarm
+  const otherCatalogAgents = customAgents.filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss);
+  if (otherCatalogAgents.length > 0) {
+    prompt += `=== KATALOG AGEN SPESIALIS TERSEDIA (HERMES DYNAMIC MULTI-AGENT SWARM) ===\n`;
+    prompt += `Sebagai Master Agent (Supreme Orchestrator), Anda dapat merekrut dan memanggil agen spesialis lain di bawah ini di tengah jalan jika Anda mendapati tugas membutuhkan keahlian tambahan (gunakan tool \`summon_specialist_agent({ agent_name_or_id, reason, subtask_assignment })\`):\n`;
+    otherCatalogAgents.forEach(a => {
+      prompt += `- **${a.name}** (ID: \`${a.id}\`): ${a.description || 'Specialist'}\n`;
+    });
+    prompt += `\n`;
+  }
+
+  prompt += `=== PROTOKOL ANTI-AI-SLOP & CONTINUOUS EXECUTION LOOP (HERMES STANDARD) ===
+1. 🛡️ NO AI SLOP: Dilarang memberikan jawaban kosong, template generik berkurung siku [Topik Presentasi], atau placeholder murahan! Setiap slide atau dokumen harus memiliki isi materi yang kaya, berwawasan, tajam, dan siap pakai.
+2. 🔄 ZERO PREMATURE STOP: Master Agent TIDAK BOLEH berhenti sebelum deliverables nyata (Google Slides via API, Google Docs, Sheet, atau aksi browser yang diminta) benar-benar berhasil dibuat dan diverifikasi!
+3. 🤝 MULTI-AGENT SYNTHESIS: Jika tugas melibatkan desain visual, copywriting, atau riset, Master Agent merekrut agen spesialis terkait (misal via \`summon_specialist_agent\` atau \`agent_subtask_analysis\`), menggabungkan keahlian mereka, dan mengeksekusi hasil akhirnya langsung ke alat/tool yang tepat.
+
+=== CAPABILITIES & TOOLS AVAILABLE ===
 1. 🧠 Autonomous Brain & Self-Evolution Tools: manage_personal_memory, create_autonomous_skill, update_autonomous_skill, create_autonomous_agent, edit_manual_skill, edit_manual_agent, rollback_brain_item, record_anti_pattern, save_epistemic_triplet, query_epistemic_graph, execute_jit_microtool.
 2. 🌐 Browser Automation Tools: browser_navigate, browser_snapshot, browser_click, browser_type, browser_press_key, browser_hover, browser_scroll, browser_control_media, browser_evaluate_script, browser_screenshot, browser_get_console_logs, browser_extract_table, browser_list_tabs, browser_switch_tab, browser_wait.
 3. 💻 Local PC Tools: local_read_file, local_write_file, local_list_dir, local_run_command.
 4. 🎨 AI Image Generation: generate_image(prompt, size).
-5. 💬 Interactive Clarification & Sub-Agent Analysis: ask_clarification, agent_subtask_analysis.
-6. 📱 Built-in Connected Apps & Telegram Bot Remote: configure_telegram_bot, get_telegram_bot_status. Browser Agent memiliki mesin Telegram Bot bawaan. Ketika mendeteksi Bot Token & Chat ID (misal dari chat @BotFather di tab Telegram Web) atau ketika user meminta koneksi Telegram, Master Agent WAJIB LANGSUNG MEMANGGIL configure_telegram_bot({ bot_token, authorized_chat_id, enabled: true }) untuk mengaktifkan bot secara otomatis tanpa menyuruh pengguna setting manual!
-7. 📑 Google Workspace (Google Docs & Sheets) Direct Link Editing: gsuite_create_doc, gsuite_append_doc_text, gsuite_replace_doc_content, gsuite_read_doc, gsuite_create_sheet, gsuite_append_sheet_row, gsuite_update_sheet_range, gsuite_read_sheet, gsuite_get_status. Ketika pengguna memberikan link Google Docs (https://docs.google.com/document/d/...) atau link Google Sheets (https://docs.google.com/spreadsheets/d/...) di prompt, Master Agent WAJIB langsung mengekstrak Document ID atau Spreadsheet ID tersebut dan mengeksekusi pengeditan / penulisan data langsung ke dokumen / spreadsheet tersebut menggunakan tool Connected Apps Google Workspace!
+5. 💬 Interactive Clarification & Multi-Agent Swarm: ask_clarification, agent_subtask_analysis, summon_specialist_agent.
+6. 📱 Built-in Connected Apps & Telegram Bot Remote: configure_telegram_bot, get_telegram_bot_status, telegram_send_message.
+7. 📑 Google Workspace REST API Suite: gsuite_create_presentation, gsuite_append_slide, gsuite_create_doc, gsuite_append_doc_text, gsuite_replace_doc_content, gsuite_read_doc, gsuite_create_sheet, gsuite_append_sheet_row, gsuite_update_sheet_range, gsuite_read_sheet, gsuite_send_gmail, gsuite_search_gmail, gsuite_search_drive, gsuite_create_form, gsuite_create_calendar_event, gsuite_create_task, gsuite_search_contacts, gsuite_get_status.
+8. 🔍 Multi-Engine Real-Time Search: google_web_search, google_news_search.
 
 Always provide clear, comprehensive final answers in clean Markdown.`;
 
@@ -909,6 +1003,22 @@ const AGENT_TOOLS = [
           recommended_next_action: { type: "string", description: "Recommended next action for General Browser Assistant (e.g. Klik tombol Lanjutkan, Masukkan nama duplikat, Tinjau dan Terbitkan)" }
         },
         required: ["agent_name", "focus", "findings"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "summon_specialist_agent",
+      description: "Dynamically recruit, summon, and add a specialist sub-agent from the agent ecosystem catalog into the active multi-agent swarm team mid-task. Use this when the current task requires additional domain expertise (e.g. Graphic/Visual Designer, Copywriter, Researcher, KPR Closer, Thesis Assistant, Coder) to craft high-quality deliverables without AI slop.",
+      parameters: {
+        type: "object",
+        properties: {
+          agent_name_or_id: { type: "string", description: "Name or ID of the specialist sub-agent to recruit (e.g. 'Tiar Property - Dark Luxury Visual Designer', 'Bangga Surabaya Art Director', 'Web Researcher', 'Gen-Z Copywriter', 'UNESA D4 Graphic Design')" },
+          reason: { type: "string", description: "Why this specialist sub-agent is recruited for the task" },
+          subtask_assignment: { type: "string", description: "Specific subtask or deliverable assigned to this recruited agent" }
+        },
+        required: ["agent_name_or_id", "reason"]
       }
     }
   },
@@ -2894,6 +3004,38 @@ async function executeTool(name, args, assistantBubble = null) {
         findings: findings,
         recommended_next_action: nextAction,
         hint: `Laporan telaah dari [${agentName}] telah diterima Master Agent. Master Agent: Evaluasi data ini, instruksikan General Browser Assistant untuk mengambil tindakan browser (klik/ketik jika diperlukan), dan jalankan browser_screenshot() untuk verifikasi visual.`
+      };
+    }
+
+    case "summon_specialist_agent": {
+      const targetQuery = String(args.agent_name_or_id || '').trim().toLowerCase();
+      const reason = args.reason || "Kebutuhan keahlian spesialis tambahan";
+      const subtask = args.subtask_assignment || "";
+
+      const recruited = customAgents.find(a => 
+        String(a.id || '').toLowerCase() === targetQuery || 
+        String(a.name || '').toLowerCase().includes(targetQuery) ||
+        targetQuery.includes(String(a.name || '').toLowerCase()) ||
+        String(a.description || '').toLowerCase().includes(targetQuery)
+      ) || {
+        id: `agent_${Date.now()}`,
+        name: args.agent_name_or_id || "Specialist Agent",
+        description: reason
+      };
+
+      if (typeof dynamicallyAddSubAgentToUI === 'function') {
+        dynamicallyAddSubAgentToUI(currentActiveAssistantBubble, recruited, subtask);
+      }
+
+      return {
+        success: true,
+        status: "recruited",
+        agent_id: recruited.id,
+        agent_name: recruited.name,
+        description: recruited.description,
+        reason: reason,
+        assigned_subtask: subtask,
+        message: `Agen spesialis [${recruited.name}] berhasil direkrut ke dalam Tim Agen yang Ditugaskan. Master Agent: Lanjutkan dengan mendelegasikan subtask atau memanggil agent_subtask_analysis untuk mengeksekusi subtask.`
       };
     }
 
@@ -7466,6 +7608,75 @@ function updateAssistantActiveAgent(assistantBubble, agentName, statusText = '',
   }
 }
 
+let currentActiveAssistantBubble = null;
+
+function dynamicallyAddSubAgentToUI(assistantBubble, newAgent, subtask = "") {
+  const targetBubble = assistantBubble || currentActiveAssistantBubble;
+  if (!targetBubble || !newAgent) return;
+  
+  let treeContainer = targetBubble.querySelector('.agent-tree-branch-container');
+  let treeList = targetBubble.querySelector('.agent-tree-branch-list');
+  const hierarchyBlock = targetBubble.querySelector('.agent-hierarchy-block');
+
+  if (!treeContainer && hierarchyBlock) {
+    treeContainer = document.createElement('div');
+    treeContainer.className = 'agent-tree-branch-container';
+    treeContainer.innerHTML = `
+      <button type="button" class="agent-tree-branch-header" title="Klik untuk sembunyikan / tampilkan daftar agen">
+        <div class="agent-tree-header-left">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="agent-tree-branch-title">Tim Agen yang Ditugaskan (1)</span>
+        </div>
+        <div class="agent-tree-header-right">
+          <span class="agent-tree-toggle-text">Tutup</span>
+          <svg class="agent-tree-toggle-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </button>
+      <div class="agent-tree-branch-list"></div>
+    `;
+    hierarchyBlock.appendChild(treeContainer);
+    treeList = treeContainer.querySelector('.agent-tree-branch-list');
+
+    const headerBtn = treeContainer.querySelector('.agent-tree-branch-header');
+    headerBtn?.addEventListener('click', () => {
+      treeContainer.classList.toggle('collapsed');
+      const textEl = treeContainer.querySelector('.agent-tree-toggle-text');
+      if (textEl) {
+        textEl.textContent = treeContainer.classList.contains('collapsed') ? 'Detail' : 'Tutup';
+      }
+    });
+  }
+
+  if (treeList) {
+    const existingItem = treeList.querySelector(`[data-agent-id="${escapeHtml(newAgent.id || '')}"]`);
+    if (!existingItem) {
+      const item = document.createElement('div');
+      item.className = 'agent-tree-item active-working';
+      item.dataset.agentId = newAgent.id || '';
+      item.innerHTML = `
+        <div class="tree-stem"></div>
+        <div class="tree-agent-card">
+          <div class="tree-agent-icon">${getAgentIconSvg(newAgent)}</div>
+          <div class="tree-agent-details">
+            <span class="tree-agent-name">${escapeHtml(newAgent.name || 'Spesialis')}</span>
+            <span class="tree-agent-desc">${escapeHtml(subtask || newAgent.description || 'Sub-agent eksekutor')}</span>
+          </div>
+          <span class="tree-agent-badge status-working">Bekerja...</span>
+        </div>
+      `;
+      treeList.appendChild(item);
+
+      const totalItems = treeList.querySelectorAll('.agent-tree-item').length;
+      const titleEl = treeContainer?.querySelector('.agent-tree-branch-title');
+      if (titleEl) {
+        titleEl.textContent = `Tim Agen yang Ditugaskan (${totalItems})`;
+      }
+    }
+  }
+
+  updateAssistantActiveAgent(targetBubble, newAgent.name || "Specialist Agent", `Merekrut & menugaskan ${newAgent.name}...`, false, false);
+}
+
 let activeClarificationState = null;
 
 function showClarificationDock(question, options = [], contextSummary = "") {
@@ -7716,6 +7927,7 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
     hydrateFileActions(msg);
   }
   scrollToBottom();
+  currentActiveAssistantBubble = msg;
   return msg;
 }
 
