@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.143`
+- **Versi Terkini:** `v2.150.144`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -147,6 +147,6 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 25. **Manifest V3 Service Worker Syntax Integrity Fix:** Memperbaiki kelebihan kurung kurawal penutup (`}`) di `extension/background.js` (line 1473) yang sebelumnya menutup fungsi `handleTelegramIncomingUpdate` secara prematur dan memicu error registrasi service worker (Status code: 15 / `SyntaxError: await is only valid in async functions`). Seluruh file JavaScript ekstensi (26 file) divalidasi ulang dengan Node.js syntax compiler dengan hasil 100% PASS.
 26. **Slash Command Autocomplete & Connected Apps Dropup Engine (`/`):** Menambahkan menu dropup interaktif saat pengguna mengetik karakter slash (`/`) pada input prompt di Sidepanel dan New Tab dengan 12 layanan Google Workspace, Telegram, dan System Tools.
 27. **Active Slash Chip Bar & High-Contrast Bubble Badge Standard:** Menyelaraskan UX pemilihan command `/` agar identik seperti `@agent` dengan chips bar interaktif di atas kolom prompt dan badge kontras tinggi di riwayat percakapan.
-28. **End-to-End Autonomous AI Agent Tool Binding for All Slash Commands:** Mengikat seluruh perintah slash (`/slides`, `/gmail`, `/drive`, `/docs`, `/sheets`, `/forms`, `/calendar`, `/tasks`, `/contacts`, `/keep`, `/meet`, `/search`, `/news`, `/telegram`, `/browse`, `/tabs`) ke dalam sistem prompt Master Agent dan eksekusi function calling otomatis:
-    - AI Agent secara langsung memanggil tool resmi (`gsuite_create_doc`, `gsuite_send_gmail`, `gsuite_search_drive`, `gsuite_append_sheet_row`, `telegram_send_message`, `google_web_search`, `browser_navigate`, dll) begitu perintah slash atau active chip dikirim oleh pengguna.
+28. **End-to-End Autonomous AI Agent Tool Binding for All Slash Commands:** Mengikat seluruh perintah slash (`/slides`, `/gmail`, `/drive`, `/docs`, `/sheets`, `/forms`, `/calendar`, `/tasks`, `/contacts`, `/keep`, `/meet`, `/search`, `/news`, `/telegram`, `/browse`, `/tabs`) ke dalam sistem prompt Master Agent dan eksekusi function calling otomatis.
+29. **Native Google Slides REST API Engine (16:9 Widescreen & Direct Execution):** Mengintegrasikan Google Slides REST API v1 resmi (`gsuite_create_presentation`, `gsuite_append_slide`, `gsuite_read_presentation`) dengan pembuatan outline slide terstruktur otomatis via API dan aturan ketat anti-browser-clicking sehingga seluruh proses pembuatan presentasi berjalan super cepat di background tanpa membuka tab browser atau menggerakkan kursor pengguna.
 

@@ -253,21 +253,23 @@ You have access to 3 categories of tools:
    - browser_extract_table(max_rows, auto_scroll, sort_by_metric): Deep structured table/grid extraction that auto-scrolls virtual lists (e.g. Meta Ads 100+ campaigns) to extract ALL rows without first-page bias!
    - agent_subtask_analysis(agent_name, focus, findings, recommended_next_action): Call whenever a specialist sub-agent (e.g. Meta Ads Strategist, Gen-Z Copywriter, Deep Web Researcher) completes domain analysis, evaluates metrics, drafts copy, or formulates recommendations for Master Agent before directing next browser actions.
 
-5. 🌐 GOOGLE WORKSPACE & CONNECTED APPS DIRECT ACTION DIRECTIVES:
-   Whenever the user sends a prompt with a target slash command or tag (e.g. [/slides], [/gmail], [/drive], [/docs], [/sheets], [/forms], [/calendar], [/tasks], [/contacts], [/keep], [/meet], [/search], [/telegram]):
-   - [/slides] or /slides: Generate structured slide-by-slide presentation outlines (Title, key points, speaking cues) in rich Markdown, and optionally call gsuite_create_doc to save as a presentation deck draft in Google Drive.
-   - [/gmail] or /gmail: Immediately call gsuite_send_gmail({ to, subject, body_html, body_text }) or gsuite_search_gmail({ query }) to process emails.
-   - [/drive] or /drive: Immediately call gsuite_search_drive({ query, mime_type }) or gsuite_list_recent_files() to search/manage files in Google Drive.
-   - [/docs] or /docs: Immediately call gsuite_create_doc({ title, content }) or gsuite_append_doc_text({ document_id_or_url, text }) to manage Google Docs.
-   - [/sheets] or /sheets: Immediately call gsuite_create_sheet({ title, headers }), gsuite_append_sheet_row({ target_sheet, row_values }), or gsuite_read_sheet({ sheet_id, range }) to manipulate spreadsheets.
-   - [/forms] or /forms: Immediately call gsuite_create_form({ title, description, questions }) or gsuite_get_form_responses({ form_id }).
-   - [/calendar] or /calendar: Immediately call gsuite_create_calendar_event({ summary, description, start_time, end_time }) or gsuite_list_calendar_events().
-   - [/tasks] or /tasks: Immediately call gsuite_create_task({ title, notes, due_date }) or gsuite_list_tasks().
-   - [/contacts] or /contacts: Immediately call gsuite_search_contacts({ query }).
-   - [/search] or /search: Immediately call google_web_search({ query }) or google_news_search({ query }) to fetch real-time Google search data.
-   - [/telegram] or /telegram: Immediately call telegram_send_message({ text }) to send messages/reports to the user's Telegram.
-   - [/browse] or /browse: Immediately navigate and inspect using browser_navigate({ url }) and browser_snapshot().
-   - [/tabs] or /tabs: Immediately call browser_list_tabs() to inspect all open tabs.
+5. 🌐 GOOGLE WORKSPACE & CONNECTED APPS DIRECT REST API RULE (CRITICAL - NO BROWSER CLICKS):
+   Whenever the user sends a prompt targeting Google Workspace or Connected Apps (e.g. [/slides], /slides, [/gmail], /gmail, [/drive], /drive, [/docs], /docs, [/sheets], /sheets, [/forms], /forms, [/calendar], /calendar, [/tasks], /tasks, [/contacts], /contacts, [/telegram]):
+   - MANDATORY NATIVE REST API USAGE: You MUST execute the task using the provided GSuite/Telegram REST API tools directly!
+   - STRICT PROHIBITION ON BROWSER CLICKING FOR GOOGLE WORKSPACE: DO NOT call browser_list_tabs, browser_navigate, or browser_click to manually open or manipulate Google Slides, Docs, Sheets, or Gmail in Chrome tabs! The native REST API tools run 100x faster, in the background, without disturbing the user's browser tabs.
+   - [/slides] or /slides (Google Slides): DIRECTLY call gsuite_create_presentation({ title, slides }) to generate 16:9 widescreen presentations with slide titles, structured bullet points, and descriptions via the Google Slides REST API!
+   - [/gmail] or /gmail (Gmail): DIRECTLY call gsuite_send_gmail({ to, subject, body_html, body_text }) or gsuite_search_gmail({ query }) to process emails.
+   - [/drive] or /drive (Google Drive): DIRECTLY call gsuite_search_drive({ query, mime_type }) or gsuite_list_recent_files() to search/manage files in Google Drive.
+   - [/docs] or /docs (Google Docs): DIRECTLY call gsuite_create_doc({ title, content }) or gsuite_append_doc_text({ document_id_or_url, text }) to manage Google Docs.
+   - [/sheets] or /sheets (Google Sheets): DIRECTLY call gsuite_create_sheet({ title, headers }), gsuite_append_sheet_row({ target_sheet, row_values }), or gsuite_read_sheet({ sheet_id, range }) to manipulate spreadsheets.
+   - [/forms] or /forms (Google Forms): DIRECTLY call gsuite_create_form({ title, description, questions }) or gsuite_get_form_responses({ form_id }).
+   - [/calendar] or /calendar: DIRECTLY call gsuite_create_calendar_event({ summary, description, start_time, end_time }) or gsuite_list_calendar_events().
+   - [/tasks] or /tasks: DIRECTLY call gsuite_create_task({ title, notes, due_date }) or gsuite_list_tasks().
+   - [/contacts] or /contacts: DIRECTLY call gsuite_search_contacts({ query }).
+   - [/search] or /search: DIRECTLY call google_web_search({ query }) or google_news_search({ query }) to fetch real-time Google search data.
+   - [/telegram] or /telegram: DIRECTLY call telegram_send_message({ text }) to send messages/reports to the user's Telegram.
+   - [/browse] or /browse: Navigate and inspect using browser_navigate({ url }) and browser_snapshot().
+   - [/tabs] or /tabs: Call browser_list_tabs() to inspect all open tabs.
 
 
 - MANDATORY SCREENSHOT WALKTHROUGH RULE (ATURAN MUTLAK SCREENSHOT WALKTHROUGH DI LANGKAH PERTAMA & AKHIR):
@@ -451,6 +453,24 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
         }
       }
     }
+  }
+
+  // 0c. If user is performing a direct GSuite / Telegram API action and did NOT explicitly select other agent chips
+  const isDirectGSuiteAction = text.startsWith('[/slides]') || text.startsWith('/slides') ||
+                               text.startsWith('[/gmail]') || text.startsWith('/gmail') ||
+                               text.startsWith('[/drive]') || text.startsWith('/drive') ||
+                               text.startsWith('[/docs]') || text.startsWith('/docs') ||
+                               text.startsWith('[/sheets]') || text.startsWith('/sheets') ||
+                               text.startsWith('[/forms]') || text.startsWith('/forms') ||
+                               text.startsWith('[/calendar]') || text.startsWith('/calendar') ||
+                               text.startsWith('[/tasks]') || text.startsWith('/tasks') ||
+                               text.startsWith('[/contacts]') || text.startsWith('/contacts') ||
+                               text.startsWith('[/telegram]') || text.startsWith('/telegram');
+
+  if (isDirectGSuiteAction && (!Array.isArray(explicitMentionAgents) || explicitMentionAgents.length === 0)) {
+    if (matchedWorkers.length > 0) return matchedWorkers;
+    // For direct API actions, do not spawn unrelated web/browser workers
+    return [];
   }
 
   // 1. Check for research / journal / scraping / analysis intent (Pipeline Phase 1)
@@ -1452,6 +1472,58 @@ const AGENT_TOOLS = [
           chat_id: { type: "string", description: "Optional specific target Telegram Chat ID (defaults to authorized chat ID from settings)" }
         },
         required: ["text"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_create_presentation",
+      description: "Directly create a brand new Google Slides presentation (16:9 widescreen) in the user's Google Drive with custom title and structured slide deck (titles, bullets, content). Fast, native REST API execution without opening browser tabs. Returns the presentation ID and shareable URL.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Title of the Google Slides presentation (e.g. 'Pitch Deck Strategi Pemasaran 2026')" },
+          slides: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "Slide title / header" },
+                content: { type: "string", description: "Body paragraph or summary text" },
+                bullets: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "List of key bullet points for this slide"
+                }
+              },
+              required: ["title"]
+            },
+            description: "Array of structured slide objects to generate in the presentation"
+          }
+        },
+        required: ["title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "gsuite_append_slide",
+      description: "Append a new slide to an existing Google Slides presentation.",
+      parameters: {
+        type: "object",
+        properties: {
+          presentation_id_or_url: { type: "string", description: "The Google Slides presentation ID or full URL" },
+          title: { type: "string", description: "Title of the new slide" },
+          content: { type: "string", description: "Optional body paragraph" },
+          bullets: {
+            type: "array",
+            items: { type: "string" },
+            description: "Optional array of bullet points"
+          }
+        },
+        required: ["presentation_id_or_url", "title"]
       }
     }
   },
@@ -4144,6 +4216,46 @@ async function executeTool(name, args, assistantBubble = null) {
         return { success: true, message: "Pesan berhasil dikirim ke Telegram!", result: res };
       } catch (err) {
         return { error: `Gagal mengirim ke Telegram: ${err.message}` };
+      }
+    }
+
+    case "gsuite_create_presentation": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      try {
+        const title = args.title || "Browser Agent Presentation";
+        const slides = Array.isArray(args.slides) ? args.slides : [];
+        const res = await googleWorkspaceService.createPresentation(title, slides);
+        return {
+          success: true,
+          message: `Presentasi Google Slides "${res.title}" berhasil dibuat via API!`,
+          presentation_id: res.presentationId,
+          presentation_url: res.presentationUrl,
+          slides_count: res.slidesCount
+        };
+      } catch (err) {
+        return { error: `Gagal membuat Google Slides: ${err.message}` };
+      }
+    }
+
+    case "gsuite_append_slide": {
+      if (typeof googleWorkspaceService === 'undefined') {
+        return { error: "Google Workspace service belum dimuat." };
+      }
+      try {
+        const res = await googleWorkspaceService.appendSlide(args.presentation_id_or_url, {
+          title: args.title,
+          content: args.content,
+          bullets: args.bullets
+        });
+        return {
+          success: true,
+          message: "Slide baru berhasil ditambahkan ke Google Slides!",
+          presentation_url: res.presentationUrl
+        };
+      } catch (err) {
+        return { error: `Gagal menambahkan slide: ${err.message}` };
       }
     }
 

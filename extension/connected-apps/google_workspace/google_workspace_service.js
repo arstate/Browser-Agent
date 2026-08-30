@@ -12,6 +12,7 @@ const GOOGLE_OAUTH_SCOPES = [
   'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/documents',
+  'https://www.googleapis.com/auth/presentations',
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/gmail.modify',
@@ -603,6 +604,279 @@ class GoogleWorkspaceService {
       title: doc.title,
       text: fullText.trim(),
       documentUrl: `https://docs.google.com/document/d/${documentId}/edit`
+    };
+  }
+
+  // =========================================================================
+  // GOOGLE SLIDES API (REST API - 16:9 Widescreen)
+  // =========================================================================
+
+  parsePresentationId(input) {
+    if (!input) return "";
+    const str = String(input).trim();
+    const match = str.match(/\/presentation\/d\/([a-zA-Z0-9-_]+)/);
+    if (match && match[1]) return match[1];
+    return str;
+  }
+
+  /**
+   * Create a new Google Slides Presentation (16:9 widescreen) with structured slides
+   */
+  async createPresentation(title = "Browser Agent Presentation", slides = []) {
+    const token = await this.getValidAccessToken();
+    const url = 'https://slides.googleapis.com/v1/presentations';
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title: title || "Browser Agent Presentation" })
+    });
+
+    const pres = await res.json();
+    if (pres.error) {
+      throw new Error(`Google Slides API Error: ${pres.error.message || JSON.stringify(pres.error)}`);
+    }
+
+    const presentationId = pres.presentationId;
+    let slidesCount = 1;
+
+    // If slides array is provided, insert slides with titles and structured bullet points
+    if (Array.isArray(slides) && slides.length > 0) {
+      try {
+        const requests = [];
+        for (let i = 0; i < slides.length; i++) {
+          const s = slides[i];
+          const slideId = `slide_page_${Date.now()}_${i}`;
+          const titleBoxId = `title_box_${Date.now()}_${i}`;
+          const bodyBoxId = `body_box_${Date.now()}_${i}`;
+
+          // Create blank slide
+          requests.push({
+            createSlide: {
+              objectId: slideId,
+              insertionIndex: i + 1,
+              slideLayoutReference: {
+                predefinedLayout: 'BLANK'
+              }
+            }
+          });
+
+          // Insert Title Shape
+          const slideTitle = typeof s === 'string' ? s : (s.title || `Slide ${i + 1}`);
+          requests.push({
+            createShape: {
+              objectId: titleBoxId,
+              shapeType: 'TEXT_BOX',
+              elementProperties: {
+                pageObjectId: slideId,
+                size: {
+                  width: { magnitude: 650, unit: 'PT' },
+                  height: { magnitude: 60, unit: 'PT' }
+                },
+                transform: {
+                  scaleX: 1,
+                  scaleY: 1,
+                  translateX: 35,
+                  translateY: 35,
+                  unit: 'PT'
+                }
+              }
+            }
+          });
+          requests.push({
+            insertText: {
+              objectId: titleBoxId,
+              text: slideTitle
+            }
+          });
+
+          // Insert Body Content Shape
+          let bodyText = "";
+          if (typeof s === 'object' && s !== null) {
+            if (Array.isArray(s.bullets)) {
+              bodyText = s.bullets.map(b => `• ${b}`).join('\n');
+            } else if (s.content || s.body) {
+              bodyText = String(s.content || s.body);
+            }
+          }
+          if (!bodyText && typeof s === 'string') {
+            bodyText = s;
+          }
+
+          if (bodyText) {
+            requests.push({
+              createShape: {
+                objectId: bodyBoxId,
+                shapeType: 'TEXT_BOX',
+                elementProperties: {
+                  pageObjectId: slideId,
+                  size: {
+                    width: { magnitude: 650, unit: 'PT' },
+                    height: { magnitude: 280, unit: 'PT' }
+                  },
+                  transform: {
+                    scaleX: 1,
+                    scaleY: 1,
+                    translateX: 35,
+                    translateY: 105,
+                    unit: 'PT'
+                  }
+                }
+              }
+            });
+            requests.push({
+              insertText: {
+                objectId: bodyBoxId,
+                text: bodyText
+              }
+            });
+          }
+        }
+
+        if (requests.length > 0) {
+          const batchUrl = `https://slides.googleapis.com/v1/presentations/${encodeURIComponent(presentationId)}:batchUpdate`;
+          await fetch(batchUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ requests })
+          });
+          slidesCount += slides.length;
+        }
+      } catch (slideErr) {
+        console.warn('Batch slide creation error:', slideErr);
+      }
+    }
+
+    this.logActivity('SLIDES_CREATE', `Berhasil membuat Presentasi Google Slides: "${title}" (ID: ${presentationId})`);
+    return {
+      success: true,
+      presentationId,
+      title: pres.title || title,
+      presentationUrl: `https://docs.google.com/presentation/d/${presentationId}/edit`,
+      slidesCount
+    };
+  }
+
+  /**
+   * Append a single slide to an existing Google Slides presentation
+   */
+  async appendSlide(presentationIdOrUrl, slideData) {
+    const presentationId = this.parsePresentationId(presentationIdOrUrl);
+    if (!presentationId) throw new Error("Presentation ID atau URL tidak valid.");
+    const token = await this.getValidAccessToken();
+
+    const slideId = `slide_page_${Date.now()}`;
+    const titleBoxId = `title_box_${Date.now()}`;
+    const bodyBoxId = `body_box_${Date.now()}`;
+    const requests = [
+      {
+        createSlide: {
+          objectId: slideId,
+          slideLayoutReference: {
+            predefinedLayout: 'BLANK'
+          }
+        }
+      }
+    ];
+
+    const slideTitle = typeof slideData === 'string' ? slideData : (slideData?.title || 'Slide');
+    requests.push({
+      createShape: {
+        objectId: titleBoxId,
+        shapeType: 'TEXT_BOX',
+        elementProperties: {
+          pageObjectId: slideId,
+          size: { width: { magnitude: 650, unit: 'PT' }, height: { magnitude: 60, unit: 'PT' } },
+          transform: { scaleX: 1, scaleY: 1, translateX: 35, translateY: 35, unit: 'PT' }
+        }
+      }
+    });
+    requests.push({
+      insertText: {
+        objectId: titleBoxId,
+        text: slideTitle
+      }
+    });
+
+    let bodyText = "";
+    if (typeof slideData === 'object' && slideData !== null) {
+      if (Array.isArray(slideData.bullets)) {
+        bodyText = slideData.bullets.map(b => `• ${b}`).join('\n');
+      } else if (slideData.content || slideData.body) {
+        bodyText = String(slideData.content || slideData.body);
+      }
+    }
+    if (bodyText) {
+      requests.push({
+        createShape: {
+          objectId: bodyBoxId,
+          shapeType: 'TEXT_BOX',
+          elementProperties: {
+            pageObjectId: slideId,
+            size: { width: { magnitude: 650, unit: 'PT' }, height: { magnitude: 280, unit: 'PT' } },
+            transform: { scaleX: 1, scaleY: 1, translateX: 35, translateY: 105, unit: 'PT' }
+          }
+        }
+      });
+      requests.push({
+        insertText: {
+          objectId: bodyBoxId,
+          text: bodyText
+        }
+      });
+    }
+
+    const batchUrl = `https://slides.googleapis.com/v1/presentations/${encodeURIComponent(presentationId)}:batchUpdate`;
+    const res = await fetch(batchUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ requests })
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Slides API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    this.logActivity('SLIDES_APPEND', `Menambahkan slide baru ke Presentasi ID: ${presentationId.substring(0, 8)}...`);
+    return {
+      success: true,
+      presentationId,
+      presentationUrl: `https://docs.google.com/presentation/d/${presentationId}/edit`
+    };
+  }
+
+  /**
+   * Read details of a Google Slides presentation
+   */
+  async readPresentation(presentationIdOrUrl) {
+    const presentationId = this.parsePresentationId(presentationIdOrUrl);
+    if (!presentationId) throw new Error("Presentation ID atau URL tidak valid.");
+    const token = await this.getValidAccessToken();
+
+    const res = await fetch(`https://slides.googleapis.com/v1/presentations/${encodeURIComponent(presentationId)}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(`Google Slides API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    return {
+      presentationId,
+      title: data.title,
+      slidesCount: Array.isArray(data.slides) ? data.slides.length : 0,
+      presentationUrl: `https://docs.google.com/presentation/d/${presentationId}/edit`
     };
   }
 
