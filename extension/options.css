@@ -480,10 +480,15 @@ body.options-body::before,
 
 .connected-apps-view-section {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  box-sizing: border-box;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.connected-apps-view-section[style*="display: none"],
+.connected-apps-view-section.hidden {
+  display: none !important;
 }
 
 .connected-apps-grid {

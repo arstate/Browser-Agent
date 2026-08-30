@@ -188,7 +188,7 @@ function setupGoogleWorkspaceEventListeners() {
   if (btnOpenConfig && hubView && detailView) {
     btnOpenConfig.addEventListener('click', () => {
       hubView.style.display = 'none';
-      detailView.style.display = 'block';
+      detailView.style.display = 'flex';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
@@ -196,7 +196,7 @@ function setupGoogleWorkspaceEventListeners() {
   if (btnBackHub && hubView && detailView) {
     btnBackHub.addEventListener('click', () => {
       detailView.style.display = 'none';
-      hubView.style.display = 'block';
+      hubView.style.display = 'flex';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }

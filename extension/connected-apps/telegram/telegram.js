@@ -465,7 +465,7 @@ function setupTelegramEventListeners() {
     const detail = document.getElementById('connected-app-telegram-detail');
     if (hub && detail) {
       hub.style.display = 'none';
-      detail.style.display = 'block';
+      detail.style.display = 'flex';
       renderTelegramLogs();
     }
   });
@@ -475,7 +475,7 @@ function setupTelegramEventListeners() {
     const detail = document.getElementById('connected-app-telegram-detail');
     if (hub && detail) {
       detail.style.display = 'none';
-      hub.style.display = 'block';
+      hub.style.display = 'flex';
       updateTelegramStatusUI();
     }
   });
