@@ -334,27 +334,64 @@ PROTOKOL EKSEKUSI BOS PERFEKSIONIS:
   }
 
   /**
-   * Analyzes conversation turns & tool outputs to update milestone states
+   * Analyzes conversation turns & tool outputs to update milestone states in realtime
    */
   function updateMilestonesFromTurns(milestones, turns) {
     if (!milestones || milestones.length === 0) return milestones;
 
     const total = milestones.length;
-    const nonSystemTurns = turns.filter(t => t.role !== 'system');
+    if (total <= 1) return milestones;
+
+    const nonSystemTurns = (turns || []).filter(t => t.role !== 'system');
     const toolTurns = nonSystemTurns.filter(t => t.role === 'tool');
+    const toolCount = toolTurns.length;
 
-    // Heuristic completion calculation based on executed steps
-    const stepRatio = toolTurns.length / Math.max(1, total * 2);
+    // Milestone 0 (Index 0) is ALWAYS completed after the initial planning phase
+    milestones[0].completed = true;
+    milestones[0].inProgress = false;
 
-    milestones.forEach((m, idx) => {
-      const threshold = (idx + 1) / total;
-      if (stepRatio >= threshold || (idx === 0 && toolTurns.length >= 1)) {
-        m.completed = true;
-        m.inProgress = false;
-      } else if (idx === 0 || milestones[idx - 1]?.completed) {
-        m.inProgress = true;
+    // Worker milestones span from index 1 to total - 2
+    const workerMilestonesCount = Math.max(1, total - 2);
+    
+    // Calculate which worker milestone is currently active based on toolCount
+    // Each worker milestone takes roughly 2-3 tools to complete
+    const toolsPerWorker = 3;
+    const currentWorkerOffset = Math.min(
+      workerMilestonesCount - 1,
+      Math.floor(toolCount / toolsPerWorker)
+    );
+    const activeWorkerIdx = 1 + currentWorkerOffset;
+
+    for (let i = 1; i < total - 1; i++) {
+      if (i < activeWorkerIdx) {
+        milestones[i].completed = true;
+        milestones[i].inProgress = false;
+      } else if (i === activeWorkerIdx) {
+        milestones[i].completed = false;
+        milestones[i].inProgress = true;
+      } else {
+        milestones[i].completed = false;
+        milestones[i].inProgress = false;
       }
-    });
+    }
+
+    // The LAST milestone (Index total - 1: Final Validation & Report)
+    // MUST NEVER be marked completed while tools or LLM are still running!
+    const lastIdx = total - 1;
+    milestones[lastIdx].completed = false;
+
+    // If all intermediate worker milestones are completed (or high tool count),
+    // the final validation milestone becomes inProgress (Master Agent validating)
+    const allWorkersDone = milestones.slice(1, total - 1).every(m => m.completed);
+    if (allWorkersDone || toolCount >= workerMilestonesCount * toolsPerWorker) {
+      for (let i = 1; i < total - 1; i++) {
+        milestones[i].completed = true;
+        milestones[i].inProgress = false;
+      }
+      milestones[lastIdx].inProgress = true;
+    } else {
+      milestones[lastIdx].inProgress = false;
+    }
 
     return milestones;
   }
@@ -374,11 +411,13 @@ PROTOKOL EKSEKUSI BOS PERFEKSIONIS:
   }
 
   /**
-   * Returns true if there are still pending milestones in the checklist
+   * Returns true if there are still pending unstarted worker milestones
    */
   function hasPendingMilestones(milestones) {
     if (!milestones || milestones.length === 0) return false;
-    return milestones.some(m => !m.completed);
+    // Check if intermediate worker milestones are still pending
+    const intermediateMilestones = milestones.slice(1, milestones.length - 1);
+    return intermediateMilestones.some(m => !m.completed && !m.inProgress);
   }
 
   /**
