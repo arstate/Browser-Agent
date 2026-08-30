@@ -467,74 +467,70 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
                                text.startsWith('[/contacts]') || text.startsWith('/contacts') ||
                                text.startsWith('[/telegram]') || text.startsWith('/telegram');
 
-  if (isDirectGSuiteAction && (!Array.isArray(explicitMentionAgents) || explicitMentionAgents.length === 0)) {
-    if (matchedWorkers.length > 0) return matchedWorkers;
-    // For direct API actions, do not spawn unrelated web/browser workers
-    return [];
-  }
-
-  // 1. Check for research / journal / scraping / analysis intent (Pipeline Phase 1)
-  const researchKeywords = [
-    "riset", "research", "jurnal", "paper", "artikel", "cari data", "scraping", "scrape", 
-    "ekstrak", "extract", "bandingkan", "komparasi", "compare", "analisis", "analisa", 
-    "rangkum", "summarize", "summary", "harga", "produk", "pasar", "review", "studi", 
-    "literatur", "tabel data", "berita", "news", "trend", "tren", "searching web", "cari jurnal", "baca web"
-  ];
-  const isResearch = researchKeywords.some(kw => text.includes(kw));
-  if (isResearch) {
-    const researchAgent = customAgents.find(a => String(a.id || '') === "web_researcher_agent" || String(a.name || '').toLowerCase().includes("research") || String(a.name || '').toLowerCase().includes("riset"));
-    if (researchAgent && !matchedWorkers.some(m => String(m.id || '') === String(researchAgent.id || ''))) {
-      matchedWorkers.push(researchAgent);
-    }
-  }
-
-  // 2. Check for browser navigation / interaction / media (Pipeline Phase 2)
-  const generalKeywords = [
-    "buka", "play", "putar", "youtube", "video", "musik", "lagu", "klik", "scroll", "tonton", "isi formulir", "login", "website", "tab", "link", "url"
-  ];
-  const isGeneral = generalKeywords.some(kw => text.includes(kw));
-  if (isGeneral && !isResearch) {
-    const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent");
-    if (defaultAgent && !matchedWorkers.some(m => String(m.id || '') === String(defaultAgent.id || ''))) {
-      matchedWorkers.push(defaultAgent);
-    }
-  }
-
-  // 3. Check for coding / system engineering / local file intent (Pipeline Phase 3)
-  const codeKeywords = [
-    "code", "koding", "coding", "script", "terminal", "command", "bash", "shell", 
-    "python", "javascript", "typescript", "html", "css", "git", "repo", "commit", 
-    "bug", "error", "traceback", "exception", "fix", "debug", "refactor", 
-    "file", "folder", "directory", "dir", "cat", "ls", "grep", "npm", "pip", "docker",
-    "lokal pc", "download masukin ke folder", "simpan ke lokal", "save to folder", "download ke pc", "lokal", "download"
-  ];
-  const isCoding = codeKeywords.some(kw => text.includes(kw));
-  if (isCoding) {
-    const codingAgent = customAgents.find(a => String(a.id || '') === "coding_engineer_agent" || String(a.name || '').toLowerCase().includes("coding") || String(a.name || '').toLowerCase().includes("engineer"));
-    if (codingAgent && !matchedWorkers.some(m => String(m.id || '') === String(codingAgent.id || ''))) {
-      matchedWorkers.push(codingAgent);
-    }
-  }
-
-  // 4. Check custom agents by keyword in description or name
-  for (const ag of customAgents) {
-    const agIdStr = String(ag.id || '');
-    if (agIdStr === "master_agent" || agIdStr === "boss_agent" || agIdStr === "default_agent" || agIdStr === "web_researcher_agent" || agIdStr === "coding_engineer_agent") continue;
-    const agNameStr = String(ag.name || '');
-    const nameMatch = agNameStr && text.includes(agNameStr.toLowerCase());
-    const descWords = String(ag.description || "").toLowerCase().split(/\s+/).filter(w => w.length > 3);
-    const descMatch = descWords.some(w => text.includes(w));
-    if (nameMatch || descMatch) {
-      if (!matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
-        matchedWorkers.push(ag);
+  if (!isDirectGSuiteAction || (Array.isArray(explicitMentionAgents) && explicitMentionAgents.length > 0)) {
+    // 1. Check for research / journal / scraping / analysis intent (Pipeline Phase 1)
+    const researchKeywords = [
+      "riset", "research", "jurnal", "paper", "artikel", "cari data", "scraping", "scrape", 
+      "ekstrak", "extract", "bandingkan", "komparasi", "compare", "analisis", "analisa", 
+      "rangkum", "summarize", "summary", "harga", "produk", "pasar", "review", "studi", 
+      "literatur", "tabel data", "berita", "news", "trend", "tren", "searching web", "cari jurnal", "baca web"
+    ];
+    const isResearch = researchKeywords.some(kw => text.includes(kw));
+    if (isResearch) {
+      const researchAgent = customAgents.find(a => String(a.id || '') === "web_researcher_agent" || String(a.name || '').toLowerCase().includes("research") || String(a.name || '').toLowerCase().includes("riset"));
+      if (researchAgent && !matchedWorkers.some(m => String(m.id || '') === String(researchAgent.id || ''))) {
+        matchedWorkers.push(researchAgent);
       }
     }
-  }
 
-  // Fallback worker if none matched
-  if (matchedWorkers.length === 0) {
-    const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent") || customAgents[0];
-    if (defaultAgent) matchedWorkers.push(defaultAgent);
+    // 2. Check for browser navigation / interaction / media (Pipeline Phase 2)
+    const generalKeywords = [
+      "buka", "play", "putar", "youtube", "video", "musik", "lagu", "klik", "scroll", "tonton", "isi formulir", "login", "website", "tab", "link", "url"
+    ];
+    const isGeneral = generalKeywords.some(kw => text.includes(kw));
+    if (isGeneral && !isResearch) {
+      const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent");
+      if (defaultAgent && !matchedWorkers.some(m => String(m.id || '') === String(defaultAgent.id || ''))) {
+        matchedWorkers.push(defaultAgent);
+      }
+    }
+
+    // 3. Check for coding / system engineering / local file intent (Pipeline Phase 3)
+    const codeKeywords = [
+      "code", "koding", "coding", "script", "terminal", "command", "bash", "shell", 
+      "python", "javascript", "typescript", "html", "css", "git", "repo", "commit", 
+      "bug", "error", "traceback", "exception", "fix", "debug", "refactor", 
+      "file", "folder", "directory", "dir", "cat", "ls", "grep", "npm", "pip", "docker",
+      "lokal pc", "download masukin ke folder", "simpan ke lokal", "save to folder", "download ke pc", "lokal", "download"
+    ];
+    const isCoding = codeKeywords.some(kw => text.includes(kw));
+    if (isCoding) {
+      const codingAgent = customAgents.find(a => String(a.id || '') === "coding_engineer_agent" || String(a.name || '').toLowerCase().includes("coding") || String(a.name || '').toLowerCase().includes("engineer"));
+      if (codingAgent && !matchedWorkers.some(m => String(m.id || '') === String(codingAgent.id || ''))) {
+        matchedWorkers.push(codingAgent);
+      }
+    }
+
+    // 4. Check custom agents by keyword in description or name
+    for (const ag of customAgents) {
+      const agIdStr = String(ag.id || '');
+      if (agIdStr === "master_agent" || agIdStr === "boss_agent" || agIdStr === "default_agent" || agIdStr === "web_researcher_agent" || agIdStr === "coding_engineer_agent") continue;
+      const agNameStr = String(ag.name || '');
+      const nameMatch = agNameStr && text.includes(agNameStr.toLowerCase());
+      const descWords = String(ag.description || "").toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      const descMatch = descWords.some(w => text.includes(w));
+      if (nameMatch || descMatch) {
+        if (!matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
+          matchedWorkers.push(ag);
+        }
+      }
+    }
+
+    // Fallback worker if none matched
+    if (matchedWorkers.length === 0) {
+      const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent") || customAgents[0];
+      if (defaultAgent) matchedWorkers.push(defaultAgent);
+    }
   }
 
   const sortedWorkers = sortAgentsByPipeline(matchedWorkers);
@@ -5261,7 +5257,8 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
       if (hasBoss) {
         updateFooterStatus(`👑 Master Agent (${stepStr})...`);
         notifyActiveTabExecutionState(true, currentStep, maxSteps, `Master Agent: ${stepStr}`);
-        updateAssistantActiveAgent(assistantBubble, "Master Agent", `Mengarahkan tim eksekutor (${stepStr})...`, true, false);
+        const bossStatusText = workerAgents.length > 0 ? `Mengarahkan tim eksekutor (${stepStr})...` : `Memproses (${stepStr})...`;
+        updateAssistantActiveAgent(assistantBubble, "Master Agent", bossStatusText, true, false);
       } else {
         updateFooterStatus(`${initialAgentName} (${stepStr})...`);
         notifyActiveTabExecutionState(true, currentStep, maxSteps, `${initialAgentName}: ${stepStr}`);
