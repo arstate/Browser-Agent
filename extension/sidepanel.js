@@ -5657,6 +5657,15 @@ Tugas Anda:
         plannedStepsTotal = detectedInPlan;
       }
 
+      // Dynamic task schedule refinement from Master Agent thought / plan
+      if (typeof GoalTracker !== 'undefined' && typeof GoalTracker.parseModelSchedule === 'function') {
+        const customSchedule = GoalTracker.parseModelSchedule(accumulatedContent || message.content, activeGoalMilestones, customAgents);
+        if (customSchedule && customSchedule.length >= 2) {
+          activeGoalMilestones = customSchedule;
+          renderTaskScheduleSection(assistantBubble, activeGoalMilestones, 'min');
+        }
+      }
+
       // Finalize assistant text only if there are NO tool calls in this turn
       if (message.content && (!message.tool_calls || message.tool_calls.length === 0)) {
         updateAssistantText(assistantBubble, ensureGeneratedImagesInText(message.content, sessionGeneratedImages), false);
