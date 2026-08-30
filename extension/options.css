@@ -522,6 +522,67 @@ body.options-body::before,
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
+/* Connected Apps Detail Sub-View Navigation Bar (Seamless 48px Pill Standard) */
+.connected-app-detail-subnav {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 9999px;
+  padding: 0 16px 0 8px;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.btn-subnav-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  padding: 7px 16px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.btn-subnav-back:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  transform: translateX(-2px);
+}
+
+.subnav-breadcrumb {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+.subnav-breadcrumb-sep {
+  color: #475569;
+}
+
+.subnav-breadcrumb-active {
+  font-weight: 600;
+}
+
 .plugins-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -3814,6 +3875,7 @@ body.no-glass-blur .bento-hero-provider-card,
 body.no-glass-blur .glass-rounded-search-box,
 body.no-glass-blur .brain-search-unified-box,
 body.no-glass-blur .search-input-box,
+body.no-glass-blur .connected-app-detail-subnav,
 body.no-glass-blur .connected-app-card,
 body.no-glass-blur .plugin-card,
 body.no-glass-blur .brain-card,

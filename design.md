@@ -268,8 +268,14 @@ Katalog kartu DILARANG disusun dalam bentuk 1 kolom tunggal (stack block), melai
    - Seluruh hero card (termasuk `.brain-hero-card` dan `.bento-hero-provider-card`) dan wrapper search bar (`.catalog-search-wrapper`) wajib menggunakan `margin: 0;` sehingga jarak vertikal atas (dari kartu header) dan jarak bawah (ke kartu grid) adalah **persis 20px sama rata tanpa deviasi**.
 7. **Clean Text Action Buttons (No Icon Standard)**:
    - Tombol aksi pada kartu Connected Apps (`.btn-glass-action`) menggunakan teks ringkas **`Settings`** murni tanpa icon chevron/panah (`>`), dengan padding simetris `8px 18px` dan border-radius `9999px`.
-8. **Connected Apps Sub-Views Normalization (`#connected-app-telegram-detail` & `#connected-app-google-workspace-detail`)**:
-   - Seluruh sub-view konfigurasi wajib mengalir menggunakan flex `gap: 20px` tanpa inline `margin-top` / `margin-bottom` manual.
+8. **Connected Apps Sub-Views Normalization & Seamless 48px Subnav (`#connected-app-telegram-detail` & `#connected-app-google-workspace-detail`)**:
+   - Seluruh sub-view konfigurasi mengalir menggunakan flex `gap: 20px` tanpa inline `margin-top` / `margin-bottom` manual.
+   - Posisi kartu hero (`.bento-hero-provider-card`) tetap berada di paling atas (posisi 1) seperti halaman utama Hub Catalog.
+   - Posisi ke-2 menggunakan Bar Navigasi Kaca Terpadu (`.connected-app-detail-subnav`) dengan **tinggi persis 48px, border-radius 9999px, padding simetris, dan gap 20px** yang 100% identik dengan Search Bar di halaman Home.
+   - Di dalam `.connected-app-detail-subnav`:
+     - Sisi Kiri: Tombol Back (`.btn-subnav-back`) dengan ikon chevron halus dan border-radius 9999px.
+     - Sisi Kanan: Breadcrumb navigasi (`.subnav-breadcrumb`) yang informatif dan elegan.
+   - Transisi antara Home Catalog (Search Bar) dan Detail View (Subnav Bar) menjadi **100% seamless tanpa pergeseran layout (zero layout shift)**.
    - Kartu kiri dan kanan dalam `.bento-grid-2col` diatur dengan `height: 100%; align-items: stretch;` dan container log auto-grow agar kedua kolom selalu setinggi dan sejajar rapi.
    - Tombol aksi Telegram dikelompokkan dalam `.telegram-action-buttons-wrap` (`height: 38px`, pills `9999px`, transisi halus).
    - Seluruh switch preferensi menggunakan kapsul modern iOS/Bento `.custom-pill-switch`.
