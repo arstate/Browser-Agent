@@ -4695,6 +4695,71 @@ body.stickman-active .chat-messages {
   margin-right: 1px !important;
 }
 
+/* Slash Command Chips in Active Input Bar */
+.mention-chip.slash-chip {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #F0F9FF;
+}
+
+.mention-chip.slash-chip .mention-chip-at {
+  color: #38BDF8;
+}
+
+.mention-chip-app-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+
+.mention-chip-app-svg {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+
+.mention-chip-app-svg svg {
+  width: 13px;
+  height: 13px;
+  color: #38BDF8;
+}
+
+/* Slash Command Badge inside Chat Message Bubbles */
+.chat-mention-badge.chat-slash-badge {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.chat-mention-badge.chat-slash-badge .mention-slash {
+  color: #38BDF8;
+  font-weight: 800;
+  margin-right: 2px;
+}
+
+.chat-mention-badge .mention-badge-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  margin-right: 4px;
+  vertical-align: -2px;
+}
+
+.message.user .chat-mention-badge.chat-slash-badge,
+.message.user .message-content .chat-mention-badge.chat-slash-badge {
+  background: #0E0E11 !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+}
+
+.message.user .chat-mention-badge.chat-slash-badge .mention-slash,
+.message.user .message-content .chat-mention-badge.chat-slash-badge .mention-slash {
+  color: #38BDF8 !important;
+}
+
 /* Attachment Previews in Input Bar */
 .attachments-preview-bar {
   display: flex;

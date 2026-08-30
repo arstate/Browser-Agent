@@ -338,7 +338,28 @@ function formatUserMentions(text) {
   if (!text) return "";
   let escaped = escapeHtml(String(text));
 
-  // Sort candidate agents by name length descending to avoid partial greedy matches
+  // 1. Format Slash Commands & Connected Apps (e.g. /slides, [/slides], /gmail, etc.)
+  if (typeof SLASH_COMMANDS_CATALOG !== 'undefined' && Array.isArray(SLASH_COMMANDS_CATALOG)) {
+    for (const cmd of SLASH_COMMANDS_CATALOG) {
+      const cmdTag = cmd.command; // e.g. /slides
+      const cmdId = cmd.id; // e.g. slides
+      let iconHtml = '';
+      if (cmd.iconSrc) {
+        iconHtml = `<img src="${cmd.iconSrc}" class="mention-badge-icon" alt="${escapeHtml(cmd.title)}">`;
+      }
+      const badgeHtml = `<span class="chat-mention-badge chat-slash-badge"><span class="mention-slash">/</span>${iconHtml}${escapeHtml(cmd.title)}</span>`;
+
+      // Match [slides], [slides/], [/slides], [/${cmdId}]
+      const bracketRegex = new RegExp(`\\[\\/?${cmdId}\\]|\\[${cmdTag.replace('/', '\\/')}\\]`, 'gi');
+      escaped = escaped.replace(bracketRegex, badgeHtml);
+
+      // Match standalone command at start or with leading space (e.g. "/slides ")
+      const standaloneRegex = new RegExp(`(^|\\s)${cmdTag.replace('/', '\\/')}(?=\\s|$)`, 'gi');
+      escaped = escaped.replace(standaloneRegex, `$1${badgeHtml}`);
+    }
+  }
+
+  // 2. Sort candidate agents by name length descending to avoid partial greedy matches
   const sorted = [...customAgents]
     .filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss)
     .sort((a, b) => (String(b.name || '').length) - (String(a.name || '').length));
@@ -11038,7 +11059,7 @@ function bindQueueCardEvents() {
 // Send message (Prompt + Attachments with Unlimited Queue Support)
 function handleSendMessage() {
   const text = chatInput.value.trim();
-  const hasInput = (text || pendingAttachments.length > 0 || selectedMentionAgents.length > 0);
+  const hasInput = (text || pendingAttachments.length > 0 || selectedMentionAgents.length > 0 || selectedSlashCommands.length > 0);
 
   // If AI is currently generating/executing
   if (isExecuting) {
@@ -11051,8 +11072,15 @@ function handleSendMessage() {
     // User submitted a prompt during generation -> Add to Prompt Queue!
     const currentAttachments = [...pendingAttachments];
     const currentMentions = [...selectedMentionAgents];
+    const currentSlashCmds = [...selectedSlashCommands];
 
     let displayMessage = text;
+    if (currentSlashCmds.length > 0) {
+      const slashPrefix = currentSlashCmds.map(c => `[/${c.id}]`).join(' ') + ' ';
+      if (!displayMessage.startsWith('/')) {
+        displayMessage = (slashPrefix + displayMessage).trim();
+      }
+    }
     if (currentMentions.length > 0) {
       const mentionPrefix = currentMentions.map(m => `@${getAgentShortName(m)}`).join(' ') + ' ';
       if (!displayMessage.startsWith('@')) {
@@ -11065,6 +11093,7 @@ function handleSendMessage() {
     chatInput.value = '';
     clearAttachments();
     clearMentionAgents();
+    clearSlashCommands();
     adjustChatInputHeight();
     return;
   }
@@ -11096,9 +11125,18 @@ function handleSendMessage() {
 
   const currentAttachments = [...pendingAttachments];
   const currentMentions = [...selectedMentionAgents];
+  const currentSlashCmds = [...selectedSlashCommands];
+
+  // Prepend slash command badge prefixes if slash chips exist (e.g. [/slides])
+  let displayMessage = text;
+  if (currentSlashCmds.length > 0) {
+    const slashPrefix = currentSlashCmds.map(c => `[/${c.id}]`).join(' ') + ' ';
+    if (!displayMessage.startsWith('/')) {
+      displayMessage = (slashPrefix + displayMessage).trim();
+    }
+  }
 
   // Prepend mention badges prefix to user message display if mention chips exist
-  let displayMessage = text;
   if (currentMentions.length > 0) {
     const mentionPrefix = currentMentions.map(m => `@${getAgentShortName(m)}`).join(' ') + ' ';
     if (!displayMessage.startsWith('@')) {
@@ -11109,6 +11147,7 @@ function handleSendMessage() {
   chatInput.value = '';
   clearAttachments();
   clearMentionAgents();
+  clearSlashCommands();
   adjustChatInputHeight();
 
   if (currentChatMode === 'chat') {
@@ -11133,17 +11172,41 @@ let activeMentionIndex = 0;
 let currentMentionMatches = [];
 let currentMentionQuery = "";
 let selectedMentionAgents = [];
+let selectedSlashCommands = [];
 
 function renderActiveMentionChips() {
   if (!activeMentionsBar) return;
 
-  if (selectedMentionAgents.length === 0) {
+  if (selectedMentionAgents.length === 0 && selectedSlashCommands.length === 0) {
     activeMentionsBar.style.display = 'none';
     activeMentionsBar.innerHTML = '';
     return;
   }
 
   let html = '';
+
+  // 1. Render Slash Command Chips (e.g. [/] Google Slides ✕)
+  selectedSlashCommands.forEach(cmd => {
+    let iconHtml = '';
+    if (cmd.iconSrc) {
+      iconHtml = `<img src="${cmd.iconSrc}" class="mention-chip-app-icon" alt="${escapeHtml(cmd.title)}">`;
+    } else if (cmd.iconSvg) {
+      iconHtml = `<span class="mention-chip-app-svg">${cmd.iconSvg}</span>`;
+    }
+
+    html += `
+      <div class="mention-chip slash-chip" data-cmd-id="${escapeHtml(cmd.id || '')}">
+        <span class="mention-chip-at">/</span>
+        ${iconHtml}
+        <span class="mention-chip-name">${escapeHtml(cmd.title || cmd.command)}</span>
+        <button type="button" class="mention-chip-remove" data-remove-cmd-id="${escapeHtml(cmd.id || '')}" title="Hapus perintah">
+          <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    `;
+  });
+
+  // 2. Render Agent Mention Chips (e.g. [@] Copywriter ✕)
   selectedMentionAgents.forEach(ag => {
     const shortName = getAgentShortName(ag);
     html += `
@@ -11160,15 +11223,43 @@ function renderActiveMentionChips() {
   activeMentionsBar.innerHTML = html;
   activeMentionsBar.style.display = 'flex';
 
-  // Bind remove handlers
-  activeMentionsBar.querySelectorAll('.mention-chip-remove').forEach(btn => {
+  // Bind remove handlers for agent mentions
+  activeMentionsBar.querySelectorAll('.mention-chip-remove[data-remove-id]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const removeId = btn.dataset.removeId;
       removeMentionAgent(removeId);
     });
   });
+
+  // Bind remove handlers for slash commands
+  activeMentionsBar.querySelectorAll('.mention-chip-remove[data-remove-cmd-id]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const removeCmdId = btn.dataset.removeCmdId;
+      removeSlashCommand(removeCmdId);
+    });
+  });
+
   syncQueueButtonMorphState();
+}
+
+function addSlashCommand(cmd) {
+  if (!cmd) return;
+  if (!selectedSlashCommands.some(c => c.id === cmd.id)) {
+    selectedSlashCommands.push(cmd);
+    renderActiveMentionChips();
+  }
+}
+
+function removeSlashCommand(cmdId) {
+  selectedSlashCommands = selectedSlashCommands.filter(c => c.id !== cmdId);
+  renderActiveMentionChips();
+}
+
+function clearSlashCommands() {
+  selectedSlashCommands = [];
+  renderActiveMentionChips();
 }
 
 function addMentionAgent(ag) {
@@ -11691,21 +11782,19 @@ function selectSlashCommand(cmdItem) {
   const text = chatInput.value;
   const cursorPos = chatInput.selectionStart || text.length;
 
-  // Find the / position before cursor
+  // Find the / position before cursor and clean the input text (Just like @agent!)
   const lastSlash = text.lastIndexOf('/', cursorPos - 1);
-  const replacementText = cmdItem.template || (cmdItem.command + ' ');
-
   if (lastSlash !== -1) {
     const beforeSlash = text.slice(0, lastSlash);
     const afterCursor = text.slice(cursorPos);
-    chatInput.value = beforeSlash + replacementText + afterCursor;
-    const newCursorPos = beforeSlash.length + replacementText.length;
-    chatInput.setSelectionRange(newCursorPos, newCursorPos);
+    chatInput.value = (beforeSlash.trimEnd() + ' ' + afterCursor.trimStart()).trim();
+    chatInput.setSelectionRange(beforeSlash.length, beforeSlash.length);
   } else {
-    chatInput.value = replacementText;
-    chatInput.setSelectionRange(replacementText.length, replacementText.length);
+    chatInput.value = '';
   }
 
+  // Add to active slash command chips in input bar
+  addSlashCommand(cmdItem);
   hideSlashCommandDropup();
   adjustChatInputHeight();
   chatInput.focus();

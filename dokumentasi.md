@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.141`
+- **Versi Terkini:** `v2.150.142`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -145,8 +145,9 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 23. **Fixed Pinned Sidebar & Independent Viewport Scrolling Architecture:** Mengunci `html` dan `body` dengan `overflow: hidden; height: 100vh;` serta menetapkan `.options-sidebar` sebagai panel permanen statis di sisi kiri (`height: 100vh; flex-shrink: 0;`). Scrolling halaman dialihkan sepenuhnya secara independen ke kontainer utama (`.options-main-content { overflow-y: scroll; height: 100vh; }`) dengan `.options-view { max-width: 1240px; margin: 0 auto; }`, sehingga sidebar tidak akan pernah ikut ter-scroll keluar layar saat menavigasi daftar sub-agent/skills yang panjang.
 24. **Resilient Brain & Skills Data Parsing Standard:** Memperbaiki desinkronisasi parsing Markdown file pada Rust Native Host dan opsi UI dengan fallback nama file stem untuk ID/Name, membersihkan baris ghost dari SQLite `chat_history.db`, dan standarisasi frontmatter `id:` pada `CORE SKILLS/`.
 25. **Manifest V3 Service Worker Syntax Integrity Fix:** Memperbaiki kelebihan kurung kurawal penutup (`}`) di `extension/background.js` (line 1473) yang sebelumnya menutup fungsi `handleTelegramIncomingUpdate` secara prematur dan memicu error registrasi service worker (Status code: 15 / `SyntaxError: await is only valid in async functions`). Seluruh file JavaScript ekstensi (26 file) divalidasi ulang dengan Node.js syntax compiler dengan hasil 100% PASS.
-26. **Slash Command Autocomplete & Connected Apps Dropup Engine (`/`):** Menambahkan menu dropup interaktif saat pengguna mengetik karakter slash (`/`) pada input prompt di Sidepanel dan New Tab:
-    - **12 Layanan Google Workspace:** Terintegrasi langsung dengan ikon resmi Vector SVG (Gmail `/gmail`, Drive `/drive`, Docs `/docs`, Sheets `/sheets`, Slides `/slides`, Forms `/forms`, Calendar `/calendar`, Tasks `/tasks`, Contacts `/contacts`, Keep `/keep`, Meet `/meet`, Search `/search`) lengkap dengan template format prompt instan.
-    - **Connected Apps Telegram (`/telegram`) & Power Tools:** Termasuk shortcut screenshot layar (`/screenshot`), generator PDF dokumen (`/pdf`), generator QR Code (`/qr`), pengatur Thinking Mode (`/thinking`), pengalih model AI (`/model`), dan reset percakapan (`/clear`).
-    - **Keyboard Navigation & Seamless Insertion:** Navigasi panah atas/bawah (`↑` `↓`), apply instan dengan `Enter` atau `Tab`, serta penutupan cepat dengan `Esc` atau klik luar.
+26. **Slash Command Autocomplete & Connected Apps Dropup Engine (`/`):** Menambahkan menu dropup interaktif saat pengguna mengetik karakter slash (`/`) pada input prompt di Sidepanel dan New Tab dengan 12 layanan Google Workspace, Telegram, dan System Tools.
+27. **Active Slash Chip Bar & High-Contrast Bubble Badge Standard:** Menyelaraskan UX pemilihan command `/` agar identik seperti `@agent`:
+    - **Clean Input Textarea:** Memilih perintah dari menu `/` (misal `/slides`, `/gmail`, `/drive`) secara otomatis membersihkan query `/` dari textarea sehingga pengguna cukup mengetik instruksi prompt murni tanpa template teks kurung yang kaku (`[...] | [...]`).
+    - **Interactive Active Slash Chips (`active-mentions-bar`):** Menampilkan chip kapsul elegan dengan simbol `/`, ikon resmi Google Workspace beresolusi tinggi, nama layanan, dan tombol hapus (`✕`) di atas kolom input prompt.
+    - **Unified Message Bubble Badges:** Merender badge kontras tinggi dengan background dark, border cyan/lime, dan ikon aplikasi di dalam balon chat pengguna.
 
