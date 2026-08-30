@@ -478,7 +478,30 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     });
   }
 
-  // 2. Copywriting, Gen-Z, Caption, Hooks, Script, Storyboard, Sales
+  // 2. Meta Ads, Lead Analytics, CPR Optimization & Campaign Auditor
+  const adsKeywords = [
+    "lead", "leads", "gacor", "boncos", "cpr", "cpl", "ctr", "roas", "meta ads", "ads manager", 
+    "iklan", "campaign", "kampanye", "winning", "audiens", "prospek", "fb ads", "ig ads", 
+    "analisis lead", "evaluasi iklan", "high-intent", "closing rate"
+  ];
+  const isAdsIntent = adsKeywords.some(kw => text.includes(kw));
+  if (isAdsIntent) {
+    const adsAgents = customAgents.filter(a => {
+      const id = String(a.id || '').toLowerCase();
+      const name = String(a.name || '').toLowerCase();
+      const desc = String(a.description || '').toLowerCase();
+      return (id.includes('ads') || id.includes('auditor') || id.includes('analyst') || id.includes('closer') || id.includes('tiar') ||
+              name.includes('ads') || name.includes('auditor') || name.includes('analyst') || name.includes('closer') || name.includes('tiar') ||
+              desc.includes('ads') || desc.includes('lead') || desc.includes('iklan') || desc.includes('closing'));
+    });
+    adsAgents.forEach(aa => {
+      if (!matchedWorkers.some(m => String(m.id || '') === String(aa.id || ''))) {
+        matchedWorkers.push(aa);
+      }
+    });
+  }
+
+  // 3. Copywriting, Gen-Z, Caption, Hooks, Script, Storyboard, Sales
   const copyKeywords = [
     "copy", "copywriter", "copywriting", "caption", "naskah", "hook", "skrip", "konten", 
     "reels", "tiktok", "skena", "genz", "closer", "sales", "headline", "aida", "cta"
@@ -498,7 +521,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     });
   }
 
-  // 3. Real Estate, Tiar Property, KPR, Rumah, Surabaya, Sidoarjo
+  // 4. Real Estate, Tiar Property, KPR, Rumah, Surabaya, Sidoarjo
   const propertyKeywords = [
     "tiar", "property", "properti", "rumah", "kpr", "surabaya", "sidoarjo", "perumahan", "dp 0", "utj", "cicilan"
   ];
@@ -5379,30 +5402,46 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     return result;
   }
 
-  if (hasBoss && workerAgents.length > 0) {
-    updateFooterStatus(`👑 Master Agent: Memindai kebutuhan & memilih agen spesialis...`);
-    updateAssistantActiveAgent(assistantBubble, "Master Agent", "Memindai & memilih agen spesialis...", true, false);
-
-    // Smooth AI discovery cadence (550ms) so user experiences the scanning & reasoning state
-    await new Promise(r => setTimeout(r, 550));
-
-    // Reveal and morph the assigned multi-agents list with smooth stagger animation!
-    revealAssignedAgentsTree(assistantBubble, workerAgents);
-
-    updateFooterStatus(`👑 Master Agent: Menemukan ${workerAgents.length} agen spesialis!`);
-    updateAssistantActiveAgent(assistantBubble, "Master Agent", `Menemukan ${workerAgents.length} Agen Spesialis`, true, false);
-
-    // Smooth brief delay before step 1 so user perceives the seamless morphing
-    await new Promise(r => setTimeout(r, 350));
-  }
-
   // Master Agent Manage Task Schedule Generator
   let activeGoalMilestones = (typeof GoalTracker !== 'undefined') 
-    ? GoalTracker.extractGoalMilestones(userMessage, customAgents) 
+    ? GoalTracker.extractGoalMilestones(userMessage, customAgents, workerAgents) 
     : null;
 
   if (activeGoalMilestones && activeGoalMilestones.length > 0) {
     renderTaskScheduleSection(assistantBubble, activeGoalMilestones, 'full');
+  }
+
+  if (hasBoss && workerAgents.length > 0) {
+    updateFooterStatus(`👑 Master Agent: Deep thinking menganalisis sasaran & memilih agen spesialis...`);
+    updateAssistantActiveAgent(assistantBubble, "Master Agent", "Deep thinking & memilih agen spesialis...", true, false);
+
+    // Keep Task 1 as inProgress during deep thinking
+    if (activeGoalMilestones && activeGoalMilestones[0]) {
+      activeGoalMilestones[0].inProgress = true;
+      updateTaskScheduleProgress(assistantBubble, activeGoalMilestones, 0, false);
+    }
+
+    // Smooth AI discovery cadence (650ms) so user experiences the scanning & reasoning state
+    await new Promise(r => setTimeout(r, 650));
+
+    // Reveal and morph the assigned multi-agents list with smooth stagger animation!
+    revealAssignedAgentsTree(assistantBubble, workerAgents);
+
+    // Mark Task 1 (Deep Thinking & Pemilihan Agen) as COMPLETED!
+    if (activeGoalMilestones && activeGoalMilestones[0]) {
+      activeGoalMilestones[0].completed = true;
+      activeGoalMilestones[0].inProgress = false;
+      if (activeGoalMilestones[1]) {
+        activeGoalMilestones[1].inProgress = true;
+      }
+      updateTaskScheduleProgress(assistantBubble, activeGoalMilestones, 1, false);
+    }
+
+    updateFooterStatus(`👑 Master Agent: Menugaskan ${workerAgents.length} agen spesialis!`);
+    updateAssistantActiveAgent(assistantBubble, "Master Agent", `Menugaskan ${workerAgents.length} Agen Spesialis`, true, false);
+
+    // Smooth brief delay before step 1 so user perceives the seamless morphing
+    await new Promise(r => setTimeout(r, 350));
   }
 
   const failureTracker = (typeof SelfCorrectionEngine !== 'undefined') 
