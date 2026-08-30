@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.147`
+- **Versi Terkini:** `v2.150.148`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -152,4 +152,5 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 30. **Supreme Master Agent Primary Ingestion Protocol:** Menjamin bahwa dalam Auto Mode (`activeAgentId === AUTO_AGENT_ID` atau seluruh perintah slash GSuite/Telegram), **👑 Master Agent** selalu berada di posisi pertama (Index 0) sebagai supreme commander penerima mandat prompt pengguna, menampilkan badge Mahkota Master Agent (`.agent-boss-chip`) dan status `Memproses (Step 1)...` secara konsisten tanpa pernah terdegradasi menjadi "General Agent".
 31. **Hermes Dynamic Multi-Agent Swarm Intelligence & On-The-Fly Recruitment:** Meng-upgrade otak Master Agent dengan kemampuan penalaran untuk menganalisis kebutuhan prompt, menyaring katalog multi-agent berdasarkan domain/keahlian (Visual Designer, Thesis Assistant, Copywriter, Coder, Researcher), merekrut agen baru di tengah eksekusi via `summon_specialist_agent`, memperbarui tree cabang UI secara real-time, serta menjalankan siklus anti-AI-slop & zero premature stop hingga tugas selesai tuntas.
 32. **Agent Finding Discovery State & Staggered Morph Entrance Animation:** Mengimplementasikan fase pemindaian agen awal (`Memindai & memilih agen spesialis...`), menyembunyikan pohon cabang multi-agent selama scanning (`is-finding-agents`), lalu me-morphing dan memunculkan kartu sub-agent secara halus menggunakan efek stagger cascade (`agentCardStaggerIn` 0.38s cubic-bezier + `stemGrowIn`) saat Master Agent mengumumkan hasil temuan tim.
+33. **Multi-Agent Tree Robust Rendering & Sub-Agent Status Badge Isolation:** Memperbaiki bug visibilitas kartu sub-agent dengan memastikan `opacity: 1` sebagai base style pada `.agent-tree-item` dan mengisolasi badge `Bekerja...` agar hanya menyala pada agen bawahan yang sedang dieksekusi aktif, bukan ketika Master Agent sedang berpikir atau mengarahkan.
 

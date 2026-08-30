@@ -7593,8 +7593,7 @@ function updateAssistantActiveAgent(assistantBubble, agentName, statusText = '',
       }
     } else if (
       target === 'all' || 
-      target === 'master agent' || 
-      (target && (itemAgentName.includes(target) || target.includes(itemAgentName) || (itemAgentId && target.includes(itemAgentId))))
+      (target && target !== 'master agent' && (itemAgentName.includes(target) || target.includes(itemAgentName) || (itemAgentId && target.includes(itemAgentId))))
     ) {
       item.classList.add('active-working');
       if (badgeEl) {
@@ -7631,7 +7630,7 @@ function revealAssignedAgentsTree(assistantBubble, workers = []) {
 
   const items = treeContainer.querySelectorAll('.agent-tree-item');
   items.forEach((item, idx) => {
-    item.style.animationDelay = `${(idx * 0.06).toFixed(2)}s`;
+    item.style.animationDelay = `${(idx * 0.05).toFixed(2)}s`;
   });
 }
 
