@@ -107,21 +107,24 @@
       inProgress: true
     });
 
-    // 0. If matchedWorkers has specific assigned agents, generate tasks for ALL of them!
+    // 0. If matchedWorkers has specific assigned agents, generate tasks for top 1-2 specialists!
     if (Array.isArray(matchedWorkers) && matchedWorkers.length > 0) {
-      matchedWorkers.forEach(worker => {
+      const topWorkers = matchedWorkers.slice(0, 2);
+      topWorkers.forEach(worker => {
         const wName = worker.name || "Agen Spesialis";
         const wId = String(worker.id || '').toLowerCase();
         const wNameLower = wName.toLowerCase();
         let taskTitle = "";
         
-        if (wId.includes("ads") || wId.includes("auditor") || wId.includes("analyst") || wNameLower.includes("ads") || wNameLower.includes("auditor")) {
+        if (wId.includes("auditor") || wNameLower.includes("auditor") || wNameLower.includes("lead quality")) {
           taskTitle = "Audit Matriks Kinerja Iklan & Filter Lead High-Intent";
+        } else if (wId.includes("strategist") || wNameLower.includes("strategist") || wId.includes("cpr")) {
+          taskTitle = "Analisis Strategi Optimasi CPR & Evaluasi Kampanye";
         } else if (wId.includes("closer") || wId.includes("sales") || wNameLower.includes("sales") || wNameLower.includes("closer")) {
           taskTitle = "Evaluasi Funnel Chat Closing & Kualifikasi Prospek KPR";
-        } else if (wId.includes("copy") || wNameLower.includes("copywriter")) {
+        } else if (wId.includes("copy") || wNameLower.includes("copywriter") || wNameLower.includes("viral")) {
           taskTitle = "Perumusan Copywriting Viral, Hooks & Naskah Konten";
-        } else if (wId.includes("visual") || wId.includes("desain") || wNameLower.includes("visual") || wNameLower.includes("desainer")) {
+        } else if (wId.includes("visual") || wId.includes("desain") || wNameLower.includes("visual") || wNameLower.includes("designer")) {
           taskTitle = "Pembuatan Desain Visual Dark Luxury & Layout Grafis";
         } else if (wId.includes("coding") || wId.includes("engineer") || wNameLower.includes("coding") || wNameLower.includes("engineer")) {
           taskTitle = "Eksekusi Script Terminal, Manajemen File & Koding";
@@ -129,10 +132,12 @@
           taskTitle = "Sinkronisasi REST API & Pembuatan Berkas Google Workspace";
         } else if (wId.includes("thesis") || wId.includes("unesa") || wNameLower.includes("thesis") || wNameLower.includes("akademik")) {
           taskTitle = "Kajian Metodologi, Riset Literatur & Penulisan Akademik";
-        } else if (wId.includes("research") || wId.includes("riset") || wNameLower.includes("research")) {
+        } else if (wId.includes("research") || wId.includes("riset") || wNameLower.includes("researcher")) {
           taskTitle = "Investigasi Riset Mendalam & Validasi Data Web";
+        } else if (wId.includes("default") || wNameLower.includes("browser")) {
+          taskTitle = "Navigasi Browser, Snapshot & Ekstraksi Data Halaman";
         } else {
-          taskTitle = `Eksekusi Operasi Spesialis: ${text.slice(0, 40)}`;
+          taskTitle = `Eksekusi Operasi Spesialis: ${worker.description ? worker.description.slice(0, 45) : text.slice(0, 40)}`;
         }
 
         milestones.push({

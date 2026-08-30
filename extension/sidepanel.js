@@ -426,207 +426,128 @@ function sortAgentsByPipeline(agents) {
 
 function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
   const cleanStr = (typeof userMessage === 'string') ? userMessage : (userMessage?.content || userMessage?.textContent || "");
-  const text = cleanStr.toLowerCase();
+  const text = cleanStr.toLowerCase().trim();
   const matchedWorkers = [];
 
-  // 0. Include ONLY the explicit user-selected @mention chips (Exact match by ID)
+  const nonBossCandidates = customAgents.filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss);
+
+  // Helper to get Master Agent boss instance
+  function getMasterBoss() {
+    let b = customAgents.find(a => a.id === "master_agent" || a.id === "boss_agent" || a.is_boss);
+    if (!b) {
+      b = {
+        id: "master_agent",
+        name: "Master Agent (Supreme Orchestrator)",
+        description: "Koordinator utama dan direktur ekosistem AI",
+        skills: ["skill_screenshot_walkthrough", "skill_dashboard_preflight", "skill_browser_wait", "skill_extract_data", "skill_fill_form"],
+        is_boss: true
+      };
+    }
+    return b;
+  }
+
+  // 0. Include ONLY explicit user-selected @mention chips (Exact match by ID)
   if (Array.isArray(explicitMentionAgents) && explicitMentionAgents.length > 0) {
     explicitMentionAgents.forEach(ag => {
       if (ag && String(ag.id || '') !== "master_agent" && String(ag.id || '') !== "boss_agent" && !matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
         matchedWorkers.push(ag);
       }
     });
-  } else {
-    // 0b. If no chips were selected, check if user manually typed an @mention in userMessage (Match exact full name/ID only)
-    const candidates = [...customAgents]
-      .filter(a => a && String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent" && !a.is_boss)
-      .sort((a, b) => (String(b.name || '').length) - (String(a.name || '').length));
-
-    for (const ag of candidates) {
-      const agNameLower = String(ag.name || "").toLowerCase();
-      const agIdLower = String(ag.id || "").toLowerCase();
-      const dispNameLower = String(getAgentDisplayName(ag) || "").toLowerCase();
-
-      if ((agIdLower && text.includes(`@${agIdLower}`)) || (agNameLower && text.includes(`@${agNameLower}`)) || (dispNameLower && text.includes(`@${dispNameLower}`))) {
-        if (!matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
-          matchedWorkers.push(ag);
-          break; // Only match the exact single target agent mentioned
-        }
-      }
+    if (matchedWorkers.length > 0) {
+      return [getMasterBoss(), ...matchedWorkers.slice(0, 2)];
     }
   }
 
-  // 1. Design, Slide, Visuals, 16:9, Dark/Light Mode, Presentation, SVG, Art Director
-  const designKeywords = [
-    "desain", "design", "slide", "ppt", "slides", "visual", "layout", "tema", "warna", 
-    "font", "tipografi", "vektor", "svg", "image", "png", "presentasi", "deck", 
-    "grafis", "art director", "light mode", "dark mode", "estetika", "poster", "feed"
-  ];
-  const isDesignIntent = designKeywords.some(kw => text.includes(kw));
-  if (isDesignIntent) {
-    const designAgents = customAgents.filter(a => {
-      const id = String(a.id || '').toLowerCase();
-      const name = String(a.name || '').toLowerCase();
-      const desc = String(a.description || '').toLowerCase();
-      return (id.includes('visual') || id.includes('desain') || id.includes('design') || id.includes('art') || 
-              name.includes('visual') || name.includes('desain') || name.includes('design') || name.includes('art') || name.includes('grafis') ||
-              desc.includes('visual') || desc.includes('desain') || desc.includes('layout'));
-    });
-    designAgents.forEach(da => {
-      if (!matchedWorkers.some(m => String(m.id || '') === String(da.id || ''))) {
-        matchedWorkers.push(da);
-      }
-    });
-  }
-
-  // 2. Meta Ads, Lead Analytics, CPR Optimization & Campaign Auditor
-  const adsKeywords = [
-    "lead", "leads", "gacor", "boncos", "cpr", "cpl", "ctr", "roas", "meta ads", "ads manager", 
-    "iklan", "campaign", "kampanye", "winning", "audiens", "prospek", "fb ads", "ig ads", 
-    "analisis lead", "evaluasi iklan", "high-intent", "closing rate"
-  ];
-  const isAdsIntent = adsKeywords.some(kw => text.includes(kw));
-  if (isAdsIntent) {
-    const adsAgents = customAgents.filter(a => {
-      const id = String(a.id || '').toLowerCase();
-      const name = String(a.name || '').toLowerCase();
-      const desc = String(a.description || '').toLowerCase();
-      return (id.includes('ads') || id.includes('auditor') || id.includes('analyst') || id.includes('closer') || id.includes('tiar') ||
-              name.includes('ads') || name.includes('auditor') || name.includes('analyst') || name.includes('closer') || name.includes('tiar') ||
-              desc.includes('ads') || desc.includes('lead') || desc.includes('iklan') || desc.includes('closing'));
-    });
-    adsAgents.forEach(aa => {
-      if (!matchedWorkers.some(m => String(m.id || '') === String(aa.id || ''))) {
-        matchedWorkers.push(aa);
-      }
-    });
-  }
-
-  // 3. Copywriting, Gen-Z, Caption, Hooks, Script, Storyboard, Sales
-  const copyKeywords = [
-    "copy", "copywriter", "copywriting", "caption", "naskah", "hook", "skrip", "konten", 
-    "reels", "tiktok", "skena", "genz", "closer", "sales", "headline", "aida", "cta"
-  ];
-  const isCopyIntent = copyKeywords.some(kw => text.includes(kw));
-  if (isCopyIntent) {
-    const copyAgents = customAgents.filter(a => {
-      const id = String(a.id || '').toLowerCase();
-      const name = String(a.name || '').toLowerCase();
-      return (id.includes('copy') || id.includes('genz') || id.includes('sales') || id.includes('closer') ||
-              name.includes('copy') || name.includes('genz') || name.includes('sales') || name.includes('closer'));
-    });
-    copyAgents.forEach(ca => {
-      if (!matchedWorkers.some(m => String(m.id || '') === String(ca.id || ''))) {
-        matchedWorkers.push(ca);
-      }
-    });
-  }
-
-  // 4. Real Estate, Tiar Property, KPR, Rumah, Surabaya, Sidoarjo
-  const propertyKeywords = [
-    "tiar", "property", "properti", "rumah", "kpr", "surabaya", "sidoarjo", "perumahan", "dp 0", "utj", "cicilan"
-  ];
-  const isPropertyIntent = propertyKeywords.some(kw => text.includes(kw));
-  if (isPropertyIntent) {
-    const propertyAgents = customAgents.filter(a => {
-      const id = String(a.id || '').toLowerCase();
-      const name = String(a.name || '').toLowerCase();
-      return (id.includes('tiar') || id.includes('property') || name.includes('tiar') || name.includes('property'));
-    });
-    propertyAgents.forEach(pa => {
-      if (!matchedWorkers.some(m => String(m.id || '') === String(pa.id || ''))) {
-        matchedWorkers.push(pa);
-      }
-    });
-  }
-
-  // 4. Academic / Thesis / Research (UNESA, D4, Thesis, Skripsi, Tugas Akhir, Metodologi)
-  const thesisKeywords = [
-    "unesa", "d4", "thesis", "skripsi", "tugas akhir", "ta", "metodologi", "academic", "kuliah", "sidang"
-  ];
-  const isThesisIntent = thesisKeywords.some(kw => text.includes(kw));
-  if (isThesisIntent) {
-    const thesisAgents = customAgents.filter(a => {
-      const id = String(a.id || '').toLowerCase();
-      const name = String(a.name || '').toLowerCase();
-      return (id.includes('unesa') || id.includes('thesis') || id.includes('tugas') || id.includes('arya') ||
-              name.includes('unesa') || name.includes('thesis') || name.includes('tugas') || name.includes('arya'));
-    });
-    thesisAgents.forEach(ta => {
-      if (!matchedWorkers.some(m => String(m.id || '') === String(ta.id || ''))) {
-        matchedWorkers.push(ta);
-      }
-    });
-  }
-
-  // 5. Research / Journal / Scraping / Data extraction
-  const researchKeywords = [
-    "riset", "research", "jurnal", "paper", "artikel", "cari data", "scraping", "scrape", 
-    "ekstrak", "extract", "bandingkan", "komparasi", "compare", "analisis", "analisa", 
-    "rangkum", "summarize", "summary", "harga", "produk", "pasar", "review", "studi", 
-    "literatur", "tabel data", "berita", "news", "trend", "tren", "searching web", "cari jurnal", "baca web"
-  ];
-  const isResearchIntent = researchKeywords.some(kw => text.includes(kw));
-  if (isResearchIntent) {
-    const researchAgent = customAgents.find(a => String(a.id || '') === "web_researcher_agent" || String(a.name || '').toLowerCase().includes("research") || String(a.name || '').toLowerCase().includes("riset"));
-    if (researchAgent && !matchedWorkers.some(m => String(m.id || '') === String(researchAgent.id || ''))) {
-      matchedWorkers.push(researchAgent);
-    }
-  }
-
-  // 6. Coding / System Engineering / Terminal / Scripts
-  const codeKeywords = [
-    "code", "koding", "coding", "script", "terminal", "command", "bash", "shell", 
-    "python", "javascript", "typescript", "html", "css", "git", "repo", "commit", 
-    "bug", "error", "traceback", "exception", "fix", "debug", "refactor", 
-    "file", "folder", "directory", "dir", "cat", "ls", "grep", "npm", "pip", "docker",
-    "lokal pc", "download masukin ke folder", "simpan ke lokal", "save to folder", "download ke pc", "lokal", "download"
-  ];
-  const isCodingIntent = codeKeywords.some(kw => text.includes(kw));
-  if (isCodingIntent) {
-    const codingAgent = customAgents.find(a => String(a.id || '') === "coding_engineer_agent" || String(a.name || '').toLowerCase().includes("coding") || String(a.name || '').toLowerCase().includes("engineer"));
-    if (codingAgent && !matchedWorkers.some(m => String(m.id || '') === String(codingAgent.id || ''))) {
-      matchedWorkers.push(codingAgent);
-    }
-  }
-
-  // 7. General browser navigation / Web control
-  const generalKeywords = [
-    "buka", "play", "putar", "youtube", "video", "musik", "lagu", "klik", "scroll", "tonton", "isi formulir", "login", "website", "tab", "link", "url"
-  ];
-  const isGeneralIntent = generalKeywords.some(kw => text.includes(kw));
-  if (isGeneralIntent && !isResearchIntent) {
-    const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent");
-    if (defaultAgent && !matchedWorkers.some(m => String(m.id || '') === String(defaultAgent.id || ''))) {
-      matchedWorkers.push(defaultAgent);
-    }
-  }
-
-  // 8. Deep Semantic & Skill Inspection across ALL available agents
-  for (const ag of customAgents) {
-    const agIdStr = String(ag.id || '');
-    if (agIdStr === "master_agent" || agIdStr === "boss_agent" || ag.is_boss) continue;
-    if (matchedWorkers.some(m => String(m.id || '') === agIdStr)) continue;
-
-    // Check agent skills
-    const agentSkillObjects = (ag.skills || []).map(sId => customSkills.find(s => s.id === sId)).filter(Boolean);
-    const skillTexts = agentSkillObjects.map(s => `${s.name} ${s.description || ''} ${(s.content || '').slice(0, 300)}`).join(' ').toLowerCase();
-
-    const agNameStr = String(ag.name || '').toLowerCase();
-    const agDescStr = String(ag.description || '').toLowerCase();
-    const agContentStr = String(ag.content || '').toLowerCase().slice(0, 400);
-    const fullAgentProfile = `${agNameStr} ${agDescStr} ${skillTexts} ${agContentStr}`;
-
-    // Semantic tokens in user prompt
-    const promptWords = text.split(/\s+/).filter(w => w.length >= 3);
-    const matchedTokens = promptWords.filter(w => fullAgentProfile.includes(w));
-
-    if (matchedTokens.length >= 2 || (matchedTokens.length >= 1 && (agNameStr.includes(promptWords[0]) || skillTexts.includes(promptWords[0])))) {
+  // 0b. If no chips, check if user manually typed an exact @mention in userMessage
+  for (const ag of nonBossCandidates) {
+    const agNameLower = String(ag.name || "").toLowerCase();
+    const agIdLower = String(ag.id || "").toLowerCase();
+    if ((agIdLower && text.includes(`@${agIdLower}`)) || (agNameLower && text.includes(`@${agNameLower}`))) {
       matchedWorkers.push(ag);
+      break;
+    }
+  }
+  if (matchedWorkers.length > 0) {
+    return [getMasterBoss(), ...matchedWorkers];
+  }
+
+  // 1. Precise Domain & Jobdesk Intent Scoring (Strict Top-K: Max 1 to 2 workers to save tokens)
+  const scoredWorkers = [];
+
+  for (const ag of nonBossCandidates) {
+    const idLower = String(ag.id || '').toLowerCase();
+    const nameLower = String(ag.name || '').toLowerCase();
+    let score = 0;
+
+    // A. Meta Ads & Lead Analytics Jobdesk
+    const isAdsQuery = (text.includes("ads") || text.includes("iklan") || text.includes("lead") || text.includes("cpr") || text.includes("cpl") || text.includes("ctr") || text.includes("roas") || text.includes("campaign") || text.includes("kampanye") || text.includes("gacor") || text.includes("boncos"));
+    if (isAdsQuery) {
+      if (idLower.includes("auditor") || nameLower.includes("auditor") || idLower.includes("lead_quality") || nameLower.includes("lead quality")) score += 15;
+      else if (idLower.includes("strategist") || nameLower.includes("strategist")) score += 10;
+      else if (idLower.includes("meta_ads") || nameLower.includes("meta ads")) score += 8;
+    }
+
+    // B. Copywriting & Script / Caption Jobdesk
+    const isCopyQuery = (text.includes("copy") || text.includes("caption") || text.includes("hook") || text.includes("naskah") || text.includes("skrip") || text.includes("genz") || text.includes("konten") || text.includes("reels") || text.includes("tiktok") || text.includes("headline") || text.includes("storyboard"));
+    if (isCopyQuery) {
+      if (idLower.includes("copy") || nameLower.includes("copywriter") || nameLower.includes("viral")) score += 15;
+    }
+
+    // C. Property Sales / KPR / Chat Closing Jobdesk
+    const isSalesKprQuery = (text.includes("kpr") || text.includes("closing") || text.includes("chat") || text.includes("survei") || text.includes("survey") || text.includes("dp 0") || text.includes("utj") || text.includes("cicilan") || text.includes("prospek") || text.includes("konsumen") || text.includes("wa ") || text.includes("whatsapp"));
+    if (isSalesKprQuery) {
+      if (idLower.includes("closer") || idLower.includes("sales") || nameLower.includes("sales") || nameLower.includes("closer") || nameLower.includes("ningsih")) score += 15;
+      else if (idLower.includes("underwriter") || nameLower.includes("underwriter") || nameLower.includes("bank")) score += 10;
+      else if (idLower.includes("on-site") || nameLower.includes("on-site")) score += 8;
+      else if (idLower.includes("admin") || nameLower.includes("admin")) score += 6;
+    }
+
+    // D. Visual Design & Image / Slide Jobdesk
+    const isVisualQuery = (text.includes("desain") || text.includes("design") || text.includes("gambar") || text.includes("visual") || text.includes("slide") || text.includes("poster") || text.includes("feed") || text.includes("layout") || text.includes("image") || text.includes("svg") || text.includes("dark luxury"));
+    if (isVisualQuery) {
+      if (idLower.includes("visual") || idLower.includes("desain") || nameLower.includes("visual") || nameLower.includes("designer")) score += 15;
+    }
+
+    // E. Academic / Thesis / Research
+    const isThesisQuery = (text.includes("unesa") || text.includes("thesis") || text.includes("skripsi") || text.includes("jurnal") || text.includes("tugas akhir") || text.includes("metodologi") || text.includes("sidang"));
+    if (isThesisQuery) {
+      if (idLower.includes("thesis") || idLower.includes("unesa") || nameLower.includes("thesis") || nameLower.includes("academic")) score += 15;
+    }
+
+    // F. Coding / Terminal / Scripting
+    const isCodingQuery = (text.includes("coding") || text.includes("koding") || text.includes("terminal") || text.includes("bash") || text.includes("command") || text.includes("script") || text.includes("python") || text.includes("javascript") || text.includes("bug") || text.includes("code") || text.includes("file"));
+    if (isCodingQuery) {
+      if (idLower.includes("coding") || idLower.includes("engineer") || nameLower.includes("coding") || nameLower.includes("engineer")) score += 15;
+    }
+
+    // G. Web Research & Search
+    const isResearchQuery = (text.includes("riset") || text.includes("research") || text.includes("scraping") || text.includes("scrape") || text.includes("cari data") || text.includes("investigasi") || text.includes("berita") || text.includes("news") || text.includes("searching"));
+    if (isResearchQuery) {
+      if (idLower.includes("researcher") || idLower.includes("research") || nameLower.includes("researcher") || nameLower.includes("riset")) score += 15;
+    }
+
+    // H. Direct Browser Control / Web Navigation
+    const isBrowserControl = (text.includes("buka") || text.includes("navigasi") || text.includes("klik") || text.includes("login") || text.includes("website") || text.includes("tab") || text.includes("url") || text.includes("scroll") || text.includes("tonton"));
+    if (isBrowserControl) {
+      if (idLower === "default_agent" || nameLower.includes("browser")) score += 5;
+    }
+
+    if (score > 0) {
+      scoredWorkers.push({ agent: ag, score: score });
     }
   }
 
-  // Fallback worker if none matched and not purely an API action
+  // Sort by score descending and take at most TOP 2 specialist agents (laser-focused & token-efficient!)
+  scoredWorkers.sort((a, b) => b.score - a.score);
+  const selectedSpecialists = scoredWorkers.slice(0, 2).map(item => item.agent);
+
+  selectedSpecialists.forEach(sp => {
+    if (!matchedWorkers.some(m => m.id === sp.id)) {
+      matchedWorkers.push(sp);
+    }
+  });
+
+  // Fallback: if nothing matched, use default browser agent
   const isDirectGSuiteAction = text.startsWith('[/slides]') || text.startsWith('/slides') ||
                                text.startsWith('[/gmail]') || text.startsWith('/gmail') ||
                                text.startsWith('[/drive]') || text.startsWith('/drive') ||
@@ -639,11 +560,12 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
                                text.startsWith('[/telegram]') || text.startsWith('/telegram');
 
   if (matchedWorkers.length === 0 && !isDirectGSuiteAction) {
-    const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || customAgents.find(a => String(a.id || '') !== "master_agent" && String(a.id || '') !== "boss_agent") || customAgents[0];
+    const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || nonBossCandidates[0];
     if (defaultAgent) matchedWorkers.push(defaultAgent);
   }
 
   const sortedWorkers = sortAgentsByPipeline(matchedWorkers);
+  return [getMasterBoss(), ...sortedWorkers];
 
   // Master Agent is ALWAYS the supreme commander prepended at index 0
   let bossAgent = customAgents.find(a => a.id === "master_agent" || a.id === "boss_agent" || a.is_boss);

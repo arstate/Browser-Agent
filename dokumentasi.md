@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.156`
+- **Versi Terkini:** `v2.150.157`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -161,3 +161,4 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 39. **Master Agent Initial Deep Thinking & High-Precision Specialist Task Assignment:** Master Agent secara cerdas mengawali setiap eksekusi dengan **Task 1: Deep Thinking & Analisis Sasaran** (berputar realtime `in-progress` saat proses scanning), membaca intent domain secara mendalam (misal: analisis lead/ads, copywriting, properti KPR, coding sistem, dsb), lalu mencocokkan dan menyusun tugas spesifik yang didelegasikan secara akurat ke masing-masing sub-agent spesialis terpilih sebelum mengeksekusi tindakan.
 40. **Perfectionist Master Agent 100% Accuracy Guard & Dynamic Sub-Agent Task Mapping:** Task schedule memetakan seluruh agen spesialis yang ditugaskan (bukan default/fallback satu agen). Master Agent bertindak sebagai Bos Perfeksionis yang mengaudit 100% data keluaran bawahan di tahap akhir. Jika ada data yang kurang/salah, Master Agent menyisipkan tugas revisi tambahan (`GoalTracker.addRevisionMilestone`) dan memerintahkan perbaikan hingga data benar-benar 100% akurat dan tuntas.
 41. **Full-Catalog Deep Reasoning & Skill-Aware Multi-Agent Selection:** Master Agent dibekali **Direktori Lengkap Multi-Agent & Skill** (nama lengkap, deskripsi peran, dan seluruh skill tersemat). Pemilihan tim spesialis dijalankan melalui analisis semantik mendalam terhadap seluruh profil keahlian agen di ekosistem (bukan template statis kaku), menjamin bahwa setiap tugas ditangani oleh spesialis paling tepat dengan hasil maksimal.
+42. **Lean & Token-Efficient Jobdesk-Focused Agent Recruitment (Max 1-2 Specialists):** Menghilangkan over-matching broad keyword (seperti kata 'tiar' atau 'analisis' yang sebelumnya memicu 11 agen sekaligus). Sistem kini menggunakan algoritma penilaian jobdesk eksklusif yang membatasi penugasan maksimal 1-2 agen spesialis paling relevan per sasaran tugas, serta mereset jadwal Manage Task secara bersih (clean 3-4 milestones) pada setiap giliran prompt baru di riwayat percakapan untuk menghemat token AI secara drastis.
