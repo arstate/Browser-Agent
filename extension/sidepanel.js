@@ -253,6 +253,23 @@ You have access to 3 categories of tools:
    - browser_extract_table(max_rows, auto_scroll, sort_by_metric): Deep structured table/grid extraction that auto-scrolls virtual lists (e.g. Meta Ads 100+ campaigns) to extract ALL rows without first-page bias!
    - agent_subtask_analysis(agent_name, focus, findings, recommended_next_action): Call whenever a specialist sub-agent (e.g. Meta Ads Strategist, Gen-Z Copywriter, Deep Web Researcher) completes domain analysis, evaluates metrics, drafts copy, or formulates recommendations for Master Agent before directing next browser actions.
 
+5. 🌐 GOOGLE WORKSPACE & CONNECTED APPS DIRECT ACTION DIRECTIVES:
+   Whenever the user sends a prompt with a target slash command or tag (e.g. [/slides], [/gmail], [/drive], [/docs], [/sheets], [/forms], [/calendar], [/tasks], [/contacts], [/keep], [/meet], [/search], [/telegram]):
+   - [/slides] or /slides: Generate structured slide-by-slide presentation outlines (Title, key points, speaking cues) in rich Markdown, and optionally call gsuite_create_doc to save as a presentation deck draft in Google Drive.
+   - [/gmail] or /gmail: Immediately call gsuite_send_gmail({ to, subject, body_html, body_text }) or gsuite_search_gmail({ query }) to process emails.
+   - [/drive] or /drive: Immediately call gsuite_search_drive({ query, mime_type }) or gsuite_list_recent_files() to search/manage files in Google Drive.
+   - [/docs] or /docs: Immediately call gsuite_create_doc({ title, content }) or gsuite_append_doc_text({ document_id_or_url, text }) to manage Google Docs.
+   - [/sheets] or /sheets: Immediately call gsuite_create_sheet({ title, headers }), gsuite_append_sheet_row({ target_sheet, row_values }), or gsuite_read_sheet({ sheet_id, range }) to manipulate spreadsheets.
+   - [/forms] or /forms: Immediately call gsuite_create_form({ title, description, questions }) or gsuite_get_form_responses({ form_id }).
+   - [/calendar] or /calendar: Immediately call gsuite_create_calendar_event({ summary, description, start_time, end_time }) or gsuite_list_calendar_events().
+   - [/tasks] or /tasks: Immediately call gsuite_create_task({ title, notes, due_date }) or gsuite_list_tasks().
+   - [/contacts] or /contacts: Immediately call gsuite_search_contacts({ query }).
+   - [/search] or /search: Immediately call google_web_search({ query }) or google_news_search({ query }) to fetch real-time Google search data.
+   - [/telegram] or /telegram: Immediately call telegram_send_message({ text }) to send messages/reports to the user's Telegram.
+   - [/browse] or /browse: Immediately navigate and inspect using browser_navigate({ url }) and browser_snapshot().
+   - [/tabs] or /tabs: Immediately call browser_list_tabs() to inspect all open tabs.
+
+
 - MANDATORY SCREENSHOT WALKTHROUGH RULE (ATURAN MUTLAK SCREENSHOT WALKTHROUGH DI LANGKAH PERTAMA & AKHIR):
   Ketika pengguna meminta tindakan yang memerlukan kontrol browser (klik tombol, isi form, navigasi halaman, scroll, beli/pesan produk, login, eksplorasi web, analisis tampilan):
   1. LANGKAH 1 (WALKTHROUGH VISUAL AWAL): Master Agent WAJIB memanggil browser_screenshot() TERLEBIH DAHULU pada langkah pertama untuk mengambil screenshot walkthrough visual layar, melihat posisi elemen, mendeteksi modal/pop-up, dan memastikan orientasi halaman secara visual sebelum memerintahkan aksi klik/scroll.
@@ -1420,6 +1437,21 @@ const AGENT_TOOLS = [
       parameters: {
         type: "object",
         properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "telegram_send_message",
+      description: "Send a notification, text message, report, or update directly to the user's Telegram chat via the configured Telegram Bot Remote.",
+      parameters: {
+        type: "object",
+        properties: {
+          text: { type: "string", description: "The message text to send to Telegram" },
+          chat_id: { type: "string", description: "Optional specific target Telegram Chat ID (defaults to authorized chat ID from settings)" }
+        },
+        required: ["text"]
       }
     }
   },
@@ -4096,6 +4128,23 @@ async function executeTool(name, args, assistantBubble = null) {
         total_logs: logs.length,
         last_log: logs.length > 0 ? logs[logs.length - 1] : null
       };
+    }
+
+    case "telegram_send_message": {
+      const data = await chrome.storage.local.get(['telegram_bot_config']);
+      const botConfig = data.telegram_bot_config || {};
+      const token = botConfig.bot_token;
+      let chatId = args.chat_id || botConfig.authorized_chat_id;
+      if (chatId && chatId.includes(',')) chatId = chatId.split(',')[0].trim();
+      if (!token || !chatId) {
+        return { error: "Telegram Bot belum dikonfigurasi. Silakan buka menu Pengaturan -> Connected Apps -> Telegram Bot." };
+      }
+      try {
+        const res = await telegramSendMessageFromSidepanel(token, chatId, args.text);
+        return { success: true, message: "Pesan berhasil dikirim ke Telegram!", result: res };
+      } catch (err) {
+        return { error: `Gagal mengirim ke Telegram: ${err.message}` };
+      }
     }
 
     case "gsuite_create_doc": {
@@ -11567,6 +11616,17 @@ const SLASH_COMMANDS_CATALOG = [
     template: "/search [kata kunci pencarian]",
     hint: "Cari web Google secara langsung"
   },
+  {
+    id: "news",
+    command: "/news",
+    aliases: ["/berita", "/trend"],
+    title: "Google News",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-search.svg",
+    desc: "Cari dan pantau berita terkini real-time dari Google News RSS",
+    template: "/news [topik berita]",
+    hint: "Pantau berita terkini real-time"
+  },
 
   // --- CONNECTED APPS: TELEGRAM ---
   {
@@ -11579,6 +11639,41 @@ const SLASH_COMMANDS_CATALOG = [
     desc: "Kirim pesan, foto, berkas dokumen, atau notifikasi ke Telegram",
     template: "/telegram kirim pesan: [isi pesan / instruksi]",
     hint: "Kirim pesan ke Telegram"
+  },
+  {
+    id: "menu",
+    command: "/menu",
+    aliases: ["/start", "/help"],
+    title: "Menu & Start Hub",
+    category: "Connected Apps",
+    iconSrc: "icons/connected-apps/telegram.svg",
+    desc: "Buka menu interaktif dan arsenal perintah AI",
+    template: "/menu",
+    hint: "Buka menu & arsenal perintah"
+  },
+
+  // --- BROWSER AUTOMATION TOOLS ---
+  {
+    id: "browse",
+    command: "/browse",
+    aliases: ["/open", "/buka", "/navigate"],
+    title: "Browse URL / Web",
+    category: "Tools & System",
+    iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+    desc: "Buka URL website di Chrome dan periksa tampilannya",
+    template: "/browse [https://url-tujuan.com]",
+    hint: "Buka URL web"
+  },
+  {
+    id: "tabs",
+    command: "/tabs",
+    aliases: ["/tablist", "/tab"],
+    title: "List Open Tabs",
+    category: "Tools & System",
+    iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>`,
+    desc: "Lihat seluruh daftar tab terbuka di browser Chrome",
+    template: "/tabs",
+    hint: "Lihat daftar tab terbuka"
   },
 
   // --- SYSTEM & AI TOOLS ---
