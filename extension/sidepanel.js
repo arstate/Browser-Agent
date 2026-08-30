@@ -10160,11 +10160,35 @@ function sanitizeHistoryForStorage(history) {
 async function saveCurrentSessionToDB() {
   if (!currentSessionId || conversationHistory.length === 0) return;
   const sanitizedMessages = sanitizeHistoryForStorage(conversationHistory);
+
+  // Extract clean preview from user messages
+  let previewText = "";
+  for (const m of sanitizedMessages) {
+    if (m.role === 'user' && m.content) {
+      if (typeof m.content === 'string') {
+        const t = m.content.trim();
+        if (t) { previewText = t.slice(0, 150); break; }
+      } else if (Array.isArray(m.content)) {
+        const textPart = m.content.find(p => p.type === 'text' || p.text);
+        if (textPart?.text) {
+          const t = textPart.text.trim();
+          if (t) { previewText = t.slice(0, 150); break; }
+        }
+      }
+    }
+  }
+  if (!previewText && sanitizedMessages[0]) {
+    const c = sanitizedMessages[0].content;
+    previewText = (typeof c === 'string' ? c : "").trim().slice(0, 150);
+  }
+
   const sessionData = {
     id: currentSessionId,
     title: currentSessionTitle || "New Chat",
     model: config.model || "Default Model",
     is_pinned: currentSessionIsPinned ? 1 : 0,
+    message_count: sanitizedMessages.length,
+    preview: previewText,
     messages: sanitizedMessages,
     created_at: currentSessionCreatedAt || Date.now()
   };
@@ -10247,8 +10271,8 @@ async function loadHistoryList(searchQuery = "") {
               model: cs.model,
               is_telegram: true,
               is_pinned: cs.is_pinned ? 1 : 0,
-              message_count: cs.messages ? cs.messages.length : 0,
-              preview: cs.messages && cs.messages[0] ? (cs.messages[0].content || "").slice(0, 120) : "",
+              message_count: cs.messages ? cs.messages.length : (cs.message_count || 0),
+              preview: cs.preview || (cs.messages && cs.messages[0] ? (cs.messages[0].content || "").slice(0, 120) : ""),
               created_at: cs.created_at,
               updated_at: cs.updated_at || cs.created_at
             });
@@ -10271,8 +10295,8 @@ async function loadHistoryList(searchQuery = "") {
       model: s.model,
       is_telegram: s.is_telegram || String(s.id || '').startsWith('sess_tg_'),
       is_pinned: s.is_pinned ? 1 : 0,
-      message_count: s.messages ? s.messages.length : 0,
-      preview: s.messages && s.messages[0] ? (s.messages[0].content || "").slice(0, 120) : "",
+      message_count: s.messages ? s.messages.length : (s.message_count || 0),
+      preview: s.preview || (s.messages && s.messages[0] ? (s.messages[0].content || "").slice(0, 120) : ""),
       created_at: s.created_at,
       updated_at: s.updated_at || s.created_at
     }));

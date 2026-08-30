@@ -238,7 +238,59 @@ fn init_db() -> Result<Connection, rusqlite::Error> {
         "
     )?;
 
+    let _ = heal_sessions(&conn);
     Ok(conn)
+}
+
+fn heal_sessions(conn: &Connection) {
+    if let Ok(mut stmt) = conn.prepare("SELECT id, messages_json FROM sessions WHERE (message_count = 0 OR preview = '' OR preview IS NULL) AND messages_json != '[]' AND messages_json != ''") {
+        let rows: Vec<(String, String)> = stmt.query_map([], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+        }).map(|iter| iter.flatten().collect()).unwrap_or_default();
+
+        for (sid, msgs_str) in rows {
+            if let Ok(msgs) = serde_json::from_str::<Vec<Value>>(&msgs_str) {
+                if !msgs.is_empty() {
+                    let count = msgs.len() as i64;
+                    let mut prev = String::new();
+                    for m in &msgs {
+                        let role = m.get("role").and_then(|v| v.as_str()).unwrap_or("");
+                        if role == "user" {
+                            if let Some(c) = m.get("content").and_then(|v| v.as_str()) {
+                                let trimmed = c.trim();
+                                if !trimmed.is_empty() {
+                                    prev = trimmed.chars().take(150).collect();
+                                    break;
+                                }
+                            } else if let Some(arr) = m.get("content").and_then(|v| v.as_array()) {
+                                for item in arr {
+                                    if let Some(txt) = item.get("text").and_then(|v| v.as_str()) {
+                                        let trimmed = txt.trim();
+                                        if !trimmed.is_empty() {
+                                            prev = trimmed.chars().take(150).collect();
+                                            break;
+                                        }
+                                    }
+                                }
+                                if !prev.is_empty() { break; }
+                            }
+                        }
+                    }
+                    if prev.is_empty() {
+                        if let Some(first) = msgs.first() {
+                            if let Some(c) = first.get("content").and_then(|v| v.as_str()) {
+                                prev = c.trim().chars().take(150).collect();
+                            }
+                        }
+                    }
+                    let _ = conn.execute(
+                        "UPDATE sessions SET message_count = ?1, preview = ?2 WHERE id = ?3",
+                        params![count, prev, sid],
+                    );
+                }
+            }
+        }
+    }
 }
 
 fn now_millis() -> i64 {
@@ -976,12 +1028,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             let model = session_obj.get("model").and_then(|v| v.as_str())
                 .or_else(|| msg.get("model").and_then(|v| v.as_str()))
                 .unwrap_or("");
-            let count = session_obj.get("message_count").and_then(|v| v.as_i64())
-                .or_else(|| msg.get("message_count").and_then(|v| v.as_i64()))
-                .unwrap_or(0);
-            let preview = session_obj.get("preview").and_then(|v| v.as_str())
-                .or_else(|| msg.get("preview").and_then(|v| v.as_str()))
-                .unwrap_or("");
+
             let messages = if let Some(m) = session_obj.get("messages") {
                 serde_json::to_string(m).unwrap_or_else(|_| "[]".to_string())
             } else {
@@ -990,6 +1037,53 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                     .unwrap_or("[]")
                     .to_string()
             };
+
+            let parsed_msgs: Vec<Value> = serde_json::from_str(&messages).unwrap_or_default();
+            let mut count = session_obj.get("message_count").and_then(|v| v.as_i64())
+                .or_else(|| msg.get("message_count").and_then(|v| v.as_i64()))
+                .unwrap_or(0);
+            if count == 0 && !parsed_msgs.is_empty() {
+                count = parsed_msgs.len() as i64;
+            }
+
+            let mut preview = session_obj.get("preview").and_then(|v| v.as_str())
+                .or_else(|| msg.get("preview").and_then(|v| v.as_str()))
+                .unwrap_or("")
+                .trim()
+                .to_string();
+            if preview.is_empty() && !parsed_msgs.is_empty() {
+                for m in &parsed_msgs {
+                    let role = m.get("role").and_then(|v| v.as_str()).unwrap_or("");
+                    if role == "user" {
+                        if let Some(c) = m.get("content").and_then(|v| v.as_str()) {
+                            let trimmed = c.trim();
+                            if !trimmed.is_empty() {
+                                preview = trimmed.chars().take(150).collect();
+                                break;
+                            }
+                        } else if let Some(arr) = m.get("content").and_then(|v| v.as_array()) {
+                            for item in arr {
+                                if let Some(txt) = item.get("text").and_then(|v| v.as_str()) {
+                                    let trimmed = txt.trim();
+                                    if !trimmed.is_empty() {
+                                        preview = trimmed.chars().take(150).collect();
+                                        break;
+                                    }
+                                }
+                            }
+                            if !preview.is_empty() { break; }
+                        }
+                    }
+                }
+                if preview.is_empty() {
+                    if let Some(first) = parsed_msgs.first() {
+                        if let Some(c) = first.get("content").and_then(|v| v.as_str()) {
+                            preview = c.trim().chars().take(150).collect();
+                        }
+                    }
+                }
+            }
+
             let is_pinned = session_obj.get("is_pinned").and_then(|v| v.as_i64())
                 .or_else(|| msg.get("is_pinned").and_then(|v| v.as_i64()))
                 .unwrap_or(0);
@@ -1015,6 +1109,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         }
 
         "db_get_sessions" => {
+            let _ = heal_sessions(&conn);
             let search = msg.get("search").and_then(|v| v.as_str()).unwrap_or("").trim().to_lowercase();
             let mut list = vec![];
             if search.is_empty() {

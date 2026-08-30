@@ -1107,9 +1107,45 @@ def db_save_session(session_data):
         log(f"Error in db_save_session: {e}\n{traceback.format_exc()}")
         return {"status": "error", "error": str(e)}
 
+def heal_sessions(conn):
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, messages_json FROM sessions WHERE (message_count = 0 OR preview = '' OR preview IS NULL) AND messages_json != '[]' AND messages_json != ''")
+        rows = cursor.fetchall()
+        for sid, msgs_str in rows:
+            try:
+                msgs = json.loads(msgs_str)
+                if msgs and isinstance(msgs, list):
+                    count = len(msgs)
+                    prev = ""
+                    for m in msgs:
+                        if isinstance(m, dict) and m.get("role") == "user":
+                            c = m.get("content")
+                            if isinstance(c, str) and c.strip():
+                                prev = c.strip()[:150]
+                                break
+                            elif isinstance(c, list):
+                                for item in c:
+                                    if isinstance(item, dict) and item.get("text"):
+                                        prev = item["text"].strip()[:150]
+                                        break
+                                if prev:
+                                    break
+                    if not prev and msgs:
+                        first = msgs[0]
+                        if isinstance(first, dict):
+                            prev = str(first.get("content") or "").strip()[:150]
+                    cursor.execute("UPDATE sessions SET message_count = ?, preview = ? WHERE id = ?", (count, prev, sid))
+            except Exception:
+                pass
+        conn.commit()
+    except Exception as e:
+        log(f"heal_sessions notice: {e}")
+
 def db_get_sessions(search=""):
     try:
         with sqlite3.connect(DB_PATH) as conn:
+            heal_sessions(conn)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             if search and search.strip():
