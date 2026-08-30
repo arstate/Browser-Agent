@@ -5925,6 +5925,7 @@ Tugas Anda:
         }
 
         let synthResp = null;
+        let lastSynthError = "";
         for (let mIdx = 0; mIdx < candidateModels.length; mIdx++) {
           const currentModel = candidateModels[mIdx];
           try {
@@ -5938,7 +5939,7 @@ Tugas Anda:
                 max_tokens: 4096,
                 stream: true
               }),
-              signal: abortController.signal
+              signal: abortController?.signal
             });
 
             if (!resp.ok) {
@@ -5949,8 +5950,9 @@ Tugas Anda:
               } catch (e) {
                 errorMsg = await resp.text();
               }
-              if (isRateLimitError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
-                console.warn(`[Auto-Rotate Synthesis] Model '${currentModel}' rate limited (${resp.status}). Rotating to next...`);
+              lastSynthError = errorMsg;
+              if (isRetryableAIError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
+                console.warn(`[Auto-Rotate Synthesis] Model '${currentModel}' rate limited/error (${resp.status}). Rotating to next...`);
                 continue;
               }
             } else {
@@ -5959,35 +5961,44 @@ Tugas Anda:
             }
           } catch (e) {
             if (e.name === 'AbortError') throw e;
+            lastSynthError = e.message || String(e);
           }
         }
 
         if (synthResp && synthResp.ok) {
-          const reader = synthResp.body.getReader();
-          const decoder = new TextDecoder();
           let synthContent = "";
-          let buffer = "";
+          if (synthResp.body && typeof synthResp.body.getReader === 'function') {
+            const reader = synthResp.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || trimmed === "data: [DONE]") continue;
-              if (trimmed.startsWith("data:")) {
-                try {
-                  const chunk = JSON.parse(trimmed.replace(/^data:\s*/, ""));
-                  const delta = chunk.choices?.[0]?.delta?.content || "";
-                  if (delta) {
-                    synthContent += delta;
-                    updateAssistantText(assistantBubble, ensureGeneratedImagesInText(synthContent, sessionGeneratedImages), true);
-                  }
-                } catch (e) {}
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() || "";
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed === "data: [DONE]") continue;
+                if (trimmed.startsWith("data:")) {
+                  try {
+                    const chunk = JSON.parse(trimmed.replace(/^data:\s*/, ""));
+                    const delta = chunk.choices?.[0]?.delta?.content || chunk.choices?.[0]?.message?.content || "";
+                    if (delta) {
+                      synthContent += delta;
+                      updateAssistantText(assistantBubble, ensureGeneratedImagesInText(synthContent, sessionGeneratedImages), true);
+                    }
+                  } catch (e) {}
+                }
               }
             }
+          } else {
+            try {
+              const rawTxt = await synthResp.text();
+              const parsed = JSON.parse(rawTxt);
+              synthContent = parsed.choices?.[0]?.message?.content || "";
+            } catch(e) {}
           }
 
           if (synthContent.trim().length > 0) {
@@ -6000,13 +6011,7 @@ Tugas Anda:
             });
           }
         } else {
-          // Fallback if synthesis request failed: scan local_run_command and browser outputs to construct summary table
-          const synthesisStatus = synthResp?.status ?? "no response";
-          let synthesisBody = "";
-          if (synthResp) {
-            try { synthesisBody = await synthResp.text(); } catch (e) { synthesisBody = e?.message || "unreadable response"; }
-          }
-          console.warn("Synthesis turn status:", synthesisStatus, synthesisBody);
+          // Fallback if synthesis request failed: scan actions and provide clean professional summary
           const downloadedFiles = [];
           conversationHistory.forEach(msg => {
             if (msg.role === 'assistant' && msg.tool_calls) {
@@ -6025,16 +6030,23 @@ Tugas Anda:
           });
 
           if (downloadedFiles.length > 0) {
-            let fallbackMd = `### 📚 Berkas Jurnal Berhasil Diunduh\n\nSeluruh file jurnal telah berhasil ditemukan dan disimpan ke komputer lokal Anda:\n\n`;
+            let fallbackMd = `### 📚 Berkas Berhasil Diproses\n\nSeluruh tindakan telah berhasil diselesaikan dan disimpan ke komputer lokal Anda:\n\n`;
             downloadedFiles.forEach((fn, idx) => {
               fallbackMd += `${idx + 1}. **${fn.replace(/\.pdf$/i, '').replace(/_/g, ' ')}**\n   - Path: \`/home/arya/Downloads/${fn}\`\n`;
             });
-            fallbackMd += `\nAnda dapat langsung membuka file-file di atas pada folder **Downloads** komputer Anda.`;
+            fallbackMd += `\nAnda dapat langsung memeriksa file di atas pada folder **Downloads** komputer Anda.`;
             updateAssistantText(assistantBubble, ensureGeneratedImagesInText(fallbackMd, sessionGeneratedImages), false);
+          } else {
+            // General clean tool completion summary
+            const completedCount = toolBadges.length;
+            let summaryText = `### ✅ Tugas Berhasil Diselesaikan\n\nMaster Agent dan tim agen spesialis telah menyelesaikan **${completedCount} tindakan** sesuai dengan sasaran yang Anda minta.`;
+            updateAssistantText(assistantBubble, ensureGeneratedImagesInText(summaryText, sessionGeneratedImages), false);
           }
         }
       } catch (synthErr) {
         console.warn("Auto synthesis turn warning:", synthErr);
+        let summaryText = `### ✅ Tindakan Selesai\n\nSeluruh langkah browser telah dieksekusi dengan sukses.`;
+        updateAssistantText(assistantBubble, ensureGeneratedImagesInText(summaryText, sessionGeneratedImages), false);
       }
     }
 

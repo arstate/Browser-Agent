@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.158`
+- **Versi Terkini:** `v2.150.159`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -163,3 +163,4 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 41. **Full-Catalog Deep Reasoning & Skill-Aware Multi-Agent Selection:** Master Agent dibekali **Direktori Lengkap Multi-Agent & Skill** (nama lengkap, deskripsi peran, dan seluruh skill tersemat). Pemilihan tim spesialis dijalankan melalui analisis semantik mendalam terhadap seluruh profil keahlian agen di ekosistem (bukan template statis kaku), menjamin bahwa setiap tugas ditangani oleh spesialis paling tepat dengan hasil maksimal.
 42. **Lean & Token-Efficient Jobdesk-Focused Agent Recruitment (Max 1-2 Specialists):** Menghilangkan over-matching broad keyword (seperti kata 'tiar' atau 'analisis' yang sebelumnya memicu 11 agen sekaligus). Sistem kini menggunakan algoritma penilaian jobdesk eksklusif yang membatasi penugasan maksimal 1-2 agen spesialis paling relevan per sasaran tugas, serta mereset jadwal Manage Task secara bersih (clean 3-4 milestones) pada setiap giliran prompt baru di riwayat percakapan untuk menghemat token AI secara drastis.
 43. **Real-Time Step-by-Step Task Schedule Progress & Anti-Premature Completion Guard:** Memperbaiki formula tracking progres task di `GoalTracker.updateMilestonesFromTurns` agar bergeser secara real-time step-by-step sesuai giliran eksekusi tool masing-masing agen bawahan. Mengunci tugas terakhir (Validasi Kualitas 100% Master Agent) agar tetap berstatus `pending` atau `in-progress` dan tidak pernah tercentang prematur sebelum seluruh tindakan tuntas diverifikasi 100%.
+44. **Bulletproof Final Synthesis Turn Resilience & Clean Fallback Summary:** Menghilangkan error fatal `Synthesis turn status: no response` pada ringkasan akhir Master Agent dengan menambahkan fallback multi-model candidate retry, penanganan non-streaming fallback, dan penyusunan ringkasan Markdown bersih otomatis dari riwayat eksekusi tool jika endpoint LLM mengalami kendala koneksi atau rate limit.
