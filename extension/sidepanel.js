@@ -5380,8 +5380,20 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   }
 
   if (hasBoss && workerAgents.length > 0) {
-    updateFooterStatus(`👑 Master Agent: Menugaskan ${workerAgents.length} agen spesialis...`);
+    updateFooterStatus(`👑 Master Agent: Memindai kebutuhan & memilih agen spesialis...`);
+    updateAssistantActiveAgent(assistantBubble, "Master Agent", "Memindai & memilih agen spesialis...", true, false);
+
+    // Smooth AI discovery cadence (550ms) so user experiences the scanning & reasoning state
+    await new Promise(r => setTimeout(r, 550));
+
+    // Reveal and morph the assigned multi-agents list with smooth stagger animation!
+    revealAssignedAgentsTree(assistantBubble, workerAgents);
+
+    updateFooterStatus(`👑 Master Agent: Menemukan ${workerAgents.length} agen spesialis!`);
     updateAssistantActiveAgent(assistantBubble, "Master Agent", `Menemukan ${workerAgents.length} Agen Spesialis`, true, false);
+
+    // Smooth brief delay before step 1 so user perceives the seamless morphing
+    await new Promise(r => setTimeout(r, 350));
   }
 
   // Option 1 & 3: Goal Decomposition & Self-Correction Initializers
@@ -7608,6 +7620,21 @@ function updateAssistantActiveAgent(assistantBubble, agentName, statusText = '',
   }
 }
 
+function revealAssignedAgentsTree(assistantBubble, workers = []) {
+  const targetBubble = assistantBubble || currentActiveAssistantBubble;
+  if (!targetBubble) return;
+  const treeContainer = targetBubble.querySelector('.agent-tree-branch-container');
+  if (!treeContainer) return;
+
+  treeContainer.classList.remove('is-finding-agents');
+  treeContainer.classList.add('is-revealed');
+
+  const items = treeContainer.querySelectorAll('.agent-tree-item');
+  items.forEach((item, idx) => {
+    item.style.animationDelay = `${(idx * 0.06).toFixed(2)}s`;
+  });
+}
+
 let currentActiveAssistantBubble = null;
 
 function dynamicallyAddSubAgentToUI(assistantBubble, newAgent, subtask = "") {
@@ -7805,7 +7832,7 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
     
     let initialStatus = isLiveLoading ? "Menganalisis tugas..." : "Selesai";
     if (isLiveLoading && isBoss && workers.length > 0) {
-      initialStatus = `Menemukan ${workers.length} Agen Spesialis`;
+      initialStatus = "Memindai & memilih agen spesialis...";
     }
     const dotClass = isLiveLoading ? "agent-pill-dot pulse" : "agent-pill-dot";
     const cleanName = (isBoss && initialName === "Master Agent") ? "" : escapeHtml(initialName);
@@ -7813,8 +7840,9 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
     let treeBranchHtml = '';
     if (hasWorkers) {
       const isInitiallyCollapsed = !isLiveLoading;
+      const initialHiddenClass = isLiveLoading ? 'is-finding-agents' : 'is-revealed';
       treeBranchHtml = `
-        <div class="agent-tree-branch-container ${isInitiallyCollapsed ? 'collapsed' : ''}">
+        <div class="agent-tree-branch-container ${initialHiddenClass} ${isInitiallyCollapsed ? 'collapsed' : ''}">
           <button type="button" class="agent-tree-branch-header" title="Klik untuk sembunyikan / tampilkan daftar agen">
             <div class="agent-tree-header-left">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>

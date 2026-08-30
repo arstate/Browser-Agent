@@ -1613,7 +1613,7 @@ body.stickman-active .chat-messages {
   color: rgba(255, 255, 255, 0.3);
 }
 
-/* Master Agent Multi-Agent Hierarchy & Tree Delegation Card */
+/* Master Agent Multi-Agent Hierarchy & Tree Delegation Card with Morph Stagger Animation */
 .agent-tree-branch-container {
   position: relative;
   margin-left: 14px;
@@ -1624,7 +1624,31 @@ body.stickman-active .chat-messages {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  transition: border-left-color 0.2s ease;
+  max-height: 1200px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: max-height 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, border-left-color 0.25s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), margin 0.3s ease;
+}
+
+.agent-tree-branch-container.is-finding-agents {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  transform: translateY(-8px) scale(0.98) !important;
+  overflow: hidden !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  pointer-events: none !important;
+  border-left-color: transparent !important;
+}
+
+.agent-tree-branch-container.is-revealed {
+  max-height: 1200px !important;
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  overflow: visible !important;
+  border-left-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 .agent-tree-branch-container.collapsed {
@@ -1707,6 +1731,36 @@ body.stickman-active .chat-messages {
   display: flex;
   align-items: center;
   width: 100%;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  animation: agentCardStaggerIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.agent-tree-item:nth-child(1) { animation-delay: 0.04s; }
+.agent-tree-item:nth-child(2) { animation-delay: 0.10s; }
+.agent-tree-item:nth-child(3) { animation-delay: 0.16s; }
+.agent-tree-item:nth-child(4) { animation-delay: 0.22s; }
+.agent-tree-item:nth-child(5) { animation-delay: 0.28s; }
+.agent-tree-item:nth-child(6) { animation-delay: 0.34s; }
+.agent-tree-item:nth-child(7) { animation-delay: 0.40s; }
+.agent-tree-item:nth-child(8) { animation-delay: 0.46s; }
+
+@keyframes agentCardStaggerIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+    filter: blur(4px);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(1px) scale(1.004);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
 }
 
 .agent-tree-item .tree-stem {
@@ -1716,7 +1770,20 @@ body.stickman-active .chat-messages {
   width: 12px;
   height: 2px;
   background: rgba(255, 255, 255, 0.12);
+  transform-origin: left center;
+  animation: stemGrowIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transition: background 0.2s ease;
+}
+
+@keyframes stemGrowIn {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
 }
 
 .tree-agent-card {
@@ -1730,7 +1797,7 @@ body.stickman-active .chat-messages {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   width: 100%;
   box-sizing: border-box;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .tree-agent-card:hover {
