@@ -11335,6 +11335,410 @@ function handleChatInputMentionCheck() {
 }
 
 // =========================================================================
+// Slash Commands & Connected Apps Dropup Engine (/command)
+// =========================================================================
+const slashCommandDropup = document.getElementById('slash-command-dropup');
+let activeSlashIndex = 0;
+let currentSlashMatches = [];
+let currentSlashQuery = "";
+
+const SLASH_COMMANDS_CATALOG = [
+  // --- GOOGLE WORKSPACE APPS (CONNECTED APPS) ---
+  {
+    id: "gmail",
+    command: "/gmail",
+    aliases: ["/email", "/mail", "/inbox"],
+    title: "Gmail / Email",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/gmail.svg",
+    desc: "Kirim email, cari inbox, balas pesan, atau buat draft",
+    template: "/gmail ke: [email] | subjek: [judul] | pesan: [isi pesan]",
+    hint: "Kirim & kelola pesan Gmail"
+  },
+  {
+    id: "drive",
+    command: "/drive",
+    aliases: ["/gdrive", "/files"],
+    title: "Google Drive",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-drive.svg",
+    desc: "Cari file di Drive, upload berkas, dan list file terbaru",
+    template: "/drive cari: [nama file / kata kunci]",
+    hint: "Cari & kelola file Drive"
+  },
+  {
+    id: "docs",
+    command: "/docs",
+    aliases: ["/doc", "/gdocs", "/document"],
+    title: "Google Docs",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-docs.svg",
+    desc: "Buat dokumen Docs baru, tulis artikel, atau baca isi dokumen",
+    template: "/docs buat dokumen: [Judul Dokumen] | konten: [isi / topik]",
+    hint: "Tulis & buat Google Docs"
+  },
+  {
+    id: "sheets",
+    command: "/sheets",
+    aliases: ["/sheet", "/gsheet", "/spreadsheet", "/excel"],
+    title: "Google Sheets",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-sheets.svg",
+    desc: "Buat spreadsheet baru, tambah baris data, baca range formula",
+    template: "/sheets tambah data: [Kolom 1, Kolom 2, Kolom 3]",
+    hint: "Kelola tabel Google Sheets"
+  },
+  {
+    id: "slides",
+    command: "/slides",
+    aliases: ["/slide", "/gslides", "/ppt", "/presentation"],
+    title: "Google Slides",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-slides.svg",
+    desc: "Buat outline presentasi slide PPT, materi pitch deck, dan bahasan",
+    template: "/slides buat presentasi: [Topik Presentasi] | jumlah slide: 5",
+    hint: "Buat materi presentasi Slides"
+  },
+  {
+    id: "forms",
+    command: "/forms",
+    aliases: ["/form", "/gforms", "/survey"],
+    title: "Google Forms",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-forms.svg",
+    desc: "Buat kuesioner survei, form pendaftaran, dan cek respon",
+    template: "/forms buat formulir: [Judul Form] | pertanyaan: [Q1, Q2, Q3]",
+    hint: "Buat kuesioner Google Forms"
+  },
+  {
+    id: "calendar",
+    command: "/calendar",
+    aliases: ["/cal", "/gcal", "/event", "/jadwal"],
+    title: "Google Calendar",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-calendar.svg",
+    desc: "Jadwalkan rapat/acara, set reminder, dan cek agenda hari ini",
+    template: "/calendar buat jadwal: [Nama Acara] | waktu: [Besok jam 14:00]",
+    hint: "Jadwalkan rapat & agenda"
+  },
+  {
+    id: "tasks",
+    command: "/tasks",
+    aliases: ["/task", "/todo", "/checklist"],
+    title: "Google Tasks",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-tasks.svg",
+    desc: "Buat to-do item baru, checklist tugas harian, dan catat agenda",
+    template: "/tasks buat to-do: [Daftar Tugas Baru]",
+    hint: "Catat checklist & to-do"
+  },
+  {
+    id: "contacts",
+    command: "/contacts",
+    aliases: ["/contact", "/phone", "/kontak"],
+    title: "Google Contacts",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-contacts.svg",
+    desc: "Cari kontak rekan/klien, nomor telepon, dan email dari address book",
+    template: "/contacts cari: [nama / nomor telepon]",
+    hint: "Cari kontak & buku alamat"
+  },
+  {
+    id: "keep",
+    command: "/keep",
+    aliases: ["/notes", "/note", "/memo"],
+    title: "Google Keep",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-keep.svg",
+    desc: "Simpan catatan ringkas kilat, memo penting, dan poin ide",
+    template: "/keep simpan catatan: [Judul] | [Isi Catatan]",
+    hint: "Simpan catatan & memo"
+  },
+  {
+    id: "meet",
+    command: "/meet",
+    aliases: ["/gmeet", "/meeting", "/video"],
+    title: "Google Meet",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-meet.svg",
+    desc: "Buat tautan ruang meeting video call Google Meet instan",
+    template: "/meet buat ruang meeting untuk: [Topik Diskusi]",
+    hint: "Buat room Google Meet"
+  },
+  {
+    id: "search",
+    command: "/search",
+    aliases: ["/google", "/find", "/web"],
+    title: "Google Search",
+    category: "Google Workspace",
+    iconSrc: "icons/google-apps/google-search.svg",
+    desc: "Cari data web dan rangkum informasi langsung dari Google",
+    template: "/search [kata kunci pencarian]",
+    hint: "Cari web Google secara langsung"
+  },
+
+  // --- CONNECTED APPS: TELEGRAM ---
+  {
+    id: "telegram",
+    command: "/telegram",
+    aliases: ["/tg", "/bot"],
+    title: "Telegram Bot Remote",
+    category: "Connected Apps",
+    iconSrc: "icons/connected-apps/telegram.svg",
+    desc: "Kirim pesan, foto, berkas dokumen, atau notifikasi ke Telegram",
+    template: "/telegram kirim pesan: [isi pesan / instruksi]",
+    hint: "Kirim pesan ke Telegram"
+  },
+
+  // --- SYSTEM & AI TOOLS ---
+  {
+    id: "screenshot",
+    command: "/screenshot",
+    aliases: ["/ss", "/capture"],
+    title: "Screenshot Tab / OS",
+    category: "Tools & System",
+    iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+    desc: "Ambil tangkapan layar tab browser aktif atau full desktop PC",
+    template: "/screenshot",
+    hint: "Ambil tangkapan layar"
+  },
+  {
+    id: "pdf",
+    command: "/pdf",
+    aliases: ["/exportpdf"],
+    title: "Generate Dokumen PDF",
+    category: "Tools & System",
+    iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
+    desc: "Kompilasi teks/artikel/tabel menjadi file PDF siap unduh",
+    template: "/pdf [Judul Dokumen] | [Isi Konten Dokumen]",
+    hint: "Kompilasi berkas PDF"
+  },
+  {
+    id: "qr",
+    command: "/qr",
+    aliases: ["/qrcode"],
+    title: "QR Code Generator",
+    category: "Tools & System",
+    iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>`,
+    desc: "Buat QR code instan dari URL web atau teks apapun",
+    template: "/qr [url tautan atau teks]",
+    hint: "Buat QR Code instan"
+  },
+  {
+    id: "thinking",
+    command: "/thinking",
+    aliases: ["/think", "/reasoning"],
+    title: "Thinking Mode Intensity",
+    category: "AI Control",
+    iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/></svg>`,
+    desc: "Atur intensitas penalaran (Low, Medium, High, Xhigh, Extreme)",
+    template: "/thinking",
+    hint: "Ubah kedalaman berpikir AI"
+  },
+  {
+    id: "model",
+    command: "/model",
+    aliases: ["/models", "/llm"],
+    title: "Ganti Model AI",
+    category: "AI Control",
+    iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`,
+    desc: "Pilih model AI (Gemini, Claude, GPT-4o, DeepSeek, Ollama)",
+    template: "/model",
+    hint: "Ganti model LLM aktif"
+  },
+  {
+    id: "clear",
+    command: "/clear",
+    aliases: ["/reset", "/new"],
+    title: "Sesi Baru / Reset Chat",
+    category: "Session",
+    iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>`,
+    desc: "Bersihkan riwayat chat dan mulai percakapan baru yang segar",
+    template: "/clear",
+    hint: "Mulai percakapan baru"
+  }
+];
+
+function getSlashCommandMatches(query = "") {
+  const q = String(query || "").toLowerCase().trim();
+  if (!q) return SLASH_COMMANDS_CATALOG;
+
+  return SLASH_COMMANDS_CATALOG.filter(item => {
+    const cmdMatch = item.command.toLowerCase().includes(q) || item.command.toLowerCase().replace('/', '').includes(q);
+    const aliasMatch = Array.isArray(item.aliases) && item.aliases.some(a => a.toLowerCase().includes(q) || a.toLowerCase().replace('/', '').includes(q));
+    const titleMatch = item.title.toLowerCase().includes(q);
+    const descMatch = item.desc.toLowerCase().includes(q);
+    const catMatch = item.category.toLowerCase().includes(q);
+    return cmdMatch || aliasMatch || titleMatch || descMatch || catMatch;
+  });
+}
+
+function renderSlashCommandDropup(matches, activeIdx = 0) {
+  if (!slashCommandDropup) return;
+  if (!matches || matches.length === 0) {
+    hideSlashCommandDropup();
+    return;
+  }
+
+  currentSlashMatches = matches;
+  activeSlashIndex = Math.max(0, Math.min(activeIdx, matches.length - 1));
+
+  let itemsHtml = '';
+  matches.forEach((item, idx) => {
+    const isActive = (idx === activeSlashIndex);
+    let iconHtml = '';
+    if (item.iconSrc) {
+      iconHtml = `<img src="${item.iconSrc}" alt="${escapeHtml(item.title)}">`;
+    } else if (item.iconSvg) {
+      iconHtml = item.iconSvg;
+    }
+
+    itemsHtml += `
+      <div class="slash-dropup-item ${isActive ? 'active' : ''}" data-idx="${idx}">
+        <div class="slash-item-icon-wrap">${iconHtml}</div>
+        <div class="slash-item-details">
+          <div class="slash-item-title-row">
+            <span class="slash-item-name">${escapeHtml(item.title)}</span>
+            <span class="slash-item-cmd">${escapeHtml(item.command)}</span>
+          </div>
+          <span class="slash-item-desc">${escapeHtml(item.desc)}</span>
+        </div>
+        <span class="slash-item-tag">${escapeHtml(item.category)}</span>
+      </div>
+    `;
+  });
+
+  slashCommandDropup.innerHTML = `
+    <div class="slash-dropup-header">
+      <div class="slash-dropup-header-left">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg>
+        <span>Perintah Cepat & Google Workspace (/)</span>
+      </div>
+      <span class="slash-dropup-hint">↑↓ Pilih • ↵ / Tab Terapkan • Esc Tutup</span>
+    </div>
+    <div class="slash-dropup-list">
+      ${itemsHtml}
+    </div>
+  `;
+
+  // Bind click events to items
+  slashCommandDropup.querySelectorAll('.slash-dropup-item').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = Number(el.dataset.idx);
+      if (currentSlashMatches[idx]) {
+        selectSlashCommand(currentSlashMatches[idx]);
+      }
+    });
+  });
+
+  slashCommandDropup.style.display = 'block';
+}
+
+function updateActiveSlashItem() {
+  if (!slashCommandDropup) return;
+  const items = slashCommandDropup.querySelectorAll('.slash-dropup-item');
+  items.forEach((item, idx) => {
+    if (idx === activeSlashIndex) {
+      item.classList.add('active');
+      item.scrollIntoView({ block: 'nearest' });
+    } else {
+      item.classList.remove('active');
+    }
+  });
+}
+
+function hideSlashCommandDropup() {
+  if (slashCommandDropup) {
+    slashCommandDropup.style.display = 'none';
+    slashCommandDropup.innerHTML = '';
+  }
+  currentSlashMatches = [];
+  currentSlashQuery = "";
+  activeSlashIndex = 0;
+}
+
+function selectSlashCommand(cmdItem) {
+  if (!cmdItem || !chatInput) return;
+
+  if (cmdItem.id === 'clear') {
+    hideSlashCommandDropup();
+    chatInput.value = '';
+    adjustChatInputHeight();
+    const btnNewChat = document.getElementById('btn-header-new-chat') || document.getElementById('btn-new-chat');
+    if (btnNewChat) btnNewChat.click();
+    return;
+  }
+
+  if (cmdItem.id === 'model') {
+    hideSlashCommandDropup();
+    chatInput.value = '';
+    adjustChatInputHeight();
+    const btnModel = document.getElementById('btn-open-model-settings') || document.getElementById('chip-active-model');
+    if (btnModel) btnModel.click();
+    return;
+  }
+
+  if (cmdItem.id === 'thinking') {
+    hideSlashCommandDropup();
+    chatInput.value = '';
+    adjustChatInputHeight();
+    const btnThinking = document.getElementById('btn-thinking-level-trigger');
+    if (btnThinking) btnThinking.click();
+    return;
+  }
+
+  const text = chatInput.value;
+  const cursorPos = chatInput.selectionStart || text.length;
+
+  // Find the / position before cursor
+  const lastSlash = text.lastIndexOf('/', cursorPos - 1);
+  const replacementText = cmdItem.template || (cmdItem.command + ' ');
+
+  if (lastSlash !== -1) {
+    const beforeSlash = text.slice(0, lastSlash);
+    const afterCursor = text.slice(cursorPos);
+    chatInput.value = beforeSlash + replacementText + afterCursor;
+    const newCursorPos = beforeSlash.length + replacementText.length;
+    chatInput.setSelectionRange(newCursorPos, newCursorPos);
+  } else {
+    chatInput.value = replacementText;
+    chatInput.setSelectionRange(replacementText.length, replacementText.length);
+  }
+
+  hideSlashCommandDropup();
+  adjustChatInputHeight();
+  chatInput.focus();
+}
+
+function handleChatInputSlashCheck() {
+  if (!chatInput) return;
+  const text = chatInput.value;
+  const cursorPos = chatInput.selectionStart;
+
+  // Check if cursor is right after a / or /query (at start of line or after whitespace)
+  const textBefore = text.slice(0, cursorPos);
+  const match = /(?:^|\s)\/([a-zA-Z0-9_\-]*)$/.exec(textBefore);
+
+  if (match) {
+    const query = match[1];
+    currentSlashQuery = query;
+
+    // Hide other dropups when slash is active
+    hideMentionDropup();
+    hideWebSearchSuggestions();
+
+    const matches = getSlashCommandMatches(query);
+    if (matches.length > 0) {
+      renderSlashCommandDropup(matches, 0);
+      return;
+    }
+  }
+
+  hideSlashCommandDropup();
+}
+
+// =========================================================================
 // Web Search Google Suggestions Autocomplete Engine
 // =========================================================================
 const webSearchDropup = document.getElementById('websearch-suggestions-dropdown');
@@ -11438,6 +11842,32 @@ function updateActiveSuggestionItem() {
 }
 
 chatInput.addEventListener('keydown', (e) => {
+  // If slash command dropup is open, intercept ArrowUp, ArrowDown, Enter, Tab, Escape
+  if (slashCommandDropup && slashCommandDropup.style.display !== 'none' && currentSlashMatches.length > 0) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeSlashIndex = (activeSlashIndex + 1) % currentSlashMatches.length;
+      updateActiveSlashItem();
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeSlashIndex = (activeSlashIndex - 1 + currentSlashMatches.length) % currentSlashMatches.length;
+      updateActiveSlashItem();
+      return;
+    }
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      selectSlashCommand(currentSlashMatches[activeSlashIndex]);
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      hideSlashCommandDropup();
+      return;
+    }
+  }
+
   // If mention dropup is open, intercept ArrowUp, ArrowDown, Enter, Tab, Escape
   if (mentionDropup && mentionDropup.style.display !== 'none' && currentMentionMatches.length > 0) {
     if (e.key === 'ArrowDown') {
@@ -11487,14 +11917,18 @@ chatInput.addEventListener('keydown', (e) => {
 
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
+    hideSlashCommandDropup();
     hideMentionDropup();
     hideWebSearchSuggestions();
     handleSendMessage();
   }
 });
 
-// Close mention dropup and suggestions when clicking outside
+// Close slash command, mention dropup, and suggestions when clicking outside
 document.addEventListener('click', (e) => {
+  if (slashCommandDropup && !slashCommandDropup.contains(e.target) && e.target !== chatInput) {
+    hideSlashCommandDropup();
+  }
   if (mentionDropup && !mentionDropup.contains(e.target) && e.target !== chatInput) {
     hideMentionDropup();
   }
@@ -11541,17 +11975,16 @@ function adjustChatInputHeight() {
   syncHeroPlaceholderHeight();
 }
 
-try {
-  adjustChatInputHeight();
-} catch (e) {}
-
 function syncHeroPlaceholderHeight() {
-  const placeholder = document.getElementById('hero-input-placeholder');
-  const inputContainer = document.getElementById('chat-input-container');
-  if (placeholder && inputContainer && !document.body.classList.contains('has-messages')) {
-    const containerHeight = inputContainer.offsetHeight;
-    if (containerHeight > 0) {
-      placeholder.style.height = `${containerHeight}px`;
+  const isInitialState = !document.body.classList.contains('has-messages');
+  if (!isInitialState) return;
+
+  const chatInputContainer = document.getElementById('chat-input-container');
+  const heroPlaceholder = document.getElementById('hero-input-placeholder');
+  if (chatInputContainer && heroPlaceholder) {
+    const inputRect = chatInputContainer.getBoundingClientRect();
+    if (inputRect.height > 0) {
+      heroPlaceholder.style.height = `${inputRect.height}px`;
     }
   }
 }
@@ -11569,6 +12002,7 @@ try {
 
 chatInput.addEventListener('input', () => {
   adjustChatInputHeight();
+  handleChatInputSlashCheck();
   handleChatInputMentionCheck();
   syncQueueButtonMorphState();
   if (currentChatMode === 'websearch') {
@@ -11582,6 +12016,7 @@ chatInput.addEventListener('keyup', (e) => {
   adjustChatInputHeight();
   syncQueueButtonMorphState();
   if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Enter' && e.key !== 'Tab') {
+    handleChatInputSlashCheck();
     handleChatInputMentionCheck();
     if (currentChatMode === 'websearch') {
       clearTimeout(suggestionDebounceTimer);
@@ -11590,6 +12025,10 @@ chatInput.addEventListener('keyup', (e) => {
       }, 120);
     }
   }
+});
+chatInput.addEventListener('click', () => {
+  handleChatInputSlashCheck();
+  handleChatInputMentionCheck();
 });
 chatInput.addEventListener('change', () => {
   adjustChatInputHeight();
