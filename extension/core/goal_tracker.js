@@ -107,6 +107,55 @@
       inProgress: true
     });
 
+    // 0. If matchedWorkers has specific assigned agents, generate tasks for ALL of them!
+    if (Array.isArray(matchedWorkers) && matchedWorkers.length > 0) {
+      matchedWorkers.forEach(worker => {
+        const wName = worker.name || "Agen Spesialis";
+        const wId = String(worker.id || '').toLowerCase();
+        const wNameLower = wName.toLowerCase();
+        let taskTitle = "";
+        
+        if (wId.includes("ads") || wId.includes("auditor") || wId.includes("analyst") || wNameLower.includes("ads") || wNameLower.includes("auditor")) {
+          taskTitle = "Audit Matriks Kinerja Iklan & Filter Lead High-Intent";
+        } else if (wId.includes("closer") || wId.includes("sales") || wNameLower.includes("sales") || wNameLower.includes("closer")) {
+          taskTitle = "Evaluasi Funnel Chat Closing & Kualifikasi Prospek KPR";
+        } else if (wId.includes("copy") || wNameLower.includes("copywriter")) {
+          taskTitle = "Perumusan Copywriting Viral, Hooks & Naskah Konten";
+        } else if (wId.includes("visual") || wId.includes("desain") || wNameLower.includes("visual") || wNameLower.includes("desainer")) {
+          taskTitle = "Pembuatan Desain Visual Dark Luxury & Layout Grafis";
+        } else if (wId.includes("coding") || wId.includes("engineer") || wNameLower.includes("coding") || wNameLower.includes("engineer")) {
+          taskTitle = "Eksekusi Script Terminal, Manajemen File & Koding";
+        } else if (wId.includes("gsuite") || wId.includes("workspace") || wNameLower.includes("workspace") || wNameLower.includes("google")) {
+          taskTitle = "Sinkronisasi REST API & Pembuatan Berkas Google Workspace";
+        } else if (wId.includes("thesis") || wId.includes("unesa") || wNameLower.includes("thesis") || wNameLower.includes("akademik")) {
+          taskTitle = "Kajian Metodologi, Riset Literatur & Penulisan Akademik";
+        } else if (wId.includes("research") || wId.includes("riset") || wNameLower.includes("research")) {
+          taskTitle = "Investigasi Riset Mendalam & Validasi Data Web";
+        } else {
+          taskTitle = `Eksekusi Operasi Spesialis: ${text.slice(0, 40)}`;
+        }
+
+        milestones.push({
+          id: milestones.length + 1,
+          title: taskTitle,
+          assignedAgent: wName,
+          completed: false,
+          inProgress: false
+        });
+      });
+
+      // Final Task is ALWAYS Perfectionist Master Agent Quality Validation:
+      milestones.push({
+        id: milestones.length + 1,
+        title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas",
+        assignedAgent: "Master Agent",
+        completed: false,
+        inProgress: false
+      });
+
+      return milestones;
+    }
+
     // 1. Check for explicit numbered lines (e.g. 1. xxx, 2. yyy)
     const numberedRegex = /(?:^|\n)\s*(?:\d+[\.\)]|\-|\*)\s*([^\n]+)/g;
     let match;
@@ -130,7 +179,7 @@
       });
       milestones.push({
         id: milestones.length + 1,
-        title: "Validasi Hasil Akhir & Penyusunan Laporan Tuntas",
+        title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas",
         assignedAgent: "Master Agent",
         completed: false,
         inProgress: false
@@ -155,7 +204,7 @@
       });
       milestones.push({
         id: milestones.length + 1,
-        title: "Validasi Hasil Akhir & Penyusunan Laporan Tuntas",
+        title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas",
         assignedAgent: "Master Agent",
         completed: false,
         inProgress: false
@@ -170,59 +219,86 @@
       milestones.push(
         { id: 2, title: "Audit Matriks Kinerja Iklan & Filter Lead High-Intent", assignedAgent: adsAgent, completed: false, inProgress: false },
         { id: 3, title: "Evaluasi Funnel Chat Closing & Kualifikasi Prospek", assignedAgent: salesAgent, completed: false, inProgress: false },
-        { id: 4, title: "Perumusan Rekomendasi Solusi & Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        { id: 4, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('tiar') || cleanLower.includes('properti') || cleanLower.includes('rumah') || cleanLower.includes('kpr') || cleanLower.includes('surabaya') || cleanLower.includes('sidoarjo')) {
       const salesAgent = findWorker('closer', findWorker('sales', 'Tiar Sales Closer CS'));
       milestones.push(
         { id: 2, title: "Analisis Unit Properti & Simulasi Cicilan KPR 2026", assignedAgent: salesAgent, completed: false, inProgress: false },
-        { id: 3, title: "Penyusunan Rekomendasi Closing & Booking Survei", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        { id: 3, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('copy') || cleanLower.includes('caption') || cleanLower.includes('hook') || cleanLower.includes('naskah') || cleanLower.includes('genz') || cleanLower.includes('reels') || cleanLower.includes('tiktok')) {
       const copyAgent = findWorker('copy', 'Tiar Copywriter Expert');
       milestones.push(
         { id: 2, title: "Perumusan Copywriting Viral, Hooks & Mental Triggers", assignedAgent: copyAgent, completed: false, inProgress: false },
-        { id: 3, title: "Validasi Tone of Voice & Penyajian Konten Final", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        { id: 3, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('desain') || cleanLower.includes('design') || cleanLower.includes('visual') || cleanLower.includes('gambar') || cleanLower.includes('poster') || cleanLower.includes('image')) {
       const visualAgent = findWorker('visual', findWorker('desain', 'AI Visual Designer'));
       milestones.push(
         { id: 2, title: "Render Desain Grafis & Pembuatan Layout Visual", assignedAgent: visualAgent, completed: false, inProgress: false },
-        { id: 3, title: "Validasi Komposisi & Penyajian Aset Akhir", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        { id: 3, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('unesa') || cleanLower.includes('thesis') || cleanLower.includes('skripsi') || cleanLower.includes('jurnal') || cleanLower.includes('akademik')) {
       const thesisAgent = findWorker('thesis', 'Thesis & Academic Assistant');
       milestones.push(
         { id: 2, title: "Sintesis Literatur & Penyusunan Kerangka Teori", assignedAgent: thesisAgent, completed: false, inProgress: false },
-        { id: 3, title: "Validasi Metodologi & Laporan Akademik Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        { id: 3, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('run') || cleanLower.includes('terminal') || cleanLower.includes('command') || cleanLower.includes('file') || cleanLower.includes('code') || cleanLower.includes('buat file') || cleanLower.includes('bash')) {
       const codeAgent = findWorker('coding', 'Coding & System Engineer');
       milestones.push(
         { id: 2, title: "Eksekusi Perintah Terminal & Pemrosesan File", assignedAgent: codeAgent, completed: false, inProgress: false },
-        { id: 3, title: "Validasi Output Eksekusi & Integritas Solusi", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        { id: 3, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('doc') || cleanLower.includes('sheet') || cleanLower.includes('slide') || cleanLower.includes('drive') || cleanLower.includes('gmail') || cleanLower.includes('gsuite')) {
       const gsuiteAgent = findWorker('gsuite', 'Google Workspace Specialist');
       milestones.push(
         { id: 2, title: "Pembuatan & Penataan Berkas via REST API", assignedAgent: gsuiteAgent, completed: false, inProgress: false },
-        { id: 3, title: "Verifikasi URL Berkas & Penyajian Laporan", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        { id: 3, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('http') || cleanLower.includes('web') || cleanLower.includes('cari') || cleanLower.includes('browse') || cleanLower.includes('scrape') || cleanLower.includes('riset') || cleanLower.includes('buka')) {
       const browserAgent = findWorker('default', 'General Browser Assistant');
       milestones.push(
         { id: 2, title: `Navigasi Web & Ekstraksi Data Target: ${text.slice(0, 40)}`, assignedAgent: browserAgent, completed: false, inProgress: false },
         { id: 3, title: "Analisis Kelengkapan & Validasi Data Temuan", assignedAgent: "Master Agent", completed: false, inProgress: false },
-        { id: 4, title: "Penyusunan Laporan Tuntas & Verifikasi Solusi", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        { id: 4, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else {
       const fallbackWorker = matchedWorkers[0]?.name || "General Browser Assistant";
       milestones.push(
         { id: 2, title: `Eksekusi Tugas Spesialis: ${text.slice(0, 45)}`, assignedAgent: fallbackWorker, completed: false, inProgress: false },
-        { id: 3, title: "Validasi Hasil Akhir & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        { id: 3, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     }
 
+    return milestones;
+  }
+
+  /**
+   * Adds a revision task dynamically when Master Agent detects incomplete or flawed data
+   */
+  function addRevisionMilestone(milestones, targetAgentName, revisionNote) {
+    if (!milestones || !Array.isArray(milestones)) return milestones;
+    
+    const valIdx = milestones.findIndex(m => m.title.toLowerCase().includes("validasi"));
+    const newId = milestones.length + 1;
+    const revMilestone = {
+      id: newId,
+      title: `🔄 Revisi & Penyempurnaan Data: ${revisionNote || 'Lengkapi data yang kurang'}`,
+      assignedAgent: targetAgentName || "Agen Spesialis",
+      completed: false,
+      inProgress: true,
+      isRevision: true
+    };
+
+    if (valIdx >= 0) {
+      milestones.splice(valIdx, 0, revMilestone);
+    } else {
+      milestones.push(revMilestone);
+    }
+
+    milestones.forEach((m, idx) => { m.id = idx + 1; });
     return milestones;
   }
 
@@ -234,17 +310,22 @@
 
     const listStr = milestones.map(m => {
       const mark = m.completed ? '[x]' : (m.inProgress ? '[▶]' : '[ ]');
-      return `- ${mark} Milestone ${m.id}: ${m.title}`;
+      const ag = m.assignedAgent ? ` [Penanggung Jawab: ${m.assignedAgent}]` : '';
+      return `- ${mark} Milestone ${m.id}: ${m.title}${ag}`;
     }).join('\n');
 
-    return `\n\n=== 🎯 MANDAT GOAL CHECKLIST MATRIX (GOAL-DRIVEN DEEP REASONING LOOP) ===
-Tugas ini memiliki target sasaran multi-langkah yang WAJIB diselesaikan 100% secara tuntas:
+    return `\n\n=== 👑 MANDAT BOS PERFEKSIONIS & GOAL CHECKLIST MATRIX (100% ACCURACY LOOP) ===
+Anda adalah 👑 Master Agent (Supreme Commander & Perfectionist Boss). Anda memiliki standar kualitas mutlak 100% dan TIDAK PERNAH menerima data yang salah, kurang lengkap, atau halusinasi dari bawahan Anda!
+
+TARGET SASARAN & JADWAL TUGAS MULTI-AGENT:
 ${listStr}
 
-PROTOKOL EKSEKUSI MUTLAK:
-1. DILARANG BERHENTI (NO PREMATURE STOP): Anda TIDAK BOLEH mengakhiri tugas atau menyatakan selesai jika masih ada Milestone bertanda [ ] atau [▶]!
-2. EVALUASI BERKELANJUTAN: Pada setiap langkah Reasoning, tinjau progres Milestone Anda dan lanjutkan eksekusi ke langkah berikutnya secara berkesinambungan.
-3. KELUARAN AKHIR: Hanya berikan jawaban akhir setelah SEMUA Milestone telah berhasil dieksekusi dan terverifikasi 100%!\n`;
+PROTOKOL EKSEKUSI BOS PERFEKSIONIS:
+1. DILARANG BERHENTI PREMATUR (NO PREMATURE STOP): Anda TIDAK BOLEH mengakhiri tugas jika masih ada Milestone bertanda [ ] atau [▶]!
+2. KOORDINASI LENGKAP: Pastikan setiap agen pelaksana menjalankan tugasnya secara optimal dan menghasilkan data konkret yang utuh.
+3. VALIDASI KUALITAS 100%: Sebelum memberikan jawaban akhir kepada pengguna, evaluasi seluruh temuan:
+   - Jika data bawahan masih ada yang kurang atau meragukan: Perintahkan revisi (panggil tool perbaikan atau delegasikan kembali).
+   - Hanya serahkan laporan ke pengguna jika data telah terverifikasi 100% akurat, lengkap, dan tuntas!\n`;
   }
 
   /**
@@ -312,6 +393,7 @@ Lanjutkan eksekusi langkah berikutnya sekarang juga menggunakan tool browser / b
   const GoalTracker = {
     isGoalTask,
     extractGoalMilestones,
+    addRevisionMilestone,
     buildGoalPromptDirective,
     updateMilestonesFromTurns,
     getGoalStatusString,

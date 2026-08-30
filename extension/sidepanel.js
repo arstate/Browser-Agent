@@ -39,6 +39,7 @@ let currentChatMode = 'agent'; // 'agent' (default, autonomous browser control) 
 let customAgents = [];
 let customSkills = [];
 let customMemories = [];
+let activeGoalMilestones = null;
 
 // Persistent Memory & Autonomous Brain State (Hermes-Surpassing)
 let cachedPersistentMemory = {
@@ -3050,6 +3051,11 @@ async function executeTool(name, args, assistantBubble = null) {
         dynamicallyAddSubAgentToUI(currentActiveAssistantBubble, recruited, subtask);
       }
 
+      if (activeGoalMilestones && typeof GoalTracker !== 'undefined' && typeof GoalTracker.addRevisionMilestone === 'function') {
+        GoalTracker.addRevisionMilestone(activeGoalMilestones, recruited.name, subtask || reason);
+        renderTaskScheduleSection(currentActiveAssistantBubble, activeGoalMilestones, 'min');
+      }
+
       return {
         success: true,
         status: "recruited",
@@ -5403,7 +5409,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   }
 
   // Master Agent Manage Task Schedule Generator
-  let activeGoalMilestones = (typeof GoalTracker !== 'undefined') 
+  activeGoalMilestones = (typeof GoalTracker !== 'undefined') 
     ? GoalTracker.extractGoalMilestones(userMessage, customAgents, workerAgents) 
     : null;
 
