@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.149`
+- **Versi Terkini:** `v2.150.150`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -154,3 +154,4 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 32. **Agent Finding Discovery State & Staggered Morph Entrance Animation:** Mengimplementasikan fase pemindaian agen awal (`Memindai & memilih agen spesialis...`), menyembunyikan pohon cabang multi-agent selama scanning (`is-finding-agents`), lalu me-morphing dan memunculkan kartu sub-agent secara halus menggunakan efek stagger cascade (`agentCardStaggerIn` 0.38s cubic-bezier + `stemGrowIn`) saat Master Agent mengumumkan hasil temuan tim.
 33. **Multi-Agent Tree Robust Rendering & Sub-Agent Status Badge Isolation:** Memperbaiki bug visibilitas kartu sub-agent dengan memastikan `opacity: 1` sebagai base style pada `.agent-tree-item` dan mengisolasi badge `Bekerja...` agar hanya menyala pada agen bawahan yang sedang dieksekusi aktif, bukan ketika Master Agent sedang berpikir atau mengarahkan.
 34. **Zero-Keyframe Failure Resilience Standard for Multi-Agent Tree:** Menghapus `@keyframes` dengan `opacity: 0` pada item sub-agent dan menggantinya dengan styling `display: flex !important; opacity: 1 !important; visibility: visible !important;` sehingga seluruh kartu tim agen yang ditugaskan selalu tampil 100% konsisten, tajam, dan tidak pernah hilang/blank dalam kondisi rendering browser apa pun.
+35. **Native OS Desktop Screenshot Engine in Rust Native Host:** Menambahkan handler RPC `capture_os_screenshot` pada Rust Native Host binary (`browser_agent_host`) yang mendukung eksekusi multi-tool Linux (Spectacle, Grim, GNOME-Screenshot, Scrot, Maim, ImageMagick) dengan kompresi base64, safe frame chunking boundary, dan pengiriman otomatis ke Telegram Bot via `/screenshot_os`.

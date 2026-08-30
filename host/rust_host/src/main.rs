@@ -868,6 +868,94 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             }
         }
 
+        "capture_os_screenshot" => {
+            let tmp_path = if cfg!(windows) {
+                let temp = std::env::var("TEMP").unwrap_or_else(|_| "C:\\Windows\\Temp".to_string());
+                PathBuf::from(temp).join("browser_agent_os_screenshot.png")
+            } else {
+                PathBuf::from("/tmp/browser_agent_os_screenshot.png")
+            };
+
+            if tmp_path.exists() {
+                let _ = fs::remove_file(&tmp_path);
+            }
+
+            let mut success = false;
+            let tmp_path_str = tmp_path.to_string_lossy().to_string();
+
+            #[cfg(target_os = "linux")]
+            {
+                let candidates: Vec<(&str, Vec<&str>)> = vec![
+                    ("spectacle", vec!["-b", "-n", "-o", &tmp_path_str]),
+                    ("grim", vec![&tmp_path_str]),
+                    ("gnome-screenshot", vec!["-f", &tmp_path_str]),
+                    ("scrot", vec![&tmp_path_str]),
+                    ("maim", vec![&tmp_path_str]),
+                    ("import", vec!["-window", "root", &tmp_path_str]),
+                ];
+
+                for (bin, args) in candidates {
+                    if let Ok(status) = Command::new(bin).args(&args).status() {
+                        if status.success() && tmp_path.exists() && fs::metadata(&tmp_path).map(|m| m.len() > 0).unwrap_or(false) {
+                            success = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Fallback via python PIL if available
+                if !success {
+                    let py_script = format!(
+                        "import PIL.ImageGrab; img=PIL.ImageGrab.grab(); img.save('{}', 'PNG')",
+                        tmp_path_str
+                    );
+                    if let Ok(status) = Command::new("python3").args(["-c", &py_script]).status() {
+                        if status.success() && tmp_path.exists() && fs::metadata(&tmp_path).map(|m| m.len() > 0).unwrap_or(false) {
+                            success = true;
+                        }
+                    }
+                }
+            }
+
+            #[cfg(target_os = "macos")]
+            {
+                if let Ok(status) = Command::new("screencapture").args(["-x", &tmp_path_str]).status() {
+                    if status.success() && tmp_path.exists() && fs::metadata(&tmp_path).map(|m| m.len() > 0).unwrap_or(false) {
+                        success = true;
+                    }
+                }
+            }
+
+            #[cfg(target_os = "windows")]
+            {
+                let ps_script = format!(
+                    "Add-Type -AssemblyName System.Windows.Forms,System.Drawing; $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds; $bmp = New-Object System.Drawing.Bitmap($b.Width, $b.Height); $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size); $bmp.Save('{}', [System.Drawing.Imaging.ImageFormat]::Png); $g.Dispose(); $bmp.Dispose()",
+                    tmp_path_str.replace('\\', "\\\\")
+                );
+                if let Ok(status) = Command::new("powershell").args(["-NoProfile", "-Command", &ps_script]).status() {
+                    if status.success() && tmp_path.exists() && fs::metadata(&tmp_path).map(|m| m.len() > 0).unwrap_or(false) {
+                        success = true;
+                    }
+                }
+            }
+
+            if success && tmp_path.exists() {
+                match fs::read(&tmp_path) {
+                    Ok(bytes) => {
+                        let b64 = BASE64_STANDARD.encode(&bytes);
+                        json!({
+                            "status": "ok",
+                            "data_url": format!("data:image/png;base64,{}", b64),
+                            "file_path": tmp_path_str
+                        })
+                    }
+                    Err(e) => json!({ "status": "error", "error": format!("Failed to read screenshot: {}", e) }),
+                }
+            } else {
+                json!({ "status": "error", "error": "Gagal mengambil screenshot desktop OS (CLI screenshot tool tidak tersedia)" })
+            }
+        }
+
         // ==========================================
         // SESSIONS RPC HANDLERS
         // ==========================================
