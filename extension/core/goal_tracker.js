@@ -34,13 +34,38 @@
   }
 
   /**
-   * Extracts or decomposes a user prompt into structured milestones
+   * Extracts or decomposes a user prompt into structured milestones with assigned agents
    */
-  function extractGoalMilestones(promptText) {
+  function extractGoalMilestones(promptText, customAgents = []) {
     if (!promptText || typeof promptText !== 'string') return [];
 
     let text = promptText.replace(/^\/goal\s*/i, '').trim();
+    const cleanLower = text.toLowerCase();
     const milestones = [];
+
+    // Helper to determine best agent for task
+    function inferAgentForTask(taskTitle) {
+      const lower = taskTitle.toLowerCase();
+      if (lower.includes('buka') || lower.includes('navigasi') || lower.includes('web') || lower.includes('klik') || lower.includes('snapshot') || lower.includes('url') || lower.includes('browser')) {
+        return "General Browser Assistant";
+      }
+      if (lower.includes('terminal') || lower.includes('bash') || lower.includes('command') || lower.includes('file') || lower.includes('script') || lower.includes('kode') || lower.includes('coding')) {
+        return "Coding & System Engineer";
+      }
+      if (lower.includes('doc') || lower.includes('sheet') || lower.includes('slides') || lower.includes('drive') || lower.includes('gmail') || lower.includes('gsuite') || lower.includes('workspace')) {
+        return "Google Workspace Specialist";
+      }
+      if (lower.includes('gambar') || lower.includes('image') || lower.includes('desain') || lower.includes('visual') || lower.includes('poster')) {
+        return "AI Visual Designer";
+      }
+      if (lower.includes('tiar') || lower.includes('properti') || lower.includes('rumah') || lower.includes('kpr') || lower.includes('copywriting') || lower.includes('closing')) {
+        return "Tiar Property / Sales Closer";
+      }
+      if (lower.includes('skripsi') || lower.includes('jurnal') || lower.includes('tesis') || lower.includes('akademik') || lower.includes('analisis')) {
+        return "Thesis & Academic Assistant";
+      }
+      return "Master Agent";
+    }
 
     // 1. Check for explicit numbered lines (e.g. 1. xxx, 2. yyy)
     const numberedRegex = /(?:^|\n)\s*(?:\d+[\.\)]|\-|\*)\s*([^\n]+)/g;
@@ -51,6 +76,7 @@
         milestones.push({
           id: milestones.length + 1,
           title: item,
+          assignedAgent: inferAgentForTask(item),
           completed: false,
           inProgress: milestones.length === 0
         });
@@ -67,6 +93,7 @@
             milestones.push({
               id: idx + 1,
               title: cleanPart,
+              assignedAgent: inferAgentForTask(cleanPart),
               completed: false,
               inProgress: idx === 0
             });
@@ -75,13 +102,34 @@
       }
     }
 
-    // 3. Fallback: Decompose complex instruction into standard 3-phase Goal Matrix
+    // 3. Fallback: Context-Aware Decomposition Matrix based on Domain
     if (milestones.length === 0) {
-      milestones.push(
-        { id: 1, title: `Inisialisasi & Pengumpulan Data: ${text.slice(0, 60)}...`, completed: false, inProgress: true },
-        { id: 2, title: "Eksekusi Aksi & Pemrosesan Berkas / Web Dashboard", completed: false, inProgress: false },
-        { id: 3, title: "Validasi Hasil Akhir & Penyusunan Laporan Tuntas", completed: false, inProgress: false }
-      );
+      if (cleanLower.includes('http') || cleanLower.includes('web') || cleanLower.includes('cari') || cleanLower.includes('browse') || cleanLower.includes('scrape')) {
+        milestones.push(
+          { id: 1, title: `Buka & Navigasi Halaman Web: ${text.slice(0, 45)}`, assignedAgent: "General Browser Assistant", completed: false, inProgress: true },
+          { id: 2, title: "Ekstraksi Data, Snapshot & Interaksi Halaman", assignedAgent: "General Browser Assistant", completed: false, inProgress: false },
+          { id: 3, title: "Analisis Kelengkapan & Validasi Data", assignedAgent: "Master Agent", completed: false, inProgress: false },
+          { id: 4, title: "Penyusunan Laporan Tuntas & Verifikasi Solusi", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        );
+      } else if (cleanLower.includes('run') || cleanLower.includes('terminal') || cleanLower.includes('command') || cleanLower.includes('file') || cleanLower.includes('code') || cleanLower.includes('buat file')) {
+        milestones.push(
+          { id: 1, title: "Analisis Struktur Sistem & Direktori Kerja", assignedAgent: "Coding & System Engineer", completed: false, inProgress: true },
+          { id: 2, title: "Eksekusi Perintah Terminal & Pemrosesan File", assignedAgent: "Coding & System Engineer", completed: false, inProgress: false },
+          { id: 3, title: "Verifikasi Output & Integritas Solusi", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        );
+      } else if (cleanLower.includes('doc') || cleanLower.includes('sheet') || cleanLower.includes('slide') || cleanLower.includes('drive') || cleanLower.includes('gmail')) {
+        milestones.push(
+          { id: 1, title: "Otorisasi & Sinkronisasi Google Workspace API", assignedAgent: "Google Workspace Specialist", completed: false, inProgress: true },
+          { id: 2, title: "Pembuatan & Pengolahan Berkas Workspace", assignedAgent: "Google Workspace Specialist", completed: false, inProgress: false },
+          { id: 3, title: "Verifikasi URL Berkas & Penyajian Laporan", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        );
+      } else {
+        milestones.push(
+          { id: 1, title: `Pemetaan Rencana Sasaran: ${text.slice(0, 50)}`, assignedAgent: "Master Agent", completed: false, inProgress: true },
+          { id: 2, title: "Eksekusi Langkah Multi-Agent & Koordinasi Tugas", assignedAgent: "General Browser Assistant", completed: false, inProgress: false },
+          { id: 3, title: "Validasi Hasil Akhir & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        );
+      }
     }
 
     return milestones;

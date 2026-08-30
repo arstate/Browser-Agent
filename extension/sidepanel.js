@@ -5396,9 +5396,15 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     await new Promise(r => setTimeout(r, 350));
   }
 
-  // Option 1 & 3: Goal Decomposition & Self-Correction Initializers
-  const isGoalTaskActive = (typeof GoalTracker !== 'undefined') && GoalTracker.isGoalTask(userMessage);
-  let activeGoalMilestones = isGoalTaskActive ? GoalTracker.extractGoalMilestones(userMessage) : null;
+  // Master Agent Manage Task Schedule Generator
+  let activeGoalMilestones = (typeof GoalTracker !== 'undefined') 
+    ? GoalTracker.extractGoalMilestones(userMessage, customAgents) 
+    : null;
+
+  if (activeGoalMilestones && activeGoalMilestones.length > 0) {
+    renderTaskScheduleSection(assistantBubble, activeGoalMilestones, 'full');
+  }
+
   const failureTracker = (typeof SelfCorrectionEngine !== 'undefined') 
     ? SelfCorrectionEngine.createFailureTracker() 
     : null;
@@ -5708,12 +5714,26 @@ Tugas Anda:
           } else if (isClarificationTool) {
             badgeActionName = "Konfirmasi Opsi Pilihan";
           }
+
+          // Master Agent Orchestration Visibility in Tool Steps
+          if (hasBoss && !isBossWorker && !toolCall._delegationRendered) {
+            toolCall._delegationRendered = true;
+            const delegBadge = appendToolBadge(assistantBubble, `Instruksikan ${workerName}: ${badgeActionName}`, {}, "👑 Master Agent");
+            updateToolBadgeState(delegBadge, "success", "Instruksi Diberikan & Dikoordinasikan");
+          }
+
           const badge = appendToolBadge(assistantBubble, badgeActionName, toolArgs, workerName);
           const stepStr = `Step ${currentStep}`;
           
           updateAssistantActiveAgent(assistantBubble, workerName, `Menjalankan ${badgeActionName}...`, isBossWorker, false);
           updateFooterStatus(`⚡ ${workerName}: ${badgeActionName} (${stepStr})...`);
           notifyActiveTabExecutionState(true, currentStep, maxSteps, `${workerName}: ${stepStr} • ${badgeActionName}`);
+
+          // Update task schedule container progress in realtime (min-mode with auto-scroll)
+          if (activeGoalMilestones && typeof GoalTracker !== 'undefined') {
+            GoalTracker.updateMilestonesFromTurns(activeGoalMilestones, conversationHistory);
+            updateTaskScheduleProgress(assistantBubble, activeGoalMilestones, currentStep, true);
+          }
 
           // Broadcast live step progress to Telegram remote chat via in-place message edit (NO SPAM)
           if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
@@ -5795,6 +5815,7 @@ Tugas Anda:
             if (failureTracker) failureTracker.reset(toolName, toolArgs);
             if (activeGoalMilestones && typeof GoalTracker !== 'undefined') {
               GoalTracker.updateMilestonesFromTurns(activeGoalMilestones, conversationHistory);
+              updateTaskScheduleProgress(assistantBubble, activeGoalMilestones, currentStep, true);
               const gStatus = GoalTracker.getGoalStatusString(activeGoalMilestones);
               if (gStatus) {
                 const plainStatus = gStatus.replace(/<[^>]+>/g, '').replace(/\n/g, ' ');
@@ -5831,6 +5852,7 @@ Tugas Anda:
       }
     }
 
+    finalizeTaskScheduleSection(assistantBubble);
     finalizeToolSection(assistantBubble, true);
     
     // If clarification dock was rendered, pause and wait for user option click
@@ -6089,6 +6111,7 @@ Tugas Anda:
     }
 
   } catch (err) {
+    finalizeTaskScheduleSection(assistantBubble);
     finalizeToolSection(assistantBubble, true);
     const finalAgentName = hasBoss ? "Master Agent" : (resolvedAgents[0]?.name || "General Agent");
     const isAbort = (
@@ -7901,6 +7924,24 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
       </div>
       <div class="thinking-content"></div>
     </div>
+    <div class="task-schedule-wrapper full-mode" style="display: none;">
+      <div class="task-schedule-header">
+        <div class="task-schedule-header-left">
+          <svg class="task-schedule-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span class="task-schedule-title">Rencana &amp; Jadwal Tugas Master Agent</span>
+        </div>
+        <div class="task-schedule-header-right">
+          <button type="button" class="task-schedule-mode-btn" title="Ubah tampilan Full / Minimize (Maks 3)">
+            <span class="task-schedule-mode-text">Minimize</span>
+          </button>
+          <span class="task-schedule-toggle-text">Tutup</span>
+          <svg class="task-schedule-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="task-schedule-list-container">
+        <div class="task-schedule-list"></div>
+      </div>
+    </div>
     <div class="tool-section-wrapper" style="display: none;">
       <button type="button" class="tool-toggle-header" title="Klik untuk sembunyikan/tampilkan riwayat tool">
         <div class="tool-toggle-left">
@@ -7956,6 +7997,161 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
   scrollToBottom();
   currentActiveAssistantBubble = msg;
   return msg;
+}
+
+function renderTaskScheduleSection(bubble, milestones, initialMode = 'full') {
+  if (!bubble || !Array.isArray(milestones) || milestones.length === 0) return;
+  const wrapper = bubble.querySelector('.task-schedule-wrapper');
+  if (!wrapper) return;
+
+  wrapper.style.display = 'flex';
+  wrapper.className = `task-schedule-wrapper ${initialMode === 'full' ? 'full-mode' : 'min-mode'}`;
+
+  const header = wrapper.querySelector('.task-schedule-header');
+  const titleEl = wrapper.querySelector('.task-schedule-title');
+  const modeBtn = wrapper.querySelector('.task-schedule-mode-btn');
+  const modeText = wrapper.querySelector('.task-schedule-mode-text');
+  const toggleText = wrapper.querySelector('.task-schedule-toggle-text');
+  const listEl = wrapper.querySelector('.task-schedule-list');
+
+  const total = milestones.length;
+  const completedCount = milestones.filter(m => m.completed).length;
+  if (titleEl) {
+    titleEl.textContent = `Rencana & Jadwal Tugas Master Agent (${completedCount}/${total})`;
+  }
+  if (modeText) {
+    modeText.textContent = wrapper.classList.contains('full-mode') ? 'Minimize' : 'Show Full';
+  }
+  if (toggleText) {
+    toggleText.textContent = wrapper.classList.contains('collapsed') ? 'Detail' : 'Tutup';
+  }
+
+  // Render items
+  listEl.innerHTML = milestones.map((m, idx) => {
+    let statusClass = 'pending';
+    let iconSvg = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
+    if (m.completed) {
+      statusClass = 'completed';
+      iconSvg = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    } else if (m.inProgress) {
+      statusClass = 'in-progress';
+      iconSvg = '<span class="task-spinner"></span>';
+    }
+
+    const assignedAgent = m.assignedAgent || 'Master Agent';
+    return `
+      <div class="task-schedule-item ${statusClass}" data-task-id="${m.id}">
+        <div class="task-item-left">
+          <span class="task-item-status-icon">${iconSvg}</span>
+          <span class="task-item-title">${escapeHtml(m.title)}</span>
+        </div>
+        <span class="task-item-agent-tag ${assignedAgent.includes('Master') ? 'boss-tag' : ''}">${escapeHtml(assignedAgent)}</span>
+      </div>
+    `;
+  }).join('');
+
+  // Bind interactive controls
+  if (modeBtn && !modeBtn.dataset.bound) {
+    modeBtn.dataset.bound = 'true';
+    modeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      wrapper.classList.remove('collapsed');
+      const isFull = wrapper.classList.toggle('full-mode');
+      wrapper.classList.toggle('min-mode', !isFull);
+      if (modeText) modeText.textContent = isFull ? 'Minimize' : 'Show Full';
+      if (toggleText) toggleText.textContent = 'Tutup';
+    });
+  }
+
+  if (header && !header.dataset.bound) {
+    header.dataset.bound = 'true';
+    header.addEventListener('click', (e) => {
+      if (e.target.closest('.task-schedule-mode-btn')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const isCollapsed = wrapper.classList.toggle('collapsed');
+      if (toggleText) {
+        toggleText.textContent = isCollapsed ? 'Detail' : 'Tutup';
+      }
+    });
+  }
+}
+
+function updateTaskScheduleProgress(bubble, milestones, activeMilestoneIdx = 0, forceMinMode = true) {
+  if (!bubble || !Array.isArray(milestones) || milestones.length === 0) return;
+  const wrapper = bubble.querySelector('.task-schedule-wrapper');
+  if (!wrapper) return;
+
+  wrapper.style.display = 'flex';
+  if (forceMinMode && !wrapper.classList.contains('collapsed')) {
+    wrapper.classList.remove('full-mode');
+    wrapper.classList.add('min-mode');
+    const modeText = wrapper.querySelector('.task-schedule-mode-text');
+    if (modeText) modeText.textContent = 'Show Full';
+  }
+
+  const total = milestones.length;
+  const completedCount = milestones.filter(m => m.completed).length;
+  const titleEl = wrapper.querySelector('.task-schedule-title');
+  if (titleEl) {
+    titleEl.textContent = `Rencana & Jadwal Tugas Master Agent (${completedCount}/${total} Selesai)`;
+  }
+
+  const items = wrapper.querySelectorAll('.task-schedule-item');
+  items.forEach((itemEl, idx) => {
+    const m = milestones[idx];
+    if (!m) return;
+    itemEl.className = `task-schedule-item ${m.completed ? 'completed' : (m.inProgress ? 'in-progress' : 'pending')}`;
+    const iconSpan = itemEl.querySelector('.task-item-status-icon');
+    if (iconSpan) {
+      if (m.completed) {
+        iconSpan.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      } else if (m.inProgress) {
+        iconSpan.innerHTML = '<span class="task-spinner"></span>';
+      } else {
+        iconSpan.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
+      }
+    }
+  });
+
+  // Auto-scroll list container to active in-progress task item
+  const container = wrapper.querySelector('.task-schedule-list-container');
+  const activeItem = wrapper.querySelector('.task-schedule-item.in-progress') || wrapper.querySelector('.task-schedule-item:last-child');
+  if (container && activeItem) {
+    container.scrollTop = activeItem.offsetTop - 10;
+  }
+}
+
+function finalizeTaskScheduleSection(bubble) {
+  if (!bubble) return;
+  const wrapper = bubble.querySelector('.task-schedule-wrapper');
+  if (!wrapper) return;
+
+  const items = wrapper.querySelectorAll('.task-schedule-item');
+  if (items.length === 0) {
+    wrapper.style.display = 'none';
+    return;
+  }
+
+  items.forEach(itemEl => {
+    itemEl.className = 'task-schedule-item completed';
+    const iconSpan = itemEl.querySelector('.task-item-status-icon');
+    if (iconSpan) {
+      iconSpan.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    }
+  });
+
+  const total = items.length;
+  const titleEl = wrapper.querySelector('.task-schedule-title');
+  if (titleEl) {
+    titleEl.textContent = `✓ Semua Tugas Master Agent Selesai (${total}/${total})`;
+  }
+
+  // Automatically collapse/hide when finished
+  wrapper.classList.add('collapsed');
+  const toggleText = wrapper.querySelector('.task-schedule-toggle-text');
+  if (toggleText) toggleText.textContent = 'Detail';
 }
 
 function updateAssistantText(bubble, text, isStreaming = false) {
