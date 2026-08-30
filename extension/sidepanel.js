@@ -602,18 +602,27 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     }
   }
 
-  // 8. Check other custom agents by keyword match in description or name
+  // 8. Deep Semantic & Skill Inspection across ALL available agents
   for (const ag of customAgents) {
     const agIdStr = String(ag.id || '');
-    if (agIdStr === "master_agent" || agIdStr === "boss_agent" || agIdStr === "default_agent" || agIdStr === "web_researcher_agent" || agIdStr === "coding_engineer_agent") continue;
-    const agNameStr = String(ag.name || '');
-    const nameMatch = agNameStr && text.includes(agNameStr.toLowerCase());
-    const descWords = String(ag.description || "").toLowerCase().split(/\s+/).filter(w => w.length > 3);
-    const descMatch = descWords.some(w => text.includes(w));
-    if (nameMatch || descMatch) {
-      if (!matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
-        matchedWorkers.push(ag);
-      }
+    if (agIdStr === "master_agent" || agIdStr === "boss_agent" || ag.is_boss) continue;
+    if (matchedWorkers.some(m => String(m.id || '') === agIdStr)) continue;
+
+    // Check agent skills
+    const agentSkillObjects = (ag.skills || []).map(sId => customSkills.find(s => s.id === sId)).filter(Boolean);
+    const skillTexts = agentSkillObjects.map(s => `${s.name} ${s.description || ''} ${(s.content || '').slice(0, 300)}`).join(' ').toLowerCase();
+
+    const agNameStr = String(ag.name || '').toLowerCase();
+    const agDescStr = String(ag.description || '').toLowerCase();
+    const agContentStr = String(ag.content || '').toLowerCase().slice(0, 400);
+    const fullAgentProfile = `${agNameStr} ${agDescStr} ${skillTexts} ${agContentStr}`;
+
+    // Semantic tokens in user prompt
+    const promptWords = text.split(/\s+/).filter(w => w.length >= 3);
+    const matchedTokens = promptWords.filter(w => fullAgentProfile.includes(w));
+
+    if (matchedTokens.length >= 2 || (matchedTokens.length >= 1 && (agNameStr.includes(promptWords[0]) || skillTexts.includes(promptWords[0])))) {
+      matchedWorkers.push(ag);
     }
   }
 
@@ -754,15 +763,24 @@ ATURAN KRUSIAL:
     prompt += "\n";
   }
 
-  // Inject Available Ecosystem Catalog for Hermes Dynamic Multi-Agent Swarm
+  // Inject Available Ecosystem Catalog for Hermes Dynamic Multi-Agent Swarm with Full Names & Skills
   const otherCatalogAgents = customAgents.filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss);
   if (otherCatalogAgents.length > 0) {
-    prompt += `=== KATALOG AGEN SPESIALIS TERSEDIA (HERMES DYNAMIC MULTI-AGENT SWARM) ===\n`;
-    prompt += `Sebagai Master Agent (Supreme Orchestrator), Anda dapat merekrut dan memanggil agen spesialis lain di bawah ini di tengah jalan jika Anda mendapati tugas membutuhkan keahlian tambahan (gunakan tool \`summon_specialist_agent({ agent_name_or_id, reason, subtask_assignment })\`):\n`;
+    prompt += `=== 📋 DIREKTORI LENGKAP MULTI-AGENT & SKILL TERSEDIA (DYNAMIC AGENT SWARM) ===\n`;
+    prompt += `Sebagai 👑 Master Agent (Supreme Boss & Perfectionist Orchestrator), Anda membaca seluruh nama lengkap, deskripsi peran, dan keahlian spesifik seluruh agen di bawah ini untuk memilih dan mendelegasikan tugas secara mendalam dan akurat:\n`;
     otherCatalogAgents.forEach(a => {
-      prompt += `- **${a.name}** (ID: \`${a.id}\`): ${a.description || 'Specialist'}\n`;
+      const assignedSkillNames = (a.skills || []).map(sId => {
+        const sk = customSkills.find(s => s.id === sId);
+        return sk ? sk.name : sId;
+      }).filter(Boolean).join(', ');
+
+      prompt += `- 👤 **${a.name}** (ID: \`${a.id}\`)\n`;
+      prompt += `  * Deskripsi: ${a.description || 'Specialist Agent'}\n`;
+      if (assignedSkillNames) {
+        prompt += `  * Skills Tersemat: ${assignedSkillNames}\n`;
+      }
     });
-    prompt += `\n`;
+    prompt += `\nAnda dapat merekrut dan memanggil agen spesialis lain di atas di tengah jalan jika Anda mendapati tugas membutuhkan keahlian tambahan (gunakan tool \`summon_specialist_agent({ agent_name_or_id, reason, subtask_assignment })\`).\n\n`;
   }
 
   prompt += `=== PROTOKOL ANTI-AI-SLOP & CONTINUOUS EXECUTION LOOP (HERMES STANDARD) ===
