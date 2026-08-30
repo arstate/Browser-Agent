@@ -26,13 +26,25 @@ echo "[+] Mengompres seluruh riwayat percakapan Antigravity (Brain & Media) ke .
 mkdir -p "$DIR/antigravity_session"
 if [ -d "$HOME/.gemini/antigravity-cli/brain/$CONV_ID" ]; then
   cd "$HOME/.gemini/antigravity-cli/brain"
-  zip -r "$DIR/antigravity_session/session_${CONV_ID}.zip" "$CONV_ID/" -x "*/.system_generated/tasks/*" > /dev/null 2>&1 || true
+  zip -9 -r "$DIR/antigravity_session/session_${CONV_ID}.zip" "$CONV_ID/" \
+    -x "*transcript_full.jsonl*" \
+    -x "*/.tempmediaStorage/*" \
+    -x "*/.user_uploaded/*" \
+    -x "*/.system_generated/tasks/*" \
+    -x "*/.system_generated/steps/*" \
+    -x "*/.system_generated/messages/*" > /dev/null 2>&1 || true
   cd "$DIR"
 fi
 
 if [ -d "$HOME/.gemini/antigravity-cli/brain/$PREV_CONV_ID" ]; then
   cd "$HOME/.gemini/antigravity-cli/brain"
-  zip -r "$DIR/antigravity_session/session_${PREV_CONV_ID}.zip" "$PREV_CONV_ID/" -x "*/.system_generated/tasks/*" > /dev/null 2>&1 || true
+  zip -9 -r "$DIR/antigravity_session/session_${PREV_CONV_ID}.zip" "$PREV_CONV_ID/" \
+    -x "*transcript_full.jsonl*" \
+    -x "*/.tempmediaStorage/*" \
+    -x "*/.user_uploaded/*" \
+    -x "*/.system_generated/tasks/*" \
+    -x "*/.system_generated/steps/*" \
+    -x "*/.system_generated/messages/*" > /dev/null 2>&1 || true
   cd "$DIR"
 fi
 

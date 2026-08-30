@@ -1,4 +1,5 @@
 ---
+id: skill_fill_form
 name: fill-form
 description: Intelligently fill web forms using provided data — handles text fields, dropdowns, checkboxes, radio buttons, and multi-step forms. Use when the user asks to fill out, complete, or submit a form.
 metadata:

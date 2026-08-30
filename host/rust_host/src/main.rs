@@ -1438,6 +1438,15 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                     let p = entry.path();
                     if p.extension().and_then(|s| s.to_str()) == Some("md") {
                         if let Some((mut meta, content)) = parse_md_file(&p) {
+                            let file_stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_string();
+                            let cur_id = meta.get("id").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+                            if cur_id.is_empty() {
+                                meta["id"] = json!(file_stem);
+                            }
+                            let cur_name = meta.get("name").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+                            if cur_name.is_empty() {
+                                meta["name"] = json!(file_stem);
+                            }
                             meta["content"] = json!(content);
                             meta["file_path"] = json!(p.to_string_lossy());
                             items.push(meta);
@@ -1474,6 +1483,15 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                     let p = entry.path();
                     if p.extension().and_then(|s| s.to_str()) == Some("md") {
                         if let Some((mut meta, content)) = parse_md_file(&p) {
+                            let file_stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_string();
+                            let cur_id = meta.get("id").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+                            if cur_id.is_empty() {
+                                meta["id"] = json!(file_stem);
+                            }
+                            let cur_name = meta.get("name").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+                            if cur_name.is_empty() {
+                                meta["name"] = json!(file_stem);
+                            }
                             meta["content"] = json!(content);
                             meta["file_path"] = json!(p.to_string_lossy());
                             items.push(meta);
@@ -1510,6 +1528,15 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                     let p = entry.path();
                     if p.extension().and_then(|s| s.to_str()) == Some("md") {
                         if let Some((mut meta, content)) = parse_md_file(&p) {
+                            let file_stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_string();
+                            let cur_id = meta.get("id").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+                            if cur_id.is_empty() {
+                                meta["id"] = json!(file_stem);
+                            }
+                            let cur_name = meta.get("name").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+                            if cur_name.is_empty() {
+                                meta["name"] = json!(file_stem);
+                            }
                             meta["content"] = json!(content);
                             meta["file_path"] = json!(p.to_string_lossy());
                             items.push(meta);

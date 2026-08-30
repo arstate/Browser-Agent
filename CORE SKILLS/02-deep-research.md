@@ -1,4 +1,5 @@
 ---
+id: skill_deep_research
 name: deep-research
 description: Research a topic across multiple sources using parallel tabs, save raw content and findings to files, then produce an HTML report and PDF. Use when the user asks to research, investigate, or gather information on a topic.
 metadata:

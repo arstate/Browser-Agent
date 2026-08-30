@@ -1470,7 +1470,6 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
       return;
     }
   }
-  }
 
   // 3. User Prompt Execution -> Always Execute via Fast Independent Background Engine
   let effectiveText = text;

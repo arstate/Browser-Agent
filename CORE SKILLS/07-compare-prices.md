@@ -1,4 +1,5 @@
 ---
+id: skill_compare_prices
 name: compare-prices
 description: Search for a product across multiple retailers in parallel, save pricing data to disk, and produce an HTML report with the best deals and direct product links. Use when the user asks to compare prices, find the best deal, or check prices across stores.
 metadata:

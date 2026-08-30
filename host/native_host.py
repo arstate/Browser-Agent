@@ -432,6 +432,7 @@ def list_md_items(target_dir):
                 if parsed:
                     item_data = parsed["meta"]
                     item_data["id"] = item_data.get("id") or filename.replace(".md", "")
+                    item_data["name"] = item_data.get("name") or item_data.get("id") or filename.replace(".md", "")
                     item_data["content"] = parsed["content"]
                     item_data["file_path"] = file_path
                     items.append(item_data)

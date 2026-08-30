@@ -1,4 +1,5 @@
 ---
+id: skill_screenshot_walkthrough
 name: screenshot-walkthrough
 description: Capture step-by-step screenshots of a workflow or process for documentation, bug reports, or tutorials. Use when the user asks to document steps, create a walkthrough, or capture a process.
 metadata:

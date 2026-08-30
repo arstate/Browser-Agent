@@ -1495,8 +1495,14 @@ async function loadSkills() {
     try {
       const res = await sendNativeRpc("list_skills");
       if (res && res.status === "ok" && Array.isArray(res.items) && res.items.length > 0) {
-        // Filter out legacy property skills
-        skillsList = res.items.filter(s => s.id !== "skill_kpr_simulation" && s.id !== "skill_seo_copywriting");
+        // Filter out legacy property skills and normalize IDs
+        skillsList = res.items
+          .filter(s => s && s.id !== "skill_kpr_simulation" && s.id !== "skill_seo_copywriting")
+          .map(s => {
+            const skillId = s.id || (s.name ? s.name.toLowerCase().replace(/[^a-z0-9_]/g, '_') : 'skill_custom');
+            const skillName = s.name || s.metadata?.['display-name'] || skillId;
+            return { ...s, id: skillId, name: skillName };
+          });
         loaded = true;
       }
     } catch (e) {
@@ -1507,7 +1513,13 @@ async function loadSkills() {
   if (!loaded) {
     const res = await chrome.storage.local.get(['custom_skills']);
     if (res && Array.isArray(res.custom_skills) && res.custom_skills.length > 0) {
-      skillsList = res.custom_skills.filter(s => s.id !== "skill_kpr_simulation" && s.id !== "skill_seo_copywriting");
+      skillsList = res.custom_skills
+        .filter(s => s && s.id !== "skill_kpr_simulation" && s.id !== "skill_seo_copywriting")
+        .map(s => {
+          const skillId = s.id || (s.name ? s.name.toLowerCase().replace(/[^a-z0-9_]/g, '_') : 'skill_custom');
+          const skillName = s.name || s.metadata?.['display-name'] || skillId;
+          return { ...s, id: skillId, name: skillName };
+        });
     } else {
       skillsList = [...DEFAULT_SKILLS];
     }
@@ -1857,7 +1869,10 @@ function renderSkillsCards(searchQuery = currentSearchSkills) {
   }
 
   filtered.forEach(sk => {
-    const isBuiltin = BUILTIN_SKILL_IDS.includes(sk.id) || !!sk.is_builtin;
+    if (!sk) return;
+    const skillId = sk.id || sk.skill_id || (sk.name ? sk.name.toLowerCase().replace(/[^a-z0-9_]/g, '_') : 'skill_custom');
+    const skillName = sk.name || sk.metadata?.['display-name'] || skillId;
+    const isBuiltin = BUILTIN_SKILL_IDS.includes(skillId) || !!sk.is_builtin;
     const isAI = (sk.source === 'autonomous_ai' || (typeof sk.created_by === 'string' && sk.created_by.includes('AI')));
     const isRefined = (sk.edited_by === 'autonomous_ai');
     let sourceBadge = '';
@@ -1877,18 +1892,18 @@ function renderSkillsCards(searchQuery = currentSearchSkills) {
       <div class="item-card-header">
         <div class="item-title-group">
           <div class="item-card-title">
-            <span>${UI_ICONS.bolt} ${escapeHtml(sk.name || 'Untitled Skill')}</span>
+            <span>${UI_ICONS.bolt} ${escapeHtml(skillName)}</span>
             ${sourceBadge}
           </div>
-          <span class="tag-pill skill-tag"><code>${escapeHtml(sk.id)}</code></span>
+          <span class="tag-pill skill-tag"><code>${escapeHtml(skillId)}</code></span>
         </div>
       </div>
       <p class="item-card-desc">${escapeHtml(sk.description || 'Tidak ada deskripsi.')}</p>
       <div class="item-code-preview">${escapeHtml(sk.content || '')}</div>
       <div class="item-card-actions">
-        <button type="button" class="btn-item-action btn-edit-skill" data-id="${sk.id}">Edit SOP</button>
+        <button type="button" class="btn-item-action btn-edit-skill" data-id="${escapeHtml(skillId)}">Edit SOP</button>
         ${!isBuiltin ? `
-        <button type="button" class="btn-item-del btn-delete-skill" data-id="${sk.id}" title="Hapus Skill">
+        <button type="button" class="btn-item-del btn-delete-skill" data-id="${escapeHtml(skillId)}" title="Hapus Skill">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>` : `
         <button type="button" class="btn-item-del disabled" title="Skill bawaan sistem dilindungi (tidak dapat dihapus)" disabled style="opacity: 0.35; cursor: not-allowed; filter: grayscale(1);">
@@ -1897,9 +1912,9 @@ function renderSkillsCards(searchQuery = currentSearchSkills) {
       </div>
     `;
 
-    card.querySelector('.btn-edit-skill')?.addEventListener('click', () => openSkillModal(sk));
+    card.querySelector('.btn-edit-skill')?.addEventListener('click', () => openSkillModal({ ...sk, id: skillId, name: skillName }));
     if (!isBuiltin) {
-      card.querySelector('.btn-delete-skill')?.addEventListener('click', () => deleteSkill(sk.id));
+      card.querySelector('.btn-delete-skill')?.addEventListener('click', () => deleteSkill(skillId));
     }
 
     container.appendChild(card);
@@ -1918,7 +1933,7 @@ function renderMemoriesCards(searchQuery = currentSearchMemories) {
 
   if (clearBtn) clearBtn.style.display = q ? 'inline-flex' : 'none';
 
-  let filtered = [...memoriesList];
+  let filtered = memoriesList.filter(m => m && (m.id || m.name || m.content));
   const totalMemories = filtered.length;
 
   if (q) {
@@ -1945,8 +1960,11 @@ function renderMemoriesCards(searchQuery = currentSearchMemories) {
     return;
   }
 
-  memoriesList.forEach(mem => {
-    const isBuiltin = BUILTIN_MEMORY_IDS.includes(mem.id) || !!mem.is_builtin;
+  filtered.forEach(mem => {
+    if (!mem) return;
+    const memId = mem.id || mem.memory_id || (mem.name ? mem.name.toLowerCase().replace(/[^a-z0-9_]/g, '_') : 'memory_custom');
+    const memName = mem.name || memId;
+    const isBuiltin = BUILTIN_MEMORY_IDS.includes(memId) || !!mem.is_builtin;
     const isAI = (mem.source === 'autonomous_ai' || (typeof mem.created_by === 'string' && mem.created_by.includes('AI')));
     const isRefined = (mem.edited_by === 'autonomous_ai');
     let sourceBadge = '';
@@ -1966,18 +1984,18 @@ function renderMemoriesCards(searchQuery = currentSearchMemories) {
       <div class="item-card-header">
         <div class="item-title-group">
           <div class="item-card-title">
-            <span>${UI_ICONS.brain} ${escapeHtml(mem.name || 'Untitled Memory')}</span>
+            <span>${UI_ICONS.brain} ${escapeHtml(memName)}</span>
             ${sourceBadge}
           </div>
-          <span class="tag-pill memory-tag"><code>${escapeHtml(mem.id)}</code></span>
+          <span class="tag-pill memory-tag"><code>${escapeHtml(memId)}</code></span>
         </div>
       </div>
       <p class="item-card-desc">${escapeHtml(mem.description || '')}</p>
       <div class="item-code-preview">${escapeHtml(mem.content || '')}</div>
       <div class="item-card-actions">
-        <button type="button" class="btn-item-action btn-edit-memory" data-id="${mem.id}">Edit</button>
+        <button type="button" class="btn-item-action btn-edit-memory" data-id="${escapeHtml(memId)}">Edit</button>
         ${!isBuiltin ? `
-        <button type="button" class="btn-item-del btn-delete-memory" data-id="${mem.id}" title="Hapus Memory">
+        <button type="button" class="btn-item-del btn-delete-memory" data-id="${escapeHtml(memId)}" title="Hapus Memory">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>` : `
         <button type="button" class="btn-item-del disabled" title="Memory bawaan sistem dilindungi (tidak dapat dihapus)" disabled style="opacity: 0.35; cursor: not-allowed; filter: grayscale(1);">
@@ -3458,63 +3476,67 @@ function renderPersistentBrain(searchQuery = "") {
       container.appendChild(card);
     });
   } else if (activeBrainSubtab === "skills") {
-    let skills = brainData.autonomous_skills || [];
+    let skills = (brainData.autonomous_skills || []).filter(s => s && ((s.id && s.id.trim()) || (s.name && s.name.trim()) || (s.workflow_markdown && s.workflow_markdown.trim())));
     if (q) {
-      skills = skills.filter(s => (s.name || "").toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q) || (s.workflow_markdown || "").toLowerCase().includes(q));
+      skills = skills.filter(s => (s.name || "").toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q) || (s.workflow_markdown || "").toLowerCase().includes(q) || (s.id || "").toLowerCase().includes(q));
     }
     if (skills.length === 0) {
       container.innerHTML = '<div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;"><p>Belum ada Autonomous Skill tercatat.</p></div>';
       return;
     }
     skills.forEach(item => {
+      const itemId = item.id || (item.name ? 'skill_auto_' + item.name.toLowerCase().replace(/[^a-z0-9_]/g, '_') : 'skill_auto');
+      const itemName = item.name || itemId;
       const card = document.createElement('div');
       card.className = 'item-card';
       card.innerHTML = `
         <div class="item-card-header">
           <div class="item-title-group">
             <div class="item-card-title">
-              <span>${UI_ICONS.bolt} ${escapeHtml(item.name)}</span>
+              <span>${UI_ICONS.bolt} ${escapeHtml(itemName)}</span>
               <span class="badge-source badge-ai-evolved">${UI_ICONS.sparkle} Autonomous AI</span>
             </div>
-            <span class="tag-pill skill-tag"><code>${escapeHtml(item.id)}</code></span>
+            <span class="tag-pill skill-tag"><code>${escapeHtml(itemId)}</code></span>
           </div>
         </div>
         <p class="item-card-desc">${escapeHtml(item.description || 'Autonomous Skill SOP terdistilasi.')}</p>
         <div class="item-code-preview">${escapeHtml(item.workflow_markdown || '')}</div>
         <div class="item-card-actions">
           <span style="font-size: 11px; color: #64748B; font-family: monospace;">Skill ${escapeHtml(item.version || 'v1.0.0')}</span>
-          ${makeDeleteBtn("skill", item.id, "Hapus Skill")}
+          ${makeDeleteBtn("skill", itemId, "Hapus Skill")}
         </div>
       `;
       container.appendChild(card);
     });
   } else if (activeBrainSubtab === "agents") {
-    let agents = brainData.autonomous_agents || [];
+    let agents = (brainData.autonomous_agents || []).filter(a => a && ((a.id && a.id.trim()) || (a.name && a.name.trim()) || (a.system_prompt && a.system_prompt.trim()) || (a.role_description && a.role_description.trim())));
     if (q) {
-      agents = agents.filter(a => (a.name || "").toLowerCase().includes(q) || (a.role_description || "").toLowerCase().includes(q) || (a.system_prompt || "").toLowerCase().includes(q));
+      agents = agents.filter(a => (a.name || "").toLowerCase().includes(q) || (a.role_description || "").toLowerCase().includes(q) || (a.system_prompt || "").toLowerCase().includes(q) || (a.id || "").toLowerCase().includes(q));
     }
     if (agents.length === 0) {
       container.innerHTML = '<div style="grid-column: 1/-1; padding: 48px 20px; text-align: center; color: #64748b; background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255, 255, 255, 0.08); border-radius: 14px;"><p>Belum ada Specialist Agent tercatat.</p></div>';
       return;
     }
     agents.forEach(item => {
+      const itemId = item.id || (item.name ? 'agent_auto_' + item.name.toLowerCase().replace(/[^a-z0-9_]/g, '_') : 'agent_auto');
+      const itemName = item.name || itemId;
       const card = document.createElement('div');
       card.className = 'item-card';
       card.innerHTML = `
         <div class="item-card-header">
           <div class="item-title-group">
             <div class="item-card-title">
-              <span>${UI_ICONS.users} ${escapeHtml(item.name)}</span>
+              <span>${UI_ICONS.users} ${escapeHtml(itemName)}</span>
               <span class="badge-source badge-ai-evolved">${UI_ICONS.robot} Specialist Agent</span>
             </div>
-            <span class="tag-pill memory-tag"><code>${escapeHtml(item.id)}</code></span>
+            <span class="tag-pill memory-tag"><code>${escapeHtml(itemId)}</code></span>
           </div>
         </div>
         <p class="item-card-desc">${escapeHtml(item.role_description || 'Autonomous Specialist Agent.')}</p>
         <div class="item-code-preview">${escapeHtml(item.system_prompt || '')}</div>
         <div class="item-card-actions">
           <span style="font-size: 11px; color: #64748B; font-family: monospace;">Specialist Agent</span>
-          ${makeDeleteBtn("agent", item.id, "Hapus Agent")}
+          ${makeDeleteBtn("agent", itemId, "Hapus Agent")}
         </div>
       `;
       container.appendChild(card);

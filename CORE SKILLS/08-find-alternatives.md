@@ -1,4 +1,5 @@
 ---
+id: skill_find_alternatives
 name: find-alternatives
 description: Find alternative products to something the user is looking at or considering. Searches across retailers and review sites, compares options, and delivers a ranked HTML report with ratings, pricing, and direct links. Use when the user asks for alternatives, similar products, or "something like this but..."
 metadata:

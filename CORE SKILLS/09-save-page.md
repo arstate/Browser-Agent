@@ -1,4 +1,5 @@
 ---
+id: skill_save_page
 name: save-page
 description: Save web pages as PDF files for offline reading, archiving, or sharing. Use when the user asks to save, download, export, or archive a page as PDF.
 metadata:

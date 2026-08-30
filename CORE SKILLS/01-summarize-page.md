@@ -1,4 +1,5 @@
 ---
+id: skill_summarize_page
 name: summarize-page
 description: Extract and summarize the main content of the current web page into structured markdown. Use when the user asks to summarize, digest, or get the gist of a page.
 metadata:

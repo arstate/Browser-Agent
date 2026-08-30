@@ -1,4 +1,5 @@
 ---
+id: skill_read_later
 name: read-later
 description: Bookmark the current page to a "Read Later" folder and save a PDF copy for offline reading. Use when the user wants to save a page for later, bookmark it for reading, or keep an offline copy.
 metadata:

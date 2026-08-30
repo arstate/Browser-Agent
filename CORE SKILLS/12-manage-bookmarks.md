@@ -1,4 +1,5 @@
 ---
+id: skill_manage_bookmarks
 name: manage-bookmarks
 description: Organize bookmarks — find duplicates, categorize by topic, create a clean folder structure, and clean up unused bookmarks. Use when the user asks to organize, clean up, sort, or manage their bookmarks.
 metadata:

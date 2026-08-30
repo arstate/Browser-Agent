@@ -302,3 +302,22 @@ Untuk menjamin performa super lancar dan bebas lag pada perangkat PC / laptop de
    - **ON (Default)**: Material Liquid Glassmorphism dengan `backdrop-filter: blur(16px)` dan transparansi kaca `rgba(18, 18, 22, 0.72)`.
    - **OFF (Opaque Low-Spec Mode)**: Mengaktifkan kelas `.no-glass-blur` di `body` & `html` (`backdrop-filter: none !important;`), mengganti seluruh permukaan kartu kaca menjadi warna solid gelap matte (`background: #141419 !important; background-color: #141419 !important;`), menghilangkan beban GPU rasterization/compositing secara total sehingga rendering 100% ringan, instan, dan bebas lag.
 
+---
+
+## 📌 9. Fixed Pinned Sidebar & Independent Viewport Scroll Architecture
+
+Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong keluar layar saat konten utama di-scroll:
+1. **Root Viewport Locking (`html, body.options-body`)**: Mengunci tinggi `100vh` dengan `overflow: hidden;` sehingga window/viewport tidak pernah melakukan scroll secara global.
+2. **Fixed Pinned Sidebar (`.options-sidebar`)**: Sidebar berukuran `width: 240px; height: 100vh; flex-shrink: 0;` terkunci permanen di sisi kiri. Jika daftar navigasi melebihi tinggi layar, kontainer internal `.sidebar-nav-scroll` melakukan scrolling secara mandiri (`overflow-y: auto;`).
+3. **Independent Main Content Viewport (`.options-main-content`)**: Kontainer utama berukuran `flex: 1; height: 100vh; overflow-y: scroll; scrollbar-gutter: stable;` menggulirkan konten kartu secara independen tanpa memengaruhi posisi sidebar.
+4. **Canonical Width Normalization (`.options-view`)**: Setiap view (`#tab-view-ai`, `#tab-view-agents`, `#tab-view-skills`, `#tab-view-memories`, `#tab-view-persistent-brain`, `#tab-view-ui`, `#tab-view-connected-apps`, `#tab-view-plugins`) memiliki `max-width: 1240px; margin: 0 auto; width: 100%;` untuk menjamin posisi batas kiri dan kanan 100% simetris dan seamless di seluruh menu.
+
+---
+
+## 🧠 10. Resilient Brain & Skills Data Parsing Standard
+
+1. **Automatic Filename Stem ID Fallback**: Pada RPC Native Host (`list_skills`, `list_agents`, `list_memories`), file Markdown tanpa metadata `id:` otomatis mengadopsi nama file sebagai `id` dan `name` sehingga tidak menghasilkan tag kosong (`<code></code>`).
+2. **Defensive Filtering in UI Renderers**: Seluruh fungsi render kartu di `options.js` (`renderPersistentBrain`, `renderSkillsCards`, `renderAgentsCards`, `renderMemoriesCards`) menyaring baris kosong/null (`filter(item => item && (item.id || item.name))`) dan memberikan fallback nama & ID yang aman (`itemId`, `itemName`, `skillId`, `agentId`).
+3. **Database Ghost Row Protection**: SQLite database `chat_history.db` secara ketat dibersihkan dari baris dummy tanpa ID / nama untuk menjaga tampilan Persistent Memory selalu bersih, valid, dan bebas anomali visual.
+
+

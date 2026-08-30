@@ -1,4 +1,5 @@
 ---
+id: skill_organize_tabs
 name: organize-tabs
 description: Analyze open tabs, group related ones by topic, close duplicates, and clean up tab clutter. Use when the user asks to organize, clean up, sort, or manage their tabs.
 metadata:

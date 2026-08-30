@@ -1,4 +1,5 @@
 ---
+id: skill_monitor_page
 name: monitor-page
 description: Track changes on a web page by comparing content snapshots over time. Use when the user wants to watch for updates, price drops, stock availability, or content changes.
 metadata:

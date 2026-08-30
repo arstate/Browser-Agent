@@ -1,4 +1,5 @@
 ---
+id: skill_extract_data
 name: extract-data
 description: Extract structured data from web pages — tables, lists, product info, pricing — into clean CSV, JSON, or markdown tables. Parallelizes across hidden tabs for multi-source extraction and saves results to disk incrementally. Use when the user asks to scrape, extract, or pull data from a page.
 metadata:
