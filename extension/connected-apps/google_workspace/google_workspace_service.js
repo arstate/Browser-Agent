@@ -1552,9 +1552,11 @@ class GoogleWorkspaceService {
 
     this.logActivity('WEB_SEARCH', `Pencarian Web: "${query}" (${results.length} hasil ditemukan)`);
     return {
+      status: "success",
       success: true,
       query,
       total_results: results.length,
+      count: results.length,
       results: results.slice(0, limit)
     };
   }
@@ -1574,21 +1576,34 @@ class GoogleWorkspaceService {
       const xmlText = await res.text();
 
       const items = [];
-      if (typeof DOMParser !== 'undefined') {
-        const xmlDoc = new DOMParser().parseFromString(xmlText, 'text/xml');
-        const itemNodes = xmlDoc.querySelectorAll('item');
-        itemNodes.forEach((item, idx) => {
-          if (idx >= 10) return;
-          const title = item.querySelector('title')?.textContent || '';
-          const link = item.querySelector('link')?.textContent || '';
-          const pubDate = item.querySelector('pubDate')?.textContent || '';
-          const source = item.querySelector('source')?.textContent || '';
-          items.push({ title, link, pubDate, source });
-        });
+      const itemRegex = /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<link>(.*?)<\/link>[\s\S]*?<pubDate>(.*?)<\/pubDate>[\s\S]*?(?:<source[^>]*>(.*?)<\/source>)?[\s\S]*?<\/item>/g;
+      let match;
+      while ((match = itemRegex.exec(xmlText)) !== null && items.length < 10) {
+        const rawTitle = match[1]?.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || '';
+        const cleanTitle = rawTitle
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"')
+          .replace(/&#039;/g, "'")
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .trim();
+        const link = match[2]?.trim() || '';
+        const pubDate = match[3]?.trim() || '';
+        const rawSource = match[4]?.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || 'Google News';
+        const source = rawSource
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"')
+          .replace(/&#039;/g, "'")
+          .trim();
+
+        if (cleanTitle && link) {
+          items.push({ title: cleanTitle, link, pubDate, source });
+        }
       }
 
       this.logActivity('NEWS_SEARCH', `Google News: "${query}" (${items.length} berita)`);
       return {
+        status: "success",
         success: true,
         query,
         total_articles: items.length,

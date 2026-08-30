@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.150`
+- **Versi Terkini:** `v2.150.151`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -155,3 +155,4 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 33. **Multi-Agent Tree Robust Rendering & Sub-Agent Status Badge Isolation:** Memperbaiki bug visibilitas kartu sub-agent dengan memastikan `opacity: 1` sebagai base style pada `.agent-tree-item` dan mengisolasi badge `Bekerja...` agar hanya menyala pada agen bawahan yang sedang dieksekusi aktif, bukan ketika Master Agent sedang berpikir atau mengarahkan.
 34. **Zero-Keyframe Failure Resilience Standard for Multi-Agent Tree:** Menghapus `@keyframes` dengan `opacity: 0` pada item sub-agent dan menggantinya dengan styling `display: flex !important; opacity: 1 !important; visibility: visible !important;` sehingga seluruh kartu tim agen yang ditugaskan selalu tampil 100% konsisten, tajam, dan tidak pernah hilang/blank dalam kondisi rendering browser apa pun.
 35. **Native OS Desktop Screenshot Engine in Rust Native Host:** Menambahkan handler RPC `capture_os_screenshot` pada Rust Native Host binary (`browser_agent_host`) yang mendukung eksekusi multi-tool Linux (Spectacle, Grim, GNOME-Screenshot, Scrot, Maim, ImageMagick) dengan kompresi base64, safe frame chunking boundary, dan pengiriman otomatis ke Telegram Bot via `/screenshot_os`.
+36. **Service Worker Regex RSS Parser & Complete Telegram GSuite Slash Suite:** Mengganti parser XML `DOMParser` di `googleNewsSearch` menjadi regex parser murni yang 100% kompatibel dengan Service Worker (`background.js`), serta melengkapi seluruh eksekusi slash command Google Workspace di Telegram (`/news`, `/search`, `/slides`, `/drive`, `/calendar`, `/forms`, `/gmail`, `/docs`, `/sheets`, `/tasks`, `/contacts`).

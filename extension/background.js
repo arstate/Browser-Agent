@@ -1053,15 +1053,21 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
         return;
       }
       await telegramSendMessage(botToken, senderId, `🔍 <i>Mencari di Google / Web untuk "${escapeHtml(q)}"...</i>`);
-      const searchRes = await executeBackgroundTool("web_search", { query: q }, senderId, botToken, tgCfg);
-      if (searchRes && searchRes.status === "success" && Array.isArray(searchRes.results)) {
-        let out = `🔍 <b>Hasil Pencarian Web (${searchRes.count}):</b>\n\n`;
+      let searchRes = await executeBackgroundTool("google_web_search", { query: q }, senderId, botToken, tgCfg);
+      if (!searchRes || (searchRes.status !== "success" && !searchRes.success)) {
+        searchRes = await executeBackgroundTool("web_search", { query: q }, senderId, botToken, tgCfg);
+      }
+      if (searchRes && (searchRes.status === "success" || searchRes.success) && Array.isArray(searchRes.results) && searchRes.results.length > 0) {
+        let out = `🔍 <b>Hasil Pencarian Web (${searchRes.results.length}):</b>\n\n`;
         searchRes.results.slice(0, 5).forEach((r, idx) => {
-          out += `${idx + 1}. <b><a href="${r.link}">${escapeHtml(r.title)}</a></b>\n${escapeHtml(r.snippet || '')}\n\n`;
+          const title = r.title || 'No Title';
+          const link = r.url || r.link || '#';
+          const snippet = r.snippet || '';
+          out += `${idx + 1}. <b><a href="${link}">${escapeHtml(title)}</a></b>\n${escapeHtml(snippet)}\n\n`;
         });
         await telegramSendMessage(botToken, senderId, out);
       } else {
-        await telegramSendMessage(botToken, senderId, `⚠️ Pencarian web gagal atau tidak ada hasil.`);
+        await telegramSendMessage(botToken, senderId, `⚠️ Pencarian web tidak menemukan hasil untuk "${escapeHtml(q)}".`);
       }
       return;
     }
@@ -1070,14 +1076,97 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
       const q = text.replace(/^\/news\s*/i, '').trim() || "indonesia properti teknologi";
       await telegramSendMessage(botToken, senderId, `📰 <i>Mengambil berita terbaru untuk "${escapeHtml(q)}"...</i>`);
       const newsRes = await executeBackgroundTool("google_news_search", { query: q }, senderId, botToken, tgCfg);
-      if (newsRes && newsRes.status === "success" && Array.isArray(newsRes.articles)) {
+      if (newsRes && (newsRes.status === "success" || newsRes.success) && Array.isArray(newsRes.articles) && newsRes.articles.length > 0) {
         let out = `📰 <b>Berita Terkini (${escapeHtml(q)}):</b>\n\n`;
-        newsRes.articles.slice(0, 5).forEach((art, idx) => {
-          out += `${idx + 1}. <b><a href="${art.link}">${escapeHtml(art.title)}</a></b>\n<i>${escapeHtml(art.source || '')} • ${escapeHtml(art.pubDate || '')}</i>\n\n`;
+        newsRes.articles.slice(0, 6).forEach((art, idx) => {
+          out += `${idx + 1}. <b><a href="${art.link}">${escapeHtml(art.title)}</a></b>\n<i>${escapeHtml(art.source || 'Google News')} • ${escapeHtml(art.pubDate || '')}</i>\n\n`;
         });
         await telegramSendMessage(botToken, senderId, out);
       } else {
-        await telegramSendMessage(botToken, senderId, `⚠️ Gagal mengambil berita terkini.`);
+        await telegramSendMessage(botToken, senderId, `⚠️ Tidak ada berita terkini ditemukan untuk "${escapeHtml(q)}".`);
+      }
+      return;
+    }
+
+    if (cmd === '/slides' || cmd === '/slide') {
+      const rawSlides = text.replace(/^\/(?:slides|slide)\s*/i, '').trim();
+      const parts = rawSlides.split('|');
+      const title = parts[0].trim() || "Presentasi Browser Agent";
+      const slidesList = parts.slice(1).map(s => {
+        const [sTitle, ...sBullets] = s.split(':');
+        return {
+          title: sTitle.trim(),
+          bullets: sBullets.join(':').split(',').map(b => b.trim()).filter(Boolean)
+        };
+      });
+      await telegramSendMessage(botToken, senderId, `📊 <i>Membuat Google Slides 16:9 widescreen "${escapeHtml(title)}"...</i>`);
+      const slideRes = await executeBackgroundTool("gsuite_create_presentation", { title, slides: slidesList }, senderId, botToken, tgCfg);
+      if (slideRes && (slideRes.status === "success" || slideRes.presentation_url)) {
+        await telegramSendMessage(botToken, senderId, `✅ <b>Google Slides Berhasil Dibuat!</b>\n📊 <b>${escapeHtml(title)}</b>\n👉 <a href="${slideRes.presentation_url}">Buka Presentasi Google Slides</a>`);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal membuat Google Slides: ${slideRes?.error || 'Pastikan otorisasi Google Workspace aktif di Pengaturan'}`);
+      }
+      return;
+    }
+
+    if (cmd === '/drive') {
+      const q = text.replace(/^\/drive\s*/i, '').trim();
+      await telegramSendMessage(botToken, senderId, `📁 <i>${q ? `Mencari berkas "${escapeHtml(q)}" di Google Drive...` : 'Mengambil berkas terbaru Google Drive...'}</i>`);
+      const driveRes = q 
+        ? await executeBackgroundTool("gsuite_search_drive", { query: q }, senderId, botToken, tgCfg)
+        : await executeBackgroundTool("gsuite_list_recent_files", { max_results: 6 }, senderId, botToken, tgCfg);
+      if (driveRes && (driveRes.status === "success" || Array.isArray(driveRes.files))) {
+        const files = Array.isArray(driveRes.files) ? driveRes.files : [];
+        if (files.length === 0) {
+          await telegramSendMessage(botToken, senderId, `ℹ️ Tidak ada berkas yang ditemukan di Google Drive.`);
+        } else {
+          let out = `📁 <b>Berkas Google Drive (${files.length}):</b>\n\n`;
+          files.slice(0, 6).forEach((f, idx) => {
+            out += `${idx + 1}. 📄 <b><a href="${f.webViewLink || f.url || '#'}">${escapeHtml(f.name || f.title || 'Berkas')}</a></b>\n   <i>${escapeHtml(f.mimeType || '')}</i>\n\n`;
+          });
+          await telegramSendMessage(botToken, senderId, out);
+        }
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal mengakses Google Drive: ${driveRes?.error || 'Pastikan Google Workspace terhubung di Pengaturan'}`);
+      }
+      return;
+    }
+
+    if (cmd === '/calendar') {
+      const rawCal = text.replace(/^\/calendar\s*/i, '').trim();
+      if (!rawCal) {
+        await telegramSendMessage(botToken, senderId, `📅 <i>Mengambil agenda Google Calendar mendatang...</i>`);
+        const calRes = await executeBackgroundTool("google_calendar_list_events", { max_results: 5 }, senderId, botToken, tgCfg);
+        if (calRes && (calRes.status === "success" || Array.isArray(calRes.events))) {
+          const events = Array.isArray(calRes.events) ? calRes.events : [];
+          if (events.length === 0) {
+            await telegramSendMessage(botToken, senderId, `ℹ️ Tidak ada agenda mendatang di Google Calendar.`);
+          } else {
+            let out = `📅 <b>Agenda Google Calendar Mendatang:</b>\n\n`;
+            events.slice(0, 5).forEach((ev, idx) => {
+              const timeStr = ev.start?.dateTime ? new Date(ev.start.dateTime).toLocaleString('id-ID') : (ev.start?.date || '-');
+              out += `${idx + 1}. 📌 <b>${escapeHtml(ev.summary || 'Acara')}</b>\n   ⏰ <code>${escapeHtml(timeStr)}</code>\n\n`;
+            });
+            await telegramSendMessage(botToken, senderId, out);
+          }
+        } else {
+          await telegramSendMessage(botToken, senderId, `⚠️ Gagal membaca Calendar: ${calRes?.error || 'Pastikan Google Workspace terhubung'}`);
+        }
+        return;
+      }
+
+      const parts = rawCal.split('|');
+      const summary = parts[0].trim();
+      const start_time = parts[1] ? parts[1].trim() : new Date(Date.now() + 3600000).toISOString();
+      const end_time = parts[2] ? parts[2].trim() : new Date(Date.now() + 7200000).toISOString();
+      const desc = parts[3] ? parts[3].trim() : "Dibuat via Browser Agent Telegram";
+
+      await telegramSendMessage(botToken, senderId, `📅 <i>Menambahkan agenda "${escapeHtml(summary)}" ke Google Calendar...</i>`);
+      const addRes = await executeBackgroundTool("google_calendar_create_event", { summary, start_time, end_time, description: desc }, senderId, botToken, tgCfg);
+      if (addRes && addRes.status === "success") {
+        await telegramSendMessage(botToken, senderId, `✅ <b>Agenda Berhasil Ditambahkan ke Calendar!</b>\n📌 <b>${escapeHtml(summary)}</b>\n👉 <a href="${addRes.html_link || '#'}">Buka di Google Calendar</a>`);
+      } else {
+        await telegramSendMessage(botToken, senderId, `⚠️ Gagal menambah agenda: ${addRes?.error || 'Error'}`);
       }
       return;
     }
@@ -1166,7 +1255,7 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
       const body = parts.slice(2).join('|').trim();
       await telegramSendMessage(botToken, senderId, `✉️ <i>Mengirim email ke ${escapeHtml(to)} via Gmail...</i>`);
       const gRes = await executeBackgroundTool("gmail_send_email", { to, subject, body }, senderId, botToken, tgCfg);
-      if (gRes && gRes.status === "success") {
+      if (gRes && (gRes.status === "success" || gRes.message_id)) {
         await telegramSendMessage(botToken, senderId, `✅ <b>Email Berhasil Terkirim!</b>\n• <b>Ke:</b> <code>${escapeHtml(to)}</code>\n• <b>Subjek:</b> ${escapeHtml(subject)}`);
       } else {
         await telegramSendMessage(botToken, senderId, `⚠️ Gagal kirim email: ${gRes?.error || 'Periksa otorisasi Google Workspace'}`);
@@ -1181,7 +1270,7 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
       const content = parts.slice(1).join('|').trim() || "Dibuat via Telegram Remote Browser Agent.";
       await telegramSendMessage(botToken, senderId, `📄 <i>Membuat Google Doc "${escapeHtml(title)}"...</i>`);
       const docRes = await executeBackgroundTool("gsuite_create_doc", { title, content }, senderId, botToken, tgCfg);
-      if (docRes && docRes.status === "success") {
+      if (docRes && (docRes.status === "success" || docRes.document_url)) {
         await telegramSendMessage(botToken, senderId, `✅ <b>Google Doc Berhasil Dibuat!</b>\n📄 <b>${escapeHtml(title)}</b>\n👉 <a href="${docRes.document_url}">Buka Dokumen Google Docs</a>`);
       } else {
         await telegramSendMessage(botToken, senderId, `⚠️ Gagal membuat Google Doc: ${docRes?.error || 'Error'}`);
@@ -1198,7 +1287,7 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
       const values = rawSheets.split(',').map(s => s.trim());
       await telegramSendMessage(botToken, senderId, `📊 <i>Menambahkan baris ke Google Sheet...</i>`);
       const sheetRes = await executeBackgroundTool("gsuite_append_sheet_row", { row_values: values }, senderId, botToken, tgCfg);
-      if (sheetRes && sheetRes.status === "success") {
+      if (sheetRes && (sheetRes.status === "success" || sheetRes.spreadsheet_url)) {
         await telegramSendMessage(botToken, senderId, `✅ <b>Data Berhasil Ditambahkan ke Google Sheet!</b>\n👉 <a href="${sheetRes.spreadsheet_url}">Buka Google Sheets</a>`);
       } else {
         await telegramSendMessage(botToken, senderId, `⚠️ Gagal tulis ke Google Sheet: ${sheetRes?.error || 'Pastikan default spreadsheet ID telah diset di Pengaturan'}`);
@@ -1206,15 +1295,15 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
       return;
     }
 
-    if (cmd === '/form') {
-      const rawForm = text.replace(/^\/form\s*/i, '').trim();
+    if (cmd === '/forms' || cmd === '/form') {
+      const rawForm = text.replace(/^\/(?:forms|form)\s*/i, '').trim();
       const parts = rawForm.split('|');
       const title = parts[0].trim() || "Formulir Pendaftaran";
       const qList = parts.slice(1).map(q => ({ title: q.trim(), type: "TEXT" }));
       await telegramSendMessage(botToken, senderId, `📝 <i>Membuat Google Form "${escapeHtml(title)}"...</i>`);
       const formRes = await executeBackgroundTool("google_forms_create_form", { title, questions: qList }, senderId, botToken, tgCfg);
-      if (formRes && formRes.status === "success") {
-        await telegramSendMessage(botToken, senderId, `✅ <b>Google Form Berhasil Dibuat!</b>\n📝 <b>${escapeHtml(title)}</b>\n👉 <a href="${formRes.form_url}">Link Formulir Pengisi</a>\n👉 <a href="${formRes.edit_url}">Link Edit Form</a>`);
+      if (formRes && (formRes.status === "success" || formRes.form_url)) {
+        await telegramSendMessage(botToken, senderId, `✅ <b>Google Form Berhasil Dibuat!</b>\n📝 <b>${escapeHtml(title)}</b>\n👉 <a href="${formRes.form_url}">Link Formulir Pengisi</a>\n👉 <a href="${formRes.edit_url || formRes.form_url}">Link Edit Form</a>`);
       } else {
         await telegramSendMessage(botToken, senderId, `⚠️ Gagal membuat form: ${formRes?.error || 'Error'}`);
       }
@@ -1229,7 +1318,7 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
       }
       await telegramSendMessage(botToken, senderId, `☑️ <i>Menambahkan ke Google Tasks...</i>`);
       const tRes = await executeBackgroundTool("google_tasks_create_task", { title }, senderId, botToken, tgCfg);
-      if (tRes && tRes.status === "success") {
+      if (tRes && (tRes.status === "success" || tRes.task_id)) {
         await telegramSendMessage(botToken, senderId, `✅ <b>Task Berhasil Dibuat!</b>\n☑️ <b>${escapeHtml(title)}</b>`);
       } else {
         await telegramSendMessage(botToken, senderId, `⚠️ Gagal membuat task: ${tRes?.error || 'Error'}`);
@@ -1245,12 +1334,13 @@ Jika pengguna meminta konversi/pengolahan file (contoh: PDF to Image ZIP, merge 
       }
       await telegramSendMessage(botToken, senderId, `👤 <i>Mencari kontak "${escapeHtml(q)}"...</i>`);
       const cRes = await executeBackgroundTool("google_contacts_search", { query: q }, senderId, botToken, tgCfg);
-      if (cRes && cRes.status === "success" && Array.isArray(cRes.contacts)) {
-        if (cRes.contacts.length === 0) {
+      if (cRes && (cRes.status === "success" || Array.isArray(cRes.contacts))) {
+        const contacts = Array.isArray(cRes.contacts) ? cRes.contacts : [];
+        if (contacts.length === 0) {
           await telegramSendMessage(botToken, senderId, `ℹ️ Tidak ditemukan kontak dengan nama "${escapeHtml(q)}".`);
         } else {
-          let out = `👤 <b>Hasil Kontak (${cRes.total_found}):</b>\n\n`;
-          cRes.contacts.slice(0, 5).forEach((c, idx) => {
+          let out = `👤 <b>Hasil Kontak (${cRes.total_found || contacts.length}):</b>\n\n`;
+          contacts.slice(0, 5).forEach((c, idx) => {
             out += `${idx + 1}. <b>${escapeHtml(c.name || 'No Name')}</b>\n   📞 ${escapeHtml(c.phone || '-')}\n   ✉️ ${escapeHtml(c.email || '-')}\n\n`;
           });
           await telegramSendMessage(botToken, senderId, out);
@@ -2380,6 +2470,24 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
       if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
       const res = await googleWorkspaceService.listRecentFiles(toolArgs.max_results || 10);
       return { status: "success", total_found: res.total_found, files: res.files };
+    }
+
+    if (toolName === "gsuite_create_presentation" || toolName === "gsuite_create_slides") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.createPresentation(toolArgs.title || "Browser Agent Presentation", toolArgs.slides || []);
+      return { status: "success", message: `Presentasi "${res.title}" berhasil dibuat di Google Drive!`, presentation_id: res.presentationId, presentation_url: res.presentationUrl, slides_count: res.slidesCount };
+    }
+
+    if (toolName === "gsuite_append_slide") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.appendSlide(toolArgs.presentation_id_or_url, toolArgs.slide_title || "Slide Baru", toolArgs.bullets || []);
+      return { status: "success", message: `Slide "${res.slideTitle}" berhasil ditambahkan ke presentasi!`, presentation_id: res.presentationId, presentation_url: res.presentationUrl };
+    }
+
+    if (toolName === "gsuite_read_presentation") {
+      if (typeof googleWorkspaceService === 'undefined') return { error: "Google Workspace service tidak aktif di background." };
+      const res = await googleWorkspaceService.readPresentation(toolArgs.presentation_id_or_url);
+      return { status: "success", presentation_id: res.presentationId, title: res.title, slides_count: res.slidesCount, slides: res.slides, presentation_url: res.presentationUrl };
     }
 
     if (toolName === "google_web_search") {
@@ -3661,6 +3769,9 @@ async function telegramSetMyCommands(botToken) {
     { command: "gmail", description: "Kirim email cepat via Gmail" },
     { command: "docs", description: "Buat dokumen baru di Google Docs" },
     { command: "sheets", description: "Tulis baris baru di Google Sheets" },
+    { command: "slides", description: "Buat presentasi 16:9 di Google Slides" },
+    { command: "drive", description: "Cari & kelola berkas di Google Drive" },
+    { command: "calendar", description: "Cek & tambah agenda Google Calendar" },
     { command: "form", description: "Buat formulir kuesioner Google Form" },
     { command: "tasks", description: "Buat to-do task di Google Tasks" },
     { command: "contacts", description: "Cari kontak & nomor telepon" },
