@@ -415,6 +415,113 @@ function formatUserMentions(text) {
   return escaped;
 }
 
+function parseUserMessageStructure(text) {
+  if (!text || typeof text !== 'string') {
+    return { agentsSectionHtml: '', appsSectionHtml: '', cleanPromptText: '', hasTags: false };
+  }
+
+  const rawText = text.trim();
+  const agentBadges = [];
+  const appBadges = [];
+  let textToClean = rawText;
+
+  // 1. Extract Slash Commands / Connected Apps (/slides, /sheets, /gmail, /search, etc.)
+  if (typeof SLASH_COMMANDS_CATALOG !== 'undefined' && Array.isArray(SLASH_COMMANDS_CATALOG)) {
+    for (const cmd of SLASH_COMMANDS_CATALOG) {
+      const cmdTag = cmd.command; // e.g. /slides
+      const cmdId = cmd.id; // e.g. slides
+      let iconHtml = '';
+      if (cmd.iconSrc) {
+        iconHtml = `<img src="${cmd.iconSrc}" class="mention-badge-icon" alt="${escapeHtml(cmd.title)}">`;
+      }
+      const badgeHtml = `<span class="chat-mention-badge chat-slash-badge"><span class="mention-slash">/</span>${iconHtml}${escapeHtml(cmd.title)}</span>`;
+
+      const bracketRegex = new RegExp(`\\[\\/?${cmdId}\\]|\\[${cmdTag.replace('/', '\\/')}\\]`, 'gi');
+      const standaloneRegex = new RegExp(`(^|\\s)${cmdTag.replace('/', '\\/')}(?=\\s|$)`, 'gi');
+
+      let found = false;
+      if (bracketRegex.test(textToClean) || standaloneRegex.test(textToClean)) {
+        found = true;
+      }
+
+      if (found) {
+        if (!appBadges.includes(badgeHtml)) {
+          appBadges.push(badgeHtml);
+        }
+        textToClean = textToClean.replace(bracketRegex, ' ').replace(standaloneRegex, ' ');
+      }
+    }
+  }
+
+  // 2. Extract Agent Mentions (@AgentName)
+  const sortedAgents = (typeof customAgents !== 'undefined' && Array.isArray(customAgents))
+    ? [...customAgents]
+        .filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss)
+        .sort((a, b) => (String(b.name || '').length) - (String(a.name || '').length))
+    : [];
+
+  for (const ag of sortedAgents) {
+    const dispName = String(typeof getAgentDisplayName === 'function' ? getAgentDisplayName(ag) : ag.name || '');
+    const fullName = String(ag.name || '');
+    const idStr = String(ag.id || '');
+    if (!dispName && !fullName && !idStr) continue;
+
+    const escapedDisp = escapeHtml(dispName);
+    const escapedFullName = escapeHtml(fullName);
+    const escapedId = escapeHtml(idStr);
+
+    const checkRegexes = [];
+    if (fullName) checkRegexes.push(new RegExp(`@${fullName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'gi'));
+    if (dispName && dispName !== fullName) checkRegexes.push(new RegExp(`@${dispName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'gi'));
+    if (idStr && idStr !== fullName && idStr !== dispName) checkRegexes.push(new RegExp(`@${idStr.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'gi'));
+
+    let foundAgent = false;
+    for (const reg of checkRegexes) {
+      if (reg.test(textToClean)) {
+        foundAgent = true;
+      }
+    }
+
+    if (foundAgent) {
+      const badgeHtml = `<span class="chat-mention-badge"><span class="mention-at">@</span>${escapedDisp || escapedFullName || escapedId}</span>`;
+      if (!agentBadges.includes(badgeHtml)) {
+        agentBadges.push(badgeHtml);
+      }
+      for (const reg of checkRegexes) {
+        textToClean = textToClean.replace(reg, ' ');
+      }
+    }
+  }
+
+  // Clean prompt text (normalize consecutive spaces, keep newlines)
+  let cleanPromptText = textToClean.replace(/[ \t]+/g, ' ').replace(/\n\s+/g, '\n').trim();
+
+  let agentsSectionHtml = '';
+  if (agentBadges.length > 0) {
+    agentsSectionHtml = `
+      <div class="user-bubble-agents-list">
+        ${agentBadges.map(b => `<div class="user-agent-badge-row">${b}</div>`).join('')}
+      </div>
+    `;
+  }
+
+  let appsSectionHtml = '';
+  if (appBadges.length > 0) {
+    appsSectionHtml = `
+      <div class="user-bubble-apps-row">
+        ${appBadges.join('')}
+      </div>
+    `;
+  }
+
+  return {
+    agentsSectionHtml,
+    appsSectionHtml,
+    cleanPromptText: cleanPromptText ? escapeHtml(cleanPromptText) : (agentBadges.length === 0 && appBadges.length === 0 ? escapeHtml(rawText) : ""),
+    hasTags: agentBadges.length > 0 || appBadges.length > 0
+  };
+}
+
 function sortAgentsByPipeline(agents) {
   const priority = {
     "casual_companion_agent": 1,
@@ -7448,7 +7555,20 @@ function appendUserMessage(text, attachments = []) {
   }
 
   const userContent = (cleanText && cleanText !== "{}" && cleanText !== "[object Object]") ? cleanText : "";
-  const formattedUserContent = userContent ? formatUserMentions(userContent) : "";
+
+  // Structured User Message Tags Parsing (@Agent at top, / Connected Apps below in 1 row, prompt text at bottom)
+  const { agentsSectionHtml, appsSectionHtml, cleanPromptText, hasTags } = parseUserMessageStructure(userContent);
+  const formattedUserContent = cleanPromptText || (userContent ? formatUserMentions(userContent) : "");
+
+  let tagsHeaderHtml = '';
+  if (agentsSectionHtml || appsSectionHtml) {
+    tagsHeaderHtml = `
+      <div class="user-msg-tags-header">
+        ${agentsSectionHtml}
+        ${appsSectionHtml}
+      </div>
+    `;
+  }
 
   // Check if message is long enough to warrant collapsible minimizing (>260 chars or >=4 newlines)
   const isLongMessage = userContent.length > 260 || (userContent.match(/\n/g) || []).length >= 4;
@@ -7458,6 +7578,7 @@ function appendUserMessage(text, attachments = []) {
     if (isLongMessage) {
       contentHtml = `
         <div class="user-msg-container">
+          ${tagsHeaderHtml}
           <div class="message-content user-collapsible is-collapsed" title="Klik untuk melihat seluruh pesan">
             <div class="user-content-inner">${formattedUserContent}</div>
             <div class="user-collapse-fade"></div>
@@ -7471,8 +7592,19 @@ function appendUserMessage(text, attachments = []) {
         </div>
       `;
     } else {
-      contentHtml = `<div class="message-content">${formattedUserContent}</div>`;
+      contentHtml = `
+        <div class="user-msg-container">
+          ${tagsHeaderHtml}
+          <div class="message-content">${formattedUserContent}</div>
+        </div>
+      `;
     }
+  } else if (tagsHeaderHtml) {
+    contentHtml = `
+      <div class="user-msg-container">
+        ${tagsHeaderHtml}
+      </div>
+    `;
   }
 
   msg.innerHTML = `

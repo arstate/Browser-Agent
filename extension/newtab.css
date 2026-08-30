@@ -5935,6 +5935,36 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
   opacity: 0.95;
 }
 
+/* Structured Header Section in User Message Bubbles (@Agent & / Apps) */
+.message.user .user-msg-tags-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.message.user .user-bubble-agents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+}
+
+.message.user .user-agent-badge-row {
+  display: flex;
+  align-items: center;
+}
+
+.message.user .user-bubble-apps-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
+}
+
 /* Specific High-Contrast Mention Badge on User Bubble (Lime Background) */
 .message.user .chat-mention-badge,
 .message.user .message-content .chat-mention-badge {
@@ -5943,10 +5973,13 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
   border: 1px solid rgba(0, 0, 0, 0.35) !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
   font-weight: 700 !important;
-  padding: 2px 8px 3px !important;
+  padding: 3px 10px 4px !important;
   border-radius: 8px !important;
-  margin-right: 6px !important;
+  margin-right: 0px !important;
   letter-spacing: -0.1px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .message.user .chat-mention-badge .mention-at,
