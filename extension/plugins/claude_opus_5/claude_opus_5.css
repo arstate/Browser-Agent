@@ -1,0 +1,95 @@
+/**
+ * =========================================================================
+ * Browser Agent - Plugin: Claude Opus 5 Distill Styles (Dark Luxury Terracotta)
+ * Reference: Leaked System Prompt Claude Opus 5 (Anthropic)
+ * =========================================================================
+ */
+
+.plugin-card-opus-5 {
+  background: linear-gradient(135deg, rgba(45, 22, 14, 0.4) 0%, rgba(20, 10, 6, 0.6) 100%);
+  border: 1px solid rgba(217, 119, 87, 0.28);
+  box-shadow: 0 4px 20px rgba(217, 119, 87, 0.08);
+}
+
+.plugin-card-opus-5:hover {
+  border-color: rgba(217, 119, 87, 0.55);
+  box-shadow: 0 8px 30px rgba(217, 119, 87, 0.18);
+}
+
+.plugin-card-opus-5 .plugin-icon-glow {
+  background: radial-gradient(circle, rgba(217, 119, 87, 0.35) 0%, transparent 70%);
+}
+
+.opus-modal-header {
+  border-bottom: 1px solid rgba(217, 119, 87, 0.25);
+}
+
+.opus-mode-btn {
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.opus-mode-btn:hover {
+  background: rgba(217, 119, 87, 0.15);
+  border-color: rgba(217, 119, 87, 0.35);
+  color: #ffedd5;
+}
+
+.opus-mode-btn.active {
+  background: linear-gradient(135deg, rgba(217, 119, 87, 0.3) 0%, rgba(194, 65, 12, 0.4) 100%);
+  border-color: #d97757;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(217, 119, 87, 0.35);
+}
+
+.opus-doc-tab {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.opus-doc-tab:hover {
+  color: #fed7aa;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.opus-doc-tab.active {
+  color: #ffedd5;
+  background: rgba(217, 119, 87, 0.2);
+  border-color: rgba(217, 119, 87, 0.4);
+  font-weight: 600;
+}
+
+.opus-doc-viewer {
+  background: #0d0907;
+  border: 1px solid rgba(217, 119, 87, 0.2);
+  border-radius: 10px;
+  padding: 16px;
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #e2e8f0;
+}
+
+.opus-doc-viewer h1, .opus-doc-viewer h2, .opus-doc-viewer h3 {
+  color: #fed7aa;
+  margin-top: 0;
+  margin-bottom: 8px;
+}

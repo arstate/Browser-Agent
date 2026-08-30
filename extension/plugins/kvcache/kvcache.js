@@ -102,7 +102,8 @@ async function updateKVCacheUI() {
       if (p.ponytail?.enabled !== false) activeCount++;
       if (p.kvcache?.enabled !== false) activeCount++;
       if (p.caveman?.enabled !== false) activeCount++;
-      if (p.claude_fable?.enabled !== false) activeCount++;
+      if (p.claude_fable?.enabled) activeCount++;
+      if (p.claude_opus_5?.enabled) activeCount++;
 
       const totalBadge = document.getElementById('plugins-total-active-badge');
       const sidebarBadge = document.getElementById('badge-status-plugins');

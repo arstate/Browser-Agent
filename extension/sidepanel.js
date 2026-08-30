@@ -894,8 +894,11 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
     prompt += `• [PLUGIN: CAVEMAN (AKTIF - MODE: ${cmMode})]: "why use many token when few do trick". Jawab secara telegrafik padat, eliminasi kata pengantar/penutup basa-basi, namun pertahankan kode dan error 100% presisi byte-exact.\n`;
   }
 
-  const claudeFable = cachedPluginSettings?.claude_fable || { enabled: true, mode: 'balanced', reasoningEffort: 60 };
-  if (claudeFable.enabled !== false && typeof getClaudeFableSystemDirective === 'function') {
+  const claudeFable = cachedPluginSettings?.claude_fable || { enabled: false, mode: 'balanced', reasoningEffort: 60 };
+  const claudeOpus5 = cachedPluginSettings?.claude_opus_5 || { enabled: false, mode: 'deep_analytical', reasoningEffort: 75 };
+  if (claudeOpus5.enabled && typeof getClaudeOpus5SystemDirective === 'function') {
+    prompt += getClaudeOpus5SystemDirective(claudeOpus5);
+  } else if (claudeFable.enabled && typeof getClaudeFableSystemDirective === 'function') {
     prompt += getClaudeFableSystemDirective(claudeFable);
   }
 

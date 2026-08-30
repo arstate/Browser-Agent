@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="plugins/kvcache/kvcache.css">
   <link rel="stylesheet" href="plugins/caveman/caveman.css">
   <link rel="stylesheet" href="plugins/claude_fable/claude_fable.css">
+  <link rel="stylesheet" href="plugins/claude_opus_5/claude_opus_5.css">
 </head>
 <body class="options-body">
   <div class="options-app-shell">
@@ -2287,6 +2288,51 @@
             </div>
           </div>
 
+          <!-- Plugin Card 5: Claude Opus 5 Distill -->
+          <div class="plugin-card bento-glass-card plugin-card-opus-5" style="background: var(--bg-card); border: 1px solid rgba(217, 119, 87, 0.28); border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; min-height: 260px; transition: all 0.25s ease; box-shadow: 0 8px 28px rgba(0,0,0,0.35);">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 50px; height: 50px; border-radius: 16px; background: rgba(217, 119, 87, 0.15); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(217, 119, 87, 0.45); overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.3); backdrop-filter: blur(10px); flex-shrink: 0;">
+                    <img src="icons/plugins/claude_opus_5.png" width="38" height="38" alt="Claude Opus 5" style="object-fit: contain; display: block; border-radius: 8px;">
+                  </div>
+                  <div>
+                    <h3 style="font-size: 16.5px; font-weight: 700; color: #fff; margin: 0; letter-spacing: -0.2px;">Claude Opus 5</h3>
+                    <span style="font-size: 11px; color: #ffedd5; font-weight: 600;">Cognitive &amp; Epistemic Distillation</span>
+                  </div>
+                </div>
+                
+                <label class="custom-pill-switch" title="Aktifkan / Nonaktifkan Plugin Claude Opus 5 Distill">
+                  <input type="checkbox" id="plugin-claude-opus-5-toggle">
+                  <span class="pill-switch-track"></span>
+                </label>
+              </div>
+
+              <p style="font-size: 12.5px; color: #cbd5e1; line-height: 1.55; margin: 0 0 14px 0;">
+                Distilasi arsitektur <b>Anthropic Claude Opus 5</b>: Taksonomi memori modular (<code>/profile.md</code>, <code>[stated]</code>, <code>[[links]]</code>), <b>Zero Forbidden Memory Phrases</b>, Artifact pattern, dan deep analytical reasoning.
+              </p>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="plugin-glass-pill" style="background: rgba(217, 119, 87, 0.15); color: #fed7aa; border: 1px solid rgba(217, 119, 87, 0.35);">
+                  Opus Reasoning
+                </span>
+                <span class="plugin-glass-pill" style="background: rgba(245, 158, 11, 0.15); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.35);">
+                  Zero Memory Phrases
+                </span>
+                <span class="plugin-glass-pill" style="background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.35);">
+                  Artifact Pattern
+                </span>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 14px; margin-top: 6px;">
+              <span id="plugin-claude-opus-5-status-text" style="font-size: 11.5px; color: #94a3b8; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                ○ Nonaktif
+              </span>
+              <button type="button" class="btn-plugin-config" id="btn-config-claude-opus-5">Settings</button>
+            </div>
+          </div>
+
         </div>
       </div>
     </main>
@@ -3206,6 +3252,128 @@
       </div>
     </div>
 
+    <!-- ======================================================== -->
+    <!-- MODAL: Plugin Claude Opus 5 Distill -->
+    <!-- ======================================================== -->
+    <div class="custom-modal-overlay" id="modal-claude-opus-5-config" style="display: none;">
+      <div class="custom-modal-dialog modal-wide" style="max-width: 740px;">
+        <div class="modal-header opus-modal-header">
+          <div class="modal-title-box">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span style="background: rgba(217, 119, 87, 0.2); color: #ffedd5; border: 1px solid rgba(217, 119, 87, 0.4); padding: 2px 8px; font-size: 10px; font-weight: 700; border-radius: 6px;">
+                OPUS TIER
+              </span>
+              <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #fff;">Claude Opus 5 Distillation Settings</h3>
+            </div>
+            <p style="margin: 0; font-size: 12px; color: #94a3b8;">Distilasi arsitektur penalaran Anthropic: Taksonomi Memori, Zero Forbidden Phrases &amp; Deep Analytical Reasoning</p>
+          </div>
+          <button type="button" class="btn-modal-close" id="btn-close-claude-opus-5-modal" title="Tutup Modal">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body-scroll" style="max-height: 65vh; overflow-y: auto; padding: 16px 4px 4px 4px;">
+          <!-- Mode Selector -->
+          <div style="margin-bottom: 18px;">
+            <label style="font-size: 12px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 8px;">
+              TINGKAT INTENSITAS PENALARAN OPUS 5:
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <button type="button" class="opus-mode-btn" data-mode="standard">
+                <b>Standard</b><br><span style="font-size: 11px; opacity: 0.8;">[stated] tag &amp; direct tone</span>
+              </button>
+              <button type="button" class="opus-mode-btn active" data-mode="deep_analytical">
+                <b>Deep Analytical (Default)</b><br><span style="font-size: 11px; opacity: 0.8;">Root cause + Lookahead</span>
+              </button>
+              <button type="button" class="opus-mode-btn" data-mode="truth_seeking">
+                <b>Truth-Seeking</b><br><span style="font-size: 11px; opacity: 0.8;">Zero sycophancy &amp; fairness</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Reasoning Effort Slider -->
+          <div style="background: rgba(217, 119, 87, 0.08); border: 1px solid rgba(217, 119, 87, 0.25); border-radius: 16px; padding: 14px 16px; margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label style="font-size: 12px; font-weight: 700; color: #ffedd5;">
+                REASONING EFFORT (&lt;antml:reasoning_effort&gt;):
+              </label>
+              <span id="opus-effort-val" style="font-size: 13px; font-weight: 800; color: #ffedd5; background: rgba(217, 119, 87, 0.3); padding: 2px 10px; border-radius: 9999px;">75</span>
+            </div>
+            <input type="range" id="opus-effort-slider" min="10" max="100" step="5" value="75" style="width: 100%; accent-color: #d97757; cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; margin-top: 4px;">
+              <span>10 (Cepat/Rutin)</span>
+              <span>50 (Standar)</span>
+              <span>100 (Deep Analytical)</span>
+            </div>
+          </div>
+
+          <!-- Directives Checklist -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px 16px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 11px;">
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+              <input type="checkbox" id="opus-opt-filesystem" checked style="accent-color: #d97757; width: 16px; height: 16px;">
+              <span><b>Epistemic Memory Filesystem:</b> Taksonomi modular (<code>/profile.md</code>, <code>[stated]</code>, <code>[[wiki-links]]</code>).</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+              <input type="checkbox" id="opus-opt-forbidden" checked style="accent-color: #d97757; width: 16px; height: 16px;">
+              <span><b>Zero Forbidden Memory Phrases:</b> Integrasi fakta mulus tanpa menarasikan <i>"Berdasarkan memori..."</i>.</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+              <input type="checkbox" id="opus-opt-artifacts" checked style="accent-color: #d97757; width: 16px; height: 16px;">
+              <span><b>Artifact Architecture:</b> Pisahkan kode dan dokumen substansial ke Artifact mandiri.</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+              <input type="checkbox" id="opus-opt-dignity" checked style="accent-color: #d97757; width: 16px; height: 16px;">
+              <span><b>High-Dignity &amp; Constructive Tone:</b> Akui error tanpa merendahkan diri, zero-fluff, dan berimbang.</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 12px; color: #e2e8f0;">
+              <input type="checkbox" id="opus-opt-privacy" checked style="accent-color: #d97757; width: 16px; height: 16px;">
+              <span><b>Privacy &amp; Omission Shield:</b> Tolak pencatatan data medis sensitif, PII, finansial, atau profil psikologis.</span>
+            </label>
+          </div>
+
+          <!-- Documentation Tabs & Viewer -->
+          <div style="margin-bottom: 14px;">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+              <button type="button" class="opus-doc-tab active" data-skill="claude-opus-5">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                <span>/claude-opus-5</span>
+              </button>
+              <button type="button" class="opus-doc-tab" data-skill="opus-memory-filesystem">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/></svg>
+                <span>/memory-filesystem</span>
+              </button>
+              <button type="button" class="opus-doc-tab" data-skill="forbidden-memory-phrases">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                <span>/forbidden-phrases</span>
+              </button>
+              <button type="button" class="opus-doc-tab" data-skill="opus-privacy-guardrails">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>/privacy-guardrails</span>
+              </button>
+              <button type="button" class="opus-doc-tab" data-skill="opus-reasoning-effort">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>/reasoning-effort</span>
+              </button>
+              <button type="button" class="opus-doc-tab" data-skill="opus-dignified-prose">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5v-2z"/></svg>
+                <span>/dignified-prose</span>
+              </button>
+            </div>
+            <div class="opus-doc-viewer" id="opus-doc-viewer">
+              Memuat dokumentasi Claude Opus 5...
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; margin-top: 6px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn-modal-cancel" id="btn-cancel-claude-opus-5-modal" style="padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 600;">Batal</button>
+            <button type="button" class="btn-modal-save" id="btn-save-claude-opus-5-modal" style="padding: 8px 22px; border-radius: 9999px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #d97757 0%, #c2410c 100%); color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(217, 119, 87, 0.4);">Simpan Pengaturan Claude Opus 5</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Save Toast -->
     <div class="save-toast" id="save-toast" style="display: none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -3227,6 +3395,8 @@
   <script src="plugins/caveman/caveman_optimizer.js"></script>
   <script src="plugins/claude_fable/claude_fable.js"></script>
   <script src="plugins/claude_fable/claude_fable_optimizer.js"></script>
+  <script src="plugins/claude_opus_5/claude_opus_5.js"></script>
+  <script src="plugins/claude_opus_5/claude_opus_5_optimizer.js"></script>
   <script src="core/update_bridge_manager.js"></script>
   <script src="options.js"></script>
 </body>

@@ -67,6 +67,15 @@ async function saveClaudeFableSettings(newSettings) {
   try {
     const data = await chrome.storage.local.get(['plugin_settings']);
     const allPluginSettings = data.plugin_settings || {};
+    
+    // Mutual Exclusivity: If Claude Fable 5 is turned ON, Claude Opus 5 must be turned OFF!
+    if (newSettings.enabled) {
+      allPluginSettings.claude_opus_5 = {
+        ...(allPluginSettings.claude_opus_5 || {}),
+        enabled: false
+      };
+    }
+
     allPluginSettings.claude_fable = {
       ...DEFAULT_CLAUDE_FABLE_SETTINGS,
       ...(allPluginSettings.claude_fable || {}),
@@ -74,6 +83,11 @@ async function saveClaudeFableSettings(newSettings) {
     };
     await chrome.storage.local.set({ plugin_settings: allPluginSettings });
     updateClaudeFableUI();
+
+    // Trigger update on Claude Opus 5 UI if active on page
+    if (typeof updateClaudeOpus5UI === 'function') {
+      updateClaudeOpus5UI();
+    }
   } catch (e) {
     console.error('[ClaudeFable] Save error:', e);
   }

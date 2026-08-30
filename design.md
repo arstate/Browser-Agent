@@ -288,7 +288,7 @@ Seluruh 7 menu utama di halaman Pengaturan dilengkapi Search Bar Full Rounded (`
 4. **Persistent Brain Vault (`#search-brain-input`)**: Unified search + embedded dual view switcher capsule (`Grid Cards` & `Neural Graph`).
 5. **Tampilan & UI (`#search-ui-input`)**: Live search preferensi tema, animasi, efek glass blur, shadow, glow, dan switch interaktif.
 6. **Connected Apps Hub (`#search-connected-apps-input`)**: Live search aplikasi terhubung (Telegram Bot, Google Workspace, WhatsApp, Webhook, Companion).
-7. **Plugin Ecosystem (`#search-plugins-input`)**: Live search plugin modular & token optimizer (Ponytail, KV Cache, Caveman, Claude Fable).
+7. **Plugin Ecosystem (`#search-plugins-input`)**: Live search plugin modular & token optimizer (Ponytail, KV Cache, Caveman, Claude Fable, Claude Opus 5).
 
 ---
 
@@ -319,5 +319,15 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 1. **Automatic Filename Stem ID Fallback**: Pada RPC Native Host (`list_skills`, `list_agents`, `list_memories`), file Markdown tanpa metadata `id:` otomatis mengadopsi nama file sebagai `id` dan `name` sehingga tidak menghasilkan tag kosong (`<code></code>`).
 2. **Defensive Filtering in UI Renderers**: Seluruh fungsi render kartu di `options.js` (`renderPersistentBrain`, `renderSkillsCards`, `renderAgentsCards`, `renderMemoriesCards`) menyaring baris kosong/null (`filter(item => item && (item.id || item.name))`) dan memberikan fallback nama & ID yang aman (`itemId`, `itemName`, `skillId`, `agentId`).
 3. **Database Ghost Row Protection**: SQLite database `chat_history.db` secara ketat dibersihkan dari baris dummy tanpa ID / nama untuk menjaga tampilan Persistent Memory selalu bersih, valid, dan bebas anomali visual.
+
+---
+
+## 🏛️ 11. Claude Opus 5 Distill Plugin & Mutual Exclusivity Architecture
+
+1. **Dark Luxury Terracotta Palette**: Kartu `.plugin-card-opus-5` menggunakan gradien `linear-gradient(135deg, rgba(45, 22, 14, 0.4) 0%, rgba(20, 10, 6, 0.6) 100%)` dengan border terracotta `rgba(217, 119, 87, 0.28)` dan aksen hover `#FF8A65`.
+2. **Autonomous Memory Filesystem & Obsidian Taxonomy**: Penataan memori modular (`/profile.md`, `/topics/`, `/areas/`, `/people/`, `/preferences.md`) dengan tag wajib `- [stated]` dan tautan entitas ganda `[[entitas]]`.
+3. **Zero Forbidden Memory Phrases**: Integrasi mulus tanpa kalimat meta-komentar *"Berdasarkan ingatan saya..."* atau *"From memory..."*.
+4. **Mutual Exclusivity Switch State**: Mengunci status switch antara **Claude Opus 5** dan **Claude Fable 5** (jika salah satu dinyalakan, yang lain otomatis dimatikan) untuk menjaga orkestrasi directive AI tetap bersih tanpa benturan kognitif.
+
 
 
