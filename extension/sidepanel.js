@@ -417,11 +417,12 @@ function formatUserMentions(text) {
 
 function sortAgentsByPipeline(agents) {
   const priority = {
-    "web_researcher_agent": 1,
-    "default_agent": 2,
-    "coding_engineer_agent": 3
+    "casual_companion_agent": 1,
+    "web_researcher_agent": 2,
+    "default_agent": 3,
+    "coding_engineer_agent": 4
   };
-  return [...agents].sort((a, b) => (priority[a.id] || 4) - (priority[b.id] || 4));
+  return [...agents].sort((a, b) => (priority[a.id] || 5) - (priority[b.id] || 5));
 }
 
 function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
@@ -479,7 +480,23 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     const nameLower = String(ag.name || '').toLowerCase();
     let score = 0;
 
-    // A. Meta Ads & Lead Analytics Jobdesk
+    // A. Casual Conversation, Greetings, Identity, Persona & Personal Facts Jobdesk
+    const isCasualOrFactQuery = (
+      text.includes("siapa nama") || text.includes("namanya siapa") || text.includes("nama kamu") || text.includes("nama anda") ||
+      text.includes("kamu siapa") || text.includes("anda siapa") || text.includes("siapa kamu") || text.includes("siapa anda") ||
+      text.includes("halo") || text.includes("hai") || text.includes("hey") || text.includes("pagi") || text.includes("siang") || text.includes("malam") ||
+      text.includes("apa kabar") || text.includes("bisa apa") || text.includes("kemampuanmu") || text.includes("tentang kamu") ||
+      text.includes("teman") || text.includes("ngobrol") || text.includes("curhat") || text.includes("santai") ||
+      text.includes("fakta") || text.includes("personal") || text.includes("fakta pribadi") || text.includes("siapa saya") || text.includes("nama saya") ||
+      text.includes("siapa arya") || text.includes("bantuan") || text.includes("tanya") || text.includes("jawab")
+    );
+    if (isCasualOrFactQuery) {
+      if (idLower.includes("companion") || nameLower.includes("companion") || idLower.includes("casual") || nameLower.includes("casual") || idLower.includes("personal") || nameLower.includes("personal") || nameLower.includes("fact") || idLower.includes("sahabat") || nameLower.includes("sahabat") || nameLower.includes("ngobrol")) {
+        score += 30;
+      }
+    }
+
+    // B. Meta Ads & Lead Analytics Jobdesk
     const isAdsQuery = (text.includes("ads") || text.includes("iklan") || text.includes("lead") || text.includes("cpr") || text.includes("cpl") || text.includes("ctr") || text.includes("roas") || text.includes("campaign") || text.includes("kampanye") || text.includes("gacor") || text.includes("boncos"));
     if (isAdsQuery) {
       if (idLower.includes("auditor") || nameLower.includes("auditor") || idLower.includes("lead_quality") || nameLower.includes("lead quality")) score += 15;
@@ -487,13 +504,13 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
       else if (idLower.includes("meta_ads") || nameLower.includes("meta ads")) score += 8;
     }
 
-    // B. Copywriting & Script / Caption Jobdesk
+    // C. Copywriting & Script / Caption Jobdesk
     const isCopyQuery = (text.includes("copy") || text.includes("caption") || text.includes("hook") || text.includes("naskah") || text.includes("skrip") || text.includes("genz") || text.includes("konten") || text.includes("reels") || text.includes("tiktok") || text.includes("headline") || text.includes("storyboard"));
     if (isCopyQuery) {
       if (idLower.includes("copy") || nameLower.includes("copywriter") || nameLower.includes("viral")) score += 15;
     }
 
-    // C. Property Sales / KPR / Chat Closing Jobdesk
+    // D. Property Sales / KPR / Chat Closing Jobdesk
     const isSalesKprQuery = (text.includes("kpr") || text.includes("closing") || text.includes("chat") || text.includes("survei") || text.includes("survey") || text.includes("dp 0") || text.includes("utj") || text.includes("cicilan") || text.includes("prospek") || text.includes("konsumen") || text.includes("wa ") || text.includes("whatsapp"));
     if (isSalesKprQuery) {
       if (idLower.includes("closer") || idLower.includes("sales") || nameLower.includes("sales") || nameLower.includes("closer") || nameLower.includes("ningsih")) score += 15;
@@ -502,34 +519,34 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
       else if (idLower.includes("admin") || nameLower.includes("admin")) score += 6;
     }
 
-    // D. Visual Design & Image / Slide Jobdesk
+    // E. Visual Design & Image / Slide Jobdesk
     const isVisualQuery = (text.includes("desain") || text.includes("design") || text.includes("gambar") || text.includes("visual") || text.includes("slide") || text.includes("poster") || text.includes("feed") || text.includes("layout") || text.includes("image") || text.includes("svg") || text.includes("dark luxury"));
     if (isVisualQuery) {
       if (idLower.includes("visual") || idLower.includes("desain") || nameLower.includes("visual") || nameLower.includes("designer")) score += 15;
     }
 
-    // E. Academic / Thesis / Research
+    // F. Academic / Thesis / Research
     const isThesisQuery = (text.includes("unesa") || text.includes("thesis") || text.includes("skripsi") || text.includes("jurnal") || text.includes("tugas akhir") || text.includes("metodologi") || text.includes("sidang"));
     if (isThesisQuery) {
       if (idLower.includes("thesis") || idLower.includes("unesa") || nameLower.includes("thesis") || nameLower.includes("academic")) score += 15;
     }
 
-    // F. Coding / Terminal / Scripting
+    // G. Coding / Terminal / Scripting
     const isCodingQuery = (text.includes("coding") || text.includes("koding") || text.includes("terminal") || text.includes("bash") || text.includes("command") || text.includes("script") || text.includes("python") || text.includes("javascript") || text.includes("bug") || text.includes("code") || text.includes("file"));
     if (isCodingQuery) {
       if (idLower.includes("coding") || idLower.includes("engineer") || nameLower.includes("coding") || nameLower.includes("engineer")) score += 15;
     }
 
-    // G. Web Research & Search
+    // H. Web Research & Search
     const isResearchQuery = (text.includes("riset") || text.includes("research") || text.includes("scraping") || text.includes("scrape") || text.includes("cari data") || text.includes("investigasi") || text.includes("berita") || text.includes("news") || text.includes("searching"));
     if (isResearchQuery) {
       if (idLower.includes("researcher") || idLower.includes("research") || nameLower.includes("researcher") || nameLower.includes("riset")) score += 15;
     }
 
-    // H. Direct Browser Control / Web Navigation
+    // I. Direct Browser Control / Web Navigation (Only if explicitly asks for browser actions)
     const isBrowserControl = (text.includes("buka") || text.includes("navigasi") || text.includes("klik") || text.includes("login") || text.includes("website") || text.includes("tab") || text.includes("url") || text.includes("scroll") || text.includes("tonton"));
     if (isBrowserControl) {
-      if (idLower === "default_agent" || nameLower.includes("browser")) score += 5;
+      if (idLower === "default_agent" || nameLower.includes("browser")) score += 8;
     }
 
     if (score > 0) {
@@ -547,7 +564,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     }
   });
 
-  // Fallback: if nothing matched, use default browser agent
+  // Fallback: if nothing matched, choose context-aware default
   const isDirectGSuiteAction = text.startsWith('[/slides]') || text.startsWith('/slides') ||
                                text.startsWith('[/gmail]') || text.startsWith('/gmail') ||
                                text.startsWith('[/drive]') || text.startsWith('/drive') ||
@@ -560,8 +577,20 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
                                text.startsWith('[/telegram]') || text.startsWith('/telegram');
 
   if (matchedWorkers.length === 0 && !isDirectGSuiteAction) {
-    const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || nonBossCandidates[0];
-    if (defaultAgent) matchedWorkers.push(defaultAgent);
+    const isExplicitBrowserAction = (text.includes("buka") || text.includes("navigasi") || text.includes("klik") || text.includes("login") || text.includes("website") || text.includes("tab") || text.includes("url") || text.includes("scroll") || text.includes("tonton") || text.includes("download") || text.includes("scrape"));
+    
+    const casualAgent = customAgents.find(a => {
+      const id = String(a.id || '').toLowerCase();
+      const n = String(a.name || '').toLowerCase();
+      return (id.includes("companion") || n.includes("companion") || id.includes("casual") || n.includes("casual") || id.includes("personal") || n.includes("personal") || n.includes("fact") || id.includes("sahabat") || n.includes("sahabat"));
+    });
+
+    if (casualAgent && !isExplicitBrowserAction) {
+      matchedWorkers.push(casualAgent);
+    } else {
+      const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || nonBossCandidates[0];
+      if (defaultAgent) matchedWorkers.push(defaultAgent);
+    }
   }
 
   const sortedWorkers = sortAgentsByPipeline(matchedWorkers);

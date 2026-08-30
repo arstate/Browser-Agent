@@ -108,7 +108,7 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ## 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.160`
+- **Versi Terkini:** `v2.150.161`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -165,3 +165,4 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 43. **Real-Time Step-by-Step Task Schedule Progress & Anti-Premature Completion Guard:** Memperbaiki formula tracking progres task di `GoalTracker.updateMilestonesFromTurns` agar bergeser secara real-time step-by-step sesuai giliran eksekusi tool masing-masing agen bawahan. Mengunci tugas terakhir (Validasi Kualitas 100% Master Agent) agar tetap berstatus `pending` atau `in-progress` dan tidak pernah tercentang prematur sebelum seluruh tindakan tuntas diverifikasi 100%.
 44. **Bulletproof Final Synthesis Turn Resilience & Clean Fallback Summary:** Menghilangkan error fatal `Synthesis turn status: no response` pada ringkasan akhir Master Agent dengan menambahkan fallback multi-model candidate retry, penanganan non-streaming fallback, dan penyusunan ringkasan Markdown bersih otomatis dari riwayat eksekusi tool jika endpoint LLM mengalami kendala koneksi atau rate limit.
 45. **Autonomous Chat History Self-Healing & Accurate Message Count / Preview Standard:** Memperbaiki bug tampilan riwayat percakapan yang sebelumnya menampilkan `0 pesan` dan preview kosong akibat desinkronisasi `message_count` dan `preview` pada Rust Native Host binary (`browser_agent_host`) dan RPC save handler. Menambahkan mesin ekstraksi otomatis preview pesan user, perhitungan jumlah pesan real-time, serta fungsi self-healing SQLite otomatis saat startup untuk memulihkan seluruh riwayat percakapan lama secara instan.
+46. **Context-Aware Intent Routing & Casual Companion / Personal Fact Specialization:** Menambahkan agen spesialis bawaan `casual_companion_agent` ("Casual Companion & Personal Fact Assistant") serta menyempurnakan algoritma penilaian intensi di `resolveAutoAgents` dan `GoalTracker`. Pertanyaan sederhana, sapaan kasual, identitas bot, fakta personal pengguna, atau obrolan santai yang tidak memerlukan aksi browser kini secara presisi dialihkan ke agen pendamping percakapan santai dengan tugas *'Jawaban Ramah, Interaksi Percakapan & Fakta Personal'* tanpa memicu tugas navigasi/ekstraksi browser yang tidak perlu.

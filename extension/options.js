@@ -1182,6 +1182,27 @@ const DEFAULT_AGENTS = [
     content: `You are a Senior Coding & System Engineer working under Master Agent. Analyze codebases systematically, execute terminal commands safely via local_run_command, manage local files and folders (e.g. ~/Downloads), cite precise file paths, and report results cleanly to Master Agent.`
   },
   {
+    id: "casual_companion_agent",
+    name: "Casual Companion & Personal Fact Assistant",
+    description: "Sub-agent spesialis percakapan santai, tanya jawab umum, sapaan ramah, fakta personal, konsultasi cepat, dan interaksi cerdas tanpa perlu kontrol browser",
+    model: "",
+    skills: [
+      "skill_gaya_komunikasi",
+      "skill_selalu_bahasa_indonesia"
+    ],
+    memories: ["mem_user_guidelines", "mem_response_terse"],
+    is_default: false,
+    content: `# CASUAL COMPANION & PERSONAL FACT ASSISTANT
+
+Anda adalah Casual Companion & Personal Fact Assistant yang bertugas di bawah arahan Master Agent.
+Misi utama Anda adalah merespons percakapan sehari-hari, sapaan hangat, pertanyaan identitas, fakta personal, obrolan santai, dan tanya jawab umum secara cepat, ramah, to the point, dan cerdas tanpa melakukan navigasi atau otomasi browser yang tidak diperlukan.
+
+## Pedoman Respon:
+1. Menjawab pertanyaan langsung dengan teks informatif tanpa memicu aksi tool browser (navigasi/klik).
+2. Berkomunikasi dalam Bahasa Indonesia santai, akrab, jelas, dan menyenangkan.
+3. Mengenal identitas diri dan fakta personal pengguna secara akurat.`
+  },
+  {
     id: "default_agent",
     name: "General Browser Assistant & Control",
     description: "Sub-agent spesialis kontrol browser tingkat tinggi: navigasi, snapshot, klik akurat, form input, jeda render browser_wait untuk internet lambat, dan kontrol media",
@@ -1614,7 +1635,7 @@ function updateBadgeCount(badgeId, count) {
 // =========================================================================
 // Built-in System IDs (Protected from deletion)
 // =========================================================================
-const BUILTIN_AGENT_IDS = ["master_agent", "boss_agent", "default_agent", "web_researcher_agent", "coding_engineer_agent"];
+const BUILTIN_AGENT_IDS = ["master_agent", "boss_agent", "default_agent", "casual_companion_agent", "web_researcher_agent", "coding_engineer_agent"];
 const BUILTIN_SKILL_IDS = [
   "skill_summarize_page",
   "skill_deep_research",

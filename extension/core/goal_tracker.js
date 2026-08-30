@@ -92,6 +92,9 @@
       if (lower.includes('skripsi') || lower.includes('jurnal') || lower.includes('tesis') || lower.includes('akademik') || lower.includes('unesa')) {
         return findWorker('thesis', 'Thesis & Academic Assistant');
       }
+      if (lower.includes('companion') || lower.includes('casual') || lower.includes('sahabat') || lower.includes('santai') || lower.includes('fakta') || lower.includes('personal') || lower.includes('obrolan') || lower.includes('tanya jawab')) {
+        return findWorker('companion', findWorker('casual', 'Casual Companion & Personal Fact Assistant'));
+      }
       if (lower.includes('buka') || lower.includes('navigasi') || lower.includes('web') || lower.includes('klik') || lower.includes('snapshot') || lower.includes('url') || lower.includes('browser')) {
         return findWorker('default', 'General Browser Assistant');
       }
@@ -116,7 +119,9 @@
         const wNameLower = wName.toLowerCase();
         let taskTitle = "";
         
-        if (wId.includes("auditor") || wNameLower.includes("auditor") || wNameLower.includes("lead quality")) {
+        if (wId.includes("companion") || wNameLower.includes("companion") || wId.includes("casual") || wNameLower.includes("casual") || wNameLower.includes("personal") || wNameLower.includes("fact") || wNameLower.includes("sahabat") || wNameLower.includes("santai")) {
+          taskTitle = "Jawaban Ramah, Interaksi Percakapan & Fakta Personal";
+        } else if (wId.includes("auditor") || wNameLower.includes("auditor") || wNameLower.includes("lead quality")) {
           taskTitle = "Audit Matriks Kinerja Iklan & Filter Lead High-Intent";
         } else if (wId.includes("strategist") || wNameLower.includes("strategist") || wId.includes("cpr")) {
           taskTitle = "Analisis Strategi Optimasi CPR & Evaluasi Kampanye";
@@ -135,7 +140,12 @@
         } else if (wId.includes("research") || wId.includes("riset") || wNameLower.includes("researcher")) {
           taskTitle = "Investigasi Riset Mendalam & Validasi Data Web";
         } else if (wId.includes("default") || wNameLower.includes("browser")) {
-          taskTitle = "Navigasi Browser, Snapshot & Ekstraksi Data Halaman";
+          const isExplicitBrowserAction = (cleanLower.includes("buka") || cleanLower.includes("navigasi") || cleanLower.includes("klik") || cleanLower.includes("login") || cleanLower.includes("website") || cleanLower.includes("tab") || cleanLower.includes("url") || cleanLower.includes("scroll") || cleanLower.includes("tonton") || cleanLower.includes("download") || cleanLower.includes("scrape"));
+          if (!isExplicitBrowserAction && (cleanLower.length < 35 || cleanLower.includes("siapa") || cleanLower.includes("halo") || cleanLower.includes("apa kabar"))) {
+            taskTitle = "Pemberian Informasi, Konsultasi & Jawaban Percakapan";
+          } else {
+            taskTitle = "Navigasi Browser, Snapshot & Ekstraksi Data Halaman";
+          }
         } else {
           taskTitle = `Eksekusi Operasi Spesialis: ${worker.description ? worker.description.slice(0, 45) : text.slice(0, 40)}`;
         }
