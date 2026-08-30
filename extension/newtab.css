@@ -2033,12 +2033,12 @@ body.has-messages .chat-messages {
   display: block;
 }
 
-/* Tool Execution Section */
+/* Tool Execution Badges & Collapsible Unified Container */
 .tool-section-wrapper {
   margin: 6px 0 10px 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
   width: 100%;
 }
 
@@ -2047,7 +2047,7 @@ body.has-messages .chat-messages {
   align-items: center;
   justify-content: space-between;
   padding: 6px 12px;
-  background: rgba(22, 22, 26, 0.85) !important;
+  background: rgba(22, 22, 26, 0.88) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border: 1px solid rgba(206, 241, 40, 0.25) !important;
@@ -2060,10 +2060,11 @@ body.has-messages .chat-messages {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   transition: all 0.15s ease;
   user-select: none;
+  box-sizing: border-box;
 }
 
 .tool-toggle-header:hover {
-  background: rgba(30, 30, 36, 0.95) !important;
+  background: rgba(30, 30, 36, 0.96) !important;
   border-color: rgba(206, 241, 40, 0.4) !important;
 }
 
@@ -2109,11 +2110,41 @@ body.has-messages .chat-messages {
   display: none !important;
 }
 
+/* 1 Unified Container with Max 3 Items Viewport & Sleek Scrolling */
 .tool-badge-container {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   width: 100%;
+  max-height: 108px; /* Exactly fit max 3 rows without taking chat space */
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: rgba(16, 16, 20, 0.85) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  margin-top: 4px;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+.tool-badge-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tool-badge-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.tool-badge-container::-webkit-scrollbar-thumb {
+  background: rgba(206, 241, 40, 0.35);
+  border-radius: 4px;
+}
+
+.tool-badge-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(206, 241, 40, 0.6);
 }
 
 .tool-badge {
@@ -2121,18 +2152,29 @@ body.has-messages .chat-messages {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: rgba(18, 18, 22, 0.82) !important;
-  backdrop-filter: blur(20px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  padding: 7px 12px;
+  min-height: 34px;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
+  font-weight: 500;
   color: #94A3B8;
   width: 100%;
   box-sizing: border-box;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tool-badge:last-child {
+  border-bottom: none !important;
+}
+
+.tool-badge:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
 }
 
 .tool-badge-left {
@@ -2158,15 +2200,63 @@ body.has-messages .chat-messages {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.tool-badge.running {
+  background: rgba(206, 241, 40, 0.06) !important;
+  color: var(--accent-lime);
+}
+
+.tool-badge.success {
+  color: #E2E8F0;
+}
+
+.tool-badge.error {
+  background: rgba(239, 68, 68, 0.08) !important;
+  color: #F87171;
 }
 
 .tool-agent-tag {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94A3B8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   font-size: 9.5px;
   font-weight: 600;
   padding: 1.5px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-muted);
+  border-radius: 5px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.tool-badge.running .tool-agent-tag {
+  background: rgba(206, 241, 40, 0.12);
+  color: var(--accent-lime);
+  border-color: rgba(206, 241, 40, 0.25);
+}
+
+.tool-badge.success .tool-agent-tag {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34D399;
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.tool-spinner {
+  width: 11px;
+  height: 11px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
   flex-shrink: 0;
 }
 

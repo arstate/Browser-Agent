@@ -7989,17 +7989,21 @@ function appendToolBadge(bubble, toolName, args, agentName = "") {
     section.style.display = 'flex';
     section.classList.remove('collapsed');
     const header = section.querySelector('.tool-toggle-header');
-    if (header && !header.dataset.bound) {
-      header.dataset.bound = 'true';
-      header.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const isCollapsed = section.classList.toggle('collapsed');
-        const textEl = header.querySelector('.tool-toggle-text');
-        if (textEl) {
-          textEl.textContent = isCollapsed ? 'Detail' : 'Tutup';
-        }
-      });
+    if (header) {
+      const textEl = header.querySelector('.tool-toggle-text');
+      if (textEl) textEl.textContent = 'Tutup';
+      if (!header.dataset.bound) {
+        header.dataset.bound = 'true';
+        header.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const isCollapsed = section.classList.toggle('collapsed');
+          const tEl = header.querySelector('.tool-toggle-text');
+          if (tEl) {
+            tEl.textContent = isCollapsed ? 'Detail' : 'Tutup';
+          }
+        });
+      }
     }
   }
 
@@ -8024,6 +8028,11 @@ function appendToolBadge(bubble, toolName, args, agentName = "") {
     ${agentTagHtml}
   `;
   container.appendChild(badge);
+
+  // Auto-scroll container to always keep the active running tool step visible (max 3 viewport)
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
 
   updateToolSectionTitle(bubble);
   scrollToBottom();
