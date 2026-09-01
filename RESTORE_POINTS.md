@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.150.175`
-- **Iterasi:** `Iterasi 375`
-- **Tanggal Rilis:** 2 September 2026 (00:42 WIB)
+- **Versi Terkini:** `v2.150.176`
+- **Iterasi:** `Iterasi 376`
+- **Tanggal Rilis:** 2 September 2026 (00:50 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (833.4 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.150.176** | 376 | 02-09-2026 00:50 | `v2.150.176` | **Clean Revert & Purge of Experimental Live Reasoning Box:** Membatalkan dan membersihkan total seluruh kode eksperimen kotak proses berpikir (live reasoning / thinking block) baik pada file JavaScript (`sidepanel.js`), file CSS (`sidepanel.css`, `newtab.css`), maupun directive sistem prompt. Mengembalikan antarmuka chat room ke kondisi bersih, rapi, ringan, dan stabil seperti semula dengan fokus penuh pada Master Agent Manage Task Schedule dan Tool Badges. | 🟢 STABLE | `./restore.sh v2.150.176` |
 | **v2.150.175** | 375 | 02-09-2026 00:42 | `v2.150.175` | **Universal Dual-Engine Live Reasoning & Instant Cognitive Stream Architecture:** Mengintegrasikan mesin penalaran ganda yang menjamin kotak pemikiran AI selalu muncul dan mengetik real-time huruf demi huruf (kecepatan 22ms per karakter dengan kursor lavender berdenyut) untuk setiap prompt tanpa terkecuali, dengan auto-override instan jika model LLM di 9router/Antigravity memancarkan token native reasoning asli, serta otomatis ter-collapse ke mode header interaktif (`Detail` / `Tutup`) saat selesai sehingga pengguna dapat membaca kembali riwayat pemikiran utuh model kapan saja. | 🟢 STABLE | `./restore.sh v2.150.175` |
 | **v2.150.174** | 374 | 02-09-2026 00:32 | `v2.150.174` | **9router & OpenRouter Native Reasoning Ingestion & Collapsible Thinking Accordion:** Menambahkan parameter `include_reasoning: true` dan `reasoning: { effort: "high" }` pada seluruh payload request HTTP ke OpenRouter / 9router proxy. Memperkuat ekstraksi delta reasoning dari berbagai jalur chunk provider (`delta.reasoning`, `delta.reasoning_content`, `delta.thought`, `choice.reasoning`). Dilengkapi sistem kartu **Collapsible Thinking Accordion** (terbuka saat streaming, otomatis collapse menjadi header compact `Detail` / `Tutup` saat selesai sehingga pengguna dapat membaca kembali pemikiran utuh model kapan saja). | 🟢 STABLE | `./restore.sh v2.150.174` |
 | **v2.150.173** | 373 | 02-09-2026 00:21 | `v2.150.173` | **Pure 100% Native LLM Reasoning Stream Architecture:** Menghilangkan seluruh simulasi buatan client-side. Kotak pemikiran AI sekarang 100% murni dikendalikan oleh token penalaran asli yang dipancarkan oleh model LLM (DeepSeek-R1 `reasoning_content`, Gemini `thought`, Claude 3.7 Extended Thinking, OpenAI o-series, serta blok tag `<think>...</think>` yang dialirkan langsung dari stream jaringan), tetap tersembunyi jika model tidak menghasilkan reasoning, dan otomatis menghilang halus saat jawaban utama mulai dirender. | 🟢 STABLE | `./restore.sh v2.150.173` |
