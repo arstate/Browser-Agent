@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.150.176`
-- **Iterasi:** `Iterasi 376`
-- **Tanggal Rilis:** 2 September 2026 (00:50 WIB)
+- **Versi Terkini:** `v2.150.177`
+- **Iterasi:** `Iterasi 377`
+- **Tanggal Rilis:** 2 September 2026 (00:53 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (833.4 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.150.177** | 377 | 02-09-2026 00:53 | `v2.150.177` | **User Bubble High-Threshold Collapsible Optimization:** Memperbaiki bug di mana pesan chat user berukuran pendek/sedang (seperti `"play denycaknan"` atau beberapa kalimat) secara keliru diminimize dan menampilkan tombol `"Lihat Selengkapnya"`. Batas threshold diperketat menjadi pesan yang benar-benar sangat panjang (`> 550 karakter` atau `≥ 8 baris`), serta menghapus logika post-render height yang tidak presisi sehingga seluruh pesan user normal selalu tampil utuh, bersih, dan tanpa tombol minimizer yang tidak perlu. | 🟢 STABLE | `./restore.sh v2.150.177` |
 | **v2.150.176** | 376 | 02-09-2026 00:50 | `v2.150.176` | **Clean Revert & Purge of Experimental Live Reasoning Box:** Membatalkan dan membersihkan total seluruh kode eksperimen kotak proses berpikir (live reasoning / thinking block) baik pada file JavaScript (`sidepanel.js`), file CSS (`sidepanel.css`, `newtab.css`), maupun directive sistem prompt. Mengembalikan antarmuka chat room ke kondisi bersih, rapi, ringan, dan stabil seperti semula dengan fokus penuh pada Master Agent Manage Task Schedule dan Tool Badges. | 🟢 STABLE | `./restore.sh v2.150.176` |
 | **v2.150.175** | 375 | 02-09-2026 00:42 | `v2.150.175` | **Universal Dual-Engine Live Reasoning & Instant Cognitive Stream Architecture:** Mengintegrasikan mesin penalaran ganda yang menjamin kotak pemikiran AI selalu muncul dan mengetik real-time huruf demi huruf (kecepatan 22ms per karakter dengan kursor lavender berdenyut) untuk setiap prompt tanpa terkecuali, dengan auto-override instan jika model LLM di 9router/Antigravity memancarkan token native reasoning asli, serta otomatis ter-collapse ke mode header interaktif (`Detail` / `Tutup`) saat selesai sehingga pengguna dapat membaca kembali riwayat pemikiran utuh model kapan saja. | 🟢 STABLE | `./restore.sh v2.150.175` |
 | **v2.150.174** | 374 | 02-09-2026 00:32 | `v2.150.174` | **9router & OpenRouter Native Reasoning Ingestion & Collapsible Thinking Accordion:** Menambahkan parameter `include_reasoning: true` dan `reasoning: { effort: "high" }` pada seluruh payload request HTTP ke OpenRouter / 9router proxy. Memperkuat ekstraksi delta reasoning dari berbagai jalur chunk provider (`delta.reasoning`, `delta.reasoning_content`, `delta.thought`, `choice.reasoning`). Dilengkapi sistem kartu **Collapsible Thinking Accordion** (terbuka saat streaming, otomatis collapse menjadi header compact `Detail` / `Tutup` saat selesai sehingga pengguna dapat membaca kembali pemikiran utuh model kapan saja). | 🟢 STABLE | `./restore.sh v2.150.174` |

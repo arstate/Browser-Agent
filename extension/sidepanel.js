@@ -7578,8 +7578,8 @@ function appendUserMessage(text, attachments = []) {
     `;
   }
 
-  // Check if message is long enough to warrant collapsible minimizing (>260 chars or >=4 newlines)
-  const isLongMessage = userContent.length > 260 || (userContent.match(/\n/g) || []).length >= 4;
+  // Check if message is long enough to warrant collapsible minimizing (>550 chars or >=8 newlines)
+  const isLongMessage = userContent.length > 550 || (userContent.match(/\n/g) || []).length >= 8;
 
   let contentHtml = '';
   if (formattedUserContent) {
@@ -7672,66 +7672,6 @@ function appendUserMessage(text, attachments = []) {
     setTimeout(() => { if (label) label.textContent = 'Copy'; }, 1500);
   });
   chatMessages.appendChild(msg);
-
-  // Dynamic post-render check if rendered bubble height naturally exceeds 140px
-  if (!isLongMessage && formattedUserContent) {
-    const rawContentEl = msg.querySelector('.message-content');
-    if (rawContentEl && rawContentEl.scrollHeight > 140) {
-      rawContentEl.classList.add('user-collapsible', 'is-collapsed');
-      rawContentEl.setAttribute('title', 'Klik untuk melihat seluruh pesan');
-      const inner = document.createElement('div');
-      inner.className = 'user-content-inner';
-      inner.innerHTML = rawContentEl.innerHTML;
-      rawContentEl.innerHTML = '';
-      rawContentEl.appendChild(inner);
-      
-      const fade = document.createElement('div');
-      fade.className = 'user-collapse-fade';
-      rawContentEl.appendChild(fade);
-
-      const dynBtn = document.createElement('button');
-      dynBtn.type = 'button';
-      dynBtn.className = 'btn-user-expand-toggle';
-      dynBtn.title = 'Tampilkan seluruh pesan';
-      dynBtn.innerHTML = `
-        <svg class="expand-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
-        <span class="expand-label">Lihat Selengkapnya</span>
-      `;
-      
-      if (rawContentEl.parentNode) {
-        rawContentEl.parentNode.insertBefore(dynBtn, rawContentEl.nextSibling);
-      }
-
-      const dynToggle = (e) => {
-        if (e) e.stopPropagation();
-        const isCollapsed = rawContentEl.classList.contains('is-collapsed');
-        const lbl = dynBtn.querySelector('.expand-label');
-        const icn = dynBtn.querySelector('.expand-icon');
-        if (isCollapsed) {
-          rawContentEl.classList.remove('is-collapsed');
-          rawContentEl.classList.add('is-expanded');
-          rawContentEl.removeAttribute('title');
-          if (lbl) lbl.textContent = 'Ciutkan Pesan';
-          if (icn) icn.innerHTML = '<polyline points="18 15 12 9 6 15"></polyline>';
-        } else {
-          rawContentEl.classList.remove('is-expanded');
-          rawContentEl.classList.add('is-collapsed');
-          rawContentEl.setAttribute('title', 'Klik untuk melihat seluruh pesan');
-          if (lbl) lbl.textContent = 'Lihat Selengkapnya';
-          if (icn) icn.innerHTML = '<polyline points="6 9 12 15 18 9"></polyline>';
-          msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      };
-
-      dynBtn.addEventListener('click', dynToggle);
-      fade.addEventListener('click', dynToggle);
-      rawContentEl.addEventListener('click', (e) => {
-        if (rawContentEl.classList.contains('is-collapsed')) dynToggle(e);
-      });
-    }
-  }
 
   scrollToBottom();
   return msg;
