@@ -5683,9 +5683,11 @@ Tugas Anda:
 
       let message = null;
       let accumulatedContent = "";
+      let accumulatedReasoning = "";
+      let isInsideThinkTag = false;
       let toolCallsMap = {};
 
-      // Realtime streaming chunk processor (ChatGPT/Gemini style)
+      // Realtime streaming chunk processor (ChatGPT/Gemini style with Live Thinking Stream)
       if (response.body && typeof response.body.getReader === 'function') {
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
@@ -5718,11 +5720,43 @@ Tugas Anda:
                 const chunk = JSON.parse(jsonStr);
                 const delta = chunk.choices?.[0]?.delta || chunk.choices?.[0]?.message;
                 if (delta) {
+                  const reasoningDelta = delta.reasoning_content || delta.reasoning || delta.thought || "";
+                  if (reasoningDelta) {
+                    accumulatedReasoning += reasoningDelta;
+                    updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
+                  }
+
                   if (delta.content) {
-                    accumulatedContent += delta.content;
-                    updateAssistantText(assistantBubble, ensureGeneratedImagesInText(accumulatedContent, sessionGeneratedImages), true);
+                    let rawContent = delta.content;
+                    if (rawContent.includes('<think>')) {
+                      isInsideThinkTag = true;
+                      rawContent = rawContent.replace('<think>', '');
+                    }
+                    if (isInsideThinkTag) {
+                      if (rawContent.includes('</think>')) {
+                        const parts = rawContent.split('</think>');
+                        accumulatedReasoning += parts[0];
+                        updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
+                        isInsideThinkTag = false;
+                        hideAssistantThinking(assistantBubble, true);
+                        if (parts[1]) {
+                          accumulatedContent += parts[1];
+                          updateAssistantText(assistantBubble, ensureGeneratedImagesInText(accumulatedContent, sessionGeneratedImages), true);
+                        }
+                      } else {
+                        accumulatedReasoning += rawContent;
+                        updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
+                      }
+                    } else {
+                      if (accumulatedReasoning && assistantBubble?.querySelector('.thinking-block.is-active-thinking')) {
+                        hideAssistantThinking(assistantBubble, true);
+                      }
+                      accumulatedContent += rawContent;
+                      updateAssistantText(assistantBubble, ensureGeneratedImagesInText(accumulatedContent, sessionGeneratedImages), true);
+                    }
                   }
                   if (delta.tool_calls) {
+                    hideAssistantThinking(assistantBubble, true);
                     for (const tc of delta.tool_calls) {
                       const idx = tc.index !== undefined ? tc.index : 0;
                       if (!toolCallsMap[idx]) {
@@ -7289,6 +7323,9 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
         throw new Error(lastErrorMessage || `Gagal menghubungi AI dengan model ${candidateModels.join(', ')}.`);
       }
 
+      let accumulatedReasoning = "";
+      let isInsideThinkTag = false;
+
       if (response.body && typeof response.body.getReader === 'function') {
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
@@ -7314,12 +7351,45 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
             try {
               const jsonStr = trimmed.replace(/^data:\s*/, "");
               const chunk = JSON.parse(jsonStr);
-              const deltaContent = chunk.choices?.[0]?.delta?.content || chunk.choices?.[0]?.message?.content || "";
-              if (deltaContent) {
-                accumulatedContent += deltaContent;
-                // Temporarily hide switch tag while streaming
-                const cleanDisplay = accumulatedContent.replace(/\[SWITCH_TO_AGENT_REQUEST:[\s\S]*?\]/gi, '').trim();
-                updateAssistantText(assistantBubble, cleanDisplay || accumulatedContent, true);
+              const delta = chunk.choices?.[0]?.delta || chunk.choices?.[0]?.message;
+              if (delta) {
+                const reasoningDelta = delta.reasoning_content || delta.reasoning || delta.thought || "";
+                if (reasoningDelta) {
+                  accumulatedReasoning += reasoningDelta;
+                  updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
+                }
+
+                let deltaContent = delta.content || "";
+                if (deltaContent) {
+                  if (deltaContent.includes('<think>')) {
+                    isInsideThinkTag = true;
+                    deltaContent = deltaContent.replace('<think>', '');
+                  }
+                  if (isInsideThinkTag) {
+                    if (deltaContent.includes('</think>')) {
+                      const parts = deltaContent.split('</think>');
+                      accumulatedReasoning += parts[0];
+                      updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
+                      isInsideThinkTag = false;
+                      hideAssistantThinking(assistantBubble, true);
+                      if (parts[1]) {
+                        accumulatedContent += parts[1];
+                        const cleanDisplay = accumulatedContent.replace(/\[SWITCH_TO_AGENT_REQUEST:[\s\S]*?\]/gi, '').trim();
+                        updateAssistantText(assistantBubble, cleanDisplay || accumulatedContent, true);
+                      }
+                    } else {
+                      accumulatedReasoning += deltaContent;
+                      updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
+                    }
+                  } else {
+                    if (accumulatedReasoning && assistantBubble?.querySelector('.thinking-block.is-active-thinking')) {
+                      hideAssistantThinking(assistantBubble, true);
+                    }
+                    accumulatedContent += deltaContent;
+                    const cleanDisplay = accumulatedContent.replace(/\[SWITCH_TO_AGENT_REQUEST:[\s\S]*?\]/gi, '').trim();
+                    updateAssistantText(assistantBubble, cleanDisplay || accumulatedContent, true);
+                  }
+                }
               }
             } catch (err) {}
           }
@@ -8103,8 +8173,7 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
     <div class="thinking-block" style="display: none;">
       <div class="thinking-header">
         <svg class="thinking-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/><path d="M9 21h6"/></svg>
-        <span class="thinking-title">Proses Berpikir</span>
-        <span class="thinking-arrow">▼</span>
+        <span class="thinking-title">Proses Berpikir (Live Reasoning)</span>
       </div>
       <div class="thinking-content"></div>
     </div>
@@ -8347,6 +8416,41 @@ function finalizeTaskScheduleSection(bubble) {
   requestSmoothScrollToBottom(true, wrapper);
 }
 
+function updateAssistantThinking(bubble, thinkingText, isStreaming = true) {
+  const thinkingBlock = bubble?.querySelector('.thinking-block');
+  if (!thinkingBlock) return;
+
+  const contentEl = thinkingBlock.querySelector('.thinking-content');
+  if (!contentEl) return;
+
+  const cleanText = typeof thinkingText === 'string' ? thinkingText.trim() : '';
+  if (!cleanText) return;
+
+  thinkingBlock.style.display = 'flex';
+  thinkingBlock.classList.add('is-active-thinking');
+  thinkingBlock.classList.remove('is-thinking-finished');
+
+  contentEl.innerHTML = escapeHtml(cleanText) + (isStreaming ? '<span class="streaming-cursor"></span>' : '');
+  requestSmoothScrollToBottom(false, bubble);
+}
+
+function hideAssistantThinking(bubble, smooth = true) {
+  const thinkingBlock = bubble?.querySelector('.thinking-block');
+  if (!thinkingBlock || thinkingBlock.style.display === 'none') return;
+
+  thinkingBlock.classList.remove('is-active-thinking');
+  if (smooth) {
+    thinkingBlock.classList.add('is-thinking-finished');
+    setTimeout(() => {
+      if (thinkingBlock && thinkingBlock.classList.contains('is-thinking-finished')) {
+        thinkingBlock.style.display = 'none';
+      }
+    }, 320);
+  } else {
+    thinkingBlock.style.display = 'none';
+  }
+}
+
 let streamingRafTimer = null;
 let lastStreamingUpdateMs = 0;
 let pendingStreamingData = null;
@@ -8363,6 +8467,11 @@ function updateAssistantText(bubble, text, isStreaming = false) {
   const contentEl = bubble?.querySelector('.message-content');
   const actionsEl = bubble?.querySelector('.message-actions');
   if (!contentEl) return;
+
+  // Auto-hide live thinking block when actual answer text starts appearing
+  if (text && text.trim().length > 0) {
+    hideAssistantThinking(bubble, true);
+  }
 
   if (!isStreaming) {
     // Final flush - execute immediately
