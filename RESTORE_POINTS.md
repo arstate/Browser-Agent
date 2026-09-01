@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.150.170`
-- **Iterasi:** `Iterasi 370`
-- **Tanggal Rilis:** 1 September 2026 (23:57 WIB)
+- **Versi Terkini:** `v2.150.171`
+- **Iterasi:** `Iterasi 371`
+- **Tanggal Rilis:** 2 September 2026 (00:09 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (833.4 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.150.171** | 371 | 02-09-2026 00:09 | `v2.150.171` | **Universal Live Reasoning Prompt Protocol & Multi-Tag Stream Buffer:** Menambahkan directive *Live Thinking Protocol* mandatori ke dalam `buildDynamicSystemPrompt` sehingga seluruh model AI (GPT-4o, Claude, Gemini, DeepSeek, Qwen, Ollama, OpenRouter) secara otomatis mengawali responnya dengan blok proses berpikir `<think>...</think>`. Dilengkapi dengan inisialisasi instan saat permintaan dikirim dan parser regex multi-tag yang fleksibel (`<think>`, `<thought>`, `<thinking>`, `[THINKING]`). | 🟢 STABLE | `./restore.sh v2.150.171` |
 | **v2.150.170** | 370 | 01-09-2026 23:57 | `v2.150.170` | **Live Streaming AI Thinking (Reasoning) Box with Distinct Styling & Seamless Auto-Hide:** Menampilkan proses pemikiran (*live reasoning / thinking stream*) AI secara real-time huruf per huruf saat sedang bekerja dengan styling Dark Luxury Monospace beraksen Lavender redup (`#A78BFA` / `#94A3B8`), border frosted glass putus-putus, dan animasi ikon otak berdenyut (*pulsing brain*). Begitu proses berpikir selesai atau AI mulai mengetik respon jawaban utama / mengeksekusi tool, kotak reasoning ini secara otomatis menghilang halus (*smooth fade-out*) sehingga ruang obrolan tetap bersih dan rapi. Dilengkapi dukungan penuh untuk model reasoning DeepSeek-R1 (`<think>`), Gemini Thinking (`thought`), Claude 3.7 Extended Thinking, dan OpenAI o1/o3-mini. | 🟢 STABLE | `./restore.sh v2.150.170` |
 | **v2.150.169** | 369 | 01-09-2026 23:48 | `v2.150.169` | **Dynamic Multi-Agent Swarm Recruitment, Reverse Infinite Scroll Auto-Load & Potato-Laptop 60FPS Performance Engine:** Menghilangkan batasan kaku maksimal 2 agen pada Master Agent sehingga sistem dapat merekrut 1 hingga banyak agen spesialis sekaligus berdasarkan skor domain multi-disiplin nyata. Mengganti tombol manual load earlier dengan **Reverse Infinite Scroll Otomatis** (sama seperti WhatsApp/Telegram) saat mendekati mentok atas dengan *Scroll-Anchor Locking*. Ditambah **Streaming RAF Throttle Buffer (35ms)** dan isolasi rendering layout CSS (`content-visibility: auto`) yang memangkas beban CPU streaming dari 85% menjadi < 10% dan menjamin 60 FPS buttery smooth di laptop kentang. | 🟢 STABLE | `./restore.sh v2.150.169` |
 | **v2.150.168** | 368 | 01-09-2026 21:57 | `v2.150.168` | **Infinite Scroll History Sessions & Virtual Message Chunking Engine:** Mengoptimalkan performa modal riwayat percakapan dan sesi chat panjang (> 1.000 pesan). Pada daftar riwayat, kartu chat dirender bertahap per batch 30 sesi (`HISTORY_PAGE_SIZE = 30`) via infinite scroll dan debounced search 150ms. Pada saat meresume chat yang panjang, browser hanya merender 35 pesan terakhir secara instan (`INITIAL_BATCH_SIZE = 35`) dengan tombol akrilik elegan `[ ⬆ Muat Pesan Sebelumnya ]` yang mempertahankan posisi scroll tanpa jump/lag, menjamin waktu buka instan < 0.05 detik dan nol risiko browser hang. | 🟢 STABLE | `./restore.sh v2.150.168` |

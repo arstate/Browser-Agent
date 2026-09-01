@@ -761,6 +761,13 @@ function buildDynamicSystemPrompt(agentOrAgents = null) {
   // 1. Inject Real-Time Current Temporal Context
   prompt += getDetailedCurrentTimeContext() + "\n\n";
 
+  // 1b. Inject Universal Live Reasoning / Thinking Stream Protocol
+  prompt += `=== 🧠 PROTOKOL LIVE THINKING & REASONING (MANDATORI) ===
+Sebelum menuliskan respon jawaban akhir atau memanggil alat (tools), Anda WAJIB mengawali respon Anda dengan blok proses berpikir (penalaran) di dalam tag <think> ... </think>.
+Di dalam tag <think>, jelaskan secara runtut apa yang Anda analisis, apa yang sedang Anda lakukan (misal: "Menganalisis maksud pengguna...", "Menentukan domain tugas...", "Menyiapkan langkah tindakan..."), dan bagaimana strategi solusi Anda.
+Teks di dalam <think> ini akan ditampilkan kepada pengguna sebagai Live Streaming Thinking Process real-time.
+Setelah tag </think>, lanjutkan langsung dengan respon final atau pemanggilan tool Anda.\n\n`;
+
   const hasBoss = (agents[0]?.id === "master_agent" || agents[0]?.id === "boss_agent" || agents[0]?.is_boss);
   const workers = hasBoss ? agents.slice(1) : agents;
 
@@ -5728,13 +5735,13 @@ Tugas Anda:
 
                   if (delta.content) {
                     let rawContent = delta.content;
-                    if (rawContent.includes('<think>')) {
+                    if (/<think>|<thought>|<thinking>|\[THINKING\]/i.test(rawContent) && !isInsideThinkTag) {
                       isInsideThinkTag = true;
-                      rawContent = rawContent.replace('<think>', '');
+                      rawContent = rawContent.replace(/<think>|<thought>|<thinking>|\[THINKING\]/gi, '');
                     }
                     if (isInsideThinkTag) {
-                      if (rawContent.includes('</think>')) {
-                        const parts = rawContent.split('</think>');
+                      if (/<\/think>|<\/thought>|<\/thinking>|\[\/THINKING\]/i.test(rawContent)) {
+                        const parts = rawContent.split(/<\/think>|<\/thought>|<\/thinking>|\[\/THINKING\]/i);
                         accumulatedReasoning += parts[0];
                         updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
                         isInsideThinkTag = false;
@@ -7361,13 +7368,13 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 
                 let deltaContent = delta.content || "";
                 if (deltaContent) {
-                  if (deltaContent.includes('<think>')) {
+                  if (/<think>|<thought>|<thinking>|\[THINKING\]/i.test(deltaContent) && !isInsideThinkTag) {
                     isInsideThinkTag = true;
-                    deltaContent = deltaContent.replace('<think>', '');
+                    deltaContent = deltaContent.replace(/<think>|<thought>|<thinking>|\[THINKING\]/gi, '');
                   }
                   if (isInsideThinkTag) {
-                    if (deltaContent.includes('</think>')) {
-                      const parts = deltaContent.split('</think>');
+                    if (/<\/think>|<\/thought>|<\/thinking>|\[\/THINKING\]/i.test(deltaContent)) {
+                      const parts = deltaContent.split(/<\/think>|<\/thought>|<\/thinking>|\[\/THINKING\]/i);
                       accumulatedReasoning += parts[0];
                       updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
                       isInsideThinkTag = false;
@@ -8247,6 +8254,8 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
   if (initialText) {
     hydrateLocalImages(msg);
     hydrateFileActions(msg);
+  } else if (isLiveLoading) {
+    updateAssistantThinking(msg, "Menganalisis prompt & memproses penalaran...", true);
   }
   requestSmoothScrollToBottom(true, msg);
   currentActiveAssistantBubble = msg;
