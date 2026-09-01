@@ -5468,6 +5468,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   };
 
   const assistantBubble = appendAssistantMessage(null, true, agentInfo, userMessage);
+  startLiveThinkingStream(assistantBubble, userMessage, hasBoss ? "Master Agent" : initialAgentName);
   
   // Dynamic Max Steps ceiling based on AI Thinking Level
   let maxSteps = 35;
@@ -7228,6 +7229,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
   };
 
   const assistantBubble = appendAssistantMessage(null, true, agentInfo, userMessage);
+  startLiveThinkingStream(assistantBubble, userMessage, initialAgentName);
   const contentEl = assistantBubble.querySelector('.message-content');
   const pillStatusEl = assistantBubble.querySelector('.agent-pill-status');
   const pillDotEl = assistantBubble.querySelector('.agent-pill-dot');
@@ -8466,7 +8468,114 @@ function finalizeTaskScheduleSection(bubble) {
   requestSmoothScrollToBottom(true, wrapper);
 }
 
+// =========================================================================
+// Universal Live Thinking & Cognitive Stream Engine (ChatGPT/DeepSeek Style)
+// =========================================================================
+let currentThinkingInterval = null;
+let isNativeReasoningStreaming = false;
+
+function generateDynamicCognitivePlan(userMessage, agentName = 'Master Agent') {
+  const cleanMsg = (userMessage || '').trim();
+  const lowerMsg = cleanMsg.toLowerCase();
+
+  const isBrowserAction = /buka|open|tab|klik|click|scroll|yt|youtube|google|search|cari|navigasi|url|login|web/i.test(lowerMsg);
+  const isGSuite = /slide|presentasi|gmail|email|drive|sheet|doc|kalender|calendar|form|tugas|tasks/i.test(lowerMsg);
+  const isProperty = /rumah|tiar|kpr|dp|cicilan|survei|properti|sidoarjo|surabaya/i.test(lowerMsg);
+  const isCoding = /code|coding|bug|error|script|fungsi|function|fix|html|css|js|python/i.test(lowerMsg);
+  const isAnalysis = /analisis|audit|evaluasi|cek|hitung|compare|bandingkan|leads|ads|cpr/i.test(lowerMsg);
+  const isCasual = cleanMsg.length <= 15 || /^(tes|test|halo|hai|p|ping|siang|pagi|malam|apa kabar|siapa)/i.test(lowerMsg);
+
+  let plan = `[Penalaran Kognitif ${agentName}]\n`;
+  plan += `1. Membedah maksud instruksi pengguna: "${cleanMsg}"\n`;
+
+  if (isCasual) {
+    plan += `2. Klasifikasi domain: Percakapan Kasual & Uji Koneksi Respon Cepat.\n`;
+    plan += `3. Memeriksa status sistem internal dan memvalidasi persona komunikasi.\n`;
+    plan += `4. Menyusun jawaban ramah, interaktif, dan informatif secara instan.`;
+  } else if (isBrowserAction) {
+    plan += `2. Klasifikasi domain: Otomasi Navigasi & Aksi Peramban Web.\n`;
+    plan += `3. Merumuskan parameter URL target dan menyiapkan pemanggilan tool browser.\n`;
+    plan += `4. Memverifikasi status tab aktif dan mengeksekusi tindakan secara presisi.`;
+  } else if (isGSuite) {
+    plan += `2. Klasifikasi domain: Integrasi Produktivitas Google Workspace.\n`;
+    plan += `3. Menyiapkan parameter API REST dan struktur payload dokumen target.\n`;
+    plan += `4. Menjalankan eksekusi background tanpa mengganggu tampilan layar pengguna.`;
+  } else if (isProperty) {
+    plan += `2. Klasifikasi domain: Konsultasi Properti & Simulasi KPR Tiar Property.\n`;
+    plan += `3. Mengkaji skema DP 0%, promo subsidi cicilan, dan SOP 3-Balon Mbak Ningsih.\n`;
+    plan += `4. Menyusun strategi pendekatan natural dan penawaran survei lokasi.`;
+  } else if (isCoding) {
+    plan += `2. Klasifikasi domain: Rekayasa Kode & Analisis Struktur Skrip.\n`;
+    plan += `3. Menganalisis sintaks, dependensi logika, dan potensi kendala runtime.\n`;
+    plan += `4. Menyusun solusi kode yang bersih, modular, dan terverifikasi 100%.`;
+  } else if (isAnalysis) {
+    plan += `2. Klasifikasi domain: Audit & Analisis Data Strategis.\n`;
+    plan += `3. Mengumpulkan metrik performa, mengidentifikasi anomali, dan menyaring insight.\n`;
+    plan += `4. Merumuskan laporan komprehensif dengan rekomendasi terukur.`;
+  } else {
+    plan += `2. Klasifikasi domain: Pemrosesan Tugas Multi-Langkah & Penalaran Umum.\n`;
+    plan += `3. Menentukan strategi eksekusi optimal dan membagi sasaran kerja.\n`;
+    plan += `4. Menyusun jawaban komprehensif, akurat, dan bebas slop.`;
+  }
+
+  return plan;
+}
+
+function startLiveThinkingStream(assistantBubble, userMessage, agentName = 'Master Agent') {
+  stopLiveThinkingStream(assistantBubble, false);
+  isNativeReasoningStreaming = false;
+
+  const thinkingBlock = assistantBubble?.querySelector('.thinking-block');
+  if (!thinkingBlock) return;
+
+  const contentEl = thinkingBlock.querySelector('.thinking-content');
+  if (!contentEl) return;
+
+  const planText = generateDynamicCognitivePlan(userMessage, agentName);
+  thinkingBlock.style.display = 'flex';
+  thinkingBlock.classList.add('is-active-thinking');
+  thinkingBlock.classList.remove('collapsed');
+
+  const toggleText = thinkingBlock.querySelector('.thinking-toggle-text');
+  if (toggleText) toggleText.textContent = 'Tutup';
+
+  let charIndex = 0;
+  contentEl.innerHTML = '<span class="streaming-cursor"></span>';
+
+  currentThinkingInterval = setInterval(() => {
+    if (isNativeReasoningStreaming || !isExecuting) {
+      clearInterval(currentThinkingInterval);
+      currentThinkingInterval = null;
+      return;
+    }
+
+    if (charIndex < planText.length) {
+      charIndex += Math.min(3, planText.length - charIndex);
+      const currentText = planText.slice(0, charIndex);
+      contentEl.innerHTML = escapeHtml(currentText) + '<span class="streaming-cursor"></span>';
+      requestSmoothScrollToBottom(false, assistantBubble);
+    } else {
+      clearInterval(currentThinkingInterval);
+      currentThinkingInterval = null;
+    }
+  }, 22);
+}
+
+function stopLiveThinkingStream(assistantBubble, smooth = true) {
+  if (currentThinkingInterval) {
+    clearInterval(currentThinkingInterval);
+    currentThinkingInterval = null;
+  }
+  hideAssistantThinking(assistantBubble, smooth);
+}
+
 function updateAssistantThinking(bubble, thinkingText, isStreaming = true) {
+  isNativeReasoningStreaming = true;
+  if (currentThinkingInterval) {
+    clearInterval(currentThinkingInterval);
+    currentThinkingInterval = null;
+  }
+
   const thinkingBlock = bubble?.querySelector('.thinking-block');
   if (!thinkingBlock) return;
 
@@ -8488,6 +8597,11 @@ function updateAssistantThinking(bubble, thinkingText, isStreaming = true) {
 }
 
 function hideAssistantThinking(bubble, smooth = true) {
+  if (currentThinkingInterval) {
+    clearInterval(currentThinkingInterval);
+    currentThinkingInterval = null;
+  }
+
   const thinkingBlock = bubble?.querySelector('.thinking-block');
   if (!thinkingBlock || thinkingBlock.style.display === 'none') return;
 
