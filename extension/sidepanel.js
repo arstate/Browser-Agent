@@ -8575,89 +8575,72 @@ function updateFooterStatus(statusText) {
 }
 
 let chatAutoScrollObserver = null;
+let isAutoScrollThrottled = false;
 
-function scrollToBottom(smooth = false, targetEl = null) {
-  // 1. Scroll inner chatMessages container
+function scrollToBottom(smooth = false) {
+  // 1. Scroll inner chatMessages container (SidePanel mode)
   if (chatMessages) {
-    chatMessages.scrollTop = chatMessages.scrollHeight + 1000;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
-  // 2. Scroll window / body / html (Crucial for full-screen newtab mode)
+  // 2. Scroll window / body / html (Crucial for Full-Screen NewTab mode)
   try {
-    const isStickman = document.body.classList.contains('stickman-active');
     const scrollTarget = Math.max(
       document.body.scrollHeight || 0,
       document.documentElement.scrollHeight || 0,
       chatMessages ? chatMessages.scrollHeight : 0
     );
-    const extraOffset = isStickman ? 280 : 200;
     window.scrollTo({
-      top: scrollTarget + extraOffset,
+      top: scrollTarget + 2000,
       behavior: smooth ? 'smooth' : 'auto'
     });
   } catch (e) {
-    window.scrollTo(0, (document.body.scrollHeight || 0) + 200);
+    window.scrollTo(0, (document.body.scrollHeight || 0) + 2000);
   }
-
-  // 3. Pin bottom-most element inside active assistant bubble into view if available
-  try {
-    const bubble = currentActiveAssistantBubble || (chatMessages ? chatMessages.lastElementChild : null);
-    if (bubble) {
-      const candidateEl = targetEl || (
-        bubble.querySelector('.tool-section-wrapper:not([style*="display: none"])') ||
-        bubble.querySelector('.task-schedule-wrapper:not([style*="display: none"])') ||
-        bubble.querySelector('.message-content:not([style*="display: none"])') ||
-        bubble.querySelector('.agent-tree-branch-container:not([style*="display: none"])') ||
-        bubble.lastElementChild
-      );
-      if (candidateEl && typeof candidateEl.scrollIntoView === 'function') {
-        candidateEl.scrollIntoView({
-          behavior: smooth ? 'smooth' : 'auto',
-          block: 'end',
-          inline: 'nearest'
-        });
-      }
-    }
-  } catch (e) {}
 }
 
-function requestSmoothScrollToBottom(smooth = false, targetEl = null) {
-  // Staggered multi-frame invocation ensures layout reflows and CSS expansion animations are 100% tracked
-  scrollToBottom(smooth, targetEl);
+function requestSmoothScrollToBottom(smooth = false) {
+  scrollToBottom(smooth);
   requestAnimationFrame(() => {
-    scrollToBottom(smooth, targetEl);
+    scrollToBottom(smooth);
   });
   setTimeout(() => {
-    scrollToBottom(smooth, targetEl);
-  }, 60);
-  setTimeout(() => {
-    scrollToBottom(smooth, targetEl);
-  }, 160);
-  setTimeout(() => {
-    scrollToBottom(smooth, targetEl);
-  }, 320);
+    scrollToBottom(smooth);
+  }, 80);
 }
 
 function startAutoScrollObserver() {
   if (chatAutoScrollObserver || !chatMessages) return;
-  let rafPending = false;
-  chatAutoScrollObserver = new MutationObserver(() => {
+  chatAutoScrollObserver = new MutationObserver((mutations) => {
     if (!isExecuting) return;
-    if (!rafPending) {
-      rafPending = true;
+    let shouldScroll = false;
+    for (let i = 0; i < mutations.length; i++) {
+      const m = mutations[i];
+      if (m.type === 'childList' && (m.addedNodes.length > 0 || m.removedNodes.length > 0)) {
+        shouldScroll = true;
+        break;
+      }
+      if (m.type === 'characterData') {
+        shouldScroll = true;
+        break;
+      }
+    }
+
+    if (shouldScroll && !isAutoScrollThrottled) {
+      isAutoScrollThrottled = true;
       requestAnimationFrame(() => {
-        rafPending = false;
+        isAutoScrollThrottled = false;
         scrollToBottom(false);
       });
     }
   });
+
   try {
     chatAutoScrollObserver.observe(chatMessages, {
       childList: true,
       subtree: true,
       characterData: true,
-      attributes: true,
-      attributeFilter: ['class', 'style']
+      attributes: false // Ignore attribute/style changes to prevent animation jitter ("jedug-jedug")
     });
   } catch (e) {}
 }
@@ -8669,6 +8652,7 @@ function stopAutoScrollObserver() {
     } catch (e) {}
     chatAutoScrollObserver = null;
   }
+  isAutoScrollThrottled = false;
   requestSmoothScrollToBottom(true);
 }
 
