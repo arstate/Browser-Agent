@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.150.166`
-- **Iterasi:** `Iterasi 366`
-- **Tanggal Rilis:** 1 September 2026 (21:40 WIB)
+- **Versi Terkini:** `v2.150.167`
+- **Iterasi:** `Iterasi 367`
+- **Tanggal Rilis:** 1 September 2026 (21:46 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (833.4 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.150.167** | 367 | 01-09-2026 21:46 | `v2.150.167` | **Proportional Anti-Void Headroom Clearance & Anti-Jitter Auto-Scroll Engine:** Merampingkan jarak vertical clearance pada area Newtab (`padding-bottom: 195px !important` pada `.fullscreen-chat-main` dan `245px` saat stickman aktif, serta padding `0px` pada `.chat-messages`) sehingga jarak antara kartu tindakan/elemen terbawah dengan kotak floating prompt input berada pada proporsi sempurna (~20px - 25px breathing room) tanpa kekosongan/void yang terlalu renggang ataupun terpotong. | 🟢 STABLE | `./restore.sh v2.150.167` |
 | **v2.150.166** | 366 | 01-09-2026 21:40 | `v2.150.166` | **Anti-Jitter Auto-Scroll Engine & Non-Conflicting 280px Viewport Spacer Architecture:** Memperbaiki tuntas bug scroll "jedug-jedug" dan kartu elemen terbawah tertutup floating input box. Menghapus `scrollIntoView` yang bentrok, memperbesar padding dasar menjadi `280px` (`360px` saat stickman aktif), menerapkan scrolling satu arah non-konflik, dan membatasi `MutationObserver` hanya pada penambahan node dan teks dengan RAF throttling ketat. | 🟢 STABLE | `./restore.sh v2.150.166` |
 | **v2.150.165** | 365 | 01-09-2026 20:45 | `v2.150.165` | **Multi-Frame Staggered Auto-Scroll & Execution MutationObserver Engine:** Meng-upgrade sistem auto-scroll saat agent bekerja dengan multi-frame staggered scrolling (`0ms`, `60ms`, `160ms`, `320ms`) dan `MutationObserver` cerdas selama eksekusi berlangsung. Menjamin status Master Agent, pohon tim sub-agen, kontainer jadwal tugas (*Task Schedule*), langkah tindakan (*Tool Badges*), thinking block, dan respon streaming selalu otomatis bergulir presisi ke elemen paling bawah yang sedang aktif tanpa memerlukan scrolling manual oleh pengguna. | 🟢 STABLE | `./restore.sh v2.150.165` |
 | **v2.131.0** | 331 | 24-08-2026 03:04 | `v2.131.0` | **Full Antigravity Session ZIP Archive with Uploaded Media on GitHub:** Mengompres seluruh folder brain percakapan Antigravity (lengkap dengan log transkrip, chunk percakapan, aset gambar paste/upload user, dan skrip) menjadi `session_7a60fcd3-8146-43e4-bc2a-fa745d9d5241.zip` (55 MB) dan mengunggahnya ke repositori GitHub. | 🟢 STABLE | `./restore.sh v2.131.0` |
