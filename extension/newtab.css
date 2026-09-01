@@ -6673,8 +6673,19 @@ html.no-glass-blur * {
 body.no-glass-blur .bento-card,
 body.no-glass-blur .newtab-header,
 body.no-glass-blur .chat-input-container,
+body.no-glass-blur .chat-input-wrapper,
 body.no-glass-blur .recent-site-card,
-body.no-glass-blur .dock-item {
+body.no-glass-blur .dock-item,
+body.no-glass-blur .message.assistant,
+body.no-glass-blur .message.user,
+body.no-glass-blur .tool-section-wrapper,
+body.no-glass-blur .task-schedule-wrapper,
+body.no-glass-blur .thinking-block,
+body.no-glass-blur .welcome-card,
+body.no-glass-blur .custom-modal-dialog,
+body.no-glass-blur .modal-content,
+body.no-glass-blur .agent-tree-branch-container,
+body.no-glass-blur .clarification-dock-container {
   background: #141419 !important;
   background-color: #141419 !important;
 }
@@ -6682,6 +6693,13 @@ body.no-glass-blur .dock-item {
 body.no-glass-blur {
   background: #0B0B0E !important;
   background-color: #0B0B0E !important;
+}
+
+/* Hardware-Accelerated Smooth DOM Layout Isolation for 60 FPS Potato Laptop */
+.message {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 80px;
+  contain: layout style paint;
 }
 
 /* =========================================================================

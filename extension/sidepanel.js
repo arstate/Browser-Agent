@@ -554,7 +554,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     return b;
   }
 
-  // 0. Include ONLY explicit user-selected @mention chips (Exact match by ID)
+  // 0. Include ALL explicit user-selected @mention chips (Exact match by ID)
   if (Array.isArray(explicitMentionAgents) && explicitMentionAgents.length > 0) {
     explicitMentionAgents.forEach(ag => {
       if (ag && String(ag.id || '') !== "master_agent" && String(ag.id || '') !== "boss_agent" && !matchedWorkers.some(m => String(m.id || '') === String(ag.id || ''))) {
@@ -562,7 +562,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
       }
     });
     if (matchedWorkers.length > 0) {
-      return [getMasterBoss(), ...matchedWorkers.slice(0, 2)];
+      return [getMasterBoss(), ...sortAgentsByPipeline(matchedWorkers)];
     }
   }
 
@@ -572,14 +572,13 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     const agIdLower = String(ag.id || "").toLowerCase();
     if ((agIdLower && text.includes(`@${agIdLower}`)) || (agNameLower && text.includes(`@${agNameLower}`))) {
       matchedWorkers.push(ag);
-      break;
     }
   }
   if (matchedWorkers.length > 0) {
-    return [getMasterBoss(), ...matchedWorkers];
+    return [getMasterBoss(), ...sortAgentsByPipeline(matchedWorkers)];
   }
 
-  // 1. Precise Domain & Jobdesk Intent Scoring (Strict Top-K: Max 1 to 2 workers to save tokens)
+  // 1. Precise Domain & Jobdesk Intent Scoring (Dynamic Swarm Recruitment)
   const scoredWorkers = [];
 
   for (const ag of nonBossCandidates) {
@@ -607,8 +606,8 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     const isAdsQuery = (text.includes("ads") || text.includes("iklan") || text.includes("lead") || text.includes("cpr") || text.includes("cpl") || text.includes("ctr") || text.includes("roas") || text.includes("campaign") || text.includes("kampanye") || text.includes("gacor") || text.includes("boncos"));
     if (isAdsQuery) {
       if (idLower.includes("auditor") || nameLower.includes("auditor") || idLower.includes("lead_quality") || nameLower.includes("lead quality")) score += 15;
-      else if (idLower.includes("strategist") || nameLower.includes("strategist")) score += 10;
-      else if (idLower.includes("meta_ads") || nameLower.includes("meta ads")) score += 8;
+      else if (idLower.includes("strategist") || nameLower.includes("strategist")) score += 12;
+      else if (idLower.includes("meta_ads") || nameLower.includes("meta ads")) score += 10;
     }
 
     // C. Copywriting & Script / Caption Jobdesk
@@ -621,9 +620,9 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     const isSalesKprQuery = (text.includes("kpr") || text.includes("closing") || text.includes("chat") || text.includes("survei") || text.includes("survey") || text.includes("dp 0") || text.includes("utj") || text.includes("cicilan") || text.includes("prospek") || text.includes("konsumen") || text.includes("wa ") || text.includes("whatsapp"));
     if (isSalesKprQuery) {
       if (idLower.includes("closer") || idLower.includes("sales") || nameLower.includes("sales") || nameLower.includes("closer") || nameLower.includes("ningsih")) score += 15;
-      else if (idLower.includes("underwriter") || nameLower.includes("underwriter") || nameLower.includes("bank")) score += 10;
-      else if (idLower.includes("on-site") || nameLower.includes("on-site")) score += 8;
-      else if (idLower.includes("admin") || nameLower.includes("admin")) score += 6;
+      else if (idLower.includes("underwriter") || nameLower.includes("underwriter") || nameLower.includes("bank")) score += 12;
+      else if (idLower.includes("on-site") || nameLower.includes("on-site")) score += 10;
+      else if (idLower.includes("admin") || nameLower.includes("admin")) score += 8;
     }
 
     // E. Visual Design & Image / Slide Jobdesk
@@ -661,15 +660,24 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     }
   }
 
-  // Sort by score descending and take at most TOP 2 specialist agents (laser-focused & token-efficient!)
+  // Dynamic Multi-Agent Swarm selection:
+  // - If single casual/personal query: recruit only 1 companion specialist
+  // - If multi-disciplinary task: recruit ALL agents with high confidence (score >= 8), no artificial 2-agent limit!
   scoredWorkers.sort((a, b) => b.score - a.score);
-  const selectedSpecialists = scoredWorkers.slice(0, 2).map(item => item.agent);
 
-  selectedSpecialists.forEach(sp => {
-    if (!matchedWorkers.some(m => m.id === sp.id)) {
-      matchedWorkers.push(sp);
+  if (scoredWorkers.length > 0) {
+    if (scoredWorkers[0].score >= 30) {
+      // Single focused casual intent
+      matchedWorkers.push(scoredWorkers[0].agent);
+    } else {
+      // Multi-agent selection: take all agents with strong domain match (score >= 8)
+      scoredWorkers.forEach(item => {
+        if (item.score >= 8 && !matchedWorkers.some(m => m.id === item.agent.id)) {
+          matchedWorkers.push(item.agent);
+        }
+      });
     }
-  });
+  }
 
   // Fallback: if nothing matched, choose context-aware default
   const isDirectGSuiteAction = text.startsWith('[/slides]') || text.startsWith('/slides') ||
@@ -8339,27 +8347,58 @@ function finalizeTaskScheduleSection(bubble) {
   requestSmoothScrollToBottom(true, wrapper);
 }
 
+let streamingRafTimer = null;
+let lastStreamingUpdateMs = 0;
+let pendingStreamingData = null;
+
+function renderStreamingChunk(data) {
+  if (!data || !data.contentEl) return;
+  const formatted = formatMarkdown(data.text);
+  data.contentEl.innerHTML = formatted + '<span class="streaming-cursor"></span>';
+  hydrateLocalImages(data.bubble);
+  requestSmoothScrollToBottom(false, data.bubble);
+}
+
 function updateAssistantText(bubble, text, isStreaming = false) {
   const contentEl = bubble?.querySelector('.message-content');
   const actionsEl = bubble?.querySelector('.message-actions');
-  if (contentEl) {
+  if (!contentEl) return;
+
+  if (!isStreaming) {
+    // Final flush - execute immediately
+    if (streamingRafTimer) {
+      cancelAnimationFrame(streamingRafTimer);
+      streamingRafTimer = null;
+    }
+    pendingStreamingData = null;
     contentEl.style.display = 'block';
-    const formatted = formatMarkdown(text);
-    if (isStreaming) {
-      contentEl.innerHTML = formatted + '<span class="streaming-cursor"></span>';
-      hydrateLocalImages(bubble);
-    } else {
-      contentEl.innerHTML = formatted;
-      hydrateLocalImages(bubble);
+    contentEl.innerHTML = formatMarkdown(text);
+    hydrateLocalImages(bubble);
+    hydrateFileActions(bubble);
+    if (actionsEl) {
+      actionsEl.style.display = (text.trim().length > 0) ? 'flex' : 'none';
       hydrateFileActions(bubble);
     }
-    if (actionsEl) {
-      actionsEl.style.display = (text.trim().length > 0 && !isStreaming) ? 'flex' : 'none';
-      if (!isStreaming) {
-        hydrateFileActions(bubble);
-      }
-    }
     requestSmoothScrollToBottom(false, bubble);
+    return;
+  }
+
+  // Live streaming mode - throttle rendering to max once per ~35ms via RAF
+  contentEl.style.display = 'block';
+  pendingStreamingData = { bubble, text, contentEl, actionsEl };
+
+  const now = performance.now();
+  if (now - lastStreamingUpdateMs >= 35) {
+    lastStreamingUpdateMs = now;
+    renderStreamingChunk(pendingStreamingData);
+  } else if (!streamingRafTimer) {
+    streamingRafTimer = requestAnimationFrame(() => {
+      streamingRafTimer = null;
+      lastStreamingUpdateMs = performance.now();
+      if (pendingStreamingData) {
+        renderStreamingChunk(pendingStreamingData);
+      }
+    });
   }
 }
 
@@ -10887,41 +10926,55 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
   hydrateFileActions(chatMessages);
 }
 
-function updateLoadEarlierButton() {
-  let loadEarlierWrap = document.getElementById('btn-load-earlier-wrap');
-  if (currentRenderedMessageStartIndex <= 0) {
-    if (loadEarlierWrap) loadEarlierWrap.remove();
-    return;
+let isLoadingEarlierMessages = false;
+
+function loadNextEarlierMessagesBatch() {
+  if (isLoadingEarlierMessages || currentRenderedMessageStartIndex <= 0) return;
+  isLoadingEarlierMessages = true;
+
+  const batchSize = 35;
+  const nextStartIndex = Math.max(0, currentRenderedMessageStartIndex - batchSize);
+  const slice = conversationHistory.slice(nextStartIndex, currentRenderedMessageStartIndex);
+  currentRenderedMessageStartIndex = nextStartIndex;
+
+  const prevScrollHeight = chatMessages ? chatMessages.scrollHeight : 0;
+  const prevScrollTop = chatMessages ? chatMessages.scrollTop : 0;
+  const prevDocHeight = document.documentElement.scrollHeight;
+  const prevWindowScrollY = window.scrollY;
+
+  renderMessageSliceIntoDOM(slice, true);
+
+  // Preserve scroll anchor position (zero jump)
+  if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
+    chatMessages.scrollTop = prevScrollTop + (chatMessages.scrollHeight - prevScrollHeight);
+  }
+  const heightDiff = document.documentElement.scrollHeight - prevDocHeight;
+  if (heightDiff > 0 && typeof window.scrollTo === 'function') {
+    window.scrollTo({ top: prevWindowScrollY + heightDiff, behavior: 'instant' });
   }
 
-  if (!loadEarlierWrap) {
-    loadEarlierWrap = document.createElement('div');
-    loadEarlierWrap.className = 'load-earlier-messages-wrap';
-    loadEarlierWrap.id = 'btn-load-earlier-wrap';
-    loadEarlierWrap.innerHTML = `
-      <button type="button" class="btn-load-earlier-messages" id="btn-load-earlier">
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="18 15 12 9 6 15"/>
-        </svg>
-        <span class="load-earlier-label">Muat Pesan Sebelumnya (${currentRenderedMessageStartIndex} pesan tersisa)</span>
-      </button>
-    `;
-    chatMessages.insertBefore(loadEarlierWrap, chatMessages.firstChild);
+  setTimeout(() => {
+    isLoadingEarlierMessages = false;
+  }, 120);
+}
 
-    const btn = loadEarlierWrap.querySelector('#btn-load-earlier');
-    btn?.addEventListener('click', () => {
-      const batchSize = 35;
-      const nextStartIndex = Math.max(0, currentRenderedMessageStartIndex - batchSize);
-      const slice = conversationHistory.slice(nextStartIndex, currentRenderedMessageStartIndex);
-      currentRenderedMessageStartIndex = nextStartIndex;
-      renderMessageSliceIntoDOM(slice, true);
-      updateLoadEarlierButton();
-    });
-  } else {
-    const label = loadEarlierWrap.querySelector('.load-earlier-label');
-    if (label) {
-      label.textContent = `Muat Pesan Sebelumnya (${currentRenderedMessageStartIndex} pesan tersisa)`;
-    }
+function initReverseInfiniteScroll() {
+  if (chatMessages && !chatMessages.dataset.boundTopAutoLoad) {
+    chatMessages.dataset.boundTopAutoLoad = 'true';
+    chatMessages.addEventListener('scroll', () => {
+      if (chatMessages.scrollTop <= 60 && currentRenderedMessageStartIndex > 0) {
+        loadNextEarlierMessagesBatch();
+      }
+    }, { passive: true });
+  }
+
+  if (typeof window !== 'undefined' && !window.boundTopAutoLoadWindow) {
+    window.boundTopAutoLoadWindow = true;
+    window.addEventListener('scroll', () => {
+      if (window.scrollY <= 140 && currentRenderedMessageStartIndex > 0 && document.body.classList.contains('has-messages')) {
+        loadNextEarlierMessagesBatch();
+      }
+    }, { passive: true });
   }
 }
 
@@ -10987,7 +11040,7 @@ async function resumeSession(sessionId) {
   const initialSlice = conversationHistory.slice(currentRenderedMessageStartIndex);
 
   renderMessageSliceIntoDOM(initialSlice, false);
-  updateLoadEarlierButton();
+  initReverseInfiniteScroll();
 
   hideHistoryModal();
   updateHeaderChatTitle(currentSessionTitle);
@@ -13490,6 +13543,7 @@ async function bootstrap() {
   }
   updateMcpStatus();
   updateHeaderChatTitle();
+  initReverseInfiniteScroll();
 }
 
 bootstrap();
