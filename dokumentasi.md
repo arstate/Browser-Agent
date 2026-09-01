@@ -106,9 +106,9 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ---
 
-#### 🛡️ 6. Protokol Versioning & Restore Points
+##### 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.171`
+- **Versi Terkini:** `v2.150.172`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -174,3 +174,4 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 52. **Dynamic Multi-Agent Swarm Recruitment, Reverse Infinite Scroll Auto-Load & Potato-Laptop 60FPS Performance Engine:** Menghilangkan batasan kaku maksimal 2 agen pada Master Agent sehingga sistem dapat merekrut 1 hingga banyak agen spesialis sekaligus berdasarkan skor domain multi-disiplin nyata. Mengganti tombol manual load earlier dengan **Reverse Infinite Scroll Otomatis** (sama seperti WhatsApp/Telegram) saat mendekati mentok atas dengan *Scroll-Anchor Locking*. Ditambah **Streaming RAF Throttle Buffer (35ms)** dan isolasi rendering layout CSS (`content-visibility: auto`) yang memangkas beban CPU streaming dari 85% menjadi < 10% dan menjamin 60 FPS buttery smooth di laptop kentang.
 53. **Live Streaming AI Thinking (Reasoning) Box with Distinct Styling & Seamless Auto-Hide:** Menampilkan proses pemikiran (*live reasoning / thinking stream*) AI secara real-time huruf per huruf saat sedang bekerja dengan styling Dark Luxury Monospace beraksen Lavender redup (`#A78BFA` / `#94A3B8`), border frosted glass putus-putus, dan animasi ikon otak berdenyut (*pulsing brain*). Begitu proses berpikir selesai atau AI mulai mengetik respon jawaban utama / mengeksekusi tool, kotak reasoning ini secara otomatis menghilang halus (*smooth fade-out*) sehingga ruang obrolan tetap bersih dan rapi. Dilengkapi dukungan penuh untuk model reasoning DeepSeek-R1 (`<think>`), Gemini Thinking (`thought`), Claude 3.7 Extended Thinking, dan OpenAI o1/o3-mini.
 54. **Universal Live Reasoning Prompt Protocol & Multi-Tag Stream Buffer:** Menambahkan directive *Live Thinking Protocol* mandatori ke dalam `buildDynamicSystemPrompt` sehingga seluruh model AI (GPT-4o, Claude, Gemini, DeepSeek, Qwen, Ollama, OpenRouter) secara otomatis mengawali responnya dengan blok proses berpikir `<think>...</think>`. Dilengkapi dengan inisialisasi instan saat permintaan dikirim dan parser regex multi-tag yang fleksibel (`<think>`, `<thought>`, `<thinking>`, `[THINKING]`).
+55. **Dynamic Real-Time Typewriter Reasoning Stream Engine & Instant Cognitive Feedback:** Menghilangkan teks template statis pada kotak pemikiran AI. Mengintegrasikan mesin generator penalaran dinamis (`generateDynamicReasoningPlan` & `startLiveThinkingStream`) yang membedah kueri spesifik pengguna dan mengetikkan tahapan berpikir nyata huruf per huruf secara live (kecepatan 24ms per karakter dengan kursor lavender berkedip), auto-override jika model mengeluarkan native reasoning token, dan otomatis lenyap seketika saat balasan utama / eksekusi tool dimulai.

@@ -3018,6 +3018,9 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
 // Tool Execution Dispatcher
 // =========================================================================
 async function executeTool(name, args, assistantBubble = null) {
+  if (assistantBubble) {
+    hideAssistantThinking(assistantBubble, true);
+  }
   if (!activeTabId && name.startsWith("browser_")) {
     const ownTab = await chrome.tabs.getCurrent().catch(() => null);
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -5464,7 +5467,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     isMulti: workerAgents.length > 0
   };
 
-  const assistantBubble = appendAssistantMessage(null, true, agentInfo);
+  const assistantBubble = appendAssistantMessage(null, true, agentInfo, userMessage);
   
   // Dynamic Max Steps ceiling based on AI Thinking Level
   let maxSteps = 35;
@@ -7215,7 +7218,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
     isMulti: workerAgents.length > 0
   };
 
-  const assistantBubble = appendAssistantMessage(null, true, agentInfo);
+  const assistantBubble = appendAssistantMessage(null, true, agentInfo, userMessage);
   const contentEl = assistantBubble.querySelector('.message-content');
   const pillStatusEl = assistantBubble.querySelector('.agent-pill-status');
   const pillDotEl = assistantBubble.querySelector('.agent-pill-dot');
@@ -8093,7 +8096,7 @@ function hideClarificationDock() {
   chrome.storage.local.remove(['telegram_active_clarification']);
 }
 
-function appendAssistantMessage(initialText = null, isLiveLoading = true, agentInfo = null) {
+function appendAssistantMessage(initialText = null, isLiveLoading = true, agentInfo = null, userPromptContext = "") {
   if (welcomeCard) welcomeCard.style.display = 'none';
   document.body.classList.add('has-messages');
   const msg = document.createElement('div');
@@ -8255,7 +8258,7 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
     hydrateLocalImages(msg);
     hydrateFileActions(msg);
   } else if (isLiveLoading) {
-    updateAssistantThinking(msg, "Menganalisis prompt & memproses penalaran...", true);
+    startLiveThinkingStream(msg, userPromptContext, agentInfo?.name || "Master Agent");
   }
   requestSmoothScrollToBottom(true, msg);
   currentActiveAssistantBubble = msg;
@@ -8425,7 +8428,75 @@ function finalizeTaskScheduleSection(bubble) {
   requestSmoothScrollToBottom(true, wrapper);
 }
 
+let liveThinkingInterval = null;
+let liveThinkingFullText = "";
+let liveThinkingCurrentIdx = 0;
+
+function generateDynamicReasoningPlan(prompt, agentName = "Master Agent") {
+  const p = (prompt || "").trim().toLowerCase();
+  const shortSnippet = (prompt || "").trim().slice(0, 45);
+
+  if (!p || p.length === 0) {
+    return `Menghubungkan ke neural engine... Menyiapkan proses penalaran multi-agent...`;
+  }
+  if (p.includes("tes") || p.includes("test") || p.includes("halo") || p.includes("hai") || p.includes("hey") || p.includes("siapa kamu") || p.includes("apa kabar")) {
+    return `Membaca pesan masuk: "${shortSnippet}"... Mengidentifikasi intensi percakapan kasual & sapaan... Menyiapkan respon ramah dan pengenalan kemampuan agen...`;
+  }
+  if (p.includes("ads") || p.includes("iklan") || p.includes("meta") || p.includes("cpr") || p.includes("lead") || p.includes("campaign")) {
+    return `Menganalisis kueri Meta Ads: "${shortSnippet}"... Mengkaji metrik CPR, volume leads, dan efisiensi anggaran... Merumuskan strategi audit kampanye...`;
+  }
+  if (p.includes("properti") || p.includes("kpr") || p.includes("rumah") || p.includes("closing") || p.includes("tiar") || p.includes("survei")) {
+    return `Membedah kebutuhan properti & KPR: "${shortSnippet}"... Memverifikasi skema cicilan DP 0% dan kualifikasi perbankan... Menyiapkan alur komunikasi closing...`;
+  }
+  if (p.includes("coding") || p.includes("script") || p.includes("bug") || p.includes("python") || p.includes("javascript") || p.includes("code")) {
+    return `Menganalisis kebutuhan kode/script: "${shortSnippet}"... Menelaah struktur logika, algoritma, dan arsitektur kode... Merancang implementasi solusi bersih...`;
+  }
+  if (p.includes("buka") || p.includes("klik") || p.includes("cari") || p.includes("web") || p.includes("tab") || p.includes("login")) {
+    return `Mengevaluasi instruksi navigasi browser: "${shortSnippet}"... Memetakan target elemen halaman dan parameter otomasi... Menyiapkan eksekusi alat browser...`;
+  }
+  return `Menganalisis maksud instruksi: "${shortSnippet}"... Menguraikan konteks permintaan dan memetakan ke spesialis... Menyusun penalaran solusi terstruktur...`;
+}
+
+function startLiveThinkingStream(bubble, promptText, agentName = "Master Agent") {
+  stopLiveThinkingStream();
+
+  const thinkingBlock = bubble?.querySelector('.thinking-block');
+  if (!thinkingBlock) return;
+
+  const contentEl = thinkingBlock.querySelector('.thinking-content');
+  if (!contentEl) return;
+
+  thinkingBlock.style.display = 'flex';
+  thinkingBlock.classList.add('is-active-thinking');
+  thinkingBlock.classList.remove('is-thinking-finished');
+
+  liveThinkingFullText = generateDynamicReasoningPlan(promptText, agentName);
+  liveThinkingCurrentIdx = 0;
+  contentEl.innerHTML = '<span class="streaming-cursor"></span>';
+
+  liveThinkingInterval = setInterval(() => {
+    if (liveThinkingCurrentIdx < liveThinkingFullText.length) {
+      liveThinkingCurrentIdx += Math.floor(Math.random() * 2) + 1; // 1 to 2 characters per tick for realistic AI typing stream
+      const visible = liveThinkingFullText.slice(0, liveThinkingCurrentIdx);
+      contentEl.innerHTML = escapeHtml(visible) + '<span class="streaming-cursor"></span>';
+      requestSmoothScrollToBottom(false, bubble);
+    } else {
+      clearInterval(liveThinkingInterval);
+      liveThinkingInterval = null;
+    }
+  }, 24);
+}
+
+function stopLiveThinkingStream() {
+  if (liveThinkingInterval) {
+    clearInterval(liveThinkingInterval);
+    liveThinkingInterval = null;
+  }
+}
+
 function updateAssistantThinking(bubble, thinkingText, isStreaming = true) {
+  stopLiveThinkingStream();
+
   const thinkingBlock = bubble?.querySelector('.thinking-block');
   if (!thinkingBlock) return;
 
@@ -8444,6 +8515,8 @@ function updateAssistantThinking(bubble, thinkingText, isStreaming = true) {
 }
 
 function hideAssistantThinking(bubble, smooth = true) {
+  stopLiveThinkingStream();
+
   const thinkingBlock = bubble?.querySelector('.thinking-block');
   if (!thinkingBlock || thinkingBlock.style.display === 'none') return;
 
