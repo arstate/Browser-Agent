@@ -7810,6 +7810,8 @@ function updateAssistantActiveAgent(assistantBubble, agentName, statusText = '',
       textEl.textContent = 'Detail';
     }
   }
+
+  requestSmoothScrollToBottom();
 }
 
 function revealAssignedAgentsTree(assistantBubble, workers = []) {
@@ -7825,6 +7827,8 @@ function revealAssignedAgentsTree(assistantBubble, workers = []) {
   items.forEach((item, idx) => {
     item.style.animationDelay = `${(idx * 0.05).toFixed(2)}s`;
   });
+
+  requestSmoothScrollToBottom(true, treeContainer);
 }
 
 let currentActiveAssistantBubble = null;
@@ -7863,6 +7867,7 @@ function dynamicallyAddSubAgentToUI(assistantBubble, newAgent, subtask = "") {
       if (textEl) {
         textEl.textContent = treeContainer.classList.contains('collapsed') ? 'Detail' : 'Tutup';
       }
+      requestSmoothScrollToBottom(true, treeContainer);
     });
   }
 
@@ -7894,6 +7899,7 @@ function dynamicallyAddSubAgentToUI(assistantBubble, newAgent, subtask = "") {
   }
 
   updateAssistantActiveAgent(targetBubble, newAgent.name || "Specialist Agent", `Merekrut & menugaskan ${newAgent.name}...`, false, false);
+  requestSmoothScrollToBottom(true, treeContainer);
 }
 
 let activeClarificationState = null;
@@ -8145,6 +8151,7 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
         if (textEl) {
           textEl.textContent = isCollapsed ? 'Detail' : 'Tutup';
         }
+        requestSmoothScrollToBottom(true, treeContainer);
       }
     });
   }
@@ -8164,7 +8171,7 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
     hydrateLocalImages(msg);
     hydrateFileActions(msg);
   }
-  scrollToBottom();
+  requestSmoothScrollToBottom(true, msg);
   currentActiveAssistantBubble = msg;
   return msg;
 }
@@ -8231,6 +8238,7 @@ function renderTaskScheduleSection(bubble, milestones, initialMode = 'full') {
       wrapper.classList.toggle('min-mode', !isFull);
       if (modeText) modeText.textContent = isFull ? 'Minimize' : 'Show Full';
       if (toggleText) toggleText.textContent = 'Tutup';
+      requestSmoothScrollToBottom(true, wrapper);
     });
   }
 
@@ -8244,8 +8252,11 @@ function renderTaskScheduleSection(bubble, milestones, initialMode = 'full') {
       if (toggleText) {
         toggleText.textContent = isCollapsed ? 'Detail' : 'Tutup';
       }
+      requestSmoothScrollToBottom(true, wrapper);
     });
   }
+
+  requestSmoothScrollToBottom(true, wrapper);
 }
 
 function updateTaskScheduleProgress(bubble, milestones, activeMilestoneIdx = 0, forceMinMode = true) {
@@ -8291,6 +8302,8 @@ function updateTaskScheduleProgress(bubble, milestones, activeMilestoneIdx = 0, 
   if (container && activeItem) {
     container.scrollTop = activeItem.offsetTop - 10;
   }
+
+  requestSmoothScrollToBottom(false, wrapper);
 }
 
 function finalizeTaskScheduleSection(bubble) {
@@ -8322,6 +8335,8 @@ function finalizeTaskScheduleSection(bubble) {
   wrapper.classList.add('collapsed');
   const toggleText = wrapper.querySelector('.task-schedule-toggle-text');
   if (toggleText) toggleText.textContent = 'Detail';
+
+  requestSmoothScrollToBottom(true, wrapper);
 }
 
 function updateAssistantText(bubble, text, isStreaming = false) {
@@ -8344,7 +8359,7 @@ function updateAssistantText(bubble, text, isStreaming = false) {
         hydrateFileActions(bubble);
       }
     }
-    scrollToBottom();
+    requestSmoothScrollToBottom(false, bubble);
   }
 }
 
@@ -8368,6 +8383,7 @@ function appendToolBadge(bubble, toolName, args, agentName = "") {
           if (tEl) {
             tEl.textContent = isCollapsed ? 'Detail' : 'Tutup';
           }
+          requestSmoothScrollToBottom(true, section);
         });
       }
     }
@@ -8401,7 +8417,7 @@ function appendToolBadge(bubble, toolName, args, agentName = "") {
   }
 
   updateToolSectionTitle(bubble);
-  scrollToBottom();
+  requestSmoothScrollToBottom(false, badge);
   return badge;
 }
 
@@ -8440,6 +8456,7 @@ function finalizeToolSection(bubble, collapse = true) {
       if (textEl) {
         textEl.textContent = isCollapsed ? 'Detail' : 'Tutup';
       }
+      requestSmoothScrollToBottom(true, section);
     });
   }
 
@@ -8451,6 +8468,8 @@ function finalizeToolSection(bubble, collapse = true) {
     section.classList.remove('collapsed');
     if (textEl) textEl.textContent = 'Tutup';
   }
+
+  requestSmoothScrollToBottom(true, section);
 }
 
 function updateToolBadgeState(badge, state, output) {
@@ -8463,6 +8482,7 @@ function updateToolBadgeState(badge, state, output) {
   const left = badge.querySelector('.tool-badge-left') || badge;
   left.insertAdjacentHTML('afterbegin', icon);
   badge.title = output.length > 200 ? output.substring(0, 200) + "..." : output;
+  requestSmoothScrollToBottom(false, badge);
 }
 
 function getToolIcon(name) {
@@ -8513,6 +8533,7 @@ function updateSendButtonState(loading) {
   if (loading) {
     btnSend.classList.add('loading');
     btnSend.title = "Batalkan eksekusi (Cancel)";
+    startAutoScrollObserver();
     if (!window.location.pathname.includes('sidepanel.html') && stickmanAnimationEnabled && typeof window.startStickmanSwarmAnimation === 'function') {
       window.startStickmanSwarmAnimation();
     }
@@ -8520,6 +8541,7 @@ function updateSendButtonState(loading) {
     btnSend.classList.remove('loading');
     btnSend.classList.remove('has-queue-input');
     btnSend.title = "Kirim perintah (Enter)";
+    stopAutoScrollObserver();
     if (typeof window.stopStickmanSwarmAnimation === 'function') {
       window.stopStickmanSwarmAnimation();
     }
@@ -8552,25 +8574,102 @@ function updateFooterStatus(statusText) {
   }
 }
 
-function scrollToBottom(smooth = false) {
+let chatAutoScrollObserver = null;
+
+function scrollToBottom(smooth = false, targetEl = null) {
+  // 1. Scroll inner chatMessages container
   if (chatMessages) {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    chatMessages.scrollTop = chatMessages.scrollHeight + 1000;
   }
+
+  // 2. Scroll window / body / html (Crucial for full-screen newtab mode)
   try {
     const isStickman = document.body.classList.contains('stickman-active');
     const scrollTarget = Math.max(
-      document.body.scrollHeight,
-      document.documentElement.scrollHeight,
+      document.body.scrollHeight || 0,
+      document.documentElement.scrollHeight || 0,
       chatMessages ? chatMessages.scrollHeight : 0
     );
-    const extraOffset = isStickman ? 220 : 160;
+    const extraOffset = isStickman ? 280 : 200;
     window.scrollTo({
       top: scrollTarget + extraOffset,
       behavior: smooth ? 'smooth' : 'auto'
     });
   } catch (e) {
-    window.scrollTo(0, (document.body.scrollHeight || 0) + (document.body.classList.contains('stickman-active') ? 220 : 160));
+    window.scrollTo(0, (document.body.scrollHeight || 0) + 200);
   }
+
+  // 3. Pin bottom-most element inside active assistant bubble into view if available
+  try {
+    const bubble = currentActiveAssistantBubble || (chatMessages ? chatMessages.lastElementChild : null);
+    if (bubble) {
+      const candidateEl = targetEl || (
+        bubble.querySelector('.tool-section-wrapper:not([style*="display: none"])') ||
+        bubble.querySelector('.task-schedule-wrapper:not([style*="display: none"])') ||
+        bubble.querySelector('.message-content:not([style*="display: none"])') ||
+        bubble.querySelector('.agent-tree-branch-container:not([style*="display: none"])') ||
+        bubble.lastElementChild
+      );
+      if (candidateEl && typeof candidateEl.scrollIntoView === 'function') {
+        candidateEl.scrollIntoView({
+          behavior: smooth ? 'smooth' : 'auto',
+          block: 'end',
+          inline: 'nearest'
+        });
+      }
+    }
+  } catch (e) {}
+}
+
+function requestSmoothScrollToBottom(smooth = false, targetEl = null) {
+  // Staggered multi-frame invocation ensures layout reflows and CSS expansion animations are 100% tracked
+  scrollToBottom(smooth, targetEl);
+  requestAnimationFrame(() => {
+    scrollToBottom(smooth, targetEl);
+  });
+  setTimeout(() => {
+    scrollToBottom(smooth, targetEl);
+  }, 60);
+  setTimeout(() => {
+    scrollToBottom(smooth, targetEl);
+  }, 160);
+  setTimeout(() => {
+    scrollToBottom(smooth, targetEl);
+  }, 320);
+}
+
+function startAutoScrollObserver() {
+  if (chatAutoScrollObserver || !chatMessages) return;
+  let rafPending = false;
+  chatAutoScrollObserver = new MutationObserver(() => {
+    if (!isExecuting) return;
+    if (!rafPending) {
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        scrollToBottom(false);
+      });
+    }
+  });
+  try {
+    chatAutoScrollObserver.observe(chatMessages, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    });
+  } catch (e) {}
+}
+
+function stopAutoScrollObserver() {
+  if (chatAutoScrollObserver) {
+    try {
+      chatAutoScrollObserver.disconnect();
+    } catch (e) {}
+    chatAutoScrollObserver = null;
+  }
+  requestSmoothScrollToBottom(true);
 }
 
 function escapeHtml(str) {
@@ -13001,7 +13100,10 @@ chatMessages.addEventListener('click', (e) => {
   const header = e.target.closest('.thinking-header');
   if (header) {
     const block = header.closest('.thinking-block');
-    if (block) block.classList.toggle('open');
+    if (block) {
+      block.classList.toggle('open');
+      requestSmoothScrollToBottom(true, block);
+    }
     return;
   }
 
