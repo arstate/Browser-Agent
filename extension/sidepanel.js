@@ -10500,75 +10500,21 @@ function formatTimeAgo(timestamp) {
   return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 }
 
-async function loadHistoryList(searchQuery = "") {
+let allLoadedHistorySessions = [];
+let historyRenderOffset = 0;
+const HISTORY_PAGE_SIZE = 30;
+let currentRenderedMessageStartIndex = 0;
+
+function renderHistoryBatch(append = false) {
   const container = document.getElementById('history-list-container');
   if (!container) return;
 
-  container.innerHTML = '<div class="history-empty-state"><p>Memuat riwayat chat...</p></div>';
-
-  let sessions = [];
-  let fetchedFromNative = false;
-
-  // 1. Query SQLite from Native Host
-  if (nativePort) {
-    try {
-      const res = await sendNativeRpc("db_get_sessions", { search: searchQuery });
-      if (res && res.status === "ok" && Array.isArray(res.sessions)) {
-        sessions = res.sessions;
-        fetchedFromNative = true;
-        // Merge telegram sessions from cache if not already in SQLite list
-        const cRes = await chrome.storage.local.get(['chat_sessions_cache']);
-        const cache = cRes.chat_sessions_cache || {};
-        Object.values(cache).forEach(cs => {
-          if ((cs.is_telegram || String(cs.id || '').startsWith('sess_tg_')) && !sessions.some(s => s.id === cs.id)) {
-            sessions.push({
-              id: cs.id,
-              title: cs.title,
-              model: cs.model,
-              is_telegram: true,
-              is_pinned: cs.is_pinned ? 1 : 0,
-              message_count: cs.messages ? cs.messages.length : (cs.message_count || 0),
-              preview: cs.preview || (cs.messages && cs.messages[0] ? (cs.messages[0].content || "").slice(0, 120) : ""),
-              created_at: cs.created_at,
-              updated_at: cs.updated_at || cs.created_at
-            });
-          }
-        });
-        sessions.sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0) || (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
-      }
-    } catch (e) {
-      console.warn("SQLite get error, fallback to cache:", e);
-    }
+  if (!append) {
+    container.innerHTML = '';
+    historyRenderOffset = 0;
   }
 
-  // 2. Only fallback to local storage cache if native host is offline/unavailable
-  if (!fetchedFromNative) {
-    const res = await chrome.storage.local.get(['chat_sessions_cache']);
-    const cache = res.chat_sessions_cache || {};
-    sessions = Object.values(cache).map(s => ({
-      id: s.id,
-      title: s.title,
-      model: s.model,
-      is_telegram: s.is_telegram || String(s.id || '').startsWith('sess_tg_'),
-      is_pinned: s.is_pinned ? 1 : 0,
-      message_count: s.messages ? s.messages.length : (s.message_count || 0),
-      preview: s.preview || (s.messages && s.messages[0] ? (s.messages[0].content || "").slice(0, 120) : ""),
-      created_at: s.created_at,
-      updated_at: s.updated_at || s.created_at
-    }));
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      sessions = sessions.filter(s => 
-        (s.title && s.title.toLowerCase().includes(q)) || 
-        (s.preview && s.preview.toLowerCase().includes(q)) ||
-        (s.model && s.model.toLowerCase().includes(q))
-      );
-    }
-    sessions.sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0) || (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
-  }
-
-  if (sessions.length === 0) {
+  if (allLoadedHistorySessions.length === 0) {
     container.innerHTML = `
       <div class="history-empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -10576,14 +10522,17 @@ async function loadHistoryList(searchQuery = "") {
           <polyline points="12 6 12 12 16 14"/>
         </svg>
         <strong>Belum Ada Riwayat</strong>
-        <p>${searchQuery ? 'Tidak ada riwayat percakapan yang cocok.' : 'Percakapan Anda akan tersimpan otomatis di database SQLite lokal.'}</p>
+        <p>Tidak ada riwayat percakapan yang cocok.</p>
       </div>
     `;
     return;
   }
 
-  container.innerHTML = '';
-  sessions.forEach(sess => {
+  const batch = allLoadedHistorySessions.slice(historyRenderOffset, historyRenderOffset + HISTORY_PAGE_SIZE);
+  historyRenderOffset += batch.length;
+
+  const fragment = document.createDocumentFragment();
+  batch.forEach(sess => {
     const isActive = sess.id === currentSessionId;
     const isPinned = !!sess.is_pinned;
     const isTelegram = sess.is_telegram || String(sess.id || '').startsWith('sess_tg_');
@@ -10660,7 +10609,8 @@ async function loadHistoryList(searchQuery = "") {
           await chrome.storage.local.set({ chat_sessions_cache: cache });
         }
       } catch (err) {}
-      loadHistoryList(searchQuery);
+      const searchInput = document.getElementById('input-search-history');
+      loadHistoryList(searchInput ? searchInput.value : "");
     });
 
     // Inline Rename
@@ -10709,11 +10659,13 @@ async function loadHistoryList(searchQuery = "") {
             await chrome.storage.local.set({ chat_sessions_cache: cache });
           }
         } catch (err) {}
-        loadHistoryList(searchQuery);
+        const searchInput = document.getElementById('input-search-history');
+        loadHistoryList(searchInput ? searchInput.value : "");
       };
 
       const doCancel = () => {
-        loadHistoryList(searchQuery);
+        const searchInput = document.getElementById('input-search-history');
+        loadHistoryList(searchInput ? searchInput.value : "");
       };
 
       saveBtn.addEventListener('click', (ev) => {
@@ -10749,8 +10701,228 @@ async function loadHistoryList(searchQuery = "") {
       openDeleteConfirmModal(sess.id, sess.title || 'New Chat');
     });
 
-    container.appendChild(card);
+    fragment.appendChild(card);
   });
+
+  container.appendChild(fragment);
+}
+
+async function loadHistoryList(searchQuery = "") {
+  const container = document.getElementById('history-list-container');
+  if (!container) return;
+
+  // Bind infinite scroll handler once
+  if (!container.dataset.boundInfiniteScroll) {
+    container.dataset.boundInfiniteScroll = 'true';
+    container.addEventListener('scroll', () => {
+      if (container.scrollTop + container.clientHeight >= container.scrollHeight - 80) {
+        if (historyRenderOffset < allLoadedHistorySessions.length) {
+          renderHistoryBatch(true);
+        }
+      }
+    });
+  }
+
+  // Bind debounced search handler once
+  const searchInput = document.getElementById('input-search-history');
+  if (searchInput && !searchInput.dataset.boundDebounce) {
+    searchInput.dataset.boundDebounce = 'true';
+    let debounceTimer = null;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        loadHistoryList(e.target.value);
+      }, 150);
+    });
+  }
+
+  container.innerHTML = '<div class="history-empty-state"><p>Memuat riwayat chat...</p></div>';
+
+  let sessions = [];
+  let fetchedFromNative = false;
+
+  // 1. Query SQLite from Native Host
+  if (nativePort) {
+    try {
+      const res = await sendNativeRpc("db_get_sessions", { search: searchQuery });
+      if (res && res.status === "ok" && Array.isArray(res.sessions)) {
+        sessions = res.sessions;
+        fetchedFromNative = true;
+        // Merge telegram sessions from cache if not already in SQLite list
+        const cRes = await chrome.storage.local.get(['chat_sessions_cache']);
+        const cache = cRes.chat_sessions_cache || {};
+        Object.values(cache).forEach(cs => {
+          if ((cs.is_telegram || String(cs.id || '').startsWith('sess_tg_')) && !sessions.some(s => s.id === cs.id)) {
+            sessions.push({
+              id: cs.id,
+              title: cs.title,
+              model: cs.model,
+              is_telegram: true,
+              is_pinned: cs.is_pinned ? 1 : 0,
+              message_count: cs.messages ? cs.messages.length : (cs.message_count || 0),
+              preview: cs.preview || (cs.messages && cs.messages[0] ? (cs.messages[0].content || "").slice(0, 120) : ""),
+              created_at: cs.created_at,
+              updated_at: cs.updated_at || cs.created_at
+            });
+          }
+        });
+        sessions.sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0) || (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
+      }
+    } catch (e) {
+      console.warn("SQLite get error, fallback to cache:", e);
+    }
+  }
+
+  // 2. Fallback to local storage cache if native host is offline
+  if (!fetchedFromNative) {
+    const res = await chrome.storage.local.get(['chat_sessions_cache']);
+    const cache = res.chat_sessions_cache || {};
+    sessions = Object.values(cache).map(s => ({
+      id: s.id,
+      title: s.title,
+      model: s.model,
+      is_telegram: s.is_telegram || String(s.id || '').startsWith('sess_tg_'),
+      is_pinned: s.is_pinned ? 1 : 0,
+      message_count: s.messages ? s.messages.length : (s.message_count || 0),
+      preview: s.preview || (s.messages && s.messages[0] ? (s.messages[0].content || "").slice(0, 120) : ""),
+      created_at: s.created_at,
+      updated_at: s.updated_at || s.created_at
+    }));
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      sessions = sessions.filter(s => 
+        (s.title && s.title.toLowerCase().includes(q)) || 
+        (s.preview && s.preview.toLowerCase().includes(q)) ||
+        (s.model && s.model.toLowerCase().includes(q))
+      );
+    }
+    sessions.sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0) || (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
+  }
+
+  allLoadedHistorySessions = sessions;
+  renderHistoryBatch(false);
+}
+
+function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
+  const fragment = document.createDocumentFragment();
+  let currentAssistantBubble = null;
+
+  for (let i = 0; i < messagesSlice.length; i++) {
+    const msg = messagesSlice[i];
+
+    if (msg.role === 'user') {
+      currentAssistantBubble = null;
+      const hasAttachments = Array.isArray(msg.attachments) && msg.attachments.length > 0;
+      let displayText = "";
+      if (typeof msg.displayContent === 'string') {
+        displayText = msg.displayContent;
+      } else if (!hasAttachments) {
+        if (typeof msg.content === 'string') {
+          displayText = msg.content;
+        } else if (typeof msg.content === 'object' && msg.content !== null && typeof msg.content.text === 'string') {
+          displayText = msg.content.text;
+        }
+      }
+      const cleanDisplay = typeof displayText === 'string' ? displayText.trim() : "";
+      if ((cleanDisplay && cleanDisplay !== "{}" && cleanDisplay !== "[object Object]") || hasAttachments) {
+        const userBubble = appendUserMessage(cleanDisplay, msg.attachments || []);
+        if (userBubble && userBubble.parentNode === chatMessages) {
+          fragment.appendChild(userBubble);
+        }
+      }
+    } else if (msg.role === 'assistant') {
+      // 1. Render tool calls as completed badges if present
+      if (msg.tool_calls && Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
+        if (!currentAssistantBubble) {
+          currentAssistantBubble = appendAssistantMessage(null, false, msg.agentInfo);
+          if (currentAssistantBubble && currentAssistantBubble.parentNode === chatMessages) {
+            fragment.appendChild(currentAssistantBubble);
+          }
+        }
+        msg.tool_calls.forEach(tc => {
+          const tName = tc.function?.name || tc.name || "tool";
+          let tArgs = {};
+          try {
+            tArgs = typeof tc.function?.arguments === 'string' ? JSON.parse(tc.function.arguments) : (tc.function?.arguments || {});
+          } catch (e) {}
+          const badge = appendToolBadge(currentAssistantBubble, tName, tArgs);
+          updateToolBadgeState(badge, "success", JSON.stringify(tArgs));
+        });
+        finalizeToolSection(currentAssistantBubble, true);
+      }
+
+      // 2. Render assistant text response if present
+      if (msg.content && typeof msg.content === 'string' && msg.content.trim().length > 0) {
+        if (!currentAssistantBubble) {
+          currentAssistantBubble = appendAssistantMessage(msg.content, false, msg.agentInfo);
+          if (currentAssistantBubble && currentAssistantBubble.parentNode === chatMessages) {
+            fragment.appendChild(currentAssistantBubble);
+          }
+        } else {
+          updateAssistantText(currentAssistantBubble, msg.content);
+        }
+        currentAssistantBubble = null;
+      }
+    } else if (msg.role === 'tool') {
+      continue;
+    }
+  }
+
+  if (prepend) {
+    const prevScrollHeight = chatMessages.scrollHeight;
+    const prevScrollTop = chatMessages.scrollTop;
+    const loadEarlierWrap = document.getElementById('btn-load-earlier-wrap');
+    if (loadEarlierWrap && loadEarlierWrap.nextSibling) {
+      chatMessages.insertBefore(fragment, loadEarlierWrap.nextSibling);
+    } else {
+      chatMessages.insertBefore(fragment, chatMessages.firstChild);
+    }
+    chatMessages.scrollTop = prevScrollTop + (chatMessages.scrollHeight - prevScrollHeight);
+  } else {
+    chatMessages.appendChild(fragment);
+  }
+
+  hydrateLocalImages(chatMessages);
+  hydrateFileActions(chatMessages);
+}
+
+function updateLoadEarlierButton() {
+  let loadEarlierWrap = document.getElementById('btn-load-earlier-wrap');
+  if (currentRenderedMessageStartIndex <= 0) {
+    if (loadEarlierWrap) loadEarlierWrap.remove();
+    return;
+  }
+
+  if (!loadEarlierWrap) {
+    loadEarlierWrap = document.createElement('div');
+    loadEarlierWrap.className = 'load-earlier-messages-wrap';
+    loadEarlierWrap.id = 'btn-load-earlier-wrap';
+    loadEarlierWrap.innerHTML = `
+      <button type="button" class="btn-load-earlier-messages" id="btn-load-earlier">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="18 15 12 9 6 15"/>
+        </svg>
+        <span class="load-earlier-label">Muat Pesan Sebelumnya (${currentRenderedMessageStartIndex} pesan tersisa)</span>
+      </button>
+    `;
+    chatMessages.insertBefore(loadEarlierWrap, chatMessages.firstChild);
+
+    const btn = loadEarlierWrap.querySelector('#btn-load-earlier');
+    btn?.addEventListener('click', () => {
+      const batchSize = 35;
+      const nextStartIndex = Math.max(0, currentRenderedMessageStartIndex - batchSize);
+      const slice = conversationHistory.slice(nextStartIndex, currentRenderedMessageStartIndex);
+      currentRenderedMessageStartIndex = nextStartIndex;
+      renderMessageSliceIntoDOM(slice, true);
+      updateLoadEarlierButton();
+    });
+  } else {
+    const label = loadEarlierWrap.querySelector('.load-earlier-label');
+    if (label) {
+      label.textContent = `Muat Pesan Sebelumnya (${currentRenderedMessageStartIndex} pesan tersisa)`;
+    }
+  }
 }
 
 async function resumeSession(sessionId) {
@@ -10805,70 +10977,21 @@ async function resumeSession(sessionId) {
     applyConfigToUI();
   }
 
-  // Re-render chat messages cleanly from history
+  // Ultra-Fast Virtual Message Chunking: Render only the latest 35 messages initially
   chatMessages.innerHTML = '';
   if (welcomeCard) welcomeCard.style.display = 'none';
   document.body.classList.add('has-messages');
 
-  let currentAssistantBubble = null;
+  const INITIAL_BATCH_SIZE = 35;
+  currentRenderedMessageStartIndex = Math.max(0, conversationHistory.length - INITIAL_BATCH_SIZE);
+  const initialSlice = conversationHistory.slice(currentRenderedMessageStartIndex);
 
-  for (let i = 0; i < conversationHistory.length; i++) {
-    const msg = conversationHistory[i];
+  renderMessageSliceIntoDOM(initialSlice, false);
+  updateLoadEarlierButton();
 
-    if (msg.role === 'user') {
-      currentAssistantBubble = null;
-      const hasAttachments = Array.isArray(msg.attachments) && msg.attachments.length > 0;
-      let displayText = "";
-      if (typeof msg.displayContent === 'string') {
-        displayText = msg.displayContent;
-      } else if (!hasAttachments) {
-        if (typeof msg.content === 'string') {
-          displayText = msg.content;
-        } else if (typeof msg.content === 'object' && msg.content !== null && typeof msg.content.text === 'string') {
-          displayText = msg.content.text;
-        }
-      }
-      const cleanDisplay = typeof displayText === 'string' ? displayText.trim() : "";
-      if ((cleanDisplay && cleanDisplay !== "{}" && cleanDisplay !== "[object Object]") || hasAttachments) {
-        appendUserMessage(cleanDisplay, msg.attachments || []);
-      }
-    } else if (msg.role === 'assistant') {
-      // 1. Render tool calls as completed badges if present
-      if (msg.tool_calls && Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
-        if (!currentAssistantBubble) {
-          currentAssistantBubble = appendAssistantMessage(null, false, msg.agentInfo);
-        }
-        msg.tool_calls.forEach(tc => {
-          const tName = tc.function?.name || tc.name || "tool";
-          let tArgs = {};
-          try {
-            tArgs = typeof tc.function?.arguments === 'string' ? JSON.parse(tc.function.arguments) : (tc.function?.arguments || {});
-          } catch (e) {}
-          const badge = appendToolBadge(currentAssistantBubble, tName, tArgs);
-          updateToolBadgeState(badge, "success", JSON.stringify(tArgs));
-        });
-        finalizeToolSection(currentAssistantBubble, true);
-      }
-
-      // 2. Render assistant text response if present
-      if (msg.content && typeof msg.content === 'string' && msg.content.trim().length > 0) {
-        if (!currentAssistantBubble) {
-          currentAssistantBubble = appendAssistantMessage(msg.content, false, msg.agentInfo);
-        } else {
-          updateAssistantText(currentAssistantBubble, msg.content);
-        }
-        currentAssistantBubble = null;
-      }
-    } else if (msg.role === 'tool') {
-      // Tool output already captured in badge
-      continue;
-    }
-  }
-
-  hydrateLocalImages(chatMessages);
-  hydrateFileActions(chatMessages);
   hideHistoryModal();
   updateHeaderChatTitle(currentSessionTitle);
+  scrollToBottom(false);
   updateFooterStatus("Sesi Dimuat");
   setTimeout(() => updateFooterStatus("Agent Ready"), 1500);
 }
