@@ -5636,6 +5636,9 @@ Tugas Anda:
               tool_choice: isPlanningTurn ? undefined : "auto",
               temperature: parseFloat(config.temperature) || 0.2,
               max_tokens: parseInt(config.maxTokens, 10) || 1000000,
+              include_reasoning: true,
+              reasoning: { effort: "high" },
+              reasoning_effort: "high",
               stream: true
             }),
             signal: abortController.signal
@@ -5678,9 +5681,9 @@ Tugas Anda:
           lastErrorMessage = fetchErr.message;
           if (isRetryableAIError(0, fetchErr.message) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
             const nextModel = candidateModels[mIdx + 1];
-            console.warn(`[Auto-Rotate] Network/Connection Exception on '${activeModelChoice}'. Rotating to '${nextModel}'...`, fetchErr);
-            updateFooterStatus(`🔄 Network issue: Beralih ke ${nextModel}...`);
-            updateAssistantActiveAgent(assistantBubble, hasBoss ? "Master Agent" : initialAgentName, `🔄 Model \`${activeModelChoice}\` mengalami kendala koneksi. Otomatis beralih ke \`${nextModel}\`...`, true, false);
+            console.warn(`[Auto-Rotate] Connection Exception on '${activeModelChoice}'. Rotating to '${nextModel}'...`, fetchErr);
+            updateFooterStatus(`🔄 Kendala koneksi: Beralih ke ${nextModel}...`);
+            updateAssistantActiveAgent(assistantBubble, hasBoss ? "Master Agent" : initialAgentName, `🔄 Koneksi \`${activeModelChoice}\` terputus. Mencoba \`${nextModel}\`...`, true, false);
             continue;
           }
           throw fetchErr;
@@ -5729,13 +5732,20 @@ Tugas Anda:
                 const jsonStr = trimmed.replace(/^data:\s*/, "");
                 const chunk = JSON.parse(jsonStr);
                 const delta = chunk.choices?.[0]?.delta || chunk.choices?.[0]?.message;
+                const reasoningDelta =
+                  delta?.reasoning_content ||
+                  delta?.reasoning ||
+                  delta?.thought ||
+                  delta?.thinking ||
+                  chunk.choices?.[0]?.reasoning ||
+                  chunk.choices?.[0]?.message?.reasoning ||
+                  chunk.choices?.[0]?.message?.reasoning_content ||
+                  "";
+                if (reasoningDelta) {
+                  accumulatedReasoning += reasoningDelta;
+                  updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
+                }
                 if (delta) {
-                  const reasoningDelta = delta.reasoning_content || delta.reasoning || delta.thought || delta.thinking || "";
-                  if (reasoningDelta) {
-                    accumulatedReasoning += reasoningDelta;
-                    updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
-                  }
-
                   if (delta.content) {
                     fullRawStream += delta.content;
                     const thinkStartMatch = fullRawStream.match(/<(?:think|thought|thinking)>|\[THINKING\]/i);
@@ -7283,6 +7293,9 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
               messages,
               temperature: parseFloat(config.temperature) || 0.7,
               max_tokens: parseInt(config.maxTokens, 10) || 1000000,
+              include_reasoning: true,
+              reasoning: { effort: "high" },
+              reasoning_effort: "high",
               stream: true
             }),
             signal: abortController.signal
@@ -7361,12 +7374,20 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
               const jsonStr = trimmed.replace(/^data:\s*/, "");
               const chunk = JSON.parse(jsonStr);
               const delta = chunk.choices?.[0]?.delta || chunk.choices?.[0]?.message;
+              const reasoningDelta =
+                delta?.reasoning_content ||
+                delta?.reasoning ||
+                delta?.thought ||
+                delta?.thinking ||
+                chunk.choices?.[0]?.reasoning ||
+                chunk.choices?.[0]?.message?.reasoning ||
+                chunk.choices?.[0]?.message?.reasoning_content ||
+                "";
+              if (reasoningDelta) {
+                accumulatedReasoning += reasoningDelta;
+                updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
+              }
               if (delta) {
-                const reasoningDelta = delta.reasoning_content || delta.reasoning || delta.thought || delta.thinking || "";
-                if (reasoningDelta) {
-                  accumulatedReasoning += reasoningDelta;
-                  updateAssistantThinking(assistantBubble, accumulatedReasoning, true);
-                }
 
                 let deltaContent = delta.content || "";
                 if (deltaContent) {
@@ -8181,8 +8202,14 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
     ${pillHtml}
     <div class="thinking-block" style="display: none;">
       <div class="thinking-header">
-        <svg class="thinking-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/><path d="M9 21h6"/></svg>
-        <span class="thinking-title">Proses Berpikir (Live Reasoning)</span>
+        <div class="thinking-header-left">
+          <svg class="thinking-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/><path d="M9 21h6"/></svg>
+          <span class="thinking-title">Proses Berpikir (Live Reasoning)</span>
+        </div>
+        <div class="thinking-header-right">
+          <span class="thinking-toggle-text">Tutup</span>
+          <svg class="thinking-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
       </div>
       <div class="thinking-content"></div>
     </div>
@@ -8225,6 +8252,20 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
       </button>
     </div>
   `;
+
+  // Bind interactive click toggle for thinking accordion
+  const thinkingBlock = msg.querySelector('.thinking-block');
+  const thinkingHeader = msg.querySelector('.thinking-header');
+  if (thinkingHeader && thinkingBlock) {
+    thinkingHeader.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isCollapsed = thinkingBlock.classList.toggle('collapsed');
+      const toggleText = thinkingHeader.querySelector('.thinking-toggle-text');
+      if (toggleText) toggleText.textContent = isCollapsed ? 'Detail' : 'Tutup';
+      requestSmoothScrollToBottom(true, thinkingBlock);
+    });
+  }
 
   // Bind interactive click toggle for assigned agents list
   const treeHeader = msg.querySelector('.agent-tree-branch-header');
@@ -8437,7 +8478,10 @@ function updateAssistantThinking(bubble, thinkingText, isStreaming = true) {
 
   thinkingBlock.style.display = 'flex';
   thinkingBlock.classList.add('is-active-thinking');
-  thinkingBlock.classList.remove('is-thinking-finished');
+  thinkingBlock.classList.remove('collapsed');
+
+  const toggleText = thinkingBlock.querySelector('.thinking-toggle-text');
+  if (toggleText) toggleText.textContent = 'Tutup';
 
   contentEl.innerHTML = escapeHtml(cleanText) + (isStreaming ? '<span class="streaming-cursor"></span>' : '');
   requestSmoothScrollToBottom(false, bubble);
@@ -8448,13 +8492,16 @@ function hideAssistantThinking(bubble, smooth = true) {
   if (!thinkingBlock || thinkingBlock.style.display === 'none') return;
 
   thinkingBlock.classList.remove('is-active-thinking');
-  if (smooth) {
-    thinkingBlock.classList.add('is-thinking-finished');
-    setTimeout(() => {
-      if (thinkingBlock && thinkingBlock.classList.contains('is-thinking-finished')) {
-        thinkingBlock.style.display = 'none';
-      }
-    }, 320);
+  const contentEl = thinkingBlock.querySelector('.thinking-content');
+  const text = contentEl ? (contentEl.innerText || contentEl.textContent || '').trim() : '';
+
+  if (text.length > 0) {
+    const cursor = contentEl.querySelector('.streaming-cursor');
+    if (cursor) cursor.remove();
+
+    thinkingBlock.classList.add('collapsed');
+    const toggleText = thinkingBlock.querySelector('.thinking-toggle-text');
+    if (toggleText) toggleText.textContent = 'Detail';
   } else {
     thinkingBlock.style.display = 'none';
   }

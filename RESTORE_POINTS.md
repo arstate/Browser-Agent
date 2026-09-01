@@ -5,9 +5,9 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 ---
 
 ## 📌 Status Versi Saat Ini
-- **Versi Terkini:** `v2.150.173`
-- **Iterasi:** `Iterasi 373`
-- **Tanggal Rilis:** 2 September 2026 (00:21 WIB)
+- **Versi Terkini:** `v2.150.174`
+- **Iterasi:** `Iterasi 374`
+- **Tanggal Rilis:** 2 September 2026 (00:32 WIB)
 - **Status Stabilitas:** 🟢 **STABLE (100% Verified & Tested)**
 - **CRX Package:** `/home/arya/Downloads/browser-agent/extension.crx` (833.4 KB)
 
@@ -17,6 +17,7 @@ Dokumen ini adalah buku catatan resmi untuk seluruh **Nomor Versi (Semantic Vers
 
 | Versi | Iterasi | Tanggal & Waktu | Tag / Hash | Deskripsi Ringkas Update | Status | Perintah Restore |
 | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
+| **v2.150.174** | 374 | 02-09-2026 00:32 | `v2.150.174` | **9router & OpenRouter Native Reasoning Ingestion & Collapsible Thinking Accordion:** Menambahkan parameter `include_reasoning: true` dan `reasoning: { effort: "high" }` pada seluruh payload request HTTP ke OpenRouter / 9router proxy. Memperkuat ekstraksi delta reasoning dari berbagai jalur chunk provider (`delta.reasoning`, `delta.reasoning_content`, `delta.thought`, `choice.reasoning`). Dilengkapi sistem kartu **Collapsible Thinking Accordion** (terbuka saat streaming, otomatis collapse menjadi header compact `Detail` / `Tutup` saat selesai sehingga pengguna dapat membaca kembali pemikiran utuh model kapan saja). | 🟢 STABLE | `./restore.sh v2.150.174` |
 | **v2.150.173** | 373 | 02-09-2026 00:21 | `v2.150.173` | **Pure 100% Native LLM Reasoning Stream Architecture:** Menghilangkan seluruh simulasi buatan client-side. Kotak pemikiran AI sekarang 100% murni dikendalikan oleh token penalaran asli yang dipancarkan oleh model LLM (DeepSeek-R1 `reasoning_content`, Gemini `thought`, Claude 3.7 Extended Thinking, OpenAI o-series, serta blok tag `<think>...</think>` yang dialirkan langsung dari stream jaringan), tetap tersembunyi jika model tidak menghasilkan reasoning, dan otomatis menghilang halus saat jawaban utama mulai dirender. | 🟢 STABLE | `./restore.sh v2.150.173` |
 | **v2.150.172** | 372 | 02-09-2026 00:15 | `v2.150.172` | **Dynamic Real-Time Typewriter Reasoning Stream Engine & Instant Cognitive Feedback:** Menghilangkan teks template statis pada kotak pemikiran AI. Mengintegrasikan mesin generator penalaran dinamis (`generateDynamicReasoningPlan` & `startLiveThinkingStream`) yang membedah kueri spesifik pengguna dan mengetikkan tahapan berpikir nyata huruf per huruf secara live (kecepatan 24ms per karakter dengan kursor lavender berkedip), auto-override jika model mengeluarkan native reasoning token, dan otomatis lenyap seketika saat balasan utama / eksekusi tool dimulai. | 🟢 STABLE | `./restore.sh v2.150.172` |
 | **v2.150.171** | 371 | 02-09-2026 00:09 | `v2.150.171` | **Universal Live Reasoning Prompt Protocol & Multi-Tag Stream Buffer:** Menambahkan directive *Live Thinking Protocol* mandatori ke dalam `buildDynamicSystemPrompt` sehingga seluruh model AI (GPT-4o, Claude, Gemini, DeepSeek, Qwen, Ollama, OpenRouter) secara otomatis mengawali responnya dengan blok proses berpikir `<think>...</think>`. Dilengkapi dengan inisialisasi instan saat permintaan dikirim dan parser regex multi-tag yang fleksibel (`<think>`, `<thought>`, `<thinking>`, `[THINKING]`). | 🟢 STABLE | `./restore.sh v2.150.171` |

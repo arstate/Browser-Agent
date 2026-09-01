@@ -2865,29 +2865,60 @@ body.stickman-active .chat-messages {
   box-shadow: 0 4px 16px rgba(167, 139, 250, 0.12);
 }
 
-.thinking-block.is-thinking-finished {
-  opacity: 0;
-  transform: translateY(-4px) scale(0.98);
-  pointer-events: none;
+.thinking-block.collapsed {
+  border-style: solid;
+  border-color: rgba(167, 139, 250, 0.2);
+  background: rgba(167, 139, 250, 0.04);
+}
+
+.thinking-block.collapsed .thinking-content {
+  display: none !important;
   max-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  overflow: hidden !important;
+  padding: 0 12px !important;
+}
+
+.thinking-block.collapsed .thinking-chevron {
+  transform: rotate(-90deg);
 }
 
 .thinking-header {
   padding: 6px 12px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 7px;
   font-size: 10.5px;
   color: #C4B5FD;
   font-weight: 700;
   letter-spacing: 0.03em;
   user-select: none;
+  cursor: pointer;
   border-bottom: 1px dashed rgba(167, 139, 250, 0.15);
   background: rgba(167, 139, 250, 0.08);
+  transition: background 0.2s ease;
+}
+
+.thinking-header:hover {
+  background: rgba(167, 139, 250, 0.14);
+}
+
+.thinking-block.collapsed .thinking-header {
+  border-bottom: none;
+}
+
+.thinking-header-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.thinking-header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #A78BFA;
+  font-weight: 600;
 }
 
 .thinking-header .thinking-icon {
@@ -2895,13 +2926,14 @@ body.stickman-active .chat-messages {
   animation: brainPulse 1.6s infinite ease-in-out;
 }
 
+.thinking-chevron {
+  transition: transform 0.2s ease;
+  color: #A78BFA;
+}
+
 @keyframes brainPulse {
   0%, 100% { transform: scale(1); opacity: 0.8; }
   50% { transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.8)); }
-}
-
-.thinking-arrow {
-  display: none;
 }
 
 .thinking-content {
@@ -2916,6 +2948,7 @@ body.stickman-active .chat-messages {
   word-break: break-word;
   max-height: 140px;
   overflow-y: auto;
+  transition: max-height 0.2s ease;
 }
 
 .thinking-content .streaming-cursor {
