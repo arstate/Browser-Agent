@@ -8570,9 +8570,10 @@ function updateFooterStatus(statusText) {
 
 let chatAutoScrollObserver = null;
 let isAutoScrollThrottled = false;
+let isInitialSessionLoading = false;
 
 function scrollToBottom(smooth = false) {
-  if (isLoadingEarlierMessages) return;
+  if (isLoadingEarlierMessages && !isInitialSessionLoading) return;
 
   // 1. Scroll inner chatMessages container (SidePanel mode)
   if (chatMessages) {
@@ -8595,15 +8596,28 @@ function scrollToBottom(smooth = false) {
   }
 }
 
+function forceScrollChatToBottom() {
+  scrollToBottom(false);
+  requestAnimationFrame(() => {
+    scrollToBottom(false);
+    requestAnimationFrame(() => {
+      scrollToBottom(false);
+    });
+  });
+  setTimeout(() => scrollToBottom(false), 50);
+  setTimeout(() => scrollToBottom(false), 120);
+  setTimeout(() => scrollToBottom(false), 220);
+}
+
 function requestSmoothScrollToBottom(smooth = false) {
-  if (isLoadingEarlierMessages) return;
+  if (isLoadingEarlierMessages && !isInitialSessionLoading) return;
   scrollToBottom(smooth);
   requestAnimationFrame(() => {
-    if (isLoadingEarlierMessages) return;
+    if (isLoadingEarlierMessages && !isInitialSessionLoading) return;
     scrollToBottom(smooth);
   });
   setTimeout(() => {
-    if (isLoadingEarlierMessages) return;
+    if (isLoadingEarlierMessages && !isInitialSessionLoading) return;
     scrollToBottom(smooth);
   }, 80);
 }
@@ -11015,7 +11029,7 @@ function loadNextEarlierMessagesBatch() {
 }
 
 function checkPreemptiveScrollPosition() {
-  if (isLoadingEarlierMessages || currentRenderedMessageStartIndex <= 0) return;
+  if (isInitialSessionLoading || isLoadingEarlierMessages || currentRenderedMessageStartIndex <= 0) return;
 
   const triggerMargin = 650; // Anticipatory margin: preload when within 650px of top
 
@@ -11102,6 +11116,9 @@ async function resumeSession(sessionId) {
     applyConfigToUI();
   }
 
+  isInitialSessionLoading = true;
+  isLoadingEarlierMessages = true;
+
   // Ultra-Fast Virtual Message Chunking: Render only the latest 50 messages initially
   chatMessages.innerHTML = '';
   if (welcomeCard) welcomeCard.style.display = 'none';
@@ -11113,11 +11130,21 @@ async function resumeSession(sessionId) {
 
   renderMessageSliceIntoDOM(initialSlice, false);
   updateTopHistorySentinel(false);
-  initReverseInfiniteScroll();
 
   hideHistoryModal();
   updateHeaderChatTitle(currentSessionTitle);
-  scrollToBottom(false);
+
+  // Force scroll view to land firmly on the very latest message at the bottom
+  forceScrollChatToBottom();
+
+  // Release loading guard and arm reverse infinite scroll only after layout has fully stabilized
+  setTimeout(() => {
+    isInitialSessionLoading = false;
+    isLoadingEarlierMessages = false;
+    initReverseInfiniteScroll();
+    forceScrollChatToBottom();
+  }, 250);
+
   updateFooterStatus("Sesi Dimuat");
   setTimeout(() => updateFooterStatus("Agent Ready"), 1500);
 }
