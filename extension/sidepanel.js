@@ -662,7 +662,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
 
   // Dynamic Multi-Agent Swarm selection:
   // - If single casual/personal query: recruit only 1 companion specialist
-  // - If multi-disciplinary task: recruit ALL agents with high confidence (score >= 8), no artificial 2-agent limit!
+  // - If multi-disciplinary task: recruit top 1-2 (max 3) agents with highest confidence
   scoredWorkers.sort((a, b) => b.score - a.score);
 
   if (scoredWorkers.length > 0) {
@@ -670,12 +670,15 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
       // Single focused casual intent
       matchedWorkers.push(scoredWorkers[0].agent);
     } else {
-      // Multi-agent selection: take all agents with strong domain match (score >= 8)
-      scoredWorkers.forEach(item => {
+      // Top domain specialists (max 2-3 to keep execution lean, accurate, and token-efficient)
+      const topScore = scoredWorkers[0].score;
+      for (const item of scoredWorkers) {
+        if (matchedWorkers.length >= 2 && item.score < topScore) break;
+        if (matchedWorkers.length >= 3) break;
         if (item.score >= 8 && !matchedWorkers.some(m => m.id === item.agent.id)) {
           matchedWorkers.push(item.agent);
         }
-      });
+      }
     }
   }
 
@@ -5972,8 +5975,12 @@ Tugas Anda:
           }
         }
       } else {
-        // No more tool calls: Option 3 Completion Guard check
-        if (activeGoalMilestones && typeof GoalTracker !== 'undefined' && GoalTracker.hasPendingMilestones(activeGoalMilestones) && currentStep < maxSteps - 2) {
+        // No more tool calls: Option 3 Completion Guard check (only when tools were actually used)
+        const hasPending = (activeGoalMilestones && typeof GoalTracker !== 'undefined')
+          ? GoalTracker.hasPendingMilestones(activeGoalMilestones, conversationHistory)
+          : false;
+
+        if (hasPending && currentStep < maxSteps - 2) {
           const contPrompt = GoalTracker.generateGoalContinuationPrompt(activeGoalMilestones);
           conversationHistory.push({
             role: "user",
@@ -5982,6 +5989,15 @@ Tugas Anda:
           updateAssistantActiveAgent(assistantBubble, "Master Agent", "Melanjutkan milestone yang tertunda...", true, false);
           updateFooterStatus("Master Agent: Melanjutkan milestone sasaran...");
           continue;
+        }
+
+        // Direct answer finished without further tools! Mark all remaining milestones completed.
+        if (activeGoalMilestones && Array.isArray(activeGoalMilestones)) {
+          activeGoalMilestones.forEach(m => {
+            m.completed = true;
+            m.inProgress = false;
+          });
+          updateTaskScheduleProgress(assistantBubble, activeGoalMilestones, activeGoalMilestones.length, false);
         }
 
         // Task finished!
@@ -8989,11 +9005,26 @@ function formatInline(str) {
   return res;
 }
 
+function sanitizeInternalAiTags(rawText) {
+  if (!rawText || typeof rawText !== 'string') return rawText || "";
+  let clean = rawText;
+  // Strip <task_schedule>...</task_schedule> or <manage_task>...</manage_task>
+  clean = clean.replace(/<(?:task_schedule|manage_task)>[\s\S]*?<\/(?:task_schedule|manage_task)>/gi, '');
+  clean = clean.replace(/<(?:task|milestone|step)\s+[^>]+?\/?>/gi, '');
+  // Strip <think>...</think> or similar tags
+  clean = clean.replace(/<(?:think|thought|thinking)>[\s\S]*?<\/(?:think|thought|thinking)>/gi, '');
+  // Clean raw milestone checklists: e.g. - [x] Milestone 1: Milestone 1: ...
+  clean = clean.replace(/(?:^|\n)\s*[-*•]\s*\[(?:x| |▶|\/)\]\s*Milestone\s*\d+[:\s][^\n]+/gi, '');
+  return clean.trim();
+}
+
 function formatMarkdown(raw) {
   if (raw === null || raw === undefined) return "";
   if (typeof raw !== 'string') {
     try { raw = JSON.stringify(raw, null, 2); } catch (e) { raw = String(raw); }
   }
+
+  raw = sanitizeInternalAiTags(raw);
 
   // 1. Extract code blocks (```lang ... ```) to safe unicode placeholders
   const codeBlocks = [];

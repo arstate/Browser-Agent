@@ -106,9 +106,9 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 
 ---
 
-##### 🛡️ 6. Protokol Versioning & Restore Points
+###### 🛡️ 6. Protokol Versioning & Restore Points
 
-- **Versi Terkini:** `v2.150.177`
+- **Versi Terkini:** `v2.150.178`
 - **Catatan Detail Restore Point:** [RESTORE_POINTS.md](file:///home/arya/browser-agent/RESTORE_POINTS.md)
 - **Alat Bantu Otomatis:**
   - `./create_restore_point.sh <VERSION_TAG> "<DESKRIPSI>"`: Membuat restore point baru, commit git, backup ZIP percakapan Antigravity, dan push ke repository GitHub.
@@ -180,3 +180,4 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
 58. **Universal Dual-Engine Live Reasoning & Instant Cognitive Stream Architecture:** Mengintegrasikan mesin penalaran ganda yang menjamin kotak pemikiran AI selalu muncul dan mengetik real-time huruf demi huruf (kecepatan 22ms per karakter dengan kursor lavender berdenyut) untuk setiap prompt tanpa terkecuali, dengan auto-override instan jika model LLM di 9router/Antigravity memancarkan token native reasoning asli, serta otomatis ter-collapse ke mode header interaktif (`Detail` / `Tutup`) saat selesai sehingga pengguna dapat membaca kembali riwayat pemikiran utuh model kapan saja.
 59. **Native Hardware-Accelerated Animation System (`stickman-engine`):** Mengganti library animasi tradisional dengan mesin rendering berbasis GPU (`RequestAnimationFrame` + `OffscreenCanvas`) yang memproses 60 FPS sprite stickman tanpa lag pada thread UI utama, menjaga responsivitas eksekusi perintah tetap 100% instan meski animasi sedang berjalan, serta menyempurnakan transisi antar-state (idle, thinking, success, error) agar selalu luwes dengan kurva easings `cubic-bezier(0.4, 0, 0.2, 1)`.
 60. **User Bubble High-Threshold Collapsible Optimization:** Memperbaiki bug di mana pesan chat user berukuran pendek/sedang (seperti `"play denycaknan"` atau beberapa kalimat) secara keliru diminimize dan menampilkan tombol `"Lihat Selengkapnya"`. Batas threshold diperketat menjadi pesan yang benar-benar sangat panjang (`> 550 karakter` atau `≥ 8 baris`), serta menghapus logika post-render height yang tidak presisi sehingga seluruh pesan user normal selalu tampil utuh, bersih, dan tanpa tombol minimizer yang tidak perlu.
+61. **Completion Guard Loop Fix, Lean Swarm Recruitment & AI Tag Sanitizer:** Memperbaiki bug perulangan (infinite thinking loop) pada respon percakapan / konsultasi langsung dengan mengisolasi `GoalTracker.hasPendingMilestones` agar hanya aktif jika terdapat pemanggilan tool nyata, otomatis menandai seluruh milestone tuntas saat respon teks lengkap diberikan, membatasi rekrutmen swarm otomatis (maksimal 2-3 agen spesialis unggulan), serta menyaring (strip) seluruh tag internal `<task_schedule>`, `<task .../>`, dan duplikasi teks milestone dari pesan yang ditampilkan ke pengguna.

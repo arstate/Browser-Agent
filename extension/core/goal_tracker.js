@@ -291,13 +291,13 @@
         const parsed = [];
         taskMatches.forEach((tm, idx) => {
           const attrStr = tm[1];
-          const titleMatch = attrStr.match(/title=["']([^"']+)["']/i) || attrStr.match(/name=["']([^"']+)["']/i) || attrStr.match(/task=["']([^"']+)["']/i);
-          const agentMatch = attrStr.match(/agent=["']([^"']+)["']/i) || attrStr.match(/executor=["']([^"']+)["']/i);
-          const title = titleMatch ? titleMatch[1].trim() : `Langkah Kerja ${idx + 1}`;
-          const assignedAgent = agentMatch ? agentMatch[1].trim() : "Master Agent";
+          const rawTitleMatch = attrStr.match(/title=["']([^"']+)["']/i) || attrStr.match(/name=["']([^"']+)["']/i) || attrStr.match(/task=["']([^"']+)["']/i);
+          const rawAgentMatch = attrStr.match(/agent=["']([^"']+)["']/i) || attrStr.match(/executor=["']([^"']+)["']/i);
+          const cleanTitle = (rawTitleMatch ? rawTitleMatch[1].trim() : `Langkah Kerja ${idx + 1}`).replace(/^Milestone\s*\d+[:\s-]*/gi, '').trim();
+          const assignedAgent = rawAgentMatch ? rawAgentMatch[1].trim() : "Master Agent";
           parsed.push({
             id: idx + 1,
-            title,
+            title: cleanTitle || `Langkah Kerja ${idx + 1}`,
             assignedAgent,
             completed: false,
             inProgress: idx === 0
@@ -324,11 +324,12 @@
         });
 
         lineMatches.forEach(lm => {
-          const title = lm[2].trim();
+          const rawTitle = lm[2].trim();
+          const cleanTitle = rawTitle.replace(/^Milestone\s*\d+[:\s-]*/gi, '').trim();
           const agent = lm[3] ? lm[3].trim() : "Master Agent";
           parsed.push({
             id: parsed.length + 1,
-            title,
+            title: cleanTitle || rawTitle,
             assignedAgent: agent,
             completed: false,
             inProgress: parsed.length === 1
@@ -395,12 +396,11 @@ TARGET SASARAN & JADWAL TUGAS MULTI-AGENT (${milestones.length} TAHAPAN TUNTAS):
 ${listStr}
 
 PROTOKOL EKSEKUSI BOS PERFEKSIONIS:
-1. DILARANG BERHENTI PREMATUR (NO PREMATURE STOP): Anda TIDAK BOLEH mengakhiri tugas jika masih ada Milestone bertanda [ ] atau [▶]!
-2. DYNAMIC TASK REFINEMENT: Jika Anda membutuhkan langkah tambahan, Anda dapat mendeklarasikan jadwal baru dalam format <task_schedule><task title="..." agent="..." /></task_schedule> di awal respon Anda.
-3. KOORDINASI LENGKAP: Pastikan setiap agen pelaksana menjalankan tugasnya secara optimal dan menghasilkan data konkret yang utuh.
-4. VALIDASI KUALITAS 100%: Sebelum memberikan jawaban akhir kepada pengguna, evaluasi seluruh temuan:
-   - Jika data bawahan masih ada yang kurang atau meragukan: Perintahkan revisi (panggil tool perbaikan atau delegasikan kembali).
-   - Hanya serahkan laporan ke pengguna jika data telah terverifikasi 100% akurat, lengkap, dan tuntas!\n`;
+1. EKSEKUSI TUNTAS & BERKUALITAS:
+   - Jika sasaran memerlukan aksi tool (browser / terminal / gsuite / file), panggil tool yang relevan hingga selesai.
+   - Jika sasaran berupa konsultasi, strategi, naskah copywriting, ide konten, atau analisis konseptual (tidak perlu aksi browser/terminal), berikan jawaban yang super lengkap, to-the-point, dan berbobot tinggi secara langsung.
+2. DILARANG MENCETAK TAG INTERNAL: DILARANG mencetak tag internal <task_schedule>, <manage_task>, atau baris checklist [-] [x] ke dalam jawaban untuk pengguna. Sajikan seluruh jawaban langsung dalam format Markdown yang bersih dan elegan.
+3. VALIDASI KUALITAS 100%: Pastikan output akhir menjawab tuntas seluruh kebutuhan pengguna tanpa keraguan.\n`;
   }
 
   /**
@@ -481,16 +481,25 @@ PROTOKOL EKSEKUSI BOS PERFEKSIONIS:
 
   /**
    * Returns true if there are still pending unstarted worker milestones
+   * ONLY applies when tools were actually used in this session!
    */
-  function hasPendingMilestones(milestones) {
+  function hasPendingMilestones(milestones, conversationHistory = []) {
     if (!milestones || milestones.length === 0) return false;
+
+    // If no tools were called in the conversation (e.g. conversational/strategy/copywriting response),
+    // the model answered directly without needing tool execution -> do NOT block or force loop!
+    const hasAnyToolCalls = (conversationHistory || []).some(m => m.role === 'tool' || (m.role === 'assistant' && Array.isArray(m.tool_calls) && m.tool_calls.length > 0));
+    if (!hasAnyToolCalls) {
+      return false;
+    }
+
     // Check if intermediate worker milestones are still pending
     const intermediateMilestones = milestones.slice(1, milestones.length - 1);
     return intermediateMilestones.some(m => !m.completed && !m.inProgress);
   }
 
   /**
-   * Generates strict continuation prompt if LLM attempts premature stop
+   * Generates strict continuation prompt if LLM attempts premature stop during tool workflow
    */
   function generateGoalContinuationPrompt(milestones) {
     const pending = milestones.filter(m => !m.completed).map(m => `• Milestone ${m.id}: ${m.title}`).join('\n');
