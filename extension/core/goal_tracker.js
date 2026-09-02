@@ -44,8 +44,44 @@
     const cleanLower = text.toLowerCase();
     const milestones = [];
 
-    // Helper to find specific worker by name/id pattern
+    // Helper to detect brand ecosystem from prompt text
+    function detectBrand(t) {
+      if (
+        t.includes("tiar") || t.includes("tiar property") || t.includes("busi jaya") ||
+        t.includes("ningsih") || t.includes("perumahan") || t.includes("kpr") ||
+        t.includes("sidoarjo") || t.includes("surabaya") || t.includes("sukodono") ||
+        t.includes("masangan") || t.includes("anggaswangi") || t.includes("sedati") ||
+        t.includes("juanda") || t.includes("cluster") || t.includes("rumah")
+      ) {
+        return "tiar_property";
+      }
+      if (t.includes("djadi") || t.includes("djadi creative")) {
+        return "djadi_creative";
+      }
+      if (t.includes("dga") || t.includes("dapur annisa") || t.includes("annisa")) {
+        return "dga";
+      }
+      if (t.includes("unesa") || t.includes("skripsi") || t.includes("thesis")) {
+        return "unesa";
+      }
+      return null;
+    }
+
+    function getAgentBrand(ag) {
+      if (!ag) return null;
+      const full = `${String(ag.id || '')} ${String(ag.name || '')} ${String(ag.description || '')}`.toLowerCase();
+      if (full.includes("tiar") || full.includes("ningsih") || full.includes("busi jaya") || (full.includes("properti") && !full.includes("djadi"))) return "tiar_property";
+      if (full.includes("djadi")) return "djadi_creative";
+      if (full.includes("dga") || full.includes("annisa")) return "dga";
+      if (full.includes("unesa") || full.includes("skripsi") || full.includes("thesis")) return "unesa";
+      return null;
+    }
+
+    const targetBrand = detectBrand(cleanLower);
+
+    // Helper to find specific worker by name/id pattern with strict brand isolation
     function findWorker(pattern, fallbackName) {
+      // 1. Strict priority: Check matchedWorkers first!
       if (Array.isArray(matchedWorkers) && matchedWorkers.length > 0) {
         const found = matchedWorkers.find(w => {
           const id = String(w.id || '').toLowerCase();
@@ -53,9 +89,20 @@
           return id.includes(pattern) || name.includes(pattern);
         });
         if (found) return found.name;
+
+        // If matchedWorkers has only 1 specialist recruited for this task, use that specialist!
+        if (matchedWorkers.length === 1 && !pattern.includes('boss') && !pattern.includes('master')) {
+          return matchedWorkers[0].name;
+        }
       }
+
+      // 2. Search customAgents with brand filter
       if (Array.isArray(customAgents) && customAgents.length > 0) {
         const found = customAgents.find(a => {
+          const aBrand = getAgentBrand(a);
+          // STRICT BRAND ISOLATION: Never pick an agent from a conflicting brand!
+          if (targetBrand && aBrand && aBrand !== targetBrand) return false;
+
           const id = String(a.id || '').toLowerCase();
           const name = String(a.name || '').toLowerCase();
           return id.includes(pattern) || name.includes(pattern);
@@ -186,15 +233,28 @@
         { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Verifikasi Laporan Cadangan", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('lead') || cleanLower.includes('ads') || cleanLower.includes('iklan') || cleanLower.includes('boncos') || cleanLower.includes('cpr') || cleanLower.includes('gacor') || cleanLower.includes('campaign') || cleanLower.includes('meta')) {
-      const adsAgent = findWorker('ads', findWorker('auditor', 'Sub-Agent Auditor & Analis Meta Ads'));
-      const strategistAgent = findWorker('strategist', 'Tiar Meta Ads Strategist');
-      const salesAgent = findWorker('closer', findWorker('sales', 'Tiar Sales Closer CS'));
-      milestones.push(
-        { id: 2, title: "Audit Matriks Kinerja Iklan & Eliminasi Junk Leads", assignedAgent: adsAgent, completed: false, inProgress: false },
-        { id: 3, title: "Perumusan Strategi Targeting Advantage+ CBO & Optimasi CPR", assignedAgent: strategistAgent, completed: false, inProgress: false },
-        { id: 4, title: "Evaluasi Funnel Chat Closing & Kualifikasi Prospek KPR", assignedAgent: salesAgent, completed: false, inProgress: false },
-        { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
-      );
+      const isAuditQuery = (cleanLower.includes('cek') || cleanLower.includes('audit') || cleanLower.includes('lihat') || cleanLower.includes('pantau') || cleanLower.includes('evaluasi') || cleanLower.includes('periksa') || cleanLower.includes('aktif') || cleanLower.includes('detail') || cleanLower.includes('status'));
+      const isStrategyQuery = (cleanLower.includes('strategi') || cleanLower.includes('buat iklan') || cleanLower.includes('bikin iklan') || cleanLower.includes('target') || cleanLower.includes('cbo') || cleanLower.includes('budget') || cleanLower.includes('scale'));
+
+      if (isAuditQuery && !isStrategyQuery) {
+        const auditorAgent = findWorker('auditor', findWorker('ads', 'Tiar Property - Meta Ads Visual Auditor & Lead Quality Analyst'));
+        milestones.push(
+          { id: 2, title: "Akses & Orientasi Live Ads Manager via Browser MCP / CDP Control", assignedAgent: auditorAgent, completed: false, inProgress: false },
+          { id: 3, title: "Audit Matriks Kinerja Iklan, Status Kampanye & Adset Aktif", assignedAgent: auditorAgent, completed: false, inProgress: false },
+          { id: 4, title: "Ekstraksi Metrik CPR, CTR, Volume Chat & Eliminasi Junk Leads", assignedAgent: auditorAgent, completed: false, inProgress: false },
+          { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        );
+      } else {
+        const adsAgent = findWorker('auditor', findWorker('ads', 'Tiar Property - Meta Ads Visual Auditor & Lead Quality Analyst'));
+        const strategistAgent = findWorker('strategist', 'Tiar Meta Ads Strategist');
+        const salesAgent = findWorker('closer', findWorker('sales', 'Tiar Sales Closer CS'));
+        milestones.push(
+          { id: 2, title: "Audit Matriks Kinerja Iklan & Eliminasi Junk Leads", assignedAgent: adsAgent, completed: false, inProgress: false },
+          { id: 3, title: "Perumusan Strategi Targeting Advantage+ CBO & Optimasi CPR", assignedAgent: strategistAgent, completed: false, inProgress: false },
+          { id: 4, title: "Evaluasi Funnel Chat Closing & Kualifikasi Prospek KPR", assignedAgent: salesAgent, completed: false, inProgress: false },
+          { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        );
+      }
     } else if (cleanLower.includes('properti') || cleanLower.includes('rumah') || cleanLower.includes('kpr') || cleanLower.includes('surabaya') || cleanLower.includes('sidoarjo') || cleanLower.includes('survei')) {
       const salesAgent = findWorker('closer', findWorker('sales', 'Tiar Sales Closer CS'));
       const adminAgent = findWorker('admin', 'Tiar Admin Customer CS');
