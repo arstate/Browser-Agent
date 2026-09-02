@@ -1225,6 +1225,7 @@ body::before {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden !important;
+  overflow-anchor: none;
   padding: 14px;
   display: flex;
   flex-direction: column;

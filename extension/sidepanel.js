@@ -7480,7 +7480,7 @@ const chatInput = document.getElementById('chat-input');
 const btnSend = document.getElementById('btn-send');
 const welcomeCard = document.getElementById('welcome-card');
 
-function appendUserMessage(text, attachments = []) {
+function appendUserMessage(text, attachments = [], autoScroll = true, attachToDom = true) {
   if (typeof text === 'object' && text !== null) {
     text = text.text || "";
   }
@@ -7687,9 +7687,12 @@ function appendUserMessage(text, attachments = []) {
     if (label) label.textContent = 'Copied!';
     setTimeout(() => { if (label) label.textContent = 'Copy'; }, 1500);
   });
-  chatMessages.appendChild(msg);
-
-  scrollToBottom();
+  if (attachToDom && chatMessages) {
+    chatMessages.appendChild(msg);
+    if (autoScroll && !isLoadingEarlierMessages) {
+      scrollToBottom();
+    }
+  }
   return msg;
 }
 
@@ -7972,7 +7975,7 @@ function hideClarificationDock() {
   chrome.storage.local.remove(['telegram_active_clarification']);
 }
 
-function appendAssistantMessage(initialText = null, isLiveLoading = true, agentInfo = null) {
+function appendAssistantMessage(initialText = null, isLiveLoading = true, agentInfo = null, autoScroll = true, attachToDom = true) {
   if (welcomeCard) welcomeCard.style.display = 'none';
   document.body.classList.add('has-messages');
   const msg = document.createElement('div');
@@ -8122,12 +8125,16 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
       setTimeout(() => { if (label) label.textContent = 'Copy'; }, 1500);
     }
   });
-  chatMessages.appendChild(msg);
+  if (attachToDom && chatMessages) {
+    chatMessages.appendChild(msg);
+    if (autoScroll && !isLoadingEarlierMessages) {
+      requestSmoothScrollToBottom(true, msg);
+    }
+  }
   if (initialText) {
     hydrateLocalImages(msg);
     hydrateFileActions(msg);
   }
-  requestSmoothScrollToBottom(true, msg);
   currentActiveAssistantBubble = msg;
   return msg;
 }
@@ -8565,6 +8572,8 @@ let chatAutoScrollObserver = null;
 let isAutoScrollThrottled = false;
 
 function scrollToBottom(smooth = false) {
+  if (isLoadingEarlierMessages) return;
+
   // 1. Scroll inner chatMessages container (SidePanel mode)
   if (chatMessages) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -8587,11 +8596,14 @@ function scrollToBottom(smooth = false) {
 }
 
 function requestSmoothScrollToBottom(smooth = false) {
+  if (isLoadingEarlierMessages) return;
   scrollToBottom(smooth);
   requestAnimationFrame(() => {
+    if (isLoadingEarlierMessages) return;
     scrollToBottom(smooth);
   });
   setTimeout(() => {
+    if (isLoadingEarlierMessages) return;
     scrollToBottom(smooth);
   }, 80);
 }
@@ -8599,7 +8611,7 @@ function requestSmoothScrollToBottom(smooth = false) {
 function startAutoScrollObserver() {
   if (chatAutoScrollObserver || !chatMessages) return;
   chatAutoScrollObserver = new MutationObserver((mutations) => {
-    if (!isExecuting) return;
+    if (!isExecuting || isLoadingEarlierMessages) return;
     let shouldScroll = false;
     for (let i = 0; i < mutations.length; i++) {
       const m = mutations[i];
@@ -10806,6 +10818,44 @@ async function loadHistoryList(searchQuery = "") {
   renderHistoryBatch(false);
 }
 
+function updateLoadEarlierButtonVisibility() {
+  if (!chatMessages) return;
+  let wrap = document.getElementById('btn-load-earlier-wrap');
+  if (currentRenderedMessageStartIndex > 0) {
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'btn-load-earlier-wrap';
+      wrap.className = 'load-earlier-messages-wrap';
+      wrap.innerHTML = `
+        <button type="button" class="btn-load-earlier-messages" id="btn-load-earlier-action" title="Muat riwayat pesan sebelumnya">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+          <span class="load-earlier-text">Muat Pesan Sebelumnya (${currentRenderedMessageStartIndex} lagi)</span>
+        </button>
+      `;
+      chatMessages.insertBefore(wrap, chatMessages.firstChild);
+      const btn = wrap.querySelector('#btn-load-earlier-action');
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          loadNextEarlierMessagesBatch();
+        });
+      }
+    } else {
+      const textEl = wrap.querySelector('.load-earlier-text');
+      if (textEl) {
+        textEl.textContent = `Muat Pesan Sebelumnya (${currentRenderedMessageStartIndex} lagi)`;
+      }
+      if (wrap !== chatMessages.firstChild) {
+        chatMessages.insertBefore(wrap, chatMessages.firstChild);
+      }
+    }
+  } else {
+    if (wrap) wrap.remove();
+  }
+}
+
 function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
   const fragment = document.createDocumentFragment();
   let currentAssistantBubble = null;
@@ -10828,8 +10878,8 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
       }
       const cleanDisplay = typeof displayText === 'string' ? displayText.trim() : "";
       if ((cleanDisplay && cleanDisplay !== "{}" && cleanDisplay !== "[object Object]") || hasAttachments) {
-        const userBubble = appendUserMessage(cleanDisplay, msg.attachments || []);
-        if (userBubble && userBubble.parentNode === chatMessages) {
+        const userBubble = appendUserMessage(cleanDisplay, msg.attachments || [], false, false);
+        if (userBubble) {
           fragment.appendChild(userBubble);
         }
       }
@@ -10837,8 +10887,8 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
       // 1. Render tool calls as completed badges if present
       if (msg.tool_calls && Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
         if (!currentAssistantBubble) {
-          currentAssistantBubble = appendAssistantMessage(null, false, msg.agentInfo);
-          if (currentAssistantBubble && currentAssistantBubble.parentNode === chatMessages) {
+          currentAssistantBubble = appendAssistantMessage(null, false, msg.agentInfo, false, false);
+          if (currentAssistantBubble) {
             fragment.appendChild(currentAssistantBubble);
           }
         }
@@ -10857,8 +10907,8 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
       // 2. Render assistant text response if present
       if (msg.content && typeof msg.content === 'string' && msg.content.trim().length > 0) {
         if (!currentAssistantBubble) {
-          currentAssistantBubble = appendAssistantMessage(msg.content, false, msg.agentInfo);
-          if (currentAssistantBubble && currentAssistantBubble.parentNode === chatMessages) {
+          currentAssistantBubble = appendAssistantMessage(msg.content, false, msg.agentInfo, false, false);
+          if (currentAssistantBubble) {
             fragment.appendChild(currentAssistantBubble);
           }
         } else {
@@ -10872,15 +10922,12 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
   }
 
   if (prepend) {
-    const prevScrollHeight = chatMessages.scrollHeight;
-    const prevScrollTop = chatMessages.scrollTop;
     const loadEarlierWrap = document.getElementById('btn-load-earlier-wrap');
     if (loadEarlierWrap && loadEarlierWrap.nextSibling) {
       chatMessages.insertBefore(fragment, loadEarlierWrap.nextSibling);
     } else {
       chatMessages.insertBefore(fragment, chatMessages.firstChild);
     }
-    chatMessages.scrollTop = prevScrollTop + (chatMessages.scrollHeight - prevScrollHeight);
   } else {
     chatMessages.appendChild(fragment);
   }
@@ -10900,32 +10947,61 @@ function loadNextEarlierMessagesBatch() {
   const slice = conversationHistory.slice(nextStartIndex, currentRenderedMessageStartIndex);
   currentRenderedMessageStartIndex = nextStartIndex;
 
+  // 1. Identify the top message element currently visible to use as anchor
+  const loadEarlierWrap = document.getElementById('btn-load-earlier-wrap');
+  let anchorEl = (loadEarlierWrap && loadEarlierWrap.nextElementSibling) 
+    ? loadEarlierWrap.nextElementSibling 
+    : (chatMessages ? chatMessages.firstElementChild : null);
+  while (anchorEl && anchorEl.id === 'btn-load-earlier-wrap') {
+    anchorEl = anchorEl.nextElementSibling;
+  }
+
+  const prevAnchorRect = anchorEl ? anchorEl.getBoundingClientRect() : null;
   const prevScrollHeight = chatMessages ? chatMessages.scrollHeight : 0;
   const prevScrollTop = chatMessages ? chatMessages.scrollTop : 0;
   const prevDocHeight = document.documentElement.scrollHeight;
   const prevWindowScrollY = window.scrollY;
 
+  // 2. Render and prepend slice cleanly
   renderMessageSliceIntoDOM(slice, true);
 
-  // Preserve scroll anchor position (zero jump)
-  if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
-    chatMessages.scrollTop = prevScrollTop + (chatMessages.scrollHeight - prevScrollHeight);
-  }
-  const heightDiff = document.documentElement.scrollHeight - prevDocHeight;
-  if (heightDiff > 0 && typeof window.scrollTo === 'function') {
-    window.scrollTo({ top: prevWindowScrollY + heightDiff, behavior: 'instant' });
+  // 3. Update or remove earlier messages button
+  updateLoadEarlierButtonVisibility();
+
+  // 4. Anchor scroll compensation (Pixel-perfect zero-jump retention)
+  if (anchorEl && prevAnchorRect) {
+    const newAnchorRect = anchorEl.getBoundingClientRect();
+    const delta = newAnchorRect.top - prevAnchorRect.top;
+
+    if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
+      chatMessages.scrollTop += delta;
+    }
+    if (delta !== 0 && (window.scrollY > 0 || prevWindowScrollY > 0)) {
+      window.scrollBy({ top: delta, behavior: 'instant' });
+    }
+  } else {
+    if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
+      const scrollHeightDiff = chatMessages.scrollHeight - prevScrollHeight;
+      chatMessages.scrollTop = prevScrollTop + scrollHeightDiff;
+    }
+    const docHeightDiff = document.documentElement.scrollHeight - prevDocHeight;
+    if (docHeightDiff > 0 && typeof window.scrollTo === 'function') {
+      window.scrollTo({ top: prevWindowScrollY + docHeightDiff, behavior: 'instant' });
+    }
   }
 
+  // 5. Release loading guard with debounce
   setTimeout(() => {
     isLoadingEarlierMessages = false;
-  }, 120);
+  }, 250);
 }
 
 function initReverseInfiniteScroll() {
   if (chatMessages && !chatMessages.dataset.boundTopAutoLoad) {
     chatMessages.dataset.boundTopAutoLoad = 'true';
     chatMessages.addEventListener('scroll', () => {
-      if (chatMessages.scrollTop <= 60 && currentRenderedMessageStartIndex > 0) {
+      if (isLoadingEarlierMessages) return;
+      if (chatMessages.scrollTop <= 80 && currentRenderedMessageStartIndex > 0) {
         loadNextEarlierMessagesBatch();
       }
     }, { passive: true });
@@ -10934,6 +11010,7 @@ function initReverseInfiniteScroll() {
   if (typeof window !== 'undefined' && !window.boundTopAutoLoadWindow) {
     window.boundTopAutoLoadWindow = true;
     window.addEventListener('scroll', () => {
+      if (isLoadingEarlierMessages) return;
       if (window.scrollY <= 140 && currentRenderedMessageStartIndex > 0 && document.body.classList.contains('has-messages')) {
         loadNextEarlierMessagesBatch();
       }
@@ -11003,6 +11080,7 @@ async function resumeSession(sessionId) {
   const initialSlice = conversationHistory.slice(currentRenderedMessageStartIndex);
 
   renderMessageSliceIntoDOM(initialSlice, false);
+  updateLoadEarlierButtonVisibility();
   initReverseInfiniteScroll();
 
   hideHistoryModal();

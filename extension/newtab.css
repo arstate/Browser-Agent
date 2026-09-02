@@ -941,6 +941,7 @@ body.has-messages .chat-input-container:focus-within::after {
 body.has-messages .chat-messages {
   display: flex;
   width: 100%;
+  overflow-anchor: none;
   padding-bottom: 0px;
   animation: messagesSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transition: padding-bottom 0.38s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1149,6 +1150,7 @@ body.has-messages .chat-messages {
 
 .chat-messages {
   width: 100%;
+  overflow-anchor: none;
   display: flex;
   flex-direction: column;
   gap: 18px;
