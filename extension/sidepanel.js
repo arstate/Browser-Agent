@@ -10818,43 +10818,63 @@ async function loadHistoryList(searchQuery = "") {
   renderHistoryBatch(false);
 }
 
-function updateLoadEarlierButtonVisibility() {
+function updateTopHistorySentinel(isActivelyLoading = false) {
   if (!chatMessages) return;
-  let wrap = document.getElementById('btn-load-earlier-wrap');
-  if (currentRenderedMessageStartIndex > 0) {
-    if (!wrap) {
-      wrap = document.createElement('div');
-      wrap.id = 'btn-load-earlier-wrap';
-      wrap.className = 'load-earlier-messages-wrap';
-      wrap.innerHTML = `
-        <button type="button" class="btn-load-earlier-messages" id="btn-load-earlier-action" title="Muat riwayat pesan sebelumnya">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="18 15 12 9 6 15"></polyline>
+
+  // Clean up old legacy button elements if present
+  const oldWrap = document.getElementById('btn-load-earlier-wrap');
+  if (oldWrap) oldWrap.remove();
+
+  let sentinel = document.getElementById('chat-history-top-sentinel');
+  let beginningBanner = document.getElementById('chat-beginning-banner');
+
+  if (currentRenderedMessageStartIndex <= 0) {
+    // Reached the true start of history
+    if (sentinel) sentinel.remove();
+    if (!beginningBanner && conversationHistory && conversationHistory.length > 0) {
+      beginningBanner = document.createElement('div');
+      beginningBanner.id = 'chat-beginning-banner';
+      beginningBanner.className = 'chat-beginning-banner';
+      beginningBanner.innerHTML = `
+        <div class="beginning-pill">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
-          <span class="load-earlier-text">Muat Pesan Sebelumnya (${currentRenderedMessageStartIndex} lagi)</span>
-        </button>
+          <span>Awal percakapan</span>
+        </div>
       `;
-      chatMessages.insertBefore(wrap, chatMessages.firstChild);
-      const btn = wrap.querySelector('#btn-load-earlier-action');
-      if (btn) {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          loadNextEarlierMessagesBatch();
-        });
-      }
-    } else {
-      const textEl = wrap.querySelector('.load-earlier-text');
-      if (textEl) {
-        textEl.textContent = `Muat Pesan Sebelumnya (${currentRenderedMessageStartIndex} lagi)`;
-      }
-      if (wrap !== chatMessages.firstChild) {
-        chatMessages.insertBefore(wrap, chatMessages.firstChild);
-      }
+      chatMessages.insertBefore(beginningBanner, chatMessages.firstChild);
     }
   } else {
-    if (wrap) wrap.remove();
+    // Still has earlier message chunks to preload seamlessly
+    if (beginningBanner) beginningBanner.remove();
+    if (!sentinel) {
+      sentinel = document.createElement('div');
+      sentinel.id = 'chat-history-top-sentinel';
+      sentinel.className = 'chat-history-sentinel';
+      chatMessages.insertBefore(sentinel, chatMessages.firstChild);
+    }
+
+    if (isActivelyLoading) {
+      sentinel.innerHTML = `
+        <div class="chat-history-loader-subtle">
+          <span class="subtle-dot"></span>
+          <span class="subtle-dot"></span>
+          <span class="subtle-dot"></span>
+        </div>
+      `;
+    } else {
+      sentinel.innerHTML = '';
+    }
+
+    if (sentinel !== chatMessages.firstChild) {
+      chatMessages.insertBefore(sentinel, chatMessages.firstChild);
+    }
   }
 }
+
+// Backward-compatible alias
+const updateLoadEarlierButtonVisibility = updateTopHistorySentinel;
 
 function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
   const fragment = document.createDocumentFragment();
@@ -10922,9 +10942,11 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
   }
 
   if (prepend) {
-    const loadEarlierWrap = document.getElementById('btn-load-earlier-wrap');
-    if (loadEarlierWrap && loadEarlierWrap.nextSibling) {
-      chatMessages.insertBefore(fragment, loadEarlierWrap.nextSibling);
+    const sentinel = document.getElementById('chat-history-top-sentinel') || document.getElementById('chat-beginning-banner');
+    if (sentinel && sentinel.nextSibling) {
+      chatMessages.insertBefore(fragment, sentinel.nextSibling);
+    } else if (sentinel) {
+      chatMessages.appendChild(fragment);
     } else {
       chatMessages.insertBefore(fragment, chatMessages.firstChild);
     }
@@ -10942,33 +10964,26 @@ function loadNextEarlierMessagesBatch() {
   if (isLoadingEarlierMessages || currentRenderedMessageStartIndex <= 0) return;
   isLoadingEarlierMessages = true;
 
-  const batchSize = 35;
+  const batchSize = 45;
   const nextStartIndex = Math.max(0, currentRenderedMessageStartIndex - batchSize);
   const slice = conversationHistory.slice(nextStartIndex, currentRenderedMessageStartIndex);
   currentRenderedMessageStartIndex = nextStartIndex;
 
   // 1. Identify the top message element currently visible to use as anchor
-  const loadEarlierWrap = document.getElementById('btn-load-earlier-wrap');
-  let anchorEl = (loadEarlierWrap && loadEarlierWrap.nextElementSibling) 
-    ? loadEarlierWrap.nextElementSibling 
-    : (chatMessages ? chatMessages.firstElementChild : null);
-  while (anchorEl && anchorEl.id === 'btn-load-earlier-wrap') {
-    anchorEl = anchorEl.nextElementSibling;
-  }
-
+  let anchorEl = chatMessages ? chatMessages.querySelector('.message') : null;
   const prevAnchorRect = anchorEl ? anchorEl.getBoundingClientRect() : null;
   const prevScrollHeight = chatMessages ? chatMessages.scrollHeight : 0;
   const prevScrollTop = chatMessages ? chatMessages.scrollTop : 0;
   const prevDocHeight = document.documentElement.scrollHeight;
   const prevWindowScrollY = window.scrollY;
 
-  // 2. Render and prepend slice cleanly
+  // 2. Prepend slice cleanly into DOM
   renderMessageSliceIntoDOM(slice, true);
 
-  // 3. Update or remove earlier messages button
-  updateLoadEarlierButtonVisibility();
+  // 3. Update top beginning indicator / sentinel
+  updateTopHistorySentinel(false);
 
-  // 4. Anchor scroll compensation (Pixel-perfect zero-jump retention)
+  // 4. Pixel-perfect zero-latency scroll restoration before paint
   if (anchorEl && prevAnchorRect) {
     const newAnchorRect = anchorEl.getBoundingClientRect();
     const delta = newAnchorRect.top - prevAnchorRect.top;
@@ -10990,30 +11005,47 @@ function loadNextEarlierMessagesBatch() {
     }
   }
 
-  // 5. Release loading guard with debounce
-  setTimeout(() => {
-    isLoadingEarlierMessages = false;
-  }, 250);
+  // 5. Fast double-RAF release so rapid scrolls can cascade fluidly without micro-stutter
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      isLoadingEarlierMessages = false;
+      checkPreemptiveScrollPosition();
+    });
+  });
+}
+
+function checkPreemptiveScrollPosition() {
+  if (isLoadingEarlierMessages || currentRenderedMessageStartIndex <= 0) return;
+
+  const triggerMargin = 650; // Anticipatory margin: preload when within 650px of top
+
+  if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
+    if (chatMessages.scrollTop <= triggerMargin) {
+      loadNextEarlierMessagesBatch();
+      return;
+    }
+  }
+
+  if (typeof window !== 'undefined' && document.body.classList.contains('has-messages')) {
+    if (window.scrollY <= (triggerMargin + 150)) {
+      loadNextEarlierMessagesBatch();
+      return;
+    }
+  }
 }
 
 function initReverseInfiniteScroll() {
   if (chatMessages && !chatMessages.dataset.boundTopAutoLoad) {
     chatMessages.dataset.boundTopAutoLoad = 'true';
     chatMessages.addEventListener('scroll', () => {
-      if (isLoadingEarlierMessages) return;
-      if (chatMessages.scrollTop <= 80 && currentRenderedMessageStartIndex > 0) {
-        loadNextEarlierMessagesBatch();
-      }
+      checkPreemptiveScrollPosition();
     }, { passive: true });
   }
 
   if (typeof window !== 'undefined' && !window.boundTopAutoLoadWindow) {
     window.boundTopAutoLoadWindow = true;
     window.addEventListener('scroll', () => {
-      if (isLoadingEarlierMessages) return;
-      if (window.scrollY <= 140 && currentRenderedMessageStartIndex > 0 && document.body.classList.contains('has-messages')) {
-        loadNextEarlierMessagesBatch();
-      }
+      checkPreemptiveScrollPosition();
     }, { passive: true });
   }
 }
@@ -11070,17 +11102,17 @@ async function resumeSession(sessionId) {
     applyConfigToUI();
   }
 
-  // Ultra-Fast Virtual Message Chunking: Render only the latest 35 messages initially
+  // Ultra-Fast Virtual Message Chunking: Render only the latest 50 messages initially
   chatMessages.innerHTML = '';
   if (welcomeCard) welcomeCard.style.display = 'none';
   document.body.classList.add('has-messages');
 
-  const INITIAL_BATCH_SIZE = 35;
+  const INITIAL_BATCH_SIZE = 50;
   currentRenderedMessageStartIndex = Math.max(0, conversationHistory.length - INITIAL_BATCH_SIZE);
   const initialSlice = conversationHistory.slice(currentRenderedMessageStartIndex);
 
   renderMessageSliceIntoDOM(initialSlice, false);
-  updateLoadEarlierButtonVisibility();
+  updateTopHistorySentinel(false);
   initReverseInfiniteScroll();
 
   hideHistoryModal();

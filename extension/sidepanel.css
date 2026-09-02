@@ -1285,6 +1285,79 @@ body.stickman-active .chat-messages {
   transform: translateY(-2px);
 }
 
+/* Seamless Anticipatory Infinite History Loader & Top Sentinel */
+.chat-history-sentinel {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 2px;
+  pointer-events: none;
+}
+
+.chat-history-loader-subtle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 12px 0;
+  width: 100%;
+  opacity: 0.75;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.chat-history-loader-subtle .subtle-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-color, #CEF128);
+  box-shadow: 0 0 6px rgba(206, 241, 40, 0.4);
+  animation: pulseSubtleDot 0.8s infinite alternate ease-in-out;
+}
+
+.chat-history-loader-subtle .subtle-dot:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.chat-history-loader-subtle .subtle-dot:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes pulseSubtleDot {
+  0% { transform: scale(0.65); opacity: 0.25; }
+  100% { transform: scale(1.2); opacity: 1; }
+}
+
+.chat-beginning-banner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 16px 0 12px 0;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.chat-beginning-banner .beginning-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-pill, 20px);
+  color: var(--text-muted, #94A3B8);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.chat-beginning-banner .beginning-pill svg {
+  color: var(--accent-color, #CEF128);
+  opacity: 0.85;
+}
+
 /* Clean Elegant Welcome Hero Card */
 .welcome-card {
   margin: auto 0;
