@@ -6525,13 +6525,34 @@ Tugas Anda:
     abortController = null;
     updateSendButtonState(false);
     notifyActiveTabExecutionState(false);
-    saveCurrentSessionToDB();
-    await detachDebugger(activeTabId);
-    await focusOwnAgentTab();
-    scrollToBottom();
+    requestSmoothScrollToBottom(true);
+    if (chatInput) {
+      chatInput.focus();
+    }
+
+    // Run non-critical teardown in the background without blocking the UI thread
+    const targetTabToDetach = activeTabId;
+    Promise.resolve().then(async () => {
+      if (isDebuggerAttached || targetTabToDetach) {
+        await detachDebugger(targetTabToDetach).catch(() => {});
+      }
+      await focusOwnAgentTab().catch(() => {});
+    });
+
+    // Defer session persistence to idle callback or micro-delay so UI remains silky responsive
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => {
+        saveCurrentSessionToDB();
+      }, { timeout: 1000 });
+    } else {
+      setTimeout(() => {
+        saveCurrentSessionToDB();
+      }, 80);
+    }
+
     setTimeout(() => {
       checkAndProcessNextPromptQueue();
-    }, 350);
+    }, 200);
   }
 }
 
@@ -7662,11 +7683,19 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
       isExecuting = false;
       updateSendButtonState(false);
       abortController = null;
-      await focusOwnAgentTab();
-      scrollToBottom();
+      requestSmoothScrollToBottom(true);
+      if (chatInput) {
+        chatInput.focus();
+      }
+
+      // Run non-critical focus teardown in background without blocking UI
+      Promise.resolve().then(async () => {
+        await focusOwnAgentTab().catch(() => {});
+      });
+
       setTimeout(() => {
         checkAndProcessNextPromptQueue();
-      }, 350);
+      }, 200);
     }
 }
 
@@ -8807,17 +8836,34 @@ function forceScrollChatToBottom() {
   setTimeout(() => scrollToBottom(false), 220);
 }
 
+let pendingScrollRaf = null;
+let pendingScrollTimeout = null;
+
 function requestSmoothScrollToBottom(smooth = false) {
   if (isLoadingEarlierMessages && !isInitialSessionLoading) return;
+
+  if (pendingScrollRaf) {
+    cancelAnimationFrame(pendingScrollRaf);
+    pendingScrollRaf = null;
+  }
+  if (pendingScrollTimeout) {
+    clearTimeout(pendingScrollTimeout);
+    pendingScrollTimeout = null;
+  }
+
   scrollToBottom(smooth);
-  requestAnimationFrame(() => {
+
+  pendingScrollRaf = requestAnimationFrame(() => {
+    pendingScrollRaf = null;
     if (isLoadingEarlierMessages && !isInitialSessionLoading) return;
     scrollToBottom(smooth);
   });
-  setTimeout(() => {
+
+  pendingScrollTimeout = setTimeout(() => {
+    pendingScrollTimeout = null;
     if (isLoadingEarlierMessages && !isInitialSessionLoading) return;
     scrollToBottom(smooth);
-  }, 80);
+  }, 60);
 }
 
 function startAutoScrollObserver() {
@@ -10675,21 +10721,40 @@ async function saveCurrentSessionToDB() {
     created_at: currentSessionCreatedAt || Date.now()
   };
 
-  // Cache in chrome.storage.local safely (prune to 10 latest sessions to prevent quota issues)
+  // Cache in chrome.storage.local safely (prune to 10 latest sessions, lightweight metadata for non-active sessions)
   try {
     const res = await chrome.storage.local.get(['chat_sessions_cache']);
     let cache = res.chat_sessions_cache || {};
-    cache[currentSessionId] = sessionData;
-
+    
+    // Build lightweight cache where non-active sessions do not duplicate full message arrays (SQLite holds full messages)
+    const lightweightCache = {};
     const keys = Object.keys(cache);
-    if (keys.length > 10) {
-      keys.sort((a, b) => (cache[b]?.created_at || 0) - (cache[a]?.created_at || 0));
-      const pruned = {};
-      keys.slice(0, 10).forEach(k => { pruned[k] = cache[k]; });
-      cache = pruned;
+    keys.sort((a, b) => (cache[b]?.created_at || 0) - (cache[a]?.created_at || 0));
+    const prunedKeys = keys.slice(0, 10);
+
+    for (const k of prunedKeys) {
+      if (k === currentSessionId) {
+        lightweightCache[k] = sessionData;
+      } else if (cache[k]) {
+        const existing = cache[k];
+        lightweightCache[k] = {
+          id: existing.id,
+          title: existing.title,
+          model: existing.model,
+          is_pinned: existing.is_pinned ? 1 : 0,
+          message_count: existing.messages ? existing.messages.length : (existing.message_count || 0),
+          preview: existing.preview || "",
+          created_at: existing.created_at,
+          updated_at: existing.updated_at || existing.created_at,
+          messages: [] // Keep storage ultra lightweight!
+        };
+      }
+    }
+    if (!lightweightCache[currentSessionId]) {
+      lightweightCache[currentSessionId] = sessionData;
     }
 
-    await chrome.storage.local.set({ chat_sessions_cache: cache });
+    await chrome.storage.local.set({ chat_sessions_cache: lightweightCache });
   } catch (e) {
     try {
       await chrome.storage.local.set({ chat_sessions_cache: { [currentSessionId]: sessionData } });
@@ -10698,13 +10763,10 @@ async function saveCurrentSessionToDB() {
     }
   }
 
-  // Save to SQLite via Native Host RPC
+  // Save to SQLite via Native Host RPC (clean & fast)
   try {
     if (nativePort) {
       await sendNativeRpc("db_save_session", { session: sessionData });
-      // Non-blocking auto-refresh of persistent memory
-      loadPersistentMemoryFromHost();
-      notifyPersistentBrainUpdated();
     }
   } catch (e) {
     console.warn("SQLite save notice (cached locally):", e);

@@ -130,10 +130,12 @@
 
   window.stopStickmanSwarmAnimation = (immediate = false) => {
     setupElements();
-    document.body.classList.remove('stickman-active');
-    
-    if (wrapper) {
-      wrapper.classList.remove('is-active');
+
+    // 1. Immediately halt RAF physics render loop to release CPU/GPU to 0.0% instantly
+    isRunning = false;
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
     }
 
     if (hideTimeout) {
@@ -141,26 +143,16 @@
       hideTimeout = null;
     }
 
-    const finalize = () => {
-      isRunning = false;
-      if (animFrameId) {
-        cancelAnimationFrame(animFrameId);
-        animFrameId = null;
-      }
-      if (wrapper && !wrapper.classList.contains('is-active')) {
-        wrapper.style.display = 'none';
-        wrapper.classList.add('is-disabled');
-      }
-      if (ctx && canvas && !isRunning) {
-        ctx.clearRect(0, 0, width, height);
-      }
-    };
+    // 2. Hide container and clear canvas without lingering timers
+    document.body.classList.remove('stickman-active');
+    if (wrapper) {
+      wrapper.classList.remove('is-active');
+      wrapper.style.display = 'none';
+      wrapper.classList.add('is-disabled');
+    }
 
-    if (immediate || window.stickmanAnimationEnabled === false || (typeof stickmanAnimationEnabled !== 'undefined' && !stickmanAnimationEnabled)) {
-      document.body.classList.add('stickman-disabled');
-      finalize();
-    } else {
-      hideTimeout = setTimeout(finalize, 350);
+    if (ctx && canvas) {
+      ctx.clearRect(0, 0, width, height);
     }
   };
 
