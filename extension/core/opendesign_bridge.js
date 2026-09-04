@@ -200,6 +200,29 @@
     }
 
     /**
+     * Export all project virtual files into a single production ZIP bundle
+     * @param {Object} files Map of filename -> file content string
+     * @param {string} title
+     * @param {string|null} outPath
+     * @returns {Promise<Object>}
+     */
+    async exportBundleZip(files = {}, title = 'opendesign_project', outPath = null) {
+      if (!this.isNativeRpcAvailable()) {
+        return { status: 'error', error: 'sendNativeRpc is not available in this context' };
+      }
+      try {
+        return await global.sendNativeRpc('od_export_bundle_zip', {
+          files,
+          title,
+          out_path: outPath
+        });
+      } catch (err) {
+        console.warn('[OpenDesignBridge] exportBundleZip error:', err);
+        return { status: 'error', error: err?.message || String(err) };
+      }
+    }
+
+    /**
      * Generic safe CLI runner for OpenDesign subcommands
      * @param {Array<string>} args
      * @param {number} timeout

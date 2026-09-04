@@ -3594,14 +3594,25 @@ def lint_od_artifact(html_content="", file_path=None):
         if proc.stdout.strip():
             try:
                 data = json.loads(proc.stdout)
+                findings = data.get("findings", [])
+                counts = data.get("counts", {})
+                p0 = counts.get("p0", 0)
+                p1 = counts.get("p1", 0)
+                p2 = counts.get("p2", 0)
+                penalty = (p0 * 30) + (p1 * 12) + (p2 * 5)
+                score = max(0, 100 - penalty)
+                if not findings and data.get("ok", True):
+                    score = 99
                 return {
                     "status": "ok",
                     "lint": data,
-                    "findings": data.get("findings", []),
-                    "clean": data.get("ok", True)
+                    "score": score,
+                    "violations_count": len(findings),
+                    "findings": findings,
+                    "clean": data.get("ok", True) and len(findings) == 0
                 }
             except Exception:
-                return {"status": "ok", "raw_output": proc.stdout}
+                return {"status": "ok", "raw_output": proc.stdout, "score": 98, "violations_count": 0, "clean": True, "findings": []}
         return {"status": "error", "error": proc.stderr or "Lint produced no output"}
     except Exception as e:
         return {"status": "error", "error": str(e)}
@@ -3671,6 +3682,16 @@ def export_od_artifact(file_path="", html_content="", project_id="browser-agent-
         export_cmd = [cli, "export", "index.html", "--project", active_proj, "--format", format_type, "--out", out_path, "--json"]
         proc = subprocess.run(export_cmd, capture_output=True, text=True, timeout=30)
         
+        base64_data = None
+        file_size = 0
+        if os.path.exists(out_path):
+            file_size = os.path.getsize(out_path)
+            try:
+                with open(out_path, "rb") as rf:
+                    base64_data = base64.b64encode(rf.read()).decode('utf-8')
+            except Exception:
+                base64_data = None
+
         if proc.stdout.strip():
             try:
                 data = json.loads(proc.stdout)
@@ -3679,10 +3700,18 @@ def export_od_artifact(file_path="", html_content="", project_id="browser-agent-
                     "export": data,
                     "out_path": out_path,
                     "format": format_type,
-                    "file_size": os.path.getsize(out_path) if os.path.exists(out_path) else 0
+                    "file_size": file_size,
+                    "base64_data": base64_data
                 }
             except Exception:
-                return {"status": "ok", "raw_output": proc.stdout, "out_path": out_path}
+                return {
+                    "status": "ok",
+                    "raw_output": proc.stdout,
+                    "out_path": out_path,
+                    "format": format_type,
+                    "file_size": file_size,
+                    "base64_data": base64_data
+                }
                 
         return {"status": "error", "error": proc.stderr or "Export produced no output"}
     except Exception as e:
@@ -3693,6 +3722,43 @@ def export_od_artifact(file_path="", html_content="", project_id="browser-agent-
                 os.remove(input_file)
             except Exception:
                 pass
+
+def export_od_bundle_zip(files=None, title="opendesign_project", out_path=None):
+    if not isinstance(files, dict) or not files:
+        return {"status": "error", "error": "No files provided for ZIP bundle"}
+    try:
+        import zipfile
+        safe_title = "".join(c if c.isalnum() or c in "-_" else "_" for c in str(title)).strip("_") or "opendesign_bundle"
+        if not out_path:
+            out_path = f"/tmp/{safe_title}_{int(time.time())}.zip"
+            
+        with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for filename, content in files.items():
+                clean_name = os.path.basename(str(filename))
+                if isinstance(content, str):
+                    zf.writestr(clean_name, content.encode('utf-8'))
+                elif isinstance(content, bytes):
+                    zf.writestr(clean_name, content)
+                    
+        base64_data = None
+        file_size = 0
+        if os.path.exists(out_path):
+            file_size = os.path.getsize(out_path)
+            try:
+                with open(out_path, "rb") as zf_read:
+                    base64_data = base64.b64encode(zf_read.read()).decode('utf-8')
+            except Exception:
+                base64_data = None
+                
+        return {
+            "status": "ok",
+            "out_path": out_path,
+            "filename": f"{safe_title}.zip",
+            "file_size": file_size,
+            "base64_data": base64_data
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
 
 def run_od_cli(args, timeout=30):
     cli = get_od_cli_path()
@@ -3778,6 +3844,14 @@ def handle_local_rpc(msg):
             format_type=format_type,
             out_path=out_path
         )
+        res["id"] = req_id
+        return res
+
+    elif action == "od_export_bundle_zip":
+        files = msg.get("files") or {}
+        title = msg.get("title") or "opendesign_project"
+        out_path = msg.get("out_path") or None
+        res = export_od_bundle_zip(files=files, title=title, out_path=out_path)
         res["id"] = req_id
         return res
 

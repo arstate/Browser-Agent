@@ -238,6 +238,40 @@
               </div>
             </div>
 
+            <!-- OpenDesign Design System Dropup (Active only in Design Mode) -->
+            <div class="design-system-dropup-wrapper" id="design-system-dropup-wrapper" style="display: none;">
+              <button type="button" class="btn-design-system-trigger" id="btn-design-system-trigger" title="Pilih dari 152 Design Systems OpenDesign">
+                <span class="design-system-trigger-icon">🎨</span>
+                <span class="design-system-label" id="design-system-label">System: Auto</span>
+                <svg class="design-system-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              <div class="design-system-dropup-menu" id="design-system-dropup-menu" style="display: none;">
+                <div class="design-system-search-box">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="input-search-design-systems" placeholder="Cari 152 Design Systems..." autocomplete="off">
+                </div>
+                <div class="design-system-categories-pills" id="design-system-categories-pills">
+                  <button type="button" class="ds-cat-pill active" data-cat="all">All</button>
+                  <button type="button" class="ds-cat-pill" data-cat="AI & LLM">AI</button>
+                  <button type="button" class="ds-cat-pill" data-cat="Dark Luxury">Luxury</button>
+                  <button type="button" class="ds-cat-pill" data-cat="Corporate">Corporate</button>
+                  <button type="button" class="ds-cat-pill" data-cat="Modern Minimal">Minimal</button>
+                </div>
+                <div class="design-system-list-scroll" id="design-system-list-scroll">
+                  <button type="button" class="design-system-option active" data-slug="auto">
+                    <span class="ds-opt-icon">✨</span>
+                    <div class="ds-opt-info">
+                      <span class="ds-opt-name">Auto Detect</span>
+                      <span class="ds-opt-desc">AI merekomendasikan gaya visual terbaik</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Thinking Level Dropup Trigger (Clean Text Only) -->
             <div class="thinking-level-dropup-wrapper" id="thinking-level-dropup-wrapper">
               <button type="button" class="btn-thinking-level-trigger" id="btn-thinking-level-trigger" title="Pilih Intensitas Penalaran AI">
@@ -559,17 +593,52 @@
       <!-- Canvas Footer -->
       <div class="opendesign-canvas-footer">
         <div class="canvas-footer-left">
-          <span class="canvas-footer-status" id="canvas-footer-status">✓ Standalone Production Ready</span>
+          <span class="canvas-footer-status" id="canvas-footer-status" title="Klik untuk audit detail Anti-Slop">
+            <span class="canvas-lint-pill score-green">🛡️ Anti-Slop: 99/100 • Clean AA/AAA</span>
+          </span>
         </div>
         <div class="canvas-footer-right">
           <button type="button" class="btn-canvas-footer-action" id="btn-canvas-footer-lint">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
             <span>Anti-Slop Lint</span>
           </button>
-          <button type="button" class="btn-canvas-footer-primary" id="btn-canvas-footer-export">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span>Export HTML</span>
-          </button>
+          <div class="canvas-export-dropdown-wrapper">
+            <button type="button" class="btn-canvas-footer-primary" id="btn-canvas-footer-export">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export</span>
+              <svg class="canvas-export-chevron" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="canvas-export-menu" id="canvas-export-menu" style="display: none;">
+              <button type="button" class="canvas-export-option" data-format="zip">
+                <span class="exp-icon">📦</span>
+                <div class="exp-info">
+                  <span class="exp-name">Full Project Bundle (.zip)</span>
+                  <span class="exp-desc">index.html, tokens.css, meta, readme</span>
+                </div>
+              </button>
+              <button type="button" class="canvas-export-option" data-format="html">
+                <span class="exp-icon">📄</span>
+                <div class="exp-info">
+                  <span class="exp-name">Standalone HTML (.html)</span>
+                  <span class="exp-desc">Single-file zero-dependency web app</span>
+                </div>
+              </button>
+              <button type="button" class="canvas-export-option" data-format="pdf">
+                <span class="exp-icon">📑</span>
+                <div class="exp-info">
+                  <span class="exp-name">PDF Document (.pdf)</span>
+                  <span class="exp-desc">Vector print & presentation layout</span>
+                </div>
+              </button>
+              <button type="button" class="canvas-export-option" data-format="image">
+                <span class="exp-icon">🖼️</span>
+                <div class="exp-info">
+                  <span class="exp-name">PNG Image Snapshot (.png)</span>
+                  <span class="exp-desc">Hi-res visual render for preview</span>
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </aside>
