@@ -3844,6 +3844,16 @@ body.stickman-active .chat-messages {
   bottom: calc(100% + 8px);
   right: 0;
   left: auto;
+}
+
+.chat-input-header-left .thinking-level-dropup-menu {
+  left: 0;
+  right: auto;
+}
+
+.chat-input-header-right .thinking-level-dropup-menu {
+  right: 0;
+  left: auto;
   min-width: 125px;
   background: rgba(18, 18, 22, 0.95) !important;
   backdrop-filter: blur(28px) saturate(180%) !important;

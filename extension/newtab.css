@@ -3043,6 +3043,16 @@ body.has-messages .chat-messages {
   bottom: calc(100% + 8px);
   right: 0;
   left: auto;
+}
+
+.chat-input-header-left .thinking-level-dropup-menu {
+  left: 0;
+  right: auto;
+}
+
+.chat-input-header-right .thinking-level-dropup-menu {
+  right: 0;
+  left: auto;
   min-width: 130px;
   background: rgba(18, 18, 22, 0.72) !important;
   backdrop-filter: blur(36px) saturate(200%) !important;

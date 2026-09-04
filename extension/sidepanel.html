@@ -262,6 +262,35 @@
                 </div>
               </div>
             </div>
+
+            <!-- Thinking Level Dropup Trigger (Pojok Kanan Atas Input Prompt) -->
+            <div class="thinking-level-dropup-wrapper" id="thinking-level-dropup-wrapper">
+              <button type="button" class="btn-thinking-level-trigger" id="btn-thinking-level-trigger" title="Pilih Intensitas Penalaran AI">
+                <span class="thinking-level-label" id="thinking-level-label">Thinking: High</span>
+                <svg class="thinking-level-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              <!-- Thinking Level Dropup Menu (Clean Text Only) -->
+              <div class="thinking-level-dropup-menu" id="thinking-level-dropup-menu" style="display: none;">
+                <button type="button" class="thinking-level-option" data-level="low" title="Instan & Linier — Tanpa Koreksi Diri">
+                  <span class="thinking-option-title">Low</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="medium" title="Standar — 1x Sanity Check">
+                  <span class="thinking-option-title">Medium</span>
+                </button>
+                <button type="button" class="thinking-level-option active" data-level="high" title="Mendalam — Multi-Branch Tree-of-Thought">
+                  <span class="thinking-option-title">High</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="xhigh" title="Kritik Diri Ketat — Adversarial Red-Teaming">
+                  <span class="thinking-option-title">Xhigh</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="extreme" title="Eksplorasi Penuh — 10x Lipat Mikir Keras">
+                  <span class="thinking-option-title">Extreme</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Right Actions Container (Switch Tab, Execution Mode, and Thinking Level in Top Right Corner) -->
@@ -379,34 +408,6 @@
               </div>
             </div>
 
-            <!-- Thinking Level Dropup Trigger (Pojok Kanan Atas Input Prompt) -->
-            <div class="thinking-level-dropup-wrapper" id="thinking-level-dropup-wrapper">
-              <button type="button" class="btn-thinking-level-trigger" id="btn-thinking-level-trigger" title="Pilih Intensitas Penalaran AI">
-                <span class="thinking-level-label" id="thinking-level-label">Thinking: High</span>
-                <svg class="thinking-level-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-
-              <!-- Thinking Level Dropup Menu (Clean Text Only) -->
-              <div class="thinking-level-dropup-menu" id="thinking-level-dropup-menu" style="display: none;">
-                <button type="button" class="thinking-level-option" data-level="low" title="Instan & Linier — Tanpa Koreksi Diri">
-                  <span class="thinking-option-title">Low</span>
-                </button>
-                <button type="button" class="thinking-level-option" data-level="medium" title="Standar — 1x Sanity Check">
-                  <span class="thinking-option-title">Medium</span>
-                </button>
-                <button type="button" class="thinking-level-option active" data-level="high" title="Mendalam — Multi-Branch Tree-of-Thought">
-                  <span class="thinking-option-title">High</span>
-                </button>
-                <button type="button" class="thinking-level-option" data-level="xhigh" title="Kritik Diri Ketat — Adversarial Red-Teaming">
-                  <span class="thinking-option-title">Xhigh</span>
-                </button>
-                <button type="button" class="thinking-level-option" data-level="extreme" title="Eksplorasi Penuh — 10x Lipat Mikir Keras">
-                  <span class="thinking-option-title">Extreme</span>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 

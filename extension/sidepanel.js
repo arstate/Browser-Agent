@@ -7363,27 +7363,42 @@ function setChatMode(mode) {
     } catch (e) {}
   }
 
-  // Manage right toolbar buttons: in Design Mode, switch-tab & execution-mode are replaced by design-system-dropup-wrapper
+  // Manage toolbar buttons:
+  // In Design Mode: switch-tab & execution-mode are hidden, design-system-dropup-wrapper shown, thinking moved to top-right (header-right)
+  // In Agent & Chat Mode: switch-tab & execution-mode shown, design-system-dropup-wrapper hidden, thinking placed on the left next to mode button
   const dsDropupWrapper = document.getElementById('design-system-dropup-wrapper');
   const switchTabWrapper = document.getElementById('switch-tab-mode-wrapper');
   const executionModeWrapper = document.getElementById('execution-mode-wrapper');
   const searchEngineWrapper = document.getElementById('search-engine-wrapper');
+  const thinkingWrapper = document.getElementById('thinking-level-dropup-wrapper');
+  const headerLeft = document.querySelector('.chat-input-header-left');
+  const headerRight = document.querySelector('.chat-input-header-right');
 
   if (mode === 'design') {
     if (switchTabWrapper) switchTabWrapper.style.display = 'none';
     if (executionModeWrapper) executionModeWrapper.style.display = 'none';
     if (searchEngineWrapper) searchEngineWrapper.style.display = 'none';
     if (dsDropupWrapper) dsDropupWrapper.style.display = 'inline-flex';
+    if (headerRight && thinkingWrapper && thinkingWrapper.parentElement !== headerRight) {
+      headerRight.appendChild(thinkingWrapper);
+    }
   } else if (mode === 'websearch') {
     if (switchTabWrapper) switchTabWrapper.style.display = 'none';
     if (executionModeWrapper) executionModeWrapper.style.display = 'none';
     if (searchEngineWrapper) searchEngineWrapper.style.display = 'inline-flex';
     if (dsDropupWrapper) dsDropupWrapper.style.display = 'none';
+    if (headerLeft && thinkingWrapper && thinkingWrapper.parentElement !== headerLeft) {
+      headerLeft.appendChild(thinkingWrapper);
+    }
   } else {
     if (switchTabWrapper) switchTabWrapper.style.display = 'inline-flex';
     if (executionModeWrapper) executionModeWrapper.style.display = 'inline-flex';
     if (searchEngineWrapper) searchEngineWrapper.style.display = 'none';
     if (dsDropupWrapper) dsDropupWrapper.style.display = 'none';
+    // Di mode agent & chat: tombol thinking tetep berada di samping kanan tombol mode di sisi kiri
+    if (headerLeft && thinkingWrapper && thinkingWrapper.parentElement !== headerLeft) {
+      headerLeft.appendChild(thinkingWrapper);
+    }
   }
 
   adjustChatInputHeight();

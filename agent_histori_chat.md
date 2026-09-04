@@ -5665,3 +5665,23 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Unit test Node.js orkestrasi hirarki, delegasi milestone, polymorphism slide builder, dan konversi markdown lulus dengan 0 kegagalan asersi.
   - Bump version to `v2.150.197`.
 
+---
+
+### 🚀 Iterasi 479: Adaptive Thinking Trigger Placement for Agent & Chat Mode (v2.150.198)
+- **Kebutuhan Pengguna**:
+  - Saat berada di mode `Agent` atau `Chat`, tombol pilihan Thinking (`[Thinking: Extreme ⌵]`) harus tetap berada di samping kanan dari tombol mode di sisi kiri (`.chat-input-header-left`), bukan terlempar ke pojok kanan atas toolbar.
+- **Implementasi & Penataan Ulang**:
+  - **Penataan Struktur Markup di [sidepanel.html](file:///home/arya/browser-agent/extension/sidepanel.html) & [newtab.html](file:///home/arya/browser-agent/extension/newtab.html)**:
+    - Memindahkan elemen `#thinking-level-dropup-wrapper` ke dalam kontainer `.chat-input-header-left` tepat di samping kanan `#chat-mode-dropup-wrapper`.
+    - Membersihkan kontainer `.chat-input-header-right` agar secara default hanya berisi tombol kontrol eksekusi (`#switch-tab-mode-wrapper` dan `#execution-mode-wrapper`).
+  - **Dinamika Pergantian Mode di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js)**:
+    - Memperbarui fungsi `setChatMode(mode)`:
+      * Saat `mode === 'agent'` atau `mode === 'chat'` atau `mode === 'websearch'`: Memastikan `#thinking-level-dropup-wrapper` bertengger di `.chat-input-header-left`.
+      * Saat `mode === 'design'`: Memindahkan `#thinking-level-dropup-wrapper` ke pojok kanan atas di `.chat-input-header-right`.
+  - **Penyelarasan Menu Dropup di [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css) & [newtab.css](file:///home/arya/browser-agent/extension/newtab.css)**:
+    - Menambahkan aturan CSS `.chat-input-header-left .thinking-level-dropup-menu { left: 0; right: auto; }` dan `.chat-input-header-right .thinking-level-dropup-menu { right: 0; left: auto; }`.
+- **Pengujian & Verifikasi**:
+  - Validasi sintaks `node -c extension/sidepanel.js` berhasil dengan 0 error.
+  - Simulasi transisi DOM perpindahan tombol Thinking saat switch antar mode (Agent -> Design -> Chat -> Agent) lulus 100%.
+  - Bump version to `v2.150.198`.
+

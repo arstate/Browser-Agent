@@ -387,3 +387,18 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `canvas_manager.js`: UI result card, virtual files, auto-linter, export engine, dan modal drawer controller.
    - `design_executor.js`: Loop eksekusi `runDesignModeLoop`, state manager, dan streaming bridge.
 
+---
+
+## 🧭 15. Contextual Thinking Trigger Placement & Toolbar Rhythm (v2.150.198)
+
+1. **Agent & Chat Mode Top-Bar Rhythm**:
+   - `.chat-input-header-left`: Menampung tombol pemicu mode (`[ Agent ⌵ ]` / `[ Chat ⌵ ]`) dan tombol pilihan Thinking (`[ Thinking: Extreme ⌵ ]`) berdampingan dengan `gap: 6px;` (Sidepanel) dan `gap: 8px;` (NewTab).
+   - `.chat-input-header-right`: Dikhususkan untuk tombol status eksekusi: `[ Switch Tab: ON/OFF ]` dan `[ Accept ]`.
+2. **Design Mode Top-Bar Rhythm**:
+   - `.chat-input-header-left`: Menampung pemicu mode `[ Design ⌵ ]`.
+   - `.chat-input-header-right`: Menampung pemicu Thinking (`[ Thinking: Extreme ⌵ ]`) di pojok kanan atas.
+   - `.chat-input-bottom-actions`: Menampung tombol `System Design Auto` di samping tombol lampiran `+`.
+3. **Adaptive Menu Anchoring**:
+   - `.chat-input-header-left .thinking-level-dropup-menu`: Menggunakan `left: 0; right: auto;` sehingga menu memanjang ke kanan ke area terbuka prompt box.
+   - `.chat-input-header-right .thinking-level-dropup-menu`: Menggunakan `right: 0; left: auto;` sehingga menu mengikat ke tepi kanan tanpa overflow.
+
