@@ -622,6 +622,15 @@ fn prune_messages_for_rpc(messages: &[Value]) -> Vec<Value> {
         if let Some(v) = m.get("name") {
             clean["name"] = v.clone();
         }
+        if let Some(v) = m.get("designArtifact") {
+            clean["designArtifact"] = v.clone();
+        }
+        if let Some(v) = m.get("chatMode") {
+            clean["chatMode"] = v.clone();
+        }
+        if let Some(v) = m.get("rawContent") {
+            clean["rawContent"] = v.clone();
+        }
         pruned.push(clean);
     }
     pruned

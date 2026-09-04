@@ -1237,6 +1237,12 @@ def prune_messages_for_rpc(messages):
             clean_m["agentInfo"] = m["agentInfo"]
         if "name" in m:
             clean_m["name"] = m["name"]
+        if "designArtifact" in m:
+            clean_m["designArtifact"] = m["designArtifact"]
+        if "chatMode" in m:
+            clean_m["chatMode"] = m["chatMode"]
+        if "rawContent" in m:
+            clean_m["rawContent"] = m["rawContent"]
         pruned.append(clean_m)
     return pruned
 

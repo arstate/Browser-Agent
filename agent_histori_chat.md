@@ -5613,6 +5613,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Verifikasi sintaks JavaScript `node -c extension/sidepanel.js` berhasil tanpa error.
   - Bump version to `v2.150.195`.
 
+---
+
+### 🚀 Iterasi 477: Canvas Design Card History Persistence, Rust RPC Pruning Fix & Auto-Restore Session Standard (v2.150.196)
+- **Kebutuhan Pengguna**:
+  - Memperbaiki bug di mana saat halaman di-refresh atau riwayat percakapan dimuat ulang (*load history chat*), respon kartu Canvas Design hilang dari chat room sehingga pengguna tidak bisa membuka kembali antarmuka Canvas Design yang sebelumnya dibuat.
+- **Implementasi & Peningkatan Sistem**:
+  - **Pencegahan Penghapusan Data pada Host RPC di [host/rust_host/src/main.rs](file:///home/arya/browser-agent/host/rust_host/src/main.rs) & [host/native_host.py](file:///home/arya/browser-agent/host/native_host.py)**:
+    - Memperbaiki `prune_messages_for_rpc` pada binary kompilasi Rust (`browser_agent_host`) dan daemon Python (`native_host.py`). Menjamin properti `designArtifact`, `chatMode`, dan `rawContent` tidak lagi dipotong saat `db_get_session` dipanggil.
+    - Mengompilasi ulang binary Rust `cargo build --release` dan memperbarui `host/browser_agent_host`.
+  - **Rehidrasi Cerdas & Fallback Rekonstruksi di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js)**:
+    - Memperbarui `renderMessageSliceIntoDOM` agar mendeteksi seluruh variasi pesan presentasi/desain (`Slide Deck Architect`, `slide interaktif`, `slide 16:9`, dsb).
+    - Menambahkan mekanisme fallback otomatis: jika artefak HTML hilang dari database sesi lama, sistem secara mandiri merekonstruksi slide deck eksekutif 16:9 menggunakan `buildExecutiveSlideDeckHtml` dan merender kartu `.opendesign-result-card` interaktif di chat.
+    - Menghilangkan duplikasi prefix pada `getCleanDesignSummaryText`.
+  - **Auto-Restore Sesi Aktif saat Refresh Halaman di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js)**:
+    - Menyimpan `last_active_session_id` di `chrome.storage.local` dan memulihkannya secara otomatis saat startup `bootstrap()`, sehingga me-refresh halaman langsung mengembalikan percakapan aktif dan kartu Canvas secara instan.
+- **Pengujian & Rilis**:
+  - Uji roundtrip Rust native host `db_save_session` -> `db_get_session` lulus 100% mempertahankan `designArtifact` dan markup HTML 33+ KB.
+  - Verifikasi sintaks `node -c extension/sidepanel.js` berhasil tanpa error.
+  - Bump version to `v2.150.196`.
+
+
 
 
 

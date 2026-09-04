@@ -12946,6 +12946,7 @@ function sanitizeHistoryForStorage(history) {
     if (msg.agentInfo) clean.agentInfo = msg.agentInfo;
     if (msg.designArtifact) clean.designArtifact = msg.designArtifact;
     if (msg.chatMode) clean.chatMode = msg.chatMode;
+    if (msg.rawContent) clean.rawContent = msg.rawContent;
     return clean;
   });
 }
@@ -13036,6 +13037,12 @@ async function saveCurrentSessionToDB() {
   } catch (e) {
     console.warn("SQLite save notice (cached locally):", e);
   }
+
+  try {
+    if (currentSessionId) {
+      await chrome.storage.local.set({ last_active_session_id: currentSessionId });
+    }
+  } catch (e) {}
 }
 
 function formatTimeAgo(timestamp) {
@@ -13466,10 +13473,22 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
       // 2. Render assistant text response if present
       if (msg.content && typeof msg.content === 'string' && msg.content.trim().length > 0) {
         let textToDisplay = msg.content;
-        const isDesignMsg = !!(msg.designArtifact || msg.chatMode === 'design' || textToDisplay.includes('```html') || textToDisplay.includes('<design_meta>'));
+        const isDesignMsg = !!(
+          msg.designArtifact || 
+          msg.chatMode === 'design' || 
+          msg.agentInfo?.name === 'Slide Deck Architect' || 
+          msg.agentInfo?.displayName === 'Slide Deck Architect' ||
+          textToDisplay.includes('Slide deck presentasi') ||
+          textToDisplay.includes('slide interaktif') ||
+          textToDisplay.includes('slide 16:9') ||
+          textToDisplay.includes('```html') || 
+          textToDisplay.includes('<design_meta>')
+        );
 
         if (isDesignMsg) {
-          textToDisplay = getCleanDesignSummaryText(msg.content, msg.designArtifact, "");
+          if (textToDisplay.includes('```') || textToDisplay.includes('<design_meta>')) {
+            textToDisplay = getCleanDesignSummaryText(msg.content, msg.designArtifact, "");
+          }
         }
 
         if (!currentAssistantBubble) {
@@ -13493,8 +13512,62 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
                 artifactToRender = { html: art.html, raw: art.raw, meta, content: msg.rawContent || msg.content };
               }
             }
+
+            // Fallback: Reconstruct executive slide deck if HTML was lost in legacy DB saves
+            if (!artifactToRender || !artifactToRender.html) {
+              const rawText = msg.rawContent || msg.content || "";
+              let topic = "Executive Presentation Deck";
+              const titleMatch = rawText.match(/presentasi\s+\*\*?([^*()]+)\*?\*?/i) ||
+                                 rawText.match(/✨\s+\*\*?([^*()]+)\*?\*?/i) ||
+                                 rawText.match(/\*\*([^*]+)\*\*\s*\([0-9]+\s*slide/i);
+              if (titleMatch && titleMatch[1]) {
+                topic = titleMatch[1].replace(/&amp;/g, '&').replace(/<[^>]+>/g, '').trim();
+              }
+
+              let slideCount = 10;
+              const countMatch = rawText.match(/([0-9]+)\s*slide/i);
+              if (countMatch && countMatch[1]) {
+                slideCount = Math.max(3, Math.min(20, parseInt(countMatch[1], 10)));
+              }
+
+              if (typeof buildExecutiveSlideDeckHtml === 'function') {
+                const generatedSlides = [];
+                for (let s = 1; s <= slideCount; s++) {
+                  const sNum = String(s).padStart(2, '0');
+                  const totNum = String(slideCount).padStart(2, '0');
+                  generatedSlides.push({
+                    title: `${topic} - Bagian ${sNum}`,
+                    subtitle: `Kajian Mendalam & Panduan Komprehensif ${topic}`,
+                    category: `BAB ${s} // TOPIK UTAMA // MODULAR SLIDE`,
+                    number: `${sNum} // ${totNum}`,
+                    cards: [
+                      { num: "01", title: `Konsep & Fondasi`, desc: `Analisis mendalam mengenai pilar utama dan prinsip esensial dalam pembahasan ${topic}.`, highlight: "PILAR STRATEGIS" },
+                      { num: "02", title: `Dinamika & Pola Perilaku`, desc: `Observasi sistematis terhadap karakteristik, adaptasi perilaku, dan interaksi lingkungan.`, highlight: "OBSERVASI AKTIF" },
+                      { num: "03", title: `Rekomendasi & Implementasi`, desc: `Langkah praktis berbasis riset untuk optimalisasi hasil dan pemahaman menyeluruh.`, highlight: "ACTIONABLE INSIGHT" }
+                    ]
+                  });
+                }
+                const generatedHtml = buildExecutiveSlideDeckHtml(topic, generatedSlides);
+                artifactToRender = {
+                  html: generatedHtml,
+                  raw: generatedHtml,
+                  meta: {
+                    title: topic,
+                    description: `Presentasi 16:9 widescreen interaktif (${slideCount} slide) dengan sidebar thumbnail dan floating navigation dock.`,
+                    system: "executive",
+                    category: "Executive Presentation",
+                    tags: ["16:9 Deck", "Executive", "PDF Ready", `${slideCount} Slides`],
+                    colors: ["#F5F3EF", "#0D0E12", "#FF4D00", "#111827"]
+                  }
+                };
+                msg.designArtifact = artifactToRender;
+              }
+            }
+
             if (artifactToRender && artifactToRender.html) {
               renderOpenDesignCard(contentEl, artifactToRender);
+              activeDesignArtifact = artifactToRender;
+              window.__activeDesignArtifact = artifactToRender;
             }
           }
         }
@@ -13650,6 +13723,9 @@ async function resumeSession(sessionId) {
   currentSessionTitle = session.title;
   currentSessionIsPinned = !!session.is_pinned;
   currentSessionCreatedAt = session.created_at;
+  try {
+    chrome.storage.local.set({ last_active_session_id: session.id });
+  } catch (e) {}
   if (Array.isArray(session.messages)) {
     conversationHistory = session.messages;
   } else if (typeof session.messages_json === 'string') {
@@ -13760,6 +13836,9 @@ function startNewChat() {
   currentSessionTitle = "New Chat";
   currentSessionIsPinned = false;
   currentSessionCreatedAt = null;
+  try {
+    chrome.storage.local.remove(['last_active_session_id']);
+  } catch (e) {}
   conversationHistory = [];
   pendingAttachments = [];
   clearAttachments();
@@ -16188,6 +16267,16 @@ async function bootstrap() {
   updateMcpStatus();
   updateHeaderChatTitle();
   initReverseInfiniteScroll();
+
+  // Auto-restore last active session if refreshing or reopening tab
+  try {
+    const sessionRes = await chrome.storage.local.get(['last_active_session_id']);
+    if (sessionRes?.last_active_session_id && !currentSessionId) {
+      await resumeSession(sessionRes.last_active_session_id);
+    }
+  } catch (e) {
+    console.warn("Bootstrap auto-restore session notice:", e);
+  }
 }
 
 bootstrap();

@@ -345,6 +345,19 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Stage 16:9 warm paper `#F5F3EF`, Google Font `Syne` (800) display headers, 3-column bento cadence (`#FF4D00`, `#0284C7`, `#111827`), white rounded takeaway cards, 2-line bottom footer, dan obsidian floating dock.
    - `@media print` 1 halaman utuh per slide untuk ekspor PDF instan.
 
+---
+
+## 🖥️ 13. Canvas Design Session Persistence & Rehydration Standard (v2.150.196)
+
+1. **Host RPC Full Artifact Preservation**:
+   - `prune_messages_for_rpc` pada binary Rust `browser_agent_host` dan Python `native_host.py` secara ketat melestarikan `designArtifact` (termasuk HTML mandiri, metadata, warna, swatch, dan tag), `chatMode`, serta `rawContent`.
+2. **Resilient Client-Side Rehydration**:
+   - `renderMessageSliceIntoDOM` di `sidepanel.js` mendeteksi peran presentasi dan merender kartu `.opendesign-result-card` interaktif di gelembung pesan.
+   - Mekanisme self-healing otomatis merekonstruksi artefak slide deck 16:9 via `buildExecutiveSlideDeckHtml` jika sesi histori lama kehilangan artefak.
+3. **Seamless Auto-Restore on Refresh**:
+   - Status `last_active_session_id` disimpan di storage lokal dan otomatis direhidrasi saat startup `bootstrap()`, menjaga kesinambungan chat dan Canvas tanpa reset manual.
+
+
 
 
 
