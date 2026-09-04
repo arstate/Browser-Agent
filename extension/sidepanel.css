@@ -3557,7 +3557,7 @@ body.stickman-active .chat-messages {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 0;
-  min-width: 145px;
+  min-width: 215px;
   background: rgba(18, 18, 22, 0.95) !important;
   backdrop-filter: blur(28px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
@@ -3576,9 +3576,9 @@ body.stickman-active .chat-messages {
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 24px;
+  height: 26px;
   box-sizing: border-box;
-  padding: 0 9px 0 4px;
+  padding: 0 9px 0 6px;
   border-radius: 9999px;
   border: 1px solid transparent;
   background: transparent;
@@ -3598,6 +3598,39 @@ body.stickman-active .chat-messages {
 .chat-mode-option.active {
   background: rgba(206, 241, 40, 0.14);
   border-color: rgba(206, 241, 40, 0.4);
+}
+
+.chat-mode-option.mode-disabled {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+}
+
+.chat-mode-option.mode-disabled:hover {
+  background: transparent !important;
+}
+
+.mode-badge-active-green {
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  margin-left: auto;
+  line-height: 1.2;
+}
+
+.mode-badge-coming-soon {
+  font-size: 8px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #9CA3AF;
+  margin-left: auto;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
 }
 
 .mode-option-icon {

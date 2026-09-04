@@ -7283,8 +7283,8 @@ const CHAT_MODES_CONFIG = {
   },
   design: {
     key: 'design',
-    name: 'Design Mode',
-    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>`
+    name: 'Slide Deck Mode',
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`
   },
   websearch: {
     key: 'websearch',
@@ -7332,11 +7332,11 @@ function setChatMode(mode) {
     clearAttachments();
     clearMentionAgents();
   } else if (mode === 'design') {
-    if (chatInput) chatInput.placeholder = 'Ketik konsep desain / website / dashboard yang ingin dibuat...';
-    if (agentStatusEl) agentStatusEl.textContent = 'Design Engine Ready';
-    if (btnSendEl) btnSendEl.title = 'Rancang Desain (OpenDesign)';
-    if (heroTitleEl) scrambleText(heroTitleEl, 'Describe your vision, <span class="hero-highlight">design anything</span> in seconds', 340);
-    if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Native OpenDesign engine with 152 design systems, live preview canvas, code viewer & instant export.');
+    if (chatInput) chatInput.placeholder = 'Ketik topik materi slide deck (contoh: ppt pitch deck startup AI 10 slide)...';
+    if (agentStatusEl) agentStatusEl.textContent = 'Slide Deck Engine Ready';
+    if (btnSendEl) btnSendEl.title = 'Rancang Slide Deck (16:9 Presentation)';
+    if (heroTitleEl) scrambleText(heroTitleEl, 'Design stunning <span class="hero-highlight">Executive Slide Decks</span> in seconds', 340);
+    if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Modular 16:9 presentation engine with interactive thumbnails sidebar, bento cards, floating dock, and instant PDF export.');
     hideWebSearchSuggestions();
     if (window.OpenDesignBridge?.ensureDaemon) {
       window.OpenDesignBridge.ensureDaemon().catch(() => {});
@@ -7386,6 +7386,10 @@ function initChatModeDropdown() {
   document.querySelectorAll('.chat-mode-option').forEach(opt => {
     opt.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (opt.hasAttribute('disabled') || opt.classList.contains('mode-disabled')) {
+        showUniversalToast('⏳ Fitur ini segera hadir (Coming Soon)! Saat ini kami memfokuskan 100% pada kesempurnaan Slide Deck Mode.');
+        return;
+      }
       const selectedMode = opt.getAttribute('data-mode');
       if (selectedMode) {
         setChatMode(selectedMode);
@@ -7943,323 +7947,558 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 // =========================================================================
 let activeDesignArtifact = null;
 
-function convertMarkdownOrTextToInteractiveSlideDeck(content, userPrompt = "") {
-  if (!content || typeof content !== 'string') return '';
+function toRoman(num) {
+  const romans = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
+  return romans[num - 1] || String(num);
+}
 
-  const lowerContent = content.toLowerCase();
-  const lowerPrompt = (userPrompt || '').toLowerCase();
-  const isPresentationIntent = lowerPrompt.includes('ppt') || lowerPrompt.includes('slide') || 
-                               lowerPrompt.includes('presentasi') || lowerPrompt.includes('deck') || 
-                               lowerPrompt.includes('pdf') || lowerContent.includes('slide 1') || 
-                               lowerContent.includes('---');
+function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
+  const total = slidesData.length || 1;
+  const brandName = deckMeta.brand || "DJADI CREATIVE";
+  const categoryTitle = deckMeta.categoryTitle || deckMeta.title || "FONDASI BRAND & MANIFESTO";
+  const gsmVersion = deckMeta.version || "GSM v3.0";
+  const accentColor = deckMeta.accentColor || "#FF4D00";
+  const copyrightText = deckMeta.copyright || `© 2026 ${brandName.toUpperCase()} • STANDAR IDENTITAS VISUAL RESMI • CONFIDENTIAL // ENTERPRISE`;
 
-  if (!isPresentationIntent) return '';
-
-  let rawSlides = [];
-  if (content.includes('\n---\n') || content.includes('\n--- \n')) {
-    rawSlides = content.split(/\n---\s*\n/).map(s => s.trim()).filter(Boolean);
-  } else if (/Slide\s+\d+[:\s]/i.test(content)) {
-    rawSlides = content.split(/(?=Slide\s+\d+[:\s])/i).map(s => s.trim()).filter(Boolean);
-  } else if (/#+\s*Slide\s+\d+/i.test(content)) {
-    rawSlides = content.split(/(?=#+\s*Slide\s+\d+)/i).map(s => s.trim()).filter(Boolean);
-  } else {
-    const headingParts = content.split(/(?=^#{1,2}\s+)/m).map(s => s.trim()).filter(Boolean);
-    if (headingParts.length >= 3) {
-      rawSlides = headingParts;
-    }
-  }
-
-  if (rawSlides.length < 2) return '';
-
-  const parsedSlides = rawSlides.map((raw, idx) => {
-    const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-    let title = `Slide ${idx + 1}`;
-    let subtitle = '';
-    const points = [];
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (i === 0 && (line.startsWith('#') || /^slide\s+\d+/i.test(line))) {
-        title = line.replace(/^#+\s*/, '').replace(/^slide\s+\d+[:\s-]*/i, '').trim() || title;
-      } else if (!subtitle && (line.toLowerCase().startsWith('subjudul:') || line.toLowerCase().startsWith('subtitle:'))) {
-        subtitle = line.replace(/^(subjudul|subtitle)[:\s-]*/i, '').trim();
-      } else if (line.startsWith('-') || line.startsWith('*') || line.startsWith('•') || /^\d+\./.test(line)) {
-        points.push(line.replace(/^[-*•\d.]+\s*/, '').trim());
-      } else if (line.length > 0 && !line.startsWith('<design_meta>')) {
-        if (!subtitle && points.length === 0) {
-          subtitle = line;
-        } else {
-          points.push(line);
-        }
-      }
-    }
-
-    return { title, subtitle, points, index: idx + 1 };
-  });
-
-  const deckTitle = parsedSlides[0]?.title || 'Presentasi Interaktif';
-
-  const slidesHtml = parsedSlides.map((s, idx) => `
-    <section class="slide ${idx === 0 ? 'active' : ''}" data-slide="${idx + 1}" id="slide-${idx + 1}">
-      <div class="slide-inner">
-        <header class="slide-header">
-          <span class="slide-tag">0${s.index} / 0${parsedSlides.length}</span>
-          <h2 class="slide-title">${escapeHtml(s.title)}</h2>
-          ${s.subtitle ? `<p class="slide-subtitle">${escapeHtml(s.subtitle)}</p>` : ''}
-        </header>
-        <div class="slide-body">
-          ${s.points.length > 0 ? `
-            <div class="slide-points-grid">
-              ${s.points.map((pt, pIdx) => `
-                <div class="slide-card">
-                  <div class="slide-card-num">${pIdx + 1}</div>
-                  <p class="slide-card-text">${escapeHtml(pt)}</p>
-                </div>
-              `).join('')}
-            </div>
-          ` : `
-            <div class="slide-cover-accent">
-              <div class="accent-glow"></div>
-              <p class="accent-tagline">${escapeHtml(s.subtitle || 'Dokumen Presentasi Interaktif')}</p>
-            </div>
-          `}
+  const thumbnailsHtml = slidesData.map((s, idx) => `
+    <div class="thumb-item ${idx === 0 ? 'active' : ''}" data-target="${idx}" id="thumb-${idx}">
+      <span class="thumb-num">${idx + 1}</span>
+      <div class="thumb-card">
+        <div class="thumb-preview">
+          <div class="thumb-mini-header"></div>
+          <div class="thumb-mini-title">${escapeHtml((s.title || '').slice(0, 18))}</div>
+          <div class="thumb-mini-boxes"><span></span><span></span><span></span></div>
         </div>
       </div>
-    </section>
+    </div>
   `).join('');
+
+  const slidesHtml = slidesData.map((s, idx) => {
+    const slideNumStr = String(idx + 1).padStart(2, '0');
+    const totalStr = String(total).padStart(2, '0');
+    const cards = s.cards || [];
+    
+    const cardsHtml = cards.map((c, cIdx) => `
+      <div class="bento-card">
+        <div class="bento-badge" style="color: ${c.badgeColor || accentColor};">
+          ${escapeHtml(c.badge || `KARTU 0${cIdx + 1} // ANALISIS`)}
+        </div>
+        <h3 class="bento-title">${escapeHtml(c.title || `Poin Strategis 0${cIdx + 1}`)}</h3>
+        <p class="bento-desc">${escapeHtml(c.desc || '')}</p>
+        ${c.footerHighlight ? `
+          <div class="bento-highlight-box">
+            <span class="bento-highlight-text" style="color: ${c.highlightColor || '#111827'};">
+              ${escapeHtml(c.footerHighlight)}
+            </span>
+          </div>
+        ` : ''}
+      </div>
+    `).join('');
+
+    return `
+      <section class="slide-section ${idx === 0 ? 'active' : ''}" data-index="${idx}" id="slide-${idx}">
+        <div class="slide-canvas">
+          <div class="slide-header-bar">
+            <div class="header-left">
+              <span class="header-chapter">BAB ${toRoman(idx + 1)} // ${escapeHtml(categoryTitle.toUpperCase())} // ${escapeHtml(gsmVersion)}</span>
+            </div>
+            <div class="header-right">
+              <span class="header-ratio">MODULAR RATIO 16:9</span>
+              <span class="header-page-tag" style="color: ${accentColor};">HALAMAN ${slideNumStr}/${totalStr}</span>
+            </div>
+          </div>
+
+          <div class="slide-hero">
+            <div class="hero-text-wrap">
+              <h1 class="slide-main-title">${escapeHtml(s.title)}</h1>
+              ${s.subtitle ? `<p class="slide-lead-desc">${escapeHtml(s.subtitle)}</p>` : ''}
+            </div>
+            <div class="slide-big-counter">
+              <span>${slideNumStr} // ${totalStr}</span>
+            </div>
+          </div>
+
+          <div class="slide-bento-grid" style="grid-template-columns: repeat(${Math.min(cards.length || 3, 3)}, 1fr);">
+            ${cardsHtml}
+          </div>
+
+          <div class="slide-footer-bar">
+            <div class="footer-left">
+              <span>${escapeHtml(copyrightText)}</span>
+            </div>
+            <div class="footer-right">
+              <span class="confidential-badge" style="color: ${accentColor};">• CONFIDENTIAL // ENTERPRISE</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    `;
+  }).join('');
 
   return `<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(deckTitle)}</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(deckMeta.title || 'Executive Presentation Deck')}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090A0F;
-      --card-bg: rgba(20, 22, 30, 0.85);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --accent: #CEF128;
-      --accent-glow: rgba(206, 241, 40, 0.25);
-      --text: #F4F4F6;
-      --text-muted: #9CA3AF;
+      --bg-desk: #F5F3EF;
+      --bg-sidebar: #0D0E12;
+      --bg-slide: #F5F3EF;
+      --text-main: #111827;
+      --text-muted: #6B7280;
+      --card-bg: #FFFFFF;
+      --card-border: #E5E7EB;
+      --accent: ${accentColor};
+      --accent-blue: #0284C7;
+      --dock-bg: rgba(18, 20, 26, 0.92);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+    html, body {
+      width: 100%;
+      height: 100%;
       overflow: hidden;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-desk);
+      color: var(--text-main);
     }
-    .deck-container {
-      flex: 1;
-      position: relative;
+
+    .presentation-workspace {
+      display: flex;
       width: 100vw;
       height: 100vh;
-      overflow: hidden;
+      position: relative;
     }
-    .slide {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-      opacity: 0;
-      pointer-events: none;
-      transform: scale(0.96) translateY(20px);
-      transition: opacity 0.35s ease, transform 0.35s ease;
-    }
-    .slide.active {
-      opacity: 1;
-      pointer-events: auto;
-      transform: scale(1) translateY(0);
-    }
-    .slide-inner {
-      width: 100%;
-      max-width: 1100px;
-      aspect-ratio: 16 / 9;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 48px;
+
+    /* === SIDEBAR THUMBNAILS === */
+    .deck-sidebar {
+      width: 140px;
+      height: 100vh;
+      background: var(--bg-sidebar);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      position: relative;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-      backdrop-filter: blur(20px);
-    }
-    .slide-header { margin-bottom: 28px; }
-    .slide-tag {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: var(--accent);
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      display: inline-block;
-    }
-    .slide-title {
-      font-size: 36px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: #FFFFFF;
-      margin-bottom: 8px;
-    }
-    .slide-subtitle {
-      font-size: 16px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-    .slide-body { flex: 1; display: flex; align-items: center; }
-    .slide-points-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 16px;
-      width: 100%;
+      padding: 20px 10px;
+      flex-shrink: 0;
+      z-index: 20;
     }
-    .slide-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 16px;
+    .deck-sidebar::-webkit-scrollbar { width: 4px; }
+    .deck-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+    .thumb-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      opacity: 0.65;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .thumb-item:hover { opacity: 0.95; }
+    .thumb-item.active { opacity: 1; }
+
+    .thumb-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: #9CA3AF;
+      width: 14px;
+      text-align: right;
+    }
+    .thumb-item.active .thumb-num { color: #FFFFFF; font-weight: 800; }
+
+    .thumb-card {
+      flex: 1;
+      aspect-ratio: 16 / 9;
+      background: #1C1D24;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .thumb-item.active .thumb-card {
+      border-color: #FFFFFF;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+    }
+    .thumb-preview {
+      width: 100%;
+      height: 100%;
+      padding: 5px;
+      background: #F5F3EF;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .thumb-mini-header { height: 2px; width: 40%; background: #D1D5DB; }
+    .thumb-mini-title { font-size: 5px; font-weight: 800; color: #111; line-height: 1; overflow: hidden; white-space: nowrap; }
+    .thumb-mini-boxes { display: flex; gap: 2px; flex: 1; align-items: flex-end; }
+    .thumb-mini-boxes span { flex: 1; height: 10px; background: #FFFFFF; border: 0.5px solid #E5E7EB; border-radius: 1px; }
+
+    /* === MAIN STAGE VIEWPORT === */
+    .deck-stage-wrap {
+      flex: 1;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-desk);
+      padding: 32px 48px 80px 48px;
+    }
+
+    .slide-section {
+      display: none;
+      width: 100%;
+      height: 100%;
+      max-width: 1240px;
+      max-height: calc(1240px * 9 / 16);
+      aspect-ratio: 16 / 9;
+      opacity: 0;
+      transform: scale(0.985);
+      transition: opacity 0.24s ease, transform 0.24s ease;
+    }
+    .slide-section.active {
+      display: flex;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .slide-canvas {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-slide);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    /* HEADER */
+    .slide-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #D1D5DB;
+      padding-bottom: 8px;
+    }
+    .header-chapter {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #374151;
+      text-transform: uppercase;
+    }
+    .header-ratio {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6B7280;
+      margin-right: 8px;
+    }
+    .header-page-tag {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    /* HERO */
+    .slide-hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin: 20px 0 16px 0;
+    }
+    .hero-text-wrap { flex: 1; }
+    .slide-main-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      color: #000000;
+      margin-bottom: 6px;
+    }
+    .slide-lead-desc {
+      font-size: 14px;
+      color: #4B5563;
+      line-height: 1.45;
+    }
+    .slide-big-counter {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      color: #111827;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      margin-top: 4px;
+    }
+
+    /* BENTO CARDS */
+    .slide-bento-grid {
+      display: grid;
+      gap: 16px;
+      flex: 1;
+      align-items: stretch;
+      margin-bottom: 16px;
+    }
+    .bento-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
       padding: 20px;
       display: flex;
-      gap: 14px;
-      align-items: flex-start;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
     }
-    .slide-card-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      background: rgba(206, 241, 40, 0.12);
-      color: var(--accent);
+    .bento-badge {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .bento-title {
+      font-size: 16px;
       font-weight: 700;
+      line-height: 1.3;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+    .bento-desc {
       font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .slide-card-text {
-      font-size: 15px;
+      color: #4B5563;
       line-height: 1.5;
-      color: var(--text);
+      margin-bottom: 14px;
+      flex: 1;
     }
-    .slide-cover-accent {
-      width: 100%;
-      height: 180px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, rgba(206,241,40,0.1), rgba(56,189,248,0.05));
-      border: 1px solid var(--accent-glow);
+    .bento-highlight-box {
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
-    .accent-tagline {
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--accent);
+    .bento-highlight-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
-    .deck-controls {
+
+    /* FOOTER */
+    .slide-footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid #E5E7EB;
+      padding-top: 10px;
+      font-size: 11px;
+      color: #6B7280;
+    }
+    .confidential-badge {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+    }
+
+    /* === FLOATING NAVIGATION DOCK === */
+    .deck-floating-dock {
       position: fixed;
       bottom: 24px;
-      left: 50%;
+      left: calc(50% + 70px);
       transform: translateX(-50%);
+      background: var(--dock-bg);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 9999px;
+      padding: 6px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
-      background: rgba(15, 17, 23, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 8px 16px;
-      border-radius: 9999px;
-      backdrop-filter: blur(20px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(24px);
       z-index: 100;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    .btn-ctrl {
+    .dock-btn {
       background: none;
       border: none;
-      color: var(--text);
+      color: #FFFFFF;
       cursor: pointer;
-      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
       border-radius: 9999px;
       font-size: 13px;
       font-weight: 600;
-      transition: all 0.2s;
+      transition: all 0.15s;
     }
-    .btn-ctrl:hover {
-      background: rgba(255, 255, 255, 0.1);
+    .dock-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
       color: var(--accent);
     }
-    .deck-counter {
-      font-size: 13px;
+    .dock-counter {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
       font-weight: 700;
-      color: var(--accent);
-      min-width: 60px;
-      text-align: center;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+    .dock-counter strong { color: var(--accent); }
+    .dock-divider {
+      width: 1px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+    .dock-shortcut-btn {
+      font-size: 12px;
+      color: #D1D5DB;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dock-key-badge {
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    /* === PRINT FOR PDF EXPORT === */
     @media print {
-      body { background: white !important; color: black !important; overflow: visible !important; }
-      .deck-controls { display: none !important; }
-      .deck-container { height: auto !important; }
-      .slide {
-        position: relative !important;
+      body, html {
+        background: #F5F3EF !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .deck-sidebar, .deck-floating-dock { display: none !important; }
+      .deck-stage-wrap {
+        padding: 0 !important;
+        height: auto !important;
+        display: block !important;
+      }
+      .slide-section {
+        display: block !important;
         opacity: 1 !important;
         transform: none !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
         page-break-after: always !important;
         break-after: page !important;
-        height: 100vh !important;
-        padding: 20px !important;
+        padding: 32px 48px !important;
       }
-      .slide-inner {
-        box-shadow: none !important;
-        background: #F8FAFC !important;
-        border: 1px solid #CBD5E1 !important;
-        color: #0F172A !important;
+      .slide-canvas {
+        height: 100% !important;
+        justify-content: space-between !important;
       }
-      .slide-title { color: #0F172A !important; }
-      .slide-card { background: white !important; border: 1px solid #E2E8F0 !important; }
-      .slide-card-text { color: #1E293B !important; }
     }
   </style>
 </head>
 <body>
-  <div class="deck-container">
-    ${slidesHtml}
+  <div class="presentation-workspace">
+    <aside class="deck-sidebar" id="deck-sidebar">
+      ${thumbnailsHtml}
+    </aside>
+
+    <main class="deck-stage-wrap" id="deck-stage-wrap">
+      ${slidesHtml}
+    </main>
   </div>
 
-  <div class="deck-controls">
-    <button type="button" class="btn-ctrl" id="btn-prev">← Prev</button>
-    <span class="deck-counter" id="deck-counter">1 / ${parsedSlides.length}</span>
-    <button type="button" class="btn-ctrl" id="btn-next">Next →</button>
-    <button type="button" class="btn-ctrl" onclick="window.print()">🖨️ PDF</button>
-  </div>
+  <nav class="deck-floating-dock">
+    <button type="button" class="dock-btn" id="dock-btn-prev" title="Slide Sebelumnya (ArrowLeft)">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="dock-counter">
+      <span id="dock-curr-slide">1</span>
+      <span>/</span>
+      <span>${total}</span>
+    </div>
+    <button type="button" class="dock-btn" id="dock-btn-next" title="Slide Berikutnya (ArrowRight)">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <div class="dock-divider"></div>
+    <button type="button" class="dock-btn dock-shortcut-btn" id="dock-btn-reset" title="Kembali ke slide awal (R)">
+      <span>Atur ulang</span>
+      <span class="dock-key-badge">R</span>
+    </button>
+    <div class="dock-divider"></div>
+    <button type="button" class="dock-btn dock-shortcut-btn" id="dock-btn-print" onclick="window.print()" title="Cetak / Simpan PDF (P)">
+      <span>PDF</span>
+      <span class="dock-key-badge">P</span>
+    </button>
+  </nav>
 
   <script>
-    const slides = document.querySelectorAll('.slide');
-    const counter = document.getElementById('deck-counter');
-    let currentIdx = 0;
+    const slides = document.querySelectorAll('.slide-section');
+    const thumbs = document.querySelectorAll('.thumb-item');
+    const currSlideEl = document.getElementById('dock-curr-slide');
+    const sidebarEl = document.getElementById('deck-sidebar');
+    let currentIndex = 0;
 
-    function showSlide(idx) {
+    function goToSlide(idx) {
       if (idx < 0) idx = 0;
       if (idx >= slides.length) idx = slides.length - 1;
-      slides[currentIdx].classList.remove('active');
-      currentIdx = idx;
-      slides[currentIdx].classList.add('active');
-      if (counter) counter.textContent = (currentIdx + 1) + ' / ' + slides.length;
+      
+      slides[currentIndex].classList.remove('active');
+      thumbs[currentIndex]?.classList.remove('active');
+      
+      currentIndex = idx;
+      
+      slides[currentIndex].classList.add('active');
+      if (thumbs[currentIndex]) {
+        thumbs[currentIndex].classList.add('active');
+        thumbs[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      
+      if (currSlideEl) {
+        currSlideEl.textContent = currentIndex + 1;
+      }
     }
 
-    document.getElementById('btn-prev').addEventListener('click', () => showSlide(currentIdx - 1));
-    document.getElementById('btn-next').addEventListener('click', () => showSlide(currentIdx + 1));
+    document.getElementById('dock-btn-prev')?.addEventListener('click', () => goToSlide(currentIndex - 1));
+    document.getElementById('dock-btn-next')?.addEventListener('click', () => goToSlide(currentIndex + 1));
+    document.getElementById('dock-btn-reset')?.addEventListener('click', () => goToSlide(0));
+
+    thumbs.forEach((t, i) => {
+      t.addEventListener('click', () => goToSlide(i));
+    });
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
-        showSlide(currentIdx + 1);
-      } else if (e.key === 'ArrowLeft') {
-        showSlide(currentIdx - 1);
+        goToSlide(currentIndex + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+        goToSlide(currentIndex - 1);
+      } else if (e.key === 'r' || e.key === 'R') {
+        goToSlide(0);
+      } else if (e.key === 'p' || e.key === 'P') {
+        window.print();
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
       }
     });
   </script>
@@ -8331,38 +8570,38 @@ function extractDesignMeta(content) {
 
 function getCleanDesignSummaryText(rawText = "", artifact = null, userPrompt = "") {
   const meta = artifact?.meta || extractDesignMeta(rawText);
-  const title = meta?.title || "Rancangan Antarmuka";
-  const promptLower = (userPrompt || "").toLowerCase();
+  const title = meta?.title || "Executive Slide Deck";
   
-  // 1. Ekstrak teks alami yang mungkin ada di luar blok kode ```html ... ``` dan <design_meta>
+  // Hitung jumlah slide aktual dari artifact HTML jika tersedia
+  let slideCount = 0;
+  if (artifact?.html) {
+    const slideMatches = artifact.html.match(/class=["\x27][^"\x27]*(?:slide-section|slide)["\x27]/gi);
+    if (slideMatches) {
+      slideCount = slideMatches.length;
+    }
+  }
+  if (!slideCount) {
+    const promptMatch = (userPrompt || "").match(/(\d+)\s*(?:slide|halaman|page)/i);
+    slideCount = promptMatch ? parseInt(promptMatch[1], 10) : 10;
+  }
+  const countText = `${slideCount} slide`;
+
+  // Ekstrak teks alami di luar blok kode dan metadata
   let outsideText = (rawText || "")
     .replace(/```(?:html|htm|xml|svg|web)?[\s\S]*?```/gi, '')
     .replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '')
     .trim();
 
-  // Bersihkan teks log atau baris debugging sisa
   outsideText = outsideText
     .replace(/→\s*skipped:[\s\S]*/gi, '')
     .replace(/```[\s\S]*?```/gi, '')
     .trim();
 
-  // Jika ada teks pengantar singkat yang wajar (< 220 karakter) dari AI, gunakan
-  if (outsideText && outsideText.length > 8 && outsideText.length < 220 && !outsideText.includes('<!DOCTYPE') && !outsideText.includes('<html')) {
-    return `✨ **${escapeHtml(title)}**\n\n${outsideText}`;
+  if (outsideText && outsideText.length > 8 && outsideText.length < 180 && !outsideText.includes('<!DOCTYPE') && !outsideText.includes('<html') && !outsideText.includes('{')) {
+    return `✨ **${escapeHtml(title)}** (${countText} 16:9)\n\n${outsideText}`;
   }
 
-  // 2. Format respon ringkas dan clean berdasarkan tipe permintaan
-  const isSlide = promptLower.includes('ppt') || promptLower.includes('slide') || 
-                  promptLower.includes('pdf') || promptLower.includes('presentasi') || 
-                  promptLower.includes('deck') || (meta.tags || []).some(t => /slide|deck|presentation/i.test(t));
-
-  if (isSlide) {
-    const slideMatch = (userPrompt || "").match(/(\d+)\s*(?:slide|halaman|page)/i);
-    const countText = slideMatch ? `${slideMatch[1]} slide` : '10 slide';
-    return `✨ Slide deck presentasi **${escapeHtml(title)}** (${countText} interaktif) telah selesai dibuat dan siap dipratinjau di Canvas atau diekspor ke PDF.`;
-  }
-
-  return `✨ Rancangan antarmuka **${escapeHtml(title)}** telah selesai dibuat dan siap dipratinjau di Canvas Workspace.`;
+  return `✨ Slide deck presentasi **${escapeHtml(title)}** (${countText} interaktif 16:9) telah selesai dibuat dan siap dipratinjau di Canvas atau diekspor ke PDF.`;
 }
 
 function showUniversalToast(message, duration = 3000) {
@@ -8392,22 +8631,29 @@ function renderOpenDesignCard(containerEl, artifact) {
   card.className = 'opendesign-result-card';
   card.setAttribute('data-system', artifact.meta?.system || 'modern');
 
-  const swatchesHtml = (artifact.meta?.colors || ['#0A0A0E', '#16181D', '#CEF128', '#FFFFFF'])
+  const isDeck = artifact.html?.includes('deck-sidebar') || artifact.html?.includes('presentation-workspace') || 
+                 (artifact.meta?.tags || []).some(t => /slide|deck|presentation/i.test(t));
+  const systemBadge = isDeck ? '🖥️ Slide Deck 16:9' : `🎨 ${escapeHtml(artifact.meta?.system || 'OpenDesign')}`;
+  const categoryBadge = isDeck ? 'Executive Presentation' : escapeHtml(artifact.meta?.category || 'Web UI');
+
+  const defaultColors = isDeck ? ['#F5F3EF', '#0D0E12', '#FF4D00', '#111827'] : ['#0A0A0E', '#16181D', '#CEF128', '#FFFFFF'];
+  const swatchesHtml = (artifact.meta?.colors || defaultColors)
     .map(c => `<span class="swatch" style="background: ${escapeHtml(c)};" title="${escapeHtml(c)}"></span>`)
     .join('');
 
-  const tagsHtml = (artifact.meta?.tags || ['HTML5', 'Tokens'])
+  const defaultTags = isDeck ? ['16:9 Deck', 'Thumbnails', 'PDF Ready'] : ['HTML5', 'Tokens'];
+  const tagsHtml = (artifact.meta?.tags || defaultTags)
     .map(t => `<span class="meta-tag">${escapeHtml(t)}</span>`)
     .join('');
 
   card.innerHTML = `
     <div class="opendesign-card-badge-row">
-      <span class="opendesign-system-badge">🎨 ${escapeHtml(artifact.meta?.system || 'OpenDesign')}</span>
-      <span class="opendesign-category-badge">${escapeHtml(artifact.meta?.category || 'Web UI')}</span>
+      <span class="opendesign-system-badge">${systemBadge}</span>
+      <span class="opendesign-category-badge">${categoryBadge}</span>
       <span class="opendesign-status-pill">Canvas Ready</span>
     </div>
-    <h4 class="opendesign-card-title">${escapeHtml(artifact.meta?.title || 'Rancangan Antarmuka')}</h4>
-    <p class="opendesign-card-desc">${escapeHtml(artifact.meta?.description || 'Desain interaktif siap dipratinjau dan diekspor.')}</p>
+    <h4 class="opendesign-card-title">${escapeHtml(artifact.meta?.title || (isDeck ? 'Executive Slide Deck' : 'Rancangan Antarmuka'))}</h4>
+    <p class="opendesign-card-desc">${escapeHtml(artifact.meta?.description || (isDeck ? 'Presentasi 16:9 widescreen interaktif dengan sidebar thumbnail dan floating navigation dock.' : 'Desain interaktif siap dipratinjau dan diekspor.'))}</p>
     <div class="opendesign-card-preview-bar">
       <div class="opendesign-palette-swatches">
         ${swatchesHtml}
@@ -8977,34 +9223,46 @@ function initOpenDesignCanvas() {
 }
 
 const DESIGN_MODE_SYSTEM_PROMPT = `
-# ROLE: OPEN DESIGN MASTER ARCHITECT (BROWSER AGENT NATIVE)
-You are the native OpenDesign Master Architect in Browser Agent.
-Your goal is to turn user requirements, product ideas, briefs, slide requests, or design prompts into world-class, production-ready, beautiful, complete user interfaces and web documents.
+# ROLE: EXECUTIVE SLIDE DECK ARCHITECT (16:9 WIDESCREEN PRESENTATION ENGINE)
+You are the native Executive Slide Deck Architect in Browser Agent.
+Your sole mission is to turn user topics, pitch deck requests, business proposals, academic slides, or presentation prompts into world-class, 16:9 widescreen interactive presentation slide decks.
+(Note: Web Landing Page and SaaS Dashboard modes are temporarily set to "Coming Soon" while we achieve 100% perfection on Slide Deck generation).
 
-## 🎨 CORE DESIGN & ARCHITECTURE RULES
-1. Adhere to professional standards: high-contrast dark luxury or modern minimal style, clean typography, proper whitespace, accessibility contrast (AA/AAA).
-2. Write 100% complete, runnable, standalone HTML with internal <style> (or CDN Tailwind v4) and internal <script> for interactions.
-3. Never output truncated code (NO "<!-- rest of code here -->", NO placeholders).
-4. Always wrap the complete HTML file in a single code block tagged \`\`\`html ... \`\`\`.
-5. You are in Direct Design Generation mode. DO NOT produce tool-call schemas, JSON tool invocations, or ask clarifying questions. Provide the complete design directly.
-
-## 📑 PRESENTATION / SLIDE DECK / PPT / PDF DIRECTIVE
-If the user requests slides, presentations, PPT, PDF, pitch deck, or pages (e.g. "ppt slide pdf 10 halaman tentang kucing lucu"):
-1. Create a 16:9 widescreen interactive HTML5 presentation slide deck containing ALL requested slides (e.g. all 10 distinct slides) with rich, informative, engaging content.
-2. Structure each slide cleanly inside <section class="slide ..."> with title, subtitle, bento cards, content points, and slide number tags (e.g. 01 / 10).
-3. Include interactive navigation controls (<div class="deck-controls">) with Previous / Next buttons, slide counter display, and keyboard ArrowLeft / ArrowRight listener in <script>.
-4. Include @media print CSS styles so each slide prints on a clean, separate page (page-break-after: always; break-after: page; width: 100vw; height: 100vh;) when exported to PDF.
+## 🎯 EXECUTIVE 16:9 PRESENTATION DECK STANDARDS
+1. **Layout & 2-Pane Architecture:**
+   - Widescreen 16:9 aspect ratio (\`aspect-ratio: 16 / 9\`).
+   - Left Sidebar (\`#deck-sidebar\`): Vertical list of slide thumbnails with slide numbers (1, 2, 3...), mini preview cards, and active border highlight. Clicking a thumbnail jumps directly to that slide.
+   - Main Presentation Stage (\`#deck-stage-wrap\`): Centered 16:9 canvas with clean, high-contrast editorial styling.
+   - Floating Navigation Dock (\`.deck-floating-dock\`): Centered pill at bottom with Prev (<), Slide Counter (X / Total), Next (>), Reset (R), and PDF Export (P).
+2. **Modular Bento Grid Structure on Each Slide:**
+   Each slide MUST have:
+   - Header Bar: Chapter / Category on left (\`BAB {I} // {CATEGORY} // GSM v3.0\`) + Ratio and page counter on right (\`MODULAR RATIO 16:9\` and \`HALAMAN 01/10\`).
+   - Hero Section: Large grotesque bold uppercase title (\`Space Grotesk\`, 32px), descriptive lead subtitle, and large slide counter (\`01 // 10\`).
+   - Bento Modular Cards: 3 structured cards per slide. Each card has:
+     * Accent category badge (\`KARTU 01 // ORTOGRAFI\` or \`POIN 01 // ANALISIS\`)
+     * Bold title
+     * Insightful explanation paragraph
+     * Bottom highlight container: White rounded pill/box with bold uppercase key takeaway (e.g. \`"DJ" → JADI\`, \`TERWUJUD & SELESAI\`, \`KEY TAKEAWAY\`).
+   - Footer Bar: Official copyright disclaimer and \`• CONFIDENTIAL // ENTERPRISE\` badge.
+3. **Interactive Script & Shortcuts:**
+   - Vanilla JS with keyboard listener: ArrowRight / Space -> Next slide, ArrowLeft / Backspace -> Prev slide, R -> Reset to slide 1, P -> window.print(), F -> Fullscreen.
+4. **Print / PDF Readiness:**
+   - Perfect \`@media print\` styles: hides sidebar and dock, one slide per page with \`page-break-after: always; break-after: page; width: 100vw; height: 100vh;\`.
+5. **Code Completeness:**
+   - Write 100% complete, runnable, standalone HTML with internal \`<style>\` and internal \`<script>\`.
+   - Never output truncated code (NO placeholders, NO comments omitting slides). Generate ALL requested slides.
+   - Wrap the complete HTML in a single code block tagged \`\`\`html ... \`\`\`.
 
 ## 📦 METADATA BLOCK
-At the very end of your response, output a structured metadata block:
+At the very end of your response, output:
 <design_meta>
 {
-  "title": "Clean Descriptive Title",
-  "category": "Modern & Minimal | Dark Luxury | Presentation / Deck | SaaS | E-Commerce",
-  "system": "luxury | modern-minimal | apple | linear-app",
-  "description": "1-sentence summary of the design layout and components",
-  "colors": ["#090A0C", "#16181D", "#CEF128", "#FFFFFF"],
-  "tags": ["Landing Page", "Dark Luxury", "Responsive", "Presentation"]
+  "title": "Judul Slide Deck",
+  "category": "Presentation / Deck",
+  "system": "Executive Editorial 16:9",
+  "description": "Ringkasan materi slide deck presentasi",
+  "colors": ["#F5F3EF", "#0D0E12", "#FF4D00", "#111827"],
+  "tags": ["Slide Deck", "16:9 Widescreen", "Presentation", "Executive", "PDF Ready"]
 }
 </design_meta>
 `;
@@ -9029,7 +9287,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
 
   if (!currentSessionId) {
     currentSessionId = 'sess_' + Date.now();
-    currentSessionTitle = (userMessage || 'Design Session').slice(0, 45).trim();
+    currentSessionTitle = (userMessage || 'Slide Deck Session').slice(0, 45).trim();
     currentSessionCreatedAt = Date.now();
     updateHeaderChatTitle(currentSessionTitle);
   }
@@ -9037,8 +9295,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   appendUserMessage(userMessage, attachments);
 
   const agentInfo = {
-    displayName: "OpenDesign Architect",
-    name: "OpenDesign Architect",
+    displayName: "Slide Deck Architect",
+    name: "Slide Deck Architect",
     isAuto: false,
     isBoss: false,
     isMulti: false
@@ -9047,7 +9305,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   const assistantBubble = appendAssistantMessage(null, true, agentInfo);
   const contentEl = assistantBubble.querySelector('.message-content');
   
-  updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "Merancang Arsitektur UI...", false, false);
+  updateAssistantActiveAgent(assistantBubble, "Slide Deck Architect", "Merancang Slide Deck 16:9...", false, false);
 
   conversationHistory.push({
     role: "user",
@@ -9085,7 +9343,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       } catch (e) {}
     }
 
-    // Clean, dedicated OpenDesign prompt (Free from Master Agent tool schemas & browser click SOPs)
+    // Clean, dedicated Slide Deck prompt (Free from Master Agent tool schemas & browser click SOPs)
     let dynamicDesignPrompt = getDetailedCurrentTimeContext() + `\n\n` + systemDirective;
 
     const mems = cachedPersistentMemory.user_memories || [];
@@ -9196,21 +9454,18 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
               accumulatedReasoning += deltaReasoning;
               if (!hasStartedContent) {
                 const shortSnippet = accumulatedReasoning.slice(-60).replace(/[\r\n]+/g, ' ').trim();
-                updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", `🤔 Merancang UI... ${shortSnippet ? `(${shortSnippet})` : ''}`, false, false);
+                updateAssistantActiveAgent(assistantBubble, "Slide Deck Architect", `🤔 Merancang Alur Presentasi... ${shortSnippet ? `(${shortSnippet})` : ''}`, false, false);
               }
             }
 
             if (deltaContent) {
               if (!hasStartedContent) {
                 hasStartedContent = true;
-                updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "⚡ Menyusun rancangan...", false, false);
+                updateAssistantActiveAgent(assistantBubble, "Slide Deck Architect", "⚡ Menyusun slide deck...", false, false);
               }
               accumulatedContent += deltaContent;
               const kb = (accumulatedContent.length / 1024).toFixed(1);
-              const isSlideReq = /ppt|slide|pdf|deck|presentasi/i.test(userMessage);
-              const liveProgressText = isSlideReq
-                ? `*⚡ Sedang merancang slide deck & tata letak visual (${kb} KB)...*\n\n> Slide deck interaktif akan otomatis ditampilkan di kartu pratinjau Canvas setelah selesai.`
-                : `*⚡ Sedang menyusun arsitektur komponen & token visual (${kb} KB)...*\n\n> Rancangan antarmuka akan otomatis ditampilkan di kartu pratinjau Canvas setelah selesai.`;
+              const liveProgressText = `*⚡ Sedang merancang slide deck 16:9 & kartu bento modular (${kb} KB)...*\n\n> Slide deck interaktif lengkap dengan navigasi & thumbnail akan otomatis tampil di Canvas setelah selesai.`;
               updateAssistantText(assistantBubble, liveProgressText, true);
             }
           } catch (err) {}
@@ -9236,10 +9491,15 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
 
     const meta = extractDesignMeta(accumulatedContent);
 
+    // Ensure artifact has the 100% executive slide deck layout (with sidebar thumbnails & floating dock)
+    if (artifact.html) {
+      artifact.html = upgradeSlideDeckHtmlIfNeeded(artifact.html, userMessage, meta);
+    }
+
     // Clean summary response for chat (Anti-Nyampah: No raw HTML code dumps in chat room!)
     let briefSummaryText = "";
     if (artifact.html) {
-      briefSummaryText = getCleanDesignSummaryText(accumulatedContent, { meta }, userMessage);
+      briefSummaryText = getCleanDesignSummaryText(accumulatedContent, { meta, html: artifact.html }, userMessage);
     } else {
       let cleanFallback = accumulatedContent.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '').trim();
       briefSummaryText = cleanFallback || "*Model AI tidak mengembalikan respons desain yang lengkap.*";
@@ -9265,7 +9525,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     }
 
     const finalStatusText = artifact.html ? "Selesai" : (briefSummaryText ? "Selesai" : "Respon Kosong");
-    updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", finalStatusText, false, true);
+    updateAssistantActiveAgent(assistantBubble, "Slide Deck Architect", finalStatusText, false, true);
 
     conversationHistory.push({
       role: "assistant",
@@ -9280,7 +9540,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
 
   } catch (err) {
     console.error("Design Mode Error:", err);
-    updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "Gagal", false, true);
+    updateAssistantActiveAgent(assistantBubble, "Slide Deck Architect", "Gagal", false, true);
     const friendlyMsg = formatFriendlyErrorMessage(err, config.endpoint, (typeof activeModelChoice !== 'undefined' ? activeModelChoice : ''));
     if (contentEl) {
       contentEl.style.display = 'block';
