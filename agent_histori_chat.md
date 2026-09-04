@@ -5633,8 +5633,35 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Verifikasi sintaks `node -c extension/sidepanel.js` berhasil tanpa error.
   - Bump version to `v2.150.196`.
 
+---
 
-
-
-
+### 🚀 Iterasi 478: Dual Master Agent Architecture & Modular Design Directory Organization (v2.150.197)
+- **Kebutuhan Pengguna**:
+  - Di Design Mode, eksekutor utama tetap **👑 Master Agent** (pemegang jabatan tertinggi/supreme commander).
+  - Di bawah Master Agent, terdapat **🎨 Master Design** (tangan kanan Master Agent untuk domain desain & slide deck), membentuk kolaborasi dua agen.
+  - Tampilkan antarmuka kerja AI (`AI working UI`) lengkap seperti di Agent Mode:
+    - Header eksekusi Master Agent (`.agent-hierarchy-block` dengan `.agent-boss-chip` Master Agent).
+    - Pohon percabangan agen bawahan (`.agent-tree-branch-container` dengan item Master Design).
+    - Kontainer Rencana & Jadwal Tugas (`.task-schedule-wrapper`) dengan 5 tahapan terstruktur.
+    - Kontainer Langkah Tindakan (`.tool-section-wrapper`) yang memperlihatkan delegasi instruksi Master Agent ke Master Design.
+  - Rapikan struktur folder proyek Browser Agent dengan membuat folder `extension/design/` untuk kode Design Mode agar modular, mudah dirawat, dan terpisah per fitur.
+- **Implementasi & Peningkatan Sistem**:
+  - **Arsitektur Dual Master Agent & Kolaborasi Real-Time**:
+    - Master Agent bertindak sebagai Supreme Commander & Chief Orchestrator yang menerima instruksi, menyusun brief, mendelegasikan tugas ke Master Design, dan melakukan verifikasi akhir.
+    - Master Design bertindak sebagai Lead Creative Director & Slide Architect yang membentuk layout 16:9 widescreen, styling typography Dark Luxury, kartu bento modular, dan floating navigation dock.
+    - UI menampilkan status kerja kedua agen secara bergantian: saat berpikir/merancang slide, Master Design aktif bekerja (`Bekerja...`), dan saat validasi akhir, Master Agent mengambil alih hingga selesai.
+  - **Modularisasi Folder `extension/design/`**:
+    - Memisahkan ~1.950 baris kode dari file monolitik `sidepanel.js` ke dalam 5 file terpisah di `extension/design/`:
+      1. `design_agent.js`: Metadata Master Design, konstruktor hirarki `createDesignHierarchyAgentInfo`, dan generator 5 jadwal tugas milestone `getDesignMilestones`.
+      2. `slide_deck_engine.js`: Mesin kompilasi presentasi 16:9 widescreen `buildExecutiveSlideDeckHtml` (polymorphic parameter support), konverter markdown `parseMarkdownToSlides` & `convertMarkdownOrTextToInteractiveSlideDeck`, ekstraktor `extractSlidesFromRawHtml`, dan layout upgrader `upgradeSlideDeckHtmlIfNeeded`.
+      3. `design_prompt.js`: Prompt kolaborasi sistem `DESIGN_MODE_SYSTEM_PROMPT`, ekstraktor kode HTML `extractHtmlArtifact`, parser metadata `extractDesignMeta`, dan peracik ringkasan chat bebas slop `getCleanDesignSummaryText`.
+      4. `canvas_manager.js`: UI result card `renderOpenDesignCard`, virtual files builder `generateVirtualFiles`, auto-linter anti-slop `runCanvasAutoLint`, toast notification `showUniversalToast`, export handler (ZIP, HTML, PDF), dan pengontrol drawer canvas `initOpenDesignCanvas`, `openOpenDesignCanvas`, `closeOpenDesignCanvas`, `switchCanvasTab`, `setCanvasViewport`.
+      5. `design_executor.js`: Loop eksekusi `runDesignModeLoop` lengkap dengan orkestrasi 2 agen, delegasi tool steps, streaming reasoning & content, dan persistensi sesi ke database.
+  - **Pendaftaran Skrip & Refactoring `sidepanel.js`**:
+    - Menambahkan script tags kelima modul di `extension/sidepanel.html` dan `extension/newtab.html` sebelum `sidepanel.js`.
+    - Merampingkan `extension/sidepanel.js` dari 16.282 baris menjadi 14.333 baris tanpa mengubah stabilitas fungsi lain.
+- **Pengujian & Verifikasi**:
+  - Validasi sintaks `node -c` pada seluruh modul (`sidepanel.js`, `design_agent.js`, `slide_deck_engine.js`, `design_prompt.js`, `canvas_manager.js`, `design_executor.js`) lulus 100% tanpa error.
+  - Unit test Node.js orkestrasi hirarki, delegasi milestone, polymorphism slide builder, dan konversi markdown lulus dengan 0 kegagalan asersi.
+  - Bump version to `v2.150.197`.
 

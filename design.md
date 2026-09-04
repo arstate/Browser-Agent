@@ -357,7 +357,33 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 3. **Seamless Auto-Restore on Refresh**:
    - Status `last_active_session_id` disimpan di storage lokal dan otomatis direhidrasi saat startup `bootstrap()`, menjaga kesinambungan chat dan Canvas tanpa reset manual.
 
+---
 
+## 🎨 14. Dual Master Agent Working UI & Modular Design System (v2.150.197)
 
+1. **Dual Master Agent Collaborative Hierarchy**:
+   - **👑 Master Agent** (*Supreme Commander & Chief Orchestrator*): Memegang jabatan tertinggi (Level 1), menganalisis brief pengguna, memimpin strategi konseptual, mendelegasikan perancangan slide ke Master Design, dan melakukan audit akhir kelayakan artefak.
+   - **🎨 Master Design** (*Lead Creative Director & Slide Architect*): Tangan kanan Master Agent yang menguasai eksekusi visual, layout bento grid 16:9 widescreen, GSM brand visual v3.0, Dark Luxury typography, dan interaktivitas canvas drawer.
 
+2. **Full AI Working UI Components**:
+   - **Header Hirarki Agen** (`.agent-hierarchy-block`):
+     * Boss chip: `👑 Master Agent` (`.agent-boss-chip`) dengan status aktif dan badge "Supreme Orchestrator".
+     * Tree branch: `.agent-tree-branch-container` dengan item `🎨 Master Design` (`.tree-agent-card`) yang berganti status real-time (`Siap Kerja` → `Bekerja...` → `Selesai`).
+   - **Rencana & Jadwal Tugas** (`.task-schedule-wrapper`):
+     * Milestone 1: 👑 Master Agent: Analisis Brief & Strategi Konseptual
+     * Milestone 2: 🤝 Delegasi ke Master Design: Penataan Layout & GSM Brand
+     * Milestone 3: 🎨 Master Design: Sintesis Konten 16:9 Widescreen & Struktur Bab
+     * Milestone 4: 🎨 Master Design: Penerapan Dark Luxury Typography & Visual Polish
+     * Milestone 5: 👑 Master Agent: Review Kualitas, Anti-Slop Audit & Final Approval
+   - **Langkah Tindakan Tool Interaktif** (`.tool-section-wrapper`):
+     * `delegate_to_master_design` (👑 Master Agent): Hand-off brief dan parameter visual ke Master Design.
+     * `synthesize_executive_slides` (🎨 Master Design): Pembentukan kode HTML 16:9 dan komponen bento cards.
+     * `audit_and_approve_artifact` (👑 Master Agent): Validasi anti-slop, kepatuhan GSM v3.0, dan rasio widescreen.
+
+3. **Modular Architecture Map (`extension/design/`)**:
+   - `design_agent.js`: Metadata, persona, hirarki agen, dan generator milestone.
+   - `slide_deck_engine.js`: Mesin kompilasi slide 16:9, konverter, dan upgrader layout.
+   - `design_prompt.js`: Prompt kolaborasi 2 agen, regex extractor, dan summary chat builder.
+   - `canvas_manager.js`: UI result card, virtual files, auto-linter, export engine, dan modal drawer controller.
+   - `design_executor.js`: Loop eksekusi `runDesignModeLoop`, state manager, dan streaming bridge.
 
