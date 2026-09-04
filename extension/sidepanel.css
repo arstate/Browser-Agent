@@ -3633,6 +3633,123 @@ body.stickman-active .chat-messages {
   letter-spacing: 0.02em;
 }
 
+/* Nested Submenu for Design Mode */
+.chat-mode-item-group.has-submenu {
+  position: relative;
+  display: block;
+}
+
+.chat-mode-item-group.has-submenu .chat-mode-option {
+  width: 100%;
+}
+
+.submenu-chevron {
+  margin-left: auto;
+  color: #94A3B8;
+  transition: transform 0.16s ease, color 0.16s ease;
+  flex-shrink: 0;
+}
+
+.chat-mode-option:hover .submenu-chevron,
+.chat-mode-item-group.has-submenu:hover .submenu-chevron {
+  color: #FFFFFF;
+  transform: translateX(2px);
+}
+
+.chat-mode-submenu {
+  position: absolute;
+  left: calc(100% + 5px);
+  bottom: -4px;
+  min-width: 180px;
+  background: rgba(18, 18, 22, 0.96) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 14px;
+  padding: 5px;
+  display: none;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+  z-index: 600;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+
+/* Invisible bridge so mouse hover doesn't break when moving between parent menu and submenu */
+.chat-mode-submenu::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  left: -12px;
+  width: 14px;
+  background: transparent;
+}
+
+.chat-mode-item-group.has-submenu:hover .chat-mode-submenu,
+.chat-mode-item-group.has-submenu:focus-within .chat-mode-submenu {
+  display: flex;
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.chat-mode-suboption {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 27px;
+  box-sizing: border-box;
+  padding: 0 9px 0 7px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  color: #E2E8F0;
+  width: 100%;
+}
+
+.chat-mode-suboption .subopt-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.chat-mode-suboption .subopt-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #FFFFFF;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chat-mode-suboption:hover:not(.mode-disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chat-mode-suboption.active {
+  background: rgba(206, 241, 40, 0.14);
+  border-color: rgba(206, 241, 40, 0.4);
+}
+
+.chat-mode-suboption.active .subopt-title {
+  color: #CEF128;
+}
+
+.chat-mode-suboption.mode-disabled {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+}
+
+.chat-mode-suboption.mode-disabled:hover {
+  background: transparent !important;
+}
+
 .mode-option-icon {
   width: 15px;
   height: 15px;
@@ -8434,7 +8551,8 @@ body.canvas-active .opendesign-canvas-pane {
 .design-system-dropup-menu {
   position: absolute;
   bottom: calc(100% + 8px);
-  left: 0;
+  right: 0;
+  left: auto;
   width: 290px;
   max-height: 340px;
   background: rgba(14, 16, 21, 0.98);

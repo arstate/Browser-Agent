@@ -224,76 +224,41 @@
                   <span class="mode-option-title">Web Search</span>
                 </button>
 
-                <button type="button" class="chat-mode-option" data-mode="design" id="mode-option-design">
-                  <div class="mode-option-icon">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                      <line x1="8" y1="21" x2="16" y2="21"/>
-                      <line x1="12" y1="17" x2="12" y2="21"/>
-                    </svg>
-                  </div>
-                  <span class="mode-option-title">Slide Deck Mode</span>
-                  <span class="mode-badge-active-green">Active</span>
-                </button>
-
-                <!-- Coming Soon Modes (Focus 100% on Slide Deck) -->
-                <button type="button" class="chat-mode-option mode-disabled" data-mode="landing_page_soon" disabled title="Segera hadir setelah Slide Deck Mode 100% sempurna">
-                  <div class="mode-option-icon">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                      <polyline points="2 17 12 22 22 17"/>
-                      <polyline points="2 12 12 17 22 12"/>
-                    </svg>
-                  </div>
-                  <span class="mode-option-title">Web Landing Page</span>
-                  <span class="mode-badge-coming-soon">Coming Soon</span>
-                </button>
-
-                <button type="button" class="chat-mode-option mode-disabled" data-mode="dashboard_ui_soon" disabled title="Segera hadir setelah Slide Deck Mode 100% sempurna">
-                  <div class="mode-option-icon">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="3" width="7" height="9"/>
-                      <rect x="14" y="3" width="7" height="5"/>
-                      <rect x="14" y="12" width="7" height="9"/>
-                      <rect x="3" y="16" width="7" height="5"/>
-                    </svg>
-                  </div>
-                  <span class="mode-option-title">SaaS Dashboard UI</span>
-                  <span class="mode-badge-coming-soon">Coming Soon</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- OpenDesign Design System Dropup (Active only in Design Mode) -->
-            <div class="design-system-dropup-wrapper" id="design-system-dropup-wrapper" style="display: none;">
-              <button type="button" class="btn-design-system-trigger" id="btn-design-system-trigger" title="Pilih dari 152 Design Systems OpenDesign">
-                <span class="design-system-trigger-icon">🎨</span>
-                <span class="design-system-label" id="design-system-label">System: Auto</span>
-                <svg class="design-system-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-
-              <div class="design-system-dropup-menu" id="design-system-dropup-menu" style="display: none;">
-                <div class="design-system-search-box">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  <input type="text" id="input-search-design-systems" placeholder="Cari 152 Design Systems..." autocomplete="off">
-                </div>
-                <div class="design-system-categories-pills" id="design-system-categories-pills">
-                  <button type="button" class="ds-cat-pill active" data-cat="all">All</button>
-                  <button type="button" class="ds-cat-pill" data-cat="AI & LLM">AI</button>
-                  <button type="button" class="ds-cat-pill" data-cat="Dark Luxury">Luxury</button>
-                  <button type="button" class="ds-cat-pill" data-cat="Corporate">Corporate</button>
-                  <button type="button" class="ds-cat-pill" data-cat="Modern Minimal">Minimal</button>
-                </div>
-                <div class="design-system-list-scroll" id="design-system-list-scroll">
-                  <button type="button" class="design-system-option active" data-slug="auto">
-                    <span class="ds-opt-icon">✨</span>
-                    <div class="ds-opt-info">
-                      <span class="ds-opt-name">Auto Detect</span>
-                      <span class="ds-opt-desc">AI merekomendasikan gaya visual terbaik</span>
+                <div class="chat-mode-item-group has-submenu" id="mode-group-design">
+                  <button type="button" class="chat-mode-option" data-mode="design" id="mode-option-design">
+                    <div class="mode-option-icon">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+                        <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+                        <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+                        <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+                      </svg>
                     </div>
+                    <span class="mode-option-title">Design Mode</span>
+                    <svg class="submenu-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
                   </button>
+
+                  <!-- Flyout Submenu to the right on hover -->
+                  <div class="chat-mode-submenu" id="chat-mode-design-submenu">
+                    <button type="button" class="chat-mode-suboption active" data-submode="slidedeck" title="Presentation Slide Deck 16:9 Fullscreen Mode">
+                      <span class="subopt-icon">🖥️</span>
+                      <span class="subopt-title">Slide Deck (16:9)</span>
+                      <span class="mode-badge-active-green">Active</span>
+                    </button>
+                    <button type="button" class="chat-mode-suboption mode-disabled" data-submode="landing_page" disabled title="Segera hadir setelah Slide Deck Mode 100% sempurna">
+                      <span class="subopt-icon">🌐</span>
+                      <span class="subopt-title">Web Landing Page</span>
+                      <span class="mode-badge-coming-soon">Soon</span>
+                    </button>
+                    <button type="button" class="chat-mode-suboption mode-disabled" data-submode="dashboard" disabled title="Segera hadir setelah Slide Deck Mode 100% sempurna">
+                      <span class="subopt-icon">📊</span>
+                      <span class="subopt-title">SaaS Dashboard UI</span>
+                      <span class="mode-badge-coming-soon">Soon</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -328,8 +293,41 @@
             </div>
           </div>
 
-          <!-- Right Actions Container (Switch Tab & Execution Mode direct instant toggles) -->
+          <!-- Right Actions Container (Switch Tab & Execution Mode direct instant toggles, or System Design Auto in Design Mode) -->
           <div class="chat-input-header-right">
+            <!-- OpenDesign Design System Dropup (Active only in Design Mode, replaces Switch Tab & Accept) -->
+            <div class="design-system-dropup-wrapper" id="design-system-dropup-wrapper" style="display: none;">
+              <button type="button" class="btn-design-system-trigger" id="btn-design-system-trigger" title="Pilih dari 152 Design Systems OpenDesign">
+                <span class="design-system-trigger-icon">🎨</span>
+                <span class="design-system-label" id="design-system-label">System: Auto</span>
+                <svg class="design-system-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              <div class="design-system-dropup-menu" id="design-system-dropup-menu" style="display: none;">
+                <div class="design-system-search-box">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="input-search-design-systems" placeholder="Cari 152 Design Systems..." autocomplete="off">
+                </div>
+                <div class="design-system-categories-pills" id="design-system-categories-pills">
+                  <button type="button" class="ds-cat-pill active" data-cat="all">All</button>
+                  <button type="button" class="ds-cat-pill" data-cat="AI & LLM">AI</button>
+                  <button type="button" class="ds-cat-pill" data-cat="Dark Luxury">Luxury</button>
+                  <button type="button" class="ds-cat-pill" data-cat="Corporate">Corporate</button>
+                  <button type="button" class="ds-cat-pill" data-cat="Modern Minimal">Minimal</button>
+                </div>
+                <div class="design-system-list-scroll" id="design-system-list-scroll">
+                  <button type="button" class="design-system-option active" data-slug="auto">
+                    <span class="ds-opt-icon">✨</span>
+                    <div class="ds-opt-info">
+                      <span class="ds-opt-name">Auto Detect</span>
+                      <span class="ds-opt-desc">AI merekomendasikan gaya visual terbaik</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
             <!-- Switch Tab Direct Toggle Button (ON / OFF) -->
             <div class="switch-tab-mode-wrapper" id="switch-tab-mode-wrapper">
               <button type="button" class="btn-switch-tab-mode-trigger is-on" id="btn-switch-tab-mode-trigger" title="Auto Switch Tab: ON (Klik untuk beralih ON / OFF)">

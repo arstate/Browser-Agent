@@ -7283,8 +7283,8 @@ const CHAT_MODES_CONFIG = {
   },
   design: {
     key: 'design',
-    name: 'Slide Deck Mode',
-    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`
+    name: 'Design Mode',
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>`
   },
   websearch: {
     key: 'websearch',
@@ -7363,9 +7363,27 @@ function setChatMode(mode) {
     } catch (e) {}
   }
 
+  // Manage right toolbar buttons: in Design Mode, switch-tab & execution-mode are replaced by design-system-dropup-wrapper
   const dsDropupWrapper = document.getElementById('design-system-dropup-wrapper');
-  if (dsDropupWrapper) {
-    dsDropupWrapper.style.display = (mode === 'design') ? 'inline-flex' : 'none';
+  const switchTabWrapper = document.getElementById('switch-tab-mode-wrapper');
+  const executionModeWrapper = document.getElementById('execution-mode-wrapper');
+  const searchEngineWrapper = document.getElementById('search-engine-wrapper');
+
+  if (mode === 'design') {
+    if (switchTabWrapper) switchTabWrapper.style.display = 'none';
+    if (executionModeWrapper) executionModeWrapper.style.display = 'none';
+    if (searchEngineWrapper) searchEngineWrapper.style.display = 'none';
+    if (dsDropupWrapper) dsDropupWrapper.style.display = 'inline-flex';
+  } else if (mode === 'websearch') {
+    if (switchTabWrapper) switchTabWrapper.style.display = 'none';
+    if (executionModeWrapper) executionModeWrapper.style.display = 'none';
+    if (searchEngineWrapper) searchEngineWrapper.style.display = 'inline-flex';
+    if (dsDropupWrapper) dsDropupWrapper.style.display = 'none';
+  } else {
+    if (switchTabWrapper) switchTabWrapper.style.display = 'inline-flex';
+    if (executionModeWrapper) executionModeWrapper.style.display = 'inline-flex';
+    if (searchEngineWrapper) searchEngineWrapper.style.display = 'none';
+    if (dsDropupWrapper) dsDropupWrapper.style.display = 'none';
   }
 
   adjustChatInputHeight();
@@ -7398,6 +7416,41 @@ function initChatModeDropdown() {
       trigger?.classList.remove('open');
     });
   });
+
+  // Handle nested submenu options inside Design Mode
+  document.querySelectorAll('.chat-mode-suboption').forEach(subopt => {
+    subopt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (subopt.hasAttribute('disabled') || subopt.classList.contains('mode-disabled')) {
+        showUniversalToast('⏳ Fitur ini segera hadir (Coming Soon)! Saat ini kami memfokuskan 100% pada kesempurnaan Slide Deck Mode.');
+        return;
+      }
+      const submode = subopt.getAttribute('data-submode');
+      if (submode === 'slidedeck') {
+        setChatMode('design');
+      }
+      if (dropup) dropup.style.display = 'none';
+      trigger?.classList.remove('open');
+    });
+  });
+
+  // Smart boundary alignment for flyout submenu in narrow sidepanels
+  const designGroup = document.getElementById('mode-group-design');
+  const designSubmenu = document.getElementById('chat-mode-design-submenu');
+  if (designGroup && designSubmenu) {
+    designGroup.addEventListener('mouseenter', () => {
+      const rect = designGroup.getBoundingClientRect();
+      if (rect.right + 195 > window.innerWidth) {
+        designSubmenu.style.left = 'auto';
+        designSubmenu.style.right = '0';
+        designSubmenu.style.bottom = 'calc(100% + 4px)';
+      } else {
+        designSubmenu.style.left = 'calc(100% + 5px)';
+        designSubmenu.style.right = 'auto';
+        designSubmenu.style.bottom = '-4px';
+      }
+    });
+  }
 
   document.addEventListener('click', (e) => {
     if (dropup && !dropup.contains(e.target) && !trigger?.contains(e.target)) {
