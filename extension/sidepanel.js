@@ -8559,6 +8559,185 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
 </html>`;
 }
 
+function parseMarkdownToSlides(content, userPrompt = "") {
+  if (!content || typeof content !== 'string') return [];
+
+  let rawSlides = [];
+  if (content.includes("\n---\n") || content.includes("\n--- \n")) {
+    rawSlides = content.split(/\n---\s*\n/).map(s => s.trim()).filter(Boolean);
+  } else if (/(?:^|\n)#+\s*Slide\s+\d+/i.test(content)) {
+    rawSlides = content.split(/(?:^|\n)(?=#+\s*Slide\s+\d+)/i).map(s => s.trim()).filter(Boolean);
+  } else if (/(?:^|\n)Slide\s+\d+[:\s-]/i.test(content)) {
+    rawSlides = content.split(/(?:^|\n)(?=Slide\s+\d+[:\s-])/i).map(s => s.trim()).filter(Boolean);
+  } else {
+    const headings = content.split(/(?:^|\n)(?=#{1,2}\s+)/m).map(s => s.trim()).filter(Boolean);
+    if (headings.length >= 2) rawSlides = headings;
+  }
+
+  const validSlides = rawSlides.filter(s => {
+    const lines = s.split("\n").map(l => l.trim()).filter(Boolean);
+    return lines.length >= 2 || s.length > 50;
+  });
+
+  if (validSlides.length === 0) return [];
+
+  return validSlides.map((raw, idx) => {
+    const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+    let title = `Slide ${idx + 1}`;
+    let subtitle = "";
+    const cards = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (i === 0 && (line.startsWith("#") || /^slide\s+\d+/i.test(line))) {
+        title = line.replace(/^#+\s*/, "").replace(/^slide\s+\d+[:\s-]*/i, "").trim() || title;
+      } else if (!subtitle && (line.toLowerCase().startsWith("subjudul:") || line.toLowerCase().startsWith("subtitle:"))) {
+        subtitle = line.replace(/^(subjudul|subtitle)[:\s-]*/i, "").trim();
+      } else if (line.startsWith("-") || line.startsWith("*") || line.startsWith("•") || /^\d+\./.test(line)) {
+        const itemText = line.replace(/^[-*•\d.]+\s*/, "").trim();
+        const colonIdx = itemText.indexOf(":");
+        if (colonIdx > 0 && colonIdx < 40) {
+          const cardTitle = itemText.slice(0, colonIdx).replace(/\*\*/g, "").trim();
+          const cardDesc = itemText.slice(colonIdx + 1).trim();
+          cards.push({
+            badge: `KARTU 0${cards.length + 1} // ANALISIS`,
+            title: cardTitle,
+            desc: cardDesc,
+            footerHighlight: cardTitle.toUpperCase().slice(0, 32)
+          });
+        } else {
+          cards.push({
+            badge: `KARTU 0${cards.length + 1} // POIN UTAMA`,
+            title: itemText.slice(0, 32),
+            desc: itemText,
+            footerHighlight: "KEY TAKEAWAY"
+          });
+        }
+      } else if (line.length > 0 && !line.startsWith("<design_meta>") && !line.startsWith("```")) {
+        if (!subtitle && cards.length === 0) {
+          subtitle = line;
+        } else {
+          cards.push({
+            badge: `KARTU 0${cards.length + 1} // INSIGHT`,
+            title: `Insight 0${cards.length + 1}`,
+            desc: line,
+            footerHighlight: "STRATEGIC VALUE"
+          });
+        }
+      }
+    }
+
+    while (cards.length < 3) {
+      const cIdx = cards.length + 1;
+      cards.push({
+        badge: `KARTU 0${cIdx} // FOKUS STRATEGIS`,
+        title: `Pilar Eksekusi 0${cIdx}`,
+        desc: `Implementasi terukur dengan standar akurasi tinggi dan efisiensi maksimal pada tahap operasional.`,
+        footerHighlight: `OPTIMASI 0${cIdx}`
+      });
+    }
+
+    return { title, subtitle, cards: cards.slice(0, 3), index: idx + 1 };
+  });
+}
+
+function convertMarkdownOrTextToInteractiveSlideDeck(content, userPrompt = "") {
+  if (!content || typeof content !== 'string') return '';
+  const slides = parseMarkdownToSlides(content, userPrompt);
+  if (slides.length >= 2) {
+    const deckMeta = {
+      title: (userPrompt || "Executive Presentation Deck").slice(0, 40),
+      brand: "DJADI CREATIVE",
+      categoryTitle: (userPrompt || "PRESENTASI EKSEKUTIF").slice(0, 32).toUpperCase(),
+      version: "GSM v3.0",
+      accentColor: "#FF4D00"
+    };
+    return buildExecutiveSlideDeckHtml(slides, deckMeta);
+  }
+  return '';
+}
+
+function extractSlidesFromRawHtml(html) {
+  if (!html || typeof html !== "string") return [];
+  const slideRegex = /<(?:section|div|article)[^>]*class=["'](?=[^"']*(?:slide|presentation-slide|deck-slide|swiper-slide))[^"']*["'][^>]*>([\s\S]*?)<\/(?:section|div|article)>/gi;
+  let match;
+  const extracted = [];
+  while ((match = slideRegex.exec(html)) !== null) {
+    const slideContent = match[1];
+    const titleMatch = slideContent.match(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i);
+    const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, "").trim() : `Slide ${extracted.length + 1}`;
+    
+    const pMatches = [...slideContent.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map(m => m[1].replace(/<[^>]+>/g, "").trim());
+    let subtitle = "";
+    let pointTexts = [];
+    if (pMatches.length > 0) {
+      subtitle = pMatches[0];
+      pointTexts = pMatches.slice(1);
+    }
+
+    const liMatches = [...slideContent.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map(m => m[1].replace(/<[^>]+>/g, "").trim());
+    if (liMatches.length > 0) {
+      pointTexts.push(...liMatches);
+    }
+
+    const cards = [];
+    for (let p of pointTexts) {
+      if (cards.length >= 3) break;
+      const colon = p.indexOf(":");
+      const cTitle = colon > 0 ? p.slice(0, colon).trim() : p.slice(0, 30);
+      const cDesc = colon > 0 ? p.slice(colon + 1).trim() : p;
+      cards.push({
+        badge: `KARTU 0${cards.length + 1} // ANALISIS`,
+        title: cTitle,
+        desc: cDesc,
+        footerHighlight: cTitle.toUpperCase().slice(0, 30)
+      });
+    }
+
+    while (cards.length < 3) {
+      const cIdx = cards.length + 1;
+      cards.push({
+        badge: `KARTU 0${cIdx} // FOKUS STRATEGIS`,
+        title: `Pilar Eksekusi 0${cIdx}`,
+        desc: `Implementasi terukur dengan standar akurasi tinggi dan efisiensi maksimal pada tahap operasional.`,
+        footerHighlight: `OPTIMASI 0${cIdx}`
+      });
+    }
+
+    extracted.push({
+      title,
+      subtitle,
+      cards,
+      index: extracted.length + 1
+    });
+  }
+  return extracted;
+}
+
+function upgradeSlideDeckHtmlIfNeeded(html, userPrompt = "", meta = {}) {
+  if (!html || typeof html !== "string") return html;
+  
+  // If already has the executive sidebar and dock, return as-is
+  if (html.includes("deck-sidebar") && html.includes("deck-floating-dock")) {
+    return html;
+  }
+
+  // If HTML contains slide elements, upgrade to full executive layout
+  const extractedSlides = extractSlidesFromRawHtml(html);
+  if (extractedSlides.length >= 2) {
+    const deckMeta = {
+      title: meta?.title || (userPrompt || "Executive Presentation Deck").slice(0, 40),
+      brand: "DJADI CREATIVE",
+      categoryTitle: meta?.title || (userPrompt || "STRATEGI & IDENTITAS").slice(0, 32).toUpperCase(),
+      version: "GSM v3.0",
+      accentColor: "#FF4D00"
+    };
+    return buildExecutiveSlideDeckHtml(extractedSlides, deckMeta);
+  }
+
+  return html;
+}
+
 function extractHtmlArtifact(content) {
   if (!content) return { html: '', raw: '' };
   
