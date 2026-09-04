@@ -7943,21 +7943,359 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 // =========================================================================
 let activeDesignArtifact = null;
 
+function convertMarkdownOrTextToInteractiveSlideDeck(content, userPrompt = "") {
+  if (!content || typeof content !== 'string') return '';
+
+  const lowerContent = content.toLowerCase();
+  const lowerPrompt = (userPrompt || '').toLowerCase();
+  const isPresentationIntent = lowerPrompt.includes('ppt') || lowerPrompt.includes('slide') || 
+                               lowerPrompt.includes('presentasi') || lowerPrompt.includes('deck') || 
+                               lowerPrompt.includes('pdf') || lowerContent.includes('slide 1') || 
+                               lowerContent.includes('---');
+
+  if (!isPresentationIntent) return '';
+
+  let rawSlides = [];
+  if (content.includes('\n---\n') || content.includes('\n--- \n')) {
+    rawSlides = content.split(/\n---\s*\n/).map(s => s.trim()).filter(Boolean);
+  } else if (/Slide\s+\d+[:\s]/i.test(content)) {
+    rawSlides = content.split(/(?=Slide\s+\d+[:\s])/i).map(s => s.trim()).filter(Boolean);
+  } else if (/#+\s*Slide\s+\d+/i.test(content)) {
+    rawSlides = content.split(/(?=#+\s*Slide\s+\d+)/i).map(s => s.trim()).filter(Boolean);
+  } else {
+    const headingParts = content.split(/(?=^#{1,2}\s+)/m).map(s => s.trim()).filter(Boolean);
+    if (headingParts.length >= 3) {
+      rawSlides = headingParts;
+    }
+  }
+
+  if (rawSlides.length < 2) return '';
+
+  const parsedSlides = rawSlides.map((raw, idx) => {
+    const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+    let title = `Slide ${idx + 1}`;
+    let subtitle = '';
+    const points = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (i === 0 && (line.startsWith('#') || /^slide\s+\d+/i.test(line))) {
+        title = line.replace(/^#+\s*/, '').replace(/^slide\s+\d+[:\s-]*/i, '').trim() || title;
+      } else if (!subtitle && (line.toLowerCase().startsWith('subjudul:') || line.toLowerCase().startsWith('subtitle:'))) {
+        subtitle = line.replace(/^(subjudul|subtitle)[:\s-]*/i, '').trim();
+      } else if (line.startsWith('-') || line.startsWith('*') || line.startsWith('•') || /^\d+\./.test(line)) {
+        points.push(line.replace(/^[-*•\d.]+\s*/, '').trim());
+      } else if (line.length > 0 && !line.startsWith('<design_meta>')) {
+        if (!subtitle && points.length === 0) {
+          subtitle = line;
+        } else {
+          points.push(line);
+        }
+      }
+    }
+
+    return { title, subtitle, points, index: idx + 1 };
+  });
+
+  const deckTitle = parsedSlides[0]?.title || 'Presentasi Interaktif';
+
+  const slidesHtml = parsedSlides.map((s, idx) => `
+    <section class="slide ${idx === 0 ? 'active' : ''}" data-slide="${idx + 1}" id="slide-${idx + 1}">
+      <div class="slide-inner">
+        <header class="slide-header">
+          <span class="slide-tag">0${s.index} / 0${parsedSlides.length}</span>
+          <h2 class="slide-title">${escapeHtml(s.title)}</h2>
+          ${s.subtitle ? `<p class="slide-subtitle">${escapeHtml(s.subtitle)}</p>` : ''}
+        </header>
+        <div class="slide-body">
+          ${s.points.length > 0 ? `
+            <div class="slide-points-grid">
+              ${s.points.map((pt, pIdx) => `
+                <div class="slide-card">
+                  <div class="slide-card-num">${pIdx + 1}</div>
+                  <p class="slide-card-text">${escapeHtml(pt)}</p>
+                </div>
+              `).join('')}
+            </div>
+          ` : `
+            <div class="slide-cover-accent">
+              <div class="accent-glow"></div>
+              <p class="accent-tagline">${escapeHtml(s.subtitle || 'Dokumen Presentasi Interaktif')}</p>
+            </div>
+          `}
+        </div>
+      </div>
+    </section>
+  `).join('');
+
+  return `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(deckTitle)}</title>
+  <style>
+    :root {
+      --bg: #090A0F;
+      --card-bg: rgba(20, 22, 30, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #CEF128;
+      --accent-glow: rgba(206, 241, 40, 0.25);
+      --text: #F4F4F6;
+      --text-muted: #9CA3AF;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .deck-container {
+      flex: 1;
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.96) translateY(20px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1) translateY(0);
+    }
+    .slide-inner {
+      width: 100%;
+      max-width: 1100px;
+      aspect-ratio: 16 / 9;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      backdrop-filter: blur(20px);
+    }
+    .slide-header { margin-bottom: 28px; }
+    .slide-tag {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+    .slide-title {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #FFFFFF;
+      margin-bottom: 8px;
+    }
+    .slide-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .slide-body { flex: 1; display: flex; align-items: center; }
+    .slide-points-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      width: 100%;
+    }
+    .slide-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .slide-card-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(206, 241, 40, 0.12);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .slide-card-text {
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+    .slide-cover-accent {
+      width: 100%;
+      height: 180px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(206,241,40,0.1), rgba(56,189,248,0.05));
+      border: 1px solid var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .accent-tagline {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .deck-controls {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(15, 17, 23, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      backdrop-filter: blur(20px);
+      z-index: 100;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .btn-ctrl {
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-ctrl:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--accent);
+    }
+    .deck-counter {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 60px;
+      text-align: center;
+    }
+    @media print {
+      body { background: white !important; color: black !important; overflow: visible !important; }
+      .deck-controls { display: none !important; }
+      .deck-container { height: auto !important; }
+      .slide {
+        position: relative !important;
+        opacity: 1 !important;
+        transform: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        height: 100vh !important;
+        padding: 20px !important;
+      }
+      .slide-inner {
+        box-shadow: none !important;
+        background: #F8FAFC !important;
+        border: 1px solid #CBD5E1 !important;
+        color: #0F172A !important;
+      }
+      .slide-title { color: #0F172A !important; }
+      .slide-card { background: white !important; border: 1px solid #E2E8F0 !important; }
+      .slide-card-text { color: #1E293B !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck-container">
+    ${slidesHtml}
+  </div>
+
+  <div class="deck-controls">
+    <button type="button" class="btn-ctrl" id="btn-prev">← Prev</button>
+    <span class="deck-counter" id="deck-counter">1 / ${parsedSlides.length}</span>
+    <button type="button" class="btn-ctrl" id="btn-next">Next →</button>
+    <button type="button" class="btn-ctrl" onclick="window.print()">🖨️ PDF</button>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('deck-counter');
+    let currentIdx = 0;
+
+    function showSlide(idx) {
+      if (idx < 0) idx = 0;
+      if (idx >= slides.length) idx = slides.length - 1;
+      slides[currentIdx].classList.remove('active');
+      currentIdx = idx;
+      slides[currentIdx].classList.add('active');
+      if (counter) counter.textContent = (currentIdx + 1) + ' / ' + slides.length;
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => showSlide(currentIdx - 1));
+    document.getElementById('btn-next').addEventListener('click', () => showSlide(currentIdx + 1));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        showSlide(currentIdx + 1);
+      } else if (e.key === 'ArrowLeft') {
+        showSlide(currentIdx - 1);
+      }
+    });
+  </script>
+</body>
+</html>`;
+}
+
 function extractHtmlArtifact(content) {
   if (!content) return { html: '', raw: '' };
   
-  const codeBlockRegex = /```(?:html|xml)?\s*([\s\S]*?)```/gi;
+  // 1. Check code blocks with tag ```html, ```htm, ```xml, ```svg, ```web, or empty ```
+  const codeBlockRegex = /```(?:html|htm|xml|svg|web)?\s*([\s\S]*?)```/gi;
   let match;
   while ((match = codeBlockRegex.exec(content)) !== null) {
     const code = match[1].trim();
-    if (code.includes('<html') || code.includes('<!DOCTYPE') || code.includes('<div') || code.includes('<style')) {
+    if (code.includes('<html') || code.includes('<!DOCTYPE') || code.includes('<div') || 
+        code.includes('<style') || code.includes('<section') || code.includes('<main') || 
+        code.includes('<body') || code.includes('<script')) {
       return { html: code, raw: match[0] };
     }
   }
   
-  const rawHtmlMatch = content.match(/(<!DOCTYPE html>[\s\S]*?<\/html>|<html[\s\S]*?<\/html>)/i);
+  // 2. Check raw <!DOCTYPE html> ... </html> or <html ... </html>
+  const rawHtmlMatch = content.match(/(<!DOCTYPE html[\s\S]*?(?:<\/html>|$)|<html[\s\S]*?(?:<\/html>|$))/i);
   if (rawHtmlMatch) {
-    return { html: rawHtmlMatch[1].trim(), raw: rawHtmlMatch[0] };
+    let cleanHtml = rawHtmlMatch[1].trim();
+    if (!cleanHtml.includes('</html>')) {
+      cleanHtml += '\n</html>';
+    }
+    return { html: cleanHtml, raw: rawHtmlMatch[0] };
+  }
+
+  // 3. Check for standalone <div> or <svg> component
+  const rawComponentMatch = content.match(/(<(?:div|section|main|svg)[\s\S]*?<\/(?:div|section|main|svg)>)/i);
+  if (rawComponentMatch) {
+    return { html: rawComponentMatch[1].trim(), raw: rawComponentMatch[0] };
   }
 
   return { html: '', raw: '' };
@@ -8605,22 +8943,32 @@ function initOpenDesignCanvas() {
 const DESIGN_MODE_SYSTEM_PROMPT = `
 # ROLE: OPEN DESIGN MASTER ARCHITECT (BROWSER AGENT NATIVE)
 You are the native OpenDesign Master Architect in Browser Agent.
-Your goal is to turn user requirements, product ideas, briefs, or design requests into world-class, production-ready, beautiful user interfaces and web applications.
+Your goal is to turn user requirements, product ideas, briefs, slide requests, or design prompts into world-class, production-ready, beautiful, complete user interfaces and web documents.
 
-## 🎨 DESIGN SYSTEM RULES
+## 🎨 CORE DESIGN & ARCHITECTURE RULES
 1. Adhere to professional standards: high-contrast dark luxury or modern minimal style, clean typography, proper whitespace, accessibility contrast (AA/AAA).
 2. Write 100% complete, runnable, standalone HTML with internal <style> (or CDN Tailwind v4) and internal <script> for interactions.
-3. Never output truncated code (NO "<!-- rest of code here -->").
+3. Never output truncated code (NO "<!-- rest of code here -->", NO placeholders).
 4. Always wrap the complete HTML file in a single code block tagged \`\`\`html ... \`\`\`.
-5. At the very end of your response, output a structured metadata block:
+5. You are in Direct Design Generation mode. DO NOT produce tool-call schemas, JSON tool invocations, or ask clarifying questions. Provide the complete design directly.
+
+## 📑 PRESENTATION / SLIDE DECK / PPT / PDF DIRECTIVE
+If the user requests slides, presentations, PPT, PDF, pitch deck, or pages (e.g. "ppt slide pdf 10 halaman tentang kucing lucu"):
+1. Create a 16:9 widescreen interactive HTML5 presentation slide deck containing ALL requested slides (e.g. all 10 distinct slides) with rich, informative, engaging content.
+2. Structure each slide cleanly inside <section class="slide ..."> with title, subtitle, bento cards, content points, and slide number tags (e.g. 01 / 10).
+3. Include interactive navigation controls (<div class="deck-controls">) with Previous / Next buttons, slide counter display, and keyboard ArrowLeft / ArrowRight listener in <script>.
+4. Include @media print CSS styles so each slide prints on a clean, separate page (page-break-after: always; break-after: page; width: 100vw; height: 100vh;) when exported to PDF.
+
+## 📦 METADATA BLOCK
+At the very end of your response, output a structured metadata block:
 <design_meta>
 {
   "title": "Clean Descriptive Title",
-  "category": "Modern & Minimal | Dark Luxury | E-Commerce | SaaS | Fintech",
+  "category": "Modern & Minimal | Dark Luxury | Presentation / Deck | SaaS | E-Commerce",
   "system": "luxury | modern-minimal | apple | linear-app",
   "description": "1-sentence summary of the design layout and components",
   "colors": ["#090A0C", "#16181D", "#CEF128", "#FFFFFF"],
-  "tags": ["Landing Page", "Dark Luxury", "Responsive"]
+  "tags": ["Landing Page", "Dark Luxury", "Responsive", "Presentation"]
 }
 </design_meta>
 `;
@@ -8663,7 +9011,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   const assistantBubble = appendAssistantMessage(null, true, agentInfo);
   const contentEl = assistantBubble.querySelector('.message-content');
   
-  updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "Merancang Desain...", false, false);
+  updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "Merancang Arsitektur UI...", false, false);
 
   conversationHistory.push({
     role: "user",
@@ -8673,6 +9021,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   });
 
   let accumulatedContent = "";
+  let accumulatedReasoning = "";
+  let hasStartedContent = false;
 
   try {
     const endpointUrl = getNormalizedChatEndpoint(config.endpoint);
@@ -8699,10 +9049,19 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       } catch (e) {}
     }
 
-    const dynamicMasterPrompt = buildDynamicSystemPrompt([]) + `\n\n` + systemDirective;
+    // Clean, dedicated OpenDesign prompt (Free from Master Agent tool schemas & browser click SOPs)
+    let dynamicDesignPrompt = getDetailedCurrentTimeContext() + `\n\n` + systemDirective;
+
+    const mems = cachedPersistentMemory.user_memories || [];
+    if (mems.length > 0) {
+      dynamicDesignPrompt += `\n\n=== USER PREFERENCES & BRAND FACTS ===\n`;
+      mems.slice(0, 5).forEach((m, idx) => {
+        dynamicDesignPrompt += `${idx + 1}. [${(m.category || 'fact').toUpperCase()}] ${m.content}\n`;
+      });
+    }
 
     const messages = [
-      { role: "system", content: dynamicMasterPrompt },
+      { role: "system", content: dynamicDesignPrompt },
       ...sanitizeMessagesForApi(conversationHistory, true)
     ];
 
@@ -8793,8 +9152,23 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
           try {
             const jsonStr = trimmed.replace(/^data:\s*/, "");
             const chunk = JSON.parse(jsonStr);
-            const deltaContent = chunk.choices?.[0]?.delta?.content || chunk.choices?.[0]?.message?.content || "";
+            const delta = chunk.choices?.[0]?.delta || chunk.choices?.[0]?.message || {};
+            const deltaContent = delta.content || "";
+            const deltaReasoning = delta.reasoning_content || delta.reasoning || delta.thought || "";
+
+            if (deltaReasoning) {
+              accumulatedReasoning += deltaReasoning;
+              if (!hasStartedContent) {
+                const shortSnippet = accumulatedReasoning.slice(-60).replace(/[\r\n]+/g, ' ').trim();
+                updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", `🤔 Merancang UI... ${shortSnippet ? `(${shortSnippet})` : ''}`, false, false);
+              }
+            }
+
             if (deltaContent) {
+              if (!hasStartedContent) {
+                hasStartedContent = true;
+                updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "⚡ Menulis kode HTML5...", false, false);
+              }
               accumulatedContent += deltaContent;
               const cleanDisplay = accumulatedContent.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '').trim();
               updateAssistantText(assistantBubble, cleanDisplay || accumulatedContent, true);
@@ -8807,9 +9181,30 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       accumulatedContent = data.choices?.[0]?.message?.content || "";
     }
 
-    const artifact = extractHtmlArtifact(accumulatedContent);
+    let artifact = extractHtmlArtifact(accumulatedContent);
+
+    // Fallback: If no direct HTML block found, convert markdown slide outline to interactive HTML slide deck
+    if (!artifact.html && accumulatedContent.trim()) {
+      const convertedSlideHtml = convertMarkdownOrTextToInteractiveSlideDeck(accumulatedContent, userMessage);
+      if (convertedSlideHtml) {
+        artifact = {
+          html: convertedSlideHtml,
+          raw: convertedSlideHtml
+        };
+      }
+    }
+
     const meta = extractDesignMeta(accumulatedContent);
-    const cleanFinalText = accumulatedContent.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '').trim();
+    let cleanFinalText = accumulatedContent.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '').trim();
+
+    // Fallback if model returned empty content
+    if (!cleanFinalText && !artifact.html) {
+      if (accumulatedReasoning) {
+        cleanFinalText = `*Model selesai berpikir namun belum menghasilkan kode HTML lengkap. Catatan penalaran:*\n\n> ${accumulatedReasoning.slice(0, 400)}...`;
+      } else {
+        cleanFinalText = `*Model AI tidak mengembalikan respons teks atau kode desain. Silakan coba kembali atau gunakan model lain di Pengaturan.*`;
+      }
+    }
 
     updateAssistantText(assistantBubble, cleanFinalText || accumulatedContent, false);
 
@@ -8829,7 +9224,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       }
     }
 
-    updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "Selesai", false, true);
+    const finalStatusText = artifact.html ? "Selesai" : (cleanFinalText ? "Selesai" : "Respon Kosong");
+    updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", finalStatusText, false, true);
 
     conversationHistory.push({
       role: "assistant",
@@ -11849,6 +12245,8 @@ function sanitizeHistoryForStorage(history) {
     if (msg.tool_calls) clean.tool_calls = msg.tool_calls;
     if (msg.tool_call_id) clean.tool_call_id = msg.tool_call_id;
     if (msg.agentInfo) clean.agentInfo = msg.agentInfo;
+    if (msg.designArtifact) clean.designArtifact = msg.designArtifact;
+    if (msg.chatMode) clean.chatMode = msg.chatMode;
     return clean;
   });
 }
