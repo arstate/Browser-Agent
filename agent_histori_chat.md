@@ -5729,4 +5729,40 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Unit test Node.js ekstraksi slide HTML dan upgrade engine menghasilkan thumbnail miniatur 16:9 lengkap tanpa header "FELINE ARCHIVE".
   - Bump version to `v2.150.200`.
 
+---
+
+### 🚀 Iterasi 482: Bulletproof Slide Deck Navigation Engine, Zero-Emoji Submenu & Contextual WebSearch Thinking Guard (v2.150.201)
+- **Kebutuhan Pengguna**:
+  1. Memperbaiki interaksi perpindahan slide pada deck presentasi (`kalau di klik klik ini harus nya berfungsi bro pindah halaman slidenya sekarang masih gabisa coba lo fix`) di mana klik pada thumbnail sidebar (1–10), tombol Previous `<`, tombol Next `>`, dan tombol `Atur ulang R` sebelumnya tidak merespons atau melompati slide.
+  2. Menghapus ikon emoji (`🖥️`, `🌐`, `📊`) dari flyout submenu opsi Design (`hapus icon ini bro`).
+  3. Menyembunyikan menu pemicu Thinking saat berada pada mode Web Search (`hapus pilihan menu thingking kalau di mode websearch`).
+- **Akar Masalah (Root Cause)**:
+  1. *Slide Deck Click Interception & Listener Conflicts*:
+     - Klik mouse pada tombol dock mengenai child elemen SVG/`<polyline>` di dalam tombol, sementara klik pada thumbnail mengenai elemen `.thumb-card` atau `.thumb-num`.
+     - Terdapat konflik multiple listeners (inline `onclick` + direct listener + document listener) yang memicu *double invocation*, menyebabkan penambahan indeks ganda (`0 -> 1 -> 2`) dan melompati slide.
+     - Parameter indeks pada `goToSlide` belum disanitasi secara ketat dengan `parseInt()`, berisiko memicu string concatenation (`"1" + 1 = "11"`) atau TypeError pada `slides[undefined]`.
+  2. *Submenu Visual Noise*: Submenu mode Design masih menyertakan icon emoji yang melanggar standar estetika minimalis.
+  3. *WebSearch Thinking Visibility*: Mode `websearch` sebelumnya tidak menyembunyikan wrapper `#thinking-level-dropup-wrapper`.
+- **Implementasi & Peningkatan**:
+  - **Bulletproof Slide Deck Navigation di [design/slide_deck_engine.js](file:///home/arya/browser-agent/extension/design/slide_deck_engine.js)**:
+    - *Single-Source-of-Truth Event Delegation*: Menghapus semua inline `onclick` dan direct listener individual yang bertumpuk. Seluruh klik ditangani oleh satu event listener global `document.addEventListener('click')` dengan `e.target.closest()` untuk `.thumb-item`, `#dock-btn-prev`, `#dock-btn-next`, dan `#dock-btn-reset`.
+    - *CSS Pointer-Events Hardening*: Menerapkan `.dock-btn * { pointer-events: none; }` dan `.thumb-item * { pointer-events: none; }` serta `user-select: none;` sehingga target klik selalu terdelegasi tepat ke kontainer utama.
+    - *Strict CSS Display Rules*: Memperbarui `.slide-section { display: none !important; }` dan `.slide-section.active { display: flex !important; opacity: 1 !important; transform: scale(1) !important; }`.
+    - *Safe Integer Sanitizer & Boundary Guard*: Sanitasi input `idx = parseInt(targetIdx, 10)` dengan `Math.max(0, slides.length - 1)`, serta sinkronisasi class aktif via `classList.toggle('active', i === idx)` untuk mencegah orphaned active state.
+    - *Global Scope & Omni-Channel Bridge*: Mengekspor `window.goToSlide` dan `window.currentIndex`, mendukung keyboard navigation (ArrowLeft, ArrowRight, Enter, Space, R, P, F), dan listener `window.addEventListener('message')` (`GO_TO_SLIDE`).
+  - **Zero-Emoji Flyout Submenu di [sidepanel.html](file:///home/arya/browser-agent/extension/sidepanel.html) & [newtab.html](file:///home/arya/browser-agent/extension/newtab.html)**:
+    - Menghapus `<span class="subopt-icon">🖥️</span>`, `<span class="subopt-icon">🌐</span>`, dan `<span class="subopt-icon">📊</span>` dari `.chat-mode-submenu`.
+  - **Contextual WebSearch Thinking Menu Guard di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js)**:
+    - Memperbarui `setChatMode`: Saat `mode === 'websearch'`, `thinkingWrapper.style.display = 'none'`. Saat `mode === 'design'`, `thinkingWrapper.style.display = 'inline-flex'` di `.chat-input-header-right`. Saat `mode === 'agent'` atau `'chat'`, `thinkingWrapper.style.display = 'inline-flex'` di `.chat-input-header-left`.
+- **Pengujian & Verifikasi**:
+  - Validasi sintaks `node -c` pada seluruh file extension lolos dengan 0 error.
+  - Pengujian headless Chrome CDP interaktif pada iframe sandboxed:
+    * Next button click 1: `slide-0` -> `slide-1` (counter: 2) - PASS.
+    * Next button click 2: `slide-1` -> `slide-2` (counter: 3) - PASS.
+    * Reset button click: `slide-2` -> `slide-0` (counter: 1) - PASS.
+    * Inner child click (`.thumb-card`): `slide-0` -> `slide-1` (counter: 2) - PASS.
+    * Prev button click: `slide-1` -> `slide-0` (counter: 1) - PASS.
+    * Inner number click (`.thumb-num`): `slide-0` -> `slide-2` (counter: 3) - PASS.
+  - Bump version to `v2.150.201`.
+
 

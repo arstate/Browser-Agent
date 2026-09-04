@@ -207,6 +207,10 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       cursor: pointer;
       opacity: 0.65;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+    .thumb-item * {
+      pointer-events: none;
     }
     .thumb-item:hover { opacity: 0.95; }
     .thumb-item.active { opacity: 1; }
@@ -353,7 +357,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     }
 
     .slide-section {
-      display: none;
+      display: none !important;
       width: 100%;
       height: 100%;
       max-width: 1220px;
@@ -364,9 +368,9 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       transition: opacity 0.2s ease, transform 0.2s ease;
     }
     .slide-section.active {
-      display: flex;
-      opacity: 1;
-      transform: scale(1);
+      display: flex !important;
+      opacity: 1 !important;
+      transform: scale(1) !important;
     }
 
     .slide-canvas {
@@ -569,6 +573,9 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       font-weight: 600;
       transition: all 0.15s;
     }
+    .dock-btn * {
+      pointer-events: none;
+    }
     .dock-btn:hover {
       background: rgba(255, 255, 255, 0.12);
       color: var(--accent);
@@ -688,57 +695,98 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   </div>
 
   <script>
-    const slides = document.querySelectorAll('.slide-section');
-    const thumbs = document.querySelectorAll('.thumb-item');
-    const currSlideEl = document.getElementById('dock-curr-slide');
-    const sidebarEl = document.getElementById('deck-sidebar');
-    let currentIndex = 0;
+    (function() {
+      const slides = Array.from(document.querySelectorAll('.slide-section'));
+      const thumbs = Array.from(document.querySelectorAll('.thumb-item'));
+      const currSlideEl = document.getElementById('dock-curr-slide');
+      let currentIndex = 0;
+      window.currentIndex = 0;
 
-    function goToSlide(idx) {
-      if (idx < 0) idx = 0;
-      if (idx >= slides.length) idx = slides.length - 1;
-      
-      slides[currentIndex].classList.remove('active');
-      thumbs[currentIndex]?.classList.remove('active');
-      
-      currentIndex = idx;
-      
-      slides[currentIndex].classList.add('active');
-      if (thumbs[currentIndex]) {
-        thumbs[currentIndex].classList.add('active');
-        thumbs[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-      
-      if (currSlideEl) {
-        currSlideEl.textContent = currentIndex + 1;
-      }
-    }
+      function goToSlide(targetIdx) {
+        let idx = parseInt(targetIdx, 10);
+        if (isNaN(idx)) idx = 0;
+        if (idx < 0) idx = 0;
+        if (idx >= slides.length) idx = Math.max(0, slides.length - 1);
 
-    document.getElementById('dock-btn-prev')?.addEventListener('click', () => goToSlide(currentIndex - 1));
-    document.getElementById('dock-btn-next')?.addEventListener('click', () => goToSlide(currentIndex + 1));
-    document.getElementById('dock-btn-reset')?.addEventListener('click', () => goToSlide(0));
+        currentIndex = idx;
+        window.currentIndex = idx;
 
-    thumbs.forEach((t, i) => {
-      t.addEventListener('click', () => goToSlide(i));
-    });
+        for (let i = 0; i < slides.length; i++) {
+          slides[i].classList.toggle('active', i === idx);
+        }
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
-        goToSlide(currentIndex + 1);
-      } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
-        goToSlide(currentIndex - 1);
-      } else if (e.key === 'r' || e.key === 'R') {
-        goToSlide(0);
-      } else if (e.key === 'p' || e.key === 'P') {
-        window.print();
-      } else if (e.key === 'f' || e.key === 'F') {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-          document.exitFullscreen().catch(() => {});
+        for (let i = 0; i < thumbs.length; i++) {
+          const isActive = (i === idx);
+          thumbs[i].classList.toggle('active', isActive);
+          if (isActive) {
+            try {
+              thumbs[i].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } catch (_) {}
+          }
+        }
+
+        if (currSlideEl) {
+          currSlideEl.textContent = String(idx + 1);
         }
       }
-    });
+
+      window.goToSlide = goToSlide;
+
+      // Event delegation on document (single source of truth, robust against child element clicks)
+      document.addEventListener('click', function(e) {
+        const thumb = e.target.closest('.thumb-item');
+        if (thumb) {
+          e.preventDefault();
+          const target = thumb.getAttribute('data-target') || thumb.id.replace('thumb-', '');
+          goToSlide(target);
+          return;
+        }
+        const prevBtn = e.target.closest('#dock-btn-prev');
+        if (prevBtn) {
+          e.preventDefault();
+          goToSlide(currentIndex - 1);
+          return;
+        }
+        const nextBtn = e.target.closest('#dock-btn-next');
+        if (nextBtn) {
+          e.preventDefault();
+          goToSlide(currentIndex + 1);
+          return;
+        }
+        const resetBtn = e.target.closest('#dock-btn-reset');
+        if (resetBtn) {
+          e.preventDefault();
+          goToSlide(0);
+          return;
+        }
+      });
+
+      // Keyboard navigation
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+          goToSlide(currentIndex + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+          goToSlide(currentIndex - 1);
+        } else if (e.key === 'r' || e.key === 'R') {
+          goToSlide(0);
+        } else if (e.key === 'p' || e.key === 'P') {
+          window.print();
+        } else if (e.key === 'f' || e.key === 'F') {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen().catch(() => {});
+          }
+        }
+      });
+
+      // Window postMessage bridge for parent iframe communication
+      window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'GO_TO_SLIDE') {
+          goToSlide(e.data.index);
+        }
+      });
+    })();
   </script>
 </body>
 </html>`;

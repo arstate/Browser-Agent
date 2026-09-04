@@ -416,4 +416,19 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Miniatur `.thumb-card` (108px x 60.75px) beresolusi 16:9 memuat representasi nyata dari slide (`.thumb-mini-slide`, 864px x 486px scaled `0.125`).
    - Active state `.thumb-item.active .thumb-card` memiliki border putih solid (`#FFFFFF`) dan bayangan lembut (`box-shadow: 0 0 14px rgba(255, 255, 255, 0.35)`).
 
+---
+
+## 🎮 17. Bulletproof Slide Deck Navigation & UI Cleanliness Standard (v2.150.201)
+
+1. **Single-Source Event Delegation Navigation**:
+   - Menggunakan delegasi event tunggal pada level dokumen iframe (`document.addEventListener('click')`) yang mencocokkan target melalui `e.target.closest()`.
+   - Mengeliminasi double-invocation / skipping slide yang sebelumnya terjadi akibat tumpukan inline `onclick` dan element listener ganda.
+   - Child click interception diatasi secara tuntas melalui CSS `.thumb-item * { pointer-events: none; }` dan `.dock-btn * { pointer-events: none; }`.
+2. **Zero-Emoji Flyout Submenu Protocol**:
+   - Menghilangkan semua ikon emoji (`🖥️`, `🌐`, `📊`) dari flyout submenu opsi Design di `sidepanel.html` dan `newtab.html`.
+   - Tampilan flyout submenu kini mengusung tipografi murni (*clean text & status badge*) dengan gaya minimalis gelap mewah.
+3. **Contextual Thinking Visibility Guard**:
+   - Menu Thinking (`#thinking-level-dropup-wrapper`) otomatis disembunyikan (`display: none`) saat berpindah ke mode `Web Search`.
+   - Tetap aktif dan tertata rapi (`display: inline-flex`) pada mode `Agent`, `Chat`, dan `Design`.
+
 

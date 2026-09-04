@@ -7379,6 +7379,7 @@ function setChatMode(mode) {
     if (executionModeWrapper) executionModeWrapper.style.display = 'none';
     if (searchEngineWrapper) searchEngineWrapper.style.display = 'none';
     if (dsDropupWrapper) dsDropupWrapper.style.display = 'inline-flex';
+    if (thinkingWrapper) thinkingWrapper.style.display = 'inline-flex';
     if (headerRight && thinkingWrapper && thinkingWrapper.parentElement !== headerRight) {
       headerRight.appendChild(thinkingWrapper);
     }
@@ -7387,14 +7388,13 @@ function setChatMode(mode) {
     if (executionModeWrapper) executionModeWrapper.style.display = 'none';
     if (searchEngineWrapper) searchEngineWrapper.style.display = 'inline-flex';
     if (dsDropupWrapper) dsDropupWrapper.style.display = 'none';
-    if (headerLeft && thinkingWrapper && thinkingWrapper.parentElement !== headerLeft) {
-      headerLeft.appendChild(thinkingWrapper);
-    }
+    if (thinkingWrapper) thinkingWrapper.style.display = 'none';
   } else {
     if (switchTabWrapper) switchTabWrapper.style.display = 'inline-flex';
     if (executionModeWrapper) executionModeWrapper.style.display = 'inline-flex';
     if (searchEngineWrapper) searchEngineWrapper.style.display = 'none';
     if (dsDropupWrapper) dsDropupWrapper.style.display = 'none';
+    if (thinkingWrapper) thinkingWrapper.style.display = 'inline-flex';
     // Di mode agent & chat: tombol thinking tetep berada di samping kanan tombol mode di sisi kiri
     if (headerLeft && thinkingWrapper && thinkingWrapper.parentElement !== headerLeft) {
       headerLeft.appendChild(thinkingWrapper);
