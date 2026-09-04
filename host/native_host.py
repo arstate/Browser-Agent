@@ -16,6 +16,8 @@ import datetime
 import shutil
 import uuid
 import re
+import socket
+import tempfile
 
 LOG_FILE = "/tmp/browser_agent_host.log"
 if sys.platform == "win32":
@@ -3357,6 +3359,358 @@ def sync_epistemic_graph_markdown():
             except Exception: pass
 
 # ==========================================
+# OpenDesign Zero-Config & Bridge Integration
+# ==========================================
+OD_CLI_PATHS = [
+    "/home/arya/.local/bin/od",
+    os.path.expanduser("~/.local/bin/od"),
+    shutil.which("od") or ""
+]
+OD_DEFAULT_PORT = 7456
+OD_PROJECTS_DIR = os.path.expanduser("~/Projects/open-design")
+OD_DESIGN_SYSTEMS_DIR = os.path.join(OD_PROJECTS_DIR, "design-systems")
+
+_od_design_systems_cache = None
+_od_cached_timestamp = 0
+
+def get_od_cli_path():
+    for p in OD_CLI_PATHS:
+        if p and os.path.isfile(p) and os.access(p, os.X_OK):
+            return p
+    found = shutil.which("od")
+    if found:
+        return found
+    return "/home/arya/.local/bin/od"
+
+def is_od_daemon_alive(host="127.0.0.1", port=OD_DEFAULT_PORT):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.3)
+        s.connect((host, port))
+        s.close()
+        return True
+    except Exception:
+        return False
+
+def ensure_od_daemon(port=OD_DEFAULT_PORT, max_wait_sec=7):
+    if is_od_daemon_alive(port=port):
+        return {
+            "status": "ok",
+            "daemon_running": True,
+            "port": port,
+            "started": False,
+            "message": "OpenDesign daemon is already active"
+        }
+    
+    cli = get_od_cli_path()
+    if not os.path.exists(cli):
+        return {
+            "status": "error",
+            "daemon_running": False,
+            "error": f"OpenDesign CLI not found at {cli}"
+        }
+        
+    try:
+        log(f"Starting OpenDesign daemon via {cli} --port {port} --no-open...")
+        env = os.environ.copy()
+        env["ONNXRUNTIME_NODE_INSTALL_CUDA"] = "skip"
+        cwd_dir = OD_PROJECTS_DIR if os.path.exists(OD_PROJECTS_DIR) else os.path.expanduser("~")
+        subprocess.Popen(
+            [cli, "--port", str(port), "--no-open"],
+            cwd=cwd_dir,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+            env=env
+        )
+        
+        start_time = time.time()
+        while time.time() - start_time < max_wait_sec:
+            if is_od_daemon_alive(port=port):
+                log(f"OpenDesign daemon started successfully on port {port} in {time.time() - start_time:.2f}s")
+                return {
+                    "status": "ok",
+                    "daemon_running": True,
+                    "port": port,
+                    "started": True,
+                    "message": "OpenDesign daemon started successfully"
+                }
+            time.sleep(0.25)
+            
+        alive = is_od_daemon_alive(port=port)
+        return {
+            "status": "ok" if alive else "warning",
+            "daemon_running": alive,
+            "port": port,
+            "started": alive,
+            "message": "Daemon active" if alive else "Daemon launch command dispatched, still initializing"
+        }
+    except Exception as e:
+        log(f"Failed to launch OpenDesign daemon: {e}")
+        return {
+            "status": "error",
+            "daemon_running": False,
+            "error": str(e)
+        }
+
+def get_od_status(port=OD_DEFAULT_PORT):
+    cli = get_od_cli_path()
+    cli_exists = os.path.exists(cli)
+    daemon_running = is_od_daemon_alive(port=port)
+    systems_exist = os.path.exists(OD_DESIGN_SYSTEMS_DIR)
+    total_systems = 0
+    if systems_exist:
+        try:
+            total_systems = len([d for d in os.listdir(OD_DESIGN_SYSTEMS_DIR) if os.path.isdir(os.path.join(OD_DESIGN_SYSTEMS_DIR, d)) and not d.startswith("_")])
+        except Exception:
+            pass
+            
+    return {
+        "status": "ok",
+        "cli_available": cli_exists,
+        "cli_path": cli,
+        "daemon_running": daemon_running,
+        "port": port,
+        "projects_dir": OD_PROJECTS_DIR,
+        "design_systems_available": systems_exist,
+        "total_design_systems": total_systems
+    }
+
+def list_od_design_systems():
+    global _od_design_systems_cache, _od_cached_timestamp
+    if _od_design_systems_cache and (time.time() - _od_cached_timestamp < 300):
+        return _od_design_systems_cache
+        
+    if not os.path.exists(OD_DESIGN_SYSTEMS_DIR):
+        return {"status": "error", "error": f"Design systems dir not found: {OD_DESIGN_SYSTEMS_DIR}"}
+        
+    systems = []
+    categories = set()
+    try:
+        for item in sorted(os.listdir(OD_DESIGN_SYSTEMS_DIR)):
+            if item.startswith("_"):
+                continue
+            mpath = os.path.join(OD_DESIGN_SYSTEMS_DIR, item, "manifest.json")
+            if os.path.isfile(mpath):
+                try:
+                    with open(mpath, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        cat = data.get("category", "General")
+                        categories.add(cat)
+                        systems.append({
+                            "id": data.get("id", item),
+                            "name": data.get("name", item.replace("-", " ").title()),
+                            "category": cat,
+                            "description": data.get("description", "")
+                        })
+                except Exception:
+                    pass
+        res = {
+            "status": "ok",
+            "total": len(systems),
+            "categories": sorted(list(categories)),
+            "systems": systems
+        }
+        _od_design_systems_cache = res
+        _od_cached_timestamp = time.time()
+        return res
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+def get_od_design_system_detail(slug):
+    if not slug:
+        return {"status": "error", "error": "No slug provided"}
+    sdir = os.path.join(OD_DESIGN_SYSTEMS_DIR, slug)
+    if not os.path.exists(sdir):
+        return {"status": "error", "error": f"Design system '{slug}' not found"}
+        
+    detail = {"id": slug}
+    manifest_path = os.path.join(sdir, "manifest.json")
+    if os.path.isfile(manifest_path):
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                detail["manifest"] = json.load(f)
+        except Exception:
+            pass
+            
+    design_md_path = os.path.join(sdir, "DESIGN.md")
+    if os.path.isfile(design_md_path):
+        try:
+            with open(design_md_path, "r", encoding="utf-8", errors="replace") as f:
+                detail["design_md"] = f.read()
+        except Exception:
+            pass
+            
+    tokens_css_path = os.path.join(sdir, "tokens.css")
+    if os.path.isfile(tokens_css_path):
+        try:
+            with open(tokens_css_path, "r", encoding="utf-8", errors="replace") as f:
+                detail["tokens_css"] = f.read()
+        except Exception:
+            pass
+            
+    return {"status": "ok", "system": detail}
+
+def get_od_directions(direction_id=None):
+    cli = get_od_cli_path()
+    try:
+        cmd = [cli, "tools", "directions"]
+        if direction_id:
+            cmd.extend(["--id", str(direction_id)])
+        else:
+            cmd.append("--json")
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        if proc.returncode == 0:
+            if direction_id:
+                return {"status": "ok", "direction_id": str(direction_id), "detail": proc.stdout}
+            else:
+                try:
+                    return {"status": "ok", "directions": json.loads(proc.stdout)}
+                except Exception:
+                    return {"status": "ok", "raw_output": proc.stdout}
+        else:
+            return {"status": "error", "error": proc.stderr or proc.stdout}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+def lint_od_artifact(html_content="", file_path=None):
+    ensure_od_daemon()
+    cli = get_od_cli_path()
+    
+    tmp_path = None
+    target_path = file_path
+    try:
+        if not target_path:
+            if not html_content:
+                return {"status": "error", "error": "No HTML content or file path provided"}
+            tmp_f = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".html", delete=False)
+            tmp_f.write(html_content)
+            tmp_f.close()
+            tmp_path = tmp_f.name
+            target_path = tmp_path
+            
+        cmd = [cli, "lint", target_path, "--json"]
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        if proc.stdout.strip():
+            try:
+                data = json.loads(proc.stdout)
+                return {
+                    "status": "ok",
+                    "lint": data,
+                    "findings": data.get("findings", []),
+                    "clean": data.get("ok", True)
+                }
+            except Exception:
+                return {"status": "ok", "raw_output": proc.stdout}
+        return {"status": "error", "error": proc.stderr or "Lint produced no output"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+
+def ensure_od_project(project_id="browser-agent-workspace", name="Browser Agent Workspace"):
+    try:
+        import urllib.request
+        req = urllib.request.Request(f"http://127.0.0.1:{OD_DEFAULT_PORT}/api/projects")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            for p in data.get("projects", []):
+                if p.get("id") == project_id or p.get("name") == name:
+                    return p.get("id")
+                    
+        payload = json.dumps({"id": project_id, "name": name}).encode('utf-8')
+        post_req = urllib.request.Request(
+            f"http://127.0.0.1:{OD_DEFAULT_PORT}/api/projects",
+            data=payload,
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(post_req, timeout=3) as resp:
+            res_data = json.loads(resp.read().decode('utf-8'))
+            return res_data.get("project", {}).get("id", project_id)
+    except Exception as e:
+        log(f"Notice in ensure_od_project: {e}")
+        return project_id
+
+def export_od_artifact(file_path="", html_content="", project_id="browser-agent-workspace", format_type="html", out_path=None):
+    ensure_od_daemon()
+    cli = get_od_cli_path()
+    
+    tmp_input_created = False
+    input_file = file_path
+    
+    try:
+        if not input_file:
+            if not html_content:
+                return {"status": "error", "error": "No file_path or html_content provided"}
+            tmp_f = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".html", delete=False)
+            tmp_f.write(html_content)
+            tmp_f.close()
+            input_file = tmp_f.name
+            tmp_input_created = True
+            
+        if not os.path.exists(input_file):
+            return {"status": "error", "error": f"Artifact file not found: {input_file}"}
+            
+        active_proj = ensure_od_project(project_id=project_id)
+        
+        # Ingest artifact into project
+        ingest_cmd = [cli, "artifacts", "create", "--name", "index.html", "--input", input_file, "--project", active_proj]
+        subprocess.run(ingest_cmd, capture_output=True, text=True, timeout=15)
+        
+        # If out_path not specified, suggest one in /tmp
+        if not out_path:
+            ext = format_type
+            if format_type == "image":
+                ext = "png"
+            out_path = f"/tmp/od_export_{int(time.time())}.{ext}"
+            
+        export_cmd = [cli, "export", "index.html", "--project", active_proj, "--format", format_type, "--out", out_path, "--json"]
+        proc = subprocess.run(export_cmd, capture_output=True, text=True, timeout=30)
+        
+        if proc.stdout.strip():
+            try:
+                data = json.loads(proc.stdout)
+                return {
+                    "status": "ok",
+                    "export": data,
+                    "out_path": out_path,
+                    "format": format_type,
+                    "file_size": os.path.getsize(out_path) if os.path.exists(out_path) else 0
+                }
+            except Exception:
+                return {"status": "ok", "raw_output": proc.stdout, "out_path": out_path}
+                
+        return {"status": "error", "error": proc.stderr or "Export produced no output"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+    finally:
+        if tmp_input_created and os.path.exists(input_file):
+            try:
+                os.remove(input_file)
+            except Exception:
+                pass
+
+def run_od_cli(args, timeout=30):
+    cli = get_od_cli_path()
+    if not isinstance(args, list):
+        args = [str(args)]
+    try:
+        cmd = [cli] + args
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return {
+            "status": "ok",
+            "stdout": proc.stdout,
+            "stderr": proc.stderr,
+            "exit_code": proc.returncode
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+# ==========================================
 # Local PC RPC Handlers (File & Command Access & SQLite)
 # ==========================================
 def handle_local_rpc(msg):
@@ -3373,6 +3727,66 @@ def handle_local_rpc(msg):
             "cwd": os.getcwd(),
             "db_path": DB_PATH
         }
+
+    # OpenDesign Native Bridge RPC Handlers
+    elif action == "od_get_status":
+        port = int(msg.get("port", OD_DEFAULT_PORT))
+        res = get_od_status(port=port)
+        res["id"] = req_id
+        return res
+
+    elif action == "od_ensure_daemon":
+        port = int(msg.get("port", OD_DEFAULT_PORT))
+        res = ensure_od_daemon(port=port)
+        res["id"] = req_id
+        return res
+
+    elif action == "od_list_design_systems":
+        res = list_od_design_systems()
+        res["id"] = req_id
+        return res
+
+    elif action == "od_get_design_system":
+        slug = msg.get("slug") or msg.get("system_id") or msg.get("name") or ""
+        res = get_od_design_system_detail(slug)
+        res["id"] = req_id
+        return res
+
+    elif action == "od_get_directions":
+        direction_id = msg.get("direction_id") or msg.get("dir_id") or None
+        res = get_od_directions(direction_id=direction_id)
+        res["id"] = req_id
+        return res
+
+    elif action == "od_lint_artifact":
+        html_content = msg.get("html_content") or msg.get("html") or ""
+        file_path = msg.get("file_path") or msg.get("path") or None
+        res = lint_od_artifact(html_content=html_content, file_path=file_path)
+        res["id"] = req_id
+        return res
+
+    elif action == "od_export_artifact":
+        file_path = msg.get("file_path") or msg.get("file") or ""
+        html_content = msg.get("html_content") or msg.get("html") or ""
+        project_id = msg.get("project_id") or "browser-agent-workspace"
+        format_type = msg.get("format") or "html"
+        out_path = msg.get("out_path") or msg.get("out") or None
+        res = export_od_artifact(
+            file_path=file_path,
+            html_content=html_content,
+            project_id=project_id,
+            format_type=format_type,
+            out_path=out_path
+        )
+        res["id"] = req_id
+        return res
+
+    elif action == "od_run_cli":
+        args = msg.get("args") or []
+        timeout = msg.get("timeout", 30)
+        res = run_od_cli(args, timeout=timeout)
+        res["id"] = req_id
+        return res
 
     # Persistent Memory RPC Actions
     elif action == "db_get_persistent_memory":
