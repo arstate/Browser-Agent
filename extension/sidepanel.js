@@ -8329,6 +8329,42 @@ function extractDesignMeta(content) {
   return meta;
 }
 
+function getCleanDesignSummaryText(rawText = "", artifact = null, userPrompt = "") {
+  const meta = artifact?.meta || extractDesignMeta(rawText);
+  const title = meta?.title || "Rancangan Antarmuka";
+  const promptLower = (userPrompt || "").toLowerCase();
+  
+  // 1. Ekstrak teks alami yang mungkin ada di luar blok kode ```html ... ``` dan <design_meta>
+  let outsideText = (rawText || "")
+    .replace(/```(?:html|htm|xml|svg|web)?[\s\S]*?```/gi, '')
+    .replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '')
+    .trim();
+
+  // Bersihkan teks log atau baris debugging sisa
+  outsideText = outsideText
+    .replace(/→\s*skipped:[\s\S]*/gi, '')
+    .replace(/```[\s\S]*?```/gi, '')
+    .trim();
+
+  // Jika ada teks pengantar singkat yang wajar (< 220 karakter) dari AI, gunakan
+  if (outsideText && outsideText.length > 8 && outsideText.length < 220 && !outsideText.includes('<!DOCTYPE') && !outsideText.includes('<html')) {
+    return `✨ **${escapeHtml(title)}**\n\n${outsideText}`;
+  }
+
+  // 2. Format respon ringkas dan clean berdasarkan tipe permintaan
+  const isSlide = promptLower.includes('ppt') || promptLower.includes('slide') || 
+                  promptLower.includes('pdf') || promptLower.includes('presentasi') || 
+                  promptLower.includes('deck') || (meta.tags || []).some(t => /slide|deck|presentation/i.test(t));
+
+  if (isSlide) {
+    const slideMatch = (userPrompt || "").match(/(\d+)\s*(?:slide|halaman|page)/i);
+    const countText = slideMatch ? `${slideMatch[1]} slide` : '10 slide';
+    return `✨ Slide deck presentasi **${escapeHtml(title)}** (${countText} interaktif) telah selesai dibuat dan siap dipratinjau di Canvas atau diekspor ke PDF.`;
+  }
+
+  return `✨ Rancangan antarmuka **${escapeHtml(title)}** telah selesai dibuat dan siap dipratinjau di Canvas Workspace.`;
+}
+
 function showUniversalToast(message, duration = 3000) {
   let toast = document.getElementById('universal-action-toast');
   if (!toast) {
@@ -9167,11 +9203,15 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
             if (deltaContent) {
               if (!hasStartedContent) {
                 hasStartedContent = true;
-                updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "⚡ Menulis kode HTML5...", false, false);
+                updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "⚡ Menyusun rancangan...", false, false);
               }
               accumulatedContent += deltaContent;
-              const cleanDisplay = accumulatedContent.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '').trim();
-              updateAssistantText(assistantBubble, cleanDisplay || accumulatedContent, true);
+              const kb = (accumulatedContent.length / 1024).toFixed(1);
+              const isSlideReq = /ppt|slide|pdf|deck|presentasi/i.test(userMessage);
+              const liveProgressText = isSlideReq
+                ? `*⚡ Sedang merancang slide deck & tata letak visual (${kb} KB)...*\n\n> Slide deck interaktif akan otomatis ditampilkan di kartu pratinjau Canvas setelah selesai.`
+                : `*⚡ Sedang menyusun arsitektur komponen & token visual (${kb} KB)...*\n\n> Rancangan antarmuka akan otomatis ditampilkan di kartu pratinjau Canvas setelah selesai.`;
+              updateAssistantText(assistantBubble, liveProgressText, true);
             }
           } catch (err) {}
         }
@@ -9195,25 +9235,25 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     }
 
     const meta = extractDesignMeta(accumulatedContent);
-    let cleanFinalText = accumulatedContent.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '').trim();
 
-    // Fallback if model returned empty content
-    if (!cleanFinalText && !artifact.html) {
-      if (accumulatedReasoning) {
-        cleanFinalText = `*Model selesai berpikir namun belum menghasilkan kode HTML lengkap. Catatan penalaran:*\n\n> ${accumulatedReasoning.slice(0, 400)}...`;
-      } else {
-        cleanFinalText = `*Model AI tidak mengembalikan respons teks atau kode desain. Silakan coba kembali atau gunakan model lain di Pengaturan.*`;
-      }
+    // Clean summary response for chat (Anti-Nyampah: No raw HTML code dumps in chat room!)
+    let briefSummaryText = "";
+    if (artifact.html) {
+      briefSummaryText = getCleanDesignSummaryText(accumulatedContent, { meta }, userMessage);
+    } else {
+      let cleanFallback = accumulatedContent.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '').trim();
+      briefSummaryText = cleanFallback || "*Model AI tidak mengembalikan respons desain yang lengkap.*";
     }
 
-    updateAssistantText(assistantBubble, cleanFinalText || accumulatedContent, false);
+    updateAssistantText(assistantBubble, briefSummaryText, false);
 
     if (artifact.html && contentEl) {
       const fullArtifact = {
         html: artifact.html,
         raw: artifact.raw,
         meta,
-        content: cleanFinalText
+        content: briefSummaryText,
+        rawContent: accumulatedContent
       };
       activeDesignArtifact = fullArtifact;
       window.__activeDesignArtifact = fullArtifact;
@@ -9224,14 +9264,15 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       }
     }
 
-    const finalStatusText = artifact.html ? "Selesai" : (cleanFinalText ? "Selesai" : "Respon Kosong");
+    const finalStatusText = artifact.html ? "Selesai" : (briefSummaryText ? "Selesai" : "Respon Kosong");
     updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", finalStatusText, false, true);
 
     conversationHistory.push({
       role: "assistant",
-      content: cleanFinalText || accumulatedContent,
+      content: briefSummaryText,
+      rawContent: accumulatedContent,
       agentInfo: agentInfo,
-      designArtifact: artifact.html ? { html: artifact.html, meta } : null,
+      designArtifact: artifact.html ? { html: artifact.html, meta, raw: artifact.raw } : null,
       chatMode: "design"
     });
 
@@ -12766,25 +12807,32 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
 
       // 2. Render assistant text response if present
       if (msg.content && typeof msg.content === 'string' && msg.content.trim().length > 0) {
+        let textToDisplay = msg.content;
+        const isDesignMsg = !!(msg.designArtifact || msg.chatMode === 'design' || textToDisplay.includes('```html') || textToDisplay.includes('<design_meta>'));
+
+        if (isDesignMsg) {
+          textToDisplay = getCleanDesignSummaryText(msg.content, msg.designArtifact, "");
+        }
+
         if (!currentAssistantBubble) {
-          currentAssistantBubble = appendAssistantMessage(msg.content, false, msg.agentInfo, false, false);
+          currentAssistantBubble = appendAssistantMessage(textToDisplay, false, msg.agentInfo, false, false);
           if (currentAssistantBubble) {
             fragment.appendChild(currentAssistantBubble);
           }
         } else {
-          updateAssistantText(currentAssistantBubble, msg.content);
+          updateAssistantText(currentAssistantBubble, textToDisplay);
         }
 
         // Render OpenDesign card if artifact exists or can be extracted
-        if (msg.designArtifact || msg.chatMode === 'design' || (typeof msg.content === 'string' && (msg.content.includes('```html') || msg.content.includes('<design_meta>')))) {
+        if (isDesignMsg) {
           const contentEl = currentAssistantBubble ? currentAssistantBubble.querySelector('.message-content') : null;
           if (contentEl) {
             let artifactToRender = msg.designArtifact;
             if (!artifactToRender || !artifactToRender.html) {
-              const art = extractHtmlArtifact(msg.content);
-              const meta = extractDesignMeta(msg.content);
+              const art = extractHtmlArtifact(msg.rawContent || msg.content);
+              const meta = extractDesignMeta(msg.rawContent || msg.content);
               if (art.html) {
-                artifactToRender = { html: art.html, raw: art.raw, meta, content: msg.content };
+                artifactToRender = { html: art.html, raw: art.raw, meta, content: msg.rawContent || msg.content };
               }
             }
             if (artifactToRender && artifactToRender.html) {
