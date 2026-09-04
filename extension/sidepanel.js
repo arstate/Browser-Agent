@@ -19,6 +19,12 @@ let config = {
 
 let conversationHistory = [];
 let pendingAttachments = [];
+function generateSessionId() {
+  return 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+}
+if (typeof window !== 'undefined') window.generateSessionId = generateSessionId;
+if (typeof globalThis !== 'undefined') globalThis.generateSessionId = generateSessionId;
+
 let currentSessionId = null;
 let currentSessionTitle = "New Chat";
 let currentSessionIsPinned = false;
@@ -5249,17 +5255,82 @@ function sanitizeMessagesForApi(history, isChatOnly = false) {
     return clean;
   });
 
+  // Strict Turn Sequence Sanitization for Gemini / OpenAI Function Calling Specs:
+  // 1. Tool turns must immediately follow an assistant turn with matching tool_calls.
+  // 2. No orphan tool turns.
+  // 3. No consecutive assistant turns or consecutive user turns.
+  // 4. Do not end with an assistant turn that has no tool_calls.
+  const sequenced = [];
+  let pendingToolCallIds = new Set();
+
+  for (let i = 0; i < cleaned.length; i++) {
+    const current = cleaned[i];
+
+    if (current.role === 'system') {
+      if (sequenced.length === 0) {
+        sequenced.push(current);
+      }
+      continue;
+    }
+
+    if (current.role === 'assistant') {
+      if (current.tool_calls && Array.isArray(current.tool_calls) && current.tool_calls.length > 0) {
+        if (sequenced.length > 0 && sequenced[sequenced.length - 1].role === 'assistant') {
+          sequenced.pop();
+        }
+        pendingToolCallIds = new Set(current.tool_calls.map(tc => tc.id));
+        sequenced.push({
+          role: 'assistant',
+          content: null,
+          tool_calls: current.tool_calls
+        });
+      } else {
+        pendingToolCallIds.clear();
+        if (sequenced.length > 0 && sequenced[sequenced.length - 1].role === 'assistant') {
+          const prev = sequenced[sequenced.length - 1];
+          prev.content = ((prev.content || '') + '\n\n' + (current.content || '')).trim();
+        } else if (current.content && current.content.trim()) {
+          sequenced.push(current);
+        }
+      }
+      continue;
+    }
+
+    if (current.role === 'tool') {
+      if (current.tool_call_id && pendingToolCallIds.has(current.tool_call_id)) {
+        pendingToolCallIds.delete(current.tool_call_id);
+        sequenced.push(current);
+      }
+      continue;
+    }
+
+    if (current.role === 'user') {
+      if (pendingToolCallIds.size > 0) {
+        continue;
+      }
+      if (sequenced.length > 0 && sequenced[sequenced.length - 1].role === 'user') {
+        const prev = sequenced[sequenced.length - 1];
+        if (typeof prev.content === 'string' && typeof current.content === 'string') {
+          prev.content = (prev.content + '\n\n' + current.content).trim();
+        }
+      } else {
+        sequenced.push(current);
+      }
+      continue;
+    }
+  }
+
   // Guard against Gemini "Requests ending with a model turn are not supported"
-  while (cleaned.length > 0) {
-    const last = cleaned[cleaned.length - 1];
+  while (sequenced.length > 0) {
+    const last = sequenced[sequenced.length - 1];
     if (last.role === 'assistant' && (!last.tool_calls || last.tool_calls.length === 0)) {
-      cleaned.pop();
+      sequenced.pop();
     } else {
       break;
     }
   }
 
-  return cleaned;
+  return sequenced;
 }
 
 async function notifyActiveTabExecutionState(isExec, step = 1, maxStep = 15, statusText = "") {
@@ -6126,30 +6197,25 @@ Tugas Anda:
             updateToolBadgeState(badge, "error", toolOutput);
           }
 
-          // Push tool response into history
-          conversationHistory.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            name: toolName,
-            content: toolOutput
-          });
-
           // Option 1: Self-Correction & Reflection Interceptor
           let isFailure = false;
+          let failureParsed = null;
           try {
-            const parsedRes = JSON.parse(toolOutput);
-            isFailure = (typeof SelfCorrectionEngine !== 'undefined') && SelfCorrectionEngine.isToolExecutionFailure(toolName, parsedRes);
+            failureParsed = JSON.parse(toolOutput);
+            isFailure = (typeof SelfCorrectionEngine !== 'undefined') && SelfCorrectionEngine.isToolExecutionFailure(toolName, failureParsed);
           } catch(e) {
             isFailure = (typeof SelfCorrectionEngine !== 'undefined') && SelfCorrectionEngine.isToolExecutionFailure(toolName, toolOutput);
           }
 
+          let finalToolContent = toolOutput;
           if (isFailure) {
             const retryCount = failureTracker ? failureTracker.recordFailure(toolName, toolArgs) : 1;
             if (failureTracker && !failureTracker.hasExceededMaxRetries(toolName, toolArgs)) {
               const reflectionPrompt = SelfCorrectionEngine.generateReflectionPrompt(toolName, toolArgs, toolOutput, retryCount);
-              conversationHistory.push({
-                role: "user",
-                content: reflectionPrompt
+              // Embed reflection guidance directly into tool response content to preserve strict Gemini/OpenAI turn sequence
+              finalToolContent = JSON.stringify({
+                output: failureParsed || toolOutput,
+                self_correction_guidance: reflectionPrompt
               });
               updateAssistantActiveAgent(assistantBubble, workerName, `Koreksi Mandiri: Mendiagnosa ${badgeActionName} (#${retryCount})...`, isBossWorker, false);
             }
@@ -6165,6 +6231,14 @@ Tugas Anda:
               }
             }
           }
+
+          // Push tool response into history
+          conversationHistory.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            name: toolName,
+            content: finalToolContent
+          });
 
           // If clarification requested, stop loop and wait for user's interactive bubble choice
           if (toolName === "ask_clarification") {

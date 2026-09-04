@@ -296,12 +296,25 @@ async function downloadTelegramFile(botToken, fileId) {
   }
 }
 
-function sendNativeRpcInBackground(action, payload = {}) {
+function sendNativeRpcInBackground(action, payload = {}, timeoutMs = null) {
   return new Promise((resolve) => {
     try {
       const port = chrome.runtime.connectNative("com.antigravity.chrome.agent");
       const msgId = "rpc_" + Date.now();
       let chunkBuffer = null;
+      let isResolved = false;
+
+      // Generous timeout: 180s (3 minutes) for commands, 60s for general RPC, or custom
+      const defaultTimeout = (action === "run_command" || action === "execute_bash" || action === "transcribe_audio") ? 180000 : 60000;
+      const effectiveTimeout = timeoutMs || payload.timeout_ms || (payload.timeout ? payload.timeout * 1000 : defaultTimeout);
+
+      const cleanupAndResolve = (result) => {
+        if (isResolved) return;
+        isResolved = true;
+        clearTimeout(timer);
+        try { port.disconnect(); } catch(e) {}
+        resolve(result);
+      };
 
       const handler = (res) => {
         if (!res || res.id !== msgId) return;
@@ -317,33 +330,36 @@ function sendNativeRpcInBackground(action, payload = {}) {
             const fullJsonStr = chunkBuffer.chunks.join('');
             try {
               const fullMsg = JSON.parse(fullJsonStr);
-              port.disconnect();
-              resolve(fullMsg);
+              cleanupAndResolve(fullMsg);
             } catch (e) {
-              port.disconnect();
-              resolve({ status: "error", error: "Failed to parse reassembled RPC chunks: " + e.message });
+              cleanupAndResolve({ status: "error", error: "Failed to parse reassembled RPC chunks: " + e.message });
             }
           }
           return; // Wait for remaining chunks before disconnecting
         }
 
         // Regular non-chunked response
-        port.disconnect();
-        resolve(res);
+        cleanupAndResolve(res);
       };
 
       port.onMessage.addListener(handler);
       port.onDisconnect.addListener(() => {
-        const err = chrome.runtime.lastError;
-        resolve(null);
+        cleanupAndResolve(null);
       });
 
-      port.postMessage({ id: msgId, action, ...payload });
+      const timer = setTimeout(() => {
+        cleanupAndResolve({ status: "error", error: `Native RPC timeout (${Math.round(effectiveTimeout/1000)}s) for action '${action}'` });
+      }, effectiveTimeout);
 
-      setTimeout(() => {
-        try { port.disconnect(); } catch(e) {}
-        resolve(null);
-      }, 20000);
+      // Forward timeout to native host so python subprocess knows how long to wait
+      const nativePayload = {
+        id: msgId,
+        action,
+        timeout: Math.round(effectiveTimeout / 1000),
+        ...payload
+      };
+
+      port.postMessage(nativePayload);
     } catch (e) {
       resolve(null);
     }
@@ -2198,7 +2214,7 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
     if (toolName === "run_bash_command" || toolName === "bash_run_command" || toolName === "local_run_command") {
       const cmd = toolArgs.command || "";
       const cwd = toolArgs.cwd || "";
-      const rpcRes = await sendNativeRpcInBackground("run_command", { command: cmd, cwd });
+      const rpcRes = await sendNativeRpcInBackground("run_command", { command: cmd, cwd, timeout: 180 });
       if (rpcRes && rpcRes.status === "ok") {
         const out = (rpcRes.stdout || '').trim();
         const err = (rpcRes.stderr || '').trim();
@@ -3154,26 +3170,100 @@ function applyPonytailContextOptimization(turns, pluginSettings = {}) {
     }
 
     const newTurn = { ...turn, content };
-    if (isOldTurn && Array.isArray(newTurn.tool_calls)) {
-      newTurn.tool_calls = newTurn.tool_calls.map(tc => {
-        let args = tc.function?.arguments || '';
-        if (typeof args === 'string' && args.length > 500) {
-          args = args.slice(0, 500) + '... [args trimmed]';
-        }
-        return {
-          ...tc,
-          function: {
-            ...tc.function,
-            arguments: args
-          }
-        };
-      });
+    // Preserve tool_calls with valid JSON arguments intact across all turns to prevent Gemini API 400 errors
+    if (Array.isArray(newTurn.tool_calls)) {
+      newTurn.tool_calls = turn.tool_calls;
     }
 
     optimized.push(newTurn);
   });
 
   return optimized;
+}
+
+// Strict Turn Sequence Sanitizer for Gemini / OpenAI Function Calling API in Background
+function sanitizeBackgroundTurnsForApi(turns) {
+  if (!Array.isArray(turns)) return [];
+  const valid = turns.filter(m => m && (m.role === 'user' || m.role === 'assistant' || m.role === 'tool' || m.role === 'system'));
+
+  const sequenced = [];
+  let pendingToolCallIds = new Set();
+
+  for (let i = 0; i < valid.length; i++) {
+    const current = valid[i];
+
+    if (current.role === 'system') {
+      if (sequenced.length === 0) {
+        sequenced.push({ role: 'system', content: current.content || '' });
+      }
+      continue;
+    }
+
+    if (current.role === 'assistant') {
+      if (current.tool_calls && Array.isArray(current.tool_calls) && current.tool_calls.length > 0) {
+        if (sequenced.length > 0 && sequenced[sequenced.length - 1].role === 'assistant') {
+          sequenced.pop();
+        }
+        pendingToolCallIds = new Set(current.tool_calls.map(tc => tc.id));
+        sequenced.push({
+          role: 'assistant',
+          content: null,
+          tool_calls: current.tool_calls
+        });
+      } else {
+        pendingToolCallIds.clear();
+        if (sequenced.length > 0 && sequenced[sequenced.length - 1].role === 'assistant') {
+          const prev = sequenced[sequenced.length - 1];
+          prev.content = ((prev.content || '') + '\n\n' + (current.content || '')).trim();
+        } else if (current.content && current.content.trim()) {
+          sequenced.push({
+            role: 'assistant',
+            content: current.content
+          });
+        }
+      }
+      continue;
+    }
+
+    if (current.role === 'tool') {
+      if (current.tool_call_id && pendingToolCallIds.has(current.tool_call_id)) {
+        pendingToolCallIds.delete(current.tool_call_id);
+        sequenced.push({
+          role: 'tool',
+          tool_call_id: current.tool_call_id,
+          name: current.name,
+          content: typeof current.content === 'string' ? current.content : JSON.stringify(current.content || {})
+        });
+      }
+      continue;
+    }
+
+    if (current.role === 'user') {
+      if (pendingToolCallIds.size > 0) {
+        continue;
+      }
+      if (sequenced.length > 0 && sequenced[sequenced.length - 1].role === 'user') {
+        const prev = sequenced[sequenced.length - 1];
+        if (typeof prev.content === 'string' && typeof current.content === 'string') {
+          prev.content = (prev.content + '\n\n' + current.content).trim();
+        }
+      } else {
+        sequenced.push(current);
+      }
+      continue;
+    }
+  }
+
+  while (sequenced.length > 0) {
+    const last = sequenced[sequenced.length - 1];
+    if (last.role === 'assistant' && (!last.tool_calls || last.tool_calls.length === 0)) {
+      sequenced.pop();
+    } else {
+      break;
+    }
+  }
+
+  return sequenced;
 }
 
 // Standalone Direct Autonomous AI Agent Execution in Background Service Worker
@@ -3540,13 +3630,14 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       telegramSendChatAction(botToken, senderId, "typing").catch(() => {});
 
       const optimizedTurns = applyPonytailContextOptimization(conversationTurns, storageData.plugin_settings);
+      const sanitizedTurns = sanitizeBackgroundTurnsForApi(optimizedTurns);
 
       const res = await fetch(endpoint, {
         method: "POST",
         headers,
         body: JSON.stringify({
           model: model,
-          messages: optimizedTurns,
+          messages: sanitizedTurns,
           tools: BACKGROUND_AGENT_TOOLS,
           tool_choice: "auto",
           stream: false,
@@ -3606,27 +3697,27 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
 
           const toolResult = await executeBackgroundTool(tName, tArgs, senderId, botToken, cfg);
 
-          conversationTurns.push({
-            role: "tool",
-            tool_call_id: tc.id,
-            name: tName,
-            content: JSON.stringify(toolResult)
-          });
-
-          // Option 1: Self-Correction & Reflection Interceptor
+          // Option 1: Self-Correction & Reflection Interceptor (Embedded into Tool Response)
+          let finalToolContent = "";
           if (typeof SelfCorrectionEngine !== 'undefined' && SelfCorrectionEngine.isToolExecutionFailure(tName, toolResult)) {
             const retryCount = failureTracker ? failureTracker.recordFailure(tName, tArgs) : 1;
             if (failureTracker && !failureTracker.hasExceededMaxRetries(tName, tArgs)) {
               const reflectionPrompt = SelfCorrectionEngine.generateReflectionPrompt(tName, tArgs, toolResult, retryCount);
-              conversationTurns.push({
-                role: "user",
-                content: reflectionPrompt
+              // Embed reflection guidance directly inside the tool result payload!
+              // This strictly preserves Gemini/OpenAI turn sequence: assistant(tool_calls) -> tool(result) -> assistant
+              // WITHOUT injecting an illegal user turn in the middle of tool responses!
+              finalToolContent = JSON.stringify({
+                output: toolResult,
+                self_correction_guidance: reflectionPrompt
               });
               currentEmoji = "⚠️";
               currentBaseText = `Koreksi Mandiri: Mendiagnosa error ${tName} (#${retryCount})`;
               await renderLiveStatus(true);
+            } else {
+              finalToolContent = JSON.stringify(toolResult);
             }
           } else {
+            finalToolContent = JSON.stringify(toolResult);
             if (failureTracker) failureTracker.reset(tName, tArgs);
             if (activeGoalMilestones && typeof GoalTracker !== 'undefined') {
               GoalTracker.updateMilestonesFromTurns(activeGoalMilestones, conversationTurns);
@@ -3634,6 +3725,13 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
               if (gStatus) currentBaseText = gStatus;
             }
           }
+
+          conversationTurns.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            name: tName,
+            content: finalToolContent
+          });
         }
       } else {
         // Final text answer reached: Option 3 Completion Guard check
