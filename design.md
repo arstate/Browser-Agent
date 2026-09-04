@@ -329,5 +329,22 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 3. **Zero Forbidden Memory Phrases**: Integrasi mulus tanpa kalimat meta-komentar *"Berdasarkan ingatan saya..."* atau *"From memory..."*.
 4. **Mutual Exclusivity Switch State**: Mengunci status switch antara **Claude Opus 5** dan **Claude Fable 5** (jika salah satu dinyalakan, yang lain otomatis dimatikan) untuk menjaga orkestrasi directive AI tetap bersih tanpa benturan kognitif.
 
+---
+
+## 🎨 12. Mode Label Minimalism & Adaptive Narrow Input Architecture (v2.150.195)
+
+1. **Ultra-Clean Mode Labels**: Menghilangkan kata "Mode" dari seluruh pemicu dan menu dropup:
+   - `Agent Mode` → `Agent`
+   - `Chat Mode` → `Chat`
+   - `Design Mode` → `Design`
+2. **Adaptive Narrow Input Toolbar**:
+   - Baris atas prompt box (`.chat-input-header`): Dioptimalkan agar hanya menyisakan tombol trigger Mode di pojok kiri atas dan tombol trigger Thinking di pojok kanan atas (`.chat-input-header-right`). Menu dropup Thinking di-anchor ke kanan (`right: 0; left: auto;`).
+   - Baris bawah prompt box (`.chat-input-bottom-actions`): Tombol `System Design Auto` (`#design-system-dropup-wrapper`) dipindahkan ke samping kanan tombol lampiran file `+` (`#btn-attach-file`) dengan `gap: 6px;` dan anchor menu ke kiri (`left: 0; right: auto; z-index: 500;`), mencegah tabrakan saat Canvas dibuka atau sidepanel berukuran sempit.
+3. **Pixel-Perfect 2-Pane Executive Presentation UI**:
+   - Sidebar kiri `#0B0C10` dengan active thumbnail miniature scaled 1:8 (`.thumb-mini-slide`), white border & glow.
+   - Stage 16:9 warm paper `#F5F3EF`, Google Font `Syne` (800) display headers, 3-column bento cadence (`#FF4D00`, `#0284C7`, `#111827`), white rounded takeaway cards, 2-line bottom footer, dan obsidian floating dock.
+   - `@media print` 1 halaman utuh per slide untuk ekspor PDF instan.
+
+
 
 

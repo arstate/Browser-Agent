@@ -7273,17 +7273,17 @@ function updateHeroSubtitleSmooth(element, newText) {
 const CHAT_MODES_CONFIG = {
   agent: {
     key: 'agent',
-    name: 'Agent Mode',
+    name: 'Agent',
     icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg>`
   },
   chat: {
     key: 'chat',
-    name: 'Chat Mode',
+    name: 'Chat',
     icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`
   },
   design: {
     key: 'design',
-    name: 'Design Mode',
+    name: 'Design',
     icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>`
   },
   websearch: {
@@ -8011,42 +8011,81 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   const categoryTitle = deckMeta.categoryTitle || deckMeta.title || "FONDASI BRAND & MANIFESTO";
   const gsmVersion = deckMeta.version || "GSM v3.0";
   const accentColor = deckMeta.accentColor || "#FF4D00";
-  const copyrightText = deckMeta.copyright || `© 2026 ${brandName.toUpperCase()} • STANDAR IDENTITAS VISUAL RESMI • CONFIDENTIAL // ENTERPRISE`;
+  const copyrightText = deckMeta.copyright || `© 2026 ${brandName.toUpperCase()} • STANDAR IDENTITAS VISUAL RESMI`;
 
-  const thumbnailsHtml = slidesData.map((s, idx) => `
-    <div class="thumb-item ${idx === 0 ? 'active' : ''}" data-target="${idx}" id="thumb-${idx}">
-      <span class="thumb-num">${idx + 1}</span>
-      <div class="thumb-card">
-        <div class="thumb-preview">
-          <div class="thumb-mini-header"></div>
-          <div class="thumb-mini-title">${escapeHtml((s.title || '').slice(0, 18))}</div>
-          <div class="thumb-mini-boxes"><span></span><span></span><span></span></div>
+  const thumbnailsHtml = slidesData.map((s, idx) => {
+    const slideNumStr = String(idx + 1).padStart(2, '0');
+    const totalStr = String(total).padStart(2, '0');
+    const cards = s.cards || [];
+
+    return `
+      <div class="thumb-item ${idx === 0 ? 'active' : ''}" data-target="${idx}" id="thumb-${idx}">
+        <span class="thumb-num">${idx + 1}</span>
+        <div class="thumb-card">
+          <div class="thumb-mini-slide-wrap">
+            <div class="thumb-mini-slide">
+              <div class="thumb-mini-header">
+                <span class="thumb-mini-chapter">BAB ${toRoman(idx + 1)} // ${escapeHtml(categoryTitle.toUpperCase())} // ${escapeHtml(gsmVersion)}</span>
+                <span class="thumb-mini-page">HALAMAN ${slideNumStr}/${totalStr}</span>
+              </div>
+              <div class="thumb-mini-hero">
+                <div class="thumb-mini-title">${escapeHtml(s.title || '')}</div>
+                <div class="thumb-mini-counter">${slideNumStr} // ${totalStr}</div>
+              </div>
+              <div class="thumb-mini-grid">
+                ${cards.slice(0, 3).map((c, ci) => {
+                  const badgeColor = c.badgeColor || (ci === 0 ? '#FF4D00' : ci === 1 ? '#0284C7' : '#111827');
+                  const highlightColor = c.highlightColor || (ci === 0 ? '#111827' : ci === 1 ? '#0284C7' : '#FF4D00');
+                  return `
+                    <div class="thumb-mini-col">
+                      <div class="thumb-mini-badge" style="color: ${badgeColor};">${escapeHtml(c.badge || `KARTU 0${ci + 1}`)}</div>
+                      <div class="thumb-mini-col-title">${escapeHtml((c.title || '').slice(0, 24))}</div>
+                      <div class="thumb-mini-box">
+                        <span style="color: ${highlightColor};">${escapeHtml((c.footerHighlight || c.title || '').slice(0, 20))}</span>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+              <div class="thumb-mini-footer">
+                <span>${escapeHtml(copyrightText)}</span>
+                <span style="color: ${accentColor}; font-weight: 800;">CONFIDENTIAL // ENTERPRISE</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   const slidesHtml = slidesData.map((s, idx) => {
     const slideNumStr = String(idx + 1).padStart(2, '0');
     const totalStr = String(total).padStart(2, '0');
     const cards = s.cards || [];
     
-    const cardsHtml = cards.map((c, cIdx) => `
-      <div class="bento-card">
-        <div class="bento-badge" style="color: ${c.badgeColor || accentColor};">
-          ${escapeHtml(c.badge || `KARTU 0${cIdx + 1} // ANALISIS`)}
-        </div>
-        <h3 class="bento-title">${escapeHtml(c.title || `Poin Strategis 0${cIdx + 1}`)}</h3>
-        <p class="bento-desc">${escapeHtml(c.desc || '')}</p>
-        ${c.footerHighlight ? `
-          <div class="bento-highlight-box">
-            <span class="bento-highlight-text" style="color: ${c.highlightColor || '#111827'};">
-              ${escapeHtml(c.footerHighlight)}
+    const cardsHtml = cards.map((c, cIdx) => {
+      const badgeColor = c.badgeColor || (cIdx === 0 ? '#FF4D00' : cIdx === 1 ? '#0284C7' : '#111827');
+      const highlightColor = c.highlightColor || (cIdx === 0 ? '#111827' : cIdx === 1 ? '#0284C7' : '#FF4D00');
+      const badgeText = c.badge || (cIdx === 0 ? 'KARTU 01 // ORTOGRAFI' : cIdx === 1 ? 'KARTU 02 // FILOSOFI' : `KARTU 0${cIdx + 1} // DIFERENSIASI`);
+      const highlightText = c.footerHighlight || (cIdx === 0 ? '"DJ" → JADI' : cIdx === 1 ? 'TERWUJUD & SELESAI' : 'DISTINCTIVE BRAND ASSET');
+
+      return `
+        <div class="slide-col">
+          <div class="col-top">
+            <div class="col-badge" style="color: ${badgeColor};">
+              ${escapeHtml(badgeText)}
+            </div>
+            <h3 class="col-title">${escapeHtml(c.title || `Poin Strategis 0${cIdx + 1}`)}</h3>
+            <p class="col-desc">${escapeHtml(c.desc || '')}</p>
+          </div>
+          <div class="col-highlight-box">
+            <span class="col-highlight-text" style="color: ${highlightColor};">
+              ${escapeHtml(highlightText)}
             </span>
           </div>
-        ` : ''}
-      </div>
-    `).join('');
+        </div>
+      `;
+    }).join('');
 
     return `
       <section class="slide-section ${idx === 0 ? 'active' : ''}" data-index="${idx}" id="slide-${idx}">
@@ -8062,25 +8101,25 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           </div>
 
           <div class="slide-hero">
-            <div class="hero-text-wrap">
-              <h1 class="slide-main-title">${escapeHtml(s.title)}</h1>
-              ${s.subtitle ? `<p class="slide-lead-desc">${escapeHtml(s.subtitle)}</p>` : ''}
-            </div>
-            <div class="slide-big-counter">
-              <span>${slideNumStr} // ${totalStr}</span>
+            <h1 class="slide-main-title">${escapeHtml(s.title)}</h1>
+            <div class="hero-sub-row">
+              <p class="slide-lead-desc">${escapeHtml(s.subtitle || '')}</p>
+              <div class="slide-big-counter">
+                <span>${slideNumStr} // ${totalStr}</span>
+              </div>
             </div>
           </div>
 
-          <div class="slide-bento-grid" style="grid-template-columns: repeat(${Math.min(cards.length || 3, 3)}, 1fr);">
+          <div class="slide-columns-grid" style="grid-template-columns: repeat(${Math.min(cards.length || 3, 3)}, 1fr);">
             ${cardsHtml}
           </div>
 
           <div class="slide-footer-bar">
-            <div class="footer-left">
-              <span>${escapeHtml(copyrightText)}</span>
-            </div>
-            <div class="footer-right">
-              <span class="confidential-badge" style="color: ${accentColor};">• CONFIDENTIAL // ENTERPRISE</span>
+            <div class="footer-meta-block">
+              <div class="footer-line-1">${escapeHtml(copyrightText)}</div>
+              <div class="footer-line-2">
+                BAB ${idx + 1} DARI ${total} • <span class="confidential-tag" style="color: ${accentColor};">CONFIDENTIAL // ENTERPRISE</span>
+              </div>
             </div>
           </div>
         </div>
@@ -8096,19 +8135,17 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   <title>${escapeHtml(deckMeta.title || 'Executive Presentation Deck')}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-desk: #F5F3EF;
-      --bg-sidebar: #0D0E12;
+      --bg-desk: #0E1015;
+      --bg-sidebar: #0B0C10;
       --bg-slide: #F5F3EF;
       --text-main: #111827;
-      --text-muted: #6B7280;
-      --card-bg: #FFFFFF;
-      --card-border: #E5E7EB;
+      --text-muted: #4B5563;
       --accent: ${accentColor};
       --accent-blue: #0284C7;
-      --dock-bg: rgba(18, 20, 26, 0.92);
+      --dock-bg: #16181F;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -8129,15 +8166,15 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
 
     /* === SIDEBAR THUMBNAILS === */
     .deck-sidebar {
-      width: 140px;
+      width: 156px;
       height: 100vh;
       background: var(--bg-sidebar);
       border-right: 1px solid rgba(255, 255, 255, 0.08);
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      padding: 20px 10px;
+      gap: 14px;
+      padding: 20px 12px;
       flex-shrink: 0;
       z-index: 20;
     }
@@ -8156,43 +8193,132 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     .thumb-item.active { opacity: 1; }
 
     .thumb-num {
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 11px;
       font-weight: 700;
-      color: #9CA3AF;
-      width: 14px;
+      color: #6B7280;
+      width: 16px;
       text-align: right;
+      flex-shrink: 0;
     }
     .thumb-item.active .thumb-num { color: #FFFFFF; font-weight: 800; }
 
     .thumb-card {
-      flex: 1;
-      aspect-ratio: 16 / 9;
-      background: #1C1D24;
+      width: 108px;
+      height: 60.75px;
+      background: #F5F3EF;
       border: 1.5px solid rgba(255, 255, 255, 0.12);
       border-radius: 6px;
       overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
+      position: relative;
+      flex-shrink: 0;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .thumb-item.active .thumb-card {
       border-color: #FFFFFF;
-      box-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.35);
     }
-    .thumb-preview {
+    .thumb-mini-slide-wrap {
       width: 100%;
       height: 100%;
-      padding: 5px;
+      position: relative;
+      overflow: hidden;
       background: #F5F3EF;
+    }
+    .thumb-mini-slide {
+      width: 864px;
+      height: 486px;
+      transform: scale(0.125);
+      transform-origin: top left;
+      pointer-events: none;
+      user-select: none;
+      background: #F5F3EF;
+      padding: 24px 32px;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      justify-content: space-between;
+      box-sizing: border-box;
     }
-    .thumb-mini-header { height: 2px; width: 40%; background: #D1D5DB; }
-    .thumb-mini-title { font-size: 5px; font-weight: 800; color: #111; line-height: 1; overflow: hidden; white-space: nowrap; }
-    .thumb-mini-boxes { display: flex; gap: 2px; flex: 1; align-items: flex-end; }
-    .thumb-mini-boxes span { flex: 1; height: 10px; background: #FFFFFF; border: 0.5px solid #E5E7EB; border-radius: 1px; }
+    .thumb-mini-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1.5px solid #9CA3AF;
+      padding-bottom: 6px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      color: #374151;
+    }
+    .thumb-mini-page { color: var(--accent); font-weight: 800; }
+    .thumb-mini-hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 10px 0 6px 0;
+    }
+    .thumb-mini-title {
+      font-family: 'Syne', 'Space Grotesk', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: #000;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 650px;
+    }
+    .thumb-mini-counter {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      color: #111;
+    }
+    .thumb-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      flex: 1;
+      margin: 10px 0;
+    }
+    .thumb-mini-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .thumb-mini-badge {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .thumb-mini-col-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #111;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .thumb-mini-box {
+      background: #FFFFFF;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .thumb-mini-footer {
+      border-top: 1px solid #D1D5DB;
+      padding-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      font-weight: 600;
+      color: #6B7280;
+    }
 
     /* === MAIN STAGE VIEWPORT === */
     .deck-stage-wrap {
@@ -8204,19 +8330,19 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       align-items: center;
       justify-content: center;
       background: var(--bg-desk);
-      padding: 32px 48px 80px 48px;
+      padding: 24px 36px 72px 36px;
     }
 
     .slide-section {
       display: none;
       width: 100%;
       height: 100%;
-      max-width: 1240px;
-      max-height: calc(1240px * 9 / 16);
+      max-width: 1220px;
+      max-height: calc(1220px * 9 / 16);
       aspect-ratio: 16 / 9;
       opacity: 0;
-      transform: scale(0.985);
-      transition: opacity 0.24s ease, transform 0.24s ease;
+      transform: scale(0.99);
+      transition: opacity 0.2s ease, transform 0.2s ease;
     }
     .slide-section.active {
       display: flex;
@@ -8228,9 +8354,13 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       width: 100%;
       height: 100%;
       background: var(--bg-slide);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+      border-radius: 4px;
+      padding: 36px 48px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      box-sizing: border-box;
       position: relative;
     }
 
@@ -8239,51 +8369,58 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid #D1D5DB;
-      padding-bottom: 8px;
+      border-bottom: 1.5px solid #9CA3AF;
+      padding-bottom: 10px;
     }
     .header-chapter {
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.05em;
-      color: #374151;
+      color: #1F2937;
       text-transform: uppercase;
     }
-    .header-ratio {
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 11px;
-      font-weight: 600;
-      color: #6B7280;
-      margin-right: 8px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .header-ratio {
+      color: #4B5563;
     }
     .header-page-tag {
-      font-size: 11px;
       font-weight: 800;
-      letter-spacing: 0.04em;
     }
 
     /* HERO */
     .slide-hero {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 24px;
-      margin: 20px 0 16px 0;
+      margin: 18px 0 16px 0;
     }
-    .hero-text-wrap { flex: 1; }
     .slide-main-title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 32px;
+      font-family: 'Syne', 'Space Grotesk', sans-serif;
+      font-size: 30px;
       font-weight: 800;
       line-height: 1.15;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
       text-transform: uppercase;
       color: #000000;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+    }
+    .hero-sub-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
     }
     .slide-lead-desc {
-      font-size: 14px;
+      font-size: 13.5px;
       color: #4B5563;
       line-height: 1.45;
+      flex: 1;
     }
     .slide-big-counter {
       font-family: 'Space Grotesk', sans-serif;
@@ -8292,60 +8429,61 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       color: #111827;
       letter-spacing: 0.04em;
       white-space: nowrap;
-      margin-top: 4px;
     }
 
-    /* BENTO CARDS */
-    .slide-bento-grid {
+    /* 3 COLUMNS GRID */
+    .slide-columns-grid {
       display: grid;
-      gap: 16px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
       flex: 1;
       align-items: stretch;
-      margin-bottom: 16px;
+      margin: 12px 0 20px 0;
     }
-    .bento-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 20px;
+    .slide-col {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      background: transparent;
     }
-    .bento-badge {
-      font-size: 10px;
+    .col-top {
+      display: flex;
+      flex-direction: column;
+    }
+    .col-badge {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-bottom: 8px;
     }
-    .bento-title {
-      font-size: 16px;
+    .col-title {
+      font-size: 17px;
       font-weight: 700;
       line-height: 1.3;
       color: #111827;
       margin-bottom: 8px;
     }
-    .bento-desc {
+    .col-desc {
       font-size: 13px;
       color: #4B5563;
-      line-height: 1.5;
-      margin-bottom: 14px;
-      flex: 1;
+      line-height: 1.55;
+      margin-bottom: 16px;
     }
-    .bento-highlight-box {
+    .col-highlight-box {
       background: #FFFFFF;
-      border: 1px solid #E5E7EB;
+      border: 1px solid rgba(0, 0, 0, 0.08);
       border-radius: 8px;
-      padding: 12px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      min-height: 46px;
     }
-    .bento-highlight-text {
+    .col-highlight-text {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 13px;
       font-weight: 800;
@@ -8355,35 +8493,47 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
 
     /* FOOTER */
     .slide-footer-bar {
+      border-top: 1px solid #D1D5DB;
+      padding-top: 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-top: 1px solid #E5E7EB;
-      padding-top: 10px;
-      font-size: 11px;
-      color: #6B7280;
     }
-    .confidential-badge {
-      font-size: 11px;
+    .footer-meta-block {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .footer-line-1 {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #374151;
+    }
+    .footer-line-2 {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #4B5563;
+    }
+    .confidential-tag {
       font-weight: 800;
       letter-spacing: 0.05em;
     }
 
     /* === FLOATING NAVIGATION DOCK === */
     .deck-floating-dock {
-      position: fixed;
-      bottom: 24px;
-      left: calc(50% + 70px);
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
       transform: translateX(-50%);
       background: var(--dock-bg);
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 9999px;
-      padding: 6px 16px;
+      padding: 5px 14px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(24px);
+      gap: 10px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(20px);
       z-index: 100;
     }
     .dock-btn {
@@ -8394,9 +8544,9 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 6px 10px;
+      padding: 5px 8px;
       border-radius: 9999px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       transition: all 0.15s;
     }
@@ -8404,20 +8554,27 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       background: rgba(255, 255, 255, 0.12);
       color: var(--accent);
     }
+    .dock-btn-circle {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border-radius: 50%;
+    }
     .dock-counter {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: #FFFFFF;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
+      padding: 0 4px;
     }
     .dock-counter strong { color: var(--accent); }
     .dock-divider {
       width: 1px;
-      height: 18px;
-      background: rgba(255, 255, 255, 0.18);
+      height: 16px;
+      background: rgba(255, 255, 255, 0.16);
     }
     .dock-shortcut-btn {
       font-size: 12px;
@@ -8427,8 +8584,9 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       gap: 6px;
     }
     .dock-key-badge {
-      background: rgba(255, 255, 255, 0.14);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: #282B33;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #E5E7EB;
       font-size: 10px;
       font-weight: 700;
       padding: 1px 5px;
@@ -8437,6 +8595,10 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
 
     /* === PRINT FOR PDF EXPORT === */
     @media print {
+      @page {
+        size: 16in 9in;
+        margin: 0;
+      }
       body, html {
         background: #F5F3EF !important;
         overflow: visible !important;
@@ -8447,6 +8609,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         padding: 0 !important;
         height: auto !important;
         display: block !important;
+        background: #F5F3EF !important;
       }
       .slide-section {
         display: block !important;
@@ -8458,10 +8621,13 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         max-height: none !important;
         page-break-after: always !important;
         break-after: page !important;
-        padding: 32px 48px !important;
+        padding: 40px 48px !important;
+        box-sizing: border-box !important;
       }
       .slide-canvas {
         height: 100% !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
         justify-content: space-between !important;
       }
     }
@@ -8475,32 +8641,32 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
 
     <main class="deck-stage-wrap" id="deck-stage-wrap">
       ${slidesHtml}
+
+      <nav class="deck-floating-dock">
+        <button type="button" class="dock-btn dock-btn-circle" id="dock-btn-prev" title="Slide Sebelumnya (ArrowLeft)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="dock-counter">
+          <span id="dock-curr-slide">1</span>
+          <span>/</span>
+          <span>${total}</span>
+        </div>
+        <button type="button" class="dock-btn dock-btn-circle" id="dock-btn-next" title="Slide Berikutnya (ArrowRight)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div class="dock-divider"></div>
+        <button type="button" class="dock-btn dock-shortcut-btn" id="dock-btn-reset" title="Kembali ke slide awal (R)">
+          <span>Atur ulang</span>
+          <span class="dock-key-badge">R</span>
+        </button>
+        <div class="dock-divider"></div>
+        <button type="button" class="dock-btn dock-shortcut-btn" id="dock-btn-print" onclick="window.print()" title="Cetak / Simpan PDF (P)">
+          <span>PDF</span>
+          <span class="dock-key-badge">P</span>
+        </button>
+      </nav>
     </main>
   </div>
-
-  <nav class="deck-floating-dock">
-    <button type="button" class="dock-btn" id="dock-btn-prev" title="Slide Sebelumnya (ArrowLeft)">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <div class="dock-counter">
-      <span id="dock-curr-slide">1</span>
-      <span>/</span>
-      <span>${total}</span>
-    </div>
-    <button type="button" class="dock-btn" id="dock-btn-next" title="Slide Berikutnya (ArrowRight)">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-    </button>
-    <div class="dock-divider"></div>
-    <button type="button" class="dock-btn dock-shortcut-btn" id="dock-btn-reset" title="Kembali ke slide awal (R)">
-      <span>Atur ulang</span>
-      <span class="dock-key-badge">R</span>
-    </button>
-    <div class="dock-divider"></div>
-    <button type="button" class="dock-btn dock-shortcut-btn" id="dock-btn-print" onclick="window.print()" title="Cetak / Simpan PDF (P)">
-      <span>PDF</span>
-      <span class="dock-key-badge">P</span>
-    </button>
-  </nav>
 
   <script>
     const slides = document.querySelectorAll('.slide-section');

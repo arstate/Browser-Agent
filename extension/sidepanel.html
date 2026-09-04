@@ -183,7 +183,7 @@
                     <line x1="16" y1="16" x2="16.01" y2="16"/>
                   </svg>
                 </span>
-                <span class="chat-mode-trigger-label" id="chat-mode-trigger-label">Agent Mode</span>
+                <span class="chat-mode-trigger-label" id="chat-mode-trigger-label">Agent</span>
                 <svg class="chat-mode-trigger-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
@@ -201,7 +201,7 @@
                       <line x1="16" y1="16" x2="16.01" y2="16"/>
                     </svg>
                   </div>
-                  <span class="mode-option-title">Agent Mode</span>
+                  <span class="mode-option-title">Agent</span>
                 </button>
 
                 <button type="button" class="chat-mode-option" data-mode="chat">
@@ -210,7 +210,7 @@
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                   </div>
-                  <span class="mode-option-title">Chat Mode</span>
+                  <span class="mode-option-title">Chat</span>
                 </button>
 
                 <button type="button" class="chat-mode-option" data-mode="websearch" style="display: none !important;">
@@ -235,7 +235,7 @@
                         <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
                       </svg>
                     </div>
-                    <span class="mode-option-title">Design Mode</span>
+                    <span class="mode-option-title">Design</span>
                     <svg class="submenu-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="9 18 15 12 9 6"/>
                     </svg>
@@ -262,72 +262,10 @@
                 </div>
               </div>
             </div>
-
-            <!-- Thinking Level Dropup Trigger (Clean Text Only) -->
-            <div class="thinking-level-dropup-wrapper" id="thinking-level-dropup-wrapper">
-              <button type="button" class="btn-thinking-level-trigger" id="btn-thinking-level-trigger" title="Pilih Intensitas Penalaran AI">
-                <span class="thinking-level-label" id="thinking-level-label">Thinking: High</span>
-                <svg class="thinking-level-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-
-              <!-- Thinking Level Dropup Menu (Clean Text Only) -->
-              <div class="thinking-level-dropup-menu" id="thinking-level-dropup-menu" style="display: none;">
-                <button type="button" class="thinking-level-option" data-level="low" title="Instan & Linier — Tanpa Koreksi Diri">
-                  <span class="thinking-option-title">Low</span>
-                </button>
-                <button type="button" class="thinking-level-option" data-level="medium" title="Standar — 1x Sanity Check">
-                  <span class="thinking-option-title">Medium</span>
-                </button>
-                <button type="button" class="thinking-level-option active" data-level="high" title="Mendalam — Multi-Branch Tree-of-Thought">
-                  <span class="thinking-option-title">High</span>
-                </button>
-                <button type="button" class="thinking-level-option" data-level="xhigh" title="Kritik Diri Ketat — Adversarial Red-Teaming">
-                  <span class="thinking-option-title">Xhigh</span>
-                </button>
-                <button type="button" class="thinking-level-option" data-level="extreme" title="Eksplorasi Penuh — 10x Lipat Mikir Keras">
-                  <span class="thinking-option-title">Extreme</span>
-                </button>
-              </div>
-            </div>
           </div>
 
-          <!-- Right Actions Container (Switch Tab & Execution Mode direct instant toggles, or System Design Auto in Design Mode) -->
+          <!-- Right Actions Container (Switch Tab, Execution Mode, and Thinking Level in Top Right Corner) -->
           <div class="chat-input-header-right">
-            <!-- OpenDesign Design System Dropup (Active only in Design Mode, replaces Switch Tab & Accept) -->
-            <div class="design-system-dropup-wrapper" id="design-system-dropup-wrapper" style="display: none;">
-              <button type="button" class="btn-design-system-trigger" id="btn-design-system-trigger" title="Pilih dari 152 Design Systems OpenDesign">
-                <span class="design-system-trigger-icon">🎨</span>
-                <span class="design-system-label" id="design-system-label">System: Auto</span>
-                <svg class="design-system-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-
-              <div class="design-system-dropup-menu" id="design-system-dropup-menu" style="display: none;">
-                <div class="design-system-search-box">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  <input type="text" id="input-search-design-systems" placeholder="Cari 152 Design Systems..." autocomplete="off">
-                </div>
-                <div class="design-system-categories-pills" id="design-system-categories-pills">
-                  <button type="button" class="ds-cat-pill active" data-cat="all">All</button>
-                  <button type="button" class="ds-cat-pill" data-cat="AI & LLM">AI</button>
-                  <button type="button" class="ds-cat-pill" data-cat="Dark Luxury">Luxury</button>
-                  <button type="button" class="ds-cat-pill" data-cat="Corporate">Corporate</button>
-                  <button type="button" class="ds-cat-pill" data-cat="Modern Minimal">Minimal</button>
-                </div>
-                <div class="design-system-list-scroll" id="design-system-list-scroll">
-                  <button type="button" class="design-system-option active" data-slug="auto">
-                    <span class="ds-opt-icon">✨</span>
-                    <div class="ds-opt-info">
-                      <span class="ds-opt-name">Auto Detect</span>
-                      <span class="ds-opt-desc">AI merekomendasikan gaya visual terbaik</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </div>
             <!-- Switch Tab Direct Toggle Button (ON / OFF) -->
             <div class="switch-tab-mode-wrapper" id="switch-tab-mode-wrapper">
               <button type="button" class="btn-switch-tab-mode-trigger is-on" id="btn-switch-tab-mode-trigger" title="Auto Switch Tab: ON (Klik untuk beralih ON / OFF)">
@@ -440,6 +378,35 @@
                 </button>
               </div>
             </div>
+
+            <!-- Thinking Level Dropup Trigger (Pojok Kanan Atas Input Prompt) -->
+            <div class="thinking-level-dropup-wrapper" id="thinking-level-dropup-wrapper">
+              <button type="button" class="btn-thinking-level-trigger" id="btn-thinking-level-trigger" title="Pilih Intensitas Penalaran AI">
+                <span class="thinking-level-label" id="thinking-level-label">Thinking: High</span>
+                <svg class="thinking-level-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              <!-- Thinking Level Dropup Menu (Clean Text Only) -->
+              <div class="thinking-level-dropup-menu" id="thinking-level-dropup-menu" style="display: none;">
+                <button type="button" class="thinking-level-option" data-level="low" title="Instan & Linier — Tanpa Koreksi Diri">
+                  <span class="thinking-option-title">Low</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="medium" title="Standar — 1x Sanity Check">
+                  <span class="thinking-option-title">Medium</span>
+                </button>
+                <button type="button" class="thinking-level-option active" data-level="high" title="Mendalam — Multi-Branch Tree-of-Thought">
+                  <span class="thinking-option-title">High</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="xhigh" title="Kritik Diri Ketat — Adversarial Red-Teaming">
+                  <span class="thinking-option-title">Xhigh</span>
+                </button>
+                <button type="button" class="thinking-level-option" data-level="extreme" title="Eksplorasi Penuh — 10x Lipat Mikir Keras">
+                  <span class="thinking-option-title">Extreme</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -481,6 +448,40 @@
                 </svg>
               </button>
               <input type="file" id="input-file-hidden" multiple style="display: none;" accept="image/*,video/*,text/*,.pdf,.json,.csv,.js,.ts,.py,.html,.css,.md,.txt,.yaml,.yml,.xml,.sh,.mp4,.webm,.mov,.mkv,.avi,.m4v">
+
+              <!-- OpenDesign Design System Dropup (Di samping kanan tombol + files) -->
+              <div class="design-system-dropup-wrapper" id="design-system-dropup-wrapper" style="display: none;">
+                <button type="button" class="btn-design-system-trigger" id="btn-design-system-trigger" title="Pilih dari 152 Design Systems OpenDesign">
+                  <span class="design-system-trigger-icon">🎨</span>
+                  <span class="design-system-label" id="design-system-label">System: Auto</span>
+                  <svg class="design-system-chevron" viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.4">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+
+                <div class="design-system-dropup-menu" id="design-system-dropup-menu" style="display: none;">
+                  <div class="design-system-search-box">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="input-search-design-systems" placeholder="Cari 152 Design Systems..." autocomplete="off">
+                  </div>
+                  <div class="design-system-categories-pills" id="design-system-categories-pills">
+                    <button type="button" class="ds-cat-pill active" data-cat="all">All</button>
+                    <button type="button" class="ds-cat-pill" data-cat="AI & LLM">AI</button>
+                    <button type="button" class="ds-cat-pill" data-cat="Dark Luxury">Luxury</button>
+                    <button type="button" class="ds-cat-pill" data-cat="Corporate">Corporate</button>
+                    <button type="button" class="ds-cat-pill" data-cat="Modern Minimal">Minimal</button>
+                  </div>
+                  <div class="design-system-list-scroll" id="design-system-list-scroll">
+                    <button type="button" class="design-system-option active" data-slug="auto">
+                      <span class="ds-opt-icon">✨</span>
+                      <div class="ds-opt-info">
+                        <span class="ds-opt-name">Auto Detect</span>
+                        <span class="ds-opt-desc">AI merekomendasikan gaya visual terbaik</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

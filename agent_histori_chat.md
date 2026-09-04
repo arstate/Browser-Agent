@@ -5593,6 +5593,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Seluruh Unit Tests lulus 100% ([test_google_workspace_connected_app.py](file:///home/arya/browser-agent/test_google_workspace_connected_app.py)).
   - Bump version to `v2.150.100`, build `extension.crx` (975.4 KB).
 
+---
+
+### 🚀 Iterasi 476: Clean Mode Labels, Adaptive Narrow Input Toolbar & Pixel-Perfect Executive Slide Deck UI (v2.150.195)
+- **Kebutuhan Pengguna**:
+  - Hapus kata "Mode" dari UI switch mode sehingga hanya bertuliskan "Agent", "Chat", "Design" agar lebih bersih dan minimalis.
+  - Saat Canvas terbuka (layout narrow), pindahkan tombol trigger `System Design Auto` ke bawah di samping kanan tombol `+` (lampiran berkas), dan posisikan tombol `Thinking` di pojok kanan atas kolom input prompt agar ruang input tetap lapang dan tidak berdesakan.
+  - Sempurnakan UI preview slide deck agar 100% pixel-perfect sesuai screenshot referensi eksekutif.
+- **Implementasi & Peningkatan Sistem**:
+  - **Refactoring Mode Label di [sidepanel.html](file:///home/arya/browser-agent/extension/sidepanel.html), [newtab.html](file:///home/arya/browser-agent/extension/newtab.html), & [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js)**:
+    - Mengubah trigger dan item menu: `Agent Mode` → `Agent`, `Chat Mode` → `Chat`, `Design Mode` → `Design`.
+    - Memperbarui `CHAT_MODES_CONFIG`: `agent.name = 'Agent'`, `chat.name = 'Chat'`, `design.name = 'Design'`.
+  - **Relokasi Toolbar & Responsive Positioning di [sidepanel.css](file:///home/arya/browser-agent/extension/sidepanel.css) & [newtab.css](file:///home/arya/browser-agent/extension/newtab.css)**:
+    - Memindahkan `#thinking-level-dropup-wrapper` ke `.chat-input-header-right` (kanan atas) dengan anchor `.thinking-level-dropup-menu { right: 0; left: auto; }`.
+    - Memindahkan `#design-system-dropup-wrapper` ke dalam `.chat-input-bottom-actions` di samping kanan `#btn-attach-file` dengan `gap: 6px;` dan anchor `.design-system-dropup-menu { left: 0; right: auto; z-index: 500; }`.
+  - **Executive 2-Pane Presentation Engine di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js)**:
+    - `buildExecutiveSlideDeckHtml` diperbarui penuh dengan live scaled thumbnail miniature (`.thumb-mini-slide`), Google Font `Syne` (800) uppercase, 3-column bento cadence (`#FF4D00`, `#0284C7`, `#111827`), white rounded takeaway cards, 2-line bottom footer, obsidian floating dock, dan CSS print `@media print` 1 halaman per slide untuk ekspor PDF presisi.
+- **Pengujian & Rilis**:
+  - Verifikasi sintaks JavaScript `node -c extension/sidepanel.js` berhasil tanpa error.
+  - Bump version to `v2.150.195`.
+
+
 
 
 
