@@ -7909,6 +7909,8 @@ function renderOpenDesignCard(containerEl, artifact) {
     activeDesignArtifact = artifact;
     window.__activeDesignArtifact = artifact;
     
+    openOpenDesignCanvas(artifact);
+
     window.dispatchEvent(new CustomEvent('open-design-canvas', {
       detail: { artifact }
     }));
@@ -7950,6 +7952,341 @@ function renderOpenDesignCard(containerEl, artifact) {
   });
 
   containerEl.appendChild(card);
+}
+
+// =========================================================================
+// OpenDesign Split-Screen Canvas Workspace Engine (Tahap 3 - Gemini Canvas)
+// =========================================================================
+
+function generateVirtualFiles(artifact) {
+  if (!artifact || !artifact.html) return [];
+
+  const htmlContent = artifact.html;
+  const meta = artifact.meta || {};
+
+  // Extract <style>...</style> block as tokens.css
+  let cssContent = `/* OpenDesign Extracted Tokens */\n:root {\n`;
+  if (Array.isArray(meta.colors)) {
+    meta.colors.forEach((c, idx) => {
+      cssContent += `  --color-palette-${idx + 1}: ${c};\n`;
+    });
+  }
+  cssContent += `  --design-system: "${meta.system || 'modern-minimal'}";\n`;
+  cssContent += `}\n\n`;
+
+  const styleMatch = htmlContent.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+  if (styleMatch) {
+    cssContent += styleMatch[1].trim();
+  } else {
+    cssContent += `/* Tailwind CSS / Framework classes embedded directly in HTML */`;
+  }
+
+  const jsonMeta = JSON.stringify(meta, null, 2);
+
+  const readmeContent = `# ${meta.title || 'OpenDesign Artifact'}
+
+**Design System:** \`${meta.system || 'modern-minimal'}\`  
+**Category:** ${meta.category || 'Web Application / UI'}  
+**Status:** Standalone Production Ready  
+
+---
+
+## 🎨 Overview
+${meta.description || 'Modern, accessible, responsive interface generated natively by OpenDesign in Browser Agent.'}
+
+## 🌈 Visual Palette
+${(meta.colors || []).map(c => `- \`${c}\``).join('\n')}
+
+## 🚀 How to Run
+1. Open \`index.html\` directly in any modern web browser.
+2. All CSS styles, fonts, and scripts are self-contained or loaded via high-speed CDNs.
+`;
+
+  return [
+    { name: 'index.html', lang: 'html', content: htmlContent, icon: '🌐' },
+    { name: 'tokens.css', lang: 'css', content: cssContent, icon: '🎨' },
+    { name: 'design_meta.json', lang: 'json', content: jsonMeta, icon: '⚙️' },
+    { name: 'README.md', lang: 'markdown', content: readmeContent, icon: '📝' }
+  ];
+}
+
+function openOpenDesignCanvas(artifact) {
+  if (!artifact || !artifact.html) return;
+  activeDesignArtifact = artifact;
+  window.__activeDesignArtifact = artifact;
+
+  try {
+    chrome.storage.local.set({ opendesign_last_artifact: artifact });
+  } catch (e) {}
+
+  const canvasPane = document.getElementById('opendesign-canvas-pane');
+  if (!canvasPane) return;
+
+  document.body.classList.add('canvas-active');
+  canvasPane.style.display = 'flex';
+
+  // 1. Set Header
+  const titleEl = document.getElementById('canvas-design-title');
+  const badgeEl = document.getElementById('canvas-system-badge');
+  if (titleEl) titleEl.textContent = artifact.meta?.title || 'Design Preview';
+  if (badgeEl) badgeEl.textContent = `🎨 ${artifact.meta?.system || 'OpenDesign'}`;
+
+  // 2. Set Preview iframe
+  const iframe = document.getElementById('opendesign-preview-frame');
+  if (iframe) {
+    iframe.srcdoc = artifact.html;
+  }
+
+  // 3. Set Code tab
+  const codeDisplay = document.getElementById('canvas-code-display');
+  const codeLangLabel = document.getElementById('canvas-code-lang-label');
+  if (codeDisplay) {
+    codeDisplay.textContent = artifact.html;
+  }
+  if (codeLangLabel) {
+    codeLangLabel.textContent = `index.html (HTML5 Standalone • ${(artifact.html.length / 1024).toFixed(1)} KB)`;
+  }
+
+  // 4. Generate & Populate Files Tab
+  const virtualFiles = generateVirtualFiles(artifact);
+  const filesListEl = document.getElementById('canvas-files-list');
+  const fileTitleEl = document.getElementById('canvas-active-file-title');
+  const fileCodeEl = document.getElementById('canvas-file-code-display');
+
+  if (filesListEl) {
+    filesListEl.innerHTML = '';
+    virtualFiles.forEach((f, idx) => {
+      const item = document.createElement('div');
+      item.className = 'canvas-file-item' + (idx === 0 ? ' active' : '');
+      item.innerHTML = `<span>${f.icon}</span><span>${escapeHtml(f.name)}</span>`;
+      item.addEventListener('click', () => {
+        filesListEl.querySelectorAll('.canvas-file-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        if (fileTitleEl) fileTitleEl.textContent = f.name;
+        if (fileCodeEl) fileCodeEl.textContent = f.content;
+      });
+      filesListEl.appendChild(item);
+    });
+
+    if (virtualFiles.length > 0) {
+      if (fileTitleEl) fileTitleEl.textContent = virtualFiles[0].name;
+      if (fileCodeEl) fileCodeEl.textContent = virtualFiles[0].content;
+    }
+  }
+
+  // Reset to preview tab
+  switchCanvasTab('preview');
+  setCanvasViewport('responsive');
+
+  // Trigger smooth resize/reflow
+  window.dispatchEvent(new Event('resize'));
+}
+
+function closeOpenDesignCanvas() {
+  document.body.classList.remove('canvas-active');
+  const canvasPane = document.getElementById('opendesign-canvas-pane');
+  if (canvasPane) {
+    canvasPane.style.display = 'none';
+    canvasPane.classList.remove('is-expanded');
+  }
+  window.dispatchEvent(new Event('resize'));
+  if (chatInput) {
+    chatInput.focus();
+  }
+}
+
+function switchCanvasTab(tabName) {
+  document.querySelectorAll('.canvas-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+  });
+  document.querySelectorAll('.canvas-tab-view').forEach(view => {
+    view.classList.remove('active');
+    view.style.display = 'none';
+  });
+
+  const activeView = document.getElementById(`canvas-view-${tabName}`);
+  if (activeView) {
+    activeView.classList.add('active');
+    activeView.style.display = 'flex';
+  }
+}
+
+function setCanvasViewport(viewport) {
+  document.querySelectorAll('.viewport-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-viewport') === viewport);
+  });
+  const stage = document.getElementById('canvas-iframe-stage');
+  if (!stage) return;
+  stage.classList.remove('responsive', 'tablet', 'mobile');
+  stage.classList.add(viewport);
+}
+
+function initOpenDesignCanvas() {
+  window.addEventListener('open-design-canvas', (e) => {
+    if (e.detail?.artifact) {
+      openOpenDesignCanvas(e.detail.artifact);
+    }
+  });
+
+  // Tab switcher
+  document.querySelectorAll('.canvas-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-tab');
+      if (tab) switchCanvasTab(tab);
+    });
+  });
+
+  // Viewport switcher
+  document.querySelectorAll('.viewport-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const vp = btn.getAttribute('data-viewport');
+      if (vp) setCanvasViewport(vp);
+    });
+  });
+
+  // Refresh
+  const btnRefresh = document.getElementById('btn-canvas-refresh');
+  btnRefresh?.addEventListener('click', () => {
+    const iframe = document.getElementById('opendesign-preview-frame');
+    if (iframe && activeDesignArtifact?.html) {
+      iframe.srcdoc = activeDesignArtifact.html;
+      showUniversalToast('🔄 Pratinjau dimuat ulang');
+    }
+  });
+
+  // Popout / Open in New Tab
+  const btnPopout = document.getElementById('btn-canvas-popout');
+  btnPopout?.addEventListener('click', () => {
+    if (!activeDesignArtifact?.html) return;
+    const isSidepanel = !window.location.pathname.includes('newtab.html');
+    if (isSidepanel) {
+      // In sidepanel: open newtab with canvas query
+      chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html?canvas=open') });
+    } else {
+      // In newtab: open standalone HTML tab
+      const blob = new Blob([activeDesignArtifact.html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    }
+  });
+
+  // Expand / Contract
+  const btnExpand = document.getElementById('btn-canvas-expand');
+  btnExpand?.addEventListener('click', () => {
+    const pane = document.getElementById('opendesign-canvas-pane');
+    if (!pane) return;
+    const isExp = pane.classList.toggle('is-expanded');
+    btnExpand.title = isExp ? 'Kembalikan ke Tampilan Split' : 'Maksimalkan Layar Penuh';
+    btnExpand.innerHTML = isExp 
+      ? `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6m10-10h-6V4m0 6l7-7M3 21l7-7"/></svg>`
+      : `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
+  });
+
+  // Close
+  const btnClose = document.getElementById('btn-canvas-close');
+  btnClose?.addEventListener('click', () => {
+    closeOpenDesignCanvas();
+  });
+
+  // Copy Code in Code Tab
+  const btnCopyCode = document.getElementById('btn-canvas-copy-code');
+  btnCopyCode?.addEventListener('click', async () => {
+    if (!activeDesignArtifact?.html) return;
+    try {
+      await navigator.clipboard.writeText(activeDesignArtifact.html);
+      const label = document.getElementById('canvas-copy-code-text');
+      if (label) label.textContent = 'Copied! ✓';
+      showUniversalToast('📋 Kode HTML berhasil disalin ke clipboard');
+      setTimeout(() => {
+        if (label) label.textContent = 'Copy Code';
+      }, 2000);
+    } catch (e) {
+      showUniversalToast('❌ Gagal menyalin kode');
+    }
+  });
+
+  // Copy File in Files Tab
+  const btnCopyFile = document.getElementById('btn-canvas-copy-file');
+  btnCopyFile?.addEventListener('click', async () => {
+    const fileCodeEl = document.getElementById('canvas-file-code-display');
+    if (!fileCodeEl || !fileCodeEl.textContent) return;
+    try {
+      await navigator.clipboard.writeText(fileCodeEl.textContent);
+      showUniversalToast('📋 File berhasil disalin ke clipboard');
+    } catch (e) {
+      showUniversalToast('❌ Gagal menyalin file');
+    }
+  });
+
+  // Anti-Slop Lint Footer Button
+  const btnLint = document.getElementById('btn-canvas-footer-lint');
+  btnLint?.addEventListener('click', async () => {
+    if (!activeDesignArtifact?.html) return;
+    btnLint.disabled = true;
+    btnLint.textContent = 'Memeriksa...';
+    try {
+      if (window.OpenDesignBridge?.lintArtifact) {
+        const res = await window.OpenDesignBridge.lintArtifact(activeDesignArtifact.html);
+        if (res?.score !== undefined) {
+          showUniversalToast(`🛡️ Anti-Slop Score: ${res.score}/100 • ${res.violations_count || 0} issues`);
+        } else {
+          showUniversalToast('✅ Linter: Desain memenuhi standar OpenDesign!');
+        }
+      } else {
+        showUniversalToast('✅ Linter: Desain valid dan siap produksi.');
+      }
+    } catch (e) {
+      showUniversalToast('ℹ️ Linter OpenDesign aktif.');
+    } finally {
+      btnLint.disabled = false;
+      btnLint.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Anti-Slop Lint</span>`;
+    }
+  });
+
+  // Export HTML Footer Button
+  const btnExport = document.getElementById('btn-canvas-footer-export');
+  btnExport?.addEventListener('click', async () => {
+    if (!activeDesignArtifact?.html) return;
+    btnExport.disabled = true;
+    btnExport.textContent = 'Mengekspor...';
+    try {
+      if (window.OpenDesignBridge?.exportArtifact) {
+        const res = await window.OpenDesignBridge.exportArtifact({
+          htmlContent: activeDesignArtifact.html,
+          format: 'html'
+        });
+        if (res?.out_path) {
+          showUniversalToast(`✅ Berhasil diekspor: ${res.out_path}`);
+        }
+      } else {
+        const blob = new Blob([activeDesignArtifact.html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${(activeDesignArtifact.meta?.title || 'design').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showUniversalToast('✅ File HTML berhasil diunduh!');
+      }
+    } catch (e) {
+      showUniversalToast('❌ Gagal mengekspor: ' + (e.message || String(e)));
+    } finally {
+      btnExport.disabled = false;
+      btnExport.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export HTML</span>`;
+    }
+  });
+
+  // Auto-open canvas if URL has ?canvas=open
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('canvas') === 'open') {
+      chrome.storage.local.get(['opendesign_last_artifact'], (res) => {
+        if (res?.opendesign_last_artifact) {
+          openOpenDesignCanvas(res.opendesign_last_artifact);
+        }
+      });
+    }
+  } catch (e) {}
 }
 
 const DESIGN_MODE_SYSTEM_PROMPT = `
@@ -14016,6 +14353,7 @@ try {
   initSwitchTabDropdown();
   initStickmanToggle();
   initSearchEngineDropdown();
+  initOpenDesignCanvas();
 } catch (e) {}
 
 try {

@@ -457,6 +457,122 @@
         </div>
       </div>
     </main>
+ 
+    <!-- OpenDesign Canvas Workspace Pane (Tahap 3 - Gemini Canvas Architecture) -->
+    <aside class="opendesign-canvas-pane" id="opendesign-canvas-pane" style="display: none;">
+      <!-- Canvas Header Bar -->
+      <div class="opendesign-canvas-header">
+        <div class="canvas-header-meta">
+          <div class="canvas-badge-system" id="canvas-system-badge">🎨 OpenDesign</div>
+          <h3 class="canvas-design-title" id="canvas-design-title">Design Preview</h3>
+        </div>
+
+        <!-- Viewport Device Switcher -->
+        <div class="canvas-viewport-switcher" id="canvas-viewport-switcher">
+          <button type="button" class="viewport-btn active" data-viewport="responsive" title="Desktop Fluid (100%)">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span class="viewport-btn-label">Desktop</span>
+          </button>
+          <button type="button" class="viewport-btn" data-viewport="tablet" title="Tablet (768px)">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <span class="viewport-btn-label">Tablet</span>
+          </button>
+          <button type="button" class="viewport-btn" data-viewport="mobile" title="Mobile (375px)">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <span class="viewport-btn-label">Mobile</span>
+          </button>
+        </div>
+
+        <!-- Tabs Nav (Preview | Code | Files) -->
+        <div class="canvas-tabs-nav" id="canvas-tabs-nav">
+          <button type="button" class="canvas-tab-btn active" data-tab="preview">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Preview</span>
+          </button>
+          <button type="button" class="canvas-tab-btn" data-tab="code">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>Code</span>
+          </button>
+          <button type="button" class="canvas-tab-btn" data-tab="files">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+            <span>Files</span>
+          </button>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="canvas-header-actions">
+          <button type="button" class="canvas-action-icon-btn" id="btn-canvas-refresh" title="Muat Ulang Preview">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <button type="button" class="canvas-action-icon-btn" id="btn-canvas-popout" title="Buka di Tab Baru">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </button>
+          <button type="button" class="canvas-action-icon-btn" id="btn-canvas-expand" title="Maksimalkan / Split Layar">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
+          <button type="button" class="canvas-action-icon-btn btn-canvas-close" id="btn-canvas-close" title="Tutup Canvas (Kembali ke Chat Penuh)">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Canvas Body -->
+      <div class="opendesign-canvas-body">
+        <!-- 1. PREVIEW TAB -->
+        <div class="canvas-tab-view canvas-view-preview active" id="canvas-view-preview">
+          <div class="canvas-iframe-stage responsive" id="canvas-iframe-stage">
+            <iframe id="opendesign-preview-frame" sandbox="allow-scripts allow-modals allow-same-origin" title="OpenDesign Live Preview"></iframe>
+          </div>
+        </div>
+
+        <!-- 2. CODE TAB -->
+        <div class="canvas-tab-view canvas-view-code" id="canvas-view-code" style="display: none;">
+          <div class="canvas-code-toolbar">
+            <span class="code-lang-label" id="canvas-code-lang-label">index.html (HTML5 Standalone)</span>
+            <button type="button" class="btn-canvas-copy-code" id="btn-canvas-copy-code">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span id="canvas-copy-code-text">Copy Code</span>
+            </button>
+          </div>
+          <pre class="canvas-code-container"><code id="canvas-code-display" class="language-html"></code></pre>
+        </div>
+
+        <!-- 3. FILES TAB -->
+        <div class="canvas-tab-view canvas-view-files" id="canvas-view-files" style="display: none;">
+          <div class="canvas-files-sidebar">
+            <div class="files-sidebar-header">VIRTUAL FILES</div>
+            <div class="canvas-files-list" id="canvas-files-list"></div>
+          </div>
+          <div class="canvas-files-content-pane">
+            <div class="files-content-header">
+              <span id="canvas-active-file-title">index.html</span>
+              <button type="button" class="btn-canvas-copy-code" id="btn-canvas-copy-file">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>Copy</span>
+              </button>
+            </div>
+            <pre class="canvas-file-code-container"><code id="canvas-file-code-display"></code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Canvas Footer -->
+      <div class="opendesign-canvas-footer">
+        <div class="canvas-footer-left">
+          <span class="canvas-footer-status" id="canvas-footer-status">✓ Standalone Production Ready</span>
+        </div>
+        <div class="canvas-footer-right">
+          <button type="button" class="btn-canvas-footer-action" id="btn-canvas-footer-lint">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+            <span>Anti-Slop Lint</span>
+          </button>
+          <button type="button" class="btn-canvas-footer-primary" id="btn-canvas-footer-export">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Export HTML</span>
+          </button>
+        </div>
+      </div>
+    </aside>
 
     <!-- Right-Hand Floating Prompt Queue Dock (Unlimited Sequential Execution) -->
     <aside id="prompt-queue-dock" class="prompt-queue-dock" style="display: none;">
