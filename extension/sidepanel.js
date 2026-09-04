@@ -8055,13 +8055,14 @@ function dynamicallyAddSubAgentToUI(assistantBubble, newAgent, subtask = "") {
     treeList = treeContainer.querySelector('.agent-tree-branch-list');
 
     const headerBtn = treeContainer.querySelector('.agent-tree-branch-header');
-    headerBtn?.addEventListener('click', () => {
+    headerBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       treeContainer.classList.toggle('collapsed');
       const textEl = treeContainer.querySelector('.agent-tree-toggle-text');
       if (textEl) {
         textEl.textContent = treeContainer.classList.contains('collapsed') ? 'Detail' : 'Tutup';
       }
-      requestSmoothScrollToBottom(true, treeContainer);
     });
   }
 
@@ -8329,7 +8330,9 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
   // Bind interactive click toggle for assigned agents list
   const treeHeader = msg.querySelector('.agent-tree-branch-header');
   if (treeHeader) {
-    treeHeader.addEventListener('click', () => {
+    treeHeader.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const treeContainer = msg.querySelector('.agent-tree-branch-container');
       if (treeContainer) {
         const isCollapsed = treeContainer.classList.toggle('collapsed');
@@ -8337,7 +8340,6 @@ function appendAssistantMessage(initialText = null, isLiveLoading = true, agentI
         if (textEl) {
           textEl.textContent = isCollapsed ? 'Detail' : 'Tutup';
         }
-        requestSmoothScrollToBottom(true, treeContainer);
       }
     });
   }
@@ -8428,7 +8430,6 @@ function renderTaskScheduleSection(bubble, milestones, initialMode = 'full') {
       wrapper.classList.toggle('min-mode', !isFull);
       if (modeText) modeText.textContent = isFull ? 'Minimize' : 'Show Full';
       if (toggleText) toggleText.textContent = 'Tutup';
-      requestSmoothScrollToBottom(true, wrapper);
     });
   }
 
@@ -8442,11 +8443,12 @@ function renderTaskScheduleSection(bubble, milestones, initialMode = 'full') {
       if (toggleText) {
         toggleText.textContent = isCollapsed ? 'Detail' : 'Tutup';
       }
-      requestSmoothScrollToBottom(true, wrapper);
     });
   }
 
-  requestSmoothScrollToBottom(true, wrapper);
+  if (isExecuting) {
+    requestSmoothScrollToBottom(false);
+  }
 }
 
 function updateTaskScheduleProgress(bubble, milestones, activeMilestoneIdx = 0, forceMinMode = true) {
@@ -8526,7 +8528,9 @@ function finalizeTaskScheduleSection(bubble) {
   const toggleText = wrapper.querySelector('.task-schedule-toggle-text');
   if (toggleText) toggleText.textContent = 'Detail';
 
-  requestSmoothScrollToBottom(true, wrapper);
+  if (isExecuting) {
+    requestSmoothScrollToBottom(false);
+  }
 }
 
 let streamingRafTimer = null;
@@ -8604,7 +8608,6 @@ function appendToolBadge(bubble, toolName, args, agentName = "") {
           if (tEl) {
             tEl.textContent = isCollapsed ? 'Detail' : 'Tutup';
           }
-          requestSmoothScrollToBottom(true, section);
         });
       }
     }
@@ -8677,7 +8680,6 @@ function finalizeToolSection(bubble, collapse = true) {
       if (textEl) {
         textEl.textContent = isCollapsed ? 'Detail' : 'Tutup';
       }
-      requestSmoothScrollToBottom(true, section);
     });
   }
 
@@ -8690,7 +8692,9 @@ function finalizeToolSection(bubble, collapse = true) {
     if (textEl) textEl.textContent = 'Tutup';
   }
 
-  requestSmoothScrollToBottom(true, section);
+  if (isExecuting) {
+    requestSmoothScrollToBottom(false);
+  }
 }
 
 function updateToolBadgeState(badge, state, output) {
