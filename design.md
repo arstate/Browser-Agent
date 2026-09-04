@@ -402,3 +402,18 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `.chat-input-header-left .thinking-level-dropup-menu`: Menggunakan `left: 0; right: auto;` sehingga menu memanjang ke kanan ke area terbuka prompt box.
    - `.chat-input-header-right .thinking-level-dropup-menu`: Menggunakan `right: 0; left: auto;` sehingga menu mengikat ke tepi kanan tanpa overflow.
 
+---
+
+## 🖼️ 16. Canvas Drawer Minimalism & True 16:9 Slide Thumbnails (v2.150.200)
+
+1. **Canvas Drawer UI Declutter**:
+   - Menghapus `.opendesign-canvas-footer`: Seluruh area footer drawer (Anti-Slop score badge, tombol linter, dan dropdown export) dieliminasi. Area pratinjau kanvas `.opendesign-canvas-body` kini membentang penuh ke dasar panel dengan `flex: 1; min-height: 0;`.
+   - Menghapus `#canvas-system-badge`: Badge `🎨 Executive Editorial 16:9` pada `.canvas-header-meta` dihilangkan, menyisakan judul `.canvas-design-title` yang bersih, lapang, dan elegan di header bar.
+2. **Clean Sidebar Thumbnails (Zero Brand Clutter)**:
+   - Sidebar presentasi `.deck-sidebar` (`#0B0C10`, lebar 156px) murni menampilkan deretan thumbnail bernomor (`1`, `2`, `3`...).
+   - Dilarang keras menampilkan judul arsip/brand tambahan (seperti *"FELINE ARCHIVE"* atau subjudul) di atas sidebar.
+3. **Pixel-Perfect 16:9 Thumbnail Miniatures**:
+   - Miniatur `.thumb-card` (108px x 60.75px) beresolusi 16:9 memuat representasi nyata dari slide (`.thumb-mini-slide`, 864px x 486px scaled `0.125`).
+   - Active state `.thumb-item.active .thumb-card` memiliki border putih solid (`#FFFFFF`) dan bayangan lembut (`box-shadow: 0 0 14px rgba(255, 255, 255, 0.35)`).
+
+

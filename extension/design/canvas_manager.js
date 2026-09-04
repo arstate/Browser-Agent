@@ -384,9 +384,7 @@ function openOpenDesignCanvas(artifact) {
 
   // 1. Set Header
   const titleEl = document.getElementById('canvas-design-title');
-  const badgeEl = document.getElementById('canvas-system-badge');
   if (titleEl) titleEl.textContent = artifact.meta?.title || 'Design Preview';
-  if (badgeEl) badgeEl.textContent = `🎨 ${artifact.meta?.system || 'OpenDesign'}`;
 
   // 2. Set Preview iframe
   const iframe = document.getElementById('opendesign-preview-frame');

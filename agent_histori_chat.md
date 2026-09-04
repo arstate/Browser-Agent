@@ -5704,3 +5704,29 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Unit test Node.js resolusi fungsi endpoint dan upgrader HTML menghasilkan 0 assertion error.
   - Bump version to `v2.150.199`.
 
+---
+
+### 🚀 Iterasi 481: Canvas Drawer UI Declutter, Zero-Slop Header & True 16:9 Slide Thumbnail Engine (v2.150.200)
+- **Kebutuhan Pengguna**:
+  1. Menghapus Canvas Footer (`.opendesign-canvas-footer` yang berisi Anti-Slop linter score dan dropdown export) agar area kanvas bersih (*clean*).
+  2. Menghapus badge sistem desain `🎨 Executive Editorial 16:9` (`#canvas-system-badge`) di Canvas Header Bar karena tidak penting.
+  3. Menghapus teks header arsip/brand (seperti *"FELINE ARCHIVE / 10 Slide Eksplorasi Kucing"*) dari sidebar presentasi agar sidebar murni hanya menampilkan deretan nomor slide (`1`, `2`, `3`...).
+  4. Memperbaiki bug pratinjau thumbnail slide yang sebelumnya hitam/kosong agar menampilkan miniatur slide 16:9 nyata dengan border putih aktif saat terpilih.
+- **Implementasi & Peningkatan**:
+  - **Canvas Footer & Badge Declutter di [sidepanel.html](file:///home/arya/browser-agent/extension/sidepanel.html) & [newtab.html](file:///home/arya/browser-agent/extension/newtab.html)**:
+    - Menghapus elemen `<div class="canvas-badge-system" id="canvas-system-badge">🎨 OpenDesign</div>` dari `.canvas-header-meta`.
+    - Menghapus total blok `<div class="opendesign-canvas-footer">...</div>` dari DOM Canvas Drawer.
+    - Menyetel `.opendesign-canvas-footer { display: none !important; }` pada `sidepanel.css` dan `newtab.css`.
+    - Menghapus referensi `badgeEl` pada `extension/design/canvas_manager.js`.
+  - **Sidebar Cleanliness di [design/design_prompt.js](file:///home/arya/browser-agent/extension/design/design_prompt.js)**:
+    - Menginstruksikan prompt LLM secara tegas: *"DO NOT put any brand header, archive title, or extra text at the top of the sidebar. Keep sidebar strictly for clean numbered thumbnails."*
+  - **True 16:9 Thumbnail Engine di [design/slide_deck_engine.js](file:///home/arya/browser-agent/extension/design/slide_deck_engine.js)**:
+    - Memperbaiki `upgradeSlideDeckHtmlIfNeeded`: Hanya mem-bypass jika HTML telah memiliki penanda miniatur resmi `.thumb-mini-slide` dan `deck-floating-dock`. Jika LLM menghasilkan thumbnail kosong atau header arsip, sistem secara otomatis mengekstrak slide dan merekonstruksinya via `buildExecutiveSlideDeckHtml`.
+    - Merombak `extractSlidesFromRawHtml`: Menggunakan browser `DOMParser` native (dengan regex boundary fallback untuk lingkungan non-browser) dan sanitasi kontainer sidebar (`aside`/`deck-sidebar`), mengatasi bug pemotongan slide pada tag penutup `</div>` pertama di dalam `<section>`.
+    - Miniatur slide `.thumb-mini-slide` (skala `0.125` di dalam kartu 108px x 60.75px) kini merender judul, bento cards, dan badge secara presisi dengan active border putih bercahaya.
+- **Pengujian & Verifikasi**:
+  - Validasi sintaks `node -c` pada seluruh modul JavaScript extension lolos dengan 0 error.
+  - Unit test Node.js ekstraksi slide HTML dan upgrade engine menghasilkan thumbnail miniatur 16:9 lengkap tanpa header "FELINE ARCHIVE".
+  - Bump version to `v2.150.200`.
+
+
