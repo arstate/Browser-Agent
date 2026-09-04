@@ -3,6 +3,27 @@
 // Master Agent (Supreme Commander) & Master Design (Right-Hand Lead Architect)
 // =========================================================================
 
+function getEffectiveEndpointUrl(rawEndpoint) {
+  if (typeof getNormalizedChatEndpoint === 'function') {
+    return getNormalizedChatEndpoint(rawEndpoint);
+  }
+  if (typeof window !== 'undefined' && typeof window.getNormalizedChatEndpoint === 'function') {
+    return window.getNormalizedChatEndpoint(rawEndpoint);
+  }
+  if (typeof buildApiUrl === 'function' && buildApiUrl !== getEffectiveEndpointUrl) {
+    return buildApiUrl(rawEndpoint);
+  }
+  let clean = (rawEndpoint || 'https://generativelanguage.googleapis.com/v1beta/openai').trim().replace(/\/+$/, '');
+  return clean.endsWith('/chat/completions') ? clean : clean + '/chat/completions';
+}
+
+if (typeof buildApiUrl !== 'function') {
+  var buildApiUrl = getEffectiveEndpointUrl;
+}
+if (typeof window !== 'undefined') {
+  window.buildApiUrl = getEffectiveEndpointUrl;
+}
+
 async function runDesignModeLoop(userMessage, attachments = [], explicitMentions = []) {
   try {
     const stored = await chrome.storage.local.get(["browser_agent_config"]);
@@ -100,7 +121,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       );
     }
 
-    const endpointUrl = buildApiUrl(config.endpoint);
+    const endpointUrl = getEffectiveEndpointUrl(config.endpoint);
     let systemDirective = (typeof DESIGN_MODE_SYSTEM_PROMPT !== 'undefined') ? DESIGN_MODE_SYSTEM_PROMPT : '';
 
     const messages = [
@@ -299,12 +320,17 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
 
     // Fallback: If no direct HTML block found, convert markdown slide outline to interactive HTML slide deck
     if (!artifact.html && accumulatedContent.trim()) {
-      const convertedSlideHtml = convertMarkdownOrTextToInteractiveSlideDeck(accumulatedContent, userMessage);
-      if (convertedSlideHtml) {
-        artifact = {
-          html: convertedSlideHtml,
-          raw: convertedSlideHtml
-        };
+      const convertFn = (typeof convertMarkdownOrTextToInteractiveSlideDeck === 'function')
+        ? convertMarkdownOrTextToInteractiveSlideDeck
+        : (typeof window !== 'undefined' && typeof window.convertMarkdownOrTextToInteractiveSlideDeck === 'function' ? window.convertMarkdownOrTextToInteractiveSlideDeck : null);
+      if (convertFn) {
+        const convertedSlideHtml = convertFn(accumulatedContent, userMessage);
+        if (convertedSlideHtml) {
+          artifact = {
+            html: convertedSlideHtml,
+            raw: convertedSlideHtml
+          };
+        }
       }
     }
 
@@ -312,7 +338,12 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
 
     // Ensure artifact has the 100% executive slide deck layout (with sidebar thumbnails & floating dock)
     if (artifact.html) {
-      artifact.html = upgradeSlideDeckHtmlIfNeeded(artifact.html, userMessage, meta);
+      const upgradeFn = (typeof upgradeSlideDeckHtmlIfNeeded === 'function')
+        ? upgradeSlideDeckHtmlIfNeeded
+        : (typeof window !== 'undefined' && typeof window.upgradeSlideDeckHtmlIfNeeded === 'function' ? window.upgradeSlideDeckHtmlIfNeeded : null);
+      if (upgradeFn) {
+        artifact.html = upgradeFn(artifact.html, userMessage, meta);
+      }
     }
 
     if (toolBadgeAudit && typeof updateToolBadgeState === 'function') {

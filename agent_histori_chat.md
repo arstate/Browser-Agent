@@ -5685,3 +5685,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Simulasi transisi DOM perpindahan tombol Thinking saat switch antar mode (Agent -> Design -> Chat -> Agent) lulus 100%.
   - Bump version to `v2.150.198`.
 
+---
+
+### 🚀 Iterasi 480: Design Mode ReferenceError Hardening & Script Loading Order Fix (v2.150.199)
+- **Kebutuhan Pengguna**:
+  - Mengatasi error `Design Mode Error: ReferenceError: buildApiUrl is not defined` pada `design/design_executor.js:379` dan `ReferenceError: upgradeSlideDeckHtmlIfNeeded is not defined` saat menjalankan pembuatan slide deck di NewTab (`chrome://newtab/`).
+- **Implementasi & Peningkatan**:
+  - **Penyelarasan Endpoint URL di [design/design_executor.js](file:///home/arya/browser-agent/extension/design/design_executor.js)**:
+    - Menambahkan fungsi `getEffectiveEndpointUrl` dan bridge alias `buildApiUrl` yang mendelegasikan ke `getNormalizedChatEndpoint` (fungsi resmi pembuat URL API di Browser Agent).
+    - Memastikan pemanggilan URL endpoint AI di `runDesignModeLoop` tidak lagi melempar `ReferenceError`.
+  - **Urutan Pemuatan Skrip di [sidepanel.html](file:///home/arya/browser-agent/extension/sidepanel.html) & [newtab.html](file:///home/arya/browser-agent/extension/newtab.html)**:
+    - Memposisikan `sidepanel.js` sebelum `design_executor.js`, sehingga seluruh utilitas jaringan, API config, dan UI helpers telah tersedia di global scope saat `runDesignModeLoop` dieksekusi.
+  - **Safe Callers & Bridge Aliases di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js)**:
+    - Menyediakan fallback wrapper untuk `upgradeSlideDeckHtmlIfNeeded`, `convertMarkdownOrTextToInteractiveSlideDeck`, dan `getCleanDesignSummaryText`.
+    - Mengekspor `window.getNormalizedChatEndpoint` dan `window.buildApiUrl`.
+- **Pengujian & Verifikasi**:
+  - Validasi sintaks `node -c` pada seluruh modul extension berhasil 100%.
+  - Unit test Node.js resolusi fungsi endpoint dan upgrader HTML menghasilkan 0 assertion error.
+  - Bump version to `v2.150.199`.
+

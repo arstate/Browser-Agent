@@ -8021,6 +8021,28 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 // =========================================================================
 var activeDesignArtifact = (typeof activeDesignArtifact !== "undefined") ? activeDesignArtifact : (typeof window !== "undefined" ? window.activeDesignArtifact : null);
 
+if (typeof upgradeSlideDeckHtmlIfNeeded !== "function") {
+  var upgradeSlideDeckHtmlIfNeeded = function(...args) {
+    if (typeof window !== "undefined" && typeof window.upgradeSlideDeckHtmlIfNeeded === "function") {
+      return window.upgradeSlideDeckHtmlIfNeeded(...args);
+    }
+    return args[0] || "";
+  };
+}
+
+if (typeof buildApiUrl !== "function") {
+  var buildApiUrl = function(ep) {
+    if (typeof getNormalizedChatEndpoint === "function") {
+      return getNormalizedChatEndpoint(ep);
+    }
+    if (typeof window !== "undefined" && typeof window.getNormalizedChatEndpoint === "function") {
+      return window.getNormalizedChatEndpoint(ep);
+    }
+    let clean = (ep || "https://generativelanguage.googleapis.com/v1beta/openai").trim().replace(/\/+$/, "");
+    return clean.endsWith("/chat/completions") ? clean : clean + "/chat/completions";
+  };
+}
+
 if (typeof runDesignModeLoop !== "function") {
   var runDesignModeLoop = function(...args) {
     if (typeof window.runDesignModeLoop === "function") {
@@ -10059,6 +10081,12 @@ function getNormalizedChatEndpoint(rawEndpoint) {
     return clean;
   }
   return clean + "/chat/completions";
+}
+
+var buildApiUrl = getNormalizedChatEndpoint;
+if (typeof window !== 'undefined') {
+  window.getNormalizedChatEndpoint = getNormalizedChatEndpoint;
+  window.buildApiUrl = getNormalizedChatEndpoint;
 }
 
 function isRateLimitError(status, errorMsg = "") {
