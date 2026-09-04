@@ -7628,3 +7628,193 @@ body.no-glass-blur {
   contain-intrinsic-size: 0 80px;
   contain: layout style paint;
 }
+
+/* ==========================================================================
+   OpenDesign Interactive Result Card (Dark Luxury / Bento Standard)
+   ========================================================================== */
+.opendesign-result-card {
+  margin-top: 14px;
+  background: linear-gradient(135deg, rgba(18, 20, 24, 0.95), rgba(12, 13, 16, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.opendesign-result-card:hover {
+  border-color: rgba(206, 241, 40, 0.3);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 15px rgba(206, 241, 40, 0.05);
+}
+
+.opendesign-card-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.opendesign-system-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(206, 241, 40, 0.12);
+  color: #CEF128;
+  border: 1px solid rgba(206, 241, 40, 0.3);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.opendesign-category-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94A3B8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  line-height: 1.4;
+}
+
+.opendesign-status-pill {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: #10B981;
+  font-weight: 600;
+}
+
+.opendesign-status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+}
+
+.opendesign-card-title {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.opendesign-card-desc {
+  margin: 0;
+  font-size: 12px;
+  color: #94A3B8;
+  line-height: 1.45;
+}
+
+.opendesign-card-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.opendesign-palette-swatches {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.opendesign-palette-swatches .swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.opendesign-meta-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.opendesign-meta-tags .meta-tag {
+  font-size: 10px;
+  color: #64748B;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.opendesign-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.btn-opendesign-view-canvas {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  background: #CEF128;
+  color: #000000;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  box-shadow: 0 2px 10px rgba(206, 241, 40, 0.25);
+}
+
+.btn-opendesign-view-canvas:hover {
+  background: #dbf83c;
+  box-shadow: 0 4px 16px rgba(206, 241, 40, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-opendesign-export {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #E2E8F0;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.btn-opendesign-export:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.2);
+}

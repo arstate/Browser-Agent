@@ -7281,6 +7281,11 @@ const CHAT_MODES_CONFIG = {
     name: 'Chat Mode',
     icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`
   },
+  design: {
+    key: 'design',
+    name: 'Design Mode',
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>`
+  },
   websearch: {
     key: 'websearch',
     name: 'Web Search',
@@ -7289,7 +7294,7 @@ const CHAT_MODES_CONFIG = {
 };
 
 function setChatMode(mode) {
-  if (mode !== 'chat' && mode !== 'agent' && mode !== 'websearch') mode = 'agent';
+  if (mode !== 'chat' && mode !== 'agent' && mode !== 'websearch' && mode !== 'design') mode = 'agent';
   currentChatMode = mode;
   
   const iconEl = document.getElementById('chat-mode-trigger-icon');
@@ -7326,6 +7331,16 @@ function setChatMode(mode) {
     if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Instant Google search, website navigation, and smart suggestions.');
     clearAttachments();
     clearMentionAgents();
+  } else if (mode === 'design') {
+    if (chatInput) chatInput.placeholder = 'Ketik konsep desain / website / dashboard yang ingin dibuat...';
+    if (agentStatusEl) agentStatusEl.textContent = 'Design Engine Ready';
+    if (btnSendEl) btnSendEl.title = 'Rancang Desain (OpenDesign)';
+    if (heroTitleEl) scrambleText(heroTitleEl, 'Describe your vision, <span class="hero-highlight">design anything</span> in seconds', 340);
+    if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Native OpenDesign engine with 152 design systems, live preview canvas, code viewer & instant export.');
+    hideWebSearchSuggestions();
+    if (window.OpenDesignBridge?.ensureDaemon) {
+      window.OpenDesignBridge.ensureDaemon().catch(() => {});
+    }
   } else if (mode === 'chat') {
     if (chatInput) chatInput.placeholder = 'Ketik pesan chat di sini...';
     if (agentStatusEl) agentStatusEl.textContent = 'Chat Ready';
@@ -7771,6 +7786,411 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
         checkAndProcessNextPromptQueue();
       }, 200);
     }
+}
+
+// =========================================================================
+// OpenDesign Interactive Result Card & Execution Engine (Tahap 2)
+// =========================================================================
+let activeDesignArtifact = null;
+
+function extractHtmlArtifact(content) {
+  if (!content) return { html: '', raw: '' };
+  
+  const codeBlockRegex = /```(?:html|xml)?\s*([\s\S]*?)```/gi;
+  let match;
+  while ((match = codeBlockRegex.exec(content)) !== null) {
+    const code = match[1].trim();
+    if (code.includes('<html') || code.includes('<!DOCTYPE') || code.includes('<div') || code.includes('<style')) {
+      return { html: code, raw: match[0] };
+    }
+  }
+  
+  const rawHtmlMatch = content.match(/(<!DOCTYPE html>[\s\S]*?<\/html>|<html[\s\S]*?<\/html>)/i);
+  if (rawHtmlMatch) {
+    return { html: rawHtmlMatch[1].trim(), raw: rawHtmlMatch[0] };
+  }
+
+  return { html: '', raw: '' };
+}
+
+function extractDesignMeta(content) {
+  let meta = {
+    title: 'Rancangan Web UI',
+    category: 'Modern Minimal',
+    system: 'modern-minimal',
+    description: 'Desain web modern responsif dengan token visual harmonis.',
+    colors: ['#0A0A0E', '#16181D', '#CEF128', '#FFFFFF'],
+    tags: ['Design System', 'Responsive', 'HTML5']
+  };
+
+  if (!content) return meta;
+
+  const metaMatch = content.match(/<design_meta>([\s\S]*?)<\/design_meta>/i);
+  if (metaMatch) {
+    try {
+      const parsed = JSON.parse(metaMatch[1].trim());
+      meta = { ...meta, ...parsed };
+    } catch (e) {}
+  } else {
+    const titleMatch = content.match(/^#+\s*(.+)$/m);
+    if (titleMatch) {
+      meta.title = titleMatch[1].trim().slice(0, 50);
+    }
+  }
+
+  return meta;
+}
+
+function showUniversalToast(message, duration = 3000) {
+  let toast = document.getElementById('universal-action-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'universal-action-toast';
+    toast.className = 'universal-action-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, duration);
+}
+
+function renderOpenDesignCard(containerEl, artifact) {
+  if (!containerEl || !artifact || !artifact.html) return;
+
+  if (containerEl.querySelector('.opendesign-result-card')) {
+    return;
+  }
+
+  const card = document.createElement('div');
+  card.className = 'opendesign-result-card';
+  card.setAttribute('data-system', artifact.meta?.system || 'modern');
+
+  const swatchesHtml = (artifact.meta?.colors || ['#0A0A0E', '#16181D', '#CEF128', '#FFFFFF'])
+    .map(c => `<span class="swatch" style="background: ${escapeHtml(c)};" title="${escapeHtml(c)}"></span>`)
+    .join('');
+
+  const tagsHtml = (artifact.meta?.tags || ['HTML5', 'Tokens'])
+    .map(t => `<span class="meta-tag">${escapeHtml(t)}</span>`)
+    .join('');
+
+  card.innerHTML = `
+    <div class="opendesign-card-badge-row">
+      <span class="opendesign-system-badge">🎨 ${escapeHtml(artifact.meta?.system || 'OpenDesign')}</span>
+      <span class="opendesign-category-badge">${escapeHtml(artifact.meta?.category || 'Web UI')}</span>
+      <span class="opendesign-status-pill">Canvas Ready</span>
+    </div>
+    <h4 class="opendesign-card-title">${escapeHtml(artifact.meta?.title || 'Rancangan Antarmuka')}</h4>
+    <p class="opendesign-card-desc">${escapeHtml(artifact.meta?.description || 'Desain interaktif siap dipratinjau dan diekspor.')}</p>
+    <div class="opendesign-card-preview-bar">
+      <div class="opendesign-palette-swatches">
+        ${swatchesHtml}
+      </div>
+      <div class="opendesign-meta-tags">
+        ${tagsHtml}
+      </div>
+    </div>
+    <div class="opendesign-card-actions">
+      <button type="button" class="btn-opendesign-view-canvas">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        <span>View Canvas ↗</span>
+      </button>
+      <button type="button" class="btn-opendesign-export" title="Unduh File HTML Mandiri">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Export HTML</span>
+      </button>
+    </div>
+  `;
+
+  const btnView = card.querySelector('.btn-opendesign-view-canvas');
+  btnView?.addEventListener('click', () => {
+    activeDesignArtifact = artifact;
+    window.__activeDesignArtifact = artifact;
+    
+    window.dispatchEvent(new CustomEvent('open-design-canvas', {
+      detail: { artifact }
+    }));
+
+    showUniversalToast('🎨 Membuka Canvas Workspace...');
+  });
+
+  const btnExport = card.querySelector('.btn-opendesign-export');
+  btnExport?.addEventListener('click', async () => {
+    if (!artifact.html) return;
+    btnExport.disabled = true;
+    btnExport.textContent = 'Mengekspor...';
+    try {
+      if (window.OpenDesignBridge?.exportArtifact) {
+        const res = await window.OpenDesignBridge.exportArtifact({
+          htmlContent: artifact.html,
+          format: 'html'
+        });
+        if (res?.out_path) {
+          showUniversalToast(`✅ Berhasil diekspor: ${res.out_path}`);
+        }
+      } else {
+        const blob = new Blob([artifact.html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${(artifact.meta?.title || 'design').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showUniversalToast('✅ File HTML berhasil diunduh!');
+      }
+    } catch (e) {
+      console.error('Export error:', e);
+      showUniversalToast('❌ Gagal mengekspor: ' + (e.message || String(e)));
+    } finally {
+      btnExport.disabled = false;
+      btnExport.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export HTML</span>`;
+    }
+  });
+
+  containerEl.appendChild(card);
+}
+
+const DESIGN_MODE_SYSTEM_PROMPT = `
+# ROLE: OPEN DESIGN MASTER ARCHITECT (BROWSER AGENT NATIVE)
+You are the native OpenDesign Master Architect in Browser Agent.
+Your goal is to turn user requirements, product ideas, briefs, or design requests into world-class, production-ready, beautiful user interfaces and web applications.
+
+## 🎨 DESIGN SYSTEM RULES
+1. Adhere to professional standards: high-contrast dark luxury or modern minimal style, clean typography, proper whitespace, accessibility contrast (AA/AAA).
+2. Write 100% complete, runnable, standalone HTML with internal <style> (or CDN Tailwind v4) and internal <script> for interactions.
+3. Never output truncated code (NO "<!-- rest of code here -->").
+4. Always wrap the complete HTML file in a single code block tagged \`\`\`html ... \`\`\`.
+5. At the very end of your response, output a structured metadata block:
+<design_meta>
+{
+  "title": "Clean Descriptive Title",
+  "category": "Modern & Minimal | Dark Luxury | E-Commerce | SaaS | Fintech",
+  "system": "luxury | modern-minimal | apple | linear-app",
+  "description": "1-sentence summary of the design layout and components",
+  "colors": ["#090A0C", "#16181D", "#CEF128", "#FFFFFF"],
+  "tags": ["Landing Page", "Dark Luxury", "Responsive"]
+}
+</design_meta>
+`;
+
+async function runDesignModeLoop(userMessage, attachments = [], explicitMentions = []) {
+  try {
+    const stored = await chrome.storage.local.get(["browser_agent_config"]);
+    if (stored && stored.browser_agent_config) {
+      config = { ...config, ...stored.browser_agent_config };
+    }
+  } catch (e) {}
+
+  if (!config.apiKey && config.preset !== "ollama" && config.preset !== "9router") {
+    openSettingsPage();
+    appendAssistantMessage("API Key belum diatur. Membuka halaman Pengaturan di tab baru untuk mengatur Provider AI Anda.");
+    return;
+  }
+
+  isExecuting = true;
+  updateSendButtonState(true);
+  abortController = new AbortController();
+
+  if (!currentSessionId) {
+    currentSessionId = 'sess_' + Date.now();
+    currentSessionTitle = (userMessage || 'Design Session').slice(0, 45).trim();
+    currentSessionCreatedAt = Date.now();
+    updateHeaderChatTitle(currentSessionTitle);
+  }
+
+  appendUserMessage(userMessage, attachments);
+
+  const agentInfo = {
+    displayName: "OpenDesign Architect",
+    name: "OpenDesign Architect",
+    isAuto: false,
+    isBoss: false,
+    isMulti: false
+  };
+
+  const assistantBubble = appendAssistantMessage(null, true, agentInfo);
+  const contentEl = assistantBubble.querySelector('.message-content');
+  
+  updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "Merancang Desain...", false, false);
+
+  conversationHistory.push({
+    role: "user",
+    content: userMessage,
+    displayContent: userMessage || "",
+    chatMode: "design"
+  });
+
+  let accumulatedContent = "";
+
+  try {
+    const endpointUrl = getNormalizedChatEndpoint(config.endpoint);
+    const headers = { "Content-Type": "application/json" };
+    if (config.apiKey) {
+      headers["Authorization"] = `Bearer ${config.apiKey}`;
+    }
+
+    const dynamicMasterPrompt = buildDynamicSystemPrompt([]) + `\n\n` + DESIGN_MODE_SYSTEM_PROMPT;
+
+    const messages = [
+      { role: "system", content: dynamicMasterPrompt },
+      ...sanitizeMessagesForApi(conversationHistory, true)
+    ];
+
+    let candidateModels = getCandidateModelsList();
+    if (config.autoRotateModel === false && config.selectedModelChoice && config.selectedModelChoice !== "auto") {
+      candidateModels = [config.selectedModelChoice];
+    } else if (config.autoRotateModel === false) {
+      candidateModels = [candidateModels[0]];
+    }
+
+    let response = null;
+    let activeModelChoice = candidateModels[0];
+    let lastErrorMessage = "";
+
+    for (let mIdx = 0; mIdx < candidateModels.length; mIdx++) {
+      activeModelChoice = candidateModels[mIdx];
+      try {
+        const resp = await fetch(endpointUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            model: activeModelChoice,
+            messages,
+            temperature: 0.4,
+            max_tokens: parseInt(config.maxTokens, 10) || 1000000,
+            stream: true
+          }),
+          signal: abortController.signal
+        });
+
+        if (!resp.ok) {
+          let errorMsg = "";
+          try {
+            const errJson = await resp.json();
+            errorMsg = errJson.error?.message || errJson.message || JSON.stringify(errJson);
+          } catch (e) {
+            errorMsg = await resp.text();
+          }
+          lastErrorMessage = errorMsg;
+
+          if (isRetryableAIError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
+            const nextModel = candidateModels[mIdx + 1];
+            updateAssistantText(assistantBubble, `*Model \`${activeModelChoice}\` mengalami kendala. Beralih ke \`${nextModel}\`...*\n\n`, true);
+            continue;
+          }
+          throw new Error(`AI Request Error (${resp.status}): ${errorMsg}`);
+        }
+
+        response = resp;
+        break;
+      } catch (fetchErr) {
+        if (fetchErr.name === 'AbortError' || !isExecuting) throw fetchErr;
+        lastErrorMessage = fetchErr.message;
+        if (isRetryableAIError(0, fetchErr.message) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
+          const nextModel = candidateModels[mIdx + 1];
+          updateAssistantText(assistantBubble, `*Kendala koneksi pada \`${activeModelChoice}\`. Mencoba \`${nextModel}\`...*\n\n`, true);
+          continue;
+        }
+        throw fetchErr;
+      }
+    }
+
+    if (!response) {
+      throw new Error(lastErrorMessage || `Gagal menghubungi AI dengan model ${candidateModels.join(', ')}.`);
+    }
+
+    if (response.body && typeof response.body.getReader === 'function') {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      while (true) {
+        if (!isExecuting || abortController?.signal.aborted) {
+          try { await reader.cancel(); } catch (e) {}
+          throw new DOMException("Aborted", "AbortError");
+        }
+
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === "data: [DONE]" || !trimmed.startsWith("data:")) continue;
+          try {
+            const jsonStr = trimmed.replace(/^data:\s*/, "");
+            const chunk = JSON.parse(jsonStr);
+            const deltaContent = chunk.choices?.[0]?.delta?.content || chunk.choices?.[0]?.message?.content || "";
+            if (deltaContent) {
+              accumulatedContent += deltaContent;
+              const cleanDisplay = accumulatedContent.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '').trim();
+              updateAssistantText(assistantBubble, cleanDisplay || accumulatedContent, true);
+            }
+          } catch (err) {}
+        }
+      }
+    } else {
+      const data = await response.json();
+      accumulatedContent = data.choices?.[0]?.message?.content || "";
+    }
+
+    const artifact = extractHtmlArtifact(accumulatedContent);
+    const meta = extractDesignMeta(accumulatedContent);
+    const cleanFinalText = accumulatedContent.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '').trim();
+
+    updateAssistantText(assistantBubble, cleanFinalText || accumulatedContent, false);
+
+    if (artifact.html && contentEl) {
+      const fullArtifact = {
+        html: artifact.html,
+        raw: artifact.raw,
+        meta,
+        content: cleanFinalText
+      };
+      activeDesignArtifact = fullArtifact;
+      window.__activeDesignArtifact = fullArtifact;
+      renderOpenDesignCard(contentEl, fullArtifact);
+
+      if (window.OpenDesignBridge?.lintArtifact) {
+        window.OpenDesignBridge.lintArtifact(artifact.html).catch(() => {});
+      }
+    }
+
+    updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "Selesai", false, true);
+
+    conversationHistory.push({
+      role: "assistant",
+      content: cleanFinalText || accumulatedContent,
+      agentInfo: agentInfo,
+      designArtifact: artifact.html ? { html: artifact.html, meta } : null,
+      chatMode: "design"
+    });
+
+    saveCurrentSessionToDB();
+
+  } catch (err) {
+    console.error("Design Mode Error:", err);
+    updateAssistantActiveAgent(assistantBubble, "OpenDesign Architect", "Gagal", false, true);
+    const friendlyMsg = formatFriendlyErrorMessage(err, config.endpoint, (typeof activeModelChoice !== 'undefined' ? activeModelChoice : ''));
+    if (contentEl) {
+      contentEl.style.display = 'block';
+      contentEl.innerHTML = `<div class="error-msg-box" style="color: #EF4444; font-size: 13px; font-weight: 500; line-height: 1.5; padding: 10px 14px; background: rgba(239, 68, 68, 0.08); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.25);">${escapeHtml(friendlyMsg)}</div>`;
+    }
+    updateFooterStatus("Design Error / Network Issue");
+  } finally {
+    isExecuting = false;
+    updateSendButtonState(false);
+    abortController = null;
+    requestSmoothScrollToBottom(true);
+    if (chatInput) {
+      chatInput.focus();
+    }
+  }
 }
 
 // =========================================================================
@@ -9361,6 +9781,8 @@ function sanitizeInternalAiTags(rawText) {
   clean = clean.replace(/<(?:task|milestone|step)\s+[^>]+?\/?>/gi, '');
   // Strip <think>...</think> or similar tags
   clean = clean.replace(/<(?:think|thought|thinking)>[\s\S]*?<\/(?:think|thought|thinking)>/gi, '');
+  // Strip <design_meta>...</design_meta>
+  clean = clean.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '');
   // Clean raw milestone checklists: e.g. - [x] Milestone 1: Milestone 1: ...
   clean = clean.replace(/(?:^|\n)\s*[-*•]\s*\[(?:x| |▶|\/)\]\s*Milestone\s*\d+[:\s][^\n]+/gi, '');
   return clean.trim();
@@ -11286,6 +11708,25 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
         } else {
           updateAssistantText(currentAssistantBubble, msg.content);
         }
+
+        // Render OpenDesign card if artifact exists or can be extracted
+        if (msg.designArtifact || msg.chatMode === 'design' || (typeof msg.content === 'string' && (msg.content.includes('```html') || msg.content.includes('<design_meta>')))) {
+          const contentEl = currentAssistantBubble ? currentAssistantBubble.querySelector('.message-content') : null;
+          if (contentEl) {
+            let artifactToRender = msg.designArtifact;
+            if (!artifactToRender || !artifactToRender.html) {
+              const art = extractHtmlArtifact(msg.content);
+              const meta = extractDesignMeta(msg.content);
+              if (art.html) {
+                artifactToRender = { html: art.html, raw: art.raw, meta, content: msg.content };
+              }
+            }
+            if (artifactToRender && artifactToRender.html) {
+              renderOpenDesignCard(contentEl, artifactToRender);
+            }
+          }
+        }
+
         currentAssistantBubble = null;
       }
     } else if (msg.role === 'tool') {
@@ -12645,6 +13086,8 @@ function handleSendMessage() {
 
   if (currentChatMode === 'chat') {
     runChatModeLoop(displayMessage, currentAttachments, currentMentions);
+  } else if (currentChatMode === 'design') {
+    runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
   } else {
     runAgentLoop(displayMessage, currentAttachments, currentMentions);
   }
