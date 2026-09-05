@@ -6037,6 +6037,40 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   1. Validasi sintaks `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
   2. Bump versi manifest ke `v2.150.212`.
 
+### Iterasi 494 (v2.150.213) - 2026-09-05
+- **User Request:**
+  "style ui preview pdf ini dibuat sama semua karena ini ui sistem, baru kalau ui slide deck pdfnya itu buat biar dipikir sama ai uinya dan sekarang saya minta kok mesti ui slide decknya isi desainya kok template sama semua di tiap halaman ya kek gabisa beda beda ya bro coba lo benerin bro" (dengan screenshot sidebar thumbnail presentasi yang dilingkari merah karena slide 1 sampai 10 memiliki template 3-kolom kartu kembar identik).
+- **Akar Masalah (Root Cause):**
+  1. Pada `slide_template.js`, perulangan `slidesData.map` dan thumbnail generator unconditionally merender layout kartu 3-kolom (`.slide-columns-grid` dan `.thumb-mini-grid`) untuk seluruh slide tanpa membedakan apakah itu slide sampul, komparasi 2-kolom, matriks 4-stat, kutipan besar, timeline proses, atau rangkuman.
+  2. Pada `design_prompt.js`, instruksi sistem sebelumnya membatasi AI bahwa setiap slide "harus memiliki Modular Cards Grid default 3 kartu", sehingga AI menghasilkan struktur kartu yang seragam.
+  3. Pada `slide_deck_engine.js`, ekstraksi slide memaksakan `while (cards.length < 3)` dan memotong ke 3 kartu, mengunci seluruh slide ke dalam template yang monoton.
+- **Analisis & Solusi:**
+  1. *Pemisahan UI Sistem vs UI Konten Slide*:
+     - UI sistem (panggung `#deck-stage-wrap`, bilah thumbnail `#deck-sidebar` dengan penomoran slide 1..N, dock `.deck-floating-dock` dengan prev/counter/next/reset/export) dipertahankan stabil dan seragam di semua presentasi.
+     - UI kanvas isi slide (`.slide-canvas`) kini mendukung 7 variasi arketipe tata letak modular:
+       * `cover` (`.slide-layout-cover`): Halaman sampul eksekutif (Slide 1) dengan judul display megah (42-46px), lead subtitle, metadata dokumen/slide, dan badge kategori.
+       * `split` (`.slide-layout-split`): 2 kolom lapang (50:50) untuk komparasi atau studi mendalam.
+       * `bento` (`.slide-layout-bento`): 3 kartu pilar standar dengan highlight box.
+       * `metrics` (`.slide-layout-metrics`): 4 kartu stat dengan angka metrik besar (`98%`, `24/7`, dll.).
+       * `quote` (`.slide-layout-quote`): Tipografi kutipan berbobot di tengah kanvas dengan tanda petik besar dan pill takeaway.
+       * `timeline` (`.slide-layout-timeline`): 4 langkah alur proses horizontal berurutan (Tahap 01 s/d 04).
+       * `conclusion` (`.slide-layout-conclusion`): Ringkasan eksekutif dan checklist aksi penutup.
+  2. *Contextual Sidebar Miniatures (`slide_template.js`, `slide_styles.js`)*:
+     - Bilah navigasi samping mendeteksi tata letak setiap slide dan merender siluet miniatur unik (`.thumb-mini-cover`, `.thumb-mini-split`, `.thumb-mini-metrics`, `.thumb-mini-quote`, `.thumb-mini-timeline`, `.thumb-mini-conclusion`, `.thumb-mini-grid`), sehingga sidebar tidak lagi tampak kembar identik.
+  3. *AI System Prompt & Engine Upgrades (`design_prompt.js`, `slide_deck_engine.js`)*:
+     - Menginstruksikan AI Master Design untuk merancang slide deck dengan alur layout yang bervariasi secara kontekstual.
+     - Memperbarui parser markdown dan HTML di `slide_deck_engine.js` untuk mendeteksi arketipe tata letak secara dinamis tanpa memaksakan 3 kartu kaku.
+  4. *Sub-800 Line Rule Compliance*:
+     - `slide_template.js`: 680 baris.
+     - `slide_styles.js`: 738 baris.
+     - `slide_deck_engine.js`: 506 baris.
+     - `design_prompt.js`: 183 baris.
+     - Seluruh file di `extension/design/` patuh aturan batasan baris kode <= 800 baris.
+- **Verifikasi:**
+  1. Validasi parsing dan rendering unit test mandiri: 7 variasi slide (cover, split, bento, metrics, quote, timeline, conclusion) berhasil dirender dan memiliki kelas visual masing-masing (`slide-layout-*` dan `thumb-mini-*`).
+  2. Validasi sintaks `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  3. Bump versi manifest ke `v2.150.213`.
+
 
 
 

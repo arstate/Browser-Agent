@@ -67,11 +67,15 @@ function parseMarkdownToSlides(content, userPrompt = "") {
 
   if (validSlides.length === 0) return [];
 
+  const totalSlides = validSlides.length;
   return validSlides.map((raw, idx) => {
     const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
     let title = `Slide ${idx + 1}`;
     let subtitle = "";
+    let explicitLayout = "";
     const cards = [];
+    let quoteText = "";
+    let quoteAuthor = "";
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -79,23 +83,32 @@ function parseMarkdownToSlides(content, userPrompt = "") {
         title = line.replace(/^#+\s*/, "").replace(/^slide\s+\d+[:\s-]*/i, "").trim() || title;
       } else if (!subtitle && (line.toLowerCase().startsWith("subjudul:") || line.toLowerCase().startsWith("subtitle:"))) {
         subtitle = line.replace(/^(subjudul|subtitle)[:\s-]*/i, "").trim();
+      } else if (line.toLowerCase().startsWith("layout:") || line.toLowerCase().startsWith("tipe:")) {
+        explicitLayout = line.replace(/^(layout|tipe)[:\s-]*/i, "").trim().toLowerCase();
+      } else if (line.startsWith(">") || line.startsWith("“") || line.startsWith('"')) {
+        quoteText = line.replace(/^[>“"'\s]+|[”"'\s]+$/g, "").trim();
       } else if (line.startsWith("-") || line.startsWith("*") || line.startsWith("•") || /^\d+\./.test(line)) {
         const itemText = line.replace(/^[-*•\d.]+\s*/, "").trim();
         const colonIdx = itemText.indexOf(":");
         if (colonIdx > 0 && colonIdx < 40) {
           const cardTitle = itemText.slice(0, colonIdx).replace(/\*\*/g, "").trim();
           const cardDesc = itemText.slice(colonIdx + 1).trim();
+          const statMatch = cardTitle.match(/^(\d+(?:[.,]\d+)?%?|\d+x|\d+\s*(?:jam|hari|bln|thn))/i) || cardDesc.match(/^(\d+(?:[.,]\d+)?%?|\d+x)/i);
           cards.push({
-            badge: `KARTU 0${cards.length + 1} // ANALISIS`,
+            badge: `POIN 0${cards.length + 1} // ANALISIS`,
             title: cardTitle,
             desc: cardDesc,
+            stat: statMatch ? statMatch[1] : `0${cards.length + 1}`,
+            metricValue: statMatch ? statMatch[1] : `0${cards.length + 1}`,
             footerHighlight: cardTitle.toUpperCase().slice(0, 32)
           });
         } else {
           cards.push({
-            badge: `KARTU 0${cards.length + 1} // POIN UTAMA`,
+            badge: `POIN 0${cards.length + 1} // ANALISIS`,
             title: itemText.slice(0, 32),
             desc: itemText,
+            stat: `0${cards.length + 1}`,
+            metricValue: `0${cards.length + 1}`,
             footerHighlight: "KEY TAKEAWAY"
           });
         }
@@ -104,26 +117,94 @@ function parseMarkdownToSlides(content, userPrompt = "") {
           subtitle = line;
         } else {
           cards.push({
-            badge: `KARTU 0${cards.length + 1} // INSIGHT`,
+            badge: `POIN 0${cards.length + 1} // INSIGHT`,
             title: `Insight 0${cards.length + 1}`,
             desc: line,
+            stat: `0${cards.length + 1}`,
+            metricValue: `0${cards.length + 1}`,
             footerHighlight: "STRATEGIC VALUE"
           });
         }
       }
     }
 
-    while (cards.length < 3) {
-      const cIdx = cards.length + 1;
-      cards.push({
-        badge: `KARTU 0${cIdx} // FOKUS STRATEGIS`,
-        title: `Pilar Eksekusi 0${cIdx}`,
-        desc: `Implementasi terukur dengan standar akurasi tinggi dan efisiensi maksimal pada tahap operasional.`,
-        footerHighlight: `OPTIMASI 0${cIdx}`
-      });
+    // Determine layout
+    let layout = explicitLayout;
+    if (!layout) {
+      if (idx === 0) {
+        layout = 'cover';
+      } else if (idx === totalSlides - 1 && totalSlides >= 4) {
+        layout = 'conclusion';
+      } else if (quoteText) {
+        layout = 'quote';
+      } else if (cards.length === 2) {
+        layout = 'split';
+      } else if (/tahap|langkah|step|alur|proses|roadmap|jadwal/i.test(title)) {
+        layout = 'timeline';
+      } else if (cards.length === 4) {
+        layout = 'metrics';
+      } else {
+        const cycle = (idx - 1) % 4;
+        if (cycle === 0) layout = 'split';
+        else if (cycle === 1) layout = 'bento';
+        else if (cycle === 2) layout = 'metrics';
+        else layout = 'timeline';
+      }
     }
 
-    return { title, subtitle, cards: cards.slice(0, 3), index: idx + 1 };
+    if (layout === 'split') {
+      while (cards.length < 2) {
+        const cIdx = cards.length + 1;
+        cards.push({
+          badge: `PILAR 0${cIdx} // ANALISIS`,
+          title: `Fokus Strategis 0${cIdx}`,
+          desc: `Analisis mendalam dan panduan eksekusi pada pilar utama.`,
+          footerHighlight: `OPTIMASI 0${cIdx}`
+        });
+      }
+    } else if (layout === 'metrics') {
+      while (cards.length < 4) {
+        const cIdx = cards.length + 1;
+        cards.push({
+          badge: `METRIK 0${cIdx} // KPI`,
+          title: `Indikator 0${cIdx}`,
+          desc: `Tolak ukur kinerja kunci dengan akurasi teruji.`,
+          stat: `0${cIdx}`,
+          metricValue: `${cIdx * 25}%`,
+          footerHighlight: `INDIKATOR 0${cIdx}`
+        });
+      }
+    } else if (layout === 'bento') {
+      while (cards.length < 3) {
+        const cIdx = cards.length + 1;
+        cards.push({
+          badge: `POIN 0${cIdx} // ANALISIS`,
+          title: `Pilar Eksekusi 0${cIdx}`,
+          desc: `Implementasi terukur dengan standar akurasi tinggi dan efisiensi maksimal pada tahap operasional.`,
+          footerHighlight: `OPTIMASI 0${cIdx}`
+        });
+      }
+    } else if (layout === 'timeline') {
+      while (cards.length < 4) {
+        const cIdx = cards.length + 1;
+        cards.push({
+          badge: `TAHAP 0${cIdx}`,
+          title: `Langkah 0${cIdx}`,
+          desc: `Aktivasi proses operasional secara berurutan dan terstandarisasi.`,
+          footerHighlight: `EKSEKUSI 0${cIdx}`
+        });
+      }
+    }
+
+    return {
+      title,
+      subtitle,
+      layout,
+      quoteText,
+      quoteAuthor,
+      cards,
+      index: idx + 1
+    };
   });
 }
 
@@ -165,64 +246,119 @@ function extractSlidesFromRawHtml(html) {
       }
 
       if (slideNodes.length > 0) {
+        const totalNodes = slideNodes.length;
         return slideNodes.map((el, idx) => {
-          const titleEl = el.querySelector("h1, h2, .slide-main-title, .title");
+          const titleEl = el.querySelector("h1, h2, .slide-main-title, .cover-main-title, .title");
           const title = titleEl ? titleEl.textContent.trim() : `Slide ${idx + 1}`;
 
-          const subEl = el.querySelector(".slide-lead-desc, .subtitle, p.lead, p");
+          const subEl = el.querySelector(".slide-lead-desc, .cover-lead-subtitle, .subtitle, p.lead, p");
           const subtitle = subEl ? subEl.textContent.trim() : "";
 
-          let colNodes = Array.from(el.querySelectorAll(".slide-col, .bento-col, .col, .bento-card, .card"));
+          // Preserve rawCanvasHtml if the slide already has rich custom canvas
+          const canvasEl = el.querySelector(".slide-canvas");
+          const rawCanvasHtml = canvasEl ? canvasEl.outerHTML : "";
+
+          // Detect layout from classes
+          let layout = "";
+          const classStr = (el.className || "") + " " + (canvasEl ? canvasEl.className : "");
+          if (/slide-layout-cover|layout-cover/i.test(classStr) || idx === 0) {
+            layout = "cover";
+          } else if (/slide-layout-split|layout-split|split-grid/i.test(classStr)) {
+            layout = "split";
+          } else if (/slide-layout-metrics|layout-metrics|metrics-grid/i.test(classStr)) {
+            layout = "metrics";
+          } else if (/slide-layout-quote|layout-quote|quote-wrap/i.test(classStr)) {
+            layout = "quote";
+          } else if (/slide-layout-timeline|layout-timeline|timeline-grid/i.test(classStr)) {
+            layout = "timeline";
+          } else if (/slide-layout-conclusion|layout-conclusion|conclusion-grid/i.test(classStr)) {
+            layout = "conclusion";
+          } else if (/slide-layout-bento|layout-bento|slide-columns-grid/i.test(classStr)) {
+            layout = "bento";
+          }
+
+          let quoteEl = el.querySelector("blockquote, .quote-text");
+          let quoteText = quoteEl ? quoteEl.textContent.trim() : "";
+          let quoteAuthorEl = el.querySelector(".quote-author");
+          let quoteAuthor = quoteAuthorEl ? quoteAuthorEl.textContent.trim().replace(/^[—-\s]+/, "") : "";
+
+          let colNodes = Array.from(el.querySelectorAll(".slide-col, .bento-col, .split-col, .metric-card, .timeline-step, .col, .bento-card, .card"));
           let cards = [];
           if (colNodes.length > 0) {
-            cards = colNodes.slice(0, 3).map((col, cIdx) => {
-              const badgeEl = col.querySelector(".col-badge, .badge, .tag");
-              const titleNode = col.querySelector(".col-title, h3, h4, strong");
-              const descEl = col.querySelector(".col-desc, p");
+            cards = colNodes.map((col, cIdx) => {
+              const badgeEl = col.querySelector(".col-badge, .badge, .tag, .timeline-step-badge");
+              const titleNode = col.querySelector(".col-title, .split-col-title, .metric-title, .timeline-step-title, h3, h4, strong");
+              const descEl = col.querySelector(".col-desc, .split-col-desc, .metric-desc, .timeline-step-desc, p");
               const hlEl = col.querySelector(".col-highlight-text, .highlight, .pill");
+              const statEl = col.querySelector(".metric-val, .stat");
 
               const cTitle = titleNode ? titleNode.textContent.trim() : `Poin 0${cIdx + 1}`;
               let rawHl = hlEl ? hlEl.textContent.trim() : cTitle.slice(0, 24).toUpperCase();
               if (/"DJ" → JADI|TERWUJUD & SELESAI/i.test(rawHl)) {
                 rawHl = cTitle.slice(0, 24).toUpperCase();
               }
-              let rawBadge = badgeEl ? badgeEl.textContent.trim() : `KARTU 0${cIdx + 1}`;
+              let rawBadge = badgeEl ? badgeEl.textContent.trim() : `POIN 0${cIdx + 1}`;
               if (/ORTOGRAFI|FILOSOFI|DIFERENSIASI/i.test(rawBadge) && !/ortografi|filosofi/i.test(cTitle)) {
-                rawBadge = `KARTU 0${cIdx + 1} // ANALISIS`;
+                rawBadge = `POIN 0${cIdx + 1} // ANALISIS`;
               }
 
               return {
                 badge: rawBadge,
                 title: cTitle,
                 desc: descEl ? descEl.textContent.trim() : "",
+                stat: statEl ? statEl.textContent.trim() : `0${cIdx + 1}`,
+                metricValue: statEl ? statEl.textContent.trim() : `0${cIdx + 1}`,
                 footerHighlight: rawHl
               };
             });
           } else {
             const h3s = Array.from(el.querySelectorAll("h3"));
-            cards = h3s.slice(0, 3).map((h, cIdx) => {
+            cards = h3s.map((h, cIdx) => {
               const cTitle = h.textContent.trim();
               const nextP = h.nextElementSibling && h.nextElementSibling.tagName.toLowerCase() === "p" ? h.nextElementSibling.textContent.trim() : "";
               return {
-                badge: `KARTU 0${cIdx + 1} // ANALISIS`,
+                badge: `POIN 0${cIdx + 1} // ANALISIS`,
                 title: cTitle,
                 desc: nextP,
+                stat: `0${cIdx + 1}`,
+                metricValue: `0${cIdx + 1}`,
                 footerHighlight: cTitle.slice(0, 24).toUpperCase()
               };
             });
           }
 
-          while (cards.length < 3) {
-            const cIdx = cards.length + 1;
-            cards.push({
-              badge: `KARTU 0${cIdx} // ANALISIS`,
-              title: `Pilar Eksekusi 0${cIdx}`,
-              desc: `Implementasi terukur dengan standar akurasi tinggi dan efisiensi maksimal pada tahap operasional.`,
-              footerHighlight: `OPTIMASI 0${cIdx}`
-            });
+          if (!layout) {
+            if (idx === 0) layout = 'cover';
+            else if (idx === totalNodes - 1 && totalNodes >= 4) layout = 'conclusion';
+            else if (quoteText) layout = 'quote';
+            else if (cards.length === 2) layout = 'split';
+            else if (cards.length === 4) layout = 'metrics';
+            else if (/tahap|langkah|step|alur|proses/i.test(title)) layout = 'timeline';
+            else layout = 'bento';
           }
 
-          return { title, subtitle, cards: cards.slice(0, 3), index: idx + 1 };
+          if (layout === 'split' && cards.length < 2) {
+            while (cards.length < 2) {
+              const cIdx = cards.length + 1;
+              cards.push({ badge: `PILAR 0${cIdx}`, title: `Pilar 0${cIdx}`, desc: '', footerHighlight: `POIN 0${cIdx}` });
+            }
+          } else if (layout === 'bento' && cards.length < 3) {
+            while (cards.length < 3) {
+              const cIdx = cards.length + 1;
+              cards.push({ badge: `POIN 0${cIdx} // ANALISIS`, title: `Pilar Eksekusi 0${cIdx}`, desc: '', footerHighlight: `OPTIMASI 0${cIdx}` });
+            }
+          }
+
+          return {
+            title,
+            subtitle,
+            layout,
+            rawCanvasHtml,
+            quoteText,
+            quoteAuthor,
+            cards,
+            index: idx + 1
+          };
         });
       }
     } catch (e) {
@@ -256,7 +392,8 @@ function extractSlidesFromRawHtml(html) {
   if (rawSections.length === 0) return [];
 
   const extracted = [];
-  for (let i = 0; i < rawSections.length; i++) {
+  const totalSections = rawSections.length;
+  for (let i = 0; i < totalSections; i++) {
     const sContent = rawSections[i];
     const titleMatch = sContent.match(/<h[1-2][^>]*>([\s\S]*?)<\/h[1-2]>/i);
     const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, "").trim() : `Slide ${i + 1}`;
@@ -270,10 +407,18 @@ function extractSlidesFromRawHtml(html) {
       if (anyP) subtitle = anyP[1].replace(/<[^>]+>/g, "").trim();
     }
 
+    let layout = "";
+    if (/slide-layout-cover|layout-cover/i.test(sContent) || i === 0) layout = "cover";
+    else if (/slide-layout-split|layout-split|split-grid/i.test(sContent)) layout = "split";
+    else if (/slide-layout-metrics|layout-metrics|metrics-grid/i.test(sContent)) layout = "metrics";
+    else if (/slide-layout-quote|layout-quote|quote-wrap/i.test(sContent)) layout = "quote";
+    else if (/slide-layout-timeline|layout-timeline|timeline-grid/i.test(sContent)) layout = "timeline";
+    else if (/slide-layout-conclusion|layout-conclusion|conclusion-grid/i.test(sContent)) layout = "conclusion";
+
     const cards = [];
     const h3Matches = [...sContent.matchAll(/<h3\b[^>]*>([\s\S]*?)<\/h3>([\s\S]*?)(?=<h3|<\/section|$)/gi)];
     if (h3Matches.length > 0) {
-      h3Matches.slice(0, 3).forEach((hm, cIdx) => {
+      h3Matches.forEach((hm, cIdx) => {
         const cTitle = hm[1].replace(/<[^>]+>/g, "").trim();
         const rest = hm[2];
         const pDesc = rest.match(/<p\b[^>]*>([\s\S]*?)<\/p>/i);
@@ -284,28 +429,29 @@ function extractSlidesFromRawHtml(html) {
           hl = cTitle.slice(0, 24).toUpperCase();
         }
         cards.push({
-          badge: `KARTU 0${cIdx + 1} // ANALISIS`,
+          badge: `POIN 0${cIdx + 1} // ANALISIS`,
           title: cTitle,
           desc: desc,
+          stat: `0${cIdx + 1}`,
+          metricValue: `0${cIdx + 1}`,
           footerHighlight: hl
         });
       });
     }
 
-    while (cards.length < 3) {
-      const cIdx = cards.length + 1;
-      cards.push({
-        badge: `KARTU 0${cIdx} // ANALISIS`,
-        title: `Pilar Eksekusi 0${cIdx}`,
-        desc: `Implementasi terukur dengan standar akurasi tinggi dan efisiensi maksimal pada tahap operasional.`,
-        footerHighlight: `OPTIMASI 0${cIdx}`
-      });
+    if (!layout) {
+      if (i === 0) layout = 'cover';
+      else if (i === totalSections - 1 && totalSections >= 4) layout = 'conclusion';
+      else if (cards.length === 2) layout = 'split';
+      else if (cards.length === 4) layout = 'metrics';
+      else layout = 'bento';
     }
 
     extracted.push({
       title,
       subtitle,
-      cards: cards.slice(0, 3),
+      layout,
+      cards,
       index: i + 1
     });
   }

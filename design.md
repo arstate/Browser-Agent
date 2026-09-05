@@ -568,6 +568,23 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Menghapus pembungkus ikon SVG dokumen pada item menu ekspor floating dock (`.dock-export-menu`), menyajikan opsi murni berbasis tipografi: `<span class="export-item-label">PDF slide deck</span>`.
    - Mengoptimalkan `min-width` menu popover akrilik dari 210px menjadi 146px di `slide_styles.js` agar pas, proporsional, dan minimalis.
 
+## 🚀 29. Dynamic Multi-Layout Slide Deck Architecture & Anti-Template Sidebar Miniatures (v2.150.213)
+
+1. **Separation of System Chrome vs Dynamic Slide Content**:
+   - UI sistem ruang kerja pratinjau (`#deck-stage-wrap`, `#deck-sidebar`, `.deck-floating-dock`) adalah UI sistem yang stabil dan seragam di semua presentasi.
+   - Kanvas slide (`.slide-canvas`) kini dirancang dinamis dengan berbagai variasi arketipe tata letak yang dipilih cerdas oleh AI:
+     - **Cover / Hero Title (`.slide-layout-cover`)**: Judul display besar (42-46px), lead subtitle/abstrak, dan metadata dokumen/slide tanpa grid 3-kolom kaku.
+     - **Split 2-Column (`.slide-layout-split`)**: 2 kolom lapang 50:50 untuk perbandingan atau deep-dive.
+     - **Bento 3-Column (`.slide-layout-bento`)**: 3 kartu pilar standar dengan highlight footer.
+     - **Metrics 4-Grid (`.slide-layout-metrics`)**: 4 kartu statistik/KPI dengan angka metrik besar dan deskripsi ringkas.
+     - **Statement / Quote (`.slide-layout-quote`)**: Tipografi kutipan/manifesto besar di tengah dengan tanda petik elegan dan pill takeaway.
+     - **Stepped Process (`.slide-layout-timeline`)**: 4 langkah proses horizontal terurut (Tahap 01 s/d 04).
+     - **Conclusion & Checklist (`.slide-layout-conclusion`)**: Ringkasan eksekutif dan daftar periksa aksi penutup.
+
+2. **Contextual Sidebar Miniatures**:
+   - Bilah thumbnail kiri (`#deck-sidebar`) menampilkan siluet miniatur visual yang sesuai dengan layout unik masing-masing slide (`.thumb-mini-cover`, `.thumb-mini-split`, `.thumb-mini-metrics`, `.thumb-mini-quote`, `.thumb-mini-timeline`, `.thumb-mini-conclusion`, `.thumb-mini-grid`), sehingga sidebar tidak lagi tampak kembar identik.
+
+
 
 
 

@@ -50,15 +50,20 @@ Slide decks must NEVER look visually monotonous or repetitive!
    - Left Sidebar (\`#deck-sidebar\`): Clean vertical list of slide thumbnails with slide numbers (1, 2, 3...) and mini preview cards (\`.thumb-mini-slide\`). Clicking a thumbnail jumps directly to that slide. DO NOT put any brand header or archive title at the top of the sidebar.
    - Main Presentation Stage (\`#deck-stage-wrap\`): Centered 16:9 canvas with the deduced theme colors and typography.
    - Floating Navigation Dock (\`.deck-floating-dock\`): Centered pill at bottom with Prev (<), Slide Counter (X / Total), Next (>), Reset (R), and PDF Export (P).
-2. **Slide Content & Bento Modular Cards:**
-   Each slide MUST have:
-   - Header Bar: Chapter / Category on left (\`BAB {I} // {JUDUL BAB / KATEGORI} // {SUBHEADER MATERI}\`) + Ratio and page counter on right (\`MODULAR RATIO 16:9\` and \`HALAMAN 01/{TOTAL}\`).
-   - Hero Section: Main title in theme font (28-32px), descriptive lead subtitle, and large slide counter (\`01 // {TOTAL}\`).
-   - Modular Cards Grid: 2 to 4 structured cards per slide (default 3 cards). Each card has:
-     * Category badge (\`POIN 01 // ANALISIS\` or topic-relevant tag)
-     * Bold title
-     * Insightful explanation paragraph
-     * Bottom highlight container: Rounded box with bold key takeaway relevant to the card.
+2. **Dynamic Multi-Layout Slide Architecture (Anti-Template Monotony):**
+   A professional presentation MUST NEVER use the same repetitive 3-column template on every page!
+   The AI MUST dynamically think and choose diverse layout archetypes across pages:
+   - **Slide 1: Cover / Hero Title Slide (\`slide-layout-cover\`)**:
+     * Header bar, large bold title (40-48px), narrative subtitle / lead summary, metadata row (Dokumen, Total Materi, Format 16:9), and category badge. DO NOT use 3-column cards on Slide 1!
+   - **Slide 2+: Varied Layouts according to content needs**:
+     * **Split 2-Column (\`slide-layout-split\` / \`split-grid\`)**: 2 wide comparative columns for problem vs solution, dual concepts, or deep-dive study.
+     * **Bento 3-Column (\`slide-layout-bento\` / \`slide-columns-grid\`)**: 3 structured cards for trio principles, pillars, or foundational concepts.
+     * **Metrics 4-Grid (\`slide-layout-metrics\` / \`metrics-grid\`)**: 4 cards with prominent metric numbers/stats (e.g. \`98%\`, \`3.4x\`, \`24/7\`, \`01\`), concise explanations, and status tags.
+     * **Central Statement / Big Quote (\`slide-layout-quote\` / \`quote-wrap\`)**: High-impact focal layout with quotation mark, bold punchy statement (24-26px), attribution, and takeaway pill.
+     * **Stepped Process / Workflow (\`slide-layout-timeline\` / \`timeline-grid\`)**: Horizontal sequence of 3 to 4 chronological steps (Langkah 01 -> Langkah 02 -> Langkah 03) with step numbers, titles, descriptions, and action pills.
+     * **Strategic Conclusion / Action Playbook (\`slide-layout-conclusion\` / \`conclusion-grid\`)**: Executive summary card on one side and action checklist items on the other side.
+   - **Sidebar Thumbnail Diversity**:
+     Each thumbnail in \`#deck-sidebar\` must visually render that slide's distinct silhouette (\`thumb-mini-cover\`, \`thumb-mini-split\`, \`thumb-mini-metrics\`, \`thumb-mini-quote\`, \`thumb-mini-timeline\`, \`thumb-mini-conclusion\`, or \`thumb-mini-grid\`) so the sidebar preview reflects the diverse structure of the deck.
    - Footer Bar: Contextual copyright and topic-relevant status tag.
 3. **Interactive Script & Shortcuts:**
    - Keyboard listener: ArrowRight / Space -> Next slide, ArrowLeft / Backspace -> Prev slide, R -> Reset to slide 1, P -> window.print(), F -> Fullscreen.
