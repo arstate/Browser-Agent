@@ -11293,10 +11293,8 @@ async function openAppsTab(e) {
   const appsOverlay = document.getElementById('fullscreen-apps-overlay');
   if (appsOverlay) {
     appsOverlay.style.display = 'flex';
-    const appsIframe = document.getElementById('apps-embedded-iframe');
-    if (appsIframe && (!appsIframe.src || !appsIframe.src.includes('flow.google.com'))) {
-      appsIframe.src = 'https://flow.google.com/';
-    }
+    const appsCatalogOverlay = document.getElementById('apps-catalog-overlay');
+    if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'flex';
     return;
   }
 
@@ -11311,7 +11309,7 @@ async function openAppsTab(e) {
         await chrome.windows.update(existingNewTab.windowId, { focused: true });
       }
       try {
-        chrome.tabs.sendMessage(existingNewTab.id, { action: 'openAppsOverlay', url: 'https://flow.google.com/', name: 'Google Flow' });
+        chrome.tabs.sendMessage(existingNewTab.id, { action: 'openAppsOverlay' });
       } catch (err) {}
       return;
     }

@@ -730,4 +730,22 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Membersihkan class CSS usang `.apps-status-pill` dan `.apps-live-dot`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+132. **Zero-Preload Idle Iframe Architecture & Explicit On-Demand App Launch (`v2.150.249`):**
+    - **Kebutuhan Pengguna**:
+      - Saat membuka menu Apps, jangan memuat web apapun di latar belakang (termasuk Google Flow) agar peramban tidak terasa berat (*zero background memory consumption*).
+      - Tampilan awal Apps wajib berstatus kosongan (*idle* / `about:blank`), dan web baru dimuat saat pengguna secara sadar mengklik tombol 'Buka' pada kartu di halaman list katalog apps.
+    - **Implementasi Teknis**:
+      1. **Zero-Preload Markup & Reset State (`extension/newtab.html`)**:
+         - Menginisialisasi `#apps-embedded-iframe` dengan `src="about:blank"` eksplisit.
+         - Menghapus class `active` bawaan dari kartu Hero Google Flow di galeri.
+         - Menyeragamkan label tombol aksi kartu menjadi `'Buka'`.
+         - Menetapkan teks default `#apps-active-title` ke `'Aplikasi Terintegrasi'` dan URL pill `#apps-current-url-text` ke `'browser-agent://apps'`.
+      2. **Lazy On-Demand Activation Logic (`extension/newtab.js`)**:
+         - Fungsi `openAppsView()` tanpa parameter menjaga `appsIframe.src = 'about:blank'` dan `currentAppUrl = ''` tanpa memicu request web.
+         - `closeAppsView()` mengosongkan kembali iframe (`appsIframe.src = 'about:blank'`) untuk segera membebaskan RAM dan CPU saat pengguna menutup Apps.
+         - Penanganan hash `#apps` serta pesan runtime disetel murni membuka katalog kosongan tanpa preload URL.
+      3. **Sidepanel Dispatcher Decoupling (`extension/sidepanel.js`)**:
+         - Menghapus paksaan URL `flow.google.com` pada `openAppsTab()`. Mengklik tombol Apps dari sidepanel kini murni membuka katalog chooser tanpa membebani browser.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
 

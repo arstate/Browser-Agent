@@ -1416,4 +1416,27 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 65. Zero-Preload Memory Optimization & On-Demand App Launch (v2.150.249)
+
+### 🚀 1. Arsitektur Iframe Kosongan (Zero-Preload)
+- **Idle by Default**: Menghilangkan seluruh preloading otomatis Google Flow atau web lain saat antarmuka Apps dibuka.
+- **Explicit `about:blank` Initial State**: Tag `<iframe>` beroperasi pada state idle murni (`src="about:blank"`), mencegah alokasi memori heap V8 dan koneksi background hingga pengguna memutuskan untuk membuka aplikasi.
+
+### 🔘 2. On-Demand Activation & Memory Cleanup
+- **Selective App Activation**: Menghapus status `active` default dari kartu hero. Seluruh kartu galeri diseragamkan dengan tombol `"Buka"`.
+- **Garbage Collection on Close**: Saat pengguna menutup overlay Apps (`closeAppsView`), iframe secara otomatis disetel ulang ke `about:blank`, membersihkan seluruh state sesi web eksternal dari RAM secara instan.
+
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
 

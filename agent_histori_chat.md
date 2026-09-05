@@ -7079,5 +7079,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.248` di `manifest.json`.
 
+---
+
+### Iterasi: Zero-Preload Idle Iframe Architecture & Explicit On-Demand App Launch (`v2.150.249`)
+- **User Request:**
+  - "buat ketika buka apps itu jangan buka web apapun termasuk flow biar ga berat jadi kosongan baru kalau klik buka di halaman list apps baru kebuka bro"
+- **Solusi & Rekayasa Teknis:**
+  1. *Zero-Preload Idle Iframe*:
+     - `extension/newtab.html`: Mengeset `#apps-embedded-iframe` dengan `src="about:blank"` secara eksplisit.
+     - Menghapus class `active` bawaan dari kartu Google Flow, menyeragamkan tombol peluncur menjadi "Buka".
+     - Menyetel default `#apps-active-title` ke "Aplikasi Terintegrasi" dan `#apps-current-url-text` ke "browser-agent://apps".
+  2. *Lazy On-Demand Activation*:
+     - `extension/newtab.js`: `openAppsView()` tanpa parameter menjaga `appsIframe.src = 'about:blank'` dan `currentAppUrl = ''` tanpa memuat web apapun di background.
+     - Web app (Google Flow, Gemini, dsb.) HANYA dimuat saat pengguna mengklik kartu aplikasi dari katalog melalui `launchApp(url, name)`.
+     - `closeAppsView()` mereset kembali iframe ke `about:blank` untuk membebaskan memori RAM dan resource CPU saat keluar dari Apps.
+  3. *Sidepanel Dispatcher Decoupling*:
+     - `extension/sidepanel.js`: `openAppsTab()` tidak lagi memaksakan `flow.google.com`. Mengklik Apps dari sidepanel kini murni membuka katalog chooser kosongan.
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_clean_monochrome_ui.js` dan `test_apps_hub_google_flow_integration.js` lulus 100%.
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.249` di `manifest.json`.
+
 
 

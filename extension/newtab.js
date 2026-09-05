@@ -260,10 +260,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (appUrl && appName) {
         launchApp(appUrl, appName, false);
       } else {
+        // Pure empty / blank state so no heavy web is loaded in background
+        if (appsIframe && (!appsIframe.src || appsIframe.src !== 'about:blank')) {
+          appsIframe.src = 'about:blank';
+        }
+        currentAppUrl = '';
+        currentAppName = '';
         if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'flex';
         btnToggleAppsCatalog?.classList.add('active');
         if (appsActiveTitle) appsActiveTitle.textContent = 'Aplikasi Terintegrasi';
         if (appsCurrentUrlText) appsCurrentUrlText.textContent = 'browser-agent://apps';
+        appCards.forEach(card => card.classList.remove('active'));
       }
     }
   }
@@ -272,6 +279,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (appsOverlay) {
       appsOverlay.style.display = 'none';
       if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'none';
+      // Free iframe memory when closing Apps
+      if (appsIframe) {
+        appsIframe.src = 'about:blank';
+      }
+      currentAppUrl = '';
+      currentAppName = '';
+      appCards.forEach(card => card.classList.remove('active'));
       updateActiveSidebarTab('home');
       chatInput?.focus();
     }
@@ -413,7 +427,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function checkUrlForAutoSettings() {
     const hash = window.location.hash;
     if (hash && (hash.startsWith('#apps') || hash.startsWith('#flow'))) {
-      openAppsView('https://flow.google.com/', 'Google Flow');
+      if (hash.startsWith('#flow')) {
+        openAppsView('https://flow.google.com/', 'Google Flow');
+      } else {
+        openAppsView();
+      }
       return;
     }
     if (hash && (hash.startsWith('#settings') || hash.startsWith('#ai') || hash.startsWith('#models') || hash.startsWith('#agents') || hash.startsWith('#skills') || hash.startsWith('#memory'))) {
@@ -434,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (msg && msg.action === 'openSettingsOverlay') {
           openFullscreenSettings(msg.tab || 'ai');
         } else if (msg && msg.action === 'openAppsOverlay') {
-          openAppsView(msg.url || 'https://flow.google.com/', msg.name || 'Google Flow');
+          openAppsView(msg.url || null, msg.name || null);
         }
       });
     }
@@ -444,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.data?.action === 'closeSettings') {
       closeFullscreenSettings();
     } else if (e.data?.action === 'openApps') {
-      openAppsView(e.data?.url || 'https://flow.google.com/', e.data?.name || 'Google Flow');
+      openAppsView(e.data?.url || null, e.data?.name || null);
     }
   });
 
