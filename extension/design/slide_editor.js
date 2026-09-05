@@ -590,24 +590,32 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         if (activeAction === 'move' && isDragging && selectedElements.size > 0) {
           e.preventDefault();
           let dx = e.clientX - startX, dy = e.clientY - startY;
+          if (e.shiftKey) {
+            if (Math.abs(dx) >= Math.abs(dy)) dy = 0;
+            else dx = 0;
+          }
           const primary = Array.from(selectedElements)[0];
           const canvas = primary?.closest('.slide-canvas');
           if (canvas && primaryStartBox) {
-            const targetL = primaryStartBox.left + dx, targetC = targetL + primaryStartBox.width / 2, targetR = targetL + primaryStartBox.width;
             let snapX = null;
-            for (const c of snapCandidatesX) {
-              if (Math.abs(targetC - c) <= 7) { dx += (c - targetC); snapX = c; break; }
-              if (Math.abs(targetL - c) <= 7) { dx += (c - targetL); snapX = c; break; }
-              if (Math.abs(targetR - c) <= 7) { dx += (c - targetR); snapX = c; break; }
+            if (!e.shiftKey || dy === 0) {
+              const targetL = primaryStartBox.left + dx, targetC = targetL + primaryStartBox.width / 2, targetR = targetL + primaryStartBox.width;
+              for (const c of snapCandidatesX) {
+                if (Math.abs(targetC - c) <= 7) { dx += (c - targetC); snapX = c; break; }
+                if (Math.abs(targetL - c) <= 7) { dx += (c - targetL); snapX = c; break; }
+                if (Math.abs(targetR - c) <= 7) { dx += (c - targetR); snapX = c; break; }
+              }
             }
             if (snapX !== null) showSnapGuideV(canvas, snapX); else removeSnapGuideV(canvas);
 
-            const targetT = primaryStartBox.top + dy, targetM = targetT + primaryStartBox.height / 2, targetB = targetT + primaryStartBox.height;
             let snapY = null;
-            for (const c of snapCandidatesY) {
-              if (Math.abs(targetM - c) <= 7) { dy += (c - targetM); snapY = c; break; }
-              if (Math.abs(targetT - c) <= 7) { dy += (c - targetT); snapY = c; break; }
-              if (Math.abs(targetB - c) <= 7) { dy += (c - targetB); snapY = c; break; }
+            if (!e.shiftKey || dx === 0) {
+              const targetT = primaryStartBox.top + dy, targetM = targetT + primaryStartBox.height / 2, targetB = targetT + primaryStartBox.height;
+              for (const c of snapCandidatesY) {
+                if (Math.abs(targetM - c) <= 7) { dy += (c - targetM); snapY = c; break; }
+                if (Math.abs(targetT - c) <= 7) { dy += (c - targetT); snapY = c; break; }
+                if (Math.abs(targetB - c) <= 7) { dy += (c - targetB); snapY = c; break; }
+              }
             }
             if (snapY !== null) showSnapGuideH(canvas, snapY); else removeSnapGuideH(canvas);
           }
