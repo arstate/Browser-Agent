@@ -66,7 +66,7 @@ Slide decks must NEVER look visually monotonous or repetitive!
      Each thumbnail in \`#deck-sidebar\` must visually render that slide's distinct silhouette (\`thumb-mini-cover\`, \`thumb-mini-split\`, \`thumb-mini-metrics\`, \`thumb-mini-quote\`, \`thumb-mini-timeline\`, \`thumb-mini-conclusion\`, or \`thumb-mini-grid\`) so the sidebar preview reflects the diverse structure of the deck.
    - Footer Bar: Contextual copyright and topic-relevant status tag.
 3. **Interactive Script & Shortcuts:**
-   - Keyboard listener: ArrowRight / Space -> Next slide, ArrowLeft / Backspace -> Prev slide, R -> Reset to slide 1, P -> window.print(), F -> Fullscreen.
+   - Keyboard listener: ArrowRight / Space -> Next slide, ArrowLeft -> Prev slide, R -> Reset to slide 1, P -> window.print(), F -> Fullscreen.
    - Event delegation on sidebar thumbnails: clicking any thumbnail navigates to that slide.
 4. **Print / PDF Readiness:**
    - \`@media print\` styles: hides sidebar and dock, one slide per page with \`page-break-after: always; break-after: page; width: 100vw; height: 100vh;\`.

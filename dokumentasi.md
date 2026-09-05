@@ -456,6 +456,18 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
       - Saat sumbu dikunci oleh `Shift`, garis pandu magnet (`.figma-snap-guide-v` / `.figma-snap-guide-h`) hanya aktif pada sumbu gerak aktif dan menonaktifkan garis pandu pada sumbu yang terkunci, mencegah kebingungan visual.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 787 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+118. **Eliminasi Pintasan Backspace dari Navigasi Slide Deck & Reservasi Hapus Elemen/Teks (`v2.150.235`):** Menghapus penanganan tombol `Backspace` dari navigasi slide mundur (`goToSlide(currentIndex - 1)`) di seluruh listener slide deck:
+    - **Pemisahan Peran Keyboard Navigation vs Canvas Editing (`canvas_manager.js` & `slide_template.js`)**:
+      - Tombol `Backspace` sebelumnya memicu perpindahan ke slide sebelumnya (`goToSlide(currentIndex - 1)`).
+      - Menghapus `e.key === 'Backspace'` dari listener navigasi kanvas dan template slide mandiri. Navigasi mundur kini eksklusif menggunakan `ArrowLeft`.
+      - Menambahkan pengaman isolasi: jika kanvas dalam mode edit aktif (`deck-edit-mode-active`), target adalah editable (`e.target?.isContentEditable`), atau fokus berada di input form (`INPUT`, `TEXTAREA`), seluruh listener keyboard slide deck langsung diabaikan (`return`).
+    - **Reservasi Fungsi Backspace untuk Penghapusan Elemen & Teks (`slide_editor.js`)**:
+      - Tombol `Backspace` dan `Delete` kini bekerja murni untuk menghapus elemen kanvas yang dipilih (`deleteSelectedElements()`) atau menghapus karakter teks saat mengetik inline tanpa risiko slide berpindah secara tak terduga.
+    - **Pembaruan Instruksi Generator AI (`design_prompt.js`)**:
+      - Memperbarui prompt interaktif dari `ArrowLeft / Backspace -> Prev slide` menjadi `ArrowLeft -> Prev slide`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 787 baris, `canvas_manager.js` 785 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+
 
 
 

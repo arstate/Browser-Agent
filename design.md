@@ -1067,6 +1067,23 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 3. **Strict Sub-800 Line Rule Compliance**:
    - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 787 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+## 🎨 51. Backspace Shortcut Elimination from Slide Navigation (v2.150.235)
+
+1. **Isolation of Navigation Keydown vs Element Deletion**:
+   - `Backspace` dihapus dari trigger navigasi slide sebelumnya di `canvas_manager.js` dan `slide_template.js`. Navigasi mundur kini hanya menggunakan `ArrowLeft`.
+   - Event listener navigasi kanvas dilengkapi guard ketat: memeriksa `.deck-edit-mode-active`, `isContentEditable`, dan tag `INPUT`/`TEXTAREA`. Jika kondisi terpenuhi, listener segera `return` agar tombol keyboard tidak mengganggu alur pengeditan elemen.
+
+2. **Full Reservation for Element & Text Editing**:
+   - Menjamin penekanan `Backspace` saat elemen terseleksi di kanvas memicu `deleteSelectedElements()` tanpa risiko berpindah slide ke halaman sebelumnya.
+   - Menghapus karakter di dalam input teks atau node yang dapat diedit tidak lagi memicu navigasi slide.
+
+3. **Prompt Synchronisation**:
+   - Mengubah prompt listener keyboard di `design_prompt.js` agar hanya merujuk pada `ArrowLeft` untuk navigasi slide sebelumnya.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 787 baris, `canvas_manager.js` 785 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+
 
 
 

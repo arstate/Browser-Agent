@@ -6689,6 +6689,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi jumlah baris memastikan seluruh file `<= 790` baris.
   4. Bump versi manifest ke `v2.150.234`.
 
+### 🚀 Iterasi 516: Eliminasi Pintasan Backspace dari Navigasi Slide Deck & Reservasi Hapus Elemen
+- **Masalah Pengguna:**
+  - Menekan tombol `Backspace` secara keliru memicu perpindahan ke halaman/slide sebelumnya (*"update tombol backspace jangan dibuat shortcut pindah ke halaman rendah soalnya backspace buat hapus elemen"*), sehingga mengganggu saat pengguna ingin menghapus elemen kanvas atau mengedit teks.
+- **Solusi & Implementasi Teknis:**
+  1. *Pemisahan Listener Navigasi vs Hapus Elemen*:
+     - Menghapus pemeriksaan `e.key === 'Backspace'` dari listener navigasi di `canvas_manager.js` dan `slide_template.js`.
+     - Navigasi mundur slide kini eksklusif ditangani oleh `ArrowLeft`.
+     - Menambahkan guard isolasi pada kedua modul: jika kanvas dalam mode edit (`deck-edit-mode-active`), target adalah editable (`e.target?.isContentEditable`), atau berada pada elemen input (`INPUT`, `TEXTAREA`), event listener navigasi langsung berhenti (`return`).
+  2. *Reservasi Tombol Backspace untuk Hapus Elemen & Teks*:
+     - Tombol `Backspace` dan `Delete` di `slide_editor.js` bekerja murni untuk `deleteSelectedElements()` atau menghapus karakter teks saat mode ketik aktif tanpa efek samping lompat slide.
+  3. *Sinkronisasi AI Prompt (`design_prompt.js`)*:
+     - Memperbarui prompt generator slide deck menjadi `ArrowLeft -> Prev slide`.
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js`: 787 baris, `canvas_manager.js`: 785 baris, `slide_styles.js`: 790 baris, `slide_template.js`: 782 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Unit test `test_backspace_navigation_guard.js` memvalidasi bahwa `Backspace` tidak pernah memicu `goToSlide`, `ArrowLeft` memicu navigasi mundur, dan mode edit mengabaikan shortcut navigasi.
+  2. Node syntax check `node -c extension/*.js extension/design/*.js` lolos 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file `<= 790` baris.
+  4. Bump versi manifest ke `v2.150.235`.
+
+
 
 
 
