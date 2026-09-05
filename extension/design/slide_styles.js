@@ -674,7 +674,7 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
         break-after: page !important;
         break-inside: avoid !important;
         margin: 0 !important;
-        padding: 40px 48px !important;
+        padding: 0 !important;
         box-sizing: border-box !important;
         background: var(--bg-slide) !important;
         position: relative !important;
@@ -687,6 +687,7 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
+        box-sizing: border-box !important;
       }
     }`;
 }

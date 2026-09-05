@@ -529,18 +529,62 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     }
 
   } catch (err) {
-    console.error("Design Mode Error:", err);
-    updateAssistantActiveAgent(assistantBubble, "Master Agent", "Gagal", true, true);
-    const friendlyMsg = formatFriendlyErrorMessage(err, config.endpoint, (typeof activeModelChoice !== 'undefined' ? activeModelChoice : ''));
-    if (contentEl) {
-      contentEl.style.display = 'block';
-      contentEl.innerHTML = `<div class="error-msg-box" style="color: #EF4444; font-size: 13px; font-weight: 500; line-height: 1.5; padding: 10px 14px; background: rgba(239, 68, 68, 0.08); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.25);">${escapeHtml(friendlyMsg)}</div>`;
-    }
-    updateFooterStatus("Design Error / Network Issue");
-    if (typeof saveCurrentSessionToDB === 'function') {
-      saveCurrentSessionToDB();
-    } else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') {
-      window.saveCurrentSessionToDB();
+    const isAbort = (
+      err.name === 'AbortError' ||
+      err.code === 20 ||
+      (err.message && /abort/i.test(err.message)) ||
+      (err.toString && /abort/i.test(err.toString())) ||
+      !isExecuting ||
+      Boolean(abortController?.signal?.aborted)
+    );
+
+    if (isAbort) {
+      updateAssistantActiveAgent(assistantBubble, "Master Agent", "Dihentikan", true, true);
+      if (Array.isArray(designMilestones)) {
+        designMilestones.forEach(m => { if (m.inProgress) m.inProgress = false; });
+      }
+      if (typeof finalizeTaskScheduleSection === 'function') {
+        finalizeTaskScheduleSection(assistantBubble);
+      }
+      if (typeof finalizeToolSection === 'function') {
+        finalizeToolSection(assistantBubble, true);
+      }
+
+      const currentText = (contentEl ? (contentEl.innerText || contentEl.textContent || "") : "").trim();
+      if (!currentText || currentText.includes("Sedang merancang") || currentText.includes("Sedang menerapkan revisi") || currentText.includes("Memulai perancangan")) {
+        if (contentEl) {
+          contentEl.style.display = 'block';
+          contentEl.innerHTML = `<div style="color: var(--text-muted, #94a3b8); font-size: 13px; font-style: italic; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">(Perancangan slide dihentikan oleh pengguna)</div>`;
+        }
+      }
+      updateFooterStatus("Design Ready");
+
+      conversationHistory.push({
+        role: "assistant",
+        content: (accumulatedContent && accumulatedContent.trim().length > 0) ? accumulatedContent.trim() : "*(Perancangan slide dihentikan oleh pengguna)*",
+        agentInfo: agentInfo,
+        chatMode: "design"
+      });
+
+      if (typeof saveCurrentSessionToDB === 'function') {
+        saveCurrentSessionToDB();
+      } else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') {
+        window.saveCurrentSessionToDB();
+      }
+    } else {
+      console.error("Design Mode Error:", err);
+      updateAssistantActiveAgent(assistantBubble, "Master Agent", "Gagal", true, true);
+      const friendlyMsg = formatFriendlyErrorMessage(err, config.endpoint, (typeof activeModelChoice !== 'undefined' ? activeModelChoice : ''));
+      if (contentEl) {
+        contentEl.style.display = 'block';
+        contentEl.innerHTML = `<div class="error-msg-box" style="color: #EF4444; font-size: 13px; font-weight: 500; line-height: 1.5; padding: 10px 14px; background: rgba(239, 68, 68, 0.08); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.25);">${escapeHtml(friendlyMsg)}</div>`;
+      }
+      updateFooterStatus("Design Error / Network Issue");
+      if (typeof saveCurrentSessionToDB === 'function') {
+        saveCurrentSessionToDB();
+      } else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') {
+        window.saveCurrentSessionToDB();
+      }
     }
   } finally {
     isExecuting = false;

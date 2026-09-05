@@ -5962,5 +5962,38 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Seluruh modul `extension/design/` terjaga di bawah 800 baris.
   3. Bump versi manifest ke `v2.150.208`.
 
+### Iterasi 490 (v2.150.209) - 2026-09-05
+- **User Request:**
+  1. "ada error ketika cancel working design mode Design Mode Error: [object DOMException] Context chrome://newtab/ Stack Trace design/design_executor.js:532 (runDesignModeLoop)" (beserta screenshot error BodyStreamBuffer was aborted dan Master Agent Gagal).
+  2. "hasil eksport to pdfnya kok kayak lebih zoom out dari preview di halaman pdf canvas ya bro, jadi di halaman canvas margin lebih mepet kan nah waktu di download pdf itu jadi kayak lebih longgar coba lo benerin"
+- **Akar Masalah (Root Cause):**
+  1. *Uncaught Abort di Design Mode*: Saat pengguna mengklik tombol Stop/Cancel ketika AI sedang streaming respon di Design Mode, `abortController.abort()` membatalkan fetch/reader stream yang melempar `AbortError` / `DOMException: BodyStreamBuffer was aborted`. Pada blok `catch (err)` di `design_executor.js`, tidak terdapat pengecekan abort (`isAbort`), sehingga kesalahan pembatalan pengguna diperlakukan sebagai kegagalan sistem unhandled: mencetak `console.error("Design Mode Error:", err)`, menandai agen sebagai `Master Agent Gagal`, dan menampilkan kotak merah error `[object DOMException] / BodyStreamBuffer was aborted`.
+  2. *Margin Ganda pada Cetak PDF*: Pada deklarasi CSS `@media print` di `slide_styles.js`, `canvas_exporter.js`, `native_host.py`, dan `rust_host/src/main.rs`, selektor `.slide-section` diberi `padding: 40px 48px !important;`. Padahal elemen anak `.slide-canvas` di dalamnya sudah memiliki padding internal `padding: 36px 48px;`. Hal ini menyebabkan penumpukan padding ganda (total margin 76px vertikal dan 96px horizontal) yang memampatkan kanvas ke tengah halaman fisik 16in x 9in, menimbulkan ilusi visual seolah-olah konten slide ter-zoom out dan menyisakan margin kosong lebar yang tidak ada pada tampilan preview canvas di layar.
+- **Analisis & Solusi:**
+  1. *Graceful Abort Handling di Design Mode (`design_executor.js`)*:
+     - Menambahkan deteksi komprehensif `isAbort` pada blok `catch` di `runDesignModeLoop`:
+       `err.name === 'AbortError' || err.code === 20 || /abort/i.test(err.message) || /abort/i.test(err.toString()) || !isExecuting || Boolean(abortController?.signal?.aborted)`.
+     - Mengubah status agen secara elegan menjadi `Master Agent: Dihentikan`.
+     - Menghentikan seluruh indikator milestone yang sedang berputar (`inProgress = false`), memanggil `finalizeTaskScheduleSection(assistantBubble)` dan `finalizeToolSection(assistantBubble, true)`.
+     - Mengganti teks progress live yang belum rampung dengan notifikasi bersahabat `(Perancangan slide dihentikan oleh pengguna)` tanpa kotak merah error.
+     - Menyimpan giliran asisten parsial ke `conversationHistory` dan memicu `saveCurrentSessionToDB()`.
+  2. *True 16:9 Flush Canvas PDF Margins (`slide_styles.js`, `canvas_exporter.js`, `native_host.py`, `rust_host/src/main.rs`)*:
+     - Mengubah padding `.slide-section` di `@media print` dan `bulletproof-pdf-print-pagination` dari `padding: 40px 48px !important;` menjadi `padding: 0 !important; margin: 0 !important;`.
+     - Menambahkan `box-sizing: border-box !important;` pada `.slide-canvas` sehingga kanvas slide mengisi 100% dimensi 16in x 9in secara presisi hingga ke tepi halaman, dan hanya mempertahankan padding internal asli (`36px 48px`), identik 100% dengan tampilan preview canvas di layar.
+  3. *Rebuild Native Rust Host*:
+     - Mengompilasi ulang binary host Rust dengan `cargo build --release` dan menyinkronkan binary ke `host/browser_agent_host`.
+  4. *Sub-800 Line Rule Compliance*:
+     - `design_executor.js`: 603 baris.
+     - `slide_styles.js`: 698 baris.
+     - `canvas_exporter.js`: 226 baris.
+     - Seluruh 9 file di `extension/design/` terjaga ketat di bawah 800 baris.
+- **Verifikasi:**
+  1. Uji pembatalan (abort) pada `design_executor.js`: error `DOMException` / `AbortError` / `BodyStreamBuffer was aborted` tertangani mulus sebagai `Dihentikan`, status progress bersih tanpa kotak merah error, riwayat percakapan tersimpan ke SQLite.
+  2. Verifikasi CSS paginasi cetak: `.slide-section` memiliki `padding: 0 !important; margin: 0 !important;`, kanvas slide flush 16:9.
+  3. Validasi sintaks `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  4. Kompilasi binary Rust release `cargo build --release` selesai dan binary `host/browser_agent_host` terpasang.
+  5. Bump versi manifest ke `v2.150.209`.
+
+
 
 

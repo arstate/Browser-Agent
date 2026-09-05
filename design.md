@@ -537,5 +537,18 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Mengoptimalkan lebar pill morphing `.has-queue-input` (`min-width: 82px` di sidepanel dan `90px` di newtab) sehingga pas dan proporsional.
    - Seluruh animasi stickman face morphing (`.gen-morph-container`), ekspresi alis/mata, dan interaksi cancel tetap berfungsi 100%.
 
+## 🚀 25. Graceful Design Mode Cancellation & True 16:9 Flush Canvas PDF Margins (v2.150.209)
+
+1. **Graceful Design Mode Cancellation**:
+   - Deteksi `isAbort` komprehensif pada blok `catch` di `design_executor.js` untuk menangkap `AbortError`, `DOMException: BodyStreamBuffer was aborted`, dan `!isExecuting`.
+   - Mengubah status agent menjadi `Dihentikan` (Canceled), menghentikan milestone yang sedang berjalan (`inProgress = false`), dan menampilkan notifikasi ramah tanpa kotak merah error `[object DOMException]`.
+   - Menyimpan percakapan parsial ke riwayat chat secara konsisten.
+
+2. **True 16:9 Flush Canvas PDF Margins**:
+   - Menghapus penumpukan padding ganda pada cetak PDF: mengubah `.slide-section` dari `padding: 40px 48px !important;` menjadi `padding: 0 !important; margin: 0 !important;`.
+   - Menambahkan `box-sizing: border-box !important;` pada `.slide-canvas` sehingga kanvas slide menyentuh batas 16in x 9in secara flush dengan padding internal asli (`36px 48px`), identik 100% dengan tampilan preview canvas di layar tanpa margin kosong/zoom out berlebih.
+   - Sinkronisasi CSS paginasi cetak pada `slide_styles.js`, `canvas_exporter.js`, `native_host.py`, dan binary Rust Host `browser_agent_host`.
+
+
 
 
