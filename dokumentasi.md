@@ -856,3 +856,27 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
       5. **Early Exit Guard `detachDebugger` (`extension/sidepanel.js`)**:
          - Langsung return jika `!isDebuggerAttached`, menghindari round-trip API debugger error ke Chromium core.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+140. **Preservasi Kartu Buka Canvas Mode Agent & Docked Quick Re-Open Pill (`v2.150.257`):**
+    - **Kebutuhan Pengguna**:
+      - Saat mengedit slide atau meminta revisi slide deck PDF di Mode Agent, kartu respon AI yang memuat tombol `[Buka Canvas ↗]` hilang, sehingga ketika Canvas Drawer ditutup pengguna tidak bisa membukanya kembali.
+      - Menjamin tombol `[Buka Canvas ↗]` selalu muncul di balon respon AI dan menyediakan akses cepat untuk membuka kembali Canvas Workspace kapan saja saat Canvas tertutup.
+    - **Akar Masalah (Root Cause Analysis)**:
+      1. **Pembersihan Konten Sebelum Tool**: Pada `runAgentLoop`, saat agen memanggil tool verifikasi (seperti `read_slide_deck`), baris `contentEl.innerHTML = ''` secara keliru menghapus elemen `.opendesign-result-card` yang sebelumnya sudah dirender oleh `create_slide_deck_design`.
+      2. **Pembersihan Turn Sintesis**: Pada fase auto-sintesis rekapitulasi akhir, `contentEl.innerHTML = ''` kembali menghapus kartu tanpa menyimpannya ke memori DOM.
+      3. **Streaming Re-Render Tanpa Fallback**: `renderStreamingChunk` dan `updateAssistantText` hanya mengecek `existingCard` di DOM lokal; jika DOM sudah terhapus, kartu tidak pernah dirender ulang.
+      4. **Ketiadaan Trigger Re-Open Eksternal**: Saat pengguna menutup Canvas (`closeOpenDesignCanvas`), tidak ada tombol persisten di atas prompt atau di dock untuk membuka kembali Canvas.
+    - **Implementasi Teknis**:
+      1. **Preservasi Elemen Kartu pada Siklus Eksekusi (`extension/sidepanel.js`)**:
+         - Memodifikasi pembersihan teks interim sebelum tool dan pada fase sintesis agar mengekstrak `.opendesign-result-card` dan memasangnya kembali ke `contentEl`.
+      2. **Auto-Restore Kartu dari `_activeDesignArtifact` (`extension/sidepanel.js`)**:
+         - Pada `renderStreamingChunk` dan `updateAssistantText`, jika `existingCard` tidak ditemukan tetapi `bubble._activeDesignArtifact` bernilai truthy, fungsi secara otomatis memanggil `renderOpenDesignCard(contentEl, bubble._activeDesignArtifact, { isRevision: true })`.
+      3. **Garansi Akhir Respon Bubble (`extension/sidepanel.js`)**:
+         - Pada akhir `runAgentLoop` dan `runChatModeLoop`, jika tool slide dieksekusi (`create_slide_deck_design` / `read_slide_deck`) atau pengguna membahas slide sementara artefak slide aktif tersedia, sistem menjamin kartu `renderOpenDesignCard` terpasang di `contentEl` dan tersimpan ke `conversationHistory`.
+      4. **Docked Quick Re-Open Canvas Pill (`extension/sidepanel.html`, `extension/newtab.html`, `extension/sidepanel.css`, `extension/newtab.css`, `extension/sidepanel.js`)**:
+         - Menambahkan kontainer `#canvas-quick-reopen-dock` di atas bilah input chat.
+         - Tombol kapsul neon-lime `[🎨 Buka Canvas (X Slide) ↗]` otomatis muncul ketika Canvas tertutup dan artefak aktif ada di memori. Mengklik tombol langsung membuka Canvas seketika (0ms).
+      5. **Sinkronisasi Lifecycle Canvas (`extension/design/canvas_manager.js`)**:
+         - Mengintegrasikan `openOpenDesignCanvas` (menyembunyikan dock re-open) dan `closeOpenDesignCanvas` (menampilkan dock re-open) tanpa melanggar batas 800 baris (`canvas_manager.js` tetap 789 baris).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+

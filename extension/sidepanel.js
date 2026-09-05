@@ -3538,6 +3538,10 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
         } catch (_) {}
       }
 
+      if (activeArt && assistantBubble) {
+        assistantBubble._activeDesignArtifact = activeArt;
+      }
+
       const extractFn = (typeof extractSlidesFromRawHtml === 'function')
         ? extractSlidesFromRawHtml
         : (typeof window !== 'undefined' && typeof window.extractSlidesFromRawHtml === 'function' ? window.extractSlidesFromRawHtml : null);
@@ -6387,11 +6391,17 @@ Tugas Anda:
           plannedStepsTotal = Math.max(plannedStepsTotal || 0, currentStep + message.tool_calls.length - 1);
         }
 
-        // Clear interim pseudo-tool strings from bubble so only clean tool section is shown
+        // Clear interim pseudo-tool strings from bubble so only clean tool section is shown, preserving active design card if present
         const contentEl = assistantBubble?.querySelector('.message-content');
         if (contentEl) {
+          const card = contentEl.querySelector('.opendesign-result-card');
           contentEl.innerHTML = '';
-          contentEl.style.display = 'none';
+          if (card) {
+            contentEl.appendChild(card);
+            contentEl.style.display = 'block';
+          } else {
+            contentEl.style.display = 'none';
+          }
         }
 
         for (const toolCall of message.tool_calls) {
@@ -6645,7 +6655,9 @@ Tugas Anda:
         updateFooterStatus(`Master Agent: Menyusun laporan akhir (${stepStr})...`);
         notifyActiveTabExecutionState(true, currentStep, maxSteps, `Master Agent: Menyusun laporan akhir (${stepStr})`);
         if (contentEl) {
+          const card = contentEl.querySelector('.opendesign-result-card');
           contentEl.innerHTML = '';
+          if (card) contentEl.appendChild(card);
           contentEl.style.display = 'block';
         }
 
@@ -6876,8 +6888,41 @@ Tugas Anda:
       const spinner = contentEl.querySelector('.tool-spinner');
       if (spinner) spinner.remove();
       const finalText = (contentEl.innerText || contentEl.textContent || "").trim();
-      if (!finalText && sessionGeneratedImages.length === 0) {
+      const hasCard = !!contentEl.querySelector('.opendesign-result-card');
+      if (!finalText && !hasCard && sessionGeneratedImages.length === 0) {
         contentEl.style.display = 'none';
+      }
+    }
+
+    // Guarantee: If slide deck artifact was created, modified, read, or requested in Agent Mode, ALWAYS render the OpenDesign card into assistantBubble
+    const activeSlideArt = assistantBubble?._activeDesignArtifact || 
+                           (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact() : null) || 
+                           (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact : null) ||
+                           (typeof window !== 'undefined' ? window.__activeDesignArtifact : null);
+
+    const touchedSlideTool = sessionExecutedTools.some(t => t === 'create_slide_deck_design' || t === 'read_slide_deck');
+    const userAskedSlide = /(?:slide|deck|presentasi|presentation|powerpoint|ppt|kanvas|canvas)/i.test(userMessage || "");
+
+    if (activeSlideArt && activeSlideArt.html && (touchedSlideTool || userAskedSlide || assistantBubble?._activeDesignArtifact)) {
+      assistantBubble._activeDesignArtifact = activeSlideArt;
+      const curContentEl = assistantBubble?.querySelector('.message-content') || assistantBubble;
+      if (curContentEl) {
+        curContentEl.style.display = 'block';
+        if (!curContentEl.querySelector('.opendesign-result-card')) {
+          if (typeof renderOpenDesignCard === 'function') {
+            renderOpenDesignCard(curContentEl, activeSlideArt, { isRevision: true });
+          } else if (typeof window !== 'undefined' && typeof window.renderOpenDesignCard === 'function') {
+            window.renderOpenDesignCard(curContentEl, activeSlideArt, { isRevision: true });
+          }
+        }
+      }
+      const lastMsg = conversationHistory[conversationHistory.length - 1];
+      if (lastMsg && lastMsg.role === 'assistant') {
+        lastMsg.designArtifact = activeSlideArt;
+        lastMsg.chatMode = "design";
+      }
+      if (typeof syncCanvasQuickReopenButton === 'function') {
+        syncCanvasQuickReopenButton(true);
       }
     }
 
@@ -8274,11 +8319,35 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
       const finalAgentName = hasBoss ? "Master Agent" : (resolvedAgents[0]?.name || "General Agent");
       updateAssistantActiveAgent(assistantBubble, finalAgentName, "Selesai", hasBoss, true);
 
-      conversationHistory.push({
+      const activeChatArt = (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact() : null) || 
+                            (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact : null) ||
+                            (typeof window !== 'undefined' ? window.__activeDesignArtifact : null);
+      const userAskedSlideInChat = /(?:slide|deck|presentasi|presentation|powerpoint|ppt|kanvas|canvas)/i.test(userMessage || "");
+      if (activeChatArt && activeChatArt.html && userAskedSlideInChat) {
+        const curContentEl = assistantBubble?.querySelector('.message-content') || assistantBubble;
+        if (curContentEl && !curContentEl.querySelector('.opendesign-result-card')) {
+          curContentEl.style.display = 'block';
+          if (typeof renderOpenDesignCard === 'function') {
+            renderOpenDesignCard(curContentEl, activeChatArt, { isRevision: true });
+          } else if (typeof window !== 'undefined' && typeof window.renderOpenDesignCard === 'function') {
+            window.renderOpenDesignCard(curContentEl, activeChatArt, { isRevision: true });
+          }
+        }
+        if (typeof syncCanvasQuickReopenButton === 'function') {
+          syncCanvasQuickReopenButton(true);
+        }
+      }
+
+      const asstChatMsg = {
         role: "assistant",
         content: cleanFinalText || accumulatedContent,
         agentInfo: agentInfo
-      });
+      };
+      if (activeChatArt && userAskedSlideInChat) {
+        asstChatMsg.designArtifact = activeChatArt;
+        asstChatMsg.chatMode = "design";
+      }
+      conversationHistory.push(asstChatMsg);
 
       saveCurrentSessionToDB();
 
@@ -8369,6 +8438,42 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 // - extension/design/design_executor.js: runDesignModeLoop Orchestration
 // =========================================================================
 var activeDesignArtifact = (typeof activeDesignArtifact !== "undefined") ? activeDesignArtifact : (typeof window !== "undefined" ? window.activeDesignArtifact : null);
+
+function syncCanvasQuickReopenButton(forceShow = false) {
+  const dock = document.getElementById('canvas-quick-reopen-dock');
+  if (!dock) return;
+
+  const canvasIsOpen = document.body.classList.contains('canvas-active') || 
+                       (typeof isCanvasOpen === 'function' ? isCanvasOpen() : false);
+  const activeArt = (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact() : null) || 
+                    (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact : null) ||
+                    (typeof window !== 'undefined' ? window.__activeDesignArtifact : null);
+
+  if (!canvasIsOpen && activeArt && activeArt.html) {
+    const slideTotal = activeArt.slideCount || (Array.isArray(activeArt.slides) ? activeArt.slides.length : '') || '16:9';
+    dock.innerHTML = `
+      <button type="button" class="btn-quick-reopen-canvas" id="btn-quick-reopen-canvas" title="Buka kembali Canvas Workspace">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        <span>Buka Canvas (${slideTotal} Slide) ↗</span>
+      </button>
+    `;
+    const btn = dock.querySelector('.btn-quick-reopen-canvas');
+    btn?.addEventListener('click', () => {
+      if (typeof openOpenDesignCanvas === 'function') {
+        openOpenDesignCanvas(activeArt);
+      } else if (typeof window !== 'undefined' && typeof window.openOpenDesignCanvas === 'function') {
+        window.openOpenDesignCanvas(activeArt);
+      }
+      dock.style.display = 'none';
+    });
+    dock.style.display = 'flex';
+  } else {
+    dock.style.display = 'none';
+  }
+}
+if (typeof window !== 'undefined') {
+  window.syncCanvasQuickReopenButton = syncCanvasQuickReopenButton;
+}
 
 if (typeof upgradeSlideDeckHtmlIfNeeded !== "function") {
   var upgradeSlideDeckHtmlIfNeeded = function(...args) {
@@ -9246,6 +9351,8 @@ function renderStreamingChunk(data) {
   data.contentEl.innerHTML = formatted + '<span class="streaming-cursor"></span>';
   if (existingCard) {
     data.contentEl.appendChild(existingCard);
+  } else if (data.bubble?._activeDesignArtifact && typeof renderOpenDesignCard === 'function') {
+    renderOpenDesignCard(data.contentEl, data.bubble._activeDesignArtifact, { isRevision: true });
   }
   hydrateLocalImages(data.bubble);
   requestSmoothScrollToBottom(false, data.bubble);
@@ -9269,6 +9376,8 @@ function updateAssistantText(bubble, text, isStreaming = false) {
     contentEl.innerHTML = formatMarkdown(text);
     if (existingCard) {
       contentEl.appendChild(existingCard);
+    } else if (bubble?._activeDesignArtifact && typeof renderOpenDesignCard === 'function') {
+      renderOpenDesignCard(contentEl, bubble._activeDesignArtifact, { isRevision: true });
     }
     hydrateLocalImages(bubble);
     hydrateFileActions(bubble);
@@ -12381,6 +12490,9 @@ async function resumeSession(sessionId) {
 
   updateFooterStatus("Sesi Dimuat");
   setTimeout(() => updateFooterStatus("Agent Ready"), 1500);
+  try {
+    syncCanvasQuickReopenButton();
+  } catch (_) {}
 }
 
 function updateHeaderChatTitle(title) {
@@ -14950,6 +15062,9 @@ async function bootstrap() {
   } catch (e) {
     console.warn("Bootstrap auto-restore session notice:", e);
   }
+  try {
+    syncCanvasQuickReopenButton();
+  } catch (_) {}
 }
 
 bootstrap();

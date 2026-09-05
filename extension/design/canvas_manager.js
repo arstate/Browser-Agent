@@ -539,6 +539,7 @@ function openOpenDesignCanvas(artifact) {
   setCanvasViewport('responsive');
   if (artifact.html) runCanvasAutoLint(artifact.html);
   window.dispatchEvent(new Event('resize'));
+  const dock = document.getElementById('canvas-quick-reopen-dock'); if (dock) dock.style.display = 'none';
 }
 
 function closeOpenDesignCanvas() {
@@ -558,6 +559,7 @@ function closeOpenDesignCanvas() {
   const canvasPane = document.getElementById('opendesign-canvas-pane');
   if (canvasPane) { canvasPane.style.display = 'none'; canvasPane.classList.remove('is-expanded'); }
   window.dispatchEvent(new Event('resize'));
+  if (typeof syncCanvasQuickReopenButton === 'function') syncCanvasQuickReopenButton();
   if (chatInput) chatInput.focus();
   requestAnimationFrame(() => {
     if (isNearBottom) {

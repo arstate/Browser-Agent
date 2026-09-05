@@ -7238,3 +7238,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.256` di `manifest.json`.
 
+---
+
+### Iterasi: Preservasi Kartu Buka Canvas Mode Agent & Docked Quick Re-Open Pill (`v2.150.257`)
+- **User Request:**
+  - "KETIKA EDIT SLIDE TRUS PAKE AGENT MODE SLIDE PDF RESPON AI KIRIM BUKA CANVAS HILANG BRO JADI KALAU DITUTUP JADI GABISA BUKA BRO COBA BENERIN BARANGKALI ADA ERROR"
+- **Solusi & Rekayasa Teknis:**
+  1. *Perbaikan Penghapusan Kartu di Mode Agent (`extension/sidepanel.js`)*:
+     - Multi-turn tool execution guard: Saat pemanggilan tool berantai (misal `create_slide_deck_design` dilanjutkan `read_slide_deck`), `contentEl` tidak lagi dihapus total (`innerHTML = ''`), melainkan elemen `.opendesign-result-card` diekstrak dan dipertahankan.
+     - Binding artifact di tool baca (`case "read_slide_deck":`): Memastikan `assistantBubble._activeDesignArtifact` tetap diikat ke artifact deck aktif.
+     - Preservasi saat streaming sintesis akhir: Di blok `toolBadges.length > 0 && !isSubstantialFinalAnswer`, kartu slide card di-detasir dan dipasang kembali setelah sintesis selesai, mencegah respon teks akhir menimpa tombol kanvas.
+     - Fallback guarantee: Pada akhir `runAgentLoop` dan `runChatModeLoop`, sistem memeriksa ketersediaan artifact slide deck. Jika kartu belum ada di dalam chat bubble, kartu otomatis dirender kembali via `renderOpenDesignCard()` dan disimpan ke riwayat obrolan.
+  2. *Docked Quick Re-Open Canvas Button (`extension/sidepanel.js`, `extension/design/canvas_manager.js`, HTML & CSS)*:
+     - Ditambahkan kontainer `#canvas-quick-reopen-dock` tepat di atas chat input bar (`extension/sidepanel.html` & `extension/newtab.html`).
+     - `syncCanvasQuickReopenButton()` secara otomatis memunculkan tombol `[🎨 Buka Canvas (X Slide) ↗]` saat drawer kanvas ditutup dan menyembunyikannya saat drawer dibuka.
+     - Styling tombol di `sidepanel.css` & `newtab.css` dengan aksen indigo, badge jumlah slide, dan animasi hover elegan.
+- **Verifikasi:**
+  1. Unit test `scratch/test_agent_mode_slide_canvas_card_persistence.js` lulus 100% (7 assertions PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.257` di `manifest.json`.
+
+

@@ -1595,3 +1595,28 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_styles.js`: 737
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
+
+## 73. Preservasi Kartu Buka Canvas Mode Agent & Docked Quick Re-Open Pill (v2.150.257)
+
+### 🎨 1. Preservasi Kartu Hasil Desain di Bubble Chat
+- **Anti-Wipe Multi-Turn Tools**: Membersihkan interim text saat eksekusi tool berantai tanpa menghapus elemen `.opendesign-result-card` yang sudah terpasang.
+- **Persistent Design Artifact Binding**: Tool verifikasi `read_slide_deck` mempertahankan artifact ke `assistantBubble._activeDesignArtifact` agar tidak hilang saat transisi tool.
+- **Card Restoration on Synthesis**: Saat AI merangkum hasil revisi pada tahap sintesis akhir, kartu "Buka Canvas ↗" diekstrak sementara dan dipasangkan kembali ke bagian bawah bubble pesan.
+- **Fallback Guarantee**: Di akhir loop percakapan (Agent Mode & Chat Mode), jika ada slide artifact aktif namun kartu belum ada di DOM chat bubble, kartu otomatis dirender kembali dan disinkronkan ke riwayat pesan.
+
+### 🚀 2. Docked Quick Re-Open Canvas Button
+- **Akses Instan Saat Drawer Tertutup**: Menambahkan kontainer `#canvas-quick-reopen-dock` tepat di atas chat input bar (`.chat-input-bar`).
+- **Sinkronisasi Otomatis**: Menampilkan tombol `[🎨 Buka Canvas (X Slide) ↗]` saat drawer ditutup dan menyembunyikannya saat drawer dibuka, menjamin pengguna tidak pernah kehilangan akses ke kanvas editor slide.
+
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 789
+  - `design_agent.js`: 782
+  - `design_executor.js`: 793
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
