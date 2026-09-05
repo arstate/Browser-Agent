@@ -7216,11 +7216,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   1. Unit test `test_apps_hub_exact_sub_navbar_placement.js` lulus 100%.
   2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris.
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
-  4. Bump versi ke `v2.150.255` di `manifest.json`.
+---
 
-
-
-
-
-
+### Iterasi: Eliminasi Lag & Hang Pasca AI Selesai Eksekusi (Zero-Stall Post-Execution Responsiveness) (`v2.150.256`)
+- **User Request:**
+  - "update optimasi browser agent kok setelah ai selesai working kok kayak lag nyandet hang beberapa detik baru bisa di klik ya coba optimasi performa"
+- **Solusi & Rekayasa Teknis:**
+  1. *Linux OS Window Focus Stall Elimination*:
+     - `extension/sidepanel.js`: `focusOwnAgentTab()` kini mengecek `!ownTab.active` dan `!currentWin.focused` sebelum memanggil `chrome.windows.update` dan `chrome.tabs.update`. Ini meniadakan jeda 1-3 detik akibat focus-stealing prevention pada window manager Linux X11/Wayland.
+  2. *Instant Non-Blocking Scroll & Single RAF*:
+     - `extension/sidepanel.js`: Mengganti smooth-scroll animation loop dengan `scrollToBottom(false)` instan (`behavior: 'instant'`). Menghapus timer `setTimeout(60)` berulang pada `requestSmoothScrollToBottom` sehingga scroll selesai dalam 0ms tanpa mengunci event klik.
+  3. *Debounced Idle Persistence*:
+     - `extension/sidepanel.js`: Memasang debounce 400ms dan mutex `isSavingSession` pada `saveCurrentSessionToDB()`. Eksekusi disk I/O dan Native RPC SQLite dialihkan ke `requestIdleCallback({ timeout: 2000 })`, menjaga thread UI 100% bebas hambatan saat AI selesai.
+  4. *Guarded Input Focus*:
+     - `extension/sidepanel.js` & `extension/design/design_executor.js`: `chatInput.focus({ preventScroll: true })` hanya dijalankan jika user tidak sedang mengklik tombol, link, atau kontainer aplikasi.
+  5. *Debugger Detach Guard*:
+     - `extension/sidepanel.js`: `detachDebugger()` langsung return jika `!isDebuggerAttached`.
+- **Verifikasi:**
+  1. Unit test `test_perf_completion_responsiveness.js` lulus 100% (5 assertions PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.256` di `manifest.json`.
 

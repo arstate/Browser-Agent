@@ -779,9 +779,10 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     isExecuting = false;
     updateSendButtonState(false);
     abortController = null;
-    requestSmoothScrollToBottom(true);
-    if (chatInput) {
-      chatInput.focus();
+    if (chatInput && document.activeElement !== chatInput) {
+      const activeEl = document.activeElement;
+      const isInteracting = activeEl && (activeEl.tagName === 'BUTTON' || activeEl.tagName === 'A' || activeEl.tagName === 'INPUT' || activeEl.isContentEditable);
+      if (!isInteracting) chatInput.focus({ preventScroll: true });
     }
   }
 }

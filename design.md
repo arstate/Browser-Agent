@@ -1574,8 +1574,24 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 72. Zero-Lag Completion Responsiveness & Linux Focus Stall Elimination (v2.150.256)
 
+### ⚡ 1. Eliminasi Lag & Hang Pasca AI Selesai Eksekusi
+- **Linux Compositor Non-Blocking**: `focusOwnAgentTab()` memeriksa `!ownTab.active` dan `!currentWin.focused` sebelum memanggil API browser window. Menghindari focus-stealing locks pada window manager Linux (GNOME/KDE/X11/Wayland) yang sebelumnya menyebabkan UI freeze 1-3 detik.
+- **Instant Non-Blocking Scroll**: Mengganti smooth scroll loop animasi dengan `scrollToBottom(false)` instan (`behavior: 'instant'`) yang digabungkan dalam satu frame RAF tanpa timer `setTimeout(60)` berulang, membebaskan event loop dan click hit-testing.
+- **Debounced Idle Persistence**: `saveCurrentSessionToDB()` didebounce 400ms dan dialihkan ke `requestIdleCallback({ timeout: 2000 })`, membebaskan thread UI dari serialisasi JSON dan I/O disk saat pengguna hendak mengklik tombol.
+- **Guarded Input Focus**: `chatInput.focus({ preventScroll: true })` hanya dipicu jika pengguna tidak sedang mengklik tombol, link, atau kontainer aplikasi lain.
+- **Debugger Detach Guard**: `detachDebugger()` langsung keluar jika `!isDebuggerAttached`, menghemat round-trip IPC ke Chromium core.
 
-
-
-
+### 📏 2. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 793
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318

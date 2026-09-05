@@ -832,8 +832,27 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menghilangkan garis potongan horizontal, menyatukan visual bilah kontrol dan webview secara mulus dan bersih.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
-
-
-
-
-
+139. **Eliminasi Lag & Hang Pasca AI Selesai Eksekusi (Zero-Stall Post-Execution Responsiveness) (`v2.150.256`):**
+    - **Kebutuhan Pengguna**:
+      - Menyelesaikan isu UI macet/nyandet ("lag nyandet hang beberapa detik baru bisa di klik") yang terjadi sesaat setelah AI selesai memproses dan membalas perintah.
+      - Memastikan seluruh kontrol UI (tombol, input, link, kapsul aplikasi) responsif seketika (0ms) tanpa jeda atau klik yang tertelan.
+    - **Akar Masalah (Root Cause Analysis)**:
+      1. **Linux OS Compositor & Focus Stealing Stall**: Pemanggilan agresif `chrome.windows.update(ownTab.windowId, { focused: true })` di `focusOwnAgentTab()` memicu protokol window activation X11/Wayland yang membekukan event loop input browser selama 1-3 detik.
+      2. **Smooth Scroll Animation Lock & Duplicate Calls**: Fungsi `requestSmoothScrollToBottom(true)` dijalankan berkali-kali secara berantai via RAF dan `setTimeout(60)`, mengaktifkan animasi smooth scroll fisik Chrome pada `window` yang menelan event klik pengguna.
+      3. **Sinkronisasi Database Berat di Main Thread**: `saveCurrentSessionToDB()` memproses sanitasi histori besar, serialisasi JSON, dan I/O penyimpanan lokal serta Native RPC SQLite di main UI thread tepat saat AI berhenti.
+      4. **Focus Contention**: `chatInput.focus()` merebut fokus secara paksa saat pengguna sedang berinteraksi atau mengklik tombol lain.
+    - **Implementasi Teknis**:
+      1. **Guard `focusOwnAgentTab` Non-Blocking (`extension/sidepanel.js`)**:
+         - Mengecek `!ownTab.active` sebelum memanggil `chrome.tabs.update`.
+         - Mengecek `!currentWin.focused` sebelum memanggil `chrome.windows.update`, sepenuhnya mengeliminasi focus-stealing lag pada Linux OS compositor.
+      2. **Instant Scroll & Coalesced RAF (`extension/sidepanel.js`)**:
+         - Mengubah scroll pasca-eksekusi menjadi instan (`behavior: 'instant'`), mematikan animasi smooth scroll yang mengunci klik.
+         - Menghapus timer `setTimeout(60)` ganda pada `requestSmoothScrollToBottom` dan menyatukan scroll ke satu frame RAF.
+      3. **Debounced Background Persistence via Idle Queue (`extension/sidepanel.js`)**:
+         - Memasang debounce 400ms dan mutex `isSavingSession` pada `saveCurrentSessionToDB`.
+         - Menjadwalkan penyimpanan session ke `requestIdleCallback({ timeout: 2000 })` sehingga tidak pernah membebani frame interaksi pengguna.
+      4. **Guarded Non-Blocking Input Focus (`extension/sidepanel.js`, `extension/design/design_executor.js`)**:
+         - Menerapkan `chatInput.focus({ preventScroll: true })` hanya jika elemen aktif bukan tombol, input, link, atau kontainer aplikasi yang sedang diklik pengguna.
+      5. **Early Exit Guard `detachDebugger` (`extension/sidepanel.js`)**:
+         - Langsung return jika `!isDebuggerAttached`, menghindari round-trip API debugger error ke Chromium core.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
