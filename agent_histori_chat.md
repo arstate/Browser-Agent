@@ -6783,23 +6783,33 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Node syntax check `node -c extension/*.js extension/design/*.js` lolos 100% tanpa error.
   3. Verifikasi jumlah baris memastikan seluruh file design `<= 796` baris.
   4. Bump versi manifest ke `v2.150.238`.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### 🚀 Iterasi 520: Integrasi Gambar Pengguna (User Uploaded Images) & Pembebasan Gaya Desain Kreatif AI (Un-Locked Playful Kawaii Archetype & Paw Doodles) (v2.150.239)
+- **User Request:**
+  1. "buat agent bisa memasukan image yang dikirim user dari prompt ke dalam page slide pdf jika user memintanya"
+  2. "saya kan minta style design lucu ada emot emot icon kucing paw kok malah ga sesuai ya hasilnya stylenya pdf slide decknya kayak dikunci ke style ini terus ya bro, coba lo fix bro, buat ai design mode jadi kreatif ga lock di style ini terus"
+  3. "margin samping atas bawah jangan terlalu mepet dengan frame, ada gambar kucingnya juga gambar harus kelihatan muka kucing jelas dan lucu, style design kek lucu lucu kucing coretan dan ada emot svg icon svg kek paw kucing dll misalnya"
+- **Akar Masalah (Root Cause):**
+  1. *Kehilangan Data Lampiran Gambar*: Saat pengguna mengunggah gambar (`attachments`) di prompt, data gambar tidak pernah diteruskan ke `deckMeta` atau ke struktur data kartu slide (`workingSlides`) pada generator slide deck, sehingga kartu dan sampul slide selalu dirender tanpa gambar.
+  2. *Gaya Desain Terkunci Kaku (Locked Corporate Templates)*: File `slide_template.js` memuat teks penutup yang di-*hardcode* kaku ("RINGKASAN EKSEKUTIF", "SIAP DIIMPLEMENTASIKAN", "CHECKLIST AKSI", "ACTION PLAYBOOK 2026") di setiap slide kesimpulan tanpa mempedulikan tema lucu/kucing yang diminta pengguna.
+  3. *Ketiadaan Aset & Dekorasi Doodles*: Belum ada aset SVG stempel tapak cakar kucing (*paw print*), wajah kucing lucu, bintang kilau, dan hati doodle, maupun fallback koleksi foto kucing resolusi tinggi yang ekspresif.
+  4. *Margin Terlalu Sempit*: Padding `.slide-canvas` (`36px 48px`) membuat elemen kartu dan judul terlalu menempel pada tepi frame slide.
+- **Analisis & Solusi:**
+  1. *Ekstraksi & Integrasi Gambar Pengguna (`design_executor.js`, `slide_deck_engine.js`)*:
+     - Mengekstrak lampiran gambar base64 (`a.isImage && a.dataUrl`) dari prompt aktif dan riwayat chat mundur (`conversationHistory`).
+     - Menugaskan `userImages` ke `deckMeta` dan mendistribusikan gambar ke cover slide maupun kartu-kartu konten.
+     - Menggunakan token placeholder `__USER_IMG_0__`, `__USER_IMG_1__` pada prompt LLM agar aman dari batas output token, kemudian merekonstruksinya dengan `replaceImagePlaceholdersInHtml(html, userImages)` setelah HTML diterima.
+     - Menerapkan fallback deterministik `injectImagesIntoSlideDeckHtml` sebagai jaring pengaman bila AI lalai menyertakan tag gambar.
+  2. *Pembebasan Gaya Desain Kreatif & Arketipe Playful Kawaii (`slide_themes.js`, `design_prompt.js`, `design_agent.js`)*:
+     - Menambahkan arketipe `Playful Pastel & Kawaii Doodles` dengan generator SVG inline: `getCutePawSvg()`, `getCuteCatFaceSvg()`, `getCuteSparkleSvg()`, `getCuteHeartSvg()`, dan watermark cakar kucing melayang transparan.
+     - Menyediakan kurasi 8 foto kucing resolusi tinggi dengan fokus wajah tajam dan ekspresif (`CUTE_CAT_PHOTO_COLLECTION`).
+     - Mengubah teks penutup korporat kaku menjadi tajuk bernuansa hangat (misal: "🐾 RANGKUMAN KASIH SAYANG", "💖 BAHAGIA BERSAMA ANABUL", "🐱 CHECKLIST PERAWATAN").
+  3. *Pelebaran Margin & Frame Gambar (`slide_styles.js`, `slide_template.js`)*:
+     - Memperlebar padding `.slide-canvas` menjadi `42px 54px`.
+     - Menambahkan styling responsif untuk `.card-image-wrap` (160px, rounded, object-fit cover) dan `.cover-hero-image-wrap` (lingkaran 124px).
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 796, `design_agent.js` 636, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 789, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+- **Verifikasi:**
+  1. Unit test `test_user_image_and_creative_design.js` lulus 100% (3/3 test suites).
+  2. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file design `<= 796` baris.
+  4. Bump versi manifest ke `v2.150.239`.

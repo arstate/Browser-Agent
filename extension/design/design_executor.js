@@ -14,17 +14,10 @@ if (typeof window !== 'undefined') window.buildApiUrl = getEffectiveEndpointUrl;
 
 function resolveDesignCandidateModels(agentConfig = {}) {
   let candidates = [];
-  if (typeof activeAgentModel !== 'undefined' && activeAgentModel && activeAgentModel !== 'auto') {
-    candidates.push(activeAgentModel);
-  }
-  if (typeof getCandidateModelsList === 'function') {
-    candidates.push(...getCandidateModelsList());
-  } else if (typeof window !== 'undefined' && typeof window.getCandidateModelsList === 'function') {
-    candidates.push(...window.getCandidateModelsList());
-  }
-  if (agentConfig && agentConfig.model && agentConfig.model !== 'auto') {
-    candidates.push(agentConfig.model);
-  }
+  if (typeof activeAgentModel !== 'undefined' && activeAgentModel && activeAgentModel !== 'auto') candidates.push(activeAgentModel);
+  if (typeof getCandidateModelsList === 'function') candidates.push(...getCandidateModelsList());
+  else if (typeof window !== 'undefined' && typeof window.getCandidateModelsList === 'function') candidates.push(...window.getCandidateModelsList());
+  if (agentConfig?.model && agentConfig.model !== 'auto') candidates.push(agentConfig.model);
   candidates = candidates.filter(m => m && typeof m === 'string' && m.trim() && m !== 'auto');
   if (candidates.length === 0) {
     const isGoogle = (agentConfig.endpointUrl && agentConfig.endpointUrl.includes("generativelanguage")) || (!agentConfig.endpoint || agentConfig.endpoint === 'google');
@@ -150,6 +143,18 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   if (typeof appendUserMessage === 'function') appendUserMessage(userMessage, attachments);
   else if (typeof window !== 'undefined' && typeof window.appendUserMessage === 'function') window.appendUserMessage(userMessage, attachments);
 
+  let imageAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isImage && a.dataUrl) : [];
+  if (imageAttachments.length === 0 && typeof conversationHistory !== 'undefined' && Array.isArray(conversationHistory)) {
+    for (let i = conversationHistory.length - 1; i >= 0; i--) {
+      const h = conversationHistory[i];
+      if (h && h.role === 'user' && Array.isArray(h.attachments)) {
+        const prevImgs = h.attachments.filter(a => a.isImage && a.dataUrl);
+        if (prevImgs.length > 0) { imageAttachments = prevImgs; break; }
+      }
+    }
+  }
+  if (typeof window !== 'undefined') window.__lastDesignUserImages = imageAttachments;
+
   if (typeof conversationHistory !== 'undefined' && Array.isArray(conversationHistory)) {
     conversationHistory.push({ role: "user", content: userMessage, displayContent: userMessage, attachments, chatMode: "design" });
   }
@@ -166,24 +171,19 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   currentActiveAssistantBubble = assistantBubble;
   const contentEl = assistantBubble ? assistantBubble.querySelector('.message-content') : null;
 
-  const detectThemeFn = (typeof detectOptimalSlideTheme === 'function')
-    ? detectOptimalSlideTheme
-    : (typeof window !== 'undefined' && typeof window.detectOptimalSlideTheme === 'function' ? window.detectOptimalSlideTheme : null);
+  const detectThemeFn = (typeof detectOptimalSlideTheme === 'function') ? detectOptimalSlideTheme : (typeof window !== 'undefined' && typeof window.detectOptimalSlideTheme === 'function' ? window.detectOptimalSlideTheme : null);
   const deducedTheme = detectThemeFn ? detectThemeFn(userMessage) : { id: 'adaptive', name: 'Adaptive Bespoke System' };
-
   const slideCountMatch = userMessage.match(/(\d+)\s*(?:slide|halaman|lembar)/i);
   const targetSlideCount = slideCountMatch ? Math.max(3, Math.min(parseInt(slideCountMatch[1], 10), 12)) : 5;
 
   // Initialize structured 5-milestone plan for Master Agent & Master Design
-  const designMilestones = (typeof getDesignMilestones === 'function')
-    ? getDesignMilestones(userMessage, isRevision, targetSlideCount)
-    : [
-        { title: "👑 Master Agent: Analisis Brief & Cetak Biru", completed: false, inProgress: true },
-        { title: "🤝 Delegasi ke Master Design: Kurasi Style Visual & Palet", completed: false, inProgress: false },
-        { title: `🎨 Master Design: Perancangan Bertahap Slide (1 s/d ${targetSlideCount})`, completed: false, inProgress: false },
-        { title: "🔍 Quality Gate: Evaluasi & Revisi Setiap Slide", completed: false, inProgress: false },
-        { title: "👑 Master Agent: Re-Check Detail Seluruh Slide & Final Approval", completed: false, inProgress: false }
-      ];
+  const designMilestones = (typeof getDesignMilestones === 'function') ? getDesignMilestones(userMessage, isRevision, targetSlideCount) : [
+    { title: "👑 Master Agent: Analisis Brief & Cetak Biru", completed: false, inProgress: true },
+    { title: "🤝 Delegasi ke Master Design: Kurasi Style Visual & Palet", completed: false, inProgress: false },
+    { title: `🎨 Master Design: Perancangan Slide (1 s/d ${targetSlideCount})`, completed: false, inProgress: false },
+    { title: "🔍 Quality Gate: Evaluasi & Revisi Setiap Slide", completed: false, inProgress: false },
+    { title: "👑 Master Agent: Re-Check Detail & Final Approval", completed: false, inProgress: false }
+  ];
 
   if (typeof renderTaskScheduleSection === 'function') {
     renderTaskScheduleSection(assistantBubble, designMilestones, 'min');
@@ -275,7 +275,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       accentColor: deducedTheme.accent,
       themeObj: deducedTheme,
       styleConcept,
-      userPrompt: userMessage
+      userPrompt: userMessage,
+      userImages: imageAttachments
     };
 
     let workingSlides = [];
@@ -301,7 +302,12 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         }
       }
 
-      const revisionContent = `[INSTRUKSI REVISI CANVAS AKTIF]\nBerikut kode HTML slide deck yang SEDANG AKTIF DIBUKA:\n\n\`\`\`html\n${currentOpenArtifact.html}\n\`\`\`\n\nPermintaan revisi: "${userMessage}"\n\nKembalikan kode HTML LENGKAP yang telah direvisi di dalam blok \`\`\`html ... \`\`\`.`;
+      let imgInstructions = '';
+      if (imageAttachments.length > 0) {
+        const imgList = imageAttachments.map((img, i) => `- Gambar ${i + 1}: placeholder "__USER_IMG_${i}__"`).join('\n');
+        imgInstructions = `\n\n[PENTING - USER MELAMPIRKAN ${imageAttachments.length} GAMBAR]:\nPengguna melampirkan gambar:\n${imgList}\nSANGAT PENTING: Sisipkan tag gambar <div class="card-image-wrap"><img class="card-image" src="__USER_IMG_X__" alt="Foto"></div> ke dalam slide/card yang diminta user!`;
+      }
+      const revisionContent = `[INSTRUKSI REVISI CANVAS AKTIF]\nBerikut kode HTML slide deck yang SEDANG AKTIF DIBUKA:\n\n\`\`\`html\n${currentOpenArtifact.html}\n\`\`\`\n\nPermintaan revisi: "${userMessage}"${imgInstructions}\n\nKembalikan kode HTML LENGKAP yang telah direvisi di dalam blok \`\`\`html ... \`\`\`.`;
       messages.push({ role: "user", content: revisionContent });
 
       const revisionModels = resolveDesignCandidateModels(config);
@@ -317,7 +323,11 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
             accumulatedContent = await readAiResponseContent(resp);
             const art = extractHtmlArtifact(accumulatedContent);
             if (art.html) {
-              targetArtifact.html = art.html;
+              let revHtml = (typeof replaceImagePlaceholdersInHtml === 'function') ? replaceImagePlaceholdersInHtml(art.html, imageAttachments) : art.html;
+              if (imageAttachments.length > 0 && /tambah|masuk|sisip|taruh|gambar|image|foto/i.test(userMessage)) {
+                revHtml = (typeof injectImagesIntoSlideDeckHtml === 'function') ? injectImagesIntoSlideDeckHtml(revHtml, imageAttachments) : revHtml;
+              }
+              targetArtifact.html = revHtml;
               break;
             }
           } else {
@@ -327,6 +337,9 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
           if (revErr.name === 'AbortError') throw revErr;
           console.warn(`[OpenDesign] Revision error with model ${revModel}:`, revErr);
         }
+      }
+      if (!targetArtifact.html && currentOpenArtifact && currentOpenArtifact.html && imageAttachments.length > 0) {
+        targetArtifact.html = (typeof injectImagesIntoSlideDeckHtml === 'function') ? injectImagesIntoSlideDeckHtml(currentOpenArtifact.html, imageAttachments) : currentOpenArtifact.html;
       }
       if (toolBadgeSynthesize && typeof updateToolBadgeState === 'function') {
         updateToolBadgeState(toolBadgeSynthesize, targetArtifact.html ? 'success' : 'warning', targetArtifact.html ? 'Canvas aktif berhasil dimutakhirkan' : 'Revisi diproses');
@@ -340,12 +353,20 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       }
     } else {
       // === PROGRESSIVE SLIDE-BY-SLIDE PIPELINE ===
-      workingSlides = defaultBp.slides.map((s, idx) => ({
-        ...s,
-        loading: true,
-        completed: false,
-        status: idx === 0 ? 'generating' : 'pending'
-      }));
+      const isCatRequest = /kucing|cat|kitten|anabul|hewan|pet/i.test(userMessage);
+      workingSlides = defaultBp.slides.map((s, idx) => {
+        let assignedImg = (imageAttachments.length > 0) ? (imageAttachments[idx % imageAttachments.length]?.dataUrl || '') : '';
+        if (!assignedImg && isCatRequest && typeof resolveThematicImageUrl === 'function') {
+          assignedImg = resolveThematicImageUrl(userMessage, idx);
+        }
+        return {
+          ...s,
+          imageUrl: assignedImg || s.imageUrl || '',
+          loading: true,
+          completed: false,
+          status: idx === 0 ? 'generating' : 'pending'
+        };
+      });
 
       // Milestone 1 complete: Brief analyzed & handoff initiated
       designMilestones[0].completed = true;
@@ -672,14 +693,12 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     const finalStatusText = targetArtifact.html ? "Selesai" : (briefSummaryText ? "Selesai" : "Respon Kosong");
     updateAssistantActiveAgent(assistantBubble, "Master Agent", finalStatusText, true, true);
 
-    if (meta && meta.title) {
+    if (meta?.title) {
       const cleanMetaTitle = String(meta.title).slice(0, 45).trim();
       if (cleanMetaTitle) {
-        if (typeof setCurrentSessionTitle === 'function') {
-          setCurrentSessionTitle(cleanMetaTitle);
-        } else if (typeof window !== 'undefined' && typeof window.setCurrentSessionTitle === 'function') {
-          window.setCurrentSessionTitle(cleanMetaTitle);
-        } else if (typeof currentSessionTitle !== 'undefined') {
+        if (typeof setCurrentSessionTitle === 'function') setCurrentSessionTitle(cleanMetaTitle);
+        else if (typeof window !== 'undefined' && typeof window.setCurrentSessionTitle === 'function') window.setCurrentSessionTitle(cleanMetaTitle);
+        else if (typeof currentSessionTitle !== 'undefined') {
           currentSessionTitle = cleanMetaTitle;
           if (typeof updateHeaderChatTitle === 'function') updateHeaderChatTitle(currentSessionTitle);
         }
@@ -695,11 +714,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       chatMode: "design"
     });
 
-    if (typeof saveCurrentSessionToDB === 'function') {
-      saveCurrentSessionToDB();
-    } else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') {
-      window.saveCurrentSessionToDB();
-    }
+    if (typeof saveCurrentSessionToDB === 'function') saveCurrentSessionToDB();
+    else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') window.saveCurrentSessionToDB();
 
   } catch (err) {
     const isAbort = (

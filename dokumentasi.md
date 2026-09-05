@@ -515,7 +515,29 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
         - Menyinkronkan transform kotak kontrol selama `mousemove` rotasi, skala, perataan, dan translasi.
       - **Dukungan Double Click Ubah URL Gambar**:
         - Double click pada elemen `<img>` membuka prompt dialog untuk memperbarui URL sumber gambar (`src`) secara langsung dengan riwayat undo/redo otomatis.
-    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 789 baris, `canvas_manager.js` 796 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+122. **Integrasi Gambar Pengguna (User Uploaded Images) & Pembebasan Gaya Desain Kreatif AI (Un-Locked Playful Kawaii Archetype & Paw Doodles) (`v2.150.239`):**
+    - **Akar Masalah**:
+      - Saat pengguna mengunggah gambar (`attachments`) dan meminta gambar tersebut dimasukkan ke slide PDF/deck, data gambar tidak pernah dioper ke pipeline pembuatan slide (`workingSlides`, `deckMeta`, dan prompt revisi).
+      - Template HTML slide sebelumnya sepenuhnya di-*hardcode* tanpa elemen `<img>`, tanpa kontainer bingkai gambar, serta memiliki teks korporat kaku yang terkunci mati (*locked*) pada setiap slide penutup (misalnya selalu memunculkan "RINGKASAN EKSEKUTIF", "SIAP DIIMPLEMENTASIKAN", "CHECKLIST AKSI", dan "ACTION PLAYBOOK 2026").
+      - Kanvas slide tidak memiliki dukungan dekorasi emot visual, stempel doodle jejak cakar kucing (*paw print*), maupun foto kucing lucu berkualitas tinggi. Margin slide juga dinilai terlalu mepet dengan bingkai tepi (*frame*).
+    - **Solusi & Implementasi Teknis**:
+      1. **Ekstraksi & Integrasi Gambar Pengguna (`design_executor.js`, `slide_deck_engine.js`)**:
+         - Mengekstrak `imageAttachments` (`a.isImage && a.dataUrl`) dari prompt aktif dan riwayat chat mundur (`conversationHistory`).
+         - Menyematkan `userImages` ke `deckMeta` dan mendistribusikan gambar ke cover slide maupun kartu-kartu konten.
+         - Mendukung placeholder token `__USER_IMG_0__`, `__USER_IMG_1__`, dst. pada prompt revisi LLM, dan secara otomatis mengganti token tersebut dengan base64 `dataUrl` setelah kode HTML dihasilkan (`replaceImagePlaceholdersInHtml`).
+         - Menambahkan fallback deterministik `injectImagesIntoSlideDeckHtml`: bila AI gagal/absen menyisipkan gambar, sistem secara otomatis menginjeksi elemen `<div class="card-image-wrap"><img class="card-image" src="..." alt="Foto"></div>` langsung ke kartu-kartu pada slide aktif.
+      2. **Pembebasan Gaya Desain Kreatif & Arketipe Kawaii Playful (`slide_themes.js`, `design_prompt.js`, `design_agent.js`)**:
+         - Menambahkan arketipe `Playful Pastel & Kawaii Doodles` dengan koleksi kurasi foto kucing lucu resolusi tinggi (`CUTE_CAT_PHOTO_COLLECTION`).
+         - Menyediakan generator SVG ramah: `getCutePawSvg` (jejak paw), `getCuteCatFaceSvg` (wajah anabul), `getCuteSparkleSvg` (bintang kilau), dan `getCuteHeartSvg` (hati doodle).
+         - Mengeliminasi kata-kata korporat kaku pada topik santai/kucing/hewan peliharaan, mengubahnya secara dinamis menjadi label hangat (misal: "🐾 RANGKUMAN KASIH SAYANG", "💖 BAHAGIA BERSAMA ANABUL", "🐱 CHECKLIST PERAWATAN", "🐾 PANDUAN HARIAN 2026").
+         - Menambahkan *watermark* cakar kucing melayang transparan halus di latar belakang kanvas slide saat mode ceria aktif.
+      3. **Penyempurnaan Margin & Penataan Bingkai Gambar (`slide_styles.js`, `slide_template.js`)**:
+         - Memperluas margin dalam kanvas (`.slide-canvas` padding dari `36px 48px` menjadi `42px 54px`) sehingga tata letak tidak lagi mepet dengan frame luar.
+         - Menambahkan aturan CSS responsif untuk `.card-image-wrap` (tinggi 160px, rounded, object-fit cover) dan `.cover-hero-image-wrap` (lingkaran estetik 124px dengan border aksen).
+         - Memodularisasi runtime script navigasi slide ke `slide_deck_engine.js` sehingga `slide_template.js` tetap ramping (686 baris).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terverifikasi ketat `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 796, `design_agent.js` 636, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 789, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
 
 
 

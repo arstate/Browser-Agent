@@ -496,6 +496,153 @@ function upgradeSlideDeckHtmlIfNeeded(html, userPrompt = "", meta = {}) {
 }
 
 
+function getSlideDeckRuntimeScript() {
+  return `
+    (function() {
+      const slides = Array.from(document.querySelectorAll('.slide-section'));
+      const thumbs = Array.from(document.querySelectorAll('.thumb-item'));
+      const currSlideEl = document.getElementById('dock-curr-slide');
+      let currentIndex = 0;
+      window.currentIndex = 0;
+
+      function goToSlide(targetIdx) {
+        let idx = parseInt(targetIdx, 10);
+        if (isNaN(idx)) idx = 0;
+        if (idx < 0) idx = 0;
+        if (idx >= slides.length) idx = Math.max(0, slides.length - 1);
+        currentIndex = idx;
+        window.currentIndex = idx;
+
+        for (let i = 0; i < slides.length; i++) slides[i].classList.toggle('active', i === idx);
+        for (let i = 0; i < thumbs.length; i++) {
+          const isActive = (i === idx);
+          thumbs[i].classList.toggle('active', isActive);
+          if (isActive) {
+            try { thumbs[i].scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (_) {}
+          }
+        }
+        if (currSlideEl) currSlideEl.textContent = String(idx + 1);
+      }
+      window.goToSlide = goToSlide;
+
+      document.addEventListener('click', function(e) {
+        const thumb = e.target.closest('.thumb-item');
+        if (thumb) {
+          e.preventDefault();
+          goToSlide(thumb.getAttribute('data-target') || thumb.id.replace('thumb-', ''));
+          return;
+        }
+        if (e.target.closest('#dock-btn-prev')) { e.preventDefault(); goToSlide(currentIndex - 1); return; }
+        if (e.target.closest('#dock-btn-next')) { e.preventDefault(); goToSlide(currentIndex + 1); return; }
+        if (e.target.closest('#dock-btn-reset')) { e.preventDefault(); goToSlide(0); return; }
+        if (e.target.closest('#dock-btn-fullscreen')) {
+          e.preventDefault();
+          if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+          else document.exitFullscreen().catch(() => {});
+          return;
+        }
+        const exportTrigger = e.target.closest('#dock-btn-export, .dock-export-trigger');
+        if (exportTrigger) {
+          e.preventDefault();
+          const wrapper = document.getElementById('dock-export-wrapper');
+          if (wrapper) wrapper.classList.toggle('open');
+          return;
+        }
+        const exportPdfItem = e.target.closest('#dock-export-pdf-item, [data-action="export-pdf"]');
+        if (exportPdfItem) {
+          e.preventDefault();
+          const wrapper = document.getElementById('dock-export-wrapper');
+          if (wrapper) wrapper.classList.remove('open');
+          window.parent.postMessage({ type: 'EXPORT_SLIDE_DECK_PDF', html: document.documentElement.outerHTML, title: document.title || 'Slide Deck' }, '*');
+          return;
+        }
+        const exportWrapper = document.getElementById('dock-export-wrapper');
+        if (exportWrapper && exportWrapper.classList.contains('open') && !e.target.closest('#dock-export-wrapper')) {
+          exportWrapper.classList.remove('open');
+        }
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (document.body?.classList?.contains('deck-edit-mode-active') || e.target?.isContentEditable || ['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return;
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') goToSlide(currentIndex + 1);
+        else if (e.key === 'ArrowLeft') goToSlide(currentIndex - 1);
+        else if (e.key === 'r' || e.key === 'R') goToSlide(0);
+        else if (e.key === 'e' || e.key === 'E') {
+          const wrapper = document.getElementById('dock-export-wrapper');
+          if (wrapper) wrapper.classList.toggle('open');
+        } else if (e.key === 'p' || e.key === 'P') {
+          window.parent.postMessage({ type: 'EXPORT_SLIDE_DECK_PDF', html: document.documentElement.outerHTML, title: document.title || 'Slide Deck' }, '*');
+        } else if (e.key === 'f' || e.key === 'F') {
+          if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+          else document.exitFullscreen().catch(() => {});
+        }
+      });
+
+      window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'GO_TO_SLIDE') goToSlide(e.data.index);
+      });
+    })();
+  `;
+}
+
+function replaceImagePlaceholdersInHtml(html, userImages = []) {
+  if (!html || typeof html !== 'string') return html;
+  let res = html;
+  if (Array.isArray(userImages) && userImages.length > 0) {
+    userImages.forEach((img, idx) => {
+      const ph = `__USER_IMG_${idx}__`;
+      const url = img.dataUrl || img.thumbnailUrl || '';
+      if (url) res = res.split(ph).join(url);
+    });
+  }
+  return res;
+}
+
+function injectImagesIntoSlideDeckHtml(html, userImages = []) {
+  if (!html || typeof html !== 'string' || !Array.isArray(userImages) || userImages.length === 0) return html;
+  let res = replaceImagePlaceholdersInHtml(html, userImages);
+  if (userImages.some(img => img.dataUrl && res.includes(img.dataUrl.slice(0, 40)))) return res;
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(res, 'text/html');
+    const activeSlide = doc.querySelector('.slide-section.active') || doc.querySelectorAll('.slide-section')[1] || doc.querySelector('.slide-section');
+    if (activeSlide) {
+      const cards = Array.from(activeSlide.querySelectorAll('.split-col, .slide-col, .metric-card, .conclusion-card, .timeline-step'));
+      if (cards.length > 0) {
+        userImages.forEach((img, idx) => {
+          const card = cards[idx % cards.length];
+          if (card && !card.querySelector('.card-image-wrap')) {
+            const wrap = doc.createElement('div');
+            wrap.className = 'card-image-wrap';
+            wrap.innerHTML = `<img class="card-image" src="${img.dataUrl}" alt="${escapeHtml(img.name || 'Foto')}">`;
+            card.insertBefore(wrap, card.firstChild);
+          }
+        });
+      } else {
+        const canvas = activeSlide.querySelector('.slide-canvas');
+        if (canvas) {
+          const gallery = doc.createElement('div');
+          gallery.className = 'slide-image-gallery';
+          gallery.style.cssText = 'display:flex;gap:14px;margin:16px 0;width:100%;height:180px;justify-content:center;';
+          gallery.innerHTML = userImages.map(img => `
+            <div class="card-image-wrap" style="flex:1;height:100%;margin-bottom:0;">
+              <img class="card-image" src="${img.dataUrl}" alt="${escapeHtml(img.name || 'Foto')}">
+            </div>
+          `).join('');
+          const footer = canvas.querySelector('.slide-footer-bar');
+          if (footer) canvas.insertBefore(gallery, footer);
+          else canvas.appendChild(gallery);
+        }
+      }
+      return doc.documentElement.outerHTML;
+    }
+  } catch (e) {
+    console.warn('[OpenDesign] injectImagesIntoSlideDeckHtml error:', e);
+  }
+  return res;
+}
+
 // Global attachments
 if (typeof window !== "undefined") {
   window.toRoman = toRoman;
@@ -503,4 +650,7 @@ if (typeof window !== "undefined") {
   window.convertMarkdownOrTextToInteractiveSlideDeck = convertMarkdownOrTextToInteractiveSlideDeck;
   window.extractSlidesFromRawHtml = extractSlidesFromRawHtml;
   window.upgradeSlideDeckHtmlIfNeeded = upgradeSlideDeckHtmlIfNeeded;
+  window.getSlideDeckRuntimeScript = getSlideDeckRuntimeScript;
+  window.replaceImagePlaceholdersInHtml = replaceImagePlaceholdersInHtml;
+  window.injectImagesIntoSlideDeckHtml = injectImagesIntoSlideDeckHtml;
 }

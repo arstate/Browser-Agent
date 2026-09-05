@@ -88,6 +88,21 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     badgeTag = theme.tag || "EDUKASI & INFORMASI";
   }
 
+  const userImages = Array.isArray(deckMeta.userImages) ? deckMeta.userImages : [];
+  const isPlayfulCute = Boolean(theme.isPlayful || /lucu|cute|gemes|gemoy|kucing|cat|kitten|paw|coretan|emot|kartun|anabul/i.test(promptOrTitle));
+
+  function resolveCardImage(s, c, cardIdx, slideIdx) {
+    if (c && c.imageUrl) return c.imageUrl;
+    if (userImages.length > 0) {
+      const uImg = userImages[(slideIdx * 2 + cardIdx) % userImages.length];
+      return uImg?.dataUrl || uImg?.thumbnailUrl || '';
+    }
+    if (isPlayfulCute && typeof resolveThematicImageUrl === 'function') {
+      return resolveThematicImageUrl(promptOrTitle, slideIdx * 2 + cardIdx);
+    }
+    return '';
+  }
+
   function resolveSlideLayout(s, idx, totalSlides) {
     if (s && s.layout) {
       const l = String(s.layout).toLowerCase().trim();
@@ -322,13 +337,20 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         </div>
       `;
     } else if (layout === 'cover') {
+      const coverImg = s.imageUrl || userImages[0]?.dataUrl || (isPlayfulCute && typeof resolveThematicImageUrl === 'function' ? resolveThematicImageUrl(promptOrTitle, 0) : '');
+      const coverPaw = (isPlayfulCute && typeof getCutePawSvg === 'function') ? getCutePawSvg(accentColor, 14) + ' ' : '';
       slideBodyContent = `
         <div class="cover-center-content">
+          ${coverImg ? `
+            <div class="cover-hero-image-wrap">
+              <img class="cover-hero-image" src="${coverImg}" alt="${escapeHtml(s.title || 'Sampul')}">
+            </div>
+          ` : ''}
           <div class="cover-badge-pill" style="color: ${accentColor}; border-color: ${accentColor};">
-            ${escapeHtml(s.badge || badgeTag || 'EDISI EKSKLUSIF')}
+            ${coverPaw}${escapeHtml(s.badge || badgeTag || (isPlayfulCute ? 'CATATAN GEMAS ANABUL' : 'EDISI EKSKLUSIF'))}
           </div>
           <h1 class="cover-main-title">${escapeHtml(s.title || categoryTitle)}</h1>
-          <p class="cover-lead-subtitle">${escapeHtml(s.subtitle || 'Panduan komprehensif, wawasan strategis, dan implementasi terstruktur.')}</p>
+          <p class="cover-lead-subtitle">${escapeHtml(s.subtitle || 'Panduan komprehensif, wawasan bernutrisi, dan visual estetik.')}</p>
           
           <div class="cover-meta-row">
             <div class="cover-meta-item">
@@ -362,10 +384,13 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
             const rawBadge = c.badge || '';
             const cleanBadge = (!rawBadge || /pilar\s*\d+|poin\s*\d+/i.test(rawBadge)) ? (c.title || `FOKUS 0${ci + 1}`).slice(0, 20).toUpperCase() : rawBadge;
             const cleanHl = c.footerHighlight || c.title || `POIN 0${ci + 1}`;
+            const colImg = resolveCardImage(s, c, ci, idx);
+            const pawBadge = (isPlayfulCute && typeof getCutePawSvg === 'function') ? getCutePawSvg(bColor, 12) + ' ' : '';
             return `
               <div class="split-col ${ci === 0 ? 'is-featured' : ''}">
                 <div class="split-col-top">
-                  <div class="col-badge" style="color: ${bColor};">${escapeHtml(cleanBadge)}</div>
+                  ${colImg ? `<div class="card-image-wrap"><img class="card-image" src="${colImg}" alt="${escapeHtml(c.title || '')}"></div>` : ''}
+                  <div class="col-badge" style="color: ${bColor};">${pawBadge}${escapeHtml(cleanBadge)}</div>
                   <h3 class="split-col-title">${escapeHtml(c.title || `Fokus 0${ci + 1}`)}</h3>
                   <p class="split-col-desc">${escapeHtml(c.desc || '')}</p>
                 </div>
@@ -450,6 +475,11 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         </div>
       `;
     } else if (layout === 'conclusion') {
+      const sumBadge = isPlayfulCute ? '🐾 RANGKUMAN KASIH SAYANG' : (s.summaryBadge || 'RINGKASAN UTAMA');
+      const sumPill = isPlayfulCute ? '💖 BAHAGIA BERSAMA ANABUL' : (s.conclusionPill || 'SIAP DITERAPKAN');
+      const checkBadge = isPlayfulCute ? '🐱 CHECKLIST PERAWATAN' : (s.checklistBadge || 'CHECKLIST AKSI');
+      const checkPill = isPlayfulCute ? '🐾 PANDUAN HARIAN 2026' : (s.actionTag || 'PANDUAN 2026');
+      const conclImg = resolveCardImage(s, cards[0], 0, idx);
       slideBodyContent = `
         <div class="slide-hero">
           <h1 class="slide-main-title">${escapeHtml(s.title || 'Kesimpulan & Tindak Lanjut')}</h1>
@@ -461,16 +491,17 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         <div class="conclusion-grid">
           <div class="conclusion-card">
             <div>
-              <div class="col-badge" style="color: ${accentColor};">RINGKASAN EKSEKUTIF</div>
+              ${conclImg ? `<div class="card-image-wrap"><img class="card-image" src="${conclImg}" alt="${escapeHtml(s.title || '')}"></div>` : ''}
+              <div class="col-badge" style="color: ${accentColor};">${sumBadge}</div>
               <h3 class="conclusion-card-title">${escapeHtml(s.title || 'Rangkuman Materi')}</h3>
-              <p class="conclusion-card-desc">${escapeHtml(s.subtitle || 'Seluruh panduan disusun secara terstruktur untuk memudahkan pemahaman dan implementasi langsung.')}</p>
+              <p class="conclusion-card-desc">${escapeHtml(s.subtitle || 'Seluruh materi disusun penuh kehangatan untuk pemahaman komprehensif.')}</p>
             </div>
             <div class="col-highlight-box">
-              <span class="col-highlight-text" style="color: ${accentColor};">SIAP DIIMPLEMENTASIKAN</span>
+              <span class="col-highlight-text" style="color: ${accentColor};">${sumPill}</span>
             </div>
           </div>
           <div class="conclusion-card">
-            <div class="col-badge" style="color: ${accentSecondary};">CHECKLIST AKSI</div>
+            <div class="col-badge" style="color: ${accentSecondary};">${checkBadge}</div>
             <div class="conclusion-list">
               ${cards.slice(0, 3).map((c, ci) => `
                 <div class="conclusion-item">
@@ -480,7 +511,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
               `).join('')}
             </div>
             <div class="col-highlight-box" style="min-height: 38px; padding: 6px 10px;">
-              <span class="col-highlight-text" style="color: ${accentSecondary}; font-size: 11px;">ACTION PLAYBOOK 2026</span>
+              <span class="col-highlight-text" style="color: ${accentSecondary}; font-size: 11px;">${checkPill}</span>
             </div>
           </div>
         </div>
@@ -493,11 +524,14 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         const cleanBadge = (!rawBadge || /pilar\s*\d+|poin\s*\d+/i.test(rawBadge)) ? (c.title || `TOPIK 0${cIdx + 1}`).slice(0, 20).toUpperCase() : rawBadge;
         const rawHl = c.footerHighlight || c.keyTakeaway || c.title || `POIN 0${cIdx + 1}`;
         const cleanHl = (/"DJ" → JADI|TERWUJUD & SELESAI|DISTINCTIVE BRAND ASSET/i.test(rawHl) && !/djadi/i.test(promptOrTitle)) ? (c.title || `POIN 0${cIdx + 1}`).slice(0, 28).toUpperCase() : rawHl;
+        const cardImg = resolveCardImage(s, c, cIdx, idx);
+        const pawBadge = (isPlayfulCute && typeof getCutePawSvg === 'function') ? getCutePawSvg(badgeColor, 12) + ' ' : '';
 
         return `
           <div class="slide-col ${cIdx === 0 ? 'is-featured' : ''}">
             <div class="col-top">
-              <div class="col-badge" style="color: ${badgeColor};">${escapeHtml(cleanBadge)}</div>
+              ${cardImg ? `<div class="card-image-wrap"><img class="card-image" src="${cardImg}" alt="${escapeHtml(c.title || '')}"></div>` : ''}
+              <div class="col-badge" style="color: ${badgeColor};">${pawBadge}${escapeHtml(cleanBadge)}</div>
               <h3 class="col-title">${escapeHtml(c.title || `Poin 0${cIdx + 1}`)}</h3>
               <p class="col-desc">${escapeHtml(c.desc || '')}</p>
             </div>
@@ -526,6 +560,10 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     return `
       <section class="slide-section ${idx === 0 ? 'active' : ''}" data-index="${idx}" id="slide-${idx}">
         <div class="slide-canvas slide-layout-${layout}">
+          ${isPlayfulCute ? `
+            <div class="paw-watermark paw-bg-1">${(typeof getCutePawSvg === 'function' ? getCutePawSvg(accentColor, 72) : '')}</div>
+            <div class="paw-watermark paw-bg-2">${(typeof getCuteCatFaceSvg === 'function' ? getCuteCatFaceSvg(accentColor, 80) : '')}</div>
+          ` : ''}
           <div class="slide-header-bar">
             <div class="header-left">
               <span class="header-topic-crumb">${escapeHtml(brandName)}</span>
@@ -630,141 +668,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   </div>
 
   <script>
-    (function() {
-      const slides = Array.from(document.querySelectorAll('.slide-section'));
-      const thumbs = Array.from(document.querySelectorAll('.thumb-item'));
-      const currSlideEl = document.getElementById('dock-curr-slide');
-      let currentIndex = 0;
-      window.currentIndex = 0;
-
-      function goToSlide(targetIdx) {
-        let idx = parseInt(targetIdx, 10);
-        if (isNaN(idx)) idx = 0;
-        if (idx < 0) idx = 0;
-        if (idx >= slides.length) idx = Math.max(0, slides.length - 1);
-
-        currentIndex = idx;
-        window.currentIndex = idx;
-
-        for (let i = 0; i < slides.length; i++) {
-          slides[i].classList.toggle('active', i === idx);
-        }
-
-        for (let i = 0; i < thumbs.length; i++) {
-          const isActive = (i === idx);
-          thumbs[i].classList.toggle('active', isActive);
-          if (isActive) {
-            try {
-              thumbs[i].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            } catch (_) {}
-          }
-        }
-
-        if (currSlideEl) {
-          currSlideEl.textContent = String(idx + 1);
-        }
-      }
-
-      window.goToSlide = goToSlide;
-
-      // Event delegation on document (single source of truth, robust against child element clicks)
-      document.addEventListener('click', function(e) {
-        const thumb = e.target.closest('.thumb-item');
-        if (thumb) {
-          e.preventDefault();
-          const target = thumb.getAttribute('data-target') || thumb.id.replace('thumb-', '');
-          goToSlide(target);
-          return;
-        }
-        const prevBtn = e.target.closest('#dock-btn-prev');
-        if (prevBtn) {
-          e.preventDefault();
-          goToSlide(currentIndex - 1);
-          return;
-        }
-        const nextBtn = e.target.closest('#dock-btn-next');
-        if (nextBtn) {
-          e.preventDefault();
-          goToSlide(currentIndex + 1);
-          return;
-        }
-        const resetBtn = e.target.closest('#dock-btn-reset');
-        if (resetBtn) {
-          e.preventDefault();
-          goToSlide(0);
-          return;
-        }
-
-
-        const fsBtn = e.target.closest('#dock-btn-fullscreen');
-        if (fsBtn) {
-          e.preventDefault();
-          if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
-          else document.exitFullscreen().catch(() => {});
-          return;
-        }
-
-        const exportTrigger = e.target.closest('#dock-btn-export, .dock-export-trigger');
-        if (exportTrigger) {
-          e.preventDefault();
-          const wrapper = document.getElementById('dock-export-wrapper');
-          if (wrapper) wrapper.classList.toggle('open');
-          return;
-        }
-
-        const exportPdfItem = e.target.closest('#dock-export-pdf-item, [data-action="export-pdf"]');
-        if (exportPdfItem) {
-          e.preventDefault();
-          const wrapper = document.getElementById('dock-export-wrapper');
-          if (wrapper) wrapper.classList.remove('open');
-          window.parent.postMessage({
-            type: 'EXPORT_SLIDE_DECK_PDF',
-            html: document.documentElement.outerHTML,
-            title: document.title || 'Slide Deck'
-          }, '*');
-          return;
-        }
-
-        const exportWrapper = document.getElementById('dock-export-wrapper');
-        if (exportWrapper && exportWrapper.classList.contains('open') && !e.target.closest('#dock-export-wrapper')) {
-          exportWrapper.classList.remove('open');
-        }
-      });
-
-      // Keyboard navigation
-      window.addEventListener('keydown', (e) => {
-        if (document.body?.classList?.contains('deck-edit-mode-active') || e.target?.isContentEditable || ['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return;
-        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
-          goToSlide(currentIndex + 1);
-        } else if (e.key === 'ArrowLeft') {
-          goToSlide(currentIndex - 1);
-        } else if (e.key === 'r' || e.key === 'R') {
-          goToSlide(0);
-        } else if (e.key === 'e' || e.key === 'E') {
-          const wrapper = document.getElementById('dock-export-wrapper');
-          if (wrapper) wrapper.classList.toggle('open');
-        } else if (e.key === 'p' || e.key === 'P') {
-          window.parent.postMessage({
-            type: 'EXPORT_SLIDE_DECK_PDF',
-            html: document.documentElement.outerHTML,
-            title: document.title || 'Slide Deck'
-          }, '*');
-        } else if (e.key === 'f' || e.key === 'F') {
-          if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-          } else {
-            document.exitFullscreen().catch(() => {});
-          }
-        }
-      });
-
-      // Window postMessage bridge for parent iframe communication
-      window.addEventListener('message', (e) => {
-        if (e.data && e.data.type === 'GO_TO_SLIDE') {
-          goToSlide(e.data.index);
-        }
-      });
-    })();
+    ${(typeof getSlideDeckRuntimeScript === 'function' ? getSlideDeckRuntimeScript() : (typeof window !== 'undefined' && window.getSlideDeckRuntimeScript ? window.getSlideDeckRuntimeScript() : ''))}
   </script>
   ${(typeof getSlideDeckEditorHtml === 'function' ? getSlideDeckEditorHtml() : (typeof window !== 'undefined' && window.getSlideDeckEditorHtml ? window.getSlideDeckEditorHtml() : ''))}
   <script>

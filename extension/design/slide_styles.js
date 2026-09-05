@@ -266,7 +266,7 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
       background: var(--bg-slide);
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
       border-radius: var(--card-radius);
-      padding: 36px 48px;
+      padding: 42px 54px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -708,79 +708,26 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
     .skeleton-status-pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; border: 1px solid; background: rgba(0,0,0,0.35); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
     .spin-svg { animation: spinLoader 1s linear infinite; }
 
+    /* === IMAGES, CARDS & DOODLES === */
+    .card-image-wrap { width: 100%; height: 160px; border-radius: calc(var(--card-radius) - 2px); overflow: hidden; margin-bottom: 12px; position: relative; background: rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: center; }
+    .card-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cover-hero-image-wrap { width: 124px; height: 124px; border-radius: 50%; overflow: hidden; margin: 0 auto 16px auto; border: 3px solid var(--accent); box-shadow: 0 8px 24px rgba(0,0,0,0.12); background: var(--card-box-bg); }
+    .cover-hero-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .doodle-paw-svg, .doodle-cat-svg, .doodle-sparkle-svg, .doodle-heart-svg { display: inline-block; vertical-align: middle; }
+    .paw-watermark { position: absolute; pointer-events: none; opacity: 0.07; z-index: 0; }
+    .paw-bg-1 { top: 28px; right: 36px; transform: rotate(18deg); }
+    .paw-bg-2 { bottom: 28px; left: 32px; transform: rotate(-14deg); }
+
     /* === PRINT FOR VECTOR 16:9 PDF EXPORT === */
     @media print {
-      @page {
-        size: 1200px 675px;
-        margin: 0;
-      }
-      *, *::before, *::after {
-        box-sizing: border-box !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      html, body {
-        background: var(--bg-slide) !important;
-        color: var(--text-main) !important;
-        overflow: visible !important;
-        height: auto !important;
-        min-height: auto !important;
-        max-height: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      .presentation-workspace {
-        display: block !important;
-        width: 100% !important;
-        height: auto !important;
-        min-height: auto !important;
-        max-height: none !important;
-        overflow: visible !important;
-        position: static !important;
-      }
+      @page { size: 1200px 675px; margin: 0; }
+      *, *::before, *::after { box-sizing: border-box !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      html, body { background: var(--bg-slide) !important; color: var(--text-main) !important; overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
+      .presentation-workspace { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; position: static !important; }
       .deck-sidebar, .deck-floating-dock { display: none !important; }
-      .deck-stage-wrap {
-        padding: 0 !important;
-        margin: 0 !important;
-        height: auto !important;
-        min-height: auto !important;
-        max-height: none !important;
-        display: block !important;
-        overflow: visible !important;
-        background: var(--bg-slide) !important;
-        position: static !important;
-      }
-      .slide-section {
-        display: flex !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        transform: none !important;
-        width: 1200px !important;
-        height: 675px !important;
-        min-width: 1200px !important;
-        min-height: 675px !important;
-        max-width: 1200px !important;
-        max-height: 675px !important;
-        page-break-after: always !important;
-        page-break-inside: avoid !important;
-        break-after: page !important;
-        break-inside: avoid !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-sizing: border-box !important;
-        background: var(--bg-slide) !important;
-        position: relative !important;
-      }
-      .slide-canvas {
-        height: 100% !important;
-        width: 100% !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-        box-sizing: border-box !important;
-      }
+      .deck-stage-wrap { padding: 0 !important; margin: 0 !important; height: auto !important; display: block !important; overflow: visible !important; background: var(--bg-slide) !important; position: static !important; }
+      .slide-section { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 1200px !important; height: 675px !important; page-break-after: always !important; break-after: page !important; margin: 0 !important; padding: 0 !important; background: var(--bg-slide) !important; position: relative !important; }
+      .slide-canvas { height: 100% !important; width: 100% !important; box-shadow: none !important; border-radius: 0 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; }
     }`;
 }
 

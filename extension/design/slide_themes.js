@@ -6,25 +6,27 @@
 const SLIDE_THEMES = {
   playful_pastel: {
     id: "playful_pastel",
-    name: "Playful Pastel & Warm Organic",
+    name: "Playful Pastel & Kawaii Doodles",
     category: "Cute / Pets / Food / Kids / Lifestyle / Fun",
-    bgDesk: "#1A1715",
-    bgSidebar: "#141210",
-    bgSlide: "#FFFDF9",
-    textMain: "#2C221E",
-    textMuted: "#6E5D53",
-    borderHeader: "#E5D9D0",
+    isPlayful: true,
+    doodlePaws: true,
+    bgDesk: "#181513",
+    bgSidebar: "#13110F",
+    bgSlide: "#FFF9F2",
+    textMain: "#2C211B",
+    textMuted: "#7A685D",
+    borderHeader: "#F0E1D5",
     accent: "#FF6B6B",
     accentSecondary: "#FA8072",
     accentTertiary: "#4ECDC4",
-    cardBg: "#FFF5EE",
-    cardBorder: "1.5px solid rgba(255, 107, 107, 0.22)",
-    cardBoxBg: "#FFFFFF",
-    cardRadius: "16px",
+    cardBg: "#FFFFFF",
+    cardBorder: "1.5px solid rgba(255, 107, 107, 0.28)",
+    cardBoxBg: "#FFF6EF",
+    cardRadius: "18px",
     fontHeading: "'Outfit', 'Plus Jakarta Sans', sans-serif",
     fontBody: "'Plus Jakarta Sans', sans-serif",
-    tag: "PANDUAN & ENSIKLOPEDIA",
-    subHeader: "EDUKASI LENGKAP"
+    tag: "🐾 CATATAN GEMAS",
+    subHeader: "PANDUAN HANGAT ANABUL"
   },
   dark_luxury_cyber: {
     id: "dark_luxury_cyber",
@@ -219,10 +221,10 @@ function exploreDesignStyleConcept(promptOrTopic = "", rawMeta = {}) {
   let badgeTone = "KARAKTERISTIK";
 
   if (theme.id === "playful_pastel") {
-    conceptName = "Warm Cozy Pet & Lifestyle Editorial";
-    vibe = "Hangat, playful, estetik, ramah, dan bersahabat dengan warna pastel organik dan sudut membulat lembut.";
-    layoutFeel = "Kartu sorotan asimetris, tag pill organik (bukan tombol formal), poin ringkas bernafas lega.";
-    badgeTone = "CIRI KHAS UNIK";
+    conceptName = "Kawaii Doodles & Warm Cat Stories";
+    vibe = "Hangat, ceria, menggemaskan dengan ilustrasi emot paws 🐾, coretan doodle kucing, sudut membulat manis, dan foto kucing berwajah lucu.";
+    layoutFeel = "Bebas dari sekat kaku korporat, kartu bernafas lega, chip tag manis bertabur paw print, margin lapang.";
+    badgeTone = "🐾 FAKTA GEMAS";
   } else if (theme.id === "dark_luxury_cyber") {
     conceptName = "Dark Luxury Obsidian & High-Tech HUD";
     vibe = "Futuristik, sleek, presisi, beraksen neon tajam dengan latar belakang gelap pekat.";
@@ -263,4 +265,54 @@ function exploreDesignStyleConcept(promptOrTopic = "", rawMeta = {}) {
     badgeTone,
     paletteSummary: `${theme.accent} (Aksen), ${theme.accentSecondary} (Sekunder), ${theme.bgSlide} (Latar)`
   };
+}
+
+// Koleksi kurasi foto kucing lucu resolusi tinggi (muka kucing jelas & menggemaskan)
+const CUTE_CAT_PHOTO_COLLECTION = [
+  'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1548802673-380ab8ebc7b7?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1561948955-570b270e7c36?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?w=800&auto=format&fit=crop&q=80'
+];
+
+function getCutePawSvg(color = "currentColor", size = 20) {
+  return `<svg class="doodle-paw-svg" viewBox="0 0 24 24" width="${size}" height="${size}" fill="${color}"><path d="M12 13c-2.2 0-4 1.8-4 4 0 1.7 1.3 3 3 3 1.1 0 2-.9 2-2 0 1.1.9 2 2 2 1.7 0 3-1.3 3-3 0-2.2-1.8-4-4-4zm-4.5-3c1.4 0 2.5-1.1 2.5-2.5S8.9 5 7.5 5 5 6.1 5 7.5 6.1 10 7.5 10zm9 0c1.4 0 2.5-1.1 2.5-2.5S17.9 5 16.5 5 14 6.1 14 7.5s1.1 2.5 2.5 2.5zM12 7.5c1.4 0 2.5-1.1 2.5-2.5S13.4 2.5 12 2.5 9.5 3.6 9.5 5s1.1 2.5 2.5 2.5z"/></svg>`;
+}
+
+function getCuteCatFaceSvg(color = "currentColor", size = 24) {
+  return `<svg class="doodle-cat-svg" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"><path d="M4 11V7l5 3h6l5-3v4c0 5-4 9-8 9s-8-4-8-9z"/><circle cx="9" cy="13" r="1.2" fill="${color}"/><circle cx="15" cy="13" r="1.2" fill="${color}"/><path d="M12 15v1.2m-2.2-.2h4.4"/><path d="M6 13H2m4 2H3m15-2h4m-4 2h3"/></svg>`;
+}
+
+function getCuteSparkleSvg(color = "currentColor", size = 18) {
+  return `<svg class="doodle-sparkle-svg" viewBox="0 0 24 24" width="${size}" height="${size}" fill="${color}"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>`;
+}
+
+function getCuteHeartSvg(color = "currentColor", size = 18) {
+  return `<svg class="doodle-heart-svg" viewBox="0 0 24 24" width="${size}" height="${size}" fill="${color}"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+}
+
+function resolveThematicImageUrl(topic = '', index = 0) {
+  const isCat = /kucing|cat|kitten|feline|meow|anabul/i.test(topic);
+  if (isCat && CUTE_CAT_PHOTO_COLLECTION.length > 0) {
+    const idx = Math.abs(index) % CUTE_CAT_PHOTO_COLLECTION.length;
+    return CUTE_CAT_PHOTO_COLLECTION[idx];
+  }
+  return '';
+}
+
+// Global attachments
+if (typeof window !== 'undefined') {
+  window.SLIDE_THEMES = SLIDE_THEMES;
+  window.detectOptimalSlideTheme = detectOptimalSlideTheme;
+  window.exploreDesignStyleConcept = exploreDesignStyleConcept;
+  window.CUTE_CAT_PHOTO_COLLECTION = CUTE_CAT_PHOTO_COLLECTION;
+  window.getCutePawSvg = getCutePawSvg;
+  window.getCuteCatFaceSvg = getCuteCatFaceSvg;
+  window.getCuteSparkleSvg = getCuteSparkleSvg;
+  window.getCuteHeartSvg = getCuteHeartSvg;
+  window.resolveThematicImageUrl = resolveThematicImageUrl;
 }

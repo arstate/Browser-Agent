@@ -1147,6 +1147,28 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Strict Sub-800 Line Rule Compliance**:
    - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 789 baris, `canvas_manager.js` 796 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+## 🎨 55. User Uploaded Image Embedding & Creative Un-Locked Slide Deck Architecture (v2.150.239)
+
+1. **Root Cause Analysis (Missing Attachment Flow, Hardcoded Rigidity, & Cluttered Spacing)**:
+   - Gambar yang diunggah pengguna lewat input lampiran chat (`attachments`) tidak pernah diteruskan ke `deckMeta` maupun struktur data kartu slide (`workingSlides`), sehingga prompt revisi atau pembuatan kanvas deck tidak dapat menyertakan foto pengguna.
+   - Template slide deck penutup sebelumnya di-*hardcode* dengan terminologi korporat kaku ("RINGKASAN EKSEKUTIF", "SIAP DIIMPLEMENTASIKAN", "CHECKLIST AKSI", "ACTION PLAYBOOK 2026") tanpa mempertimbangkan tema ceria/lucu/hewan peliharaan.
+   - Kanvas slide tidak menyediakan aset visual emot cakar kucing (*paw print*), wajah kucing lucu, maupun stempel kilau, serta margin `.slide-canvas` terlalu sempit (`36px 48px`) sehingga kartu dan teks tampak menempel pada frame luar.
+
+2. **User Image Extraction & Token Replacement Pipeline (`design_executor.js`, `slide_deck_engine.js`)**:
+   - **Attachment Extraction**: Mengekstrak lampiran gambar base64 (`a.isImage && a.dataUrl`) dari prompt aktif dan riwayat obrolan (`conversationHistory`).
+   - **Token Placeholder Strategy (`__USER_IMG_X__`)**: Mengirim token placeholder ringkas ke LLM agar tidak membebani batas token output (`max_tokens: 8192`), lalu menggantinya secara lokal dengan base64 asli melalui `replaceImagePlaceholdersInHtml(html, userImages)`.
+   - **Deterministic Fallback Injection (`injectImagesIntoSlideDeckHtml`)**: Berfungsi sebagai safety net DOM jika AI merespon tanpa menyisipkan tag gambar; secara otomatis menyisipkan container kartu gambar `<div class="card-image-wrap"><img class="card-image" src="..." alt="Foto"></div>` pada kartu slide aktif.
+
+3. **Playful Pastel & Kawaii Doodles Archetype (`slide_themes.js`, `slide_styles.js`, `slide_template.js`)**:
+   - **Aset Visual & Emot SVG**: Menambahkan generator SVG inline `getCutePawSvg()`, `getCuteCatFaceSvg()`, `getCuteSparkleSvg()`, `getCuteHeartSvg()`, serta watermark cakar kucing melayang transparan di latar belakang slide.
+   - **Thematic Photo Fallback (`CUTE_CAT_PHOTO_COLLECTION`)**: Menyediakan 8 foto kucing resolusi tinggi pilihan dengan fokus wajah yang jelas dan ekspresif jika pengguna meminta konten kucing tanpa melampirkan foto pribadi.
+   - **Dynamic Un-Locked Conclusions**: Mengganti teks penutup korporat kaku menjadi tajuk bernuansa hangat (misal: "🐾 RANGKUMAN KASIH SAYANG", "💖 BAHAGIA BERSAMA ANABUL", "🐱 CHECKLIST PERAWATAN").
+   - **Expanded Canvas Margins**: Padding `.slide-canvas` diperlebar menjadi `42px 54px`, memberikan ruang bernapas lega yang rapi dan elegan.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 796, `design_agent.js` 636, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 789, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+
 
 
 

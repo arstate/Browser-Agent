@@ -354,11 +354,18 @@ function reviseSlideData(slide, auditReason = '', expectedLayout = '', topic = '
       .replace(/DJADI CREATIVE/gi, cleanTopic.slice(0, 24).toUpperCase() || 'PRESENTASI')
       .replace(/GSM v3\.0/gi, theme.subHeader || 'PANDUAN LENGKAP')
       .replace(/CONFIDENTIAL \/\/ ENTERPRISE/gi, theme.tag || 'EDUKASI & INFORMASI');
-    try {
-      const parsed = JSON.parse(strRep);
-      Object.assign(revised, parsed);
-    } catch (e) {}
   }
+  if (theme?.isPlayful || /kucing|cat|pet|lucu|anabul/i.test(cleanTopic)) {
+    strRep = strRep
+      .replace(/RINGKASAN EKSEKUTIF/gi, '🐾 RANGKUMAN KASIH SAYANG')
+      .replace(/SIAP DIIMPLEMENTASIKAN/gi, '💖 BAHAGIA BERSAMA ANABUL')
+      .replace(/CHECKLIST AKSI/gi, '🐱 CHECKLIST PERAWATAN')
+      .replace(/ACTION PLAYBOOK 2026/gi, '🐾 PANDUAN HARIAN 2026');
+  }
+  try {
+    const parsed = JSON.parse(strRep);
+    Object.assign(revised, parsed);
+  } catch (e) {}
 
   const layout = String(revised.layout || expectedLayout || 'bento').toLowerCase();
   revised.layout = layout;
@@ -502,16 +509,17 @@ function createSlidePromptForMasterDesign(slideIndex, totalSlides, topic = '', b
   const vibe = styleConcept.vibe || 'Visual ekspresif, estetik, dan scannable';
   const layoutFeel = styleConcept.layoutFeel || 'Asimetris dinamis, kartu sorotan';
 
+  const isPlayful = Boolean(styleConcept?.theme?.isPlayful || /lucu|cute|gemes|gemoy|kucing|cat|kitten|paw|coretan|kartun|anabul/i.test(cleanTopic));
   const isCover = (slideNum === 1 || layout === 'cover');
   const coverDirective = isCover
     ? `KHUSUS COVER:
 - Buat judul utama ("title") yang ARTISTIK, KREATIF, dan MEMIKAT (BUKAN teks perintah seperti "Slide PDF tentang...", "Buatkan...", dsb). Contoh: "Pesona & Ragam Kucing Lucu di Indonesia".
-- Buat subjudul ("subtitle") yang informatif, puitis, dan menggugah minat audiens.`
+- Buat subjudul ("subtitle") yang informatif, puitis, dan menggugah minat audiens.${isPlayful ? '\n- Gaya Playful / Kawaii: Gunakan judul ceria, hangat, bersahabat dengan sentuhan kasih sayang anabul.' : ''}`
     : `KHUSUS KONTEN:
 - Seluruh judul kartu, deskripsi, dan metrik HARUS 100% KONSISTEN dengan tema "${cleanTopic}".
-- ANTI-TEMPLATE & ANTI-TEXT-WALL: DILARANG membuat kartu berisi satu dinding paragraf panjang teks monolitik. Buat deskripsi padat (2-3 kalimat tajam atau poin-poin karakteristik penting yang scannable).
-- DILARANG menggunakan kata seragam "PILAR 01", "PILAR 02" pada badge kartu! Berikan badge spesifik topik (misal: "RAS ASLI", "CIRI FISIK", "FAVORIT", "TIPS RAWAT").
-- "footerHighlight": Frasa kunci ringkas (1-3 kata), bukan tombol aksi.`;
+- ANTI-TEMPLATE & ANTI-TEXT-WALL: Buat deskripsi padat (2-3 kalimat tajam atau poin-poin karakteristik penting yang scannable).
+- DILARANG menggunakan kata seragam "PILAR 01", "PILAR 02" pada badge kartu! Berikan badge spesifik topik (misal: "${isPlayful ? '🐾 RAS ASLI' : 'CIRI FISIK'}", "${isPlayful ? '🐱 TINGKAH GEMAS' : 'FAVORIT'}", "${isPlayful ? '✨ FAKTA LUCU' : 'TIPS RAWAT'}").
+- "footerHighlight": Frasa kunci ringkas (1-3 kata), bukan tombol aksi.${isPlayful ? '\n- Hindari istilah korporat kaku seperti "Action Playbook", "Eksekutif", "Implementasi", "KPI"!' : ''}`;
 
   return `Kamu adalah 🎨 Master Design (Tangan Kanan Master Agent).
 Tugasmu: Rancang konten SANGAT DETAIL dan SPESIFIK untuk Slide ${slideNum} dari total ${totalSlides} slide presentasi 16:9 widescreen.
@@ -527,10 +535,10 @@ ${prevSlideSummary ? `Konteks Slide Sebelumnya: "${prevSlideSummary}"` : ''}
 ${coverDirective}
 
 ATURAN KETAT:
-1. DILARANG menggunakan teks korporat palsu ("Djadi Creative", "GSM v3.0", "Confidential // Enterprise", "PILAR 01").
+1. DILARANG menggunakan teks korporat palsu ("Djadi Creative", "GSM v3.0", "Confidential // Enterprise", "PILAR 01"${isPlayful ? ', "Action Playbook", "Eksekutif"' : ''}).
 2. Konten harus berbobot, berbasis fakta/karakteristik nyata mengenai "${cleanTopic}".
 3. Arketipe ${layout}:
-   - Jika "cover": Hasilkan judul utama megah, lead subtitle komprehensif, badge status eksklusif.
+   - Jika "cover": Hasilkan judul utama megah/lucu, lead subtitle komprehensif, badge status eksklusif.
    - Jika "split": 2 kartu komparasi visual dengan judul tajam dan deskripsi komparatif tentang ${cleanTopic}.
    - Jika "metrics": 3-4 kartu metrik dengan angka riil (contoh: "85%", "12-16 Jam", "4 Juta") dan penjelasan dampak.
    - Jika "timeline": 3-4 kartu langkah berurutan dengan judul fase roadmap ${cleanTopic}.
@@ -540,20 +548,22 @@ ATURAN KETAT:
 
 Balas HANYA berupa JSON valid dalam blok \`\`\`json ... \`\`\` dengan format:
 {
-  "title": "${isCover ? 'Judul Editorial yang Menarik' : title}",
+  "title": "${isCover ? (isPlayful ? 'Pesona Kucing Lucu Indonesia' : 'Judul Editorial yang Menarik') : title}",
   "subtitle": "Penjelasan mendalam konteks slide",
   "layout": "${layout}",
-  "badge": "${isCover ? 'EDISI EKSKLUSIF' : 'TOPIK KUNCI'}",
+  "badge": "${isCover ? (isPlayful ? '🐾 EDISI GEMAS' : 'EDISI EKSKLUSIF') : (isPlayful ? '🐾 TOPIK KUNCI' : 'TOPIK KUNCI')}",
+  "imageUrl": "",
   "quoteText": "",
   "quoteAuthor": "",
   "cards": [
     {
-      "badge": "TAG TOPIK SPESIFIK",
+      "badge": "${isPlayful ? '🐾 CIRI KHAS' : 'TAG TOPIK SPESIFIK'}",
       "title": "Judul Spesifik Topik",
       "desc": "Penjabaran scannable seputar ${cleanTopic}...",
       "stat": "98%",
       "metricValue": "98%",
-      "footerHighlight": "POIN KUNCI"
+      "footerHighlight": "${isPlayful ? 'FAKTA GEMAS' : 'POIN KUNCI'}",
+      "imageUrl": ""
     }
   ]
 }`;
