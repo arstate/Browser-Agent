@@ -24,14 +24,35 @@ if (typeof window !== 'undefined') {
   window.buildApiUrl = getEffectiveEndpointUrl;
 }
 
+function resolveDesignCandidateModels(agentConfig = {}) {
+  let candidates = [];
+  if (typeof activeAgentModel !== 'undefined' && activeAgentModel && activeAgentModel !== 'auto') {
+    candidates.push(activeAgentModel);
+  }
+  if (typeof getCandidateModelsList === 'function') {
+    candidates.push(...getCandidateModelsList());
+  } else if (typeof window !== 'undefined' && typeof window.getCandidateModelsList === 'function') {
+    candidates.push(...window.getCandidateModelsList());
+  }
+  if (agentConfig && agentConfig.model && agentConfig.model !== 'auto') {
+    candidates.push(agentConfig.model);
+  }
+  candidates = candidates.filter(m => m && typeof m === 'string' && m.trim() && m !== 'auto');
+  if (candidates.length === 0) {
+    const isGoogle = (agentConfig.endpointUrl && agentConfig.endpointUrl.includes("generativelanguage")) || (!agentConfig.endpoint || agentConfig.endpoint === 'google');
+    candidates = isGoogle ? ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"] : ["google/gemini-2.5-flash", "google/gemini-2.0-flash-001"];
+  }
+  return [...new Set(candidates)];
+}
+
 async function fetchSlideContentFromAI(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary, agentConfig, abortSignal) {
   const prompt = (typeof createSlidePromptForMasterDesign === 'function')
     ? createSlidePromptForMasterDesign(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary)
     : `Rancang konten detail untuk slide ${slideIndex + 1} topik: ${topic}`;
 
-  const endpointUrl = getEffectiveEndpointUrl(agentConfig.endpoint);
+  const endpointUrl = getEffectiveEndpointUrl(agentConfig.endpointUrl || agentConfig.endpoint);
   const apiKey = (agentConfig.apiKey || "").trim();
-  const chosenModel = (typeof activeAgentModel !== 'undefined' && activeAgentModel) ? activeAgentModel : (agentConfig.model || "google/gemini-2.5-flash");
+  const models = resolveDesignCandidateModels(agentConfig);
 
   const headers = {
     "Content-Type": "application/json",
@@ -42,31 +63,36 @@ async function fetchSlideContentFromAI(slideIndex, totalSlides, topic, blueprint
     headers["X-Title"] = "Browser Agent OpenDesign Engine";
   }
 
-  try {
-    const resp = await fetch(endpointUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        model: chosenModel,
-        messages: [
-          { role: "system", content: "Kamu adalah Master Design, perancang presentasi 16:9 modular kelas dunia. Balas HANYA dengan JSON valid tanpa teks pengantar." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.3,
-        max_tokens: 1800
-      }),
-      signal: abortSignal
-    });
+  for (const model of models) {
+    try {
+      const resp = await fetch(endpointUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: "Kamu adalah Master Design, perancang presentasi 16:9 modular kelas dunia. Balas HANYA dengan JSON valid tanpa teks pengantar." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 1800
+        }),
+        signal: abortSignal
+      });
 
-    if (resp.ok) {
-      const data = await resp.json();
-      const content = data.choices?.[0]?.message?.content || "";
-      if (content && typeof parseSingleSlideJson === 'function') {
-        return parseSingleSlideJson(content, blueprintSlide);
+      if (resp.ok) {
+        const data = await resp.json();
+        const content = data.choices?.[0]?.message?.content || "";
+        if (content && typeof parseSingleSlideJson === 'function') {
+          return parseSingleSlideJson(content, blueprintSlide);
+        }
+      } else {
+        console.warn(`[OpenDesign] fetchSlideContentFromAI model ${model} failed (${resp.status})`);
       }
+    } catch (err) {
+      if (err.name === 'AbortError') throw err;
+      console.warn(`[OpenDesign] fetchSlideContentFromAI error with model ${model}:`, err);
     }
-  } catch (err) {
-    if (err.name === 'AbortError') throw err;
   }
 
   return (typeof reviseSlideData === 'function')
@@ -225,8 +251,17 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       ? createDefaultBlueprint(userMessage, targetSlideCount, deducedTheme)
       : { title: 'Materi Presentasi', slides: [] };
 
-    const cleanTopic = (userMessage || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim();
-    const rawTitle = defaultBp.title || cleanTopic.slice(0, 40) || "Executive Presentation Deck";
+    const cleanFn = (typeof cleanPresentationTopic === 'function')
+      ? cleanPresentationTopic
+      : (typeof window !== 'undefined' && typeof window.cleanPresentationTopic === 'function' ? window.cleanPresentationTopic : null);
+    const cleanTopic = cleanFn ? cleanFn(userMessage) : (userMessage || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim();
+
+    const genEdFn = (typeof generateEditorialTitle === 'function')
+      ? generateEditorialTitle
+      : (typeof window !== 'undefined' && typeof window.generateEditorialTitle === 'function' ? window.generateEditorialTitle : null);
+    const edTitleObj = genEdFn ? genEdFn(cleanTopic, deducedTheme.id) : { title: defaultBp.title, subtitle: '' };
+
+    const rawTitle = defaultBp.title || edTitleObj.title || cleanTopic.slice(0, 40) || "Executive Presentation Deck";
     meta.title = rawTitle;
 
     const deckMeta = {
@@ -251,7 +286,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         );
       }
 
-      const endpointUrl = getEffectiveEndpointUrl(config.endpoint);
+      const endpointUrl = getEffectiveEndpointUrl(config.endpointUrl || config.endpoint);
       const systemDirective = (typeof DESIGN_MODE_SYSTEM_PROMPT !== 'undefined') ? DESIGN_MODE_SYSTEM_PROMPT : '';
       const messages = [{ role: "system", content: systemDirective }];
 
@@ -265,11 +300,12 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       const revisionContent = `[INSTRUKSI REVISI CANVAS AKTIF]\nBerikut kode HTML slide deck yang SEDANG AKTIF DIBUKA:\n\n\`\`\`html\n${currentOpenArtifact.html}\n\`\`\`\n\nPermintaan revisi: "${userMessage}"\n\nKembalikan kode HTML LENGKAP yang telah direvisi di dalam blok \`\`\`html ... \`\`\`.`;
       messages.push({ role: "user", content: revisionContent });
 
-      const chosenModel = (typeof activeAgentModel !== 'undefined' && activeAgentModel) ? activeAgentModel : config.model;
+      const revisionModels = resolveDesignCandidateModels(config);
+      const chosenModel = revisionModels[0] || "gemini-2.5-flash";
       const resp = await fetch(endpointUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: chosenModel, messages, temperature: 0.3, max_tokens: 1000000 }),
+        body: JSON.stringify({ model: chosenModel, messages, temperature: 0.3, max_tokens: 8192 }),
         signal: abortController.signal
       });
 
@@ -337,6 +373,17 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       workingSlides[0].completed = true;
       workingSlides[0].status = 'ready';
 
+      // Dynamically sync editorial title from Slide 1
+      if (workingSlides[0].title && workingSlides[0].title.length >= 3 && !/^(?:slide|presentasi|dokumen)/i.test(workingSlides[0].title)) {
+        deckMeta.title = workingSlides[0].title;
+        deckMeta.brand = workingSlides[0].title;
+        deckMeta.categoryTitle = workingSlides[0].title.toUpperCase();
+        meta.title = workingSlides[0].title;
+        if (typeof setCurrentSessionTitle === 'function') {
+          setCurrentSessionTitle(workingSlides[0].title);
+        }
+      }
+
       if (toolBadgeDispatch1 && typeof updateToolBadgeState === 'function') {
         updateToolBadgeState(toolBadgeDispatch1, 'success', 'Slide 1 selesai dirancang dengan detail tinggi.');
       }
@@ -351,7 +398,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
 
       targetArtifact.html = initialDeckHtml;
       targetArtifact.raw = initialDeckHtml;
-      targetArtifact.meta = { title: rawTitle, category: deducedTheme.name };
+      targetArtifact.meta = { title: deckMeta.title || rawTitle, category: deducedTheme.name };
       targetArtifact.content = `*⚡ Slide 1 tervalidasi. Pratinjau Canvas aktif & siap dibuka...*`;
 
       if (typeof setActiveDesignArtifact === 'function') {

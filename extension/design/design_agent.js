@@ -182,59 +182,156 @@ function auditFullDeck(slides, topic = '') {
   };
 }
 
+function cleanPresentationTopic(rawPrompt = "") {
+  let text = String(rawPrompt || "").trim();
+  text = text.replace(/^(?:tolong\s+)?(?:buatkan|bikin|buat|generate|create|siapkan|rancang|tampilkan|sajikan)\s+/i, "");
+  text = text.replace(/^(?:(?:\d+\s+)?(?:slide|slides|deck|presentasi|presentation|ppt|pdf|materi|dokumen|kanvas|canvas)\s*)+(?:tentang|mengenai|seputar|topik|tema|bahas|soal)?\s+/i, "");
+  text = text.replace(/^(?:tentang|mengenai|seputar|topik|tema|bahas|soal)\s+/i, "");
+  text = text.replace(/\s+(?:sebanyak\s+)?\d+\s*(?:slide|slides|halaman|lembar|page|pages|hal)?\s*$/i, "");
+  text = text.replace(/\s+(?:format\s+)?(?:pdf|ppt|powerpoint|deck|16:9|widescreen)\s*$/i, "");
+  text = text.replace(/^[:\-\s]+|[:\-\s]+$/g, "").trim();
+  return text || "Materi Presentasi";
+}
+
+function toTitleCaseIndonesian(str) {
+  const smallWords = /^(di|ke|dari|dan|yang|untuk|pada|seputar|tentang|dengan|atau|serta)$/i;
+  return String(str || "").split(/\s+/).map((w, i) => {
+    if (i > 0 && smallWords.test(w)) return w.toLowerCase();
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }).join(" ");
+}
+
+function generateEditorialTitle(cleanTopic, themeId = "playful_pastel") {
+  const titleCase = toTitleCaseIndonesian(cleanTopic);
+  if (/kucing|hewan|anjing|pet|fauna|satwa|binatang/i.test(cleanTopic)) {
+    return {
+      title: `Pesona & Ragam ${titleCase}`,
+      subtitle: `Mengenal keunikan ras nusantara, tingkah menggemaskan si anabul, dan panduan merawat penuh kasih.`
+    };
+  }
+  if (/kopi|kuliner|makanan|masakan|resep|minuman/i.test(cleanTopic)) {
+    return {
+      title: `Cita Rasa & Eksplorasi ${titleCase}`,
+      subtitle: `Menjelajahi asal-usul rasa autentik, seni peracikan, dan keistimewaan tradisi nusantara.`
+    };
+  }
+  if (/ai|coding|tech|cyber|software|startup|data|cloud|devops/i.test(cleanTopic)) {
+    return {
+      title: `Inovasi & Masa Depan: ${titleCase}`,
+      subtitle: `Analisis arsitektur sistem modern, peluang transformasi digital, dan peta jalan teknologi terdepan.`
+    };
+  }
+  if (/sejarah|budaya|nusantara|indonesia|seni|tradisi/i.test(cleanTopic)) {
+    return {
+      title: `Warisan & Jejak Sejarah: ${titleCase}`,
+      subtitle: `Kilas balik mendalam, nilai-nilai luhur peradaban, dan relevansinya di era modern.`
+    };
+  }
+  if (/kesehatan|medis|wellness|olahraga|nutrisi|mental/i.test(cleanTopic)) {
+    return {
+      title: `Harmoni & Panduan Hidup Sehat: ${titleCase}`,
+      subtitle: `Pendekatan komprehensif, pemahaman fundamental, dan langkah praktis mewujudkan kebugaran optimal.`
+    };
+  }
+  return {
+    title: `Eksplorasi Komprehensif: ${titleCase}`,
+    subtitle: `Wawasan mendalam, analisis pilar utama, dan panduan terstruktur seputar ${cleanTopic.toLowerCase()}.`
+  };
+}
+
 function createDefaultBlueprint(topic = 'Presentasi', targetSlideCount = 5, theme = {}) {
   const count = Math.max(3, Math.min(parseInt(targetSlideCount, 10) || 5, 12));
-  const rawTitle = (topic || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim() || 'Materi Presentasi';
-  const cleanTitle = rawTitle.slice(0, 45).toUpperCase();
+  const cleanTopic = cleanPresentationTopic(topic);
+  const edObj = generateEditorialTitle(cleanTopic, theme.id);
+  const titleCase = toTitleCaseIndonesian(cleanTopic);
 
   const archetypes = ['split', 'bento', 'metrics', 'timeline', 'quote', 'bento', 'split', 'metrics'];
   const slides = [];
 
-  const toRomanChar = (num) => {
-    const romans = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-    return romans[num - 1] || String(num);
-  };
-
-  // Slide 1: Cover
   slides.push({
     index: 1,
-    title: cleanTitle,
-    subtitle: `Panduan komprehensif, wawasan strategis, dan implementasi terstruktur ${rawTitle.toLowerCase()}.`,
+    title: edObj.title,
+    subtitle: edObj.subtitle,
     layout: 'cover',
     badge: theme.tag || 'EDISI EKSKLUSIF'
   });
 
-  // Middle slides
+  let outlineTitles = [];
+  if (/kucing|hewan|anjing|pet|fauna|satwa/i.test(cleanTopic)) {
+    outlineTitles = [
+      { title: `Asal-Usul & Keanekaragaman ${titleCase}`, sub: `Menelusuri jejak sejarah dan keunikan fauna endemik nusantara.` },
+      { title: `Ragam Ras Populer & Karakteristik Fisik`, sub: `Mengenal ciri khas bulu, postur tubuh, dan adaptasi lingkungan.` },
+      { title: `Perilaku & Tingkah Menggemaskan Si Anabul`, sub: `Mengapa kucing mendengkur, memijat, dan bagaimana mereka berkomunikasi.` },
+      { title: `Fakta Kunci & Statistik Pecinta Hewan`, sub: `Data populasi, tren adopsi, dan antusiasme komunitas nusantara.` },
+      { title: `Mitos vs Fakta Populer Seputar ${titleCase}`, sub: `Mengurai kesalahpahaman umum dengan fakta biologis terpercaya.` },
+      { title: `Filosofi Kasih Sayang & Kesejahteraan Hewan`, sub: `Tanggung jawab moral dan kebahagiaan hidup berdampingan dengan satwa.` },
+      { title: `Panduan Perawatan & Kebutuhan Nutrisi Harian`, sub: `Langkah demi langkah menjaga kebersihan, gizi seimbang, dan kebugaran.` },
+      { title: `Kesehatan, Vaksinasi & Perlindungan Rutin`, sub: `Pencegahan penyakit menular dan pentingnya jadwal dokter hewan.` },
+      { title: `Komitmen Peduli: Aksi Nyata Lindungi ${titleCase}`, sub: `Gerakan adopsi bertanggung jawab dan kepedulian satwa jalanan.` }
+    ];
+  } else if (/kopi|kuliner|makanan|masakan/i.test(cleanTopic)) {
+    outlineTitles = [
+      { title: `Asal-Usul & Filosofi Rasa ${titleCase}`, sub: `Kisah di balik tradisi bahan baku autentik nusantara.` },
+      { title: `Keistimewaan Bahan & Varietas Utama`, sub: `Karakteristik mutu dan standar pemilihan bahan terbaik.` },
+      { title: `Seni Peracikan & Teknik Pengolahan`, sub: `Kombinasi metode tradisional dan sentuhan presisi modern.` },
+      { title: `Metrik Mutu & Standar Cita Rasa`, sub: `Tolak ukur rasa, aroma, dan kepuasan penikmat kuliner.` },
+      { title: `Diferensiasi & Ciri Khas Autentik`, sub: `Faktor pembeda yang menjadikannya ikonik dan dicintai.` },
+      { title: `Filosofi & Kebersamaan Menikmati Hidangan`, sub: `Nilai sosial dan kehangatan di setiap sajian.` },
+      { title: `Alur Kreasi dari Dapur hingga Meja Saji`, sub: `Tahapan pengolahan higienis dengan dedikasi tinggi.` },
+      { title: `Peluang Eksplorasi & Inovasi Rasa`, sub: `Tren masa depan dan adaptasi selera generasi baru.` },
+      { title: `Rangkuman Rasa & Warisan Kuliner`, sub: `Melestarikan kekayaan tradisi kuliner untuk generasi mendatang.` }
+    ];
+  } else if (/ai|coding|tech|cyber|software|startup|data/i.test(cleanTopic)) {
+    outlineTitles = [
+      { title: `Pondasi & Evolusi Teknologi ${titleCase}`, sub: `Latar belakang perkembangan dan pendorong inovasi modern.` },
+      { title: `Arsitektur Sistem & Komponen Kunci`, sub: `Pilar teknis yang menopang keandalan dan skalabilitas.` },
+      { title: `Kapabilitas Inti & Diferensiasi Solusi`, sub: `Fitur unggulan yang memberikan keunggulan kompetitif nyata.` },
+      { title: `Indikator Performa & Metrik Efisiensi`, sub: `Pengukuran latensi, throughput, dan dampak optimasi.` },
+      { title: `Tantangan Keamanan & Mitigasi Risiko`, sub: `Evaluasi komparatif celah sistem dan benteng pertahanan.` },
+      { title: `Prinsip Filosofi Desain Sistem Terbuka`, sub: `Standar kehandalan, interoperabilitas, dan keamanan kode.` },
+      { title: `Peta Jalan Implementasi & Deployment`, sub: `Alur eksekusi dari prototipe hingga skala produksi.` },
+      { title: `Ekosistem Integrasi & Automasi Terpadu`, sub: `Menghubungkan layanan pendukung untuk efisiensi maksimal.` },
+      { title: `Kesimpulan Strategis & Arah Masa Depan`, sub: `Rangkuman eksekutif dan rekomendasi adopsi teknologi.` }
+    ];
+  } else {
+    outlineTitles = [
+      { title: `Fondasi & Latar Belakang ${titleCase}`, sub: `Pemahaman mendasar mengenai sejarah dan konteks utama.` },
+      { title: `Pilar Utama & Ruang Lingkup ${titleCase}`, sub: `Eksplorasi dimensi penting dan struktur pembahasan.` },
+      { title: `Karakteristik & Keunikan Penting`, sub: `Aspek khusus yang membedakan dan menjadikannya bernilai.` },
+      { title: `Data, Fakta & Statistik Kunci`, sub: `Angka nyata dan tolak ukur penting yang terverifikasi.` },
+      { title: `Komparasi Perspektif & Analisis Kritis`, sub: `Membedah peluang, tantangan, dan sudut pandang berbeda.` },
+      { title: `Prinsip Utama & Nilai Fundamental`, sub: `Pijakan moral dan pemikiran inti yang mendasari materi.` },
+      { title: `Tahapan Implementasi & Panduan Aksi`, sub: `Langkah operasional yang sistematis dan terstruktur.` },
+      { title: `Faktor Pendukung & Penguatan Kualitas`, sub: `Elemen pelengkap yang memaksimalkan keberhasilan hasil.` },
+      { title: `Kesimpulan Komprehensif & Rekomendasi`, sub: `Rangkuman wawasan dan intisari penting untuk masa depan.` }
+    ];
+  }
+
   for (let i = 2; i < count; i++) {
     const layout = archetypes[(i - 2) % archetypes.length];
-    let defaultSub = 'Analisis mendalam dan kerangka kerja operasional.';
-    if (layout === 'split') defaultSub = 'Eksplorasi dua dimensi utama dan komparasi strategis.';
-    else if (layout === 'metrics') defaultSub = 'Indikator performa kunci dan tolak ukur keberhasilan.';
-    else if (layout === 'quote') defaultSub = 'Prinsip fundamental dan filosofi inti pelaksanaan.';
-    else if (layout === 'timeline') defaultSub = 'Tahapan implementasi berurutan dan terstandarisasi.';
-
+    const outlineItem = outlineTitles[(i - 2) % outlineTitles.length];
     slides.push({
       index: i,
-      title: `Bab ${toRomanChar(i)}: Eksplorasi Strategis 0${i}`,
-      subtitle: defaultSub,
+      title: outlineItem.title,
+      subtitle: outlineItem.sub,
       layout: layout,
-      badge: `POIN 0${i} // ANALISIS`
+      badge: `BAB 0${i} // ${cleanTopic.slice(0, 16).toUpperCase()}`
     });
   }
 
-  // Final slide: Conclusion
   if (count >= 3) {
+    const lastOutline = outlineTitles[outlineTitles.length - 1];
     slides.push({
       index: count,
-      title: 'Kesimpulan & Tindak Lanjut',
-      subtitle: 'Rangkuman eksekutif, rekomendasi aksi prioritas, dan peta jalan implementasi.',
+      title: lastOutline.title || `Rangkuman & Kesimpulan: ${titleCase}`,
+      subtitle: lastOutline.sub || `Intisari pemahaman dan rekomendasi terbaik seputar ${cleanTopic.toLowerCase()}.`,
       layout: 'conclusion',
-      badge: 'ACTION PLAYBOOK'
+      badge: 'KESIMPULAN'
     });
   }
 
   return {
-    title: cleanTitle,
+    title: edObj.title,
     category: theme.name || 'Executive Presentation',
     slides
   };
@@ -242,11 +339,12 @@ function createDefaultBlueprint(topic = 'Presentasi', targetSlideCount = 5, them
 
 function reviseSlideData(slide, auditReason = '', expectedLayout = '', topic = '', theme = {}) {
   const revised = { ...(slide || {}) };
-  const cleanTopic = (topic || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim() || 'Materi Presentasi';
+  const cleanTopic = cleanPresentationTopic(topic || 'Materi Presentasi');
+  const titleCase = toTitleCaseIndonesian(cleanTopic);
 
   // Fix 1: Bad or short title
-  if (!revised.title || String(revised.title).trim().length < 3) {
-    revised.title = `Analisis Komprehensif: ${cleanTopic.slice(0, 30)}`;
+  if (!revised.title || String(revised.title).trim().length < 3 || /^(?:slide|halaman|lembar)\s*\d*$/i.test(revised.title)) {
+    revised.title = `${titleCase}: Wawasan Penting`;
   }
 
   // Fix 2: Remove legacy or fake branding
@@ -268,65 +366,69 @@ function reviseSlideData(slide, auditReason = '', expectedLayout = '', topic = '
 
   // Fix 3: Layout-specific fixes
   if (layout === 'cover') {
-    if (!revised.subtitle) {
-      revised.subtitle = `Panduan komprehensif, wawasan strategis, dan peta jalan implementasi ${cleanTopic.toLowerCase()}.`;
+    const ed = generateEditorialTitle(cleanTopic, theme.id);
+    if (!revised.title || revised.title.length < 3 || /^(?:slide|presentasi|dokumen|buatkan)/i.test(revised.title)) {
+      revised.title = ed.title;
+    }
+    if (!revised.subtitle || /analisis komprehensif/i.test(revised.subtitle)) {
+      revised.subtitle = ed.subtitle;
     }
     revised.badge = revised.badge || theme.tag || 'EDISI EKSKLUSIF';
   } else if (layout === 'split') {
     while (revised.cards.length < 2) {
       const idx = revised.cards.length + 1;
       revised.cards.push({
-        badge: `PILAR 0${idx}`,
-        title: idx === 1 ? 'Kondisi Eksisting & Tantangan' : 'Peluang Transformasi & Solusi',
-        desc: idx === 1 ? 'Pemetaan komparatif variabel kritis dan evaluasi risiko mendasar.' : 'Akselerasi terukur dengan metodologi berbasis data dan dampak teruji.',
+        badge: `ASPEK 0${idx}`,
+        title: idx === 1 ? `Karakteristik Kunci ${titleCase}` : `Daya Tarik & Potensi ${titleCase}`,
+        desc: idx === 1 ? `Eksplorasi ciri khas mendasar dan aspek pembeda seputar ${cleanTopic.toLowerCase()}.` : `Peluang pengembangan dan manfaat bernilai tinggi terkait ${cleanTopic.toLowerCase()}.`,
         stat: `0${idx}`,
         metricValue: `0${idx}`,
-        footerHighlight: idx === 1 ? 'EVALUASI RISIKO' : 'SOLUSI STRATEGIS'
+        footerHighlight: idx === 1 ? 'KARAKTERISTIK' : 'POTENSI UTAMA'
       });
     }
   } else if (layout === 'metrics') {
     while (revised.cards.length < 3) {
       const idx = revised.cards.length + 1;
-      const metricValues = ['98.4%', '3.5x', '100%', '+45%'];
+      const metricValues = ['87.5%', '3.8x', '100%', '+52%'];
       revised.cards.push({
-        badge: `METRIK 0${idx}`,
-        title: `Indikator Performa 0${idx}`,
-        desc: `Capaian efisiensi dan tolak ukur keberhasilan operasional sistem.`,
+        badge: `DATA 0${idx}`,
+        title: `Indikator & Fakta Kunci 0${idx}`,
+        desc: `Bukti empiris dan data relevan mengenai dinamika ${cleanTopic.toLowerCase()}.`,
         stat: metricValues[idx - 1] || '100%',
         metricValue: metricValues[idx - 1] || '100%',
-        footerHighlight: 'KPI TARGET'
+        footerHighlight: 'DATA RIIL'
       });
     }
   } else if (layout === 'quote') {
     if (!revised.quoteText) {
-      revised.quoteText = revised.subtitle || `Keberhasilan transformasi terletak pada presisi eksekusi dan konsistensi perbaikan berkesinambungan.`;
+      revised.quoteText = revised.subtitle || `Memahami seluk-beluk ${cleanTopic.toLowerCase()} memberikan wawasan mendalam dan perspektif baru yang berharga.`;
     }
     if (!revised.quoteAuthor) {
-      revised.quoteAuthor = cleanTopic.slice(0, 24).toUpperCase() || 'EXECUTIVE PRINCIPLE';
+      revised.quoteAuthor = `${titleCase} Insights`;
     }
   } else if (layout === 'timeline') {
     while (revised.cards.length < 3) {
       const idx = revised.cards.length + 1;
-      const phases = ['Inisiasi & Analisis', 'Eksekusi & Integrasi', 'Skalabilitas & Audit'];
+      const phases = ['Pemahaman Awal', 'Pengamatan & Penerapan', 'Pengembangan Lanjutan'];
       revised.cards.push({
-        badge: `FASE 0${idx}`,
-        title: phases[idx - 1] || `Tahap Implementasi 0${idx}`,
-        desc: `Pelaksanaan terstruktur dengan kontrol kualitas ketat pada setiap milestone.`,
-        stat: `F${idx}`,
+        badge: `TAHAP 0${idx}`,
+        title: phases[idx - 1] || `Langkah 0${idx}`,
+        desc: `Panduan terarah dalam mengeksplorasi ${cleanTopic.toLowerCase()} secara berurutan.`,
+        stat: `T${idx}`,
         metricValue: `0${idx}`,
-        footerHighlight: 'MILESTONE UTAMA'
+        footerHighlight: 'PANDUAN AKSI'
       });
     }
   } else if (layout === 'conclusion') {
     while (revised.cards.length < 2) {
       const idx = revised.cards.length + 1;
       revised.cards.push({
-        badge: `AKSI 0${idx}`,
-        title: idx === 1 ? 'Prioritas Implementasi 30 Hari' : 'Evaluasi & Skalabilitas Berkelanjutan',
-        desc: idx === 1 ? 'Mobilisasi sumber daya dan penetapan parameter keberhasilan awal.' : 'Monitoring berkala untuk memastikan konsistensi luaran jangka panjang.',
+        badge: `INTISARI 0${idx}`,
+        title: idx === 1 ? `Kesimpulan Inti ${titleCase}` : `Rekomendasi & Langkah Lanjutan`,
+        desc: idx === 1 ? `Rangkuman poin esensial dan wawasan paling krusial mengenai ${cleanTopic.toLowerCase()}.` : `Arahan praktis yang dapat langsung diterapkan untuk mendapatkan hasil optimal seputar ${cleanTopic.toLowerCase()}.`,
         stat: `0${idx}`,
         metricValue: `0${idx}`,
-        footerHighlight: 'ACTION ITEM'
+        footerHighlight: idx === 1 ? 'INTISARI' : 'REKOMENDASI'
       });
     }
   } else {
@@ -334,12 +436,12 @@ function reviseSlideData(slide, auditReason = '', expectedLayout = '', topic = '
     while (revised.cards.length < 2) {
       const idx = revised.cards.length + 1;
       revised.cards.push({
-        badge: `POIN 0${idx} // ANALISIS`,
-        title: `Wawasan Strategis 0${idx}`,
-        desc: `Pendalaman materi dan elaborasi solusi praktis berbasis studi kasus nyata.`,
+        badge: `POIN 0${idx}`,
+        title: `Wawasan ${titleCase} 0${idx}`,
+        desc: `Penjabaran komprehensif mengenai aspek penting ${cleanTopic.toLowerCase()} secara faktual.`,
         stat: `0${idx}`,
         metricValue: `0${idx}`,
-        footerHighlight: 'KEY INSIGHT'
+        footerHighlight: 'POIN KUNCI'
       });
     }
   }
@@ -347,10 +449,10 @@ function reviseSlideData(slide, auditReason = '', expectedLayout = '', topic = '
   // Ensure card titles are not empty
   revised.cards.forEach((c, ci) => {
     if (!c.title || String(c.title).trim().length < 2) {
-      c.title = `Poin Analisis 0${ci + 1}`;
+      c.title = `Poin Penting 0${ci + 1}`;
     }
     if (!c.desc || String(c.desc).trim().length < 4) {
-      c.desc = `Penjabaran poin penting mengenai implementasi dan optimasi sistem.`;
+      c.desc = `Penjabaran komprehensif mengenai aspek ${cleanTopic.toLowerCase()} secara mendalam.`;
     }
   });
 
@@ -393,33 +495,44 @@ function reviseFullDeckData(slides, missList = [], topic = '', theme = {}) {
 
 function createSlidePromptForMasterDesign(slideIndex, totalSlides, topic = '', blueprintSlide = {}, prevSlideSummary = '') {
   const slideNum = slideIndex + 1;
-  const cleanTopic = (topic || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim();
+  const cleanTopic = cleanPresentationTopic(topic || 'Materi Presentasi');
   const layout = blueprintSlide.layout || (slideNum === 1 ? 'cover' : 'bento');
   const title = blueprintSlide.title || `Slide ${slideNum}`;
+
+  const isCover = (slideNum === 1 || layout === 'cover');
+  const coverDirective = isCover
+    ? `KHUSUS COVER:
+- Buat judul utama ("title") yang ARTISTIK, KREATIF, dan MEMIKAT (BUKAN teks perintah seperti "Slide PDF tentang...", "Buatkan...", dsb). Contoh: "Pesona & Ragam Kucing Lucu di Indonesia".
+- Buat subjudul ("subtitle") yang informatif, puitis, dan menggugah minat audiens.`
+    : `KHUSUS KONTEN:
+- Seluruh judul kartu, deskripsi, dan metrik HARUS 100% KONSISTEN dengan tema "${cleanTopic}".
+- DILARANG KERAS menggunakan jargon bisnis/korporat klise jika topik adalah non-korporat (hewan, sains, budaya, hobi).`;
 
   return `Kamu adalah 🎨 Master Design (Tangan Kanan Master Agent).
 Tugasmu: Rancang konten SANGAT DETAIL dan SPESIFIK untuk Slide ${slideNum} dari total ${totalSlides} slide presentasi 16:9 widescreen.
 
 Materi Utama: "${cleanTopic}"
 Arketipe Tata Letak: ${layout.toUpperCase()}
-Judul Sasaran: "${title}"
+Sasaran Topik Slide: "${title}"
 ${prevSlideSummary ? `Konteks Slide Sebelumnya: "${prevSlideSummary}"` : ''}
+
+${coverDirective}
 
 ATURAN KETAT:
 1. DILARANG menggunakan teks korporat palsu ("Djadi Creative", "GSM v3.0", "Confidential // Enterprise").
-2. Konten harus berbobot, berbasis fakta/analisis/strategi nyata, tidak klise.
+2. Konten harus berbobot, berbasis fakta/analisis/karakteristik nyata mengenai "${cleanTopic}".
 3. Arketipe ${layout}:
-   - Jika "cover": Hasilkan judul utama megah, lead subtitle komprehensif, badge status eksklusif, dan 2-3 poin ringkasan.
-   - Jika "split": Minimal 2 kartu perbandingan (50:50) dengan judul tajam, deskripsi komparatif, dan footer highlight.
-   - Jika "metrics": Minimal 3-4 kartu dengan angka metrik/KPI riil (contoh: "98.4%", "3.5x", "12-16 Jam"), judul metrik, deskripsi dampak, dan highlight.
-   - Jika "timeline": Minimal 3-4 kartu langkah berurutan (Tahap 01 s/d 04) dengan judul fase dan roadmap eksekusi.
-   - Jika "quote": Kutipan berbobot, signifikansi strategis, dan atribusi otoritatif.
-   - Jika "conclusion": Ringkasan eksekutif dan checklist aksi prioritas.
-   - Jika "bento": 3 kartu pilar bento dengan analisis mendalam.
+   - Jika "cover": Hasilkan judul utama megah, lead subtitle komprehensif, badge status eksklusif.
+   - Jika "split": Minimal 2 kartu perbandingan dengan judul tajam dan deskripsi komparatif tentang ${cleanTopic}.
+   - Jika "metrics": Minimal 3-4 kartu dengan angka riil (contoh: "85%", "12-16 Jam", "4 Juta"), judul metrik, dan deskripsi relevan.
+   - Jika "timeline": Minimal 3-4 kartu langkah berurutan dengan judul fase roadmap ${cleanTopic}.
+   - Jika "quote": Kutipan bermakna tentang ${cleanTopic} dan atribusi terpercaya.
+   - Jika "conclusion": Ringkasan intisari dan checklist rekomendasi tentang ${cleanTopic}.
+   - Jika "bento": 3 kartu pilar bento dengan analisis mendalam mengenai ${cleanTopic}.
 
 Balas HANYA berupa JSON valid dalam blok \`\`\`json ... \`\`\` dengan format:
 {
-  "title": "Judul Slide ${slideNum}",
+  "title": "${isCover ? 'Judul Editorial yang Menarik' : title}",
   "subtitle": "Penjelasan mendalam konteks slide",
   "layout": "${layout}",
   "badge": "BADGE ${slideNum}",
@@ -428,8 +541,8 @@ Balas HANYA berupa JSON valid dalam blok \`\`\`json ... \`\`\` dengan format:
   "cards": [
     {
       "badge": "PILAR 01",
-      "title": "Judul Analitis",
-      "desc": "Penjabaran komprehensif tanpa generalisasi klise...",
+      "title": "Judul Spesifik Topik",
+      "desc": "Penjabaran komprehensif seputar ${cleanTopic}...",
       "stat": "98%",
       "metricValue": "98%",
       "footerHighlight": "KEY POINT"
@@ -489,6 +602,9 @@ function parseSingleSlideJson(rawText, fallbackSlide = {}) {
 
 // Attach to window for global extension access
 if (typeof window !== 'undefined') {
+  window.cleanPresentationTopic = cleanPresentationTopic;
+  window.toTitleCaseIndonesian = toTitleCaseIndonesian;
+  window.generateEditorialTitle = generateEditorialTitle;
   window.MASTER_DESIGN_AGENT = MASTER_DESIGN_AGENT;
   window.createDesignHierarchyAgentInfo = createDesignHierarchyAgentInfo;
   window.getDesignMilestones = getDesignMilestones;

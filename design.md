@@ -633,3 +633,23 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Penyelarasan artefak pada tahap finalisasi mengikat variabel `targetArtifact.html` yang terverifikasi, mengeliminasi exception `ReferenceError: artifact is not defined` dan menjamin penyelesaian presentasi 100% mulus.
 
 
+## 🚀 33. Context-Aware Editorial Titles & Multi-Model OpenDesign Resilience (v2.150.217)
+
+1. **Contextual Presentation Topic Extraction (`cleanPresentationTopic`)**:
+   - Membersihkan input mentah pengguna dari awalan/akhiran teknis (`slide`, `pdf`, `ppt`, `deck`, `tentang`, `buatkan`, dan penanda jumlah `\d+ slide`).
+   - Contoh: `"slide pdf tentang kucing lucu di indonesia 10"` diekstraksi menjadi topik murni `"kucing lucu di indonesia"`.
+
+2. **Creative Editorial Titles (`generateEditorialTitle`)**:
+   - Menghasilkan judul display sampul yang artistik, berwawasan luas, dan elegan (contoh: *"Pesona & Ragam Kucing Lucu di Indonesia"*) beserta subjudul puitis/eksploratif yang relevan dengan topik pengguna.
+   - Mengeliminasi pengulangan teks prompt mentah ("Slide PDF tentang...") di cover slide.
+
+3. **Multi-Model API Resolution (`resolveDesignCandidateModels`)**:
+   - Menghilangkan kegagalan HTTP 404 pada endpoint AI yang terjadi saat `config.model` bernilai `"auto"`.
+   - Mengambil model kandidat valid (`gemini-2.5-flash`, dll.) dan mencoba secara berurutan dengan penanganan graceful error.
+
+4. **Zero-Corporate Fallback Safeguard**:
+   - Fallback kartu (`reviseSlideData`, `createDefaultBlueprint`) tidak lagi memuat teks korporat kaku ("Prioritas Implementasi 30 Hari: Mobilisasi sumber daya", "Bab II: Eksplorasi Strategis").
+   - Generator kartu kini mengikat variabel topik pengguna secara dinamis dan kontekstual.
+
+
+

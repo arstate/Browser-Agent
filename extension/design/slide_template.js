@@ -31,15 +31,25 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   const promptOrTitle = deckMeta.userPrompt || deckMeta.title || (slidesData[0]?.title || "");
   const theme = deckMeta.themeObj || detectOptimalSlideTheme(promptOrTitle, deckMeta);
 
+  const cleanFn = (typeof cleanPresentationTopic === 'function')
+    ? cleanPresentationTopic
+    : (typeof window !== 'undefined' && typeof window.cleanPresentationTopic === 'function' ? window.cleanPresentationTopic : null);
+
   // Brand Name logic: NEVER hardcode DJADI CREATIVE!
   let brandName = deckMeta.brand;
   if (!brandName || (/djadi/i.test(brandName) && !/djadi/i.test(promptOrTitle))) {
     brandName = (deckMeta.title || slidesData[0]?.title || "MATERI PRESENTASI").slice(0, 40);
   }
+  if (cleanFn && /^(?:slide|pdf|ppt|deck|tentang|buatkan)/i.test(brandName)) {
+    brandName = cleanFn(brandName);
+  }
 
   let categoryTitle = deckMeta.categoryTitle || deckMeta.title || (slidesData[0]?.title || "MATERI PRESENTASI");
   if (/FONDASI BRAND|STRATEGI & IDENTITAS/i.test(categoryTitle) && !/fondasi|identitas|gsm/i.test(promptOrTitle)) {
     categoryTitle = (deckMeta.title || slidesData[0]?.title || "MATERI PRESENTASI").slice(0, 40);
+  }
+  if (cleanFn && /^(?:slide|pdf|ppt|deck|tentang|buatkan)/i.test(categoryTitle)) {
+    categoryTitle = cleanFn(categoryTitle);
   }
 
   // Header subcategory: NEVER hardcode GSM v3.0!

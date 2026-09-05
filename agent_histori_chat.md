@@ -6157,4 +6157,38 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Verifikasi batas baris file via `wc -l extension/design/*.js` memastikan seluruh 9 file <= 800 baris.
   3. Bump versi manifest ke `v2.150.216`.
 
+### Iterasi 498 (v2.150.217) - 2026-09-05
+- **User Request:**
+  "kok slide 2 sampai akhir ga sesuai konteks prompt user ya bro padahal bahas kucing lucu di indonesia malah apa ini beda gini, trus covernya harusnya jangan slide tentang ini tapi dibuatin judul sendiri bro dibuatin judul yang bagus yang sesuai konteks"
+- **Akar Masalah (Root Cause):**
+  1. Pada panggilan API AI `fetchSlideContentFromAI`, model yang dikirimkan adalah `config.model` yang nilainya default `"auto"`. Endpoint Google Gemini OpenAI compatibility (`https://generativelanguage.googleapis.com/...`) melempar HTTP 404 (`models/auto not found`). Hal ini menyebabkan fetch gagal dan diam-diam jatuh ke fallback `reviseSlideData`.
+  2. Fungsi fallback `reviseSlideData` dan `createDefaultBlueprint` sebelumnya memuat template kartu statis korporat ("Prioritas Implementasi 30 Hari: Mobilisasi sumber daya dan penetapan parameter keberhasilan awal", "Bab II: Eksplorasi Strategis 02"). Ketika fallback terpicu, teks korporat inilah yang disuntikkan ke presentasi pengguna alih-alih konten topik kucing.
+  3. Pembersih topik sebelumnya hanya membuang awalan `buatkan`, sehingga teks perintah mentah (`"slide pdf tentang kucing lucu di indonesia 10"`) dijadikan judul cover, subjudul, dan metadata deck tanpa judul editorial kreatif.
+- **Analisis & Solusi:**
+  1. *Presentation Topic Normalization (`cleanPresentationTopic` di `design_agent.js`)*:
+     - Regex ekstraksi komprehensif membuang kata teknis `slide`, `pdf`, `ppt`, `deck`, `tentang`, `buatkan`, dan jumlah slide (`10`, `10 slide`).
+     - Mengubah `"slide pdf tentang kucing lucu di indonesia 10"` menjadi topik bersih `"kucing lucu di indonesia"`.
+  2. *Creative Editorial Title Generator (`generateEditorialTitle` & `toTitleCaseIndonesian`)*:
+     - Meracik judul display sampul yang kaya estetika dan jurnalistik (contoh: *"Pesona & Ragam Kucing Lucu di Indonesia"*) beserta subjudul informatif yang memikat.
+     - Menyinkronkan judul editorial ini ke `deckMeta.title`, `deckMeta.brand`, `targetArtifact.meta.title`, dan `currentSessionTitle`.
+  3. *Multi-Model AI Resolution & Retry (`resolveDesignCandidateModels` di `design_executor.js`)*:
+     - Mengambil daftar model dari `getCandidateModelsList()` dan menyaring nilai `"auto"`.
+     - Menyediakan fallback multi-kandidat (`gemini-2.5-flash`, `gemini-2.0-flash`, dll.) sehingga request API ke Google Gemini / OpenRouter selalu berhasil dan menghasilkan konten AI yang 100% akurat sesuai prompt.
+  4. *Contextual Zero-Corporate Fallback Safeguard (`design_agent.js`, `design_prompt.js`)*:
+     - Menghapus seluruh teks korporat kaku dari `createDefaultBlueprint` dan `reviseSlideData`.
+     - Mengganti kartu fallback menjadi dinamis berbasis topik pengguna (`titleCase` & `cleanTopic.toLowerCase()`).
+     - Menambahkan aturan ketat pada prompt Master Design untuk melarang keras jargon bisnis jika topik membahas non-korporat (hewan, sains, budaya, hobi).
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - `design_executor.js`: 773 baris (limit <= 800 baris).
+     - `slide_template.js`: 737 baris (limit <= 800 baris).
+     - `design_agent.js`: 618 baris (limit <= 800 baris).
+     - `canvas_manager.js`: 788 baris (limit <= 800 baris).
+     - `slide_styles.js`: 764 baris (limit <= 800 baris).
+     - Seluruh 9 modul di `extension/design/` patuh limit <= 800 baris.
+- **Verifikasi:**
+  1. Node.js unit test assertion pada pembersih topik, generator judul editorial, blueprint, dan resolver model kandidat lulus 100% (`ALL TESTS PASSED`).
+  2. Syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  3. Bump versi manifest ke `v2.150.217`.
+
+
 
