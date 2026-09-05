@@ -486,3 +486,23 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_executor.js` (517 lines): Execution loop, streaming milestones & toast dispatch.
    - `design_prompt.js` (178 lines): System prompt & meta extractor.
    - `design_agent.js` (78 lines): Agent metadata & tools declaration.
+
+## 🚀 21. Floating Dock Export Dropup & Native Background 16:9 Vector PDF Engine (v2.150.205)
+
+1. **Floating Navigation Dock Export Dropup**:
+   - Tombol lama `PDF P` direfactor menjadi tombol `Export ⌵` dengan dropup menu akrilik elegan (`.dock-export-menu`).
+   - Opsi aktif: `Export PDF Slide` dilengkapi badge hijau `Vektor 16:9` dan ikon SVG dokumen.
+   - Opsi non-aktif: `Export PPTX (Soon)`, `Export HTML (Soon)`, `Export PNG (Soon)`.
+   - Menutup otomatis saat klik di luar menu. Didukung keyboard shortcut `E` (toggle menu) dan `P` (ekspor PDF langsung).
+
+2. **Native Background Vector 16:9 PDF Engine**:
+   - Handler RPC `export_slide_deck_pdf` pada Rust Native Host binary (`browser_agent_host`) dan Python (`native_host.py`).
+   - Eksekusi background via headless Chrome (`--print-to-pdf`, `--no-pdf-header-footer`).
+   - Dimensi cetak: 1152 x 648 pt (rasio 16:9 widescreen presisi tinggi).
+   - Teks, font, dan elemen vektor tertanam sebagai vektor murni (ukuran berkas kecil ~100-140 KB, tidak pernah pecah). Gambar raster dirender dalam resolusi tajam asli.
+   - Seluruh halaman diekspor otomatis tanpa memotong atau mengubah tampilan preview.
+
+3. **Sub-800 Line Modularization Mastery**:
+   - `slide_styles.js` (694 baris): Pembangun CSS lengkap (theme tokens, floating dock, layout grid, dan aturan `@media print` 16:9).
+   - `slide_template.js` (413 baris): Generator HTML, miniature thumbnails bar, dan lifecycle controller.
+   - Seluruh 9 file di folder `extension/design/` terverifikasi di bawah 800 baris.

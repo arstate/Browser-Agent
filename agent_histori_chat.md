@@ -5873,3 +5873,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - `node -c` validasi sintaks lolos 100% pada semua file JavaScript.
   - Pengujian pembuatan slide deck, deteksi tema otonom, dan normalisasi slide Markdown berjalan sempurna.
   - Bump versi manifest ke `v2.150.204`.
+
+### Iterasi 486 (v2.150.205) - 2026-09-05
+- **Permintaan Pengguna:**
+  1. Update tombol PDF di floating navigation dock menjadi tombol export.
+  2. Saat diklik ada opsi pilihan dropup menu export pdf slide dll, tapi saat ini hanya tersedia eksport pdf slide yang lain "soon".
+  3. Hasil eksport pdf slide harus pdf high-quality berbasis vektor (size kecil, tidak pecah pada zoom berapa pun, jika ada image tetap dirender image).
+  4. Eksport pdf diproses di background ukuran slide 16:9 sesuai yang seperti di preview, hasil eksport semua halaman, dan harus sama persis dengan yang di preview tanpa ada yang berubah.
+- **Analisis & Solusi:**
+  1. *Floating Dock Export Dropup*: Merefactor tombol `PDF P` di `slide_template.js` menjadi kontainer `.dock-export-wrapper` dengan pemicu `.dock-export-trigger` (`Export ⌵`) dan menu dropup `.dock-export-menu`. Opsi aktif adalah **Export PDF Slide** (badge `Vektor 16:9`) dan opsi berstatus `Soon` (`Export PPTX`, `Export HTML`, `Export PNG`). Mendukung pintasan keyboard `E` (toggle menu) dan `P` (ekspor PDF langsung).
+  2. *Background Vector 16:9 PDF Engine*: Menambahkan handler native RPC `export_slide_deck_pdf` pada Rust Native Host (`host/rust_host/src/main.rs`, dikompilasi ke `host/browser_agent_host`) dan Python (`host/native_host.py`). Mengeksekusi headless Chrome secara headless di latar belakang (`--print-to-pdf`, `--no-pdf-header-footer`) menghasilkan PDF 16:9 berukuran 1152 x 648 pt. Teks dan grafik vektor tajam tanpa pikselasi, berkas berukuran sangat kecil (~100-140 KB), dan gambar raster di-embed dalam resolusi penuh.
+  3. *Print Pagination 16:9 Identik*: Menyesuaikan `@media print` di `slide_styles.js` agar `.presentation-workspace` menjadi `display: block`, menyembunyikan sidebar dan dock, serta menyetel `.slide-section` ke `width: 16in !important; height: 9in !important; page-break-after: always !important; break-inside: avoid !important;`, menjamin seluruh slide tercetak 100% identik dengan tampilan canvas tanpa pergeseran layout.
+  4. *Sub-800 Baris Architecture*: Mengekstrak CSS slide deck ke dalam `extension/design/slide_styles.js` (694 baris) dan menyusutkan `slide_template.js` menjadi 413 baris. Seluruh file di direktori `extension/design/` kini berada di bawah 800 baris.
+- **Verifikasi:**
+  - Kompilasi binary Rust release `cargo build --release` berhasil 100% dan diuji via length-prefixed JSON-RPC (`STATUS: ok`, ukuran 143.622 bytes, file `visi-strategis-2026.pdf`).
+  - Uji `pdfinfo` pada hasil kompilasi headless Chrome: `Pages: 2`, `Page size: 1152 x 648 pts` (rasio murni 16:9), `Producer: Skia/PDF m146`.
+  - Uji render halaman PDF via `pdftoppm`: ukuran 2400 x 1350 px (rasio 16:9 presisi), teks vektor tajam sempurna.
+  - `node -c` validasi sintaks lolos 100% pada semua modul JavaScript.
+  - Bump manifest ke `v2.150.205`.

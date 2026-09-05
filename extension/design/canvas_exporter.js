@@ -92,30 +92,7 @@ async function handleCanvasExport(format) {
   }
 
   if (format === "pdf") {
-    notify("📑 Mengompilasi PDF layout via OpenDesign...");
-    try {
-      if (window.OpenDesignBridge?.exportArtifact) {
-        const res = await window.OpenDesignBridge.exportArtifact({
-          htmlContent: artifact.html,
-          format: "pdf"
-        });
-        if (res?.base64_data) {
-          const blob = base64ToBlob(res.base64_data, "application/pdf");
-          triggerDownloadBlob(blob, `${cleanTitle}.pdf`);
-          notify(`✅ File PDF ${cleanTitle}.pdf berhasil diunduh!`);
-          return;
-        } else if (res?.out_path) {
-          notify(`✅ File PDF tersimpan: ${res.out_path}`);
-          return;
-        }
-      }
-      // Fallback: download HTML for print to PDF
-      const blob = new Blob([artifact.html], { type: "text/html" });
-      triggerDownloadBlob(blob, `${cleanTitle}.html`);
-      notify("ℹ️ Mengunduh HTML untuk Print to PDF.");
-    } catch (err) {
-      notify("❌ Gagal ekspor PDF: " + (err.message || String(err)));
-    }
+    await exportSlideDeckPdf(artifact.html, cleanTitle);
     return;
   }
 
@@ -145,9 +122,83 @@ async function handleCanvasExport(format) {
   }
 }
 
+async function exportSlideDeckPdf(htmlContent, title = "presentation") {
+  const notify = (msg) => {
+    if (typeof showUniversalToast === "function") {
+      showUniversalToast(msg);
+    } else if (typeof window !== "undefined" && window.showUniversalToast) {
+      window.showUniversalToast(msg);
+    } else {
+      console.log(msg);
+    }
+  };
+
+  if (!htmlContent) return;
+  notify("📑 Mengompilasi PDF Slide Vektor 16:9 di background...");
+
+  const rawTitle = title || "slide_deck";
+  const cleanTitle = rawTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "presentation";
+
+  try {
+    const rpcFn = (typeof sendNativeRpc === "function")
+      ? sendNativeRpc
+      : (typeof window !== "undefined" && typeof window.sendNativeRpc === "function" ? window.sendNativeRpc : null);
+
+    if (rpcFn) {
+      const res = await rpcFn("export_slide_deck_pdf", {
+        html_content: htmlContent,
+        title: cleanTitle
+      });
+
+      if (res?.status === "ok" && res?.base64_data) {
+        const blob = base64ToBlob(res.base64_data, "application/pdf");
+        const finalFilename = res.filename || `${cleanTitle}.pdf`;
+        triggerDownloadBlob(blob, finalFilename);
+        notify(`✅ Berhasil mengunduh ${finalFilename} (Vektor 16:9)!`);
+        return;
+      }
+    }
+
+    // Fallback: OpenDesignBridge
+    if (typeof window !== "undefined" && window.OpenDesignBridge?.exportArtifact) {
+      const res = await window.OpenDesignBridge.exportArtifact({
+        htmlContent: htmlContent,
+        format: "pdf"
+      });
+      if (res?.base64_data) {
+        const blob = base64ToBlob(res.base64_data, "application/pdf");
+        triggerDownloadBlob(blob, `${cleanTitle}.pdf`);
+        notify(`✅ File PDF ${cleanTitle}.pdf berhasil diunduh!`);
+        return;
+      } else if (res?.out_path) {
+        notify(`✅ File PDF tersimpan: ${res.out_path}`);
+        return;
+      }
+    }
+
+    // Fallback: download standalone HTML
+    const blob = new Blob([htmlContent], { type: "text/html" });
+    triggerDownloadBlob(blob, `${cleanTitle}.html`);
+    notify("ℹ️ Mengunduh HTML untuk Print to PDF.");
+  } catch (err) {
+    notify("❌ Gagal ekspor PDF slide: " + (err.message || String(err)));
+  }
+}
+
+// Listen to postMessage from iframe
+if (typeof window !== "undefined" && typeof window.addEventListener === "function" && !window.__slideDeckExportListenerAdded) {
+  window.__slideDeckExportListenerAdded = true;
+  window.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "EXPORT_SLIDE_DECK_PDF") {
+      exportSlideDeckPdf(e.data.html, e.data.title);
+    }
+  });
+}
+
 // Global attachments
 if (typeof window !== "undefined") {
   window.triggerDownloadBlob = triggerDownloadBlob;
   window.base64ToBlob = base64ToBlob;
   window.handleCanvasExport = handleCanvasExport;
+  window.exportSlideDeckPdf = exportSlideDeckPdf;
 }

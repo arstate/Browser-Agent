@@ -929,6 +929,109 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             }
         }
 
+        "export_slide_deck_pdf" => {
+            let html_content = msg.get("html_content")
+                .or_else(|| msg.get("html"))
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            let title = msg.get("title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("presentation");
+
+            if html_content.is_empty() {
+                json!({ "status": "error", "error": "No html_content provided" })
+            } else {
+                let clean_title = title.to_lowercase()
+                    .chars()
+                    .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
+                    .collect::<String>()
+                    .split('-')
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+                    .join("-");
+                let clean_title = if clean_title.is_empty() { "presentation".to_string() } else { clean_title };
+
+                let ts = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis();
+                let tmp_dir = std::env::temp_dir();
+                let html_path = tmp_dir.join(format!("deck_{}.html", ts));
+                let pdf_path = tmp_dir.join(format!("{}_{}.pdf", clean_title, ts));
+
+                if let Err(e) = fs::write(&html_path, html_content) {
+                    json!({ "status": "error", "error": format!("Failed to write temp html: {}", e) })
+                } else {
+                    let chrome_candidates = [
+                        "/home/arya/.local/bin/google-chrome-stable",
+                        "google-chrome-stable",
+                        "google-chrome",
+                        "chromium",
+                        "chromium-browser",
+                        "/usr/bin/google-chrome-stable",
+                        "/usr/bin/google-chrome",
+                        "/usr/bin/chromium",
+                    ];
+
+                    let mut found_bin = None;
+                    for cand in chrome_candidates {
+                        let p = Path::new(cand);
+                        if p.is_absolute() && p.exists() {
+                            found_bin = Some(cand.to_string());
+                            break;
+                        } else if let Ok(out) = Command::new("which").arg(cand).output() {
+                            if out.status.success() {
+                                let path_str = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                                if !path_str.is_empty() {
+                                    found_bin = Some(path_str);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if let Some(chrome_bin) = found_bin {
+                        let res = Command::new(&chrome_bin)
+                            .arg("--headless")
+                            .arg("--disable-gpu")
+                            .arg("--no-pdf-header-footer")
+                            .arg(format!("--print-to-pdf={}", pdf_path.display()))
+                            .arg(&html_path)
+                            .output();
+
+                        let _ = fs::remove_file(&html_path);
+
+                        match res {
+                            Ok(_) => {
+                                if pdf_path.exists() {
+                                    match fs::read(&pdf_path) {
+                                        Ok(bytes) if !bytes.is_empty() => {
+                                            let b64 = BASE64_STANDARD.encode(&bytes);
+                                            json!({
+                                                "status": "ok",
+                                                "base64_data": b64,
+                                                "filename": format!("{}.pdf", clean_title),
+                                                "file_size": bytes.len(),
+                                                "pdf_path": pdf_path.to_string_lossy()
+                                            })
+                                        }
+                                        Ok(_) => json!({ "status": "error", "error": "Generated PDF is empty" }),
+                                        Err(e) => json!({ "status": "error", "error": format!("Failed to read PDF: {}", e) }),
+                                    }
+                                } else {
+                                    json!({ "status": "error", "error": "PDF file was not created by Chrome" })
+                                }
+                            }
+                            Err(e) => json!({ "status": "error", "error": format!("Chrome process error: {}", e) }),
+                        }
+                    } else {
+                        let _ = fs::remove_file(&html_path);
+                        json!({ "status": "error", "error": "Chrome / Chromium binary not found" })
+                    }
+                }
+            }
+        }
+
         "capture_os_screenshot" => {
             let tmp_path = if cfg!(windows) {
                 let temp = std::env::var("TEMP").unwrap_or_else(|_| "C:\\Windows\\Temp".to_string());

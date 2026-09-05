@@ -195,524 +195,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=Syne:wght@700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg-desk: ${theme.bgDesk || '#0E1015'};
-      --bg-sidebar: ${theme.bgSidebar || '#0B0C10'};
-      --bg-slide: ${theme.bgSlide || '#F5F3EF'};
-      --text-main: ${theme.textMain || '#111827'};
-      --text-muted: ${theme.textMuted || '#4B5563'};
-      --border-header: ${theme.borderHeader || '#9CA3AF'};
-      --accent: ${accentColor};
-      --accent-sec: ${accentSecondary};
-      --accent-ter: ${accentTertiary};
-      --card-bg: ${theme.cardBg || 'rgba(255, 255, 255, 0.65)'};
-      --card-border: ${theme.cardBorder || '1.5px solid rgba(0, 0, 0, 0.08)'};
-      --card-box-bg: ${theme.cardBoxBg || '#FFFFFF'};
-      --card-radius: ${theme.cardRadius || '6px'};
-      --font-heading: ${theme.fontHeading || "'Syne', 'Space Grotesk', sans-serif"};
-      --font-body: ${theme.fontBody || "'Plus Jakarta Sans', sans-serif"};
-      --dock-bg: #16181F;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      font-family: var(--font-body);
-      background: var(--bg-desk);
-      color: var(--text-main);
-    }
-
-    .presentation-workspace {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-    }
-
-    /* === SIDEBAR THUMBNAILS === */
-    .deck-sidebar {
-      width: 156px;
-      height: 100vh;
-      background: var(--bg-sidebar);
-      border-right: 1px solid rgba(255, 255, 255, 0.08);
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      padding: 20px 12px;
-      flex-shrink: 0;
-      z-index: 20;
-    }
-    .deck-sidebar::-webkit-scrollbar { width: 4px; }
-    .deck-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-
-    .thumb-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      opacity: 0.65;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      user-select: none;
-    }
-    .thumb-item * {
-      pointer-events: none;
-    }
-    .thumb-item:hover { opacity: 0.95; }
-    .thumb-item.active { opacity: 1; }
-
-    .thumb-num {
-      font-family: var(--font-body);
-      font-size: 11px;
-      font-weight: 700;
-      color: #6B7280;
-      width: 16px;
-      text-align: right;
-      flex-shrink: 0;
-    }
-    .thumb-item.active .thumb-num { color: #FFFFFF; font-weight: 800; }
-
-    .thumb-card {
-      width: 108px;
-      height: 60.75px;
-      background: var(--bg-slide);
-      border: 1.5px solid rgba(255, 255, 255, 0.12);
-      border-radius: var(--card-radius);
-      overflow: hidden;
-      position: relative;
-      flex-shrink: 0;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .thumb-item.active .thumb-card {
-      border-color: #FFFFFF;
-      box-shadow: 0 0 14px rgba(255, 255, 255, 0.35);
-    }
-    .thumb-mini-slide-wrap {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      overflow: hidden;
-      background: var(--bg-slide);
-    }
-    .thumb-mini-slide {
-      width: 864px;
-      height: 486px;
-      transform: scale(0.125);
-      transform-origin: top left;
-      pointer-events: none;
-      user-select: none;
-      background: var(--bg-slide);
-      color: var(--text-main);
-      padding: 24px 32px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-sizing: border-box;
-    }
-    .thumb-mini-header {
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 1.5px solid var(--border-header);
-      padding-bottom: 6px;
-      font-family: var(--font-body);
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--text-muted);
-    }
-    .thumb-mini-page { color: var(--accent); font-weight: 800; }
-    .thumb-mini-hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin: 10px 0 6px 0;
-    }
-    .thumb-mini-title {
-      font-family: var(--font-heading);
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--text-main);
-      text-transform: uppercase;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 650px;
-    }
-    .thumb-mini-counter {
-      font-family: var(--font-body);
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--text-main);
-    }
-    .thumb-mini-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      flex: 1;
-      margin: 10px 0;
-    }
-    .thumb-mini-col {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .thumb-mini-badge {
-      font-family: var(--font-body);
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .thumb-mini-col-title {
-      font-family: var(--font-heading);
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-main);
-      line-height: 1.2;
-      margin-bottom: 8px;
-    }
-    .thumb-mini-box {
-      background: var(--card-box-bg);
-      border: var(--card-border);
-      border-radius: var(--card-radius);
-      padding: 8px 10px;
-      font-family: var(--font-body);
-      font-size: 11px;
-      font-weight: 800;
-      text-align: center;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    }
-    .thumb-mini-footer {
-      border-top: 1px solid var(--border-header);
-      padding-top: 6px;
-      display: flex;
-      justify-content: space-between;
-      font-family: var(--font-body);
-      font-size: 9px;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    /* === MAIN STAGE VIEWPORT === */
-    .deck-stage-wrap {
-      flex: 1;
-      height: 100vh;
-      overflow: hidden;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-desk);
-      padding: 24px 36px 72px 36px;
-    }
-
-    .slide-section {
-      display: none !important;
-      width: 100%;
-      height: 100%;
-      max-width: 1220px;
-      max-height: calc(1220px * 9 / 16);
-      aspect-ratio: 16 / 9;
-      opacity: 0;
-      transform: scale(0.99);
-      transition: opacity 0.2s ease, transform 0.2s ease;
-    }
-    .slide-section.active {
-      display: flex !important;
-      opacity: 1 !important;
-      transform: scale(1) !important;
-    }
-
-    .slide-canvas {
-      width: 100%;
-      height: 100%;
-      background: var(--bg-slide);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
-      border-radius: var(--card-radius);
-      padding: 36px 48px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-sizing: border-box;
-      position: relative;
-    }
-
-    /* HEADER */
-    .slide-header-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1.5px solid var(--border-header);
-      padding-bottom: 10px;
-    }
-    .header-chapter {
-      font-family: var(--font-body);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      color: var(--text-main);
-      text-transform: uppercase;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-family: var(--font-body);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-    }
-    .header-ratio {
-      color: var(--text-muted);
-    }
-    .header-page-tag {
-      font-weight: 800;
-    }
-
-    /* HERO */
-    .slide-hero {
-      margin: 18px 0 16px 0;
-    }
-    .slide-main-title {
-      font-family: var(--font-heading);
-      font-size: 30px;
-      font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -0.01em;
-      text-transform: uppercase;
-      color: var(--text-main);
-      margin-bottom: 8px;
-    }
-    .hero-sub-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-    }
-    .slide-lead-desc {
-      font-family: var(--font-body);
-      font-size: 13.5px;
-      color: var(--text-muted);
-      line-height: 1.45;
-      flex: 1;
-    }
-    .slide-big-counter {
-      font-family: var(--font-body);
-      font-size: 15px;
-      font-weight: 800;
-      color: var(--text-main);
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-    }
-
-    /* 3 COLUMNS GRID */
-    .slide-columns-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      flex: 1;
-      align-items: stretch;
-      margin: 12px 0 20px 0;
-    }
-    .slide-col {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      background: transparent;
-    }
-    .col-top {
-      display: flex;
-      flex-direction: column;
-    }
-    .col-badge {
-      font-family: var(--font-body);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .col-title {
-      font-family: var(--font-heading);
-      font-size: 17px;
-      font-weight: 700;
-      line-height: 1.3;
-      color: var(--text-main);
-      margin-bottom: 8px;
-    }
-    .col-desc {
-      font-family: var(--font-body);
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.55;
-      margin-bottom: 16px;
-    }
-    .col-highlight-box {
-      background: var(--card-box-bg);
-      border: var(--card-border);
-      border-radius: var(--card-radius);
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-      min-height: 46px;
-    }
-    .col-highlight-text {
-      font-family: var(--font-body);
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    /* FOOTER */
-    .slide-footer-bar {
-      border-top: 1px solid var(--border-header);
-      padding-top: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .footer-meta-block {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-    .footer-line-1 {
-      font-family: var(--font-body);
-      font-size: 10.5px;
-      font-weight: 600;
-      color: var(--text-main);
-    }
-    .footer-line-2 {
-      font-family: var(--font-body);
-      font-size: 10.5px;
-      font-weight: 700;
-      color: var(--text-muted);
-    }
-    .footer-status-tag {
-      font-weight: 800;
-      letter-spacing: 0.05em;
-    }
-
-    /* === FLOATING NAVIGATION DOCK === */
-    .deck-floating-dock {
-      position: absolute;
-      bottom: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--dock-bg);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 9999px;
-      padding: 5px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(20px);
-      z-index: 100;
-    }
-    .dock-btn {
-      background: none;
-      border: none;
-      color: #FFFFFF;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 5px 8px;
-      border-radius: 9999px;
-      font-size: 12px;
-      font-weight: 600;
-      transition: all 0.15s;
-    }
-    .dock-btn * {
-      pointer-events: none;
-    }
-    .dock-btn:hover {
-      background: rgba(255, 255, 255, 0.12);
-      color: var(--accent);
-    }
-    .dock-btn-circle {
-      width: 26px;
-      height: 26px;
-      padding: 0;
-      border-radius: 50%;
-    }
-    .dock-counter {
-      font-family: var(--font-body);
-      font-size: 13px;
-      font-weight: 700;
-      color: #FFFFFF;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 0 4px;
-    }
-    .dock-counter strong { color: var(--accent); }
-    .dock-divider {
-      width: 1px;
-      height: 16px;
-      background: rgba(255, 255, 255, 0.16);
-    }
-    .dock-shortcut-btn {
-      font-size: 12px;
-      color: #D1D5DB;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .dock-key-badge {
-      background: #282B33;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #E5E7EB;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 4px;
-    }
-
-    /* === PRINT FOR PDF EXPORT === */
-    @media print {
-      @page {
-        size: 16in 9in;
-        margin: 0;
-      }
-      body, html {
-        background: var(--bg-slide) !important;
-        color: var(--text-main) !important;
-        overflow: visible !important;
-        height: auto !important;
-      }
-      .deck-sidebar, .deck-floating-dock { display: none !important; }
-      .deck-stage-wrap {
-        padding: 0 !important;
-        height: auto !important;
-        display: block !important;
-        background: var(--bg-slide) !important;
-      }
-      .slide-section {
-        display: block !important;
-        opacity: 1 !important;
-        transform: none !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        max-width: none !important;
-        max-height: none !important;
-        page-break-after: always !important;
-        break-after: page !important;
-        padding: 40px 48px !important;
-        box-sizing: border-box !important;
-      }
-      .slide-canvas {
-        height: 100% !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        justify-content: space-between !important;
-      }
-    }
+    ${(typeof getExecutiveSlideDeckCss === 'function' ? getExecutiveSlideDeckCss(theme, { accentColor, accentSecondary, accentTertiary }) : (typeof window !== 'undefined' && window.getExecutiveSlideDeckCss ? window.getExecutiveSlideDeckCss(theme, { accentColor, accentSecondary, accentTertiary }) : ''))}
   </style>
 </head>
 <body>
@@ -742,10 +225,51 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           <span class="dock-key-badge">R</span>
         </button>
         <div class="dock-divider"></div>
-        <button type="button" class="dock-btn dock-shortcut-btn" id="dock-btn-print" onclick="window.print()" title="Cetak / Simpan PDF (P)">
-          <span>PDF</span>
-          <span class="dock-key-badge">P</span>
-        </button>
+        <div class="dock-export-wrapper" id="dock-export-wrapper">
+          <button type="button" class="dock-btn dock-export-trigger" id="dock-btn-export" title="Ekspor Presentasi (E)">
+            <span>Export</span>
+            <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" class="dock-export-chevron"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <div class="dock-export-menu" id="dock-export-menu">
+            <button type="button" class="dock-export-item" data-action="export-pdf" id="dock-export-pdf-item">
+              <div class="dock-export-item-left">
+                <span class="export-item-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </span>
+                <span class="export-item-label">Export PDF Slide</span>
+              </div>
+              <span class="export-item-badge">Vektor 16:9</span>
+            </button>
+            <div class="dock-export-divider"></div>
+            <button type="button" class="dock-export-item disabled" disabled title="Segera hadir">
+              <div class="dock-export-item-left">
+                <span class="export-item-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="12" y1="9" x2="12" y2="15"/></svg>
+                </span>
+                <span class="export-item-label">Export PPTX</span>
+              </div>
+              <span class="export-item-soon">Soon</span>
+            </button>
+            <button type="button" class="dock-export-item disabled" disabled title="Segera hadir">
+              <div class="dock-export-item-left">
+                <span class="export-item-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </span>
+                <span class="export-item-label">Export HTML</span>
+              </div>
+              <span class="export-item-soon">Soon</span>
+            </button>
+            <button type="button" class="dock-export-item disabled" disabled title="Segera hadir">
+              <div class="dock-export-item-left">
+                <span class="export-item-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </span>
+                <span class="export-item-label">Export PNG</span>
+              </div>
+              <span class="export-item-soon">Soon</span>
+            </button>
+          </div>
+        </div>
       </nav>
     </main>
   </div>
@@ -815,6 +339,32 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           goToSlide(0);
           return;
         }
+
+        const exportTrigger = e.target.closest('#dock-btn-export, .dock-export-trigger');
+        if (exportTrigger) {
+          e.preventDefault();
+          const wrapper = document.getElementById('dock-export-wrapper');
+          if (wrapper) wrapper.classList.toggle('open');
+          return;
+        }
+
+        const exportPdfItem = e.target.closest('#dock-export-pdf-item, [data-action="export-pdf"]');
+        if (exportPdfItem) {
+          e.preventDefault();
+          const wrapper = document.getElementById('dock-export-wrapper');
+          if (wrapper) wrapper.classList.remove('open');
+          window.parent.postMessage({
+            type: 'EXPORT_SLIDE_DECK_PDF',
+            html: document.documentElement.outerHTML,
+            title: document.title || 'Slide Deck'
+          }, '*');
+          return;
+        }
+
+        const exportWrapper = document.getElementById('dock-export-wrapper');
+        if (exportWrapper && exportWrapper.classList.contains('open') && !e.target.closest('#dock-export-wrapper')) {
+          exportWrapper.classList.remove('open');
+        }
       });
 
       // Keyboard navigation
@@ -825,8 +375,15 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           goToSlide(currentIndex - 1);
         } else if (e.key === 'r' || e.key === 'R') {
           goToSlide(0);
+        } else if (e.key === 'e' || e.key === 'E') {
+          const wrapper = document.getElementById('dock-export-wrapper');
+          if (wrapper) wrapper.classList.toggle('open');
         } else if (e.key === 'p' || e.key === 'P') {
-          window.print();
+          window.parent.postMessage({
+            type: 'EXPORT_SLIDE_DECK_PDF',
+            html: document.documentElement.outerHTML,
+            title: document.title || 'Slide Deck'
+          }, '*');
         } else if (e.key === 'f' || e.key === 'F') {
           if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => {});

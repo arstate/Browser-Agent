@@ -127,6 +127,40 @@ function attachSlideDeckController(iframe) {
           goToSlide(0);
           return;
         }
+
+        const exportTrigger = e.target.closest('#dock-btn-export, .dock-export-trigger');
+        if (exportTrigger) {
+          e.preventDefault();
+          e.stopPropagation();
+          const wrapper = doc.getElementById('dock-export-wrapper');
+          if (wrapper) wrapper.classList.toggle('open');
+          return;
+        }
+
+        const exportPdfItem = e.target.closest('#dock-export-pdf-item, [data-action="export-pdf"]');
+        if (exportPdfItem) {
+          e.preventDefault();
+          e.stopPropagation();
+          const wrapper = doc.getElementById('dock-export-wrapper');
+          if (wrapper) wrapper.classList.remove('open');
+          if (typeof exportSlideDeckPdf === 'function') {
+            exportSlideDeckPdf(doc.documentElement.outerHTML, doc.title);
+          } else if (typeof window !== 'undefined' && typeof window.exportSlideDeckPdf === 'function') {
+            window.exportSlideDeckPdf(doc.documentElement.outerHTML, doc.title);
+          } else {
+            win.parent.postMessage({
+              type: 'EXPORT_SLIDE_DECK_PDF',
+              html: doc.documentElement.outerHTML,
+              title: doc.title
+            }, '*');
+          }
+          return;
+        }
+
+        const exportWrapper = doc.getElementById('dock-export-wrapper');
+        if (exportWrapper && exportWrapper.classList.contains('open') && !e.target.closest('#dock-export-wrapper')) {
+          exportWrapper.classList.remove('open');
+        }
       }, true);
     }
 
@@ -139,8 +173,21 @@ function attachSlideDeckController(iframe) {
           goToSlide(currentIndex - 1);
         } else if (e.key === 'r' || e.key === 'R') {
           goToSlide(0);
+        } else if (e.key === 'e' || e.key === 'E') {
+          const wrapper = doc.getElementById('dock-export-wrapper');
+          if (wrapper) wrapper.classList.toggle('open');
         } else if (e.key === 'p' || e.key === 'P') {
-          win.print();
+          if (typeof exportSlideDeckPdf === 'function') {
+            exportSlideDeckPdf(doc.documentElement.outerHTML, doc.title);
+          } else if (typeof window !== 'undefined' && typeof window.exportSlideDeckPdf === 'function') {
+            window.exportSlideDeckPdf(doc.documentElement.outerHTML, doc.title);
+          } else {
+            win.parent.postMessage({
+              type: 'EXPORT_SLIDE_DECK_PDF',
+              html: doc.documentElement.outerHTML,
+              title: doc.title
+            }, '*');
+          }
         } else if (e.key === 'f' || e.key === 'F') {
           if (!doc.fullscreenElement) {
             doc.documentElement.requestFullscreen().catch(() => {});

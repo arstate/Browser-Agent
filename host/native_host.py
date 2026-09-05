@@ -3729,6 +3729,70 @@ def export_od_artifact(file_path="", html_content="", project_id="browser-agent-
             except Exception:
                 pass
 
+def export_slide_deck_pdf(html_content="", title="presentation"):
+    if not html_content:
+        return {"status": "error", "error": "No html_content provided"}
+    try:
+        clean_title = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-') or 'presentation'
+        ts = int(time.time() * 1000)
+        tmp_html = f"/tmp/deck_{ts}.html"
+        tmp_pdf = f"/tmp/{clean_title}_{ts}.pdf"
+        with open(tmp_html, "w", encoding="utf-8") as f:
+            f.write(html_content)
+
+        chrome_candidates = [
+            "/home/arya/.local/bin/google-chrome-stable",
+            "google-chrome-stable",
+            "google-chrome",
+            "chromium",
+            "chromium-browser",
+            "/usr/bin/google-chrome-stable",
+            "/usr/bin/google-chrome",
+            "/usr/bin/chromium"
+        ]
+        chrome_bin = None
+        for cand in chrome_candidates:
+            if os.path.isabs(cand) and os.path.exists(cand):
+                chrome_bin = cand
+                break
+            elif shutil.which(cand):
+                chrome_bin = shutil.which(cand)
+                break
+
+        if not chrome_bin:
+            if os.path.exists(tmp_html):
+                try: os.remove(tmp_html)
+                except Exception: pass
+            return {"status": "error", "error": "Chrome / Chromium binary not found"}
+
+        cmd = [
+            chrome_bin,
+            "--headless",
+            "--disable-gpu",
+            "--no-pdf-header-footer",
+            f"--print-to-pdf={tmp_pdf}",
+            tmp_html
+        ]
+        subprocess.run(cmd, capture_output=True, timeout=30)
+        if os.path.exists(tmp_html):
+            try: os.remove(tmp_html)
+            except Exception: pass
+
+        if os.path.exists(tmp_pdf) and os.path.getsize(tmp_pdf) > 0:
+            with open(tmp_pdf, "rb") as f:
+                pdf_bytes = f.read()
+            b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+            return {
+                "status": "ok",
+                "base64_data": b64,
+                "filename": f"{clean_title}.pdf",
+                "file_size": len(pdf_bytes),
+                "pdf_path": tmp_pdf
+            }
+        return {"status": "error", "error": "PDF file was not created by Chrome"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
 def export_od_bundle_zip(files=None, title="opendesign_project", out_path=None):
     if not isinstance(files, dict) or not files:
         return {"status": "error", "error": "No files provided for ZIP bundle"}
@@ -3834,6 +3898,13 @@ def handle_local_rpc(msg):
         html_content = msg.get("html_content") or msg.get("html") or ""
         file_path = msg.get("file_path") or msg.get("path") or None
         res = lint_od_artifact(html_content=html_content, file_path=file_path)
+        res["id"] = req_id
+        return res
+
+    elif action == "export_slide_deck_pdf":
+        html_content = msg.get("html_content") or msg.get("html") or ""
+        title = msg.get("title") or "presentation"
+        res = export_slide_deck_pdf(html_content=html_content, title=title)
         res["id"] = req_id
         return res
 
