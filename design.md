@@ -1191,6 +1191,30 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Strict Sub-800 Line Rule Compliance**:
    - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 636, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 788, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+---
+
+## 57. Integrasi Agent Mode ➔ Master Design Slide Deck Orchestration (`v2.150.241`)
+
+### 🎨 1. Arsitektur Komunikasi Lintas-Mode (Seamless Agent-to-Design Handshake)
+- **Problem**: Pengguna di Agent Mode yang meminta analisis kompleks (misal audit Meta Ads ratusan baris) sekaligus slide deck presentasi/PDF report harus berpindah mode secara manual atau prompt terpotong.
+- **Solusi Terpadu**:
+  - `AGENT_TOOLS` kini dilengkapi tool resmi: `create_slide_deck_design`.
+  - Master Agent memproses analisis, tabel data, dan audit terlebih dahulu, kemudian secara otomatis memanggil `create_slide_deck_design`.
+  - Eksekusi dialihkan ke **🎨 Master Design (Slide Architect)** dengan visual badge: `Instruksikan 🎨 Master Design: Merancang Slide Deck 16:9 (N Slide)`.
+
+### 📑 2. Blueprinting Adaptif hingga 30 Slide & Domain Meta Ads
+- **Peningkatan Kapasitas Slide**: `createDefaultBlueprint` kini mendukung hingga 30 slide terstruktur tanpa batasan 12 slide sebelumnya.
+- **Domain Meta Ads**: Menyediakan 17 modul terkurasi khusus metrik periklanan (KPI, CPR, CTR, CBO, Demografi, Ad Fatigue, Lead Quality, A/B Testing Copy, dsb.) dengan penomoran bab dinamis.
+- **Generator Terpadu**: `generateSlideDeckArtifactFromOutline` menggabungkan input markdown/outline dari Master Agent, blueprinting, tema visual adaptif, dan injeksi gambar otomatis.
+
+### 🖼️ 3. Presentasi Otomatis di Canvas Drawer & Bento Result Card
+- Tool eksekusi langsung merender `.opendesign-result-card` di dalam obrolan asisten.
+- Otomatis membuka Canvas Drawer (`openOpenDesignCanvas(artifact)`).
+- Menyematkan `designArtifact` pada `conversationHistory` sehingga kartu preview dan dokumen kanvas tetap utuh saat obrolan dimuat ulang.
+
+### 📏 4. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` tetap strictly `<= 800` baris (`canvas_exporter.js` 245, `canvas_manager.js` 788, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 657, `slide_editor.js` 789, `slide_styles.js` 738, `slide_template.js` 687, `slide_themes.js` 319).
+
 
 
 

@@ -50,31 +50,11 @@ function getDesignMilestones(userTopic = '', isRevision = false, totalSlides = 5
     ];
   }
   return [
-    {
-      title: '👑 Master Agent: Analisis Brief & Penyusunan Cetak Biru Presentasi',
-      completed: false,
-      inProgress: true
-    },
-    {
-      title: '🤝 Delegasi ke Master Design: Kurasi Style Visual & Palet Sesuai Materi',
-      completed: false,
-      inProgress: false
-    },
-    {
-      title: `🎨 Master Design: Perancangan Bertahap Slide demi Slide (1 s/d ${totalSlides || 'N'})`,
-      completed: false,
-      inProgress: false
-    },
-    {
-      title: '🔍 Quality Gate: Evaluasi & Revisi Setiap Slide sampai Tervalidasi',
-      completed: false,
-      inProgress: false
-    },
-    {
-      title: '👑 Master Agent: Re-Check Detail Seluruh Slide & Final Approval',
-      completed: false,
-      inProgress: false
-    }
+    { title: '👑 Master Agent: Analisis Brief & Penyusunan Cetak Biru Presentasi', completed: false, inProgress: true },
+    { title: '🤝 Delegasi ke Master Design: Kurasi Style Visual & Palet Sesuai Materi', completed: false, inProgress: false },
+    { title: `🎨 Master Design: Perancangan Bertahap Slide demi Slide (1 s/d ${totalSlides || 'N'})`, completed: false, inProgress: false },
+    { title: '🔍 Quality Gate: Evaluasi & Revisi Setiap Slide sampai Tervalidasi', completed: false, inProgress: false },
+    { title: '👑 Master Agent: Re-Check Detail Seluruh Slide & Final Approval', completed: false, inProgress: false }
   ];
 }
 
@@ -240,7 +220,7 @@ function generateEditorialTitle(cleanTopic, themeId = "playful_pastel") {
 }
 
 function createDefaultBlueprint(topic = 'Presentasi', targetSlideCount = 5, theme = {}) {
-  const count = Math.max(3, Math.min(parseInt(targetSlideCount, 10) || 5, 12));
+  const count = Math.max(3, Math.min(parseInt(targetSlideCount, 10) || 5, 30));
   const cleanTopic = cleanPresentationTopic(topic);
   const edObj = generateEditorialTitle(cleanTopic, theme.id);
   const titleCase = toTitleCaseIndonesian(cleanTopic);
@@ -257,65 +237,87 @@ function createDefaultBlueprint(topic = 'Presentasi', targetSlideCount = 5, them
   });
 
   let outlineTitles = [];
-  if (/kucing|hewan|anjing|pet|fauna|satwa/i.test(cleanTopic)) {
+  if (/meta\s*ads|iklan|marketing|facebook\s*ads|instagram\s*ads|cpr|roas|campaign/i.test(cleanTopic)) {
     outlineTitles = [
-      { title: `Asal-Usul & Keanekaragaman ${titleCase}`, sub: `Menelusuri jejak sejarah dan keunikan fauna endemik nusantara.` },
-      { title: `Ragam Ras Populer & Karakteristik Fisik`, sub: `Mengenal ciri khas bulu, postur tubuh, dan adaptasi lingkungan.` },
-      { title: `Perilaku & Tingkah Menggemaskan Si Anabul`, sub: `Mengapa kucing mendengkur, memijat, dan bagaimana mereka berkomunikasi.` },
-      { title: `Fakta Kunci & Statistik Pecinta Hewan`, sub: `Data populasi, tren adopsi, dan antusiasme komunitas nusantara.` },
-      { title: `Mitos vs Fakta Populer Seputar ${titleCase}`, sub: `Mengurai kesalahpahaman umum dengan fakta biologis terpercaya.` },
-      { title: `Filosofi Kasih Sayang & Kesejahteraan Hewan`, sub: `Tanggung jawab moral dan kebahagiaan hidup berdampingan dengan satwa.` },
-      { title: `Panduan Perawatan & Kebutuhan Nutrisi Harian`, sub: `Langkah demi langkah menjaga kebersihan, gizi seimbang, dan kebugaran.` },
-      { title: `Kesehatan, Vaksinasi & Perlindungan Rutin`, sub: `Pencegahan penyakit menular dan pentingnya jadwal dokter hewan.` },
-      { title: `Komitmen Peduli: Aksi Nyata Lindungi ${titleCase}`, sub: `Gerakan adopsi bertanggung jawab dan kepedulian satwa jalanan.` }
-    ];
+      ['Ringkasan Kinerja & KPI Utama', 'Ikhtisar metrik performa kampanye iklan, spend, dan pencapaian target.'],
+      ['Struktur Kampanye & Objektif Penjualan', 'Pemetaan hierarki Advantage+ Campaign Budget (CBO) dan targeting.'],
+      ['Analisis Biaya per Hasil (CPR) & Efisiensi', 'Tolak ukur biaya per prospek berkualitas vs threshold profitabilitas.'],
+      ['Evaluasi CTR, Hook Rate & Interaksi Visual', 'Daya pikat 3 detik pertama video Reels dan rasio klik tautan.'],
+      ['Segmentasi Demografi & Sebaran Wilayah', 'Karakteristik audiens usia 25-45 tahun di wilayah target utama.'],
+      ['Komparasi Format: Reels vs Feed vs Carousel', 'Analisis efektivitas format materi kreatif dalam memicu respon chat.'],
+      ['Kualitas Leads & Rasio Konversi WhatsApp', 'Tingkat kelayakan calon pembeli dan kecepatan respon admin.'],
+      ['A/B Testing Copywriting & Sudut Penawaran', 'Pengujian headline anti-price shock dan pemicu urgensi penawaran.'],
+      ['Deteksi Ad Fatigue & Siklus Kejenuhan Kreatif', 'Pemantauan frekuensi tayang dan timing tepat untuk penyegaran materi.'],
+      ['Alokasi Anggaran & Strategi Skalabilitas', 'Rencana penambahan budget bertahap pada adset dengan CPR terendah.'],
+      ['Strategi Retargeting & Custom Audience', 'Menjangkau kembali pengunjung profil dan prospek yang belum closing.'],
+      ['Eliminasi Junk Leads & Penyempurnaan Filter', 'Penerapan negative keyword dan penguncian audiens berdaya beli tinggi.'],
+      ['Benchmark Kompetitor & Tren Kreatif Industri', 'Peta persaingan konten visual dan diferensiasi penawaran produk.'],
+      ['Analisis Kebocoran Biaya & Optimalisasi Jam Tayang', 'Penyesuaian jadwal penayangan iklan pada jam-jam aktif konsumen.'],
+      ['Diagnostik Kesehatan Akun & Mitigasi Risiko', 'Pencegahan pembatasan akun dan kepatuhan terhadap kebijakan periklanan.'],
+      ['Rekomendasi Strategis & Quick Wins', 'Langkah perbaikan instan untuk menurunkan CPR dalam 48 jam ke depan.'],
+      ['Peta Jalan Eksekusi & Target Skala Bulanan', 'Tahapan aksi berkelanjutan menuju target closing maksimal.']
+    ].map(([title, sub]) => ({ title, sub }));
+  } else if (/kucing|hewan|anjing|pet|fauna|satwa/i.test(cleanTopic)) {
+    outlineTitles = [
+      [`Asal-Usul & Keanekaragaman ${titleCase}`, `Menelusuri jejak sejarah dan keunikan fauna endemik nusantara.`],
+      [`Ragam Ras Populer & Karakteristik Fisik`, `Mengenal ciri khas bulu, postur tubuh, dan adaptasi lingkungan.`],
+      [`Perilaku & Tingkah Menggemaskan Si Anabul`, `Mengapa kucing mendengkur, memijat, dan bagaimana mereka berkomunikasi.`],
+      [`Fakta Kunci & Statistik Pecinta Hewan`, `Data populasi, tren adopsi, dan antusiasme komunitas nusantara.`],
+      [`Mitos vs Fakta Populer Seputar ${titleCase}`, `Mengurai kesalahpahaman umum dengan fakta biologis terpercaya.`],
+      [`Filosofi Kasih Sayang & Kesejahteraan Hewan`, `Tanggung jawab moral dan kebahagiaan hidup berdampingan dengan satwa.`],
+      [`Panduan Perawatan & Kebutuhan Nutrisi Harian`, `Langkah demi langkah menjaga kebersihan, gizi seimbang, dan kebugaran.`],
+      [`Kesehatan, Vaksinasi & Perlindungan Rutin`, `Pencegahan penyakit menular dan pentingnya jadwal dokter hewan.`],
+      [`Komitmen Peduli: Aksi Nyata Lindungi ${titleCase}`, `Gerakan adopsi bertanggung jawab dan kepedulian satwa jalanan.`]
+    ].map(([title, sub]) => ({ title, sub }));
   } else if (/kopi|kuliner|makanan|masakan/i.test(cleanTopic)) {
     outlineTitles = [
-      { title: `Asal-Usul & Filosofi Rasa ${titleCase}`, sub: `Kisah di balik tradisi bahan baku autentik nusantara.` },
-      { title: `Keistimewaan Bahan & Varietas Utama`, sub: `Karakteristik mutu dan standar pemilihan bahan terbaik.` },
-      { title: `Seni Peracikan & Teknik Pengolahan`, sub: `Kombinasi metode tradisional dan sentuhan presisi modern.` },
-      { title: `Metrik Mutu & Standar Cita Rasa`, sub: `Tolak ukur rasa, aroma, dan kepuasan penikmat kuliner.` },
-      { title: `Diferensiasi & Ciri Khas Autentik`, sub: `Faktor pembeda yang menjadikannya ikonik dan dicintai.` },
-      { title: `Filosofi & Kebersamaan Menikmati Hidangan`, sub: `Nilai sosial dan kehangatan di setiap sajian.` },
-      { title: `Alur Kreasi dari Dapur hingga Meja Saji`, sub: `Tahapan pengolahan higienis dengan dedikasi tinggi.` },
-      { title: `Peluang Eksplorasi & Inovasi Rasa`, sub: `Tren masa depan dan adaptasi selera generasi baru.` },
-      { title: `Rangkuman Rasa & Warisan Kuliner`, sub: `Melestarikan kekayaan tradisi kuliner untuk generasi mendatang.` }
-    ];
+      [`Asal-Usul & Filosofi Rasa ${titleCase}`, `Kisah di balik tradisi bahan baku autentik nusantara.`],
+      [`Keistimewaan Bahan & Varietas Utama`, `Karakteristik mutu dan standar pemilihan bahan terbaik.`],
+      [`Seni Peracikan & Teknik Pengolahan`, `Kombinasi metode tradisional dan sentuhan presisi modern.`],
+      [`Metrik Mutu & Standar Cita Rasa`, `Tolak ukur rasa, aroma, dan kepuasan penikmat kuliner.`],
+      [`Diferensiasi & Ciri Khas Autentik`, `Faktor pembeda yang menjadikannya ikonik dan dicintai.`],
+      [`Filosofi & Kebersamaan Menikmati Hidangan`, `Nilai sosial dan kehangatan di setiap sajian.`],
+      [`Alur Kreasi dari Dapur hingga Meja Saji`, `Tahapan pengolahan higienis dengan dedikasi tinggi.`],
+      [`Peluang Eksplorasi & Inovasi Rasa`, `Tren masa depan dan adaptasi selera generasi baru.`],
+      [`Rangkuman Rasa & Warisan Kuliner`, `Melestarikan kekayaan tradisi kuliner untuk generasi mendatang.`]
+    ].map(([title, sub]) => ({ title, sub }));
   } else if (/ai|coding|tech|cyber|software|startup|data/i.test(cleanTopic)) {
     outlineTitles = [
-      { title: `Pondasi & Evolusi Teknologi ${titleCase}`, sub: `Latar belakang perkembangan dan pendorong inovasi modern.` },
-      { title: `Arsitektur Sistem & Komponen Kunci`, sub: `Pilar teknis yang menopang keandalan dan skalabilitas.` },
-      { title: `Kapabilitas Inti & Diferensiasi Solusi`, sub: `Fitur unggulan yang memberikan keunggulan kompetitif nyata.` },
-      { title: `Indikator Performa & Metrik Efisiensi`, sub: `Pengukuran latensi, throughput, dan dampak optimasi.` },
-      { title: `Tantangan Keamanan & Mitigasi Risiko`, sub: `Evaluasi komparatif celah sistem dan benteng pertahanan.` },
-      { title: `Prinsip Filosofi Desain Sistem Terbuka`, sub: `Standar kehandalan, interoperabilitas, dan keamanan kode.` },
-      { title: `Peta Jalan Implementasi & Deployment`, sub: `Alur eksekusi dari prototipe hingga skala produksi.` },
-      { title: `Ekosistem Integrasi & Automasi Terpadu`, sub: `Menghubungkan layanan pendukung untuk efisiensi maksimal.` },
-      { title: `Kesimpulan Strategis & Arah Masa Depan`, sub: `Rangkuman eksekutif dan rekomendasi adopsi teknologi.` }
-    ];
+      [`Pondasi & Evolusi Teknologi ${titleCase}`, `Latar belakang perkembangan dan pendorong inovasi modern.`],
+      [`Arsitektur Sistem & Komponen Kunci`, `Pilar teknis yang menopang keandalan dan skalabilitas.`],
+      [`Kapabilitas Inti & Diferensiasi Solusi`, `Fitur unggulan yang memberikan keunggulan kompetitif nyata.`],
+      [`Indikator Performa & Metrik Efisiensi`, `Pengukuran latensi, throughput, dan dampak optimasi.`],
+      [`Tantangan Keamanan & Mitigasi Risiko`, `Evaluasi komparatif celah sistem dan benteng pertahanan.`],
+      [`Prinsip Filosofi Desain Sistem Terbuka`, `Standar kehandalan, interoperabilitas, dan keamanan kode.`],
+      [`Peta Jalan Implementasi & Deployment`, `Alur eksekusi dari prototipe hingga skala produksi.`],
+      [`Ekosistem Integrasi & Automasi Terpadu`, `Menghubungkan layanan pendukung untuk efisiensi maksimal.`],
+      [`Kesimpulan Strategis & Arah Masa Depan`, `Rangkuman eksekutif dan rekomendasi adopsi teknologi.`]
+    ].map(([title, sub]) => ({ title, sub }));
   } else {
     outlineTitles = [
-      { title: `Fondasi & Latar Belakang ${titleCase}`, sub: `Pemahaman mendasar mengenai sejarah dan konteks utama.` },
-      { title: `Pilar Utama & Ruang Lingkup ${titleCase}`, sub: `Eksplorasi dimensi penting dan struktur pembahasan.` },
-      { title: `Karakteristik & Keunikan Penting`, sub: `Aspek khusus yang membedakan dan menjadikannya bernilai.` },
-      { title: `Data, Fakta & Statistik Kunci`, sub: `Angka nyata dan tolak ukur penting yang terverifikasi.` },
-      { title: `Komparasi Perspektif & Analisis Kritis`, sub: `Membedah peluang, tantangan, dan sudut pandang berbeda.` },
-      { title: `Prinsip Utama & Nilai Fundamental`, sub: `Pijakan moral dan pemikiran inti yang mendasari materi.` },
-      { title: `Tahapan Implementasi & Panduan Aksi`, sub: `Langkah operasional yang sistematis dan terstruktur.` },
-      { title: `Faktor Pendukung & Penguatan Kualitas`, sub: `Elemen pelengkap yang memaksimalkan keberhasilan hasil.` },
-      { title: `Kesimpulan Komprehensif & Rekomendasi`, sub: `Rangkuman wawasan dan intisari penting untuk masa depan.` }
-    ];
+      [`Fondasi & Latar Belakang ${titleCase}`, `Pemahaman mendasar mengenai sejarah dan konteks utama.`],
+      [`Pilar Utama & Ruang Lingkup ${titleCase}`, `Eksplorasi dimensi penting dan struktur pembahasan.`],
+      [`Karakteristik & Keunikan Penting`, `Aspek khusus yang membedakan dan menjadikannya bernilai.`],
+      [`Data, Fakta & Statistik Kunci`, `Angka nyata dan tolak ukur penting yang terverifikasi.`],
+      [`Komparasi Perspektif & Analisis Kritis`, `Membedah peluang, tantangan, dan sudut pandang berbeda.`],
+      [`Prinsip Utama & Nilai Fundamental`, `Pijakan moral dan pemikiran inti yang mendasari materi.`],
+      [`Tahapan Implementasi & Panduan Aksi`, `Langkah operasional yang sistematis dan terstruktur.`],
+      [`Faktor Pendukung & Penguatan Kualitas`, `Elemen pelengkap yang memaksimalkan keberhasilan hasil.`],
+      [`Kesimpulan Komprehensif & Rekomendasi`, `Rangkuman wawasan dan intisari penting untuk masa depan.`]
+    ].map(([title, sub]) => ({ title, sub }));
   }
 
   for (let i = 2; i < count; i++) {
     const layout = archetypes[(i - 2) % archetypes.length];
-    const outlineItem = outlineTitles[(i - 2) % outlineTitles.length];
+    const outlineIdx = (i - 2) % outlineTitles.length;
+    const outlineItem = outlineTitles[outlineIdx];
+    const suffix = (i - 2 >= outlineTitles.length) ? ` // Lanjutan ${Math.floor((i - 2) / outlineTitles.length) + 1}` : '';
     slides.push({
       index: i,
-      title: outlineItem.title,
+      title: outlineItem.title + suffix,
       subtitle: outlineItem.sub,
       layout: layout,
-      badge: `BAB 0${i} // ${cleanTopic.slice(0, 16).toUpperCase()}`
+      badge: `BAB ${String(i).padStart(2, '0')} // ${cleanTopic.slice(0, 16).toUpperCase()}`
     });
   }
 
@@ -618,6 +620,148 @@ function parseSingleSlideJson(rawText, fallbackSlide = {}) {
   return slide;
 }
 
+function generateSlideDeckArtifactFromOutline({
+  topic = 'Presentasi Eksekutif',
+  slideCount = 10,
+  detailedOutlineOrContent = '',
+  designArchetype = 'auto',
+  userImages = []
+} = {}) {
+  const cleanFn = (typeof cleanPresentationTopic === 'function')
+    ? cleanPresentationTopic
+    : (typeof window !== 'undefined' && typeof window.cleanPresentationTopic === 'function' ? window.cleanPresentationTopic : null);
+  const cleanTopic = cleanFn ? cleanFn(topic) : String(topic || '').replace(/^(?:slide|pdf|ppt|deck|tentang|buatkan)\s+/i, '').trim();
+  const titleCaseFn = (typeof toTitleCaseIndonesian === 'function')
+    ? toTitleCaseIndonesian
+    : (typeof window !== 'undefined' && typeof window.toTitleCaseIndonesian === 'function' ? window.toTitleCaseIndonesian : null);
+  const titleCase = titleCaseFn ? titleCaseFn(cleanTopic) : cleanTopic;
+
+  const targetCount = Math.max(3, Math.min(parseInt(slideCount, 10) || 10, 30));
+
+  const getThemeFn = (typeof detectOptimalSlideTheme === 'function')
+    ? detectOptimalSlideTheme
+    : (typeof window !== 'undefined' && typeof window.detectOptimalSlideTheme === 'function' ? window.detectOptimalSlideTheme : null);
+  const themeQuery = (designArchetype && designArchetype !== 'auto') ? `${designArchetype} ${cleanTopic}` : cleanTopic;
+  const theme = getThemeFn ? getThemeFn(themeQuery, { archetype: designArchetype }) : {
+    id: 'dark_luxury_cyber',
+    name: 'Dark Luxury Cyber Editorial',
+    bgSlide: '#0B0F19',
+    accent: '#6366F1',
+    subHeader: 'LAPORAN EKSEKUTIF & STRATEGIS',
+    badge: 'INSIGHT'
+  };
+
+  const parseFn = (typeof parseMarkdownToSlides === 'function')
+    ? parseMarkdownToSlides
+    : (typeof window !== 'undefined' && typeof window.parseMarkdownToSlides === 'function' ? window.parseMarkdownToSlides : null);
+
+  let parsedSlides = [];
+  if (detailedOutlineOrContent && parseFn) {
+    parsedSlides = parseFn(detailedOutlineOrContent, topic);
+  }
+
+  const blueprintFn = (typeof createDefaultBlueprint === 'function')
+    ? createDefaultBlueprint
+    : (typeof window !== 'undefined' && typeof window.createDefaultBlueprint === 'function' ? window.createDefaultBlueprint : null);
+
+  let finalSlides = [];
+  if (parsedSlides.length >= targetCount) {
+    finalSlides = parsedSlides.slice(0, targetCount);
+  } else {
+    const blueprint = blueprintFn ? blueprintFn(topic, targetCount, theme) : { slides: [] };
+    const bpSlides = blueprint.slides || [];
+    finalSlides = [];
+
+    // First slide: cover
+    if (parsedSlides.length > 0 && parsedSlides[0].layout === 'cover') {
+      finalSlides.push(parsedSlides[0]);
+    } else if (bpSlides.length > 0) {
+      finalSlides.push(bpSlides[0]);
+    }
+
+    // Intermediate slides
+    for (let i = 1; i < targetCount - 1; i++) {
+      if (i < parsedSlides.length && parsedSlides[i].title && parsedSlides[i].title !== parsedSlides[0]?.title) {
+        finalSlides.push(parsedSlides[i]);
+      } else if (i < bpSlides.length) {
+        finalSlides.push(bpSlides[i]);
+      } else {
+        const cycle = i % 4;
+        const layouts = ['split', 'bento', 'metrics', 'timeline'];
+        finalSlides.push({
+          index: i + 1,
+          title: `${titleCase} // Analisis Bagian ${String(i + 1).padStart(2, '0')}`,
+          subtitle: `Pendalaman metrik kinerja, tren operasional, dan temuan kunci seputar ${cleanTopic}.`,
+          layout: layouts[cycle],
+          badge: `MODUL ${String(i + 1).padStart(2, '0')}`,
+          cards: [
+            { badge: 'POIN 01', title: 'Observasi Mendalam', desc: `Evaluasi komprehensif data lapangan dan tolak ukur efisiensi ${cleanTopic}.`, stat: '01', metricValue: '98%', footerHighlight: 'HIGH IMPACT' },
+            { badge: 'POIN 02', title: 'Optimalisasi Taktis', desc: `Peluang percepatan hasil dan mitigasi kendala operasional secara terukur.`, stat: '02', metricValue: '+45%', footerHighlight: 'SCALABILITY' }
+          ]
+        });
+      }
+    }
+
+    // Last slide: conclusion
+    if (parsedSlides.length >= targetCount && parsedSlides[parsedSlides.length - 1].layout === 'conclusion') {
+      finalSlides.push(parsedSlides[parsedSlides.length - 1]);
+    } else if (bpSlides.length >= targetCount) {
+      finalSlides.push(bpSlides[bpSlides.length - 1]);
+    } else {
+      finalSlides.push({
+        index: targetCount,
+        title: `Rangkuman Eksekutif & Rekomendasi: ${titleCase}`,
+        subtitle: `Intisari kesimpulan strategis dan langkah aksi terukur untuk optimalisasi performa.`,
+        layout: 'conclusion',
+        badge: 'KESIMPULAN'
+      });
+    }
+  }
+
+  // Sequential 1 to N indexing
+  finalSlides.forEach((s, idx) => { s.index = idx + 1; });
+
+  const buildHtmlFn = (typeof buildExecutiveSlideDeckHtml === 'function')
+    ? buildExecutiveSlideDeckHtml
+    : (typeof window !== 'undefined' && typeof window.buildExecutiveSlideDeckHtml === 'function' ? window.buildExecutiveSlideDeckHtml : null);
+
+  const deckMeta = {
+    title: titleCase,
+    brand: titleCase,
+    categoryTitle: titleCase.toUpperCase(),
+    subCategory: theme.subHeader || 'LAPORAN EKSEKUTIF & STRATEGIS',
+    accentColor: theme.accent || '#38BDF8',
+    themeObj: theme,
+    userPrompt: `${topic} ${designArchetype}`
+  };
+
+  let deckHtml = buildHtmlFn ? buildHtmlFn(finalSlides, deckMeta) : '';
+
+  const injectImgFn = (typeof injectImagesIntoSlideDeckHtml === 'function')
+    ? injectImagesIntoSlideDeckHtml
+    : (typeof window !== 'undefined' && typeof window.injectImagesIntoSlideDeckHtml === 'function' ? window.injectImagesIntoSlideDeckHtml : null);
+
+  if (injectImgFn && userImages && userImages.length > 0) {
+    deckHtml = injectImgFn(deckHtml, userImages);
+  }
+
+  return {
+    id: `deck_${Date.now()}`,
+    html: deckHtml,
+    meta: {
+      title: titleCase,
+      description: `Presentasi 16:9 widescreen interaktif (${finalSlides.length} slide) hasil analisis Master Agent & Master Design.`,
+      system: 'Slide Deck 16:9',
+      category: 'Executive Presentation',
+      theme: theme.id,
+      colors: [theme.bgSlide || theme.bg || '#0B0F19', theme.accent || '#6366F1', theme.accentSecondary || '#38BDF8', '#FFFFFF'],
+      tags: ['16:9 Deck', 'Thumbnails', 'PDF Ready', `${finalSlides.length} Slides`]
+    },
+    raw: detailedOutlineOrContent || deckHtml,
+    slideCount: finalSlides.length
+  };
+}
+
 // Attach to window for global extension access
 if (typeof window !== 'undefined') {
   window.cleanPresentationTopic = cleanPresentationTopic;
@@ -633,4 +777,5 @@ if (typeof window !== 'undefined') {
   window.reviseFullDeckData = reviseFullDeckData;
   window.createSlidePromptForMasterDesign = createSlidePromptForMasterDesign;
   window.parseSingleSlideJson = parseSingleSlideJson;
+  window.generateSlideDeckArtifactFromOutline = generateSlideDeckArtifactFromOutline;
 }

@@ -6844,3 +6844,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Verifikasi jumlah baris memastikan seluruh file design `<= 792` baris.
   5. Bump versi manifest ke `v2.150.240`.
+
+### 🚀 Iterasi 522: Integrasi Penuh Agent Mode & Delegasi Otomatis ke Master Design (create_slide_deck_design) (v2.150.241)
+- **User Request:**
+  - "sekarang tambah fitur ketika di mode agent mode agent mode bisa membuat design mode juga bro jadi misal saya rpomtp gini kan, 'analisis meta ads saya trus buatkan saya pdf reportnya detail 20 halaman' master agent akan analisis dulu sampai selesai baru master agent otomatis memanggil master design untuk eksekusi design ppt slide 16:9, jadi master agent itu agent mode itu serba bisa bro"
+- **Akar Kebutuhan (Root Cause & Need):**
+  - Master Agent dalam Agent Mode (`runAgentLoop`) sebelumnya belum memiliki tool resmi untuk membuat presentasi slide deck interaktif 16:9 widescreen di Canvas Drawer.
+  - Jika pengguna meminta alur komposit (analisis/riset web + laporan presentasi slide/PDF deck hingga 20 halaman), Master Agent harus dapat menyelesaikan analisis data terlebih dahulu, lalu mendelegasikan perancangan slide ke Master Design.
+- **Analisis & Solusi Teknis:**
+  1. *Pendaftaran Tool `create_slide_deck_design` di `AGENT_TOOLS` (`extension/sidepanel.js`)*:
+     - Menambahkan tool `create_slide_deck_design` dengan parameter: `topic`, `slide_count` (3 s/d 30 slide), `detailed_outline_or_content` (data analisis & poin slide), dan `design_archetype`.
+     - Menambahkan instruksi operasional di `buildDynamicSystemPrompt` agar Master Agent menyelesaikan audit/analisis terlebih dahulu sebelum mendelegasikan slide deck ke Master Design.
+  2. *Atribusi Multi-Agent & Delegasi Orkestrasi (`sidepanel.js`)*:
+     - Dalam tool execution loop di `runAgentLoop`, memetakan `toolName === "create_slide_deck_design"` ke worker agent `🎨 Master Design (Slide Architect)` (`is_boss: false`).
+     - Menampilkan badge delegasi `Instruksikan 🎨 Master Design: Merancang Slide Deck 16:9 (N Slide)` dan update live status Telegram remote.
+  3. *Engine Slide Terstruktur hingga 30 Halaman & Domain Meta Ads (`extension/design/design_agent.js`)*:
+     - Memperluas kapasitas `createDefaultBlueprint` dari batas 12 slide menjadi hingga 30 slide penuh.
+     - Menambahkan modul outline khusus Meta Ads & Digital Marketing (KPI, CPR, CTR, CBO, Demografi, Ad Fatigue, dsb.) dengan penomoran bab dinamis.
+     - Mengimplementasikan `generateSlideDeckArtifactFromOutline` yang menggabungkan parsed outline, blueprint adaptif, dan rendering HTML `buildExecutiveSlideDeckHtml`.
+  4. *Render Hasil di Bubble Chat & Auto-Open Canvas (`sidepanel.js`)*:
+     - Tool eksekusi langsung merender kartu Bento `.opendesign-result-card` pada bubble pesan asisten aktif.
+     - Otomatis membuka Canvas Drawer (`openOpenDesignCanvas(artifact)`).
+     - Menyematkan `designArtifact` pada entri `conversationHistory` asisten untuk persistensi database saat reload sesi.
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 245, `canvas_manager.js` 788, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 657, `slide_editor.js` 789, `slide_styles.js` 738, `slide_template.js` 687, `slide_themes.js` 319).
+- **Verifikasi:**
+  1. Unit test `test_agent_mode_design_tool.js` lulus 100% (4/4 test suites).
+  2. Seluruh 4 unit test regresi (`test_slide_editor_lag_optimization`, `test_user_image_and_creative_design`, `test_slide_image_container_selection`, `test_backspace_navigation_guard`) lulus 100%.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Verifikasi baris memastikan seluruh file design `<= 793` baris.
+  5. Bump versi manifest ke `v2.150.241`.
+
