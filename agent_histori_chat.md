@@ -7137,5 +7137,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.251` di `manifest.json`.
 
+---
+
+### Iterasi: Penambahan Aplikasi Cloud Notes pada Hub Aplikasi Terintegrasi (`v2.150.252`)
+- **User Request:**
+  - "update tambah apps notes ini linknya cloudnotes-wheat.vercel.app"
+- **Solusi & Rekayasa Teknis:**
+  1. *Bento Card Cloud Notes (`extension/newtab.html`)*:
+     - Menambahkan bento card baru dengan atribut `data-app-id="cloudnotes"`, `data-app-name="Cloud Notes"`, dan `data-app-url="https://cloudnotes-wheat.vercel.app/"`.
+     - Styling icon box bernuansa gradien cyan-blue (`linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%)`) dengan ikon SVG notes/document.
+     - Menyediakan deskripsi aplikasi, domain tag `cloudnotes-wheat.vercel.app`, dan tombol Buka (`.apps-launch-btn.btn-launch-app`).
+  2. *In-App Embedding & Zero Preload*:
+     - Dynamic declarativeNetRequest strip-headers otomatis menangani request framing untuk domain ini.
+     - Pemuatan dilakukan secara on-demand saat user mengklik kartu aplikasi.
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_cloud_notes_integration.js` lulus 100%.
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.252` di `manifest.json`.
+
+
 
 

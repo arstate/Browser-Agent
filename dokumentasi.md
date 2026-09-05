@@ -774,4 +774,18 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Garis horizontal atas dan bawah trio kontrol di `.apps-header-center` kini rata sempurna (*pixel-perfect horizontal alignment*).
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+135. **Penambahan Aplikasi Cloud Notes pada Hub Aplikasi Terintegrasi (`v2.150.252`):**
+    - **Kebutuhan Pengguna**:
+      - Menambahkan aplikasi "Cloud Notes" dengan tautan `https://cloudnotes-wheat.vercel.app/` ke dalam katalog grid Hub Aplikasi (`.apps-grid`).
+    - **Implementasi Teknis**:
+      1. **Bento Card Cloud Notes (`extension/newtab.html`)**:
+         - Menambahkan card `.apps-bento-card` dengan `data-app-id="cloudnotes"`, `data-app-name="Cloud Notes"`, dan `data-app-url="https://cloudnotes-wheat.vercel.app/"`.
+         - Memasang icon box bernuansa gradien cyan-blue (`linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%)`) dengan ikon SVG dokumen/catatan modern.
+         - Menyematkan badge domain tag `cloudnotes-wheat.vercel.app` dan tombol aksi "Buka".
+      2. **Dukungan Dynamic Rule & Zero-Preload**:
+         - Mengandalkan arsitektur dynamic declarativeNetRequest header-stripping yang telah aktif (`URLFilter: *`, `sub_frame`) sehingga Cloud Notes dapat ter-embed lancar di `#apps-embedded-iframe`.
+         - Mengikuti pola zero-preload di mana aplikasi hanya dimuat saat kartu diklik oleh pengguna.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+
 
