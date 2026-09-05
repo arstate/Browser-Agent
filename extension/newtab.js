@@ -175,17 +175,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const appsActiveTitle = document.getElementById('apps-active-title');
   const appsCurrentUrlText = document.getElementById('apps-current-url-text');
   const btnToggleAppsCatalog = document.getElementById('btn-toggle-apps-catalog');
-  const labelToggleCatalog = document.getElementById('label-toggle-catalog');
   const appsCatalogOverlay = document.getElementById('apps-catalog-overlay');
   const btnCloseCatalogDrawer = document.getElementById('btn-close-catalog-drawer');
   const btnAppsReload = document.getElementById('btn-apps-reload');
-  const btnAppsOpenTab = document.getElementById('btn-apps-open-tab');
   const inputCustomAppUrl = document.getElementById('input-custom-app-url');
   const btnLaunchCustomApp = document.getElementById('btn-launch-custom-app');
   const appCards = document.querySelectorAll('.apps-bento-card');
 
-  let currentAppUrl = 'https://flow.google.com/';
-  let currentAppName = 'Google Flow';
+  let currentAppUrl = '';
+  let currentAppName = '';
 
   // Ensure In-App DeclarativeNetRequest dynamic rules are registered with requestHeaders
   async function ensureInAppDnrRules() {
@@ -254,12 +252,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function openAppsView(appUrl = 'https://flow.google.com/', appName = 'Google Flow') {
+  function openAppsView(appUrl = null, appName = null) {
     closeFullscreenSettings();
     if (appsOverlay) {
       appsOverlay.style.display = 'flex';
       updateActiveSidebarTab('apps');
-      launchApp(appUrl, appName, false);
+      if (appUrl && appName) {
+        launchApp(appUrl, appName, false);
+      } else {
+        if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'flex';
+        btnToggleAppsCatalog?.classList.add('active');
+        if (appsActiveTitle) appsActiveTitle.textContent = 'Aplikasi Terintegrasi';
+        if (appsCurrentUrlText) appsCurrentUrlText.textContent = 'browser-agent://apps';
+      }
     }
   }
 
@@ -277,11 +282,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const isHidden = appsCatalogOverlay.style.display === 'none' || !appsCatalogOverlay.style.display;
     if (isHidden) {
       appsCatalogOverlay.style.display = 'flex';
-      if (labelToggleCatalog) labelToggleCatalog.textContent = 'Tutup Katalog';
       btnToggleAppsCatalog?.classList.add('active');
     } else {
       appsCatalogOverlay.style.display = 'none';
-      if (labelToggleCatalog) labelToggleCatalog.textContent = 'Semua Apps';
       btnToggleAppsCatalog?.classList.remove('active');
     }
   }
@@ -310,7 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // Hide catalog drawer once app is selected
     if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'none';
-    if (labelToggleCatalog) labelToggleCatalog.textContent = 'Semua Apps';
     btnToggleAppsCatalog?.classList.remove('active');
   }
 
@@ -318,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnOpenApps?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    openAppsView('https://flow.google.com/', 'Google Flow');
+    openAppsView();
   });
 
   // Apps Header Controls
@@ -335,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
   btnCloseCatalogDrawer?.addEventListener('click', (e) => {
     e.preventDefault();
     if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'none';
-    if (labelToggleCatalog) labelToggleCatalog.textContent = 'Semua Apps';
     btnToggleAppsCatalog?.classList.remove('active');
   });
 
@@ -343,13 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     if (currentAppUrl) {
       launchApp(currentAppUrl, currentAppName, true);
-    }
-  });
-
-  btnAppsOpenTab?.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (currentAppUrl) {
-      window.open(currentAppUrl, '_blank');
     }
   });
 
@@ -458,7 +452,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') {
       if (appsCatalogOverlay && appsCatalogOverlay.style.display !== 'none') {
         appsCatalogOverlay.style.display = 'none';
-        if (labelToggleCatalog) labelToggleCatalog.textContent = 'Semua Apps';
         btnToggleAppsCatalog?.classList.remove('active');
       } else if (appsOverlay && appsOverlay.style.display !== 'none') {
         closeAppsView();

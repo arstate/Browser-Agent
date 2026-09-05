@@ -1365,4 +1365,32 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 63. Clean Glasses Monochrome Apps Navbar & Catalog Hub Experience (v2.150.247)
+
+### 🪟 1. Estetika Glassmorphism & Navbar 38px
+- **Compact Geometry**: Tinggi `.apps-header-bar` direduksi menjadi `38px` dengan padding horizontal `14px` dan `backdrop-filter: blur(20px)`, menciptakan bilah kontrol atas yang ramping, tidak memakan ruang pandang, dan menyatu mulus (*acrylic glassmorphism*).
+- **Body Offset Synchronization**: Kontainer body `.apps-overlay-body` disinkronkan ke `height: calc(100vh - 38px)`.
+
+### 🔘 2. Tombol Full Rounded & Skema Warna Monochrome
+- **Icon-Only Actions**: Tombol reload (`#btn-apps-reload`) dan toggle katalog (`#btn-toggle-apps-catalog`) diubah murni menjadi tombol aksi ikonik berbasis SVG tanpa teks, berukuran `26px x 26px` dengan `border-radius: 9999px`.
+- **Eliminasi Pop-Out**: Tombol `#btn-apps-open-tab` dihilangkan sepenuhnya demi integritas alur in-app.
+- **Zero-Neon Policy**: Seluruh aksen warna hijau neon `#CEF128` pada section Apps dibersihkan dan diganti dengan palet monokromatik (`#FFFFFF`, `rgba(255, 255, 255, 0.08 - 0.25)`, `#94A3B8`, `#F8FAFC`).
+
+### 🗂️ 3. Default Apps Catalog Chooser
+- **Default Catalog Overlay**: Saat ikon Apps di sidebar kiri diklik, Browser Agent langsung menyajikan UI Hub Katalog (`#apps-catalog-overlay` `display: flex;`) dengan status title `Aplikasi Terintegrasi` dan URL pill `browser-agent://apps`.
+- **Subframe Lazy Load**: Iframe webview hanya memuat URL Google Flow atau aplikasi lain saat pengguna secara sadar memilih kartu dari galeri apps.
+
+### 📏 4. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
 

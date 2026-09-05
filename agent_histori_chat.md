@@ -7032,4 +7032,31 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.246` di `manifest.json`.
 
+---
+
+### Iterasi: Redesain Clean Glasses Monochrome Apps Navbar (38px) & Default Apps Catalog Hub View (`v2.150.247`)
+- **User Request:**
+  - "buat ketika buka apps itu ke ui ini dulu bro jangan langsung google flow, trus navbar ata tombol ini dihilangin aja , trus tombol reload dan katalog apps dibuat icon oly biar lebih clean trus kecilin ukuran tinggi navbar atasa biar lebih clean style glasses rounded tombolnya full rounded warna tombol full monochrome jangan neon"
+  - Uploaded Screenshot 0: Tampilan katalog pilihan apps (Google Flow, Gemini, AI Studio, Meta Ads Manager, Custom URL Launcher). Pengguna menginginkan UI ini yang pertama kali muncul saat membuka menu Apps.
+  - Uploaded Screenshot 1: Tombol open-in-tab (`#btn-apps-open-tab`) yang diminta untuk dihilangkan dari navbar.
+- **Solusi & Rekayasa Teknis:**
+  1. *Default Apps Catalog Hub*:
+     - `extension/newtab.html`: Mengubah default `#apps-catalog-overlay` menjadi `style="display: flex;"`.
+     - `extension/newtab.js`: `openAppsView()` kini membuka catalog chooser terlebih dahulu jika dipanggil tanpa parameter, mengatur judul menjadi "Aplikasi Terintegrasi" dan URL pill ke "browser-agent://apps".
+  2. *Navbar Clean Minimalist (38px & Glassmorphism)*:
+     - Mengubah tinggi `.apps-header-bar` menjadi `38px`, background `rgba(14, 14, 18, 0.75)`, dan `backdrop-filter: blur(20px)`.
+     - Mengatur body offset `.apps-overlay-body` menjadi `height: calc(100vh - 38px)`.
+  3. *Tombol Full Rounded & Icon-Only*:
+     - Menghapus tombol `#btn-apps-open-tab`.
+     - Menghapus text span pada `#btn-toggle-apps-catalog` dan `#btn-apps-reload`, menyisakan ikon SVG 14px.
+     - Mengatur seluruh tombol (`.apps-brand-icon`, `.apps-action-btn`, `.apps-close-btn`, `.apps-catalog-close`, `.apps-launch-btn`, `.custom-app-btn`, `.apps-custom-launcher`, `.apps-catalog-badge`) dengan `border-radius: 9999px`.
+  4. *Skema Warna Full Monochrome (Zero-Neon)*:
+     - Menghilangkan seluruh aksen warna hijau neon `#CEF128` dari komponen Apps, menggantikannya dengan palet monokromatik semi-transparan (`#FFFFFF`, `#94A3B8`, `rgba(255, 255, 255, 0.08 - 0.25)`).
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_clean_monochrome_ui.js` dan `test_apps_hub_google_flow_integration.js` lulus 100%.
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.247` di `manifest.json`.
+
+
 

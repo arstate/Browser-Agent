@@ -692,4 +692,27 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Jika iframe sedang menampilkan error atau perlu direfresh, tombol `Reload` melakukan transisi cepat melalui `about:blank` untuk membersihkan frame cache dan memuat ulang URL secara bersih dengan header spoofed.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+130. **Redesain Clean Glasses Monochrome Apps Navbar (38px) & Default Apps Catalog Hub View (`v2.150.247`):**
+    - **Kebutuhan Pengguna**:
+      - Saat membuka menu Apps, pengguna langsung disajikan UI Katalog / Chooser aplikasi terlebih dahulu (bukan langsung jump ke Google Flow).
+      - Menghilangkan tombol pop-out tab eksternal (`#btn-apps-open-tab`) dari navbar atas.
+      - Mengubah tombol reload dan katalog menjadi icon-only yang ringkas tanpa teks pendamping.
+      - Mengecilkan ukuran tinggi navbar atas menjadi 38px dengan style kaca modern (*glassmorphism*).
+      - Menjadikan tombol-tombol full rounded (`border-radius: 9999px`) dan warna full monochrome (tanpa aksen neon `#CEF128`).
+    - **Implementasi Teknis**:
+      1. **Markup Navbar & Catalog Hub (`extension/newtab.html`)**:
+         - Menghapus tombol `#btn-apps-open-tab`.
+         - Menghapus label teks pada `#btn-toggle-apps-catalog` dan `#btn-apps-reload`, menyisakan ikon SVG berukuran 14px.
+         - Mengubah style awal `#apps-catalog-overlay` menjadi `display: flex;` sehingga saat Apps dibuka, antarmuka katalog langsung tampil.
+      2. **Styling Glassmorphism & Full Monochrome (`extension/newtab.css`)**:
+         - Mengubah `.apps-header-bar` menjadi `height: 38px;`, `background: rgba(14, 14, 18, 0.75);`, dan `backdrop-filter: blur(20px);`.
+         - Menyesuaikan `.apps-overlay-body` menjadi `height: calc(100vh - 38px);`.
+         - Menyetel seluruh tombol (`.apps-brand-icon`, `.apps-action-btn`, `.apps-close-btn`, `.apps-catalog-close`, `.apps-launch-btn`, `.custom-app-btn`, `.apps-custom-launcher`, `.apps-catalog-badge`) dengan `border-radius: 9999px`.
+         - Menghapus seluruh warna neon `#CEF128`, menggantinya dengan translusen putih/abu-abu netral (`rgba(255, 255, 255, ...)` dan `#FFFFFF`).
+      3. **Logic Flow Apps (`extension/newtab.js`)**:
+         - `openAppsView` tanpa argumen menampilkan `#apps-catalog-overlay` terlebih dahulu dengan URL pill `browser-agent://apps` dan judul `"Aplikasi Terintegrasi"`.
+         - Iframe Google Flow baru dimuat saat pengguna memilih kartu aplikasi.
+         - Membersihkan seluruh kode referensi `btnAppsOpenTab` dan `labelToggleCatalog`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
 
