@@ -245,10 +245,9 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
     @media screen {
       .slide-section {
         display: none !important;
-        width: 100%;
-        height: 100%;
-        max-width: 1220px;
-        max-height: calc(1220px * 9 / 16);
+        width: min(1200px, 100%, calc((100vh - 96px) * (16 / 9)));
+        max-width: 1200px;
+        max-height: 675px;
         aspect-ratio: 16 / 9;
         opacity: 0;
         transform: scale(0.99);
@@ -712,7 +711,7 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
     /* === PRINT FOR VECTOR 16:9 PDF EXPORT === */
     @media print {
       @page {
-        size: 16in 9in;
+        size: 1200px 675px;
         margin: 0;
       }
       *, *::before, *::after {
@@ -756,12 +755,12 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
         opacity: 1 !important;
         visibility: visible !important;
         transform: none !important;
-        width: 16in !important;
-        height: 9in !important;
-        min-width: 16in !important;
-        min-height: 9in !important;
-        max-width: 16in !important;
-        max-height: 9in !important;
+        width: 1200px !important;
+        height: 675px !important;
+        min-width: 1200px !important;
+        min-height: 675px !important;
+        max-width: 1200px !important;
+        max-height: 675px !important;
         page-break-after: always !important;
         page-break-inside: avoid !important;
         break-after: page !important;

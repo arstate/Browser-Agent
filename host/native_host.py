@@ -3742,14 +3742,14 @@ def export_slide_deck_pdf(html_content="", title="presentation"):
         sanitized_html = re.sub(r'<style\b[^>]*id=["\']slide-deck-controller-style["\'][^>]*>[\s\S]*?</style>', '', html_content, flags=re.IGNORECASE)
         if "bulletproof-pdf-print-pagination" not in sanitized_html:
             print_css = """<style id="bulletproof-pdf-print-pagination">
-@page { size: 16in 9in !important; margin: 0 !important; }
+@page { size: 1200px 675px !important; margin: 0 !important; }
 @media print {
   *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   html, body { background: var(--bg-slide, #0b0f19) !important; color: var(--text-main, #ffffff) !important; overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
   .presentation-workspace { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; position: static !important; }
   .deck-sidebar, .deck-floating-dock, nav, aside, button, .deck-dock-wrap { display: none !important; }
   .deck-stage-wrap { padding: 0 !important; margin: 0 !important; height: auto !important; display: block !important; overflow: visible !important; background: var(--bg-slide, #0b0f19) !important; position: static !important; }
-  .slide-section { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 16in !important; height: 9in !important; min-width: 16in !important; min-height: 9in !important; max-width: 16in !important; max-height: 9in !important; page-break-after: always !important; page-break-inside: avoid !important; break-after: page !important; break-inside: avoid !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; background: var(--bg-slide, #0b0f19) !important; position: relative !important; }
+  .slide-section { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 1200px !important; height: 675px !important; min-width: 1200px !important; min-height: 675px !important; max-width: 1200px !important; max-height: 675px !important; page-break-after: always !important; page-break-inside: avoid !important; break-after: page !important; break-inside: avoid !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; background: var(--bg-slide, #0b0f19) !important; position: relative !important; }
   .slide-canvas { height: 100% !important; width: 100% !important; box-shadow: none !important; border-radius: 0 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-sizing: border-box !important; }
 }
 </style>"""

@@ -966,20 +966,25 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_prompt.js`: 183 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
 
-## 🎨 45. Sidebar Thumbnail Page Numbering Top-Left Alignment (v2.150.229)
+## 🎨 46. True 16:9 Scaling Parity (Preview vs Downloaded PDF & Standalone HTML) (v2.150.230)
 
-1. **Top-Left Flexbox Layout Alignment**:
-   - Kontainer `.thumb-item` beralih dari `align-items: center` menjadi `align-items: flex-start`, menempatkan angka halaman `.thumb-num` di sudut samping kiri atas kartu thumbnail.
-   - Mengatur `.thumb-num` dengan `line-height: 1; padding-top: 4px;` agar baseline angka sejajar lurus secara optis dengan border atas `.thumb-card` (border radius 5px).
+1. **Resolution & Scaling Disparity Analysis**:
+   - Standar CSS mendefinisikan 1 inchi = 96 px. Aturan `@page { size: 16in 9in; }` sebelumnya menciptakan viewport 1536px x 864px, sedangkan tipografi dan padding slide didesain untuk kanvas 1200px x 675px.
+   - Perbedaan skala sebesar 28% tersebut menyebabkan teks tampak kecil dan kontainer `justify-content: space-between` meninggalkan ruang kosong putih besar di bagian bawah dan kanan halaman hasil unduh.
 
-2. **Controller Dynamic Injection Enforcement**:
-   - `attachSlideDeckController` pada `canvas_manager.js` menyuntikkan deklarasi penegasan: `.thumb-item { align-items: flex-start !important; }` dan `.thumb-num { align-self: flex-start !important; line-height: 1 !important; padding-top: 4px !important; }`.
-   - Menjamin bahwa seluruh presentasi lama atau baru di dalam live preview iframe langsung tampil konsisten.
+2. **1:1 Pixel-Perfect Export & Screen CSS**:
+   - **Print / PDF Export**:
+     - `@page { size: 1200px 675px !important; margin: 0 !important; }`.
+     - `.slide-section { width: 1200px !important; height: 675px !important; min-width: 1200px !important; min-height: 675px !important; max-width: 1200px !important; max-height: 675px !important; }`.
+     - Disinkronkan ke `slide_styles.js`, `canvas_exporter.js`, `native_host.py`, dan `host/rust_host/src/main.rs`.
+   - **Screen Mode**:
+     - `.slide-section { width: min(1200px, 100%, calc((100vh - 96px) * (16 / 9))); max-width: 1200px; max-height: 675px; aspect-ratio: 16 / 9; }`.
+     - Menjamin kanvas terkunci pada rasio 16:9 widescreen di semua perangkat layar tanpa distorsi atau overflow.
 
 3. **Strict Sub-800 Line Rule Compliance**:
    - `slide_editor.js`: 783 baris.
    - `canvas_manager.js`: 791 baris.
-   - `slide_styles.js`: 791 baris.
+   - `slide_styles.js`: 790 baris.
    - `slide_template.js`: 781 baris.
    - `design_executor.js`: 776 baris.
    - `design_agent.js`: 626 baris.

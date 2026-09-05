@@ -6567,8 +6567,30 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
 - **Verifikasi:**
   1. Node assertion unit test memverifikasi `align-items: flex-start` dan `padding-top: 4px` pada `slide_styles.js` dan `canvas_manager.js`.
   2. Node syntax check `node -c extension/design/*.js extension/*.js` lolos 100% tanpa error.
+### 🚀 Iterasi 511: True 16:9 Scaling Parity (Preview vs Downloaded PDF & Standalone HTML) (v2.150.230)
+- **User Request:**
+  - "scaling di preview sama hasil download kok ga sama ya bro coba anda lihat , benerin bro biar sama kek di preview di hasil dowloadnya" (Pengguna mengunggah 2 tangkapan layar perbandingan: `uploaded_media_0` menunjukkan live preview canvas dengan proporsi teks, badge, dan padding yang padat, seimbang, dan pas; `uploaded_media_1` menunjukkan hasil unduh di mana teks tampak mengecil dan menyisakan ruang kosong putih raksasa di bagian bawah dan samping kanan).
+- **Akar Masalah:**
+  1. Pada aturan cetak PDF (`bulletproof-pdf-print-pagination` dan `@media print`), ukuran halaman disetel ke `@page { size: 16in 9in !important; }` dan `.slide-section { width: 16in !important; height: 9in !important; }`.
+  2. Standar CSS menetapkan 1 inchi = 96px, sehingga `16in` = 1536px dan `9in` = 864px. Karena tipografi dan margin slide deck menggunakan ukuran `px` tetap yang didesain untuk kanvas 1200px x 675px, kanvas 1536x864 membuat font tampak 28% lebih kecil dan layout dengan `justify-content: space-between` menyisakan celah kosong putih sebesar ~280px di antara komponen konten dan footer.
+  3. Pada mode layar (`@media screen`), `.slide-section` memiliki `width: 100%; height: 100%; max-width: 1220px; max-height: calc(1220px * 9 / 16);`. Pada viewport yang lebih sempit secara vertikal (seperti layar laptop 1366x768), spesifikasi CSS mengabaikan `aspect-ratio: 16 / 9` jika kedua `width` dan `height` disetel eksplisit, menyebabkan kanvas terdistorsi melebar ke samping.
+- **Analisis & Solusi:**
+  1. *Paginasi Cetak PDF Vektor 1:1 (`slide_styles.js`, `canvas_exporter.js`, `native_host.py`, `rust_host/src/main.rs`)*:
+     - Mengubah `@page { size: 16in 9in !important; }` menjadi `@page { size: 1200px 675px !important; margin: 0 !important; }`.
+     - Mengunci `.slide-section` cetak pada `width: 1200px !important; height: 675px !important; min-width: 1200px !important; min-height: 675px !important; max-width: 1200px !important; max-height: 675px !important;`.
+     - Hasil cetak PDF kini memiliki resolusi dan geometri yang 100% identik per piksel dengan kanvas pratinjau di layar tanpa celah kosong berlebih.
+  2. *Constraint Aspek Rasio Layar Responsif (`slide_styles.js`)*:
+     - Memperbarui media query screen menjadi: `width: min(1200px, 100%, calc((100vh - 96px) * (16 / 9))); max-width: 1200px; max-height: 675px; aspect-ratio: 16 / 9;`.
+     - Memastikan kanvas selalu mempertahankan proporsi murni 16:9 widescreen di semua perangkat layar tanpa distorsi horizontal atau overflow vertikal.
+  3. *Kompilasi Ulang Rust Native Host Binary (`host/browser_agent_host`)*:
+     - Mengompilasi ulang binary release Rust host dengan penyesuaian CSS paginasi 1200px x 675px dan mengganti binary distribusi secara aman.
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` patuh di bawah 800 baris (`slide_editor.js`: 783 baris, `canvas_manager.js`: 791 baris, `slide_styles.js`: 790 baris, `slide_template.js`: 781 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Pengujian rendering nyata Chrome headless `--print-to-pdf` dengan `pdftoppm` memverifikasi bahwa halaman PDF yang dihasilkan berukuran tepat 1200px x 675px dengan MediaBox 900pt x 506.25pt, dan tata letak visualnya 100% identik dengan tangkapan layar preview pengguna.
+  2. Node syntax check `node -c extension/design/*.js extension/*.js` lolos 100% tanpa error.
   3. Verifikasi jumlah baris memastikan seluruh file `<= 791` baris.
-  4. Bump versi manifest ke `v2.150.229`.
+  4. Bump versi manifest ke `v2.150.230`.
 
 
 

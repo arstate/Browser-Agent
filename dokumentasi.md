@@ -380,7 +380,22 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
       - Menyesuaikan `.thumb-num` dengan `line-height: 1; padding-top: 4px;` agar baseline angka penomoran halaman sejajar lurus dengan sudut tepi atas kartu `.thumb-card` (border radius 5px).
     - **Penguatan Controller Pratinjau Kanvas (`canvas_manager.js`)**:
       - Menyuntikkan aturan penegasan `align-items: flex-start !important;` pada `.thumb-item` dan `.thumb-num { align-self: flex-start !important; line-height: 1 !important; padding-top: 4px !important; }` di dalam `slide-deck-controller-style`, menjamin presentasi lama yang dimuat di iframe langsung ter-update ke posisi samping kiri atas.
-    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 783 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 791 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+113. **True 16:9 Scaling Parity (Preview vs Downloaded PDF & Standalone HTML) (`v2.150.230`):** Menuntaskan ketidaksesuaian skala visual dan jarak komponen antara tampilan live preview canvas dengan hasil unduhan PDF/HTML:
+    - **Akar Masalah Disparitas Skala**:
+      - Pada aturan cetak PDF (`bulletproof-pdf-print-pagination` dan `@media print`), ukuran halaman sebelumnya disetel ke `@page { size: 16in 9in; }` dan `.slide-section { width: 16in; height: 9in; }`.
+      - Dalam standar CSS (96 DPI), `16in` = 1536px dan `9in` = 864px. Karena tipografi slide deck menggunakan ukuran `px` tetap yang didesain untuk kanvas lebar 1200px (misal judul 42px, badge 11px, padding 36px 48px), pembesaran ke 1536x864 membuat teks tampak 28% lebih kecil dan layout dengan `justify-content: space-between` menyisakan celah kosong putih raksasa (~280px) di antara komponen konten dan footer.
+      - Pada mode layar (`@media screen`), `.slide-section` memiliki `width: 100%; height: 100%; max-width: 1220px; max-height: calc(1220px * 9 / 16);`. Jika dibuka pada layar dengan aspek rasio berbeda (seperti laptop 1366x768), penentuan eksplisit `width: 100%` dan `height: 100%` mengesampingkan `aspect-ratio: 16 / 9`, menyebabkan kanvas terdistorsi melebar ke samping.
+    - **Solusi Skala 1:1 Presisi Tinggi**:
+      - **Paginasi Cetak PDF Vektor (`slide_styles.js`, `canvas_exporter.js`, `native_host.py`, `rust_host/src/main.rs`)**:
+        - Mengunci `@page { size: 1200px 675px !important; margin: 0 !important; }`.
+        - Mengunci `.slide-section` cetak pada `width: 1200px !important; height: 675px !important; min-width: 1200px !important; min-height: 675px !important; max-width: 1200px !important; max-height: 675px !important;`.
+        - Menghasilkan PDF 16:9 widescreen yang 100% identik dengan tampilan kanvas pratinjau di layar tanpa celah kosong berlebih.
+      - **Responsivitas Layar Layar Lebar & Laptop (`slide_styles.js`)**:
+        - Memperbarui media query screen menjadi: `width: min(1200px, 100%, calc((100vh - 96px) * (16 / 9))); max-width: 1200px; max-height: 675px; aspect-ratio: 16 / 9;`.
+        - Menjamin kanvas selalu mempertahankan proporsi murni 16:9 widescreen, tidak pernah terdistorsi melebar, dan tidak pernah terpotong/overflow secara vertikal pada resolusi monitor apa pun.
+      - **Kompilasi Ulang Rust Native Host (`host/browser_agent_host`)**:
+        - Mengompilasi ulang binary release Rust host dengan penyesuaian CSS paginasi 1200px x 675px dan mengganti binary distribusi secara aman.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 783 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
 
 
