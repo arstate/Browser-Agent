@@ -170,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Integrated Apps Hub & In-App Webview Logic (Google Flow, etc.) ---
   const appsOverlay = document.getElementById('fullscreen-apps-overlay');
   const btnOpenApps = document.getElementById('btn-open-apps');
-  const btnCloseAppsOverlay = document.getElementById('btn-close-apps-overlay');
   const appsIframe = document.getElementById('apps-embedded-iframe');
   const appsActiveTitle = document.getElementById('apps-active-title');
   const appsCurrentUrlText = document.getElementById('apps-current-url-text');
@@ -338,11 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Apps Header Controls
-  btnCloseAppsOverlay?.addEventListener('click', (e) => {
-    e.preventDefault();
-    closeAppsView();
-  });
-
   btnToggleAppsCatalog?.addEventListener('click', (e) => {
     e.preventDefault();
     toggleAppsCatalog();

@@ -7101,5 +7101,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.249` di `manifest.json`.
 
+---
+
+### Iterasi: Eliminasi Tombol Tutup X & Reposisi Kontrol Katalog/Refresh Flanking URL Pill (`v2.150.250`)
+- **User Request:**
+  - "tombol x dihilangin aja trus posisinya tombol refresh di pindah di samping kanan ui link dan tombol open apps list di sisi kiri dari ui link container https"
+  - Uploaded Screenshot: Tombol close 'X' disorot kotak merah.
+- **Solusi & Rekayasa Teknis:**
+  1. *Eliminasi Tombol Tutup X*:
+     - `extension/newtab.html`: Menghapus `#btn-close-apps-overlay` dan kontainer `.apps-header-actions`.
+     - `extension/newtab.js`: Menghapus variabel dan event listener `btnCloseAppsOverlay`.
+     - `extension/newtab.css`: Menghapus aturan CSS `.apps-close-btn` dan `.apps-header-actions`.
+  2. *Reposisi Flanking URL Container*:
+     - `extension/newtab.html`: Memindahkan `#btn-toggle-apps-catalog` ke sisi kiri `#apps-url-display-pill`, dan `#btn-apps-reload` ke sisi kanan `#apps-url-display-pill`, semuanya berada di dalam `.apps-header-center`.
+     - `extension/newtab.css`: Menyetel `.apps-header-center` dengan `gap: 8px; align-items: center; justify-content: center; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);` untuk menghasilkan trio kontrol simetris yang presisi di tengah layar.
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_clean_monochrome_ui.js` dan `test_apps_hub_google_flow_integration.js` lulus 100%.
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.250` di `manifest.json`.
+
 
 

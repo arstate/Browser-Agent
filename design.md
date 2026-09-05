@@ -1439,4 +1439,29 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 66. Flanking Controls Layout & Close Button Removal (v2.150.250)
+
+### ❌ 1. Eliminasi Tombol Close 'X'
+- **Removal**: Tombol close `#btn-close-apps-overlay` dan kontainer `.apps-header-actions` dihapus dari navbar atas. Penutupan Apps dilakukan secara intuitif melalui navigasi sidebar (Home) atau tombol `Escape`.
+
+### 🔄 2. Flanking Layout pada Centered URL Container
+- **Trio Simetris**:
+  - Tombol toggle katalog (`#btn-toggle-apps-catalog`) ditempatkan di sisi KIRI URL pill.
+  - URL link container (`#apps-url-display-pill`) berada di TENGAH.
+  - Tombol reload (`#btn-apps-reload`) ditempatkan di sisi KANAN URL pill.
+- **Micro-Gap Spacing**: Ketiganya dibungkus dalam `.apps-header-center` dengan `gap: 8px;`, di-center secara absolut di tengah layar (`left: 50%; transform: translate(-50%, -50%);`), menciptakan tata letak yang simetris, rapi, dan mudah dijangkau.
+
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
 

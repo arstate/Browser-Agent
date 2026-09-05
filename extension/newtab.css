@@ -8538,9 +8538,10 @@ body.canvas-active .chat-input-container {
   top: 50%;
   transform: translate(-50%, -50%);
   display: flex;
-  justify-content: center;
   align-items: center;
-  max-width: min(520px, calc(100% - 240px));
+  justify-content: center;
+  gap: 8px;
+  max-width: min(560px, calc(100% - 200px));
   z-index: 2;
   pointer-events: auto;
 }
@@ -8576,13 +8577,6 @@ body.canvas-active .chat-input-container {
   white-space: nowrap;
 }
 
-.apps-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  z-index: 3;
-}
-
 .apps-action-btn {
   display: inline-flex;
   align-items: center;
@@ -8596,6 +8590,7 @@ body.canvas-active .chat-input-container {
   color: #E2E8F0;
   cursor: pointer;
   transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
 }
 
 .apps-action-btn:hover {
@@ -8609,28 +8604,6 @@ body.canvas-active .chat-input-container {
   background: rgba(255, 255, 255, 0.22);
   border-color: rgba(255, 255, 255, 0.4);
   color: #FFFFFF;
-}
-
-.apps-close-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #94A3B8;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  cursor: pointer;
-  transition: all 0.16s ease;
-}
-
-.apps-close-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #FF5A5A;
-  border-color: rgba(239, 68, 68, 0.4);
-  transform: scale(1.05);
 }
 
 .apps-overlay-body {

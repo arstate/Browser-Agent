@@ -748,4 +748,20 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menghapus paksaan URL `flow.google.com` pada `openAppsTab()`. Mengklik tombol Apps dari sidepanel kini murni membuka katalog chooser tanpa membebani browser.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+133. **Eliminasi Tombol Tutup X & Reposisi Kontrol Katalog/Refresh Flanking URL Pill (`v2.150.250`):**
+    - **Kebutuhan Pengguna**:
+      - Menghilangkan tombol close 'X' (`#btn-close-apps-overlay`) pada navbar atas agar antarmuka lebih bersih.
+      - Memindahkan posisi tombol refresh (`#btn-apps-reload`) ke samping kanan UI link container HTTPS (`.apps-url-pill`).
+      - Memindahkan posisi tombol open apps list (`#btn-toggle-apps-catalog`) ke sisi kiri dari UI link container HTTPS (`.apps-url-pill`).
+    - **Implementasi Teknis**:
+      1. **Rekonfigurasi Tata Letak Navbar (`extension/newtab.html`)**:
+         - Menghapus tombol `#btn-close-apps-overlay` dan kontainer `.apps-header-actions`.
+         - Mengelompokkan tombol `#btn-toggle-apps-catalog` (sisi kiri), `#apps-url-display-pill` (tengah), dan `#btn-apps-reload` (sisi kanan) ke dalam kontainer terpadu `.apps-header-center`.
+      2. **Styling Flanking Centered Controls (`extension/newtab.css`)**:
+         - Memperbarui `.apps-header-center` dengan `gap: 8px; display: flex; align-items: center; justify-content: center;`, menjaga simetri visual sempurna di titik tengah geometris navbar (`position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);`).
+         - Membersihkan class CSS usang `.apps-close-btn` dan `.apps-header-actions`.
+      3. **Script Optimization (`extension/newtab.js`)**:
+         - Menghapus deklarasi variabel dan event listener `btnCloseAppsOverlay`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
 
