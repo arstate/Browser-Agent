@@ -6226,6 +6226,39 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
   3. Bump versi manifest ke `v2.150.218`.
 
+### Iterasi 500 (v2.150.219) - 2026-09-05
+- **User Request:**
+  "ada error bro [OpenDesign] fetchSlideContentFromAI error with model ag/gemini-3.8-flash-high: SyntaxError: Unexpected token 'd', "data: {"id"... is not valid JSON ... ketika revisi slide deck yang udah jadi"
+- **Akar Masalah (Root Cause):**
+  1. Pada pemanggilan API AI (`fetchSlideContentFromAI` dan alur revisi canvas aktif), kode sebelumnya memanggil `await resp.json()`. Model proxy (`ag/gemini-3.8-flash-high`, `ag/gemini-3.7-flash-high`, dsb.) selalu mengalirkan respons berbasis Server-Sent Events (`text/event-stream`) berawalan `data: {"id": ...}`. Pemanggilan `resp.json()` pada respons stream melempar exception `SyntaxError: Unexpected token 'd', "data: {"id"... is not valid JSON`.
+  2. Variabel `accumulatedContent` sebelumnya dideklarasikan dengan `let` di dalam blok `try { ... }`. Ketika terjadi error di dalam blok `try`, kendali melompat ke blok `catch (err)` dan memicu exception fatal kedua: `ReferenceError: accumulatedContent is not defined`.
+  3. Alur revisi canvas aktif sebelumnya hanya mencoba model pertama tunggal tanpa rotasi multi-model fallback, dan tidak melengkapi flag `stream: false` secara eksplisit pada payload JSON.
+- **Analisis & Solusi:**
+  1. *Universal AI Response Decoder (`readAiResponseContent` di `design_executor.js`)*:
+     - Menginspeksi teks mentah dari respons: jika berawalan `data:` atau ber-header `event-stream`, fungsi memecah stream per baris, mem-parse token delta (`choices[0].delta.content` atau `message.content`), dan menggabungkannya menjadi string teks utuh.
+     - Jika berformat JSON standar, fungsi mem-parse objek dan mengekstrak pesan seperti biasa.
+  2. *Top-Level Scoping Guard (`accumulatedContent`)*:
+     - Mendeklarasikan `let accumulatedContent = ""` di tingkat terluar fungsi `runDesignModeLoop` sebelum blok `try-catch`, melenyapkan `ReferenceError`.
+  3. *Multi-Model Candidate Retry & Explicit Stream Flag on Revision (`design_executor.js`)*:
+     - Alur revisi kini menggunakan loop percobaan `revisionModels` dengan fallback multi-kandidat otomatis dan menyuntikkan `stream: false`.
+     - Memperbarui status badge `update_canvas_slides` dan sinkronisasi milestones secara tuntas.
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - `design_executor.js`: 776 baris.
+     - `slide_styles.js`: 789 baris.
+     - `slide_template.js`: 759 baris.
+     - `design_agent.js`: 626 baris.
+     - `canvas_manager.js`: 788 baris.
+     - `slide_deck_engine.js`: 505 baris.
+     - `slide_themes.js`: 266 baris.
+     - `canvas_exporter.js`: 226 baris.
+     - `design_prompt.js`: 183 baris.
+     - Seluruh 9 modul di `extension/design/` patuh limit <= 800 baris.
+- **Verifikasi:**
+  1. Node.js unit test assertion pada parsing SSE chunks `data: {"id":...}` dan JSON standar lolos 100% (`ALL STREAM & JSON PARSING TESTS PASSED 100%`).
+  2. Syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  3. Bump versi manifest ke `v2.150.219`.
+
+
 
 
 

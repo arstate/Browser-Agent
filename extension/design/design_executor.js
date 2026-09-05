@@ -33,6 +33,30 @@ function resolveDesignCandidateModels(agentConfig = {}) {
   return [...new Set(candidates)];
 }
 
+async function readAiResponseContent(resp) {
+  if (!resp) return "";
+  const rawText = await resp.text();
+  const trimmed = rawText.trim();
+  if (trimmed.startsWith("data:") || (resp.headers?.get?.("content-type")?.includes("event-stream"))) {
+    let acc = "";
+    for (const line of trimmed.split("\n")) {
+      const t = line.trim();
+      if (!t || t === "data: [DONE]" || !t.startsWith("data:")) continue;
+      try {
+        const chunk = JSON.parse(t.replace(/^data:\s*/, ""));
+        acc += chunk.choices?.[0]?.delta?.content || chunk.choices?.[0]?.message?.content || chunk.choices?.[0]?.text || chunk.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      } catch (e) {}
+    }
+    return acc || trimmed;
+  }
+  try {
+    const data = JSON.parse(trimmed);
+    return data.choices?.[0]?.message?.content || data.choices?.[0]?.delta?.content || data.choices?.[0]?.text || data.candidates?.[0]?.content?.parts?.[0]?.text || trimmed;
+  } catch (e) {
+    return trimmed;
+  }
+}
+
 async function fetchSlideContentFromAI(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary, agentConfig, abortSignal) {
   const prompt = (typeof createSlidePromptForMasterDesign === 'function')
     ? createSlidePromptForMasterDesign(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary, agentConfig?.styleConcept)
@@ -63,14 +87,14 @@ async function fetchSlideContentFromAI(slideIndex, totalSlides, topic, blueprint
             { role: "user", content: prompt }
           ],
           temperature: 0.3,
-          max_tokens: 1800
+          max_tokens: 1800,
+          stream: false
         }),
         signal: abortSignal
       });
 
       if (resp.ok) {
-        const data = await resp.json();
-        const content = data.choices?.[0]?.message?.content || "";
+        const content = await readAiResponseContent(resp);
         if (content && typeof parseSingleSlideJson === 'function') {
           return parseSingleSlideJson(content, blueprintSlide);
         }
@@ -109,6 +133,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   isExecuting = true;
   updateSendButtonState(true);
   abortController = new AbortController();
+  let accumulatedContent = "";
 
   // Ensure active session is initialized for chat history persistence
   if (typeof ensureCurrentSessionInitialized === 'function') {
@@ -135,20 +160,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   // Dual Master Agent Hierarchy: Master Agent (Boss) directing Master Design (Right Hand)
   const agentInfo = (typeof createDesignHierarchyAgentInfo === 'function') 
     ? createDesignHierarchyAgentInfo() 
-    : {
-        isBoss: true,
-        name: "Master Agent",
-        role: "Supreme Commander & Chief Orchestrator",
-        badge: "Supreme Orchestrator",
-        workers: [
-          {
-            id: "master_design",
-            name: "Master Design",
-            role: "Lead Creative Director & Slide Architect",
-            badge: "Tangan Kanan Master Agent"
-          }
-        ]
-      };
+    : { isBoss: true, name: "Master Agent", role: "Supreme Commander & Chief Orchestrator", badge: "Supreme Orchestrator", workers: [{ id: "master_design", name: "Master Design", role: "Lead Creative Director & Slide Architect", badge: "Tangan Kanan Master Agent" }] };
 
   const assistantBubble = appendAssistantMessage("", true, agentInfo);
   currentActiveAssistantBubble = assistantBubble;
@@ -240,7 +252,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
 
     let targetArtifact = (isRevision && currentOpenArtifact) ? currentOpenArtifact : {};
     let cardRendered = false;
-    let accumulatedContent = "";
+    accumulatedContent = "";
     const meta = { category: deducedTheme.name };
 
     const defaultBp = (typeof createDefaultBlueprint === 'function')
@@ -293,19 +305,38 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       messages.push({ role: "user", content: revisionContent });
 
       const revisionModels = resolveDesignCandidateModels(config);
-      const chosenModel = revisionModels[0] || "gemini-2.5-flash";
-      const resp = await fetch(endpointUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: chosenModel, messages, temperature: 0.3, max_tokens: 8192 }),
-        signal: abortController.signal
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        accumulatedContent = data.choices?.[0]?.message?.content || "";
-        const art = extractHtmlArtifact(accumulatedContent);
-        if (art.html) targetArtifact.html = art.html;
+      for (const revModel of revisionModels) {
+        try {
+          const resp = await fetch(endpointUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+            body: JSON.stringify({ model: revModel, messages, temperature: 0.3, max_tokens: 8192, stream: false }),
+            signal: abortController.signal
+          });
+          if (resp.ok) {
+            accumulatedContent = await readAiResponseContent(resp);
+            const art = extractHtmlArtifact(accumulatedContent);
+            if (art.html) {
+              targetArtifact.html = art.html;
+              break;
+            }
+          } else {
+            console.warn(`[OpenDesign] Revision model ${revModel} failed (${resp.status})`);
+          }
+        } catch (revErr) {
+          if (revErr.name === 'AbortError') throw revErr;
+          console.warn(`[OpenDesign] Revision error with model ${revModel}:`, revErr);
+        }
+      }
+      if (toolBadgeSynthesize && typeof updateToolBadgeState === 'function') {
+        updateToolBadgeState(toolBadgeSynthesize, targetArtifact.html ? 'success' : 'warning', targetArtifact.html ? 'Canvas aktif berhasil dimutakhirkan' : 'Revisi diproses');
+      }
+      designMilestones[2].completed = true;
+      designMilestones[2].inProgress = false;
+      designMilestones[3].completed = true;
+      designMilestones[3].inProgress = false;
+      if (typeof updateTaskScheduleProgress === 'function') {
+        updateTaskScheduleProgress(assistantBubble, designMilestones, 4, true);
       }
     } else {
       // === PROGRESSIVE SLIDE-BY-SLIDE PIPELINE ===
@@ -589,12 +620,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     // Finalize tasks & tools
     designMilestones[4].completed = true;
     designMilestones[4].inProgress = false;
-    if (typeof finalizeTaskScheduleSection === 'function') {
-      finalizeTaskScheduleSection(assistantBubble);
-    }
-    if (typeof finalizeToolSection === 'function') {
-      finalizeToolSection(assistantBubble, true);
-    }
+    if (typeof finalizeTaskScheduleSection === 'function') finalizeTaskScheduleSection(assistantBubble);
+    if (typeof finalizeToolSection === 'function') finalizeToolSection(assistantBubble, true);
 
     // Clean summary response for chat
     let briefSummaryText = "";
@@ -610,12 +637,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       targetArtifact.content = briefSummaryText;
       targetArtifact.rawContent = accumulatedContent;
 
-      if (typeof setActiveDesignArtifact === 'function') {
-        setActiveDesignArtifact(targetArtifact);
-      } else {
-        activeDesignArtifact = targetArtifact;
-        window.__activeDesignArtifact = targetArtifact;
-      }
+      if (typeof setActiveDesignArtifact === 'function') setActiveDesignArtifact(targetArtifact);
+      else { activeDesignArtifact = targetArtifact; window.__activeDesignArtifact = targetArtifact; }
 
       // If canvas is currently open, live update the open drawer in-place!
       if (checkCanvasOpen()) {
@@ -628,26 +651,14 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
           }
         }
         const titleEl = document.getElementById('canvas-design-title');
-        if (titleEl && targetArtifact.meta?.title) {
-          titleEl.textContent = targetArtifact.meta.title;
-        }
+        if (titleEl && targetArtifact.meta?.title) titleEl.textContent = targetArtifact.meta.title;
         const codeDisplay = document.getElementById('canvas-code-display');
-        if (codeDisplay) {
-          codeDisplay.textContent = targetArtifact.html;
-        }
+        if (codeDisplay) codeDisplay.textContent = targetArtifact.html;
         const codeLangLabel = document.getElementById('canvas-code-lang-label');
-        if (codeLangLabel) {
-          codeLangLabel.textContent = `index.html (HTML5 Standalone • ${(targetArtifact.html.length / 1024).toFixed(1)} KB)`;
-        }
-        if (typeof updateCanvasVirtualFiles === 'function') {
-          updateCanvasVirtualFiles(targetArtifact);
-        }
-        if (typeof runCanvasAutoLint === 'function') {
-          runCanvasAutoLint(targetArtifact.html);
-        }
-        if (typeof showUniversalToast === 'function') {
-          showUniversalToast('✅ Canvas aktif berhasil diperbarui!');
-        }
+        if (codeLangLabel) codeLangLabel.textContent = `index.html (HTML5 Standalone • ${(targetArtifact.html.length / 1024).toFixed(1)} KB)`;
+        if (typeof updateCanvasVirtualFiles === 'function') updateCanvasVirtualFiles(targetArtifact);
+        if (typeof runCanvasAutoLint === 'function') runCanvasAutoLint(targetArtifact.html);
+        if (typeof showUniversalToast === 'function') showUniversalToast('✅ Canvas aktif berhasil diperbarui!');
       }
 
       renderOpenDesignCard(contentEl, targetArtifact, { isRevision });

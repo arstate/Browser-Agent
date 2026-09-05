@@ -668,3 +668,19 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Menyematkan kelas `.is-featured` pada kartu sorotan utama dengan aksen border atas dan elevasi visual.
    - Menghilangkan template badge seragam `PILAR 01/02/03` menjadi label kontekstual murni.
    - Menginstruksikan AI Master Design untuk menghindari dinding teks padat dan memformat kartu dengan poin-poin ringkas yang scannable.
+
+
+## 🚀 35. Universal SSE Stream & JSON Response Decoding with Zero ReferenceError Guard (v2.150.219)
+
+1. **Universal Stream Decoder (`readAiResponseContent`)**:
+   - Membaca dan menafsirkan respons API baik berformat Server-Sent Events (SSE chunks berawalan `data: {"id": ...}`) maupun JSON standar.
+   - Mengeliminasi exception `SyntaxError: Unexpected token 'd', "data: {"id"... is not valid JSON` yang terjadi saat menggunakan model proxy seperti `ag/gemini-3.8-flash-high`.
+   - Mengakumulasi potongan delta token dari stream secara presisi menjadi konten utuh.
+
+2. **Multi-Candidate Model Fallback on Revision**:
+   - Menghubungkan alur revisi canvas aktif (`isRevision === true`) dengan rotasi kandidat model (`resolveDesignCandidateModels`) dan parameter `stream: false`.
+   - Menyelesaikan pembaruan badge `update_canvas_slides` dan milestones jadwal tugas secara rapi tanpa tertahan di status gagal.
+
+3. **Function-Level Variable Scoping (`accumulatedContent`)**:
+   - Mendeklarasikan `accumulatedContent` di tingkat fungsi utama sebelum blok `try-catch`, mencegah `ReferenceError` pada penanganan exception di blok `catch`.
+
