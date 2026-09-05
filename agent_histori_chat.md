@@ -5949,4 +5949,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Validasi sintaks `node -c extension/sidepanel.js extension/design/*.js` lolos 100% tanpa error.
   3. Bump versi manifest ke `v2.150.207`.
 
+### Iterasi 489 (v2.150.208) - 2026-09-05
+- **User Request:**
+  "update ui add to queue yang saya kotak in hapus aja jadi uinya cuman queue trs tetep ada animasi nya" (dengan gambar lampiran kotak merah pada "+ Add to ").
+- **Analisis & Solusi:**
+  1. *Hapus Ikon Tambah & Teks "Add to "*: Pada `extension/sidepanel.html` dan `extension/newtab.html`, menghapus tag `<svg>` ikon plus (`+`) dan teks `"Add to "`, sehingga label tombol morphing hanya menampilkan `"Queue"`.
+  2. *Preservasi Animasi Penuh*: Seluruh kontainer animasi stickman face (`.gen-morph-container`), ekspresi alis/mata (`.gen-eyebrow`, `.gen-eye-slit`), efek rotasi, dan indikator cancel tetap utuh dan aktif seperti sebelumnya.
+  3. *Penyesuaian Geometri Pill*: Memperkecil `min-width` tombol saat `.has-queue-input` aktif dari 124px/136px menjadi 82px/90px serta `max-width` label menjadi 52px/58px di `sidepanel.css` dan `newtab.css` agar bentuk kapsul pas dan padat membungkus teks `"Queue"` dan wajah stickman.
+  4. *Tooltip Sync*: Memperbarui tooltip `btnSend.title` di `sidepanel.js` menjadi `"Masukkan ke Antrean Prompt (Queue)"`.
+- **Verifikasi:**
+  1. Validasi sintaks `node -c extension/sidepanel.js extension/newtab.js extension/design/*.js` lolos 100% tanpa error.
+  2. Seluruh modul `extension/design/` terjaga di bawah 800 baris.
+  3. Bump versi manifest ke `v2.150.208`.
+
+
 

@@ -9117,7 +9117,7 @@ function syncQueueButtonMorphState() {
 
   if (isExecuting && hasInput) {
     btnSend.classList.add('has-queue-input');
-    btnSend.title = "Masukkan ke Antrean Prompt (Add to Queue)";
+    btnSend.title = "Masukkan ke Antrean Prompt (Queue)";
   } else {
     btnSend.classList.remove('has-queue-input');
     if (isExecuting) {

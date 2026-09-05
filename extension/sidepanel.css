@@ -5829,7 +5829,7 @@ body.stickman-active .chat-messages {
 /* Morphing Wide Pill State When User Types Text During Generation */
 .btn-send.loading.has-queue-input {
   width: auto !important;
-  min-width: 124px !important;
+  min-width: 82px !important;
   height: 32px !important;
   border-radius: 9999px !important;
   padding: 0 7px 0 11px !important;
@@ -5839,7 +5839,7 @@ body.stickman-active .chat-messages {
 
 .btn-send.loading.has-queue-input .btn-queue-morph-label {
   opacity: 1 !important;
-  max-width: 100px !important;
+  max-width: 52px !important;
   transform: translateX(0) !important;
   pointer-events: auto !important;
 }

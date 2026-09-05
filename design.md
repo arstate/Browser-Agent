@@ -529,4 +529,13 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Judul sesi otomatis diperbarui dari metadata slide (`meta.title`) saat perakitan selesai.
    - Laci riwayat chat (`openHistoryModal`) secara otomatis memanggil `saveCurrentSessionToDB()` sebelum membaca daftar riwayat, memastikan sesi pembuatan slide langsung terlihat di kartu riwayat.
 
+## 🚀 24. Minimalist Queue Morphing Button UI (v2.150.208)
+
+1. **Queue Button Visual Streamlining**:
+   - Mengeliminasi ikon SVG `+` dan prefix `Add to ` dari tombol `.btn-queue-morph-label`.
+   - Menampilkan label teks `"Queue"` bersih dengan font size 11px weight 800.
+   - Mengoptimalkan lebar pill morphing `.has-queue-input` (`min-width: 82px` di sidepanel dan `90px` di newtab) sehingga pas dan proporsional.
+   - Seluruh animasi stickman face morphing (`.gen-morph-container`), ekspresi alis/mata, dan interaksi cancel tetap berfungsi 100%.
+
+
 

@@ -4667,7 +4667,7 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
 /* Morphing Wide Pill State When User Types Text During Generation */
 .btn-send.loading.has-queue-input {
   width: auto !important;
-  min-width: 136px !important;
+  min-width: 90px !important;
   height: 36px !important;
   border-radius: 9999px !important;
   padding: 0 8px 0 13px !important;
@@ -4677,7 +4677,7 @@ body.has-messages .chat-mode-option[data-mode="websearch"] {
 
 .btn-send.loading.has-queue-input .btn-queue-morph-label {
   opacity: 1 !important;
-  max-width: 110px !important;
+  max-width: 58px !important;
   transform: translateX(0) !important;
   pointer-events: auto !important;
 }
