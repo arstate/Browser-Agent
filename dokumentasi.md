@@ -498,6 +498,25 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
       - Mengklik tombol secara instan melakukan *smooth scrolling* ke pesan paling baru di bagian paling bawah.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 785 baris, `canvas_manager.js` 796 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+121. **Seleksi Hierarki Gambar & Frame Kontainer Dalam di Slide Editor (`v2.150.238`):**
+    - **Akar Masalah**:
+      - Seleksi elemen di kanvas sebelumnya menggunakan `target.closest(...)` tanpa mendaftarkan tag media (`img, svg, picture, figure`) maupun kontainer pembungkus gambar (`.card-image-wrap, .col-img, div` dalam kartu).
+      - Akibatnya, saat pengguna mengklik gambar atau kontainer gambar di dalam kolom/kartu (`.slide-col, .split-col`), selector melompat melewati gambar langsung ke kartu induk. Jika kartu sudah terpilih, klik pada gambar secara keliru memicu aksi geser kartu (*card move drag*).
+      - Selain itu, pemanggilan `el.appendChild(box)` pada elemen void seperti `<img>` memicu error DOM `HierarchyRequestError` yang membisukan pembuatan gagang kontrol transformasi (Figma handles).
+    - **Solusi & Implementasi Teknis (`slide_editor.js`)**:
+      - **Pendeteksian Media & Siklus Seleksi Bertingkat (`findEditableTarget`)**:
+        1. *Klik 1 pada Gambar*: Mendeteksi `img, svg, picture, figure, video, canvas` secara langsung sehingga gambar dapat dipilih seketika.
+        2. *Klik 2 pada Gambar Terpilih*: Bersepeda secara cerdas ke bingkai/kontainer induk pembungkus gambar (`media.parentElement`), memungkinkan pengguna memilih dan mengedit kontainer gambar (*container framedalam*).
+        3. *Klik 3 / Siklus Lanjutan*: Bersepeda ke kartu induk (`.split-col, .slide-col`) dan kembali ke gambar.
+        4. Menambahkan dukungan seleksi langsung untuk frame kontainer dalam (`innerFrame` berbasis kelas media, frame, box, wrap, atau `div` anak langsung).
+      - **Dukungan Gagang Figma untuk Elemen Void (`updateFigmaHandles`)**:
+        - Memasang `.deck-figma-box` ke `el.parentElement` dengan koordinat absolut presisi (`box.style.left`, `top`, `width`, `height`, dan `transform`) khusus untuk tag void (`IMG`, `INPUT`, `HR`, `VIDEO`), disertai referensi balik `box._targetElement = el`.
+        - Memperbarui resolusi klik handle (`[data-handle]`) agar mengenali `box?._targetElement`.
+        - Menyinkronkan transform kotak kontrol selama `mousemove` rotasi, skala, perataan, dan translasi.
+      - **Dukungan Double Click Ubah URL Gambar**:
+        - Double click pada elemen `<img>` membuka prompt dialog untuk memperbarui URL sumber gambar (`src`) secara langsung dengan riwayat undo/redo otomatis.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 789 baris, `canvas_manager.js` 796 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
 
 
 

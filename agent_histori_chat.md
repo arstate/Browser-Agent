@@ -6758,6 +6758,32 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi jumlah baris memastikan seluruh file design `<= 796` baris.
   4. Bump versi manifest ke `v2.150.237`.
 
+### 🚀 Iterasi 519: Seleksi Hierarki Gambar & Frame Kontainer Dalam di Slide Editor
+- **Masalah Pengguna:**
+  - Pengguna melaporkan bug tidak bisa memilih ke dalam container / frame dalam di kanvas editor slide. Pengguna ingin memilih gambar (`<img>`) dan memilih/mengedit frame/container pembungkus gambar, namun saat diklik hanya kartu terluar (`.split-col, .slide-col`) yang terpilih atau kartu langsung tergeser (*drag move*).
+- **Solusi & Implementasi Teknis:**
+  1. *Pendeteksian Media & Siklus Seleksi Bertingkat (`findEditableTarget` di `slide_editor.js`)*:
+     - Menambahkan pengecekan elemen media langsung (`img, svg, picture, figure, video, canvas`). Klik pada gambar langsung memilih elemen gambar dengan outline seleksi dan kotak transformasi Figma.
+     - Menerapkan siklus seleksi hierarkis:
+       * Klik 1 pada gambar: Memilih elemen `<img>` langsung.
+       * Klik 2 pada gambar yang sudah terpilih: Bersepeda ke container/frame induknya (`media.parentElement`), memungkinkan pengguna memilih dan mengedit container gambar (*container framedalam*).
+       * Klik 3: Bersepeda ke kartu induk terluar (`.split-col, .slide-col`).
+     - Menambahkan dukungan penargetan inner frame/container anak (`[class*="image"], [class*="frame"], [class*="box"], [class*="wrap"], div` di dalam kolom/kartu).
+  2. *Pemasangan Gagang Kontrol Figma untuk Elemen Void (`updateFigmaHandles`)*:
+     - Elemen void seperti `<img>` tidak dapat memiliki child node (`appendChild` memicu `HierarchyRequestError`).
+     - Memasang `.deck-figma-box` ke `el.parentElement` dengan positioning absolut presisi (`box.style.left = el.offsetLeft - 5`, `box.style.top = el.offsetTop - 5`, `width = el.offsetWidth + 10`, `height = el.offsetHeight + 10`, `transform = el.style.transform`) dan menyematkan `box._targetElement = el`.
+     - Memperbarui resolusi klik handle (`[data-handle]`) untuk mengenali `box?._targetElement` agar interaksi rotasi, skala, dan resize bekerja sempurna pada gambar.
+     - Menyinkronkan translasi `box` saat gambar digeser dalam mode `move`.
+  3. *Dukungan Double-Click Ganti URL Gambar*:
+     - Menambahkan handler pada `dblclick` khusus tag `IMG` untuk memunculkan dialog prompt penggantian URL sumber gambar (`src`) dengan pencatatan snapshot otomatis.
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js`: 789 baris, `canvas_manager.js`: 796 baris, `slide_styles.js`: 790 baris, `slide_template.js`: 782 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Unit test `test_slide_image_container_selection.js` memvalidasi: (1) Klik gambar dalam kartu terpilih langsung memilih `IMG`, (2) Klik gambar terpilih bersepeda ke frame container dalam, (3) Klik frame container bersepeda ke kartu luar, (4) Pemasangan Figma handles pada void element `IMG` tanpa throwing, (5) Resolusi target handle ke `IMG`.
+  2. Node syntax check `node -c extension/*.js extension/design/*.js` lolos 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file design `<= 796` baris.
+  4. Bump versi manifest ke `v2.150.238`.
+
 
 
 

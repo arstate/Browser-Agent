@@ -9,12 +9,12 @@ function getSlideDeckEditorCss() {
     body.deck-edit-mode-active [contenteditable="true"], body.deck-edit-mode-active [contenteditable="true"] * { user-select: text !important; -webkit-user-select: text !important; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas { position: relative; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas [data-deck-editable="true"],
-    body.deck-edit-mode-active .slide-section.active .slide-canvas h1, body.deck-edit-mode-active .slide-section.active .slide-canvas h2, body.deck-edit-mode-active .slide-section.active .slide-canvas h3, body.deck-edit-mode-active .slide-section.active .slide-canvas p, body.deck-edit-mode-active .slide-section.active .slide-canvas .slide-col, body.deck-edit-mode-active .slide-section.active .slide-canvas .split-col, body.deck-edit-mode-active .slide-section.active .slide-canvas .metric-card, body.deck-edit-mode-active .slide-section.active .slide-canvas .timeline-step, body.deck-edit-mode-active .slide-section.active .slide-canvas .col-tag-chip, body.deck-edit-mode-active .slide-section.active .slide-canvas .col-badge, body.deck-edit-mode-active .slide-section.active .slide-canvas .cover-badge-pill { cursor: move !important; transition: outline 0.12s, box-shadow 0.12s; }
+    body.deck-edit-mode-active .slide-section.active .slide-canvas h1, body.deck-edit-mode-active .slide-section.active .slide-canvas h2, body.deck-edit-mode-active .slide-section.active .slide-canvas h3, body.deck-edit-mode-active .slide-section.active .slide-canvas p, body.deck-edit-mode-active .slide-section.active .slide-canvas .slide-col, body.deck-edit-mode-active .slide-section.active .slide-canvas .split-col, body.deck-edit-mode-active .slide-section.active .slide-canvas .metric-card, body.deck-edit-mode-active .slide-section.active .slide-canvas .timeline-step, body.deck-edit-mode-active .slide-section.active .slide-canvas .col-tag-chip, body.deck-edit-mode-active .slide-section.active .slide-canvas .col-badge, body.deck-edit-mode-active .slide-section.active .slide-canvas .cover-badge-pill, body.deck-edit-mode-active .slide-section.active .slide-canvas img, body.deck-edit-mode-active .slide-section.active .slide-canvas picture, body.deck-edit-mode-active .slide-section.active .slide-canvas figure, body.deck-edit-mode-active .slide-section.active .slide-canvas [class*="image"], body.deck-edit-mode-active .slide-section.active .slide-canvas [class*="img"] { cursor: move !important; transition: outline 0.12s, box-shadow 0.12s; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas [contenteditable="true"] { cursor: text !important; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas *:hover { outline: 1.5px dashed rgba(99, 102, 241, 0.45); outline-offset: 3px; }
     .deck-editable-selected { outline: 1.5px solid var(--accent, #6366F1) !important; outline-offset: 2px !important; box-shadow: 0 0 14px rgba(99, 102, 241, 0.35) !important; position: relative !important; }
-    [data-deck-transform], span[data-deck-transform], a[data-deck-transform], b[data-deck-transform], i[data-deck-transform], strong[data-deck-transform], em[data-deck-transform] { display: inline-block !important; }
-    span.deck-editable-selected, a.deck-editable-selected, b.deck-editable-selected, i.deck-editable-selected, strong.deck-editable-selected { display: inline-block !important; }
+    [data-deck-transform], span[data-deck-transform], a[data-deck-transform], b[data-deck-transform], i[data-deck-transform], strong[data-deck-transform], em[data-deck-transform], img[data-deck-transform] { display: inline-block !important; }
+    span.deck-editable-selected, a.deck-editable-selected, b.deck-editable-selected, i.deck-editable-selected, strong.deck-editable-selected, img.deck-editable-selected { display: inline-block !important; }
     .deck-figma-box { position: absolute; inset: -5px; pointer-events: none; z-index: 10000; }
     .figma-handle { position: absolute; width: 9px; height: 9px; background: #FFFFFF; border: 1.5px solid var(--accent, #6366F1); border-radius: 2px; pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 10002; }
     .figma-handle-tl { top: -5px; left: -5px; cursor: nwse-resize; } .figma-handle-tr { top: -5px; right: -5px; cursor: nesw-resize; } .figma-handle-bl { bottom: -5px; left: -5px; cursor: nesw-resize; } .figma-handle-br { bottom: -5px; right: -5px; cursor: nwse-resize; }
@@ -110,34 +110,19 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
   if (win.__slideDeckEditorInited) return;
   win.__slideDeckEditorInited = true;
 
-      let isEditMode = false;
-      let selectedElements = new Set();
-      let isDragging = false;
-      let activeAction = null;
-      let activeDir = null;
-      let activeElement = null;
-      let startX = 0, startY = 0;
-      let centerX = 0, centerY = 0;
-      let initialTransform = { x: 0, y: 0, scale: 1, rotate: 0 };
-      let initialDistance = 1;
-      let initialAngle = 0;
-      let initialWidth = 0, initialHeight = 0;
+      let isEditMode = false, selectedElements = new Set(), isDragging = false;
+      let activeAction = null, activeDir = null, activeElement = null;
+      let startX = 0, startY = 0, centerX = 0, centerY = 0;
+      let initialTransform = { x: 0, y: 0, scale: 1, rotate: 0 }, initialDistance = 1, initialAngle = 0, initialWidth = 0, initialHeight = 0;
       let primaryStartBox = null, snapCandidatesX = [], snapCandidatesY = [];
-      let initialTransforms = new Map();
-      let historyStack = [];
-      let futureStack = [];
+      let initialTransforms = new Map(), historyStack = [], futureStack = [];
       const MAX_HISTORY = 30;
 
-      function getSlidesState() {
-        return Array.from(doc.querySelectorAll('.slide-section')).map(s => s.innerHTML);
-      }
-
+      function getSlidesState() { return Array.from(doc.querySelectorAll('.slide-section')).map(s => s.innerHTML); }
       function restoreSlidesState(state) {
         if (!Array.isArray(state)) return;
         const slides = Array.from(doc.querySelectorAll('.slide-section'));
-        state.forEach((html, i) => {
-          if (slides[i]) slides[i].innerHTML = html;
-        });
+        state.forEach((html, i) => { if (slides[i]) slides[i].innerHTML = html; });
       }
 
       function updateUndoRedoButtons() {
@@ -176,7 +161,23 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           const box = doc.createElement('div');
           box.className = 'deck-figma-box';
           box.innerHTML = '<div class="figma-handle figma-handle-tl" data-handle="scale" data-dir="tl"></div><div class="figma-handle figma-handle-tr" data-handle="scale" data-dir="tr"></div><div class="figma-handle figma-handle-bl" data-handle="scale" data-dir="bl"></div><div class="figma-handle figma-handle-br" data-handle="scale" data-dir="br"></div><div class="figma-handle figma-handle-tm" data-handle="resize-h" data-dir="tm" title="Atur tinggi"></div><div class="figma-handle figma-handle-bm" data-handle="resize-h" data-dir="bm" title="Atur tinggi"></div><div class="figma-handle figma-handle-ml" data-handle="resize-w" data-dir="ml" title="Atur lebar"></div><div class="figma-handle figma-handle-mr" data-handle="resize-w" data-dir="mr" title="Atur lebar"></div><div class="figma-rot-stem"></div><div class="figma-handle-rot" data-handle="rotate" title="Putar"></div><div class="figma-badge-dim"></div>';
-          try { el.appendChild(box); } catch(err) {}
+          box._targetElement = el;
+          if (['IMG', 'INPUT', 'HR', 'VIDEO', 'EMBED'].includes(el.tagName)) {
+            const p = el.parentElement;
+            if (p) {
+              if (win.getComputedStyle(p).position === 'static') p.style.position = 'relative';
+              box.style.inset = 'auto';
+              box.style.left = (el.offsetLeft - 5) + 'px';
+              box.style.top = (el.offsetTop - 5) + 'px';
+              box.style.width = (el.offsetWidth + 10) + 'px';
+              box.style.height = (el.offsetHeight + 10) + 'px';
+              box.style.transform = el.style.transform || '';
+              box.style.transformOrigin = el.style.transformOrigin || 'center center';
+              p.appendChild(box);
+            }
+          } else {
+            try { el.appendChild(box); } catch(_) {}
+          }
         });
       }
 
@@ -386,26 +387,30 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
       }
 
       function findEditableTarget(target) {
-        if (!target) return null;
-        if (target.closest('#deck-editor-toolbar') || target.closest('.deck-floating-dock') || target.closest('#deck-sidebar')) {
-          return null;
+        if (!target || target.closest('#deck-editor-toolbar, .deck-floating-dock, #deck-sidebar, .deck-figma-box')) return null;
+        const media = target.closest('img, svg, picture, figure, video, canvas');
+        if (media) {
+          if (selectedElements.has(media) && media.parentElement && !media.parentElement.classList.contains('slide-section') && !media.parentElement.classList.contains('slide-canvas')) {
+            return media.parentElement;
+          }
+          return media;
         }
-        let el = target.closest(
-          '[data-deck-editable="true"], .slide-main-title, .slide-lead-desc, .col-title, .col-desc, ' +
-          '.col-badge, .col-tag-chip, .col-highlight-text, .cover-main-title, .cover-lead-subtitle, ' +
-          '.cover-badge-pill, .cover-meta-item, .cover-meta-val, .metric-val, .metric-title, .metric-desc, .quote-text, .quote-author, ' +
-          '.timeline-step-title, .timeline-step-desc, .conclusion-card-title, .conclusion-card-desc, ' +
-          '.slide-col, .split-col, .metric-card, .timeline-step, .conclusion-card, h1, h2, h3, h4, p, span, strong, em, b, i'
-        );
-        if (el && !el.classList.contains('slide-section') && !el.classList.contains('slide-stage-wrap') && !el.classList.contains('deck-stage-wrap') && !el.classList.contains('slide-canvas')) {
-          if (['IMG', 'INPUT', 'HR'].includes(el.tagName) && el.parentElement) el = el.parentElement;
-          return el;
+        const textEl = target.closest('h1, h2, h3, h4, h5, h6, p, span, strong, em, b, i, a, .col-title, .col-desc, .split-col-title, .split-col-desc, .cover-main-title, .cover-lead-subtitle, .metric-val, .metric-title, .metric-desc, .quote-text, .quote-author, .timeline-step-title, .timeline-step-desc, .conclusion-card-title, .conclusion-card-desc');
+        if (textEl && !textEl.classList.contains('slide-section') && !textEl.classList.contains('slide-canvas')) return textEl;
+        const badgeEl = target.closest('.col-badge, .col-tag-chip, .col-highlight-box, .col-highlight-text, .cover-badge-pill, .cover-meta-item, .cover-meta-val');
+        if (badgeEl) return badgeEl;
+        const cardParent = target.closest('.slide-col, .split-col, .metric-card, .timeline-step, .conclusion-card, .quote-wrap');
+        if (cardParent && target !== cardParent) {
+          const inner = target.closest('[class*="image"], [class*="img"], [class*="media"], [class*="photo"], [class*="frame"], [class*="box"], [class*="wrap"], [class*="content"], .col-top, div');
+          if (inner && inner !== cardParent && cardParent.contains(inner)) {
+            return selectedElements.has(inner) ? cardParent : inner;
+          }
         }
+        if (cardParent) return cardParent;
+        const el = target.closest('[data-deck-editable="true"]');
+        if (el && !el.classList.contains('slide-section') && !el.classList.contains('slide-canvas')) return el;
         const canvas = target.closest('.slide-canvas');
-        if (canvas && target !== canvas && !target.classList.contains('slide-header-bar') && !target.classList.contains('slide-footer-bar')) {
-          return target;
-        }
-        return null;
+        return (canvas && target !== canvas && !target.classList.contains('slide-header-bar') && !target.classList.contains('slide-footer-bar')) ? target : null;
       }
 
       // Interaction: Selection, Move Drag, and Figma Transform Handles
@@ -415,10 +420,10 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
 
         const handleEl = e.target.closest('[data-handle]');
         if (handleEl) {
-          e.preventDefault();
-          e.stopPropagation();
+          e.preventDefault(); e.stopPropagation();
           const handleType = handleEl.getAttribute('data-handle');
-          const parentSelected = handleEl.closest('.deck-editable-selected');
+          const box = handleEl.closest('.deck-figma-box');
+          const parentSelected = box?._targetElement || handleEl.closest('.deck-editable-selected') || Array.from(selectedElements)[0];
           if (!parentSelected) return;
 
           activeAction = handleType;
@@ -598,54 +603,53 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           selectedElements.forEach(el => {
             const init = initialTransforms.get(el) || { x: 0, y: 0, scale: 1, rotate: 0 };
             applyTransform(el, { x: init.x + dx, y: init.y + dy, scale: init.scale, rotate: init.rotate });
+            const box = el.querySelector?.('.deck-figma-box') || (el.parentElement?.querySelector?.('.deck-figma-box')?._targetElement === el ? el.parentElement.querySelector('.deck-figma-box') : null);
+            if (box && box._targetElement === el) box.style.transform = el.style.transform;
           });
         }
       });
 
       doc.addEventListener('mouseup', () => {
-        if (activeAction) {
-          if (activeElement) {
-            const badge = activeElement.querySelector('.figma-badge-dim');
-            if (badge) badge.style.display = 'none';
-          }
-          removeSnapGuides();
-          activeAction = null;
-          activeDir = null;
-          activeElement = null;
-          isDragging = false;
-          primaryStartBox = null;
-          snapCandidatesX = [];
-          snapCandidatesY = [];
-          initialTransforms.clear();
-          takeSnapshot();
-          notifyParentContentChanged();
+        if (!activeAction) return;
+        if (activeElement) {
+          const badge = activeElement.querySelector?.('.figma-badge-dim') || activeElement.parentElement?.querySelector?.('.figma-badge-dim');
+          if (badge) badge.style.display = 'none';
         }
+        removeSnapGuides();
+        activeAction = null; activeDir = null; activeElement = null; isDragging = false; primaryStartBox = null;
+        snapCandidatesX = []; snapCandidatesY = []; initialTransforms.clear();
+        updateFigmaHandles();
+        takeSnapshot();
+        notifyParentContentChanged();
       });
 
-      // Double-click inline text editing
+      // Double-click inline text or image editing
       doc.addEventListener('dblclick', (e) => {
         if (!isEditMode) return;
         const target = findEditableTarget(e.target);
         if (!target) return;
-
         removeFigmaBoxes();
+        if (target.tagName === 'IMG') {
+          const cur = target.getAttribute('src') || '';
+          const newSrc = win.prompt('Ganti URL Gambar (Image Source):', cur);
+          if (newSrc && newSrc.trim() && newSrc !== cur) {
+            target.setAttribute('src', newSrc.trim());
+            takeSnapshot(); notifyParentContentChanged();
+          }
+          updateFigmaHandles(); return;
+        }
         let textTarget = target;
         if (target.classList.contains('slide-col') || target.classList.contains('split-col') || target.classList.contains('metric-card')) {
           textTarget = target.querySelector('h1, h2, h3, p, .col-title, .col-desc') || target;
         }
-
         textTarget.setAttribute('contenteditable', 'true');
         textTarget.focus();
-
         const initialText = textTarget.innerHTML;
         const onBlur = () => {
           textTarget.removeAttribute('contenteditable');
           textTarget.removeEventListener('blur', onBlur);
           updateFigmaHandles();
-          if (textTarget.innerHTML !== initialText) {
-            takeSnapshot();
-            notifyParentContentChanged();
-          }
+          if (textTarget.innerHTML !== initialText) { takeSnapshot(); notifyParentContentChanged(); }
         };
         textTarget.addEventListener('blur', onBlur);
       });

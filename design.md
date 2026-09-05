@@ -1126,6 +1126,28 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 3. **Strict Sub-800 Line Rule Compliance**:
    - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 785 baris, `canvas_manager.js` 796 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+## 🎨 54. Hierarchical Image & Inner Container Frame Selection Engine (v2.150.238)
+
+1. **Root Cause Analysis (Missing Media Selectors & Void Element Failure)**:
+   - Evaluasi selector target sebelumnya (`target.closest(...)`) tidak menyertakan elemen `img, picture, figure, svg` maupun container pembungkus gambar (`.card-image-wrap`, `div` dalam kolom/kartu).
+   - Akibatnya, mengklik gambar di dalam kartu (`.split-col, .slide-col`) langsung melompati gambar dan memilih kartu induk. Bila kartu sudah aktif, event `mousedown` langsung mengasumsikan drag translasi kartu (*card move*).
+   - Pemanggilan `el.appendChild(box)` pada `<img>` memicu `HierarchyRequestError` di DOM browser karena `img` adalah void tag yang tidak dapat memiliki child node.
+
+2. **Hierarchical Drill-Down & Cycling Selector (`findEditableTarget`)**:
+   - **Prioritas 1: Direct Media**: Mengidentifikasi `img, svg, picture, figure, video, canvas`. Mengklik gambar yang belum terpilih langsung memilih gambar tersebut dengan outline dan kotak Figma.
+   - **Prioritas 2: Frame Pembungkus / Container Gambar**: Jika gambar sudah dalam keadaan terpilih dan diklik kembali, selector cerdas beralih ke container induknya (`media.parentElement`), memungkinkan pengguna memilih bingkai / container gambar (*inner container frame*).
+   - **Prioritas 3: Frame Kontainer Dalam**: Mengenali selector container dalam (`[class*="image"], [class*="frame"], [class*="box"], [class*="wrap"], div` di dalam kartu).
+   - **Prioritas 4: Kartu Induk / Kolom**: Siklus berlanjut ke kartu terluar (`.split-col, .slide-col`), lalu kembali ke gambar bila diklik berulang.
+
+3. **Void Element Figma Handles Mounting (`updateFigmaHandles`)**:
+   - Kotak kontrol `.deck-figma-box` untuk elemen void (`IMG`, `INPUT`, `HR`, `VIDEO`) dipasang ke `el.parentElement` dengan kalkulasi offset presisi (`el.offsetLeft - 5`, `el.offsetTop - 5`, `el.offsetWidth + 10`, `el.offsetHeight + 10`) dan sinkronisasi transform.
+   - Menyematkan referensi `box._targetElement = el` sehingga klik pada gagang kontrol transformasi (`[data-handle]`) langsung merujuk pada elemen gambar.
+   - Menambahkan fitur double click pada gambar untuk memicu dialog penggantian URL sumber gambar (`src`) dengan snapshot riwayat instan.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 789 baris, `canvas_manager.js` 796 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+
 
 
 
