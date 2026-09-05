@@ -764,4 +764,14 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menghapus deklarasi variabel dan event listener `btnCloseAppsOverlay`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+134. **Penyelarasan Tinggi Kontainer URL Pill 26px Seamless dengan Tombol Navbar (`v2.150.251`):**
+    - **Kebutuhan Pengguna**:
+      - Ukuran tinggi container UI link (`.apps-url-pill`) dibuat persis setara dengan tinggi tombol di sampingnya (26px) agar sejajar rapi, tidak anjlok (*seamless*), dan proporsional.
+    - **Implementasi Teknis**:
+      1. **Tinggi & Geometri Terpadu (`extension/newtab.css`)**:
+         - Menetapkan `height: 26px;` dan `box-sizing: border-box;` secara eksplisit pada `.apps-url-pill`, dengan `padding: 0 12px;` dan `line-height: 24px;`.
+         - Memastikan `.apps-action-btn` dan `.apps-brand-icon` juga memiliki ukuran presisi `26px x 26px; box-sizing: border-box;`.
+         - Garis horizontal atas dan bawah trio kontrol di `.apps-header-center` kini rata sempurna (*pixel-perfect horizontal alignment*).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
 

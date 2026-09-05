@@ -1464,4 +1464,23 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 67. Seamless Height Matching (26px) for Navbar Trio Container (v2.150.251)
+
+### 📐 1. Penyelarasan Tinggi 26px Pixel-Perfect
+- **Equal Height Geometry**: Menyelaraskan tinggi `.apps-url-pill` menjadi tepat `26px` dengan `box-sizing: border-box;` dan `padding: 0 12px;` (line-height: `24px`), menyamakan tinggi secara presisi dengan tombol aksi circular `.apps-action-btn` (26px x 26px) dan `.apps-brand-icon` (26px x 26px).
+- **Seamless Alignment**: Mengeliminasi efek anjlok/timpang vertikal antara pill URL dan tombol di sampingnya, menciptakan kesatuan visual yang kohesif (*seamless acrylic ribbon*).
+
+### 📏 2. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
 

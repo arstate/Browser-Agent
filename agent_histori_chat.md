@@ -7121,5 +7121,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.250` di `manifest.json`.
 
+---
+
+### Iterasi: Penyelarasan Tinggi Kontainer URL Pill 26px Seamless dengan Tombol Navbar (`v2.150.251`)
+- **User Request:**
+  - "ukuran tinggi container ui link buat kek tinggi tombol biar sama ga anjlok biar kek seamles"
+  - Uploaded Screenshot: Menampilkan trio kontrol navbar (tombol katalog, URL container, tombol reload) di mana URL pill tampak sedikit lebih pendek dari tombol circular 26px di sampingnya.
+- **Solusi & Rekayasa Teknis:**
+  1. *Penyetaraan Tinggi 26px Pixel-Perfect*:
+     - `extension/newtab.css`: Menyetel `.apps-url-pill` dengan `height: 26px; box-sizing: border-box; padding: 0 12px; line-height: 24px;` agar identik dengan tinggi `.apps-action-btn` (26px x 26px) dan `.apps-brand-icon` (26px x 26px).
+     - Menghilangkan efek anjlok atau disparitas vertikal, menghasilkan tampilan horizontal yang rata dan mulus (*seamless acrylic ribbon*).
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_clean_monochrome_ui.js` dan `test_apps_hub_google_flow_integration.js` lulus 100%.
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.251` di `manifest.json`.
+
 
 
