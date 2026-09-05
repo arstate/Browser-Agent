@@ -431,4 +431,18 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Menu Thinking (`#thinking-level-dropup-wrapper`) otomatis disembunyikan (`display: none`) saat berpindah ke mode `Web Search`.
    - Tetap aktif dan tertata rapi (`display: inline-flex`) pada mode `Agent`, `Chat`, dan `Design`.
 
+---
+
+## 🎨 18. In-Place Live Canvas Revision & Same-Origin Navigation Guard (v2.150.202)
+
+1. **Parent-Controlled Same-Origin Iframe Navigation Guard**:
+   - Injeksi script navigasi tangguh dari window parent (`attachSlideDeckController`) ke `iframe.contentDocument` saat iframe event `load` dan assign `srcdoc`.
+   - Penegasan pointer-events `.thumb-item * { pointer-events: none !important; }` dan `.dock-btn * { pointer-events: none !important; }` menjamin klik thumbnail maupun anak tombol selalu memicu pergantian slide.
+   - Mengontrol state slide aktif (`.slide-section.active` display flex) dan nomor counter dock secara sinkron.
+2. **In-Place Live Canvas Revision Protocol**:
+   - Saat Canvas Drawer aktif (`isCanvasOpen()`), setiap input chat yang dikirim diarahkan otomatis ke proses revisi kanvas in-place tanpa membuat card kanvas baru yang terpisah.
+   - Status badge kartu chat bertransformasi menjadi `Live Updated` berwarna hijau zamrud (`#34D399`) dengan tombol aksi `View Updated Canvas ↗`.
+   - Live iframe reload, pembaruan kode di Code Tab, pembaruan Virtual Files di Files Tab, dan toast feedback `✅ Canvas aktif berhasil diperbarui!` bekerja secara real-time.
+
+
 

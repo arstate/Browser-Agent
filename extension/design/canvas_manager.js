@@ -27,6 +27,135 @@ function setActiveDesignArtifact(artifact) {
     window.__activeDesignArtifact = artifact;
   }
 }
+
+function isCanvasOpen() {
+  const canvasPane = document.getElementById('opendesign-canvas-pane');
+  return Boolean(canvasPane && canvasPane.style.display !== 'none' && document.body.classList.contains('canvas-active'));
+}
+
+function attachSlideDeckController(iframe) {
+  if (!iframe) return;
+  try {
+    const doc = iframe.contentDocument;
+    const win = iframe.contentWindow;
+    if (!doc || !doc.body) return;
+
+    const slides = Array.from(doc.querySelectorAll('.slide-section'));
+    if (slides.length === 0) return;
+
+    const thumbs = Array.from(doc.querySelectorAll('.thumb-item'));
+    const currSlideEl = doc.getElementById('dock-curr-slide');
+
+    let styleTag = doc.getElementById('slide-deck-controller-style');
+    if (!styleTag) {
+      styleTag = doc.createElement('style');
+      styleTag.id = 'slide-deck-controller-style';
+      styleTag.textContent = `
+        .slide-section { display: none !important; }
+        .slide-section.active { display: flex !important; opacity: 1 !important; transform: scale(1) !important; }
+        .thumb-item * { pointer-events: none !important; }
+        .dock-btn * { pointer-events: none !important; }
+        .thumb-item { cursor: pointer !important; user-select: none !important; }
+      `;
+      doc.head.appendChild(styleTag);
+    }
+
+    let currentIndex = 0;
+    const activeIdx = slides.findIndex(s => s.classList.contains('active'));
+    if (activeIdx >= 0) currentIndex = activeIdx;
+    win.currentIndex = currentIndex;
+
+    function goToSlide(targetIdx) {
+      let idx = parseInt(targetIdx, 10);
+      if (isNaN(idx)) idx = 0;
+      if (idx < 0) idx = 0;
+      if (idx >= slides.length) idx = Math.max(0, slides.length - 1);
+
+      currentIndex = idx;
+      win.currentIndex = idx;
+
+      for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.toggle('active', i === idx);
+      }
+
+      for (let i = 0; i < thumbs.length; i++) {
+        const isActive = (i === idx);
+        thumbs[i].classList.toggle('active', isActive);
+        if (isActive) {
+          try {
+            thumbs[i].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } catch (_) {}
+        }
+      }
+
+      if (currSlideEl) {
+        currSlideEl.textContent = String(idx + 1);
+      }
+    }
+
+    win.goToSlide = goToSlide;
+
+    if (!doc.__slideDeckDelegated) {
+      doc.__slideDeckDelegated = true;
+      doc.addEventListener('click', function(e) {
+        const thumb = e.target.closest('.thumb-item');
+        if (thumb) {
+          e.preventDefault();
+          e.stopPropagation();
+          const target = thumb.getAttribute('data-target') || thumb.id.replace('thumb-', '');
+          goToSlide(target);
+          return;
+        }
+        const prevBtn = e.target.closest('#dock-btn-prev');
+        if (prevBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          goToSlide(currentIndex - 1);
+          return;
+        }
+        const nextBtn = e.target.closest('#dock-btn-next');
+        if (nextBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          goToSlide(currentIndex + 1);
+          return;
+        }
+        const resetBtn = e.target.closest('#dock-btn-reset');
+        if (resetBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          goToSlide(0);
+          return;
+        }
+      }, true);
+    }
+
+    if (!win.__slideDeckKeydown) {
+      win.__slideDeckKeydown = true;
+      win.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+          goToSlide(currentIndex + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+          goToSlide(currentIndex - 1);
+        } else if (e.key === 'r' || e.key === 'R') {
+          goToSlide(0);
+        } else if (e.key === 'p' || e.key === 'P') {
+          win.print();
+        } else if (e.key === 'f' || e.key === 'F') {
+          if (!doc.fullscreenElement) {
+            doc.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            doc.exitFullscreen().catch(() => {});
+          }
+        }
+      });
+    }
+
+    goToSlide(currentIndex);
+  } catch (err) {
+    console.error('attachSlideDeckController error:', err);
+  }
+}
 function showUniversalToast(message, duration = 3000) {
   let toast = document.getElementById('universal-action-toast');
   if (!toast) {
@@ -43,15 +172,16 @@ function showUniversalToast(message, duration = 3000) {
   }, duration);
 }
 
-function renderOpenDesignCard(containerEl, artifact) {
+function renderOpenDesignCard(containerEl, artifact, options = {}) {
   if (!containerEl || !artifact || !artifact.html) return;
 
-  if (containerEl.querySelector('.opendesign-result-card')) {
-    return;
+  const existingCard = containerEl.querySelector('.opendesign-result-card');
+  if (existingCard) {
+    existingCard.remove();
   }
 
   const card = document.createElement('div');
-  card.className = 'opendesign-result-card';
+  card.className = 'opendesign-result-card' + (options.isRevision ? ' opendesign-card-revised' : '');
   card.setAttribute('data-system', artifact.meta?.system || 'modern');
 
   const isDeck = artifact.html?.includes('deck-sidebar') || artifact.html?.includes('presentation-workspace') || 
@@ -69,11 +199,17 @@ function renderOpenDesignCard(containerEl, artifact) {
     .map(t => `<span class="meta-tag">${escapeHtml(t)}</span>`)
     .join('');
 
+  const statusBadgeHtml = options.isRevision
+    ? `<span class="opendesign-status-pill opendesign-revision-pill" style="background: rgba(52, 211, 153, 0.15); color: #34D399; border: 1px solid rgba(52, 211, 153, 0.3);">Live Updated</span>`
+    : `<span class="opendesign-status-pill">Canvas Ready</span>`;
+
+  const btnViewText = options.isRevision ? 'View Updated Canvas ↗' : 'View Canvas ↗';
+
   card.innerHTML = `
     <div class="opendesign-card-badge-row">
       <span class="opendesign-system-badge">${systemBadge}</span>
       <span class="opendesign-category-badge">${categoryBadge}</span>
-      <span class="opendesign-status-pill">Canvas Ready</span>
+      ${statusBadgeHtml}
     </div>
     <h4 class="opendesign-card-title">${escapeHtml(artifact.meta?.title || (isDeck ? 'Executive Slide Deck' : 'Rancangan Antarmuka'))}</h4>
     <p class="opendesign-card-desc">${escapeHtml(artifact.meta?.description || (isDeck ? 'Presentasi 16:9 widescreen interaktif dengan sidebar thumbnail dan floating navigation dock.' : 'Desain interaktif siap dipratinjau dan diekspor.'))}</p>
@@ -88,7 +224,7 @@ function renderOpenDesignCard(containerEl, artifact) {
     <div class="opendesign-card-actions">
       <button type="button" class="btn-opendesign-view-canvas">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        <span>View Canvas ↗</span>
+        <span>${btnViewText}</span>
       </button>
       <button type="button" class="btn-opendesign-export" title="Unduh File HTML Mandiri">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -108,7 +244,7 @@ function renderOpenDesignCard(containerEl, artifact) {
       detail: { artifact }
     }));
 
-    showUniversalToast('🎨 Membuka Canvas Workspace...');
+    showUniversalToast(options.isRevision ? '🎨 Membuka Canvas Workspace yang telah diperbarui...' : '🎨 Membuka Canvas Workspace...');
   });
 
   const btnExport = card.querySelector('.btn-opendesign-export');
@@ -367,42 +503,8 @@ async function handleCanvasExport(format) {
   }
 }
 
-function openOpenDesignCanvas(artifact) {
-  if (!artifact || !artifact.html) return;
-  activeDesignArtifact = artifact;
-  window.__activeDesignArtifact = artifact;
-
-  try {
-    chrome.storage.local.set({ opendesign_last_artifact: artifact });
-  } catch (e) {}
-
-  const canvasPane = document.getElementById('opendesign-canvas-pane');
-  if (!canvasPane) return;
-
-  document.body.classList.add('canvas-active');
-  canvasPane.style.display = 'flex';
-
-  // 1. Set Header
-  const titleEl = document.getElementById('canvas-design-title');
-  if (titleEl) titleEl.textContent = artifact.meta?.title || 'Design Preview';
-
-  // 2. Set Preview iframe
-  const iframe = document.getElementById('opendesign-preview-frame');
-  if (iframe) {
-    iframe.srcdoc = artifact.html;
-  }
-
-  // 3. Set Code tab
-  const codeDisplay = document.getElementById('canvas-code-display');
-  const codeLangLabel = document.getElementById('canvas-code-lang-label');
-  if (codeDisplay) {
-    codeDisplay.textContent = artifact.html;
-  }
-  if (codeLangLabel) {
-    codeLangLabel.textContent = `index.html (HTML5 Standalone • ${(artifact.html.length / 1024).toFixed(1)} KB)`;
-  }
-
-  // 4. Generate & Populate Files Tab
+function updateCanvasVirtualFiles(artifact) {
+  if (!artifact) return;
   const virtualFiles = generateVirtualFiles(artifact);
   const filesListEl = document.getElementById('canvas-files-list');
   const fileTitleEl = document.getElementById('canvas-active-file-title');
@@ -428,6 +530,60 @@ function openOpenDesignCanvas(artifact) {
       if (fileCodeEl) fileCodeEl.textContent = virtualFiles[0].content;
     }
   }
+}
+
+function openOpenDesignCanvas(artifact) {
+  if (!artifact || !artifact.html) return;
+
+  // Auto-upgrade slide deck HTML if needed (guarantees latest navigation engine & fixes old artifacts)
+  if (typeof upgradeSlideDeckHtmlIfNeeded === 'function') {
+    artifact.html = upgradeSlideDeckHtmlIfNeeded(artifact.html, artifact.meta?.title || "", artifact.meta || {});
+  } else if (typeof window !== 'undefined' && typeof window.upgradeSlideDeckHtmlIfNeeded === 'function') {
+    artifact.html = window.upgradeSlideDeckHtmlIfNeeded(artifact.html, artifact.meta?.title || "", artifact.meta || {});
+  }
+
+  activeDesignArtifact = artifact;
+  window.__activeDesignArtifact = artifact;
+
+  try {
+    if (typeof chrome !== 'undefined' && chrome?.storage?.local?.set) {
+      chrome.storage.local.set({ opendesign_last_artifact: artifact });
+    }
+  } catch (e) {}
+
+  const canvasPane = document.getElementById('opendesign-canvas-pane');
+  if (!canvasPane) return;
+
+  document.body.classList.add('canvas-active');
+  canvasPane.style.display = 'flex';
+
+  // 1. Set Header
+  const titleEl = document.getElementById('canvas-design-title');
+  if (titleEl) titleEl.textContent = artifact.meta?.title || 'Design Preview';
+
+  // 2. Set Preview iframe
+  const iframe = document.getElementById('opendesign-preview-frame');
+  if (iframe) {
+    iframe.srcdoc = artifact.html;
+    iframe.onload = () => {
+      attachSlideDeckController(iframe);
+    };
+    setTimeout(() => attachSlideDeckController(iframe), 50);
+    setTimeout(() => attachSlideDeckController(iframe), 250);
+  }
+
+  // 3. Set Code tab
+  const codeDisplay = document.getElementById('canvas-code-display');
+  const codeLangLabel = document.getElementById('canvas-code-lang-label');
+  if (codeDisplay) {
+    codeDisplay.textContent = artifact.html;
+  }
+  if (codeLangLabel) {
+    codeLangLabel.textContent = `index.html (HTML5 Standalone • ${(artifact.html.length / 1024).toFixed(1)} KB)`;
+  }
+
+  // 4. Generate & Populate Files Tab
+  updateCanvasVirtualFiles(artifact);
 
   // Reset to preview tab
   switchCanvasTab('preview');
@@ -504,12 +660,21 @@ function initOpenDesignCanvas() {
     });
   });
 
+  const previewIframe = document.getElementById('opendesign-preview-frame');
+  if (previewIframe) {
+    previewIframe.addEventListener('load', () => {
+      attachSlideDeckController(previewIframe);
+    });
+  }
+
   // Refresh
   const btnRefresh = document.getElementById('btn-canvas-refresh');
   btnRefresh?.addEventListener('click', () => {
     const iframe = document.getElementById('opendesign-preview-frame');
     if (iframe && activeDesignArtifact?.html) {
       iframe.srcdoc = activeDesignArtifact.html;
+      setTimeout(() => attachSlideDeckController(iframe), 50);
+      setTimeout(() => attachSlideDeckController(iframe), 250);
       showUniversalToast('🔄 Pratinjau dimuat ulang');
     }
   });
@@ -521,7 +686,9 @@ function initOpenDesignCanvas() {
     const isSidepanel = !window.location.pathname.includes('newtab.html');
     if (isSidepanel) {
       // In sidepanel: open newtab with canvas query
-      chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html?canvas=open') });
+      if (typeof chrome !== 'undefined' && chrome?.tabs?.create && chrome?.runtime?.getURL) {
+        chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html?canvas=open') });
+      }
     } else {
       // In newtab: open standalone HTML tab
       const blob = new Blob([activeDesignArtifact.html], { type: 'text/html' });
@@ -634,11 +801,13 @@ function initOpenDesignCanvas() {
   try {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('canvas') === 'open') {
-      chrome.storage.local.get(['opendesign_last_artifact'], (res) => {
-        if (res?.opendesign_last_artifact) {
-          openOpenDesignCanvas(res.opendesign_last_artifact);
-        }
-      });
+      if (typeof chrome !== 'undefined' && chrome?.storage?.local?.get) {
+        chrome.storage.local.get(['opendesign_last_artifact'], (res) => {
+          if (res?.opendesign_last_artifact) {
+            openOpenDesignCanvas(res.opendesign_last_artifact);
+          }
+        });
+      }
     }
   } catch (e) {}
 }
@@ -661,4 +830,7 @@ if (typeof window !== 'undefined') {
   window.initOpenDesignCanvas = initOpenDesignCanvas;
   window.getActiveDesignArtifact = getActiveDesignArtifact;
   window.setActiveDesignArtifact = setActiveDesignArtifact;
+  window.isCanvasOpen = isCanvasOpen;
+  window.attachSlideDeckController = attachSlideDeckController;
+  window.updateCanvasVirtualFiles = updateCanvasVirtualFiles;
 }

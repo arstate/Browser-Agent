@@ -1047,8 +1047,8 @@ function extractSlidesFromRawHtml(html) {
 function upgradeSlideDeckHtmlIfNeeded(html, userPrompt = "", meta = {}) {
   if (!html || typeof html !== "string") return html;
   
-  // If already has BOTH the miniature slide thumbnail preview (.thumb-mini-slide) and floating dock, return as-is
-  if (html.includes("thumb-mini-slide") && html.includes("deck-floating-dock")) {
+  // If already has BOTH the miniature slide thumbnail preview (.thumb-mini-slide), floating dock, AND modern delegation script, return as-is
+  if (html.includes("thumb-mini-slide") && html.includes("deck-floating-dock") && html.includes("classList.toggle('active'")) {
     return html;
   }
 

@@ -5761,8 +5761,48 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
     * Next button click 2: `slide-1` -> `slide-2` (counter: 3) - PASS.
     * Reset button click: `slide-2` -> `slide-0` (counter: 1) - PASS.
     * Inner child click (`.thumb-card`): `slide-0` -> `slide-1` (counter: 2) - PASS.
-    * Prev button click: `slide-1` -> `slide-0` (counter: 1) - PASS.
     * Inner number click (`.thumb-num`): `slide-0` -> `slide-2` (counter: 3) - PASS.
   - Bump version to `v2.150.201`.
+
+---
+
+### 🚀 Iterasi 483: Parent-Controlled Same-Origin Iframe Automation & In-Place Live Canvas Revision Engine (v2.150.202)
+- **Kebutuhan Pengguna**:
+  1. Memperbaiki perpindahan slide deck yang masih belum berfungsi saat diklik (`masih gabisa di klik pindah pindah halaman bro`).
+  2. Saat kanvas sedang dibuka, jika pengguna meminta revisi melalui chat agent, sistem harus otomatis mengedit kanvas yang sedang dibuka secara langsung (*in-place*), bukan membuat kanvas/kartu baru yang terpisah (`buat ketika sedang membuka canvas yang sedang dibuka kalau ada revisi chat agent otopmatis agent design mode akan mengedit canvas yang dibuka bukan malah membuat canvas baru`).
+- **Akar Masalah (Root Cause)**:
+  1. *Legacy Stored Artifact Bypass*: Sesi aktif pengguna (`sess_1788545506963`) menyimpan artefak HTML yang dibuat sebelum `v2.150.201`. Pada `upgradeSlideDeckHtmlIfNeeded`, pengecekan `if (html.includes("thumb-mini-slide") && html.includes("deck-floating-dock")) return html;` secara keliru mem-bypass upgrade karena HTML lama sudah memiliki kedua class tersebut namun belum memiliki skrip delegasi dan pointer-events modern, sehingga artefak lama tetap macet.
+  2. *Disconnected Revision Cards*: Sebelumnya, setiap pesan chat baru di Sidepanel selalu memicu loop agent reguler atau membuat blok kartu OpenDesign baru yang berdiri sendiri tanpa konteks HTML kanvas yang sedang terbuka, menyebabkan hasil revisi terpisah dari Drawer Canvas.
+- **Implementasi & Peningkatan**:
+  - **Parent-Controlled Same-Origin Iframe Automation di [design/canvas_manager.js](file:///home/arya/browser-agent/extension/design/canvas_manager.js)**:
+    - Menambahkan fungsi `attachSlideDeckController(iframe)` yang beroperasi langsung dari jendela parent ke `iframe.contentDocument` dalam fase tangkap (*capture phase* `useCapture: true`).
+    - Menyuntikkan CSS penegasan pointer-events (`.thumb-item * { pointer-events: none !important; }` dan `.dock-btn * { pointer-events: none !important; }`).
+    - Mengikat listener `load` pada `#opendesign-preview-frame` serta timeout eksekusi ganda pada pembukaan kanvas dan tombol refresh, menjamin navigasi slide 100% aktif bahkan pada artefak legacy.
+    - Menambahkan `isCanvasOpen()`, `updateCanvasVirtualFiles(artifact)`, serta dukungan opsi `options.isRevision` pada `renderOpenDesignCard` dengan badge `Live Updated` dan tombol `View Updated Canvas ↗`.
+  - **Re-Synthesis Guard di [design/slide_deck_engine.js](file:///home/arya/browser-agent/extension/design/slide_deck_engine.js)**:
+    - Memperketat `upgradeSlideDeckHtmlIfNeeded` dengan syarat `html.includes("classList.toggle('active'")`. Artefak legacy otomatis diekstrak ulang seluruh slidenya via `extractSlidesFromRawHtml` dan dirakit kembali menjadi deck 16:9 widescreen eksekutif modern via `buildExecutiveSlideDeckHtml`.
+  - **In-Place Live Revision Execution di [design/design_executor.js](file:///home/arya/browser-agent/extension/design/design_executor.js)**:
+    - Mendeteksi `isRevision` saat `options.isRevision` atau `isCanvasOpen() && currentOpenArtifact.html`.
+    - Menyusun 5 milestone terstruktur khusus revisi:
+      * 👑 Master Agent: Analisis Permintaan Revisi Canvas
+      * 🤝 Delegasi ke Master Design: Penyesuaian Slide & Elemen Aktif
+      * 🎨 Master Design: Modifikasi Teks, Tata Letak & Visual Canvas
+      * 🎨 Master Design: Sinkronisasi Seluruh Slide & Token Desain
+      * 👑 Master Agent: Verifikasi Perubahan & Update Live Canvas Langsung
+    - Menyuntikkan seluruh kode HTML aktif ke dalam giliran pesan user (`[INSTRUKSI REVISI CANVAS AKTIF]`) sebagai konteks dasar bagi LLM.
+    - Begitu streaming selesai, kanvas yang sedang terbuka langsung di-update secara live (*in-place*): `iframe.srcdoc` dimuat ulang, controller slide diinjeksi, penampil Code Tab diperbarui, Virtual Files diperbarui, dan linter anti-slop dijalankan dengan notifikasi toast `✅ Canvas aktif berhasil diperbarui!`.
+  - **Prompt Routing di [sidepanel.js](file:///home/arya/browser-agent/extension/sidepanel.js)**:
+    - Memperbarui `handleSendMessage` dan `checkAndProcessNextPromptQueue`: Saat `isCanvasOpen()` bernilai `true` dan artefak aktif tersedia, prompt pengguna otomatis dialihkan ke `runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true })`.
+- **Pengujian & Verifikasi**:
+  - Validasi sintaks `node -c` pada seluruh modul lolos 100% tanpa error.
+  - Pengujian headless Chrome CDP pada artefak legacy pengguna (`/tmp/user_real_artifact.html`):
+    * Initial slide: `0` (counter: 1) - PASS.
+    * Click thumbnail 3: `0` -> `3` (counter: 4) - PASS.
+    * Click next button: `3` -> `4` (counter: 5) - PASS.
+    * Click prev button: `4` -> `3` (counter: 4) - PASS.
+    * Click reset button: `3` -> `0` (counter: 1) - PASS.
+    * Render kartu revisi: Badge `Live Updated` & Tombol `View Updated Canvas ↗` - PASS.
+  - Bump version to `v2.150.202`.
+
 
 

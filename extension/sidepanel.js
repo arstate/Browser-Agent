@@ -12771,8 +12771,15 @@ function checkAndProcessNextPromptQueue() {
   if (!nextItem) return;
 
   setTimeout(() => {
-    if (nextItem.chatMode === 'chat') {
+    const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
+    const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
+
+    if (canvasIsOpen && activeArt && activeArt.html) {
+      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
+    } else if (nextItem.chatMode === 'chat') {
       runChatModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
+    } else if (nextItem.chatMode === 'design') {
+      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
     } else {
       runAgentLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
     }
@@ -13037,7 +13044,12 @@ function handleSendMessage() {
   clearSlashCommands();
   adjustChatInputHeight();
 
-  if (currentChatMode === 'chat') {
+  const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
+  const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
+
+  if (canvasIsOpen && activeArt && activeArt.html) {
+    runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
+  } else if (currentChatMode === 'chat') {
     runChatModeLoop(displayMessage, currentAttachments, currentMentions);
   } else if (currentChatMode === 'design') {
     runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
