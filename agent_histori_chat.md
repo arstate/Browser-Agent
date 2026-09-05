@@ -6296,6 +6296,45 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
   3. Bump versi manifest ke `v2.150.220`.
 
+### Iterasi 502 (v2.150.221) - 2026-09-05
+- **User Request:**
+  "bisa edit delete duplikat elemen desain teks dll juga bro
+  bisa undo redo juga editan"
+- **Akar Masalah (Root Cause):**
+  1. Mode edit realtime pada slide deck sebelumnya belum menyediakan tombol aksi maupun pintasan keyboard untuk menghapus (delete) dan menduplikasi (duplicate) elemen terpilih.
+  2. Belum ada mekanisme riwayat status (snapshot history stack) untuk membatalkan kesalahan pengeditan (Undo) dan mengulang kembali (Redo).
+- **Analisis & Solusi:**
+  1. *Snapshot History Engine (`slide_editor.js`)*:
+     - Mengembangkan `historyStack` dan `futureStack` (kapasitas 30 snapshot) berbasis serialisasi status HTML `.slide-section`.
+     - Fungsi `takeSnapshot()` mencatat status bersih sebelum dan sesudah mutasi (drag move, font, ukuran teks, styling, warna, align, skala, rotasi, reset, penyuntingan teks in-place, duplikasi, dan hapus).
+     - Tombol `#editor-btn-undo` dan `#editor-btn-redo` diaktifkan/dinonaktifkan secara dinamis sesuai ketersediaan snapshot.
+  2. *Undo / Redo Keyboard Shortcuts*:
+     - `Ctrl+Z` / `Cmd+Z`: Memulihkan keadaan slide ke snapshot sebelumnya.
+     - `Ctrl+Y` / `Cmd+Shift+Z` / `Ctrl+Shift+Z`: Mengulangi aksi yang telah di-undo.
+  3. *Duplikasi Elemen Presisi (`#editor-btn-duplicate`)*:
+     - Tombol toolbar dan pintasan `Ctrl+D` / `Cmd+D` menduplikasi seluruh elemen yang sedang diseleksi (kartu, teks, badge, split column) dengan offset posisi +20px X dan Y.
+     - Elemen hasil duplikasi langsung diseleksi sehingga siap digeser atau ditata gayanya seketika.
+  4. *Penghapusan Elemen Aman (`#editor-btn-delete`)*:
+     - Tombol toolbar merah bahaya dan tombol fisik keyboard `Delete` / `Backspace` menghapus elemen terpilih dari kanvas.
+     - Dilengkapi proteksi capture phase agar `Backspace` tidak memicu navigasi slide sebelumnya saat mengedit.
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - `slide_editor.js`: 780 baris.
+     - `canvas_manager.js`: 792 baris.
+     - `slide_styles.js`: 789 baris.
+     - `design_executor.js`: 776 baris.
+     - `slide_template.js`: 772 baris.
+     - `design_agent.js`: 626 baris.
+     - `slide_deck_engine.js`: 505 baris.
+     - `slide_themes.js`: 266 baris.
+     - `canvas_exporter.js`: 244 baris.
+     - `design_prompt.js`: 183 baris.
+     - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+- **Verifikasi:**
+  1. Node.js unit test assertion pada CSS disabled/danger, tombol toolbar undo/redo/duplicate/delete, implementasi snapshot stack, dan rendering slide template lolos 100% (`ALL UNDO REDO DUPLICATE DELETE TESTS PASSED 100%!`).
+  2. Syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  3. Bump versi manifest ke `v2.150.221`.
+
+
 
 
 

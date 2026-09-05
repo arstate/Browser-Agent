@@ -707,7 +707,7 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Auto-Save & Synchronization: Tombol "Simpan" mengakhiri mode edit dan menyiarkan `{ type: 'SLIDE_DECK_CONTENT_CHANGED', html }` ke parent window untuk memperbarui `activeDesignArtifact`, tab kode HTML, dan penyimpanan lokal.
 
 4. **Strict Sub-800 Line Rule Compliance**:
-   - `slide_editor.js`: 605 baris.
+   - `slide_editor.js`: 780 baris.
    - `canvas_manager.js`: 792 baris.
    - `slide_template.js`: 772 baris.
    - `design_executor.js`: 776 baris.
@@ -718,5 +718,38 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `canvas_exporter.js`: 244 baris.
    - `design_prompt.js`: 183 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
+
+## 🚀 37. Slide Deck Editor Undo, Redo, Duplicate & Delete Architecture (v2.150.221)
+
+1. **Snapshot History Stack & State Preservation**:
+   - `historyStack` dan `futureStack` mengelola hingga 30 snapshot status inner HTML dari seluruh `.slide-section`.
+   - Menggunakan serialisasi JSON terisolasi tanpa mengotori class seleksi aktif (`.deck-editable-selected`).
+   - Setiap mutasi (drag posisi, font, ukuran, styling, warna, perataan, skala, rotasi, reset, penyuntingan teks, duplikasi, dan hapus) memicu `takeSnapshot()` dan memperbarui status tombol Undo (`#editor-btn-undo`) dan Redo (`#editor-btn-redo`).
+
+2. **Precision Element Duplication (`#editor-btn-duplicate`)**:
+   - Melakukan kloning deep (`cloneNode(true)`) pada setiap elemen yang sedang terpilih.
+   - Menghitung koordinat transform saat ini dan memberikan pergeseran relatif (+20px X, +20px Y).
+   - Menyisipkan klon ke dalam DOM tepat setelah elemen sumber (`el.parentNode.insertBefore(clone, el.nextSibling)`), kemudian secara otomatis memilih seluruh klon baru untuk mempermudah pergeseran lanjutan.
+   - Mendukung pintasan keyboard global `Ctrl+D` / `Cmd+D`.
+
+3. **Safe Element Deletion (`#editor-btn-delete`)**:
+   - Menghapus elemen terpilih dari DOM dengan perlindungan terhadap elemen struktur utama slide.
+   - Mendukung tombol fisik `Delete` dan `Backspace` (ketika tidak sedang mengetik di input/contenteditable).
+   - Event listener keyboard menggunakan capture phase (`capture: true`) untuk mencegah `Backspace` berpindah ke slide sebelumnya.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - `slide_editor.js`: 780 baris.
+   - `canvas_manager.js`: 792 baris.
+   - `slide_styles.js`: 789 baris.
+   - `design_executor.js`: 776 baris.
+   - `slide_template.js`: 772 baris.
+   - `design_agent.js`: 626 baris.
+   - `slide_deck_engine.js`: 505 baris.
+   - `slide_themes.js`: 266 baris.
+   - `canvas_exporter.js`: 244 baris.
+   - `design_prompt.js`: 183 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
 
 

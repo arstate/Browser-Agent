@@ -191,6 +191,16 @@ function getSlideDeckEditorCss() {
       color: #FFFFFF;
       box-shadow: 0 0 12px var(--accent, #6366F1);
     }
+    .editor-tool-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .editor-btn-danger:hover {
+      background: rgba(239, 68, 68, 0.2) !important;
+      border-color: rgba(239, 68, 68, 0.5) !important;
+      color: #F87171 !important;
+    }
   `;
 }
 
@@ -202,6 +212,18 @@ function getSlideDeckEditorHtml() {
           <span class="editor-pulse-dot"></span>
           <span>Edit Mode</span>
         </span>
+      </div>
+
+      <div class="editor-tool-divider"></div>
+
+      <!-- Undo / Redo -->
+      <div class="editor-tool-group">
+        <button type="button" class="editor-tool-btn" id="editor-btn-undo" title="Undo (Ctrl+Z)" disabled>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+        </button>
+        <button type="button" class="editor-tool-btn" id="editor-btn-redo" title="Redo (Ctrl+Y)" disabled>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+        </button>
       </div>
 
       <div class="editor-tool-divider"></div>
@@ -269,6 +291,20 @@ function getSlideDeckEditorHtml() {
 
       <div class="editor-tool-divider"></div>
 
+      <!-- Duplicate & Delete -->
+      <div class="editor-tool-group">
+        <button type="button" class="editor-tool-btn" id="editor-btn-duplicate" title="Duplikat Elemen Terpilih (Ctrl+D)">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>Duplikat</span>
+        </button>
+        <button type="button" class="editor-tool-btn editor-btn-danger" id="editor-btn-delete" title="Hapus Elemen Terpilih (Del / Backspace)">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span>Hapus</span>
+        </button>
+      </div>
+
+      <div class="editor-tool-divider"></div>
+
       <!-- Selection & Done Actions -->
       <div class="editor-tool-group">
         <span id="editor-selection-counter" style="font-size: 11px; opacity: 0.8; padding: 0 4px;">Pilih elemen</span>
@@ -286,6 +322,96 @@ function getSlideDeckEditorScript() {
       let isDragging = false;
       let startX = 0, startY = 0;
       let initialTransforms = new Map();
+      let historyStack = [];
+      let futureStack = [];
+      const MAX_HISTORY = 30;
+
+      function getSlidesState() {
+        return Array.from(document.querySelectorAll('.slide-section')).map(s => s.innerHTML);
+      }
+
+      function restoreSlidesState(state) {
+        if (!Array.isArray(state)) return;
+        const slides = Array.from(document.querySelectorAll('.slide-section'));
+        state.forEach((html, i) => {
+          if (slides[i]) slides[i].innerHTML = html;
+        });
+      }
+
+      function updateUndoRedoButtons() {
+        const undoBtn = document.getElementById('editor-btn-undo');
+        const redoBtn = document.getElementById('editor-btn-redo');
+        if (undoBtn) undoBtn.disabled = (historyStack.length <= 1);
+        if (redoBtn) redoBtn.disabled = (futureStack.length === 0);
+      }
+
+      function takeSnapshot() {
+        selectedElements.forEach(el => el.classList.remove('deck-editable-selected'));
+        const stateJson = JSON.stringify(getSlidesState());
+        selectedElements.forEach(el => el.classList.add('deck-editable-selected'));
+
+        if (historyStack.length > 0 && historyStack[historyStack.length - 1] === stateJson) {
+          return;
+        }
+        historyStack.push(stateJson);
+        if (historyStack.length > MAX_HISTORY) historyStack.shift();
+        futureStack = [];
+        updateUndoRedoButtons();
+      }
+
+      function applyUndo() {
+        if (historyStack.length <= 1) return;
+        selectedElements.forEach(el => el.classList.remove('deck-editable-selected'));
+        futureStack.push(JSON.stringify(getSlidesState()));
+        historyStack.pop();
+        const prevStateJson = historyStack[historyStack.length - 1];
+        clearSelection();
+        restoreSlidesState(JSON.parse(prevStateJson));
+        updateUndoRedoButtons();
+        notifyParentContentChanged();
+      }
+
+      function applyRedo() {
+        if (futureStack.length === 0) return;
+        const nextStateJson = futureStack.pop();
+        selectedElements.forEach(el => el.classList.remove('deck-editable-selected'));
+        historyStack.push(JSON.stringify(getSlidesState()));
+        clearSelection();
+        restoreSlidesState(JSON.parse(nextStateJson));
+        updateUndoRedoButtons();
+        notifyParentContentChanged();
+      }
+
+      function duplicateSelectedElements() {
+        if (selectedElements.size === 0) return;
+        const newSelected = [];
+        selectedElements.forEach(el => {
+          if (!el || el.classList.contains('slide-section')) return;
+          const clone = el.cloneNode(true);
+          clone.classList.remove('deck-editable-selected');
+          const t = getParsedTransform(el);
+          applyTransform(clone, { x: t.x + 20, y: t.y + 20, scale: t.scale, rotate: t.rotate });
+          el.parentNode.insertBefore(clone, el.nextSibling);
+          newSelected.push(clone);
+        });
+        clearSelection();
+        newSelected.forEach(c => selectElement(c, true));
+        takeSnapshot();
+        notifyParentContentChanged();
+      }
+
+      function deleteSelectedElements() {
+        if (selectedElements.size === 0) return;
+        selectedElements.forEach(el => {
+          if (el && !el.classList.contains('slide-section') && el.parentNode) {
+            el.remove();
+          }
+        });
+        selectedElements.clear();
+        updateSelectionCounter();
+        takeSnapshot();
+        notifyParentContentChanged();
+      }
 
       function notifyParentContentChanged() {
         const selected = Array.from(selectedElements);
@@ -332,7 +458,10 @@ function getSlideDeckEditorScript() {
         const dockBtn = document.getElementById('dock-btn-edit');
         if (dockBtn) dockBtn.classList.toggle('active', isEditMode);
 
-        if (!isEditMode) {
+        if (isEditMode) {
+          if (historyStack.length === 0) takeSnapshot();
+          updateUndoRedoButtons();
+        } else {
           clearSelection();
           notifyParentContentChanged();
         }
@@ -435,6 +564,7 @@ function getSlideDeckEditorScript() {
         if (isDragging) {
           isDragging = false;
           initialTransforms.clear();
+          takeSnapshot();
           notifyParentContentChanged();
         }
       });
@@ -453,10 +583,14 @@ function getSlideDeckEditorScript() {
         textTarget.setAttribute('contenteditable', 'true');
         textTarget.focus();
 
+        const initialText = textTarget.innerHTML;
         const onBlur = () => {
           textTarget.removeAttribute('contenteditable');
           textTarget.removeEventListener('blur', onBlur);
-          notifyParentContentChanged();
+          if (textTarget.innerHTML !== initialText) {
+            takeSnapshot();
+            notifyParentContentChanged();
+          }
         };
         textTarget.addEventListener('blur', onBlur);
       });
@@ -469,6 +603,7 @@ function getSlideDeckEditorScript() {
           if (val) el.style.fontFamily = val;
           else el.style.fontFamily = '';
         });
+        takeSnapshot();
         notifyParentContentChanged();
       });
 
@@ -478,6 +613,7 @@ function getSlideDeckEditorScript() {
           const num = parseFloat(curr) || 14;
           el.style.fontSize = Math.max(8, num + delta) + 'px';
         });
+        takeSnapshot();
         notifyParentContentChanged();
       }
       document.getElementById('editor-btn-size-up')?.addEventListener('click', () => adjustFontSize(2));
@@ -489,6 +625,7 @@ function getSlideDeckEditorScript() {
           el.style.fontWeight = isBold ? 'normal' : '800';
         });
         e.currentTarget.classList.toggle('active');
+        takeSnapshot();
         notifyParentContentChanged();
       });
 
@@ -498,6 +635,7 @@ function getSlideDeckEditorScript() {
           el.style.fontStyle = isItalic ? 'normal' : 'italic';
         });
         e.currentTarget.classList.toggle('active');
+        takeSnapshot();
         notifyParentContentChanged();
       });
 
@@ -507,6 +645,7 @@ function getSlideDeckEditorScript() {
           el.style.textDecoration = isU ? 'none' : 'underline';
         });
         e.currentTarget.classList.toggle('active');
+        takeSnapshot();
         notifyParentContentChanged();
       });
 
@@ -516,6 +655,7 @@ function getSlideDeckEditorScript() {
           selectedElements.forEach(el => {
             el.style.color = color;
           });
+          takeSnapshot();
           notifyParentContentChanged();
         });
       });
@@ -524,6 +664,7 @@ function getSlideDeckEditorScript() {
         selectedElements.forEach(el => {
           el.style.textAlign = align;
         });
+        takeSnapshot();
         notifyParentContentChanged();
       }
       document.getElementById('editor-btn-align-left')?.addEventListener('click', () => setAlignment('left'));
@@ -536,6 +677,7 @@ function getSlideDeckEditorScript() {
           t.scale = Math.max(0.2, Math.min(3.0, t.scale + factor));
           applyTransform(el, t);
         });
+        takeSnapshot();
         notifyParentContentChanged();
       }
       document.getElementById('editor-btn-scale-up')?.addEventListener('click', () => adjustScale(0.1));
@@ -547,6 +689,7 @@ function getSlideDeckEditorScript() {
           t.rotate = (t.rotate + deg) % 360;
           applyTransform(el, t);
         });
+        takeSnapshot();
         notifyParentContentChanged();
       }
       document.getElementById('editor-btn-rot-left')?.addEventListener('click', () => adjustRotation(-15));
@@ -558,8 +701,40 @@ function getSlideDeckEditorScript() {
           el.style.transform = '';
           el.style.transformOrigin = '';
         });
+        takeSnapshot();
         notifyParentContentChanged();
       });
+
+      // Undo, Redo, Duplicate, Delete Buttons
+      document.getElementById('editor-btn-undo')?.addEventListener('click', applyUndo);
+      document.getElementById('editor-btn-redo')?.addEventListener('click', applyRedo);
+      document.getElementById('editor-btn-duplicate')?.addEventListener('click', duplicateSelectedElements);
+      document.getElementById('editor-btn-delete')?.addEventListener('click', deleteSelectedElements);
+
+      // Keyboard Shortcuts (Capture phase to override slide navigation)
+      window.addEventListener('keydown', (e) => {
+        if (!isEditMode) return;
+        const activeTag = document.activeElement?.tagName;
+        const isEditingText = document.activeElement?.isContentEditable || activeTag === 'INPUT' || activeTag === 'SELECT' || activeTag === 'TEXTAREA';
+
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+          if (!isEditingText) { e.preventDefault(); e.stopPropagation(); applyUndo(); return; }
+        }
+        if (((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) ||
+            ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'z' || e.key === 'Z'))) {
+          if (!isEditingText) { e.preventDefault(); e.stopPropagation(); applyRedo(); return; }
+        }
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
+          if (!isEditingText && selectedElements.size > 0) { e.preventDefault(); e.stopPropagation(); duplicateSelectedElements(); return; }
+        }
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          if (!isEditingText && selectedElements.size > 0) { e.preventDefault(); e.stopPropagation(); deleteSelectedElements(); return; }
+        }
+        if (e.key === 'Escape') {
+          if (selectedElements.size > 0) clearSelection();
+          else toggleEditMode(false);
+        }
+      }, true);
 
       document.getElementById('editor-btn-done')?.addEventListener('click', () => {
         toggleEditMode(false);
