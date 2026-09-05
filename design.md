@@ -1213,7 +1213,55 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 - Menyematkan `designArtifact` pada `conversationHistory` sehingga kartu preview dan dokumen kanvas tetap utuh saat obrolan dimuat ulang.
 
 ### 📏 4. Kepatuhan Ketat Aturan Sub-800 Baris
-- Seluruh 10 file di `extension/design/` tetap strictly `<= 800` baris (`canvas_exporter.js` 245, `canvas_manager.js` 788, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 657, `slide_editor.js` 789, `slide_styles.js` 738, `slide_template.js` 687, `slide_themes.js` 319).
+- Seluruh 10 file di `extension/design/` tetap strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 788, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+---
+
+## 58. Staged Execution Pipeline & Dispatcher Routing Architecture (`v2.150.242`)
+
+### 🧭 1. Hirarki Dispatcher Pesan (Anti-Hijack Open Canvas)
+- **Masalah**: Pemeriksaan `canvasIsOpen && activeArt && activeArt.html` yang prematur menyebabkan seluruh prompt lanjutan di Agent Mode (termasuk permintaan analisis data baru) dibelokkan paksa ke `runDesignModeLoop(..., { isRevision: true })`.
+- **Hirarki Baru yang Terstandarisasi**:
+  1. `currentChatMode === 'chat'` ➔ `runChatModeLoop`
+  2. `currentChatMode === 'agent' || hasAgentActionOrAnalysis` ➔ `runAgentLoop` (Master Agent memegang kendali penuh atas analisis & browser tools).
+  3. `currentChatMode === 'design' && canvasIsOpen && activeArt` ➔ `runDesignModeLoop({ isRevision: true })` (Khusus revisi visual desain murni).
+  4. Fallback ➔ `runAgentLoop`.
+
+### 🔄 2. Tiga Tahap Eksekusi Wajib (Strict Staged Workflow)
+```
+[User Prompt: Analisis + PPT Report]
+                 │
+                 ▼
+ ┌──────────────────────────────────────────────┐
+ │ TAHAP 1: MASTER AGENT BROWSER & DATA AUDIT   │
+ │ • browser_list_tabs / browser_extract_table  │
+ │ • browser_snapshot / browser_evaluate_script │
+ │ • Menghasilkan temuan data metrik riil       │
+ └──────────────────────┬───────────────────────┘
+                        │
+                        ▼
+ ┌──────────────────────────────────────────────┐
+ │ TAHAP 2: PERUMUSAN PPT SLIDE BRIEF           │
+ │ • Struktur slide-by-slide kaya data          │
+ │ • Outline terperinci (KPI, CPR, CTR, Leads)  │
+ └──────────────────────┬───────────────────────┘
+                        │
+                        ▼
+ ┌──────────────────────────────────────────────┐
+ │ TAHAP 3: DELEGASI KE MASTER DESIGN           │
+ │ • Eksekusi create_slide_deck_design tool     │
+ │ • 🎨 Master Design merender slide 16:9       │
+ │ • Live update sinkronisasi ke Canvas Drawer  │
+ └──────────────────────────────────────────────┘
+```
+
+### 🛡️ 3. Runtime Staged Guard pada `create_slide_deck_design`
+- Mencegah model LLM melompati langkah analisis ketika pengguna secara eksplisit meminta analisis data.
+- Jika `asksAnalysis && !hasExecutedAnalysis && (currentStep <= 1)`, tool mengembalikan status penolakan terarah yang memandu model untuk melakukan inspeksi tab/tabel browser terlebih dahulu.
+
+### 📏 4. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 788, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
 
 
 

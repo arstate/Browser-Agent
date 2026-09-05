@@ -6875,3 +6875,28 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Verifikasi baris memastikan seluruh file design `<= 793` baris.
   5. Bump versi manifest ke `v2.150.241`.
 
+### 🚀 Iterasi 523: Protokol Staged Execution & Pemulihan Routing Dispatcher Anti-Hijack (v2.150.242)
+- **User Request:**
+  - "kok malah langsung eksekusi master design harusnya kan master agent menyelesaikan tugasya dulu bro analisis itu baru hasil analisis dibuat ppt slide brief lalu baru eksekusi amster aget"
+  - Lampiran screenshot: `uploaded_media_1788616445575.png` dengan prompt *"analisis iklan terbaik meta ads anda analisis lagi trus update slide deck reportnya pdfnya"* yang langsung menjalankan `delegate_revision_to_master_design` -> `master_design_ideate_visual_style` -> `update_canvas_slides` tanpa analisis browser.
+- **Akar Masalah (Root Cause):**
+  1. *Dispatcher Hijack*: Pengecekan `canvasIsOpen && activeArt && activeArt.html` di awal `handleSendMessage` dan `checkAndProcessNextPromptQueue` secara buta mengarahkan prompt ke `runDesignModeLoop({ isRevision: true })`, sehingga menonaktifkan Agent Mode saat kanvas terbuka.
+  2. *Kurangnya Staged Enforcer*: Master Agent belum memiliki runtime guard untuk mencegah LLM langsung memanggil `create_slide_deck_design` pada turn awal tanpa melakukan inspeksi data terlebih dahulu.
+- **Solusi & Implementasi:**
+  1. *Perbaikan Dispatcher Routing (`extension/sidepanel.js`)*:
+     - Menambahkan deteksi `hasAgentActionOrAnalysis`.
+     - Jika pengguna memilih `agent` mode ATAU prompt meminta analisis/aksi browser, alur SELALU diarahkan ke `runAgentLoop`, sekalipun kanvas sedang terbuka.
+     - `runDesignModeLoop({ isRevision: true })` hanya dijalankan jika mode aktif adalah `design` atau prompt revisi visual murni.
+  2. *Penegasan Staged Pipeline di System Prompt (`sidepanel.js`)*:
+     - Menetapkan 3 tahap wajib: Tahap 1 Analisis Mandiri oleh Master Agent ➔ Tahap 2 Perumusan PPT Brief ➔ Tahap 3 Delegasi ke Master Design via `create_slide_deck_design`.
+  3. *Runtime Guard di `executeTool("create_slide_deck_design")`*:
+     - Meneruskan `executionContext` (`{ sessionExecutedTools, userMessage, currentStep }`).
+     - Jika prompt meminta analisis data namun belum ada browser/analisis tool yang dijalankan pada turn 1, tool mengembalikan error edukatif agar Master Agent mengekstrak data tab/tabel terlebih dahulu.
+  4. *In-Place Live Update di Canvas*:
+     - Meneruskan status `isRevision` ke `renderOpenDesignCard` saat artefak sebelumnya ada, menampilkan pill "Live Updated" dan toast sinkronisasi.
+- **Verifikasi:**
+  1. Unit test `test_staged_agent_analysis_and_design_flow.js` lulus 100% (routing regex, dispatcher decision, staged tool guard).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 788, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.242` di `manifest.json`.
+

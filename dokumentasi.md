@@ -577,8 +577,29 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Mengimplementasikan helper komprehensif `generateSlideDeckArtifactFromOutline({ topic, slideCount, detailedOutlineOrContent, designArchetype, userImages })` yang menggabungkan parsed markdown, blueprinting adaptif, rendering HTML via `buildExecutiveSlideDeckHtml`, dan injeksi gambar otomatis.
       4. **Eksekusi Canvas Drawer & Sinkronisasi Obrolan (`sidepanel.js`)**:
          - Dalam `executeTool("create_slide_deck_design")`, artefak disimpan ke `activeDesignArtifact`, `window.__activeDesignArtifact`, dan `chrome.storage.local`.
-         - Merender kartu Bento `renderOpenDesignCard` di dalam bubble chat asisten, membuka Canvas Drawer secara otomatis (`openOpenDesignCanvas`), dan menyematkan `designArtifact` pada entri riwayat percakapan (`conversationHistory`) untuk persistensi penuh saat sesi dimuat ulang.
-    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 245, `canvas_manager.js` 788, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 657, `slide_editor.js` 789, `slide_styles.js` 738, `slide_template.js` 687, `slide_themes.js` 319).
+125. **Protokol Staged Execution (Analisis Mandiri ➔ PPT Slide Brief ➔ Eksekusi Master Design) & Pemulihan Routing Dispatcher (`v2.150.242`):**
+    - **Latar Belakang & Masalah (Root Cause Analysis)**:
+      - Saat pengguna mengirimkan prompt komposit analisis + update slide report (misal: *"analisis iklan terbaik meta ads anda analisis lagi trus update slide deck reportnya pdfnya"*), sistem langsung melompat mengeksekusi `delegate_revision_to_master_design`, `master_design_ideate_visual_style`, dan `update_canvas_slides` tanpa Master Agent melakukan inspeksi atau analisis metrik data riil di browser terlebih dahulu.
+      - **Penyebab Utama**:
+        1. Di `handleSendMessage` dan `checkAndProcessNextPromptQueue` (`extension/sidepanel.js`), terdapat pengecekan `if (canvasIsOpen && activeArt && activeArt.html)` yang diletakkan di posisi teratas sebelum pemeriksaan mode obrolan atau tipe prompt. Akibatnya, saat kanvas slide terbuka, SEMUA prompt pengguna (termasuk permintaan analisis data di Agent Mode) ter-hijack dan langsung dibelokkan ke `runDesignModeLoop(..., { isRevision: true })` yang hanya berisi loop revisi visual Master Design tanpa akses ke tool automasi browser.
+        2. Master Agent di `runAgentLoop` membutuhkan *hard enforcer* dan guard runtime agar model LLM tidak melakukan *cheat* dengan langsung memanggil `create_slide_deck_design` pada giliran awal sebelum data riil diambil dan dianalisis.
+    - **Solusi & Implementasi Arsitektur**:
+      1. **Pemulihan Hirarki Dispatcher Mode (`extension/sidepanel.js`)**:
+         - Menambahkan evaluasi regex deteksi aksi/analisis agen (`hasAgentActionOrAnalysis`).
+         - Jika pengguna berada di `currentChatMode === 'agent'` ATAU prompt mengandung kata kunci analisis/browser/audit (`analisis`, `audit`, `cek`, `pantau`, `ekstrak`, `scrape`, `search`, `tab`, `browser`, dsb.), sistem HARUS SELALU mengeksekusi `runAgentLoop` (Agent Mode), BUKAN `runDesignModeLoop`, meskipun kanvas sedang terbuka.
+         - Loop revisi desain murni (`runDesignModeLoop({ isRevision: true })`) hanya dieksekusi jika pengguna berada di `design` mode atau prompt murni permintaan visual/teks tanpa kebutuhan automasi browser.
+      2. **Aturan Tegas Staged Pipeline di System Prompt (`sidepanel.js`)**:
+         - Memperbarui poin 4 di `buildDynamicSystemPrompt` dengan protokol bertahap wajib:
+           - *Tahap 1 (Analisis Mandiri)*: Master Agent wajib mengekstrak dan menganalisis data riil melalui browser tools (`browser_list_tabs`, `browser_extract_table`, `browser_snapshot`, dsb.).
+           - *Tahap 2 (Penyusunan PPT Brief)*: Merangkum temuan metrik konkrit ke dalam outline slide-by-slide yang bernutrisi.
+           - *Tahap 3 (Delegasi ke Master Design)*: Memanggil `create_slide_deck_design` dengan data temuan riil tersebut.
+      3. **Runtime Execution Guard di Tool `create_slide_deck_design` (`sidepanel.js`)**:
+         - Meneruskan `executionContext` (`{ sessionExecutedTools, userMessage, currentStep }`) dari `runAgentLoop` ke `executeTool`.
+         - Jika prompt meminta analisis data/iklan tetapi belum ada tool observasi/analisis browser yang dijalankan (`currentStep <= 1` dan belum memanggil browser/analisis tools), eksekusi `create_slide_deck_design` dicegat dan mengembalikan pesan panduan terstruktur agar Master Agent menjalankan inspeksi data terlebih dahulu.
+      4. **In-Place Live Update di Canvas Drawer**:
+         - Jika artefak slide sudah aktif di kanvas, pembuatan deck baru akan terdeteksi sebagai `is_revision: true`, menampilkan pill "Live Updated" pada Bento Result Card, dan menyinkronkan pratinjau kanvas secara langsung.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 788, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
 
 
 

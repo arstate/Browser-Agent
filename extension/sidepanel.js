@@ -1096,7 +1096,11 @@ ATURAN KRUSIAL:
 1. 🛡️ NO AI SLOP: Dilarang memberikan jawaban kosong, template generik berkurung siku [Topik Presentasi], atau placeholder murahan! Setiap slide atau dokumen harus memiliki isi materi yang kaya, berwawasan, tajam, dan siap pakai.
 2. 🔄 ZERO PREMATURE STOP: Master Agent TIDAK BOLEH berhenti sebelum deliverables nyata (Google Slides via API, Google Docs, Sheet, atau aksi browser yang diminta) benar-benar berhasil dibuat dan diverifikasi!
 3. 🤝 MULTI-AGENT SYNTHESIS: Jika tugas melibatkan desain visual, copywriting, atau riset, Master Agent merekrut agen spesialis terkait (misal via \`summon_specialist_agent\` atau \`agent_subtask_analysis\`), menggabungkan keahlian mereka, dan mengeksekusi hasil akhirnya langsung ke alat/tool yang tepat.
-4. 🎨 MASTER DESIGN SLIDE DECK & PDF REPORTING: Jika pengguna meminta presentasi/PPT/PDF report (misal: "analisis meta ads saya trus buatkan saya pdf reportnya detail 20 halaman"), Master Agent bertindak serba bisa: analisis data tuntas terlebih dahulu, lalu panggil tool \`create_slide_deck_design({ topic, slide_count, detailed_outline_or_content, design_archetype })\` untuk mendelegasikan perancangan slide interaktif 16:9 widescreen ke Master Design.
+4. 🎨 STRICT STAGED PIPELINE (ANALISIS RIIL DULU -> PPT BRIEF -> EKSEKUSI MASTER DESIGN):
+   Jika pengguna meminta analisis/audit/inspeksi data (misal: "analisis iklan terbaik meta ads anda analisis lagi trus update slide deck reportnya pdfnya" atau "analisis dashboard lalu buatkan pdf report detail 20 halaman"):
+   - TAHAP 1 (ANALISIS MANDIRI): Master Agent WAJIB memeriksa tab browser aktif atau mengekstrak data tabel riil terlebih dahulu (gunakan \`browser_list_tabs\`, \`browser_switch_tab\`, \`browser_extract_table\`, \`browser_snapshot\`, \`browser_evaluate_script\`, dll). DILARANG KERAS langsung memanggil \`create_slide_deck_design\` di Step 1 tanpa mengambil data riil terlebih dahulu!
+   - TAHAP 2 (PERUMUSAN PPT SLIDE BRIEF): Setelah temuan data riil terkumpul, Master Agent merumuskan brief presentasi slide-by-slide yang kaya data, metrik konkrit, dan rekomendasi taktis.
+   - TAHAP 3 (DELEGASI KE MASTER DESIGN): Barulah Master Agent memanggil tool \`create_slide_deck_design({ topic, slide_count, detailed_outline_or_content, design_archetype })\` dengan menyertakan brief temuan riil tersebut. Master Design akan langsung merancang dan memperbarui slide deck 16:9 widescreen di Canvas Drawer.
 
 === CAPABILITIES & TOOLS AVAILABLE ===
 1. 🧠 Autonomous Brain & Self-Evolution Tools: manage_personal_memory, create_autonomous_skill, update_autonomous_skill, create_autonomous_agent, edit_manual_skill, edit_manual_agent, rollback_brain_item, record_anti_pattern, save_epistemic_triplet, query_epistemic_graph, execute_jit_microtool.
@@ -1328,7 +1332,7 @@ const AGENT_TOOLS = [
     type: "function",
     function: {
       name: "create_slide_deck_design",
-      description: "Generates an interactive 16:9 widescreen presentation slide deck / PDF report directly in the OpenDesign Canvas Drawer. Master Agent executes this tool after completing browser analysis, research, or data extraction to delegate final presentation slide creation to Master Design. Supports 3 to 30 slides with rich analytical cards, metrics, and visual themes.",
+      description: "Generates or updates an interactive 16:9 widescreen presentation slide deck / PDF report directly in the OpenDesign Canvas Drawer. Master Agent executes this tool AFTER completing browser analysis, research, or data extraction to delegate final presentation slide creation to Master Design. Supports 3 to 30 slides with rich analytical cards, metrics, and visual themes. MANDATORY: If the user asked for data analysis or audit (e.g. Meta Ads audit), you MUST first perform the analysis using browser/data tools to obtain real findings before invoking this tool!",
       parameters: {
         type: "object",
         properties: {
@@ -3283,7 +3287,7 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
 // =========================================================================
 // Tool Execution Dispatcher
 // =========================================================================
-async function executeTool(name, args, assistantBubble = null) {
+async function executeTool(name, args, assistantBubble = null, executionContext = {}) {
   if (!activeTabId && name.startsWith("browser_")) {
     const ownTab = await chrome.tabs.getCurrent().catch(() => null);
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -3360,10 +3364,25 @@ async function executeTool(name, args, assistantBubble = null) {
     }
 
     case "create_slide_deck_design": {
-      const topic = args.topic || "Laporan Eksekutif";
+      const activeArtTitle = (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact()?.meta?.title : null) || (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact?.meta?.title : null);
+      const topic = args.topic || activeArtTitle || "Laporan Eksekutif";
       const slideCount = parseInt(args.slide_count, 10) || 10;
       const detailedOutlineOrContent = args.detailed_outline_or_content || "";
       const designArchetype = args.design_archetype || "auto";
+
+      // Strict Staged Execution Guard:
+      // If user prompt requested data analysis, audit, or inspection (e.g. Meta Ads audit),
+      // Master Agent MUST have executed browser or data analysis tools first before delegating to Master Design!
+      const userPromptText = executionContext?.userMessage || "";
+      const asksAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|baca)/i.test(userPromptText);
+      const pastTools = executionContext?.sessionExecutedTools || [];
+      const hasExecutedAnalysis = pastTools.some(t => t.startsWith("browser_") || t.startsWith("google_") || t === "agent_subtask_analysis" || t.startsWith("local_"));
+
+      if (asksAnalysis && !hasExecutedAnalysis && (executionContext?.currentStep <= 1 || pastTools.length === 0)) {
+        return {
+          error: "PROTOKOL ANALISIS BELUM SELESAI: Pengguna meminta Anda menganalisis data/iklan terlebih dahulu sebelum membuat atau memperbarui slide deck report. Silakan periksa tab aktif/dashboard Meta Ads menggunakan tool browser (misal browser_list_tabs, browser_extract_table, atau browser_snapshot), lakukan analisis menyeluruh dan dapatkan data riil, lalu panggil kembali create_slide_deck_design dengan menyertakan temuan data riil tersebut pada detailed_outline_or_content."
+        };
+      }
 
       // Extract user attached images from history if any
       let userImages = [];
@@ -3384,6 +3403,8 @@ async function executeTool(name, args, assistantBubble = null) {
       if (!generateFn) {
         return { error: "Engine perancangan slide OpenDesign belum dimuat di runtime." };
       }
+
+      const hadExistingArtifact = Boolean(activeDesignArtifact && activeDesignArtifact.html);
 
       const artifact = generateFn({
         topic,
@@ -3415,9 +3436,9 @@ async function executeTool(name, args, assistantBubble = null) {
       if (contentEl) {
         contentEl.style.display = 'block';
         if (typeof renderOpenDesignCard === 'function') {
-          renderOpenDesignCard(contentEl, artifact, { isRevision: false });
+          renderOpenDesignCard(contentEl, artifact, { isRevision: hadExistingArtifact });
         } else if (typeof window !== 'undefined' && typeof window.renderOpenDesignCard === 'function') {
-          window.renderOpenDesignCard(contentEl, artifact, { isRevision: false });
+          window.renderOpenDesignCard(contentEl, artifact, { isRevision: hadExistingArtifact });
         }
       }
 
@@ -3434,7 +3455,9 @@ async function executeTool(name, args, assistantBubble = null) {
       }
 
       if (typeof showUniversalToast === 'function') {
-        showUniversalToast(`🎨 Master Design: Presentasi 16:9 (${artifact.slideCount} Slide) berhasil dibuka di Canvas!`);
+        showUniversalToast(hadExistingArtifact 
+          ? `🎨 Master Design: Presentasi 16:9 (${artifact.slideCount} Slide) berhasil disinkronkan & diperbarui!`
+          : `🎨 Master Design: Presentasi 16:9 (${artifact.slideCount} Slide) berhasil dibuka di Canvas!`);
       }
 
       return {
@@ -3443,7 +3466,10 @@ async function executeTool(name, args, assistantBubble = null) {
         slide_count: artifact.slideCount,
         theme: artifact.meta?.theme || designArchetype,
         canvas_status: "open",
-        message: `Presentasi 16:9 widescreen interaktif (${artifact.slideCount} slide) berhasil dirancang oleh Master Design dan langsung dibuka di Canvas Drawer. Pengguna dapat melihat pratinjau, mengedit tiap slide di mode visual, atau mengunduh PDF secara instan.`
+        is_revision: hadExistingArtifact,
+        message: hadExistingArtifact
+          ? `Slide deck report berhasil diperbarui dengan hasil analisis terkini (${artifact.slideCount} slide) di Canvas Drawer.`
+          : `Presentasi 16:9 widescreen interaktif (${artifact.slideCount} slide) berhasil dirancang oleh Master Design dan langsung dibuka di Canvas Drawer. Pengguna dapat melihat pratinjau, mengedit tiap slide di mode visual, atau mengunduh PDF secara instan.`
       };
     }
 
@@ -5926,6 +5952,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
 
   let plannedStepsTotal = detectPlannedStepsCount(userMessage);
   let currentStep = 0;
+  const sessionExecutedTools = [];
   const sessionGeneratedImages = [];
 
   function ensureGeneratedImagesInText(text, images) {
@@ -6351,7 +6378,12 @@ Tugas Anda:
           let genImgResult = null;
 
           try {
-            const toolResult = await executeTool(toolName, toolArgs, assistantBubble);
+            const toolResult = await executeTool(toolName, toolArgs, assistantBubble, {
+              sessionExecutedTools: [...sessionExecutedTools],
+              userMessage: userMessage,
+              currentStep: currentStep
+            });
+            sessionExecutedTools.push(toolName);
             if (isImageGen && toolResult?.image_url) {
               genImgResult = toolResult;
               if (!sessionGeneratedImages.some(img => img.image_id === toolResult.image_id)) {
@@ -13050,12 +13082,18 @@ function checkAndProcessNextPromptQueue() {
     const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
     const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
 
-    if (canvasIsOpen && activeArt && activeArt.html) {
-      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
-    } else if (nextItem.chatMode === 'chat') {
+    const hasAgentActionOrAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|tab|browser|url|web)/i.test(nextItem.text || "");
+
+    if (nextItem.chatMode === 'chat') {
       runChatModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
+    } else if (nextItem.chatMode === 'agent' || hasAgentActionOrAnalysis) {
+      runAgentLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
+    } else if (nextItem.chatMode === 'design' && canvasIsOpen && activeArt && activeArt.html) {
+      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
     } else if (nextItem.chatMode === 'design') {
       runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
+    } else if (canvasIsOpen && activeArt && activeArt.html) {
+      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
     } else {
       runAgentLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
     }
@@ -13323,12 +13361,18 @@ function handleSendMessage() {
   const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
   const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
 
-  if (canvasIsOpen && activeArt && activeArt.html) {
-    runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
-  } else if (currentChatMode === 'chat') {
+  const hasAgentActionOrAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|tab|browser|url|web)/i.test(displayMessage || "");
+
+  if (currentChatMode === 'chat') {
     runChatModeLoop(displayMessage, currentAttachments, currentMentions);
+  } else if (currentChatMode === 'agent' || hasAgentActionOrAnalysis) {
+    runAgentLoop(displayMessage, currentAttachments, currentMentions);
+  } else if (currentChatMode === 'design' && canvasIsOpen && activeArt && activeArt.html) {
+    runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
   } else if (currentChatMode === 'design') {
     runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
+  } else if (canvasIsOpen && activeArt && activeArt.html) {
+    runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
   } else {
     runAgentLoop(displayMessage, currentAttachments, currentMentions);
   }
