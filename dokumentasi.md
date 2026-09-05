@@ -422,7 +422,29 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
         - Saat user membuat obrolan baru (`startNewChat`) atau menghapus riwayat (`confirmDeleteSession`), kunci `tab_active_session_id` di `sessionStorage` dan `last_active_session_id` di `chrome.storage.local` langsung dibersihkan.
       - **Sidepanel Tetap Persisten**:
         - Mode sidepanel (`sidepanel.html`) tetap mempertahankan fitur auto-restore dari `chrome.storage.local` sehingga obrolan di sidepanel tidak hilang saat sidepanel ditutup dan dibuka kembali.
-    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 776 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 779 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+116. **Slide Deck Manual Edit Persistence Across Refresh (`v2.150.233`):** Memperbaiki bug di mana hasil editan manual slide (posisi, dimensi, rotasi, teks) hilang saat halaman di-refresh (F5):
+    - **Akar Masalah Ganda**:
+      1. *Destruksi Templating pada `upgradeSlideDeckHtmlIfNeeded` (`slide_deck_engine.js`)*:
+         - Saat kanvas dibuka atau di-reload (`openOpenDesignCanvas`), fungsi `upgradeSlideDeckHtmlIfNeeded` memeriksa ketersediaan string `"initSlideDeckRealtimeEditor"` di dalam HTML.
+         - Karena fungsi tersebut diinjeksi secara native via pemanggilan fungsi JavaScript (`initFn(doc, win)`) alih-alih tag `<script>`, string tersebut tidak pernah ada dalam serialisasi `outerHTML`.
+         - Akibatnya, `upgradeSlideDeckHtmlIfNeeded` menganggap deck memerlukan regenerasi total dari template awal via `renderSlideDeckHtml(extractedSlides, deckMeta)`, membuang seluruh modifikasi gaya `transform`, `width`, `height`, dan teks yang baru saja diedit pengguna.
+      2. *Ketiadaan Sinkronisasi Sesi Chat & Database*:
+         - Event pesan `SLIDE_DECK_CONTENT_CHANGED` sebelumnya hanya memperbarui objek lokal `activeDesignArtifact` di memori kanvas dan `opendesign_last_artifact` di storage tanpa memperbarui `conversationHistory` pesan asisten terkait.
+         - Fungsi `saveCurrentSessionToDB()` tidak pernah dipanggil, sehingga database SQLite dan cache penyimpanan riwayat percakapan tetap menyimpan HTML versi lama sebelum diedit.
+         - Saat tab di-refresh, riwayat percakapan memuat HTML lama dari database dan kartu pratinjau kanvas kembali membuka versi lama tersebut.
+    - **Solusi Komprehensif & Permanen**:
+      1. *Proteksi Slide Deck yang Sudah Lengkap (`slide_deck_engine.js`)*:
+         - Memperbarui logika penjaga di `upgradeSlideDeckHtmlIfNeeded`: jika HTML sudah memiliki komponen deck lengkap (`deck-floating-dock` / `dock-btn-edit` / `deck-editor-toolbar` dan `slide-section` / `slide-stage-wrap`), fungsi **LANGSUNG** mengembalikan `html` apa adanya (`return html;`) tanpa melakukan rekonstruksi ulang dari template.
+      2. *Sinkronisasi Otomatis ke `conversationHistory` & SQLite DB (`sidepanel.js` & `canvas_manager.js`)*:
+         - Menambahkan penanganan pesan `SLIDE_DECK_CONTENT_CHANGED` di `sidepanel.js` dan `canvas_manager.js` yang mencari pesan asisten ber-artifact di `conversationHistory`, memperbarui properti `html` dan `raw`-nya secara instan, dan langsung memicu penyimpanan ke SQLite lokal (`saveCurrentSessionToDB()`).
+      3. *Isolasi State Kanvas Bersih (`slide_editor.js`)*:
+         - Pada saat `notifyParentContentChanged()` mengabarkan perubahan konten, class `.deck-edit-mode-active` dilepas sesaat sebelum serialisasi `doc.documentElement.outerHTML` dan dikembalikan seketika, memastikan HTML tersimpan dalam keadaan bersih tanpa artifak visual toolbar aktif.
+      4. *Presistensi Status Buka Kanvas (`canvas_manager.js`)*:
+         - Menggunakan `sessionStorage.getItem('canvas_was_open')` sehingga jika pengguna me-refresh saat sedang membuka kanvas, kanvas otomatis terbuka kembali dengan hasil editan terbaru.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 779 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
 
 
 

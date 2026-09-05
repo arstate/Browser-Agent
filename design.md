@@ -1032,7 +1032,29 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Sidepanel tetap mempertahankan kenyamanan persistensi sesi via `chrome.storage.local`.
 
 3. **Strict Sub-800 Line Rule Compliance**:
-   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 776 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 779 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+## 🎨 49. Slide Deck Manual Edit Persistence Across Refresh (v2.150.233)
+
+1. **Anti-Demolition Slide Deck Engine (`slide_deck_engine.js`)**:
+   - `upgradeSlideDeckHtmlIfNeeded` tidak lagi memaksakan regenerasi template jika mendeteksi deck yang sudah lengkap dengan dock floating/editor dan slide stage.
+   - Seluruh styling inline kustom hasil drag/move (`transform: translate(...) scale(...) rotate(...)`), resize (`width`, `height`), dan edit teks dipertahankan secara utuh tanpa risiko ter-overwrite oleh template bawaan.
+
+2. **Full-Stack Persistence Pipeline (`sidepanel.js` & `canvas_manager.js`)**:
+   - Event `SLIDE_DECK_CONTENT_CHANGED` langsung mengalirkan update HTML ke:
+     - `activeDesignArtifact` di memori kanvas.
+     - Pesan asisten yang sesuai di `conversationHistory`.
+     - Penyimpanan lokal SQLite via Native Host RPC `db_save_session`.
+     - Cache memori cepat `chat_sessions_cache` di `chrome.storage.local`.
+   - Menjamin bahwa saat pengguna me-refresh halaman (F5), sesi obrolan memuat slide deck yang telah diperbarui secara konsisten.
+
+3. **Session Canvas Auto-Reopen**:
+   - Status kanvas yang sedang aktif dicatat di `sessionStorage.getItem('canvas_was_open')`.
+   - Saat tab di-refresh, kanvas secara mulus terbuka kembali dengan kondisi slide hasil editan manual terakhir.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 779 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
 
 
 

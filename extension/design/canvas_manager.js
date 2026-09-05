@@ -518,7 +518,7 @@ function openOpenDesignCanvas(artifact) {
 
   activeDesignArtifact = artifact;
   window.__activeDesignArtifact = artifact;
-
+  try { sessionStorage.setItem('canvas_was_open', 'true'); } catch (_) {}
   try {
     if (typeof chrome !== 'undefined' && chrome?.storage?.local?.set) {
       chrome.storage.local.set({ opendesign_last_artifact: artifact });
@@ -573,16 +573,12 @@ function openOpenDesignCanvas(artifact) {
 }
 
 function closeOpenDesignCanvas() {
+  try { sessionStorage.removeItem('canvas_was_open'); } catch (_) {}
   document.body.classList.remove('canvas-active');
   const canvasPane = document.getElementById('opendesign-canvas-pane');
-  if (canvasPane) {
-    canvasPane.style.display = 'none';
-    canvasPane.classList.remove('is-expanded');
-  }
+  if (canvasPane) { canvasPane.style.display = 'none'; canvasPane.classList.remove('is-expanded'); }
   window.dispatchEvent(new Event('resize'));
-  if (chatInput) {
-    chatInput.focus();
-  }
+  if (chatInput) chatInput.focus();
 }
 
 function switchCanvasTab(tabName) {
@@ -604,26 +600,12 @@ function initOpenDesignCanvas() {
     window.__opendesign_canvas_inited = true;
   }
   window.addEventListener('open-design-canvas', (e) => {
-    if (e.detail?.artifact) {
-      openOpenDesignCanvas(e.detail.artifact);
-    }
+    if (e.detail?.artifact) openOpenDesignCanvas(e.detail.artifact);
   });
 
-  // Tab switcher
-  document.querySelectorAll('.canvas-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.getAttribute('data-tab');
-      if (tab) switchCanvasTab(tab);
-    });
-  });
-
-  // Viewport switcher
-  document.querySelectorAll('.viewport-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const vp = btn.getAttribute('data-viewport');
-      if (vp) setCanvasViewport(vp);
-    });
-  });
+  // Tab & Viewport switchers
+  document.querySelectorAll('.canvas-tab-btn').forEach(btn => btn.addEventListener('click', () => { const t = btn.getAttribute('data-tab'); if (t) switchCanvasTab(t); }));
+  document.querySelectorAll('.viewport-btn').forEach(btn => btn.addEventListener('click', () => { const vp = btn.getAttribute('data-viewport'); if (vp) setCanvasViewport(vp); }));
 
   const previewIframe = document.getElementById('opendesign-preview-frame');
   if (previewIframe) previewIframe.addEventListener('load', () => attachSlideDeckController(previewIframe));
@@ -751,20 +733,31 @@ function initOpenDesignCanvas() {
     if (e.data.type === 'DECK_EDIT_MODE_CHANGED') {
       const btn = document.getElementById('btn-canvas-edit-mode');
       if (btn) btn.classList.toggle('active', Boolean(e.data.active));
-    } else if (e.data.type === 'SLIDE_DECK_CONTENT_CHANGED') {
-      if (activeDesignArtifact) {
-        activeDesignArtifact.html = e.data.html;
-        try { if (typeof chrome !== 'undefined' && chrome?.storage?.local?.set) chrome.storage.local.set({ opendesign_last_artifact: activeDesignArtifact }); } catch (_) {}
-      }
+    } else if (e.data.type === 'SLIDE_DECK_CONTENT_CHANGED' && e.data.html) {
+      if (activeDesignArtifact) { activeDesignArtifact.html = e.data.html; if (activeDesignArtifact.raw) activeDesignArtifact.raw = e.data.html; }
+      if (window.__activeDesignArtifact) { window.__activeDesignArtifact.html = e.data.html; if (window.__activeDesignArtifact.raw) window.__activeDesignArtifact.raw = e.data.html; }
+      try { if (typeof chrome !== 'undefined' && chrome?.storage?.local?.set) chrome.storage.local.set({ opendesign_last_artifact: activeDesignArtifact || { html: e.data.html } }); } catch (_) {}
       const codeDisplay = document.getElementById('canvas-code-display');
       if (codeDisplay) codeDisplay.textContent = e.data.html;
+      if (typeof conversationHistory !== 'undefined' && Array.isArray(conversationHistory)) {
+        for (let i = conversationHistory.length - 1; i >= 0; i--) {
+          if (conversationHistory[i]?.designArtifact) {
+            conversationHistory[i].designArtifact.html = e.data.html;
+            if (conversationHistory[i].designArtifact.raw) conversationHistory[i].designArtifact.raw = e.data.html;
+            break;
+          }
+        }
+      }
+      if (typeof saveCurrentSessionToDB === 'function') saveCurrentSessionToDB();
+      else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') window.saveCurrentSessionToDB();
     }
   });
 
-  // Auto-open canvas if URL has ?canvas=open
+  // Auto-open canvas if URL has ?canvas=open or was open in this tab session
   try {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('canvas') === 'open' && typeof chrome !== 'undefined' && chrome?.storage?.local?.get) {
+    const wasOpen = (urlParams.get('canvas') === 'open') || (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('canvas_was_open') === 'true');
+    if (wasOpen && typeof chrome !== 'undefined' && chrome?.storage?.local?.get) {
       chrome.storage.local.get(['opendesign_last_artifact'], (res) => {
         if (res?.opendesign_last_artifact) openOpenDesignCanvas(res.opendesign_last_artifact);
       });

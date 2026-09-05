@@ -303,7 +303,10 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         removeFigmaBoxes();
         const selected = Array.from(selectedElements);
         selected.forEach(el => el.classList.remove('deck-editable-selected'));
+        const wasEditModeActive = doc.body.classList.contains('deck-edit-mode-active');
+        if (wasEditModeActive) doc.body.classList.remove('deck-edit-mode-active');
         const html = doc.documentElement.outerHTML;
+        if (wasEditModeActive) doc.body.classList.add('deck-edit-mode-active');
         selected.forEach(el => el.classList.add('deck-editable-selected'));
         updateFigmaHandles();
 

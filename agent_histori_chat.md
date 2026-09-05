@@ -6642,6 +6642,31 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi jumlah baris memastikan seluruh file di `extension/design/*.js` `<= 791` baris.
   4. Bump versi manifest ke `v2.150.232`.
 
+### 🚀 Iterasi 514: Fix Slide Deck Manual Edit Persistence Across Refresh (v2.150.233)
+- **User Request:**
+  - "bug hasil editan ga kesimpen ketika di refresh harusnya kan kesimpen meskipun di refresh editan manualnya"
+- **Akar Masalah:**
+  1. Pada `upgradeSlideDeckHtmlIfNeeded` di `slide_deck_engine.js`, terdapat kondisi pengecekan `html.includes("initSlideDeckRealtimeEditor")`. Karena modul editor diinjeksi secara native via pemanggilan JS tanpa tag `<script>`, string tersebut tidak pernah ada di dalam HTML yang tersimpan. Akibatnya, setiap kali kanvas dibuka atau di-refresh, fungsi tersebut merusak deck dan meregenerasi ulang deck dari template dasar murni, melenyapkan semua custom inline styles (`transform`, `width`, `height`) dan teks yang telah diedit manual.
+  2. Event `SLIDE_DECK_CONTENT_CHANGED` tidak pernah memperbarui `conversationHistory` pada pesan asisten dan tidak pernah memicu penyimpanan database `saveCurrentSessionToDB()`. Akibatnya, saat halaman di-refresh, riwayat obrolan memuat HTML lama dari database SQLite/cache.
+  3. Status kanvas yang sedang dibuka tidak tersimpan, sehingga refresh menutup kanvas.
+- **Analisis & Solusi:**
+  1. *Perlindungan Anti-Destruksi di `upgradeSlideDeckHtmlIfNeeded` (`slide_deck_engine.js`)*:
+     - Memperbaiki kondisi penjaga agar jika HTML sudah memiliki struktur deck lengkap (`deck-floating-dock` / `dock-btn-edit` / `deck-editor-toolbar` dan `slide-section` / `slide-stage-wrap`), fungsi langsung mengembalikan `html` apa adanya tanpa melakukan regenerasi template.
+  2. *Sinkronisasi Penuh ke `conversationHistory` & SQLite (`canvas_manager.js` & `sidepanel.js`)*:
+     - Saat menerima `SLIDE_DECK_CONTENT_CHANGED`, kedua modul mencari pesan asisten ber-artifact di `conversationHistory`, memperbarui properti `html` dan `raw`-nya secara instan, dan memanggil `saveCurrentSessionToDB()` untuk menyimpan langsung ke database SQLite dan cache storage.
+  3. *Pembersihan State Toolbar pada Serialisasi (`slide_editor.js`)*:
+     - `notifyParentContentChanged()` melepas class `.deck-edit-mode-active` sesaat sebelum mengambil `doc.documentElement.outerHTML` dan memasangnya kembali seketika, menjamin HTML yang tersimpan bersih dari toolbar edit mode.
+  4. *Auto-Reopen Kanvas via `sessionStorage` (`canvas_manager.js`)*:
+     - Mencatat `sessionStorage.setItem('canvas_was_open', 'true')` saat kanvas dibuka, sehingga refresh halaman langsung membuka kembali kanvas dengan slide hasil editan terbaru.
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris.
+- **Verifikasi:**
+  1. Unit test otomatis memvalidasi 3 skenario: (1) `upgradeSlideDeckHtmlIfNeeded` mempertahankan slide deck yang diedit secara utuh tanpa regenerasi template, (2) `conversationHistory` diperbarui dan `saveCurrentSessionToDB` dipicu saat edit manual, (3) kanvas auto-reopen di-support melalui `sessionStorage`.
+  2. Node syntax check `node -c extension/*.js extension/design/*.js` lolos 100% tanpa error.
+  3. Verifikasi baris: seluruh file `extension/design/*.js` `<= 790` baris.
+  4. Bump versi manifest ke `v2.150.233`.
+
+
 
 
 

@@ -5653,6 +5653,25 @@ try {
   });
 } catch (e) {}
 
+// Sync manual slide deck edits from iframe into conversationHistory and DB
+try {
+  window.addEventListener('message', async (e) => {
+    if (!e.data || e.data.type !== 'SLIDE_DECK_CONTENT_CHANGED' || !e.data.html) return;
+    const newHtml = e.data.html;
+    if (Array.isArray(conversationHistory)) {
+      for (let i = conversationHistory.length - 1; i >= 0; i--) {
+        const msg = conversationHistory[i];
+        if (msg && msg.designArtifact) {
+          msg.designArtifact.html = newHtml;
+          if (msg.designArtifact.raw) msg.designArtifact.raw = newHtml;
+          break;
+        }
+      }
+    }
+    await saveCurrentSessionToDB();
+  });
+} catch (e) {}
+
 async function runAgentLoop(userMessage, attachments = [], explicitMentions = []) {
   if (!config.apiKey && config.preset !== "ollama" && config.preset !== "9router") {
     openSettingsPage();
