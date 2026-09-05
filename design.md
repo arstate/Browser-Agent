@@ -1260,7 +1260,26 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 - Jika `asksAnalysis && !hasExecutedAnalysis && (currentStep <= 1)`, tool mengembalikan status penolakan terarah yang memandu model untuk melakukan inspeksi tab/tabel browser terlebih dahulu.
 
 ### 📏 4. Kepatuhan Ketat Aturan Sub-800 Baris
-- Seluruh 10 file di `extension/design/` terjaga ketat di bawah 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 788, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+---
+
+## 59. Zero-Lag Element Selection & Fluid Inline Text Typing (`v2.150.243`)
+
+### ⚡ 1. Arsitektur Seleksi Tanpa Beban Reflow (Zero-Thrashing Selection)
+- **Problem**: Pengguna mengalami freeze/lag saat mengklik untuk memilih elemen slide atau saat mulai mengetik teks di awal.
+- **Solusi**:
+  - Eliminasi pemanggilan `initSnapCandidates()` prematur pada `mousedown`. Bounding rect kandidat snap hanya dihitung jika mouse benar-benar bergerak lebih dari 4px.
+  - Flag `dragCandidate` memisahkan interaksi klik seleksi murni dari aksi drag pemindahan elemen.
+  - Saat `mouseup` pada klik seleksi biasa (`hasActuallyMoved === false`), sistem langsung mengembalikan status tanpa memanggil `takeSnapshot()` dan tanpa `notifyParentContentChanged()`.
+
+### ✍️ 2. Pengetikan Teks Instan (Contenteditable Fast-Path)
+- **Bypass Mousedown pada Elemen Teks Aktif**: Klik di dalam elemen `[contenteditable="true"]` tidak diinterupsi oleh event listener editor, memungkinkan kursor teks berpindah secara native dan seketika.
+- **Smooth Caret Positioning**: Pada double-click, kursor teks langsung difokuskan dan direntangkan ke akhir teks via `Range` & `Selection` API tanpa antrean background serialization.
+
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
 
 
 

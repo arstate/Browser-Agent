@@ -6900,3 +6900,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.242` di `manifest.json`.
 
+### 🚀 Iterasi 524: Optimasi Seleksi Elemen & Pengetikan Teks Instan di Slide Editor (v2.150.243)
+- **User Request:**
+  - "optimasi lagi ketika edit manual slide soalnya ketika mau select elemen atau ketik teks edit di awal mesti kayak ngelag dulu bro baru lancar coba optimasi bro"
+- **Akar Masalah (Root Cause):**
+  1. *Snap Candidates Thrashing pada Mousedown*: Pada setiap mousedown, `initSnapCandidates(el)` memindai seluruh elemen slide dan memanggil `getBoundingClientRect()` secara sinkron, memicu forced synchronous reflow.
+  2. *Snapshots & Broadcast pada Klik Seleksi Biasa*: `mousedown` langsung menyetel `activeAction = 'move'` dan `isDragging = true`. Akibatnya saat mouseup (klik seleksi tanpa drag), sistem memicu `takeSnapshot()` (serialisasi JSON seluruh 20-30 slide) dan `notifyParentContentChanged()` (serialisasi outerHTML dan IndexedDB write).
+  3. *Tersedak saat Memulai Pengetikan*: Klik pertama dari double-click memicu background snapshot dan timer broadcast. Saat dblclick mengaktifkan contenteditable dan memanggil focus, thread utama sedang tersedak proses serialisasi DOM dari klik pertama.
+- **Solusi & Implementasi Teknis (`extension/design/slide_editor.js`):**
+  1. *Drag Candidate & Move Threshold (> 4px)*:
+     - Mousedown menyetel `dragCandidate = true`, `activeAction = null`, dan `isDragging = false`.
+     - `initSnapCandidates()` hanya dipanggil jika pergeseran mouse melebihi ambang batas 4px.
+  2. *Skip Snapshot & Notification pada Klik Murni*:
+     - Mouseup memeriksa flag `hasActuallyMoved`. Jika elemen tidak bergeser (hanya klik seleksi), proses snapshot dan notifikasi dilewati sepenuhnya (0ms instant selection).
+  3. *Fast-Path Contenteditable & Fluid Caret Focus*:
+     - Mousedown mengabaikan elemen yang sedang dalam mode `contenteditable` agar kursor teks native tidak terinterupsi.
+     - Dblclick menggunakan `Range` & `Selection` API untuk langsung menempatkan kursor di akhir teks tanpa delay.
+- **Verifikasi:**
+  1. Unit test `test_slide_selection_and_typing_optimization.js` lulus 100% (4/4 test cases).
+  2. Seluruh 6 unit test regresi lolos 100%.
+  3. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  4. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  5. Bump versi ke `v2.150.243` di `manifest.json`.
+
+

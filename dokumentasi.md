@@ -597,8 +597,25 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Meneruskan `executionContext` (`{ sessionExecutedTools, userMessage, currentStep }`) dari `runAgentLoop` ke `executeTool`.
          - Jika prompt meminta analisis data/iklan tetapi belum ada tool observasi/analisis browser yang dijalankan (`currentStep <= 1` dan belum memanggil browser/analisis tools), eksekusi `create_slide_deck_design` dicegat dan mengembalikan pesan panduan terstruktur agar Master Agent menjalankan inspeksi data terlebih dahulu.
       4. **In-Place Live Update di Canvas Drawer**:
-         - Jika artefak slide sudah aktif di kanvas, pembuatan deck baru akan terdeteksi sebagai `is_revision: true`, menampilkan pill "Live Updated" pada Bento Result Card, dan menyinkronkan pratinjau kanvas secara langsung.
-    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 788, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+ 126. **Optimasi Performa Seleksi Elemen & Pengetikan Teks Awal (Zero-Lag Selection & Drag Threshold Guard) (`v2.150.243`):**
+    - **Latar Belakang & Masalah Pengguna**:
+      - Pengguna melaporkan bahwa saat masuk ke mode edit manual slide, ketika hendak memilih (klik/seleksi) elemen atau mulai mengetik teks di awal, terdapat jeda lag/freeze yang terasa mengganggu sebelum interaksi menjadi lancar.
+      - **Akar Masalah (Root Cause)**:
+        1. *Layout Thrashing Prematur pada Mousedown*: Pada setiap event `mousedown`, `slide_editor.js` langsung memanggil `initSnapCandidates(el)` yang mengeksekusi `getBoundingClientRect()` secara sinkron pada seluruh elemen teks, heading, paragraf, kartu, dan badge di seluruh kanvas slide, memicu forced synchronous reflow.
+        2. *Eksekusi Snapshot & Serialisasi HTML pada Setiap Klik Biasa*: `mousedown` langsung menyetel `activeAction = 'move'` dan `isDragging = true` tanpa memeriksa apakah mouse benar-benar digeser. Akibatnya, saat `mouseup` (bahkan pada klik seleksi biasa berjarak 0 pixel), sistem mengeksekusi `takeSnapshot()` (menghapus handles, menserialisasi HTML 20-30 slide ke JSON, membuat ulang handles) serta memicu `notifyParentContentChanged()` yang mengirimkan ratusan KB string outerHTML ke window induk dan menjadwalkan penulisan IndexedDB.
+        3. *Lag Dobel pada Pengetikan Teks*: Saat pengguna melakukan klik ganda (`dblclick`) untuk menyunting teks, klik pertama memicu snapshot & serialisasi di latar belakang. Tepat saat `dblclick` mengaktifkan `contenteditable="true"` dan memanggil `focus()`, thread utama sedang tersedak oleh proses serialisasi DOM dari klik pertama.
+    - **Solusi & Implementasi Teknis (`extension/design/slide_editor.js`)**:
+      1. *Threshold-Based Drag Initiation (> 4px)*:
+         - Pada `mousedown`, `activeAction` dan `isDragging` disetel ke `null`/`false`. Status hanya dicatat sebagai `dragCandidate = true`.
+         - `initSnapCandidates()` dan kalkulasi bounding rect TIDAK PERNAH dipanggil pada klik seleksi biasa! Pemindaian kandidat snap magnetik hanya diinisialisasi jika mouse benar-benar digeser melewati batas ambang `Math.hypot(dx, dy) > 4` pixel.
+      2. *Eliminasi Total Snapshot & Broadcast pada Klik Seleksi*:
+         - Pada `mouseup`, sistem memeriksa flag `hasActuallyMoved`.
+         - Jika pengguna hanya mengklik untuk memilih elemen (`hasActuallyMoved === false`), sistem langsung keluar tanpa memanggil `takeSnapshot()` dan tanpa `notifyParentContentChanged()`. Hasil: seleksi elemen instan 0ms pada 60fps.
+      3. *Native Caret Placement & Instant Typing*:
+         - Menambahkan guard awal pada `mousedown`: jika `e.target.isContentEditable || e.target.closest('[contenteditable="true"]')`, `mousedown` tidak diinterupsi sehingga browser menempatkan kursor teks secara instan.
+         - Pada `dblclick`, kursor teks langsung diarahkan dan direntangkan ke akhir teks via `win.getSelection()` dan `createRange()` tanpa hambatan thread dari klik sebelumnya.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
 
 
 
