@@ -68,6 +68,11 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   currentActiveAssistantBubble = assistantBubble;
   const contentEl = assistantBubble ? assistantBubble.querySelector('.message-content') : null;
 
+  const detectThemeFn = (typeof detectOptimalSlideTheme === 'function')
+    ? detectOptimalSlideTheme
+    : (typeof window !== 'undefined' && typeof window.detectOptimalSlideTheme === 'function' ? window.detectOptimalSlideTheme : null);
+  const deducedTheme = detectThemeFn ? detectThemeFn(userMessage) : { id: 'adaptive', name: 'Adaptive Bespoke System' };
+
   // Initialize structured 5-milestone plan for Master Agent & Master Design
   const designMilestones = isRevision
     ? [
@@ -81,9 +86,9 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         ? getDesignMilestones(userMessage)
         : [
             { title: "👑 Master Agent: Analisis Brief & Strategi Konseptual", completed: false, inProgress: true },
-            { title: "🤝 Delegasi ke Master Design: Penataan Layout & GSM Brand", completed: false, inProgress: false },
+            { title: "🤝 Delegasi ke Master Design: Kurasi Style Visual & Palet Sesuai Materi", completed: false, inProgress: false },
             { title: "🎨 Master Design: Sintesis Konten 16:9 Widescreen & Struktur Bab", completed: false, inProgress: false },
-            { title: "🎨 Master Design: Penerapan Dark Luxury Typography & Visual Polish", completed: false, inProgress: false },
+            { title: "🎨 Master Design: Penerapan Tipografi Sesuai Tema & Visual Polish", completed: false, inProgress: false },
             { title: "👑 Master Agent: Review Kualitas, Anti-Slop Audit & Final Approval", completed: false, inProgress: false }
           ]);
 
@@ -102,7 +107,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       isRevision ? 'delegate_revision_to_master_design' : 'delegate_to_master_design',
       isRevision
         ? { revisionRequest: userMessage, target: 'Active OpenDesign Canvas', canvasTitle: currentOpenArtifact?.meta?.title || 'Slide Deck' }
-        : { brief: userMessage, layout: '16:9 Widescreen', style: 'Executive Editorial GSM v3.0' },
+        : { brief: userMessage, layout: '16:9 Widescreen', style: deducedTheme.name, archetype: deducedTheme.id },
       'Master Agent'
     );
   }
@@ -337,7 +342,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         isRevision ? 'audit_and_apply_live_revision' : 'audit_and_approve_artifact',
         isRevision
           ? { verified: true, liveSynced: true, target: 'Active Canvas' }
-          : { antiSlopCheck: true, gsmCompliance: true, layoutVerification: '16:9 Widescreen' },
+          : { antiSlopCheck: true, themeCompliance: deducedTheme.name, layoutVerification: '16:9 Widescreen' },
         'Master Agent'
       );
     }
@@ -373,7 +378,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     }
 
     if (toolBadgeAudit && typeof updateToolBadgeState === 'function') {
-      updateToolBadgeState(toolBadgeAudit, 'success', isRevision ? 'Revisi tervalidasi dan disinkronkan langsung ke canvas aktif.' : 'Artifact tervalidasi. Standar visual GSM v3.0 dan rasio 16:9 terpenuhi.');
+      updateToolBadgeState(toolBadgeAudit, 'success', isRevision ? 'Revisi tervalidasi dan disinkronkan langsung ke canvas aktif.' : `Artifact tervalidasi. Standar visual tema ${deducedTheme.name} dan rasio 16:9 terpenuhi.`);
     }
 
     // Finalize tasks & tools

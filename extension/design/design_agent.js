@@ -8,13 +8,13 @@ const MASTER_DESIGN_AGENT = {
   name: 'Master Design',
   role: 'Lead Creative Director & Slide Architect',
   badge: 'Tangan Kanan Master Agent',
-  description: 'Tangan kanan Master Agent untuk perancangan visual, tata letak 16:9 widescreen, GSM brand visual, typography Dark Luxury, dan interaktivitas canvas.',
+  description: 'Tangan kanan Master Agent untuk perancangan visual, tata letak 16:9 widescreen, sistem desain adaptif sesuai materi, kurasi tipografi harmonis, dan interaktivitas canvas.',
   category: 'Design & Presentation',
   capabilities: [
     'slide_deck_16_9',
-    'dark_luxury_ui',
+    'adaptive_design_systems',
     'bento_grid_layout',
-    'brand_identity_gsm',
+    'bespoke_theming',
     'interactive_dock',
     'pdf_export_ready'
   ]
@@ -48,7 +48,7 @@ function getDesignMilestones(userTopic = '') {
       inProgress: true
     },
     {
-      title: '🤝 Delegasi ke Master Design: Penataan Layout & GSM Brand',
+      title: '🤝 Delegasi ke Master Design: Kurasi Style Visual & Palet Sesuai Materi',
       completed: false,
       inProgress: false
     },
@@ -58,7 +58,7 @@ function getDesignMilestones(userTopic = '') {
       inProgress: false
     },
     {
-      title: '🎨 Master Design: Penerapan Dark Luxury Typography & Visual Polish',
+      title: '🎨 Master Design: Penerapan Tipografi Sesuai Tema & Visual Polish',
       completed: false,
       inProgress: false
     },

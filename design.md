@@ -444,5 +444,29 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Status badge kartu chat bertransformasi menjadi `Live Updated` berwarna hijau zamrud (`#34D399`) dengan tombol aksi `View Updated Canvas ↗`.
    - Live iframe reload, pembaruan kode di Code Tab, pembaruan Virtual Files di Files Tab, dan toast feedback `✅ Canvas aktif berhasil diperbarui!` bekerja secara real-time.
 
+---
+
+## 🌈 19. Adaptive Multi-Theme Archetypes & Strict Contextual Branding Standard (v2.150.203)
+
+1. **Adaptive Thematic Archetypes (7 Design System Archetypes)**:
+   - `playful_pastel`: Soft warm ivory canvas (`#FFFDF9`), playful coral accents (`#FF6B6B`), mint (`#4ECDC4`), font `Outfit`/`Plus Jakarta Sans`, 16px soft rounded cards. Ideal untuk topik hewan peliharaan, anak-anak, resep, kuliner, dan gaya hidup.
+   - `dark_luxury_cyber`: Deep obsidian canvas (`#0A0D14`), dark slate card boxes, neon cyan (`#06B6D4`) & electric emerald accents, font `JetBrains Mono`/`Space Grotesk`. Ideal untuk AI, LLM, coding, cloud, DevOps, dan web3.
+   - `swiss_minimalist`: Crisp off-white canvas (`#F8F9FA`), razor-sharp borders (6px radius), deep navy/slate & cobalt blue accents, font `Inter`/`Space Grotesk`. Ideal untuk laporan keuangan, audit, perbankan, hukum, dan enterprise B2B.
+   - `neo_brutalist`: High-contrast energetic cream (`#FFFDF9`), bold black borders (2px solid), electric orange (`#FF4D00`) & acid lime, font `Syne`/`Space Grotesk`. Ideal untuk startup pitch decks dan kampanye viral Gen-Z.
+   - `botanical_sage`: Calming pale sage canvas (`#F3F7F4`), forest slate text, botanical green accents (`#059669`), font `Plus Jakarta Sans`. Ideal untuk kesehatan, medis, yoga, nutrisi, dan lingkungan.
+   - `monochrome_minimal`: Stark noir canvas (`#141414`), white text, chrome silver accents, font `Space Grotesk`/`Inter`. Ideal untuk fashion, arsitektur, seni, dan fotografi.
+   - `warm_editorial`: Warm linen canvas (`#F5F3EF`), terracotta accents (`#FF4D00`), font `Syne`/`Plus Jakarta Sans`. Ideal untuk sastra, manifesto, dan studi panjang.
+
+2. **Intelligent "Mikir Keras" Style Deduction**:
+   - Jika pengguna menentukan tema (misal: "pastel", "neon cyber", "brutalis"), sistem mematuhinya 100%.
+   - Jika tidak ditentukan, fungsi `detectOptimalSlideTheme` mengekstrak domain subjek materi dan memilih arketipe paling harmonis secara otonom.
+
+3. **Strict Brand Integrity & Contextual Footer Standard**:
+   - Menghapus total teks palsu: `DJADI CREATIVE`, `GSM v3.0`, `CONFIDENTIAL // ENTERPRISE`, `"DJ" → JADI`, dan `TERWUJUD & SELESAI`.
+   - Header Bab: `BAB {I} // {TOPIK MATERI NYATA} // {SUBHEADER TEMATIK}`.
+   - Footer: `© 2026 {TOPIK / BRAND} • MATERI PRESENTASI RESMI` dan `.footer-status-tag` tematik (misal: `PANDUAN & ENSIKLOPEDIA`, `EDUKASI & SAINS`).
+   - Card Highlight Box: Ditarik langsung dari intisari pilar kartu nyata.
+
+
 
 

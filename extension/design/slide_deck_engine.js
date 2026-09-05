@@ -1,6 +1,6 @@
 // =========================================================================
 // EXECUTIVE SLIDE DECK ENGINE (16:9 Widescreen Presentation Engine)
-// Standard Executive Editorial GSM v3.0, Widescreen Bento Grid & Floating Dock
+// Adaptive Multi-Theme Intelligence, Contextual Branding & Widescreen Layout
 // =========================================================================
 
 if (typeof escapeHtml !== 'function') {
@@ -15,6 +15,205 @@ function toRoman(num) {
   return romans[num - 1] || String(num);
 }
 
+const SLIDE_THEMES = {
+  playful_pastel: {
+    id: "playful_pastel",
+    name: "Playful Pastel & Warm Organic",
+    category: "Cute / Pets / Food / Kids / Lifestyle / Fun",
+    bgDesk: "#1A1715",
+    bgSidebar: "#141210",
+    bgSlide: "#FFFDF9",
+    textMain: "#2C221E",
+    textMuted: "#6E5D53",
+    borderHeader: "#E5D9D0",
+    accent: "#FF6B6B",
+    accentSecondary: "#FA8072",
+    accentTertiary: "#4ECDC4",
+    cardBg: "#FFF5EE",
+    cardBorder: "1.5px solid rgba(255, 107, 107, 0.22)",
+    cardBoxBg: "#FFFFFF",
+    cardRadius: "16px",
+    fontHeading: "'Outfit', 'Plus Jakarta Sans', sans-serif",
+    fontBody: "'Plus Jakarta Sans', sans-serif",
+    tag: "PANDUAN & ENSIKLOPEDIA",
+    subHeader: "EDUKASI LENGKAP"
+  },
+  dark_luxury_cyber: {
+    id: "dark_luxury_cyber",
+    name: "Dark Luxury Obsidian & Neon",
+    category: "Tech / AI / Code / Web3 / Cyber / Future",
+    bgDesk: "#07080A",
+    bgSidebar: "#0C0E12",
+    bgSlide: "#0F1117",
+    textMain: "#F8FAFC",
+    textMuted: "#94A3B8",
+    borderHeader: "#334155",
+    accent: "#CEF128",
+    accentSecondary: "#00F0FF",
+    accentTertiary: "#A855F7",
+    cardBg: "#161922",
+    cardBorder: "1.5px solid rgba(206, 241, 40, 0.25)",
+    cardBoxBg: "#1E2330",
+    cardRadius: "8px",
+    fontHeading: "'Space Grotesk', 'Syne', sans-serif",
+    fontBody: "'Plus Jakarta Sans', sans-serif",
+    tag: "TECH INNOVATION // ARCHITECTURE",
+    subHeader: "SYSTEM SPECIFICATION"
+  },
+  swiss_minimalist: {
+    id: "swiss_minimalist",
+    name: "Swiss International Clean Minimal",
+    category: "Corporate / Finance / Research / B2B / Law",
+    bgDesk: "#0D1117",
+    bgSidebar: "#161B22",
+    bgSlide: "#FFFFFF",
+    textMain: "#0F172A",
+    textMuted: "#475569",
+    borderHeader: "#E2E8F0",
+    accent: "#0284C7",
+    accentSecondary: "#0D9488",
+    accentTertiary: "#E11D48",
+    cardBg: "#F8FAFC",
+    cardBorder: "1.5px solid rgba(15, 23, 42, 0.09)",
+    cardBoxBg: "#FFFFFF",
+    cardRadius: "6px",
+    fontHeading: "'Inter', 'Space Grotesk', sans-serif",
+    fontBody: "'Inter', sans-serif",
+    tag: "ANALISIS & LAPORAN RESMI",
+    subHeader: "EXECUTIVE REPORT"
+  },
+  neo_brutalist: {
+    id: "neo_brutalist",
+    name: "Vibrant Neo-Brutalist",
+    category: "Creative Pitch / Startups / Gen-Z / Campaigns",
+    bgDesk: "#121212",
+    bgSidebar: "#1A1A1A",
+    bgSlide: "#FFFDF0",
+    textMain: "#000000",
+    textMuted: "#333333",
+    borderHeader: "#000000",
+    accent: "#FACC15",
+    accentSecondary: "#FF3366",
+    accentTertiary: "#00D26A",
+    cardBg: "#FFFFFF",
+    cardBorder: "2px solid #000000",
+    cardBoxBg: "#F3F4F6",
+    cardRadius: "10px",
+    fontHeading: "'Syne', 'Space Grotesk', sans-serif",
+    fontBody: "'Space Grotesk', sans-serif",
+    tag: "CREATIVE STRATEGY // PLAYBOOK",
+    subHeader: "ACTION PLAYBOOK"
+  },
+  botanical_sage: {
+    id: "botanical_sage",
+    name: "Botanical Sage & Organic Wellness",
+    category: "Health / Nature / Wellness / Environment / Psychology",
+    bgDesk: "#0F1A15",
+    bgSidebar: "#14221C",
+    bgSlide: "#F3F7F4",
+    textMain: "#132E22",
+    textMuted: "#3E6050",
+    borderHeader: "#D1E0D7",
+    accent: "#059669",
+    accentSecondary: "#D97706",
+    accentTertiary: "#0284C7",
+    cardBg: "#E5EFE8",
+    cardBorder: "1.5px solid rgba(5, 150, 105, 0.2)",
+    cardBoxBg: "#FFFFFF",
+    cardRadius: "14px",
+    fontHeading: "'Plus Jakarta Sans', sans-serif",
+    fontBody: "'Plus Jakarta Sans', sans-serif",
+    tag: "PANDUAN & KESEHATAN",
+    subHeader: "WELLNESS FRAMEWORK"
+  },
+  monochrome_minimal: {
+    id: "monochrome_minimal",
+    name: "Monochrome Noir & Minimalist",
+    category: "High-Fashion / Architecture / Portfolio / Photography",
+    bgDesk: "#050505",
+    bgSidebar: "#0D0D0D",
+    bgSlide: "#141414",
+    textMain: "#FFFFFF",
+    textMuted: "#9CA3AF",
+    borderHeader: "#262626",
+    accent: "#E5E5E5",
+    accentSecondary: "#999999",
+    accentTertiary: "#525252",
+    cardBg: "#1F1F1F",
+    cardBorder: "1.5px solid rgba(255, 255, 255, 0.14)",
+    cardBoxBg: "#262626",
+    cardRadius: "8px",
+    fontHeading: "'Space Grotesk', 'Inter', sans-serif",
+    fontBody: "'Inter', sans-serif",
+    tag: "PORTFOLIO & DOKUMEN RESMI",
+    subHeader: "VISUAL ANTHOLOGY"
+  },
+  warm_editorial: {
+    id: "warm_editorial",
+    name: "Warm Editorial Linen",
+    category: "Editorial / Literature / Branding / Manifesto",
+    bgDesk: "#0E1015",
+    bgSidebar: "#0B0C10",
+    bgSlide: "#F5F3EF",
+    textMain: "#111827",
+    textMuted: "#4B5563",
+    borderHeader: "#9CA3AF",
+    accent: "#FF4D00",
+    accentSecondary: "#0284C7",
+    accentTertiary: "#111827",
+    cardBg: "rgba(255, 255, 255, 0.65)",
+    cardBorder: "1.5px solid rgba(0, 0, 0, 0.08)",
+    cardBoxBg: "#FFFFFF",
+    cardRadius: "6px",
+    fontHeading: "'Syne', 'Space Grotesk', sans-serif",
+    fontBody: "'Plus Jakarta Sans', sans-serif",
+    tag: "STUDI & EKSPLORASI",
+    subHeader: "PANDUAN MATERI"
+  }
+};
+
+function detectOptimalSlideTheme(promptOrTopic = "", rawMeta = {}) {
+  const text = (promptOrTopic + " " + (rawMeta?.title || "") + " " + (rawMeta?.description || "") + " " + (rawMeta?.system || "") + " " + (rawMeta?.theme || "")).toLowerCase();
+
+  // 1. Explicit user request matching
+  if (/pastel|kawaii|lucu|cute|gemes|gemoy|soft/i.test(text)) return SLIDE_THEMES.playful_pastel;
+  if (/cyber|cyberpunk|neon|dark|obsidian|futuristik|hacker/i.test(text)) return SLIDE_THEMES.dark_luxury_cyber;
+  if (/brutalis|brutalist|pop|retro|warna-warni/i.test(text)) return SLIDE_THEMES.neo_brutalist;
+  if (/sage|botani|nature|organik|hijau|alam|wellness/i.test(text)) return SLIDE_THEMES.botanical_sage;
+  if (/monokrom|monochrome|hitam-putih|noir|black and white/i.test(text)) return SLIDE_THEMES.monochrome_minimal;
+  if (/swiss|minimalis|clean|putih|white/i.test(text)) return SLIDE_THEMES.swiss_minimalist;
+
+  // 2. Intelligent Subject Domain Matching ("Mikir Keras" berdasarkan konteks materi)
+  if (/kucing|cat|kitten|feline|anjing|dog|pet|hewan|binatang|satwa|burung|fish|ikan|anak|kids|bayi|toddler|resep|kuliner|masak|cooking|baking|cake|kopi|coffee|hobi|game|gaming|manga|anime|kartun/i.test(text)) {
+    return SLIDE_THEMES.playful_pastel;
+  }
+  if (/ai|llm|machine learning|deep learning|coding|code|programmer|programming|python|javascript|react|vue|node|backend|frontend|devops|cloud|docker|linux|kubernetes|api|database|sql|cyber|security|solana|bitcoin|crypto|blockchain|web3|robot/i.test(text)) {
+    return SLIDE_THEMES.dark_luxury_cyber;
+  }
+  if (/kesehatan|health|medis|medical|dokter|rumah sakit|mental|psikologi|mindfulness|yoga|diet|nutrisi|gizi|stres|stress|vitamin|olahraga|fitness|lingkungan|hutan|tanaman|bumi|climate/i.test(text)) {
+    return SLIDE_THEMES.botanical_sage;
+  }
+  if (/bisnis|business|keuangan|finance|investasi|saham|reksadana|crypto finance|bank|banking|laporan|revenue|omset|audit|pajak|tax|hukum|law|compliance|legal|asuransi|insurance|corporate|b2b|enterprise/i.test(text)) {
+    return SLIDE_THEMES.swiss_minimalist;
+  }
+  if (/startup|pitch|venture|growth|marketing|viral|tiktok|instagram|reels|campaign|gen-z|influencer|iklan|funnel|sales pitch/i.test(text)) {
+    return SLIDE_THEMES.neo_brutalist;
+  }
+  if (/fashion|mode|fotografi|photography|seni|art|galeri|gallery|puisi|sastra|arsitektur|architecture|interior/i.test(text)) {
+    return SLIDE_THEMES.monochrome_minimal;
+  }
+
+  // 3. Fallback to colors if provided
+  if (rawMeta?.colors && Array.isArray(rawMeta.colors) && rawMeta.colors.length > 0) {
+    const primary = rawMeta.colors[0];
+    if (/^#0[0-9a-f]{5}$/i.test(primary)) {
+      return SLIDE_THEMES.dark_luxury_cyber;
+    }
+  }
+
+  return SLIDE_THEMES.warm_editorial;
+}
+
 function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   // Support both (slidesData, deckMeta) and alternate (topic, slidesData)
   if (typeof slidesData === 'string' && Array.isArray(deckMeta)) {
@@ -26,11 +225,41 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     slidesData = [];
   }
   const total = slidesData.length || 1;
-  const brandName = deckMeta.brand || "DJADI CREATIVE";
-  const categoryTitle = deckMeta.categoryTitle || deckMeta.title || "FONDASI BRAND & MANIFESTO";
-  const gsmVersion = deckMeta.version || "GSM v3.0";
-  const accentColor = deckMeta.accentColor || "#FF4D00";
-  const copyrightText = deckMeta.copyright || `© 2026 ${brandName.toUpperCase()} • STANDAR IDENTITAS VISUAL RESMI`;
+  const promptOrTitle = deckMeta.userPrompt || deckMeta.title || (slidesData[0]?.title || "");
+  const theme = deckMeta.themeObj || detectOptimalSlideTheme(promptOrTitle, deckMeta);
+
+  // Brand Name logic: NEVER hardcode DJADI CREATIVE!
+  let brandName = deckMeta.brand;
+  if (!brandName || (/djadi/i.test(brandName) && !/djadi/i.test(promptOrTitle))) {
+    brandName = (deckMeta.title || slidesData[0]?.title || "MATERI PRESENTASI").slice(0, 40);
+  }
+
+  let categoryTitle = deckMeta.categoryTitle || deckMeta.title || (slidesData[0]?.title || "MATERI PRESENTASI");
+  if (/FONDASI BRAND|STRATEGI & IDENTITAS/i.test(categoryTitle) && !/fondasi|identitas|gsm/i.test(promptOrTitle)) {
+    categoryTitle = (deckMeta.title || slidesData[0]?.title || "MATERI PRESENTASI").slice(0, 40);
+  }
+
+  // Header subcategory: NEVER hardcode GSM v3.0!
+  let subCategory = deckMeta.version || deckMeta.subCategory;
+  if (!subCategory || subCategory === "GSM v3.0") {
+    subCategory = theme.subHeader || "PANDUAN LENGKAP";
+  }
+
+  const accentColor = deckMeta.accentColor || theme.accent;
+  const accentSecondary = deckMeta.accentSecondary || theme.accentSecondary;
+  const accentTertiary = deckMeta.accentTertiary || theme.accentTertiary;
+
+  // Copyright text: NEVER hardcode STANDAR IDENTITAS VISUAL RESMI!
+  let copyrightText = deckMeta.copyright;
+  if (!copyrightText || (/DJADI CREATIVE|STANDAR IDENTITAS VISUAL RESMI/i.test(copyrightText) && !/djadi/i.test(promptOrTitle))) {
+    copyrightText = `© 2026 ${brandName.toUpperCase()} • MATERI PRESENTASI RESMI`;
+  }
+
+  // Badge tag: NEVER hardcode CONFIDENTIAL // ENTERPRISE!
+  let badgeTag = deckMeta.badgeTag || deckMeta.statusTag;
+  if (!badgeTag || (/CONFIDENTIAL/i.test(badgeTag) && !/confidential|rahasia|enterprise/i.test(promptOrTitle))) {
+    badgeTag = theme.tag || "EDUKASI & INFORMASI";
+  }
 
   const thumbnailsHtml = slidesData.map((s, idx) => {
     const slideNumStr = String(idx + 1).padStart(2, '0');
@@ -44,7 +273,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           <div class="thumb-mini-slide-wrap">
             <div class="thumb-mini-slide">
               <div class="thumb-mini-header">
-                <span class="thumb-mini-chapter">BAB ${toRoman(idx + 1)} // ${escapeHtml(categoryTitle.toUpperCase())} // ${escapeHtml(gsmVersion)}</span>
+                <span class="thumb-mini-chapter">BAB ${toRoman(idx + 1)} // ${escapeHtml(categoryTitle.toUpperCase())} // ${escapeHtml(subCategory)}</span>
                 <span class="thumb-mini-page">HALAMAN ${slideNumStr}/${totalStr}</span>
               </div>
               <div class="thumb-mini-hero">
@@ -53,14 +282,19 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
               </div>
               <div class="thumb-mini-grid">
                 ${cards.slice(0, 3).map((c, ci) => {
-                  const badgeColor = c.badgeColor || (ci === 0 ? '#FF4D00' : ci === 1 ? '#0284C7' : '#111827');
-                  const highlightColor = c.highlightColor || (ci === 0 ? '#111827' : ci === 1 ? '#0284C7' : '#FF4D00');
+                  const badgeColor = c.badgeColor || (ci === 0 ? accentColor : ci === 1 ? accentSecondary : accentTertiary);
+                  const highlightColor = c.highlightColor || badgeColor;
+                  const rawBadge = c.badge || `POIN 0${ci + 1} // ANALISIS`;
+                  const cleanBadge = (/ORTOGRAFI|FILOSOFI|DIFERENSIASI/i.test(rawBadge) && !/ortografi|filosofi/i.test(c.title || '')) ? `POIN 0${ci + 1} // ANALISIS` : rawBadge;
+                  const rawHl = c.footerHighlight || c.keyTakeaway || c.title || `POIN UTAMA 0${ci + 1}`;
+                  const cleanHl = (/"DJ" → JADI|TERWUJUD & SELESAI|DISTINCTIVE BRAND ASSET/i.test(rawHl) && !/djadi/i.test(promptOrTitle)) ? (c.title || `POIN UTAMA 0${ci + 1}`).slice(0, 24).toUpperCase() : rawHl;
+
                   return `
                     <div class="thumb-mini-col">
-                      <div class="thumb-mini-badge" style="color: ${badgeColor};">${escapeHtml(c.badge || `KARTU 0${ci + 1}`)}</div>
+                      <div class="thumb-mini-badge" style="color: ${badgeColor};">${escapeHtml(cleanBadge)}</div>
                       <div class="thumb-mini-col-title">${escapeHtml((c.title || '').slice(0, 24))}</div>
                       <div class="thumb-mini-box">
-                        <span style="color: ${highlightColor};">${escapeHtml((c.footerHighlight || c.title || '').slice(0, 20))}</span>
+                        <span style="color: ${highlightColor};">${escapeHtml(cleanHl.slice(0, 20))}</span>
                       </div>
                     </div>
                   `;
@@ -68,7 +302,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
               </div>
               <div class="thumb-mini-footer">
                 <span>${escapeHtml(copyrightText)}</span>
-                <span style="color: ${accentColor}; font-weight: 800;">CONFIDENTIAL // ENTERPRISE</span>
+                <span style="color: ${accentColor}; font-weight: 800;">${escapeHtml(badgeTag)}</span>
               </div>
             </div>
           </div>
@@ -83,23 +317,25 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     const cards = s.cards || [];
     
     const cardsHtml = cards.map((c, cIdx) => {
-      const badgeColor = c.badgeColor || (cIdx === 0 ? '#FF4D00' : cIdx === 1 ? '#0284C7' : '#111827');
-      const highlightColor = c.highlightColor || (cIdx === 0 ? '#111827' : cIdx === 1 ? '#0284C7' : '#FF4D00');
-      const badgeText = c.badge || (cIdx === 0 ? 'KARTU 01 // ORTOGRAFI' : cIdx === 1 ? 'KARTU 02 // FILOSOFI' : `KARTU 0${cIdx + 1} // DIFERENSIASI`);
-      const highlightText = c.footerHighlight || (cIdx === 0 ? '"DJ" → JADI' : cIdx === 1 ? 'TERWUJUD & SELESAI' : 'DISTINCTIVE BRAND ASSET');
+      const badgeColor = c.badgeColor || (cIdx === 0 ? accentColor : cIdx === 1 ? accentSecondary : accentTertiary);
+      const highlightColor = c.highlightColor || badgeColor;
+      const rawBadge = c.badge || `POIN 0${cIdx + 1} // ANALISIS`;
+      const cleanBadge = (/ORTOGRAFI|FILOSOFI|DIFERENSIASI/i.test(rawBadge) && !/ortografi|filosofi/i.test(c.title || '')) ? `POIN 0${cIdx + 1} // ANALISIS` : rawBadge;
+      const rawHl = c.footerHighlight || c.keyTakeaway || c.title || `POIN UTAMA 0${cIdx + 1}`;
+      const cleanHl = (/"DJ" → JADI|TERWUJUD & SELESAI|DISTINCTIVE BRAND ASSET/i.test(rawHl) && !/djadi/i.test(promptOrTitle)) ? (c.title || `POIN UTAMA 0${cIdx + 1}`).slice(0, 28).toUpperCase() : rawHl;
 
       return `
         <div class="slide-col">
           <div class="col-top">
             <div class="col-badge" style="color: ${badgeColor};">
-              ${escapeHtml(badgeText)}
+              ${escapeHtml(cleanBadge)}
             </div>
             <h3 class="col-title">${escapeHtml(c.title || `Poin Strategis 0${cIdx + 1}`)}</h3>
             <p class="col-desc">${escapeHtml(c.desc || '')}</p>
           </div>
           <div class="col-highlight-box">
             <span class="col-highlight-text" style="color: ${highlightColor};">
-              ${escapeHtml(highlightText)}
+              ${escapeHtml(cleanHl)}
             </span>
           </div>
         </div>
@@ -111,7 +347,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         <div class="slide-canvas">
           <div class="slide-header-bar">
             <div class="header-left">
-              <span class="header-chapter">BAB ${toRoman(idx + 1)} // ${escapeHtml(categoryTitle.toUpperCase())} // ${escapeHtml(gsmVersion)}</span>
+              <span class="header-chapter">BAB ${toRoman(idx + 1)} // ${escapeHtml(categoryTitle.toUpperCase())} // ${escapeHtml(subCategory)}</span>
             </div>
             <div class="header-right">
               <span class="header-ratio">MODULAR RATIO 16:9</span>
@@ -129,7 +365,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
             </div>
           </div>
 
-          <div class="slide-columns-grid" style="grid-template-columns: repeat(${Math.min(cards.length || 3, 3)}, 1fr);">
+          <div class="slide-columns-grid" style="grid-template-columns: repeat(${Math.min(cards.length || 3, 4)}, 1fr);">
             ${cardsHtml}
           </div>
 
@@ -137,7 +373,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
             <div class="footer-meta-block">
               <div class="footer-line-1">${escapeHtml(copyrightText)}</div>
               <div class="footer-line-2">
-                BAB ${idx + 1} DARI ${total} • <span class="confidential-tag" style="color: ${accentColor};">CONFIDENTIAL // ENTERPRISE</span>
+                SLIDE ${idx + 1} DARI ${total} • <span class="footer-status-tag" style="color: ${accentColor}; font-weight: 800;">${escapeHtml(badgeTag)}</span>
               </div>
             </div>
           </div>
@@ -154,16 +390,24 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   <title>${escapeHtml(deckMeta.title || 'Executive Presentation Deck')}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=Syne:wght@700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-desk: #0E1015;
-      --bg-sidebar: #0B0C10;
-      --bg-slide: #F5F3EF;
-      --text-main: #111827;
-      --text-muted: #4B5563;
+      --bg-desk: ${theme.bgDesk || '#0E1015'};
+      --bg-sidebar: ${theme.bgSidebar || '#0B0C10'};
+      --bg-slide: ${theme.bgSlide || '#F5F3EF'};
+      --text-main: ${theme.textMain || '#111827'};
+      --text-muted: ${theme.textMuted || '#4B5563'};
+      --border-header: ${theme.borderHeader || '#9CA3AF'};
       --accent: ${accentColor};
-      --accent-blue: #0284C7;
+      --accent-sec: ${accentSecondary};
+      --accent-ter: ${accentTertiary};
+      --card-bg: ${theme.cardBg || 'rgba(255, 255, 255, 0.65)'};
+      --card-border: ${theme.cardBorder || '1.5px solid rgba(0, 0, 0, 0.08)'};
+      --card-box-bg: ${theme.cardBoxBg || '#FFFFFF'};
+      --card-radius: ${theme.cardRadius || '6px'};
+      --font-heading: ${theme.fontHeading || "'Syne', 'Space Grotesk', sans-serif"};
+      --font-body: ${theme.fontBody || "'Plus Jakarta Sans', sans-serif"};
       --dock-bg: #16181F;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -171,7 +415,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: var(--font-body);
       background: var(--bg-desk);
       color: var(--text-main);
     }
@@ -216,7 +460,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     .thumb-item.active { opacity: 1; }
 
     .thumb-num {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 11px;
       font-weight: 700;
       color: #6B7280;
@@ -229,9 +473,9 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     .thumb-card {
       width: 108px;
       height: 60.75px;
-      background: #F5F3EF;
+      background: var(--bg-slide);
       border: 1.5px solid rgba(255, 255, 255, 0.12);
-      border-radius: 6px;
+      border-radius: var(--card-radius);
       overflow: hidden;
       position: relative;
       flex-shrink: 0;
@@ -246,7 +490,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       height: 100%;
       position: relative;
       overflow: hidden;
-      background: #F5F3EF;
+      background: var(--bg-slide);
     }
     .thumb-mini-slide {
       width: 864px;
@@ -255,7 +499,8 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       transform-origin: top left;
       pointer-events: none;
       user-select: none;
-      background: #F5F3EF;
+      background: var(--bg-slide);
+      color: var(--text-main);
       padding: 24px 32px;
       display: flex;
       flex-direction: column;
@@ -265,12 +510,12 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     .thumb-mini-header {
       display: flex;
       justify-content: space-between;
-      border-bottom: 1.5px solid #9CA3AF;
+      border-bottom: 1.5px solid var(--border-header);
       padding-bottom: 6px;
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 10px;
       font-weight: 700;
-      color: #374151;
+      color: var(--text-muted);
     }
     .thumb-mini-page { color: var(--accent); font-weight: 800; }
     .thumb-mini-hero {
@@ -280,10 +525,10 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       margin: 10px 0 6px 0;
     }
     .thumb-mini-title {
-      font-family: 'Syne', 'Space Grotesk', sans-serif;
+      font-family: var(--font-heading);
       font-size: 24px;
       font-weight: 800;
-      color: #000;
+      color: var(--text-main);
       text-transform: uppercase;
       white-space: nowrap;
       overflow: hidden;
@@ -291,10 +536,10 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       max-width: 650px;
     }
     .thumb-mini-counter {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 14px;
       font-weight: 800;
-      color: #111;
+      color: var(--text-main);
     }
     .thumb-mini-grid {
       display: grid;
@@ -309,38 +554,40 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       justify-content: space-between;
     }
     .thumb-mini-badge {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 10px;
       font-weight: 800;
       text-transform: uppercase;
       margin-bottom: 4px;
     }
     .thumb-mini-col-title {
+      font-family: var(--font-heading);
       font-size: 13px;
       font-weight: 700;
-      color: #111;
+      color: var(--text-main);
       line-height: 1.2;
       margin-bottom: 8px;
     }
     .thumb-mini-box {
-      background: #FFFFFF;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 6px;
+      background: var(--card-box-bg);
+      border: var(--card-border);
+      border-radius: var(--card-radius);
       padding: 8px 10px;
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 11px;
       font-weight: 800;
       text-align: center;
       box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
     .thumb-mini-footer {
-      border-top: 1px solid #D1D5DB;
+      border-top: 1px solid var(--border-header);
       padding-top: 6px;
       display: flex;
       justify-content: space-between;
+      font-family: var(--font-body);
       font-size: 9px;
       font-weight: 600;
-      color: #6B7280;
+      color: var(--text-muted);
     }
 
     /* === MAIN STAGE VIEWPORT === */
@@ -378,7 +625,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       height: 100%;
       background: var(--bg-slide);
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
-      border-radius: 4px;
+      border-radius: var(--card-radius);
       padding: 36px 48px;
       display: flex;
       flex-direction: column;
@@ -392,28 +639,28 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1.5px solid #9CA3AF;
+      border-bottom: 1.5px solid var(--border-header);
       padding-bottom: 10px;
     }
     .header-chapter {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.05em;
-      color: #1F2937;
+      color: var(--text-main);
       text-transform: uppercase;
     }
     .header-right {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.04em;
     }
     .header-ratio {
-      color: #4B5563;
+      color: var(--text-muted);
     }
     .header-page-tag {
       font-weight: 800;
@@ -424,13 +671,13 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       margin: 18px 0 16px 0;
     }
     .slide-main-title {
-      font-family: 'Syne', 'Space Grotesk', sans-serif;
+      font-family: var(--font-heading);
       font-size: 30px;
       font-weight: 800;
       line-height: 1.15;
       letter-spacing: -0.01em;
       text-transform: uppercase;
-      color: #000000;
+      color: var(--text-main);
       margin-bottom: 8px;
     }
     .hero-sub-row {
@@ -440,16 +687,17 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       gap: 20px;
     }
     .slide-lead-desc {
+      font-family: var(--font-body);
       font-size: 13.5px;
-      color: #4B5563;
+      color: var(--text-muted);
       line-height: 1.45;
       flex: 1;
     }
     .slide-big-counter {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 15px;
       font-weight: 800;
-      color: #111827;
+      color: var(--text-main);
       letter-spacing: 0.04em;
       white-space: nowrap;
     }
@@ -474,7 +722,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       flex-direction: column;
     }
     .col-badge {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 11px;
       font-weight: 800;
       letter-spacing: 0.08em;
@@ -482,22 +730,24 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       margin-bottom: 8px;
     }
     .col-title {
+      font-family: var(--font-heading);
       font-size: 17px;
       font-weight: 700;
       line-height: 1.3;
-      color: #111827;
+      color: var(--text-main);
       margin-bottom: 8px;
     }
     .col-desc {
+      font-family: var(--font-body);
       font-size: 13px;
-      color: #4B5563;
+      color: var(--text-muted);
       line-height: 1.55;
       margin-bottom: 16px;
     }
     .col-highlight-box {
-      background: #FFFFFF;
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 8px;
+      background: var(--card-box-bg);
+      border: var(--card-border);
+      border-radius: var(--card-radius);
       padding: 12px 16px;
       display: flex;
       align-items: center;
@@ -507,7 +757,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       min-height: 46px;
     }
     .col-highlight-text {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 13px;
       font-weight: 800;
       letter-spacing: 0.04em;
@@ -516,7 +766,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
 
     /* FOOTER */
     .slide-footer-bar {
-      border-top: 1px solid #D1D5DB;
+      border-top: 1px solid var(--border-header);
       padding-top: 10px;
       display: flex;
       align-items: center;
@@ -528,16 +778,18 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       gap: 3px;
     }
     .footer-line-1 {
+      font-family: var(--font-body);
       font-size: 10.5px;
       font-weight: 600;
-      color: #374151;
+      color: var(--text-main);
     }
     .footer-line-2 {
+      font-family: var(--font-body);
       font-size: 10.5px;
       font-weight: 700;
-      color: #4B5563;
+      color: var(--text-muted);
     }
-    .confidential-tag {
+    .footer-status-tag {
       font-weight: 800;
       letter-spacing: 0.05em;
     }
@@ -587,7 +839,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       border-radius: 50%;
     }
     .dock-counter {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--font-body);
       font-size: 13px;
       font-weight: 700;
       color: #FFFFFF;
@@ -626,7 +878,8 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         margin: 0;
       }
       body, html {
-        background: #F5F3EF !important;
+        background: var(--bg-slide) !important;
+        color: var(--text-main) !important;
         overflow: visible !important;
         height: auto !important;
       }
@@ -635,7 +888,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         padding: 0 !important;
         height: auto !important;
         display: block !important;
-        background: #F5F3EF !important;
+        background: var(--bg-slide) !important;
       }
       .slide-section {
         display: block !important;
@@ -878,12 +1131,16 @@ function convertMarkdownOrTextToInteractiveSlideDeck(content, userPrompt = "") {
   if (!content || typeof content !== 'string') return '';
   const slides = parseMarkdownToSlides(content, userPrompt);
   if (slides.length >= 2) {
+    const rawTitle = (userPrompt || "Executive Presentation Deck").slice(0, 40);
+    const theme = detectOptimalSlideTheme(userPrompt || content);
     const deckMeta = {
-      title: (userPrompt || "Executive Presentation Deck").slice(0, 40),
-      brand: "DJADI CREATIVE",
-      categoryTitle: (userPrompt || "PRESENTASI EKSEKUTIF").slice(0, 32).toUpperCase(),
-      version: "GSM v3.0",
-      accentColor: "#FF4D00"
+      title: rawTitle,
+      brand: rawTitle,
+      categoryTitle: rawTitle.toUpperCase(),
+      subCategory: theme.subHeader,
+      accentColor: theme.accent,
+      themeObj: theme,
+      userPrompt: userPrompt
     };
     return buildExecutiveSlideDeckHtml(slides, deckMeta);
   }
@@ -925,11 +1182,20 @@ function extractSlidesFromRawHtml(html) {
               const hlEl = col.querySelector(".col-highlight-text, .highlight, .pill");
 
               const cTitle = titleNode ? titleNode.textContent.trim() : `Poin 0${cIdx + 1}`;
+              let rawHl = hlEl ? hlEl.textContent.trim() : cTitle.slice(0, 24).toUpperCase();
+              if (/"DJ" → JADI|TERWUJUD & SELESAI/i.test(rawHl)) {
+                rawHl = cTitle.slice(0, 24).toUpperCase();
+              }
+              let rawBadge = badgeEl ? badgeEl.textContent.trim() : `KARTU 0${cIdx + 1}`;
+              if (/ORTOGRAFI|FILOSOFI|DIFERENSIASI/i.test(rawBadge) && !/ortografi|filosofi/i.test(cTitle)) {
+                rawBadge = `KARTU 0${cIdx + 1} // ANALISIS`;
+              }
+
               return {
-                badge: badgeEl ? badgeEl.textContent.trim() : `KARTU 0${cIdx + 1}`,
+                badge: rawBadge,
                 title: cTitle,
                 desc: descEl ? descEl.textContent.trim() : "",
-                footerHighlight: hlEl ? hlEl.textContent.trim() : cTitle.slice(0, 24).toUpperCase()
+                footerHighlight: rawHl
               };
             });
           } else {
@@ -938,7 +1204,7 @@ function extractSlidesFromRawHtml(html) {
               const cTitle = h.textContent.trim();
               const nextP = h.nextElementSibling && h.nextElementSibling.tagName.toLowerCase() === "p" ? h.nextElementSibling.textContent.trim() : "";
               return {
-                badge: `KARTU 0${cIdx + 1}`,
+                badge: `KARTU 0${cIdx + 1} // ANALISIS`,
                 title: cTitle,
                 desc: nextP,
                 footerHighlight: cTitle.slice(0, 24).toUpperCase()
@@ -1013,9 +1279,12 @@ function extractSlidesFromRawHtml(html) {
         const pDesc = rest.match(/<p\b[^>]*>([\s\S]*?)<\/p>/i);
         const desc = pDesc ? pDesc[1].replace(/<[^>]+>/g, "").trim() : "";
         const hlMatch = rest.match(/<(?:span|div)\b[^>]*class=["']?[^"'>]*(?:highlight|pill|tag)[^"'>]*["']?[^>]*>([\s\S]*?)<\/(?:span|div)>/i);
-        const hl = hlMatch ? hlMatch[1].replace(/<[^>]+>/g, "").trim() : cTitle;
+        let hl = hlMatch ? hlMatch[1].replace(/<[^>]+>/g, "").trim() : cTitle;
+        if (/"DJ" → JADI|TERWUJUD & SELESAI/i.test(hl)) {
+          hl = cTitle.slice(0, 24).toUpperCase();
+        }
         cards.push({
-          badge: `KARTU 0${cIdx + 1}`,
+          badge: `KARTU 0${cIdx + 1} // ANALISIS`,
           title: cTitle,
           desc: desc,
           footerHighlight: hl
@@ -1047,21 +1316,27 @@ function extractSlidesFromRawHtml(html) {
 function upgradeSlideDeckHtmlIfNeeded(html, userPrompt = "", meta = {}) {
   if (!html || typeof html !== "string") return html;
   
-  // If already has BOTH the miniature slide thumbnail preview (.thumb-mini-slide), floating dock, AND modern delegation script, return as-is
-  if (html.includes("thumb-mini-slide") && html.includes("deck-floating-dock") && html.includes("classList.toggle('active'")) {
+  // Check if existing deck contains legacy Djadi spill when user prompt is NOT about Djadi
+  const hasLegacyDjadiSpill = /DJADI CREATIVE|STANDAR IDENTITAS VISUAL RESMI|CONFIDENTIAL \/\/ ENTERPRISE/i.test(html) && !/djadi/i.test(userPrompt);
+
+  // If already has BOTH the miniature slide thumbnail preview (.thumb-mini-slide), floating dock, modern delegation script, AND no legacy spill, return as-is
+  if (!hasLegacyDjadiSpill && html.includes("thumb-mini-slide") && html.includes("deck-floating-dock") && html.includes("classList.toggle('active'")) {
     return html;
   }
 
   // If HTML contains slide elements, upgrade to full executive layout
   const extractedSlides = extractSlidesFromRawHtml(html);
   if (extractedSlides.length >= 1) {
-    const rawTitle = meta?.title || (userPrompt || "Executive Presentation Deck").slice(0, 40);
+    const rawTitle = meta?.title || (userPrompt || extractedSlides[0]?.title || "Executive Presentation Deck").slice(0, 40);
+    const theme = detectOptimalSlideTheme(userPrompt || rawTitle, meta);
     const deckMeta = {
       title: rawTitle,
-      brand: "DJADI CREATIVE",
-      categoryTitle: (rawTitle || "STRATEGI & IDENTITAS").slice(0, 32).toUpperCase(),
-      version: "GSM v3.0",
-      accentColor: meta?.colors?.[2] || "#FF4D00"
+      brand: rawTitle,
+      categoryTitle: rawTitle.toUpperCase(),
+      subCategory: theme.subHeader,
+      accentColor: meta?.colors?.[2] || theme.accent,
+      themeObj: theme,
+      userPrompt: userPrompt
     };
     return buildExecutiveSlideDeckHtml(extractedSlides, deckMeta);
   }
@@ -1073,10 +1348,10 @@ function upgradeSlideDeckHtmlIfNeeded(html, userPrompt = "", meta = {}) {
   return html;
 }
 
-
-
 // Global attachments
 if (typeof window !== 'undefined') {
+  window.SLIDE_THEMES = SLIDE_THEMES;
+  window.detectOptimalSlideTheme = detectOptimalSlideTheme;
   window.toRoman = toRoman;
   window.buildExecutiveSlideDeckHtml = buildExecutiveSlideDeckHtml;
   window.parseMarkdownToSlides = parseMarkdownToSlides;
