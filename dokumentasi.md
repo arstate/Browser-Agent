@@ -642,3 +642,31 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
       4. **Penyimpanan Struktur Data Slide pada Artefak (`extension/design/design_agent.js`)**:
          - Menyematkan array `slides: finalSlides` ke objek artefak `generateSlideDeckArtifactFromOutline` untuk inspeksi instan O(1).
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+128. **Menu Terintegrasi "Apps" & In-App Webview Google Flow (`https://flow.google.com/`) Tanpa Pindah Tab (`v2.150.245`):**
+    - **Latar Belakang & Permintaan Pengguna**:
+      - Pengguna meminta: *"OKE TAMBAH MENU APPS DISINI TRUS DI DALAM MENU APPS NANTI ADA PILIHAN BANYAK APPS NAH SAAT INI GOOGLE FLOW DLU AJA BRO, JADI UINYA TETEP BROWSER AGENT BRO DI DALAM BROWSER AGENT GITU BRO TANPA PINDAH TAB BARU"*.
+      - Screenshot yang diunggah menunjukkan sidebar `newtab.html` dengan tanda kotak merah di bawah tombol `Home` (sebelum `Riwayat Chat`).
+    - **Tantangan Teknis**:
+      - Domain Google seperti `flow.google.com` menyajikan header proteksi `X-Frame-Options: SAMEORIGIN` dan Content Security Policy `frame-ancestors` ketat yang secara default memblokir embedding ke dalam elemen `<iframe>`.
+      - UI Browser Agent (sidebar navigasi dengan tombol Home, Apps, History, Pengaturan) harus tetap aktif dan terlihat di sisi kiri (`z-index: 500`), sehingga pengguna selalu merasa berada di dalam lingkungan Browser Agent tanpa dipaksa membuka tab baru.
+    - **Solusi & Implementasi Teknis**:
+      1. **Dynamic Header Stripping via MV3 `declarativeNetRequest` (`extension/manifest.json` & `extension/background.js`)**:
+         - Menambahkan permissions `"declarativeNetRequest"` dan `"declarativeNetRequestWithHostAccess"` di `manifest.json`.
+         - Mengimplementasikan fungsi `setupInAppEmbeddableRules()` di `background.js` (rule ID `9901`, priority 1): menghapus respons header `x-frame-options`, `content-security-policy`, dan `frame-options`, serta menyetel `cross-origin-opener-policy` ke `unsafe-none` secara khusus pada request tipe `sub_frame`.
+         - Aturan diregistrasikan secara otomatis saat runtime startup dan instalasi service worker, memungkinkan web app seperti Google Flow berjalan mulus di dalam iframe in-app.
+      2. **Markup Sidebar Nav & Fullscreen Apps Overlay (`extension/newtab.html`)**:
+         - Menambahkan tombol `#btn-open-apps` dengan ikon grid 4 kotak di `.sidebar-nav` tepat di bawah tombol `Home`.
+         - Merancang container `#fullscreen-apps-overlay` yang terdiri atas:
+           - *Apps Header Bar*: Logo apps, judul aktif (`#apps-active-title`), status pill live dot, URL display pill terproteksi SSL (`#apps-current-url-text`), tombol toggle katalog apps (`#btn-toggle-apps-catalog`), tombol reload (`#btn-apps-reload`), tombol fallback buka di tab baru (`#btn-apps-open-tab`), dan tombol tutup (`#btn-close-apps-overlay`).
+           - *Webview Wrapper*: Iframe `#apps-embedded-iframe` dengan default `src="https://flow.google.com/"` dan permissions atribut `allow="camera; microphone; clipboard-read; clipboard-write; fullscreen; display-capture; geolocation"`.
+           - *Apps Catalog Overlay*: Bento grid pilihan aplikasi yang memprioritaskan Google Flow sebagai Hero App, dilengkapi opsi Google Gemini, Google AI Studio, Meta Ads Manager, serta input peluncur URL kustom (`#input-custom-app-url`).
+      3. **Styling Dark Luxury Bento UI (`extension/newtab.css`)**:
+         - Mengatur posisi `.fullscreen-apps-overlay` dengan `left: 58px` dan `z-index: 400` sehingga sidebar navigasi Browser Agent (`z-index: 500`) tetap terlihat dan dapat diakses setiap saat.
+         - Menyediakan animasi pulsasi halus pada live dot (`#10B981`) dan kartu bento apps dengan efek glow dan hover lift.
+      4. **Apps Controller Logic (`extension/newtab.js` & `extension/sidepanel.js`)**:
+         - Mengimplementasikan fungsi `openAppsView`, `closeAppsView`, `toggleAppsCatalog`, dan `launchApp` di `newtab.js`.
+         - Mendukung deep-linking URL hash `#apps` dan `#flow` untuk langsung meluncurkan Google Flow in-app.
+         - Mengintegrasikan tombol `#btn-open-apps` pada header actions `sidepanel.html` dan `sidepanel.js` (`openAppsTab`).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+

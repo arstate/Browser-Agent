@@ -167,10 +167,156 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // --- Integrated Apps Hub & In-App Webview Logic (Google Flow, etc.) ---
+  const appsOverlay = document.getElementById('fullscreen-apps-overlay');
+  const btnOpenApps = document.getElementById('btn-open-apps');
+  const btnCloseAppsOverlay = document.getElementById('btn-close-apps-overlay');
+  const appsIframe = document.getElementById('apps-embedded-iframe');
+  const appsActiveTitle = document.getElementById('apps-active-title');
+  const appsCurrentUrlText = document.getElementById('apps-current-url-text');
+  const btnToggleAppsCatalog = document.getElementById('btn-toggle-apps-catalog');
+  const labelToggleCatalog = document.getElementById('label-toggle-catalog');
+  const appsCatalogOverlay = document.getElementById('apps-catalog-overlay');
+  const btnCloseCatalogDrawer = document.getElementById('btn-close-catalog-drawer');
+  const btnAppsReload = document.getElementById('btn-apps-reload');
+  const btnAppsOpenTab = document.getElementById('btn-apps-open-tab');
+  const inputCustomAppUrl = document.getElementById('input-custom-app-url');
+  const btnLaunchCustomApp = document.getElementById('btn-launch-custom-app');
+  const appCards = document.querySelectorAll('.apps-bento-card');
+
+  let currentAppUrl = 'https://flow.google.com/';
+  let currentAppName = 'Google Flow';
+
+  function openAppsView(appUrl = 'https://flow.google.com/', appName = 'Google Flow') {
+    closeFullscreenSettings();
+    if (appsOverlay) {
+      appsOverlay.style.display = 'flex';
+      updateActiveSidebarTab('apps');
+      launchApp(appUrl, appName);
+    }
+  }
+
+  function closeAppsView() {
+    if (appsOverlay) {
+      appsOverlay.style.display = 'none';
+      if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'none';
+      updateActiveSidebarTab('home');
+      chatInput?.focus();
+    }
+  }
+
+  function toggleAppsCatalog() {
+    if (!appsCatalogOverlay) return;
+    const isHidden = appsCatalogOverlay.style.display === 'none' || !appsCatalogOverlay.style.display;
+    if (isHidden) {
+      appsCatalogOverlay.style.display = 'flex';
+      if (labelToggleCatalog) labelToggleCatalog.textContent = 'Tutup Katalog';
+      btnToggleAppsCatalog?.classList.add('active');
+    } else {
+      appsCatalogOverlay.style.display = 'none';
+      if (labelToggleCatalog) labelToggleCatalog.textContent = 'Semua Apps';
+      btnToggleAppsCatalog?.classList.remove('active');
+    }
+  }
+
+  function launchApp(url, name) {
+    currentAppUrl = url;
+    currentAppName = name;
+    if (appsActiveTitle) appsActiveTitle.textContent = name;
+    if (appsCurrentUrlText) appsCurrentUrlText.textContent = url;
+    if (appsIframe && appsIframe.src !== url) {
+      appsIframe.src = url;
+    }
+    // Update card selection highlight
+    appCards.forEach(card => {
+      if (card.getAttribute('data-app-url') === url) {
+        card.classList.add('active');
+      } else {
+        card.classList.remove('active');
+      }
+    });
+    // Hide catalog drawer once app is selected
+    if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'none';
+    if (labelToggleCatalog) labelToggleCatalog.textContent = 'Semua Apps';
+    btnToggleAppsCatalog?.classList.remove('active');
+  }
+
+  // Sidebar Apps Button Trigger
+  btnOpenApps?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openAppsView('https://flow.google.com/', 'Google Flow');
+  });
+
+  // Apps Header Controls
+  btnCloseAppsOverlay?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeAppsView();
+  });
+
+  btnToggleAppsCatalog?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleAppsCatalog();
+  });
+
+  btnCloseCatalogDrawer?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'none';
+    if (labelToggleCatalog) labelToggleCatalog.textContent = 'Semua Apps';
+    btnToggleAppsCatalog?.classList.remove('active');
+  });
+
+  btnAppsReload?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (appsIframe && currentAppUrl) {
+      appsIframe.src = currentAppUrl;
+    }
+  });
+
+  btnAppsOpenTab?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (currentAppUrl) {
+      window.open(currentAppUrl, '_blank');
+    }
+  });
+
+  // Apps Catalog Cards Selection
+  appCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const url = card.getAttribute('data-app-url');
+      const name = card.getAttribute('data-app-name');
+      if (url && name) {
+        launchApp(url, name);
+      }
+    });
+  });
+
+  // Custom App URL Launcher
+  function handleCustomAppLaunch() {
+    let val = inputCustomAppUrl?.value?.trim();
+    if (!val) return;
+    if (!val.startsWith('http://') && !val.startsWith('https://')) {
+      val = 'https://' + val;
+    }
+    try {
+      const parsed = new URL(val);
+      launchApp(parsed.href, parsed.hostname);
+    } catch (err) {
+      launchApp(val, 'Custom Web App');
+    }
+    if (inputCustomAppUrl) inputCustomAppUrl.value = '';
+  }
+
+  btnLaunchCustomApp?.addEventListener('click', handleCustomAppLaunch);
+  inputCustomAppUrl?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleCustomAppLaunch();
+  });
+
   // Home Button (Back to Chat / Reset to Clean Welcome Screen)
   document.getElementById('btn-header-new-chat')?.addEventListener('click', (e) => {
     e.preventDefault();
     closeFullscreenSettings();
+    closeAppsView();
     const welcomeCardEl = document.getElementById('welcome-card');
     if (welcomeCardEl) {
       welcomeCardEl.style.display = 'flex';
@@ -185,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
+    closeAppsView();
     openFullscreenSettings('ai');
   }, true);
 
@@ -195,9 +342,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Auto-open settings overlay if opened with hash (e.g. newtab.html#settings)
+  // Auto-open settings or apps overlay if opened with hash (e.g. newtab.html#settings or newtab.html#apps)
   function checkUrlForAutoSettings() {
     const hash = window.location.hash;
+    if (hash && (hash.startsWith('#apps') || hash.startsWith('#flow'))) {
+      openAppsView('https://flow.google.com/', 'Google Flow');
+      return;
+    }
     if (hash && (hash.startsWith('#settings') || hash.startsWith('#ai') || hash.startsWith('#models') || hash.startsWith('#agents') || hash.startsWith('#skills') || hash.startsWith('#memory'))) {
       let tab = 'ai';
       if (hash.includes('models')) tab = 'models';
@@ -215,6 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.runtime.onMessage.addListener((msg) => {
         if (msg && msg.action === 'openSettingsOverlay') {
           openFullscreenSettings(msg.tab || 'ai');
+        } else if (msg && msg.action === 'openAppsOverlay') {
+          openAppsView(msg.url || 'https://flow.google.com/', msg.name || 'Google Flow');
         }
       });
     }
@@ -223,12 +376,22 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('message', (e) => {
     if (e.data?.action === 'closeSettings') {
       closeFullscreenSettings();
+    } else if (e.data?.action === 'openApps') {
+      openAppsView(e.data?.url || 'https://flow.google.com/', e.data?.name || 'Google Flow');
     }
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && settingsOverlay && settingsOverlay.style.display !== 'none') {
-      closeFullscreenSettings();
+    if (e.key === 'Escape') {
+      if (appsCatalogOverlay && appsCatalogOverlay.style.display !== 'none') {
+        appsCatalogOverlay.style.display = 'none';
+        if (labelToggleCatalog) labelToggleCatalog.textContent = 'Semua Apps';
+        btnToggleAppsCatalog?.classList.remove('active');
+      } else if (appsOverlay && appsOverlay.style.display !== 'none') {
+        closeAppsView();
+      } else if (settingsOverlay && settingsOverlay.style.display !== 'none') {
+        closeFullscreenSettings();
+      }
     }
   });
 

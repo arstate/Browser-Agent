@@ -6957,5 +6957,42 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - `slide_styles.js`: 737
      - `slide_template.js`: 686
      - `slide_themes.js`: 318
-  4. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
-  5. Bump versi ke `v2.150.244` di `manifest.json`.
+### 🚀 Iterasi 526: Menu Terintegrasi "Apps" & In-App Webview Google Flow Tanpa Pindah Tab (v2.150.245)
+- **User Request:**
+  - "OKE TAMBAH MENU APPS DISINI TRUS DI DALAM MENU APPS NANTI ADA PILIHAN BANYAK APPS NAH SAAT INI GOOGLE FLOW DLU AJA BRO, JADI UINYA TETEP BROWSER AGENT BRO DI DALAM BROWSER AGENT GITU BRO TANPA PINDAH TAB BARU"
+  - Uploaded screenshot menunjukkan tombol `Home` di sidebar `newtab.html` dengan tanda panah/kotak merah penempatan menu baru di bawahnya.
+- **Akar Masalah & Kebutuhan Desain:**
+  1. Pengguna ingin menjalankan Google Flow (`flow.google.com`) dan aplikasi web lainnya langsung di dalam tab Browser Agent tanpa perlu membuka tab peramban baru secara terpisah.
+  2. Halaman web modern seperti `flow.google.com` memiliki header proteksi `X-Frame-Options: SAMEORIGIN` dan CSP `frame-ancestors` yang memblokir rendering di dalam `<iframe>`.
+  3. UI sidebar Browser Agent (Home, Apps, Riwayat Chat, Pengaturan) harus tetap aktif dan terlihat di sisi kiri agar pengguna tidak kehilangan konteks antarmuka.
+- **Solusi & Implementasi Teknis:**
+  1. *DeclarativeNetRequest Dynamic Rules (`extension/manifest.json` & `extension/background.js`)*:
+     - Menambahkan permissions `"declarativeNetRequest"` dan `"declarativeNetRequestWithHostAccess"`.
+     - Mengimplementasikan `setupInAppEmbeddableRules()` yang meregistrasikan rule dinamis `9901` untuk menghapus header `x-frame-options`, `content-security-policy`, dan `frame-options` serta menyetel `cross-origin-opener-policy` ke `unsafe-none` pada request tipe `sub_frame`.
+  2. *Sidebar Nav Trigger & In-App Overlay Markup (`extension/newtab.html`)*:
+     - Menambahkan tombol `#btn-open-apps` di `.sidebar-nav` tepat di bawah `Home`.
+     - Menambahkan kontainer `#fullscreen-apps-overlay` yang mencakup:
+       - Header bar interaktif dengan judul aplikasi aktif, badge live dot, URL display pill, tombol katalog aplikasi, tombol muat ulang, tombol pop-out ke tab baru, dan tombol tutup.
+       - Wrapper webview dengan iframe `#apps-embedded-iframe` (default: `https://flow.google.com/`).
+       - Apps Catalog Grid yang menonjolkan Google Flow sebagai Hero App, bersama opsi Gemini, AI Studio, Meta Ads Manager, dan peluncur URL kustom.
+  3. *Dark Luxury Bento Styling (`extension/newtab.css`)*:
+     - Menempatkan overlay pada `left: 58px` dengan `z-index: 400` sehingga sidebar navigasi (`z-index: 500`) tetap clickable dan responsive saat hover.
+  4. *In-App Apps Controller (`extension/newtab.js` & `extension/sidepanel.js`)*:
+     - Mengembangkan fungsi `openAppsView`, `closeAppsView`, `toggleAppsCatalog`, `launchApp`, serta penangan URL hash `#apps` / `#flow`.
+     - Menambahkan tombol `#btn-open-apps` di header actions `sidepanel.html` dan fungsi `openAppsTab` di `sidepanel.js`.
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_google_flow_integration.js` lulus 100% (7/7 test checks).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris:
+     - `canvas_exporter.js`: 244
+     - `canvas_manager.js`: 787
+     - `design_agent.js`: 782
+     - `design_executor.js`: 792
+     - `design_prompt.js`: 191
+     - `slide_deck_engine.js`: 724
+     - `slide_editor.js`: 798
+     - `slide_styles.js`: 737
+     - `slide_template.js`: 686
+     - `slide_themes.js`: 318
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.245` di `manifest.json`.
+

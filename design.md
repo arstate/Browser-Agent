@@ -1304,3 +1304,38 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_styles.js`: 737
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
+
+## 61. Integrated Apps Hub & In-App Embedded Webview Architecture (v2.150.245)
+
+### 🧩 1. Filosofi & Arsitektur In-App Webview Tanpa Pindah Tab
+- **Masalah Pengguna**: Pengguna harus berulang kali membuka tab terpisah untuk mengakses Google Flow (`flow.google.com`) dan aplikasi produktivitas/AI lainnya saat menggunakan Browser Agent.
+- **Tujuan Desain**: Mengintegrasikan tab navigasi `Apps` di sidebar `newtab.html` dan header `sidepanel.html` yang merender web app langsung di dalam antarmuka Browser Agent tanpa membuka tab baru atau merusak alur kerja.
+
+### 🛡️ 2. Dynamic Frame Decoupling via DeclarativeNetRequest (DNR)
+- **Header Stripping**: Ekstensi mendaftarkan aturan dinamis `modifyHeaders` dengan resource type `sub_frame` di `background.js`:
+  - Menghapus: `x-frame-options`, `content-security-policy`, `frame-options`.
+  - Mengubah: `cross-origin-opener-policy` disetel ke `unsafe-none`.
+- **Hasil**: Halaman terproteksi seperti Google Flow dapat dimuat di dalam `<iframe>` in-app secara aman tanpa melanggar kebijakan peramban atau mengubah respons HTTP di luar frame ekstensi.
+
+### 🖥️ 3. Tampilan Dua Lapis: Webview Aktif & Apps Catalog Hub
+- **Apps Header Bar (`.apps-header-bar`)**:
+  - Menampilkan nama aplikasi aktif (`#apps-active-title`), status live dot (`#10B981`), dan URL pill terproteksi (`#apps-current-url-text`).
+  - Tombol kontrol: `Semua Apps` (toggle drawer katalog), `Reload` (muat ulang iframe), `Open in Tab` (opsi fallback buka di tab eksternal), dan `Close` (kembali ke chat).
+- **Z-Index Layering yang Presisi**:
+  - `.app-sidebar` berada pada `z-index: 500` (tetap terlihat dan interaktif di sebelah kiri).
+  - `#fullscreen-apps-overlay` berada pada `left: 58px; z-index: 400` (mengisi sisa layar penuh).
+  - `#apps-catalog-overlay` berada pada `z-index: 30` di dalam overlay untuk memilih Google Flow, Gemini, AI Studio, Meta Ads Manager, atau Custom URL.
+
+### 📏 4. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+

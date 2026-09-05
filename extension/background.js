@@ -24,6 +24,43 @@ let telegramAbortController = null;
 const bgProcessedUpdateIds = new Set();
 let lastProcessedTelegramPrompt = { text: '', time: 0 };
 
+// --- DeclarativeNetRequest Dynamic Rules for In-App Embedded Webviews (Google Flow, etc.) ---
+async function setupInAppEmbeddableRules() {
+  if (typeof chrome === 'undefined' || !chrome.declarativeNetRequest || !chrome.declarativeNetRequest.updateDynamicRules) {
+    return;
+  }
+  const RULE_ID_STRIP_HEADERS = 9901;
+  const rules = [
+    {
+      id: RULE_ID_STRIP_HEADERS,
+      priority: 1,
+      action: {
+        type: "modifyHeaders",
+        responseHeaders: [
+          { header: "x-frame-options", operation: "remove" },
+          { header: "content-security-policy", operation: "remove" },
+          { header: "frame-options", operation: "remove" },
+          { header: "cross-origin-opener-policy", operation: "set", value: "unsafe-none" }
+        ]
+      },
+      condition: {
+        urlFilter: "*",
+        resourceTypes: ["sub_frame"]
+      }
+    }
+  ];
+  try {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [RULE_ID_STRIP_HEADERS],
+      addRules: rules
+    });
+    console.log("[Background] In-App Embeddable declarativeNetRequest rules registered successfully.");
+  } catch (err) {
+    console.warn("[Background] Failed to register declarativeNetRequest rules:", err);
+  }
+}
+setupInAppEmbeddableRules();
+
 // --- Helper Functions ---
 function escapeHtml(str) {
   if (!str) return '';
@@ -4004,6 +4041,7 @@ async function checkAndRestartTelegramPoller(force = false) {
 // --- Event Listeners Registration ---
 chrome.runtime.onInstalled.addListener(async (details) => {
   await enableSidePanelOnAction();
+  await setupInAppEmbeddableRules();
   if (details && details.reason === "install") {
     try {
       chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
@@ -4015,6 +4053,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 chrome.runtime.onStartup.addListener(async () => {
   await enableSidePanelOnAction();
+  await setupInAppEmbeddableRules();
   setupWatchdogAlarm();
   checkAndRestartTelegramPoller();
 });

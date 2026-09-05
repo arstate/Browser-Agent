@@ -37,7 +37,20 @@
           <span class="sidebar-nav-label">Home</span>
         </button>
 
-        <!-- 2. Riwayat Chat / History Modal Trigger -->
+        <!-- 2. Apps / Integrated Web Apps Trigger (Google Flow, etc.) -->
+        <button type="button" class="sidebar-nav-item" id="btn-open-apps" data-tab="apps" title="Aplikasi Terintegrasi (Apps Hub &amp; Google Flow)">
+          <div class="sidebar-nav-icon">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+            </svg>
+          </div>
+          <span class="sidebar-nav-label">Apps</span>
+        </button>
+
+        <!-- 3. Riwayat Chat / History Modal Trigger -->
         <button type="button" class="sidebar-nav-item" id="btn-open-history" title="Riwayat Percakapan (History)">
           <div class="sidebar-nav-icon">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -632,6 +645,178 @@
   <div class="fullscreen-settings-overlay" id="fullscreen-settings-overlay" style="display: none;">
     <div class="settings-overlay-body">
       <iframe src="" id="settings-embedded-iframe" class="settings-embedded-iframe" loading="lazy"></iframe>
+    </div>
+  </div>
+
+  <!-- Integrated Apps Hub & In-App Webview (Google Flow, etc.) -->
+  <div class="fullscreen-apps-overlay" id="fullscreen-apps-overlay" style="display: none;">
+    <!-- Top Control Bar -->
+    <header class="apps-header-bar">
+      <div class="apps-header-left">
+        <div class="apps-brand-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+            <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+          </svg>
+        </div>
+        <div class="apps-info-meta">
+          <span class="apps-title" id="apps-active-title">Google Flow</span>
+          <span class="apps-status-pill">
+            <span class="apps-live-dot"></span>
+            <span id="apps-active-status">In-App Browser Agent</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="apps-header-center">
+        <div class="apps-url-pill" id="apps-url-display-pill" title="URL Aplikasi Aktif">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="apps-lock-icon">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span class="apps-url-text" id="apps-current-url-text">https://flow.google.com/</span>
+        </div>
+      </div>
+
+      <div class="apps-header-actions">
+        <button type="button" class="apps-action-btn" id="btn-toggle-apps-catalog" title="Buka Katalog & Pilihan Aplikasi">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          <span id="label-toggle-catalog">Semua Apps</span>
+        </button>
+
+        <button type="button" class="apps-action-btn" id="btn-apps-reload" title="Muat Ulang Aplikasi">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Reload</span>
+        </button>
+
+        <button type="button" class="apps-action-btn" id="btn-apps-open-tab" title="Buka di Tab Terpisah (Eksternal)">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </button>
+
+        <button type="button" class="apps-close-btn" id="btn-close-apps-overlay" title="Tutup Apps & Kembali ke Chat">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Apps Body Content -->
+    <div class="apps-overlay-body">
+      <!-- Webview Container (Default: Google Flow loaded) -->
+      <div class="apps-webview-wrapper" id="apps-webview-wrapper">
+        <iframe id="apps-embedded-iframe" class="apps-embedded-iframe" src="https://flow.google.com/" allow="camera; microphone; clipboard-read; clipboard-write; fullscreen; display-capture; geolocation" loading="lazy"></iframe>
+      </div>
+
+      <!-- Apps Catalog / Chooser Overlay (Hidden by default, can be toggled) -->
+      <div class="apps-catalog-overlay" id="apps-catalog-overlay" style="display: none;">
+        <div class="apps-catalog-content">
+          <div class="apps-catalog-header">
+            <div>
+              <span class="apps-catalog-badge">INTEGRATED ECOSYSTEM</span>
+              <h2 class="apps-catalog-title">Aplikasi Terintegrasi Browser Agent</h2>
+              <p class="apps-catalog-sub">Jalankan platform produktivitas &amp; AI favorit langsung di dalam satu antarmuka tanpa perlu berpindah tab.</p>
+            </div>
+            <button type="button" class="apps-catalog-close" id="btn-close-catalog-drawer">&times;</button>
+          </div>
+
+          <div class="apps-grid">
+            <!-- Hero Card: Google Flow -->
+            <div class="apps-bento-card featured active" data-app-id="flow" data-app-name="Google Flow" data-app-url="https://flow.google.com/">
+              <div class="apps-card-badge">HERO APP</div>
+              <div class="apps-card-icon-box" style="background: linear-gradient(135deg, #4285F4 0%, #34A853 50%, #FBBC05 100%);">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="#ffffff">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/>
+                </svg>
+              </div>
+              <h3 class="apps-card-name">Google Flow</h3>
+              <p class="apps-card-desc">Workflow Automation &amp; Agentic AI Orchestration by Google. Terintegrasi penuh tanpa reload tab.</p>
+              <div class="apps-card-footer">
+                <span class="apps-card-tag">flow.google.com</span>
+                <button type="button" class="apps-launch-btn btn-launch-app">Buka Sekarang</button>
+              </div>
+            </div>
+
+            <!-- Gemini Web Card -->
+            <div class="apps-bento-card" data-app-id="gemini" data-app-name="Google Gemini" data-app-url="https://gemini.google.com/">
+              <div class="apps-card-icon-box" style="background: linear-gradient(135deg, #1E88E5 0%, #7E57C2 100%);">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v20M2 12h20"/>
+                </svg>
+              </div>
+              <h3 class="apps-card-name">Google Gemini</h3>
+              <p class="apps-card-desc">Asisten percakapan cerdas multimodal dari Google DeepMind dengan Deep Research.</p>
+              <div class="apps-card-footer">
+                <span class="apps-card-tag">gemini.google.com</span>
+                <button type="button" class="apps-launch-btn btn-launch-app">Buka</button>
+              </div>
+            </div>
+
+            <!-- Google AI Studio Card -->
+            <div class="apps-bento-card" data-app-id="aistudio" data-app-name="Google AI Studio" data-app-url="https://aistudio.google.com/">
+              <div class="apps-card-icon-box" style="background: linear-gradient(135deg, #EA4335 0%, #FBBC05 100%);">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+              </div>
+              <h3 class="apps-card-name">Google AI Studio</h3>
+              <p class="apps-card-desc">Workspace prototyping prompt engineering, system instruction, dan API sandbox.</p>
+              <div class="apps-card-footer">
+                <span class="apps-card-tag">aistudio.google.com</span>
+                <button type="button" class="apps-launch-btn btn-launch-app">Buka</button>
+              </div>
+            </div>
+
+            <!-- Meta Ads Manager Card -->
+            <div class="apps-bento-card" data-app-id="metaads" data-app-name="Meta Ads Manager" data-app-url="https://adsmanager.facebook.com/">
+              <div class="apps-card-icon-box" style="background: linear-gradient(135deg, #0081FB 0%, #0064E0 100%);">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                </svg>
+              </div>
+              <h3 class="apps-card-name">Meta Ads Manager</h3>
+              <p class="apps-card-desc">Dashboard kampanye Facebook &amp; Instagram Ads untuk monitoring CPA &amp; lead real estate.</p>
+              <div class="apps-card-footer">
+                <span class="apps-card-tag">adsmanager.facebook.com</span>
+                <button type="button" class="apps-launch-btn btn-launch-app">Buka</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Custom URL Launcher Bar -->
+          <div class="apps-custom-launcher">
+            <div class="custom-launcher-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+            </div>
+            <input type="url" id="input-custom-app-url" class="custom-app-input" placeholder="Masukkan URL aplikasi kustom (contoh: https://notion.so atau https://canva.com)...">
+            <button type="button" id="btn-launch-custom-app" class="custom-app-btn">Jalankan In-App</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

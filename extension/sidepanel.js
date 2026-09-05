@@ -11283,6 +11283,45 @@ function openPersistentBrainTab() {
   });
 }
 
+async function openAppsTab(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  // If in newtab (embedded fullscreen-apps-overlay exists), open in-page overlay directly!
+  const appsOverlay = document.getElementById('fullscreen-apps-overlay');
+  if (appsOverlay) {
+    appsOverlay.style.display = 'flex';
+    const appsIframe = document.getElementById('apps-embedded-iframe');
+    if (appsIframe && (!appsIframe.src || !appsIframe.src.includes('flow.google.com'))) {
+      appsIframe.src = 'https://flow.google.com/';
+    }
+    return;
+  }
+
+  const targetUrl = chrome.runtime.getURL('newtab.html#apps');
+  try {
+    const allTabs = await chrome.tabs.query({});
+    const existingNewTab = allTabs.find(t => t.url && (t.url.includes('newtab.html') || t.url === 'chrome://newtab/'));
+    
+    if (existingNewTab) {
+      await chrome.tabs.update(existingNewTab.id, { active: true, url: targetUrl });
+      if (existingNewTab.windowId) {
+        await chrome.windows.update(existingNewTab.windowId, { focused: true });
+      }
+      try {
+        chrome.tabs.sendMessage(existingNewTab.id, { action: 'openAppsOverlay', url: 'https://flow.google.com/', name: 'Google Flow' });
+      } catch (err) {}
+      return;
+    }
+
+    await chrome.tabs.create({ url: targetUrl, active: true });
+  } catch (err) {
+    chrome.tabs.create({ url: targetUrl, active: true });
+  }
+}
+
 function updateBrainDrawerBadge() {
   const badgeEl = document.getElementById('badge-brain-total-count');
   if (!badgeEl) return;
@@ -11300,6 +11339,7 @@ function updateBrainDrawerBadge() {
 }
 
 document.getElementById('btn-open-brain-drawer')?.addEventListener('click', openPersistentBrainTab);
+document.getElementById('btn-open-apps')?.addEventListener('click', openAppsTab);
 document.getElementById('btn-open-settings')?.addEventListener('click', openOptionsTab);
 document.getElementById('btn-close-settings')?.addEventListener('click', hideSettingsModal);
 document.getElementById('btn-cancel-settings')?.addEventListener('click', hideSettingsModal);

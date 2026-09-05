@@ -8467,4 +8467,461 @@ body.canvas-active .chat-input-container {
   text-overflow: ellipsis;
 }
 
+/* ==========================================================================
+   Integrated Apps Hub & In-App Webview Overlay (Google Flow, etc.)
+   ========================================================================== */
+.fullscreen-apps-overlay {
+  position: fixed;
+  top: 0;
+  left: 58px;
+  right: 0;
+  bottom: 0;
+  width: calc(100vw - 58px);
+  height: 100vh;
+  background: #0c0d0e;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: none !important;
+  transition: none !important;
+}
+
+.apps-header-bar {
+  height: 52px;
+  background: rgba(18, 18, 22, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  gap: 16px;
+  z-index: 10;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.apps-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.apps-brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(206, 241, 40, 0.12);
+  border: 1px solid rgba(206, 241, 40, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #CEF128;
+  flex-shrink: 0;
+}
+
+.apps-info-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.apps-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #F8FAFC;
+  letter-spacing: -0.01em;
+}
+
+.apps-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #10B981;
+}
+
+.apps-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+  animation: appsPulseDot 2s infinite ease-in-out;
+}
+
+@keyframes appsPulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+
+.apps-header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  max-width: 560px;
+}
+
+.apps-url-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 9999px;
+  padding: 5px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #94A3B8;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: all;
+}
+
+.apps-lock-icon {
+  color: #10B981;
+  flex-shrink: 0;
+}
+
+.apps-url-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.apps-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.apps-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #E2E8F0;
+  cursor: pointer;
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apps-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.apps-action-btn.active {
+  background: rgba(206, 241, 40, 0.14);
+  border-color: rgba(206, 241, 40, 0.4);
+  color: #CEF128;
+}
+
+.apps-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.apps-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #FF5A5A;
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: scale(1.05);
+}
+
+.apps-overlay-body {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 52px);
+  background: #08080a;
+  overflow: hidden;
+}
+
+.apps-webview-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #08080a;
+}
+
+.apps-embedded-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: #FFFFFF;
+}
+
+/* Apps Catalog Hub Modal / Grid */
+.apps-catalog-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.94);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  z-index: 30;
+  overflow-y: auto;
+  padding: 40px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+.apps-catalog-content {
+  max-width: 960px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.apps-catalog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 20px;
+}
+
+.apps-catalog-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #CEF128;
+  background: rgba(206, 241, 40, 0.1);
+  border: 1px solid rgba(206, 241, 40, 0.25);
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.apps-catalog-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.apps-catalog-sub {
+  font-size: 13px;
+  color: #94A3B8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.apps-catalog-close {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  font-size: 20px;
+  line-height: 1;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.16s ease;
+}
+
+.apps-catalog-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+}
+
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.apps-bento-card {
+  background: rgba(22, 22, 26, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apps-bento-card:hover {
+  background: rgba(28, 28, 34, 0.9);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.apps-bento-card.featured {
+  border-color: rgba(66, 133, 244, 0.4);
+  background: linear-gradient(180deg, rgba(66, 133, 244, 0.12) 0%, rgba(22, 22, 26, 0.8) 100%);
+}
+
+.apps-bento-card.featured:hover {
+  border-color: rgba(66, 133, 244, 0.6);
+  box-shadow: 0 12px 36px rgba(66, 133, 244, 0.18);
+}
+
+.apps-card-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 3px 7px;
+  border-radius: 9999px;
+  background: rgba(66, 133, 244, 0.2);
+  border: 1px solid rgba(66, 133, 244, 0.4);
+  color: #60A5FA;
+}
+
+.apps-card-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.apps-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.apps-card-desc {
+  font-size: 12px;
+  color: #94A3B8;
+  margin: 0;
+  line-height: 1.45;
+  flex: 1;
+}
+
+.apps-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.apps-card-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #64748B;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.apps-launch-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.apps-bento-card.featured .apps-launch-btn {
+  background: #3B82F6;
+  border-color: #60A5FA;
+  color: #FFFFFF;
+}
+
+.apps-launch-btn:hover {
+  background: #2563EB;
+  border-color: #3B82F6;
+  transform: translateY(-1px);
+}
+
+/* Custom URL Launcher */
+.apps-custom-launcher {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(22, 22, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px 14px;
+}
+
+.custom-launcher-icon {
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+}
+
+.custom-app-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  color: #FFFFFF;
+  font-family: inherit;
+}
+
+.custom-app-input::placeholder {
+  color: #64748B;
+}
+
+.custom-app-btn {
+  background: rgba(206, 241, 40, 0.15);
+  border: 1px solid rgba(206, 241, 40, 0.35);
+  color: #CEF128;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.custom-app-btn:hover {
+  background: #CEF128;
+  color: #0A0A0C;
+}
+
 
