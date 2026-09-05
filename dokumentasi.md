@@ -670,3 +670,26 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Mengintegrasikan tombol `#btn-open-apps` pada header actions `sidepanel.html` dan `sidepanel.js` (`openAppsTab`).
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+129. **Resolusi Google 403 Forbidden pada In-App Webview via Spoofing Fetch Metadata (`Sec-Fetch-Site: same-origin`) & Lazy Iframe Activation (`v2.150.246`):**
+    - **Latar Belakang & Error Pengguna**:
+      - Pengguna melaporkan error saat membuka Google Flow di dalam Browser Agent (`"ERROR BRO COBA LO AKALIN"`).
+      - Screenshot menunjukkan halaman error Google di dalam iframe: `403. That's an error. We're sorry, but you do not have access to this page. That's all we know.`
+    - **Akar Masalah (Root Cause)**:
+      1. *Google Reverse Proxy (ESF) Sec-Fetch Inspection*: Server Google (`ESF`) secara aktif memeriksa header `vary: Sec-Fetch-Dest, Sec-Fetch-Mode, Sec-Fetch-Site`. Saat dimuat dari iframe ekstensi Chrome, peramban secara otomatis mengirimkan `Sec-Fetch-Site: cross-site` dan `Sec-Fetch-Dest: iframe`. Header `cross-site` ini memicu pemblokiran 403 Forbidden seketika oleh firewall Google.
+      2. *Premature HTML Iframe Fetch*: Pada implementasi awal, tag `<iframe>` di `newtab.html` memiliki atribut `src="https://flow.google.com/"`. Saat tab baru dibuka, browser langsung meminta halaman ke server Google SEBELUM script registrasi aturan DeclarativeNetRequest sempat tereksekusi. Akibatnya, request awal gagal (403) dan halaman error tersebut tersimpan di cache frame.
+    - **Solusi & Rekayasa Teknis ("Akalin")**:
+      1. **Spoofing Fetch Metadata Request Headers via DNR (`extension/background.js` & `extension/newtab.js`)**:
+         - Menambahkan aturan DeclarativeNetRequest rule `9901` dan `9902` yang memodifikasi `requestHeaders` pada request `sub_frame`:
+           - `sec-fetch-site` disetel ke `"same-origin"`.
+           - `sec-fetch-dest` disetel ke `"document"`.
+           - `sec-fetch-mode` disetel ke `"navigate"`.
+           - `sec-fetch-user` disetel ke `"?1"`.
+           - `referer` disetel ke `"https://flow.google.com/"`.
+         - Mengubah `responseHeaders` dengan menghapus `x-frame-options`, `content-security-policy`, `frame-options`, `cross-origin-embedder-policy`, dan menyetel `cross-origin-resource-policy` ke `"cross-origin"` serta `cross-origin-opener-policy` ke `"unsafe-none"`.
+      2. **Lazy Iframe Activation & Anti-Cache Reload (`extension/newtab.html` & `extension/newtab.js`)**:
+         - Mengosongkan `src=""` pada elemen `#apps-embedded-iframe` di HTML awal dengan menambahkan atribut `referrerpolicy="no-referrer"`.
+         - Fungsi `launchApp(url, name, forceReload)` di `newtab.js` memastikan bahwa aturan `ensureInAppDnrRules()` telah aktif terlebih dahulu sebelum URL dimuat ke iframe.
+         - Jika iframe sedang menampilkan error atau perlu direfresh, tombol `Reload` melakukan transisi cepat melalui `about:blank` untuk membersihkan frame cache dan memuat ulang URL secara bersih dengan header spoofed.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+

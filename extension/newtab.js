@@ -187,12 +187,79 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentAppUrl = 'https://flow.google.com/';
   let currentAppName = 'Google Flow';
 
+  // Ensure In-App DeclarativeNetRequest dynamic rules are registered with requestHeaders
+  async function ensureInAppDnrRules() {
+    if (typeof chrome !== 'undefined' && chrome.declarativeNetRequest && chrome.declarativeNetRequest.updateDynamicRules) {
+      const RULE_ID_STRIP_HEADERS = 9901;
+      const RULE_ID_GOOGLE_FLOW = 9902;
+      const rules = [
+        {
+          id: RULE_ID_STRIP_HEADERS,
+          priority: 1,
+          action: {
+            type: "modifyHeaders",
+            requestHeaders: [
+              { header: "sec-fetch-site", operation: "set", value: "same-origin" },
+              { header: "sec-fetch-dest", operation: "set", value: "document" },
+              { header: "sec-fetch-mode", operation: "set", value: "navigate" },
+              { header: "sec-fetch-user", operation: "set", value: "?1" }
+            ],
+            responseHeaders: [
+              { header: "x-frame-options", operation: "remove" },
+              { header: "content-security-policy", operation: "remove" },
+              { header: "frame-options", operation: "remove" },
+              { header: "cross-origin-opener-policy", operation: "set", value: "unsafe-none" },
+              { header: "cross-origin-embedder-policy", operation: "remove" },
+              { header: "cross-origin-resource-policy", operation: "set", value: "cross-origin" }
+            ]
+          },
+          condition: {
+            urlFilter: "*",
+            resourceTypes: ["sub_frame"]
+          }
+        },
+        {
+          id: RULE_ID_GOOGLE_FLOW,
+          priority: 2,
+          action: {
+            type: "modifyHeaders",
+            requestHeaders: [
+              { header: "sec-fetch-site", operation: "set", value: "same-origin" },
+              { header: "sec-fetch-dest", operation: "set", value: "document" },
+              { header: "sec-fetch-mode", operation: "set", value: "navigate" },
+              { header: "sec-fetch-user", operation: "set", value: "?1" },
+              { header: "referer", operation: "set", value: "https://flow.google.com/" }
+            ],
+            responseHeaders: [
+              { header: "x-frame-options", operation: "remove" },
+              { header: "content-security-policy", operation: "remove" },
+              { header: "frame-options", operation: "remove" },
+              { header: "cross-origin-opener-policy", operation: "set", value: "unsafe-none" },
+              { header: "cross-origin-embedder-policy", operation: "remove" },
+              { header: "cross-origin-resource-policy", operation: "set", value: "cross-origin" }
+            ]
+          },
+          condition: {
+            urlFilter: "*flow.google.com*",
+            resourceTypes: ["sub_frame", "xmlhttprequest", "script", "other"]
+          }
+        }
+      ];
+      try {
+        await chrome.declarativeNetRequest.updateDynamicRules({
+          removeRuleIds: [RULE_ID_STRIP_HEADERS, RULE_ID_GOOGLE_FLOW],
+          addRules: rules
+        });
+      } catch (e) {}
+    }
+  }
+
   function openAppsView(appUrl = 'https://flow.google.com/', appName = 'Google Flow') {
     closeFullscreenSettings();
     if (appsOverlay) {
       appsOverlay.style.display = 'flex';
       updateActiveSidebarTab('apps');
-      launchApp(appUrl, appName);
+      launchApp(appUrl, appName, false);
     }
   }
 
@@ -219,13 +286,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function launchApp(url, name) {
+  async function launchApp(url, name, forceReload = false) {
+    await ensureInAppDnrRules();
     currentAppUrl = url;
     currentAppName = name;
     if (appsActiveTitle) appsActiveTitle.textContent = name;
     if (appsCurrentUrlText) appsCurrentUrlText.textContent = url;
-    if (appsIframe && appsIframe.src !== url) {
-      appsIframe.src = url;
+    if (appsIframe) {
+      if (forceReload || !appsIframe.src || !appsIframe.src.startsWith('http') || appsIframe.src !== url) {
+        appsIframe.src = 'about:blank';
+        setTimeout(() => {
+          if (appsIframe) appsIframe.src = url;
+        }, 50);
+      }
     }
     // Update card selection highlight
     appCards.forEach(card => {
@@ -268,8 +341,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnAppsReload?.addEventListener('click', (e) => {
     e.preventDefault();
-    if (appsIframe && currentAppUrl) {
-      appsIframe.src = currentAppUrl;
+    if (currentAppUrl) {
+      launchApp(currentAppUrl, currentAppName, true);
     }
   });
 

@@ -6996,3 +6996,40 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.245` di `manifest.json`.
 
+### 🚀 Iterasi 527: Resolusi Google 403 Forbidden via Sec-Fetch Spoofing & Lazy Iframe Loading (v2.150.246)
+- **User Request:**
+  - "ERROR BRO COBA LO AKALIN"
+  - Uploaded screenshot menunjukkan iframe Google Flow menampilkan pesan: `403. That's an error. We're sorry, but you do not have access to this page. That's all we know.`
+- **Akar Masalah (Root Cause):**
+  1. *Sec-Fetch-Site Firewall Inspection*: Google ESF memeriksa header `Sec-Fetch-Site`. Permintaan cross-origin dari subframe ekstensi secara default mengirimkan `Sec-Fetch-Site: cross-site` dan `Sec-Fetch-Dest: iframe`, yang langsung ditolak dengan status HTTP 403.
+  2. *Premature Frame Request*: Atribut `src="https://flow.google.com/"` di HTML menyebabkan browser menembak permintaan sebelum dynamic rule DNR terdaftar, mengunci frame pada halaman 403 yang tercache.
+- **Solusi & Rekayasa Teknis:**
+  1. *DNR Request Header Spoofing (`extension/background.js` & `extension/newtab.js`)*:
+     - Meregistrasikan rule `9901` dan `9902` untuk memodifikasi `requestHeaders`:
+       - `sec-fetch-site`: `same-origin`
+       - `sec-fetch-dest`: `document`
+       - `sec-fetch-mode`: `navigate`
+       - `sec-fetch-user`: `?1`
+       - `referer`: `https://flow.google.com/`
+     - Response headers dibersihkan dari `x-frame-options`, `content-security-policy`, `frame-options`, `cross-origin-embedder-policy`, dan `cross-origin-resource-policy` disetel ke `cross-origin`.
+  2. *Lazy Loading & Cache-Flush Reload (`extension/newtab.html` & `extension/newtab.js`)*:
+     - Inisialisasi iframe dengan `src=""` dan `referrerpolicy="no-referrer"`.
+     - `ensureInAppDnrRules()` menjamin aturan DNR aktif sebelum iframe memuat URL.
+     - Tombol Reload menggunakan transisi `about:blank` 50ms untuk membersihkan error frame cache secara tuntas.
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_google_flow_integration.js` lulus 100% (7/7 test checks).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris:
+     - `canvas_exporter.js`: 244
+     - `canvas_manager.js`: 787
+     - `design_agent.js`: 782
+     - `design_executor.js`: 792
+     - `design_prompt.js`: 191
+     - `slide_deck_engine.js`: 724
+     - `slide_editor.js`: 798
+     - `slide_styles.js`: 737
+     - `slide_template.js`: 686
+     - `slide_themes.js`: 318
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.246` di `manifest.json`.
+
+

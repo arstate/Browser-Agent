@@ -1339,3 +1339,30 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 62. Fetch Metadata Spoofing & Lazy Iframe Lifecycle (v2.150.246)
+
+### 🛡️ 1. Eliminasi Error 403 Forbidden pada Google Flow
+- **Akar Masalah**: Server Google ESF memeriksa header metadata fetch peramban. Permintaan dari iframe ekstensi menyertakan `Sec-Fetch-Site: cross-site`, yang langsung memicu respons HTTP 403 Forbidden.
+- **Header Spoofing**: Melalui aturan DNR dinamis `RULE_ID_STRIP_HEADERS` (9901) dan `RULE_ID_GOOGLE_FLOW` (9902):
+  - Request headers disetel: `sec-fetch-site: same-origin`, `sec-fetch-dest: document`, `sec-fetch-mode: navigate`, `sec-fetch-user: ?1`, dan `referer: https://flow.google.com/`.
+  - Response headers dibersihkan: `x-frame-options`, `content-security-policy`, `frame-options`, `cross-origin-embedder-policy` dihapus; `cross-origin-resource-policy: cross-origin` dan `cross-origin-opener-policy: unsafe-none`.
+
+### ⏱️ 2. Lazy Iframe Lifecycle & Cache Flushing
+- **Initial Blank State**: Tag `<iframe>` di `newtab.html` diinisialisasi dengan `src=""` dan `referrerpolicy="no-referrer"` agar browser tidak melakukan request sebelum aturan DNR terpasang.
+- **Runtime Synchronizer**: Fungsi `ensureInAppDnrRules()` di `newtab.js` menjamin aturan telah aktif sebelum `launchApp` memuat URL target.
+- **Cache Flushing**: Reload iframe menggunakan transisi `about:blank` 50ms untuk membersihkan frame cache jika terjadi error sebelumnya.
+
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
+

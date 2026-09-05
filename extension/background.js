@@ -30,28 +30,63 @@ async function setupInAppEmbeddableRules() {
     return;
   }
   const RULE_ID_STRIP_HEADERS = 9901;
+  const RULE_ID_GOOGLE_FLOW = 9902;
   const rules = [
     {
       id: RULE_ID_STRIP_HEADERS,
       priority: 1,
       action: {
         type: "modifyHeaders",
+        requestHeaders: [
+          { header: "sec-fetch-site", operation: "set", value: "same-origin" },
+          { header: "sec-fetch-dest", operation: "set", value: "document" },
+          { header: "sec-fetch-mode", operation: "set", value: "navigate" },
+          { header: "sec-fetch-user", operation: "set", value: "?1" }
+        ],
         responseHeaders: [
           { header: "x-frame-options", operation: "remove" },
           { header: "content-security-policy", operation: "remove" },
           { header: "frame-options", operation: "remove" },
-          { header: "cross-origin-opener-policy", operation: "set", value: "unsafe-none" }
+          { header: "cross-origin-opener-policy", operation: "set", value: "unsafe-none" },
+          { header: "cross-origin-embedder-policy", operation: "remove" },
+          { header: "cross-origin-resource-policy", operation: "set", value: "cross-origin" }
         ]
       },
       condition: {
         urlFilter: "*",
         resourceTypes: ["sub_frame"]
       }
+    },
+    {
+      id: RULE_ID_GOOGLE_FLOW,
+      priority: 2,
+      action: {
+        type: "modifyHeaders",
+        requestHeaders: [
+          { header: "sec-fetch-site", operation: "set", value: "same-origin" },
+          { header: "sec-fetch-dest", operation: "set", value: "document" },
+          { header: "sec-fetch-mode", operation: "set", value: "navigate" },
+          { header: "sec-fetch-user", operation: "set", value: "?1" },
+          { header: "referer", operation: "set", value: "https://flow.google.com/" }
+        ],
+        responseHeaders: [
+          { header: "x-frame-options", operation: "remove" },
+          { header: "content-security-policy", operation: "remove" },
+          { header: "frame-options", operation: "remove" },
+          { header: "cross-origin-opener-policy", operation: "set", value: "unsafe-none" },
+          { header: "cross-origin-embedder-policy", operation: "remove" },
+          { header: "cross-origin-resource-policy", operation: "set", value: "cross-origin" }
+        ]
+      },
+      condition: {
+        urlFilter: "*flow.google.com*",
+        resourceTypes: ["sub_frame", "xmlhttprequest", "script", "other"]
+      }
     }
   ];
   try {
     await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: [RULE_ID_STRIP_HEADERS],
+      removeRuleIds: [RULE_ID_STRIP_HEADERS, RULE_ID_GOOGLE_FLOW],
       addRules: rules
     });
     console.log("[Background] In-App Embeddable declarativeNetRequest rules registered successfully.");
