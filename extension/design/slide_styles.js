@@ -62,7 +62,7 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
 
     .thumb-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 8px;
       cursor: pointer;
       opacity: 0.65;
@@ -83,6 +83,8 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
       width: 16px;
       text-align: right;
       flex-shrink: 0;
+      line-height: 1;
+      padding-top: 4px;
     }
     .thumb-item.active .thumb-num { color: #FFFFFF; font-weight: 800; }
 
