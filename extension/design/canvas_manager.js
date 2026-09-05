@@ -127,6 +127,24 @@ function attachSlideDeckController(iframe) {
           return;
         }
 
+        const editBtn = e.target.closest('#dock-btn-edit');
+        if (editBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof win.toggleEditMode === 'function') win.toggleEditMode();
+          else win.postMessage({ type: 'TOGGLE_EDIT_MODE' }, '*');
+          return;
+        }
+
+        const fsBtn = e.target.closest('#dock-btn-fullscreen');
+        if (fsBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!doc.fullscreenElement) doc.documentElement.requestFullscreen().catch(() => {});
+          else doc.exitFullscreen().catch(() => {});
+          return;
+        }
+
         const exportTrigger = e.target.closest('#dock-btn-export, .dock-export-trigger');
         if (exportTrigger) {
           e.preventDefault();
@@ -428,32 +446,19 @@ function showCanvasLintDetails() {
 }
 
 function triggerDownloadBlob(blob, filename) {
-  if (typeof window !== 'undefined' && window.triggerDownloadBlob && window.triggerDownloadBlob !== triggerDownloadBlob) {
-    return window.triggerDownloadBlob(blob, filename);
-  }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  if (typeof window !== 'undefined' && window.triggerDownloadBlob && window.triggerDownloadBlob !== triggerDownloadBlob) return window.triggerDownloadBlob(blob, filename);
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function base64ToBlob(b64Data, contentType = '', sliceSize = 512) {
-  if (typeof window !== 'undefined' && window.base64ToBlob && window.base64ToBlob !== base64ToBlob) {
-    return window.base64ToBlob(b64Data, contentType, sliceSize);
-  }
-  const byteCharacters = atob(b64Data);
-  const byteArrays = [];
-  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-    const slice = byteCharacters.slice(offset, offset + sliceSize);
-    const byteNumbers = new Array(slice.length);
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
-    }
-    byteArrays.push(new Uint8Array(byteNumbers));
+  if (typeof window !== 'undefined' && window.base64ToBlob && window.base64ToBlob !== base64ToBlob) return window.base64ToBlob(b64Data, contentType, sliceSize);
+  const byteChars = atob(b64Data), byteArrays = [];
+  for (let offset = 0; offset < byteChars.length; offset += sliceSize) {
+    const slice = byteChars.slice(offset, offset + sliceSize), nums = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) nums[i] = slice.charCodeAt(i);
+    byteArrays.push(new Uint8Array(nums));
   }
   return new Blob(byteArrays, { type: contentType });
 }
@@ -574,32 +579,23 @@ function closeOpenDesignCanvas() {
 }
 
 function switchCanvasTab(tabName) {
-  document.querySelectorAll('.canvas-tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
-  });
-  document.querySelectorAll('.canvas-tab-view').forEach(view => {
-    view.classList.remove('active');
-    view.style.display = 'none';
-  });
-
+  document.querySelectorAll('.canvas-tab-btn').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName));
+  document.querySelectorAll('.canvas-tab-view').forEach(view => { view.classList.remove('active'); view.style.display = 'none'; });
   const activeView = document.getElementById(`canvas-view-${tabName}`);
-  if (activeView) {
-    activeView.classList.add('active');
-    activeView.style.display = 'flex';
-  }
+  if (activeView) { activeView.classList.add('active'); activeView.style.display = 'flex'; }
 }
 
 function setCanvasViewport(viewport) {
-  document.querySelectorAll('.viewport-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.getAttribute('data-viewport') === viewport);
-  });
+  document.querySelectorAll('.viewport-btn').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-viewport') === viewport));
   const stage = document.getElementById('canvas-iframe-stage');
-  if (!stage) return;
-  stage.classList.remove('responsive', 'tablet', 'mobile');
-  stage.classList.add(viewport);
+  if (stage) { stage.classList.remove('responsive', 'tablet', 'mobile'); stage.classList.add(viewport); }
 }
 
 function initOpenDesignCanvas() {
+  if (typeof window !== 'undefined') {
+    if (window.__opendesign_canvas_inited) return;
+    window.__opendesign_canvas_inited = true;
+  }
   window.addEventListener('open-design-canvas', (e) => {
     if (e.detail?.artifact) {
       openOpenDesignCanvas(e.detail.artifact);
@@ -663,7 +659,9 @@ function initOpenDesignCanvas() {
   const btnEditMode = document.getElementById('btn-canvas-edit-mode');
   btnEditMode?.addEventListener('click', () => {
     const iframe = document.getElementById('opendesign-preview-frame');
-    iframe?.contentWindow?.postMessage({ type: 'TOGGLE_EDIT_MODE' }, '*');
+    if (!iframe?.contentWindow) return;
+    if (typeof iframe.contentWindow.toggleEditMode === 'function') iframe.contentWindow.toggleEditMode();
+    else iframe.contentWindow.postMessage({ type: 'TOGGLE_EDIT_MODE' }, '*');
   });
 
   // Expand / Contract
@@ -681,42 +679,28 @@ function initOpenDesignCanvas() {
   // Close
   document.getElementById('btn-canvas-close')?.addEventListener('click', closeOpenDesignCanvas);
 
-  // Copy Code in Code Tab
-  const btnCopyCode = document.getElementById('btn-canvas-copy-code');
-  btnCopyCode?.addEventListener('click', async () => {
+  // Copy Code & File
+  document.getElementById('btn-canvas-copy-code')?.addEventListener('click', async () => {
     if (!activeDesignArtifact?.html) return;
     try {
       await navigator.clipboard.writeText(activeDesignArtifact.html);
       const label = document.getElementById('canvas-copy-code-text');
-      if (label) label.textContent = 'Copied! ✓';
+      if (label) { label.textContent = 'Copied! ✓'; setTimeout(() => { label.textContent = 'Copy Code'; }, 2000); }
       showUniversalToast('📋 Kode HTML berhasil disalin ke clipboard');
-      setTimeout(() => {
-        if (label) label.textContent = 'Copy Code';
-      }, 2000);
-    } catch (e) {
-      showUniversalToast('❌ Gagal menyalin kode');
-    }
+    } catch (_) { showUniversalToast('❌ Gagal menyalin kode'); }
   });
 
-  // Copy File in Files Tab
-  const btnCopyFile = document.getElementById('btn-canvas-copy-file');
-  btnCopyFile?.addEventListener('click', async () => {
-    const fileCodeEl = document.getElementById('canvas-file-code-display');
-    if (!fileCodeEl || !fileCodeEl.textContent) return;
+  document.getElementById('btn-canvas-copy-file')?.addEventListener('click', async () => {
+    const text = document.getElementById('canvas-file-code-display')?.textContent;
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(fileCodeEl.textContent);
+      await navigator.clipboard.writeText(text);
       showUniversalToast('📋 File berhasil disalin ke clipboard');
-    } catch (e) {
-      showUniversalToast('❌ Gagal menyalin file');
-    }
+    } catch (_) { showUniversalToast('❌ Gagal menyalin file'); }
   });
 
   // Anti-Slop Lint Footer Status & Button
-  const statusEl = document.getElementById('canvas-footer-status');
-  statusEl?.addEventListener('click', () => {
-    showCanvasLintDetails();
-  });
-
+  document.getElementById('canvas-footer-status')?.addEventListener('click', showCanvasLintDetails);
   const btnLint = document.getElementById('btn-canvas-footer-lint');
   btnLint?.addEventListener('click', async () => {
     if (!activeDesignArtifact?.html) return;
@@ -725,9 +709,8 @@ function initOpenDesignCanvas() {
     try {
       await runCanvasAutoLint(activeDesignArtifact.html);
       showCanvasLintDetails();
-    } catch (e) {
-      showUniversalToast('ℹ️ Linter OpenDesign aktif.');
-    } finally {
+    } catch (_) { showUniversalToast('ℹ️ Linter OpenDesign aktif.'); }
+    finally {
       btnLint.disabled = false;
       btnLint.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Anti-Slop Lint</span>`;
     }
@@ -749,10 +732,9 @@ function initOpenDesignCanvas() {
   document.querySelectorAll('.canvas-export-option').forEach(opt => {
     opt.addEventListener('click', async (e) => {
       e.stopPropagation();
-      const format = opt.getAttribute('data-format') || 'html';
       if (exportMenu) exportMenu.style.display = 'none';
       exportWrapper?.classList.remove('open');
-      await handleCanvasExport(format);
+      await handleCanvasExport(opt.getAttribute('data-format') || 'html');
     });
   });
 
@@ -763,21 +745,29 @@ function initOpenDesignCanvas() {
     }
   });
 
+  // Sync edit mode & content changes from iframe
+  window.addEventListener('message', (e) => {
+    if (!e.data) return;
+    if (e.data.type === 'DECK_EDIT_MODE_CHANGED') {
+      const btn = document.getElementById('btn-canvas-edit-mode');
+      if (btn) btn.classList.toggle('active', Boolean(e.data.active));
+    } else if (e.data.type === 'SLIDE_DECK_CONTENT_CHANGED') {
+      if (activeDesignArtifact) activeDesignArtifact.html = e.data.html;
+      const codeDisplay = document.getElementById('canvas-code-display');
+      if (codeDisplay) codeDisplay.textContent = e.data.html;
+    }
+  });
+
   // Auto-open canvas if URL has ?canvas=open
   try {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('canvas') === 'open') {
-      if (typeof chrome !== 'undefined' && chrome?.storage?.local?.get) {
-        chrome.storage.local.get(['opendesign_last_artifact'], (res) => {
-          if (res?.opendesign_last_artifact) {
-            openOpenDesignCanvas(res.opendesign_last_artifact);
-          }
-        });
-      }
+    if (urlParams.get('canvas') === 'open' && typeof chrome !== 'undefined' && chrome?.storage?.local?.get) {
+      chrome.storage.local.get(['opendesign_last_artifact'], (res) => {
+        if (res?.opendesign_last_artifact) openOpenDesignCanvas(res.opendesign_last_artifact);
+      });
     }
-  } catch (e) {}
+  } catch (_) {}
 }
-
 
 // Global attachments
 if (typeof window !== 'undefined') {
@@ -789,4 +779,10 @@ if (typeof window !== 'undefined') {
     initOpenDesignCanvas, getActiveDesignArtifact, setActiveDesignArtifact,
     isCanvasOpen, attachSlideDeckController, updateCanvasVirtualFiles
   });
+}
+
+// Auto-initialize on load for newtab & sidepanel
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initOpenDesignCanvas);
+  else initOpenDesignCanvas();
 }

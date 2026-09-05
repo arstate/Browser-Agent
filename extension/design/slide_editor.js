@@ -456,7 +456,11 @@ function getSlideDeckEditorScript() {
         isEditMode = (typeof forceState === 'boolean') ? forceState : !isEditMode;
         document.body.classList.toggle('deck-edit-mode-active', isEditMode);
         const dockBtn = document.getElementById('dock-btn-edit');
-        if (dockBtn) dockBtn.classList.toggle('active', isEditMode);
+        if (dockBtn) {
+          dockBtn.classList.toggle('active', isEditMode);
+          dockBtn.style.background = isEditMode ? 'var(--accent, #6366F1)' : '';
+          dockBtn.style.color = isEditMode ? '#FFFFFF' : '';
+        }
 
         if (isEditMode) {
           if (historyStack.length === 0) takeSnapshot();
@@ -466,11 +470,10 @@ function getSlideDeckEditorScript() {
           notifyParentContentChanged();
         }
 
-        window.parent.postMessage({
-          type: 'EDIT_MODE_TOGGLED',
-          active: isEditMode
-        }, '*');
+        window.parent.postMessage({ type: 'DECK_EDIT_MODE_CHANGED', active: isEditMode }, '*');
+        window.parent.postMessage({ type: 'EDIT_MODE_TOGGLED', active: isEditMode }, '*');
       }
+      window.toggleEditMode = toggleEditMode;
 
       function clearSelection() {
         selectedElements.forEach(el => {

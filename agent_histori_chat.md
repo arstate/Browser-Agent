@@ -6334,6 +6334,45 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
   3. Bump versi manifest ke `v2.150.221`.
 
+### 🚀 Iterasi 503: Fix Slide Deck Edit Mode Button Click Activation, Global Bridge & Self-Init Architecture (v2.150.222)
+- **User Request:**
+  "kok tombol edit gabisa di klik ya jadi gabisa ngedit bro"
+- **Akar Masalah (Root Cause):**
+  1. *Capture-Phase Event Interception*: `attachSlideDeckController` di `canvas_manager.js` memasang capture-phase click listener (`doc.addEventListener('click', ..., true)`) yang menangani thumb dan navigasi, namun tidak menyadap `#dock-btn-edit` dan `#dock-btn-fullscreen`.
+  2. *Missing Global Method Exposure*: Fungsi `toggleEditMode` di dalam IIFE `slide_editor.js` tidak diekspos ke `window.toggleEditMode`, sehingga pemanggilan langsung dari parent window gagal.
+  3. *Missing Dock Button Click Handler in Slide Template*: File `slide_template.js` pada click listener internalnya juga tidak memiliki handler untuk `#dock-btn-edit` dan `#dock-btn-fullscreen`.
+  4. *Canvas Manager Uninitialized on NewTab*: `initOpenDesignCanvas()` di `canvas_manager.js` tidak otomatis dipanggil saat dokumen siap, dan pada `newtab.html` tidak pernah dipanggil sama sekali, sehingga listener `#btn-canvas-edit-mode` di header canvas tidak terpasang.
+- **Analisis & Solusi:**
+  1. *Capture-Phase Dock Event Delegation (`canvas_manager.js` & `slide_template.js`)*:
+     - Menambahkan penanganan klik eksplisit untuk `#dock-btn-edit` dan `#dock-btn-fullscreen` pada capture-phase listener di `canvas_manager.js` (`attachSlideDeckController`) serta di listener dokumen internal `slide_template.js`.
+     - Saat `#dock-btn-edit` diklik, sistem langsung memicu `win.toggleEditMode()` atau mengirim pesan `TOGGLE_EDIT_MODE` secara deterministik.
+  2. *Global Window Exposure & Active Styling (`slide_editor.js`)*:
+     - Mengekspos `window.toggleEditMode = toggleEditMode` secara publik di konteks window iframe.
+     - Memberikan umpan balik visual langsung pada tombol dock (`active` class, background aksen ungu/indigo, dan warna teks putih).
+     - Memancarkan event sinkronisasi `DECK_EDIT_MODE_CHANGED` dan `EDIT_MODE_TOGGLED` ke parent window.
+  3. *Canvas Manager Auto-Initialization & State Sync (`canvas_manager.js`)*:
+     - Mengimplementasikan auto-inisialisasi otomatis berbasis `DOMContentLoaded` di akhir `canvas_manager.js` dengan idempotency guard (`window.__opendesign_canvas_inited`), menjamin seluruh event listener header canvas (`#btn-canvas-edit-mode`, refresh, expand, close) terpasang sempurna baik di `newtab.html` maupun `sidepanel.html`.
+     - Menyinkronkan status active tombol `#btn-canvas-edit-mode` via window message listener `DECK_EDIT_MODE_CHANGED`.
+  4. *Visual Feedback Styling (`sidepanel.css` & `newtab.css`)*:
+     - Menambahkan aturan CSS `.canvas-action-icon-btn.active` dengan background aksen dan glow untuk mengindikasikan status edit realtime sedang aktif.
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - `canvas_manager.js`: 788 baris.
+     - `slide_template.js`: 788 baris.
+     - `slide_editor.js`: 783 baris.
+     - `slide_styles.js`: 789 baris.
+     - `design_executor.js`: 776 baris.
+     - `design_agent.js`: 626 baris.
+     - `slide_deck_engine.js`: 505 baris.
+     - `slide_themes.js`: 266 baris.
+     - `canvas_exporter.js`: 244 baris.
+     - `design_prompt.js`: 183 baris.
+     - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+- **Verifikasi:**
+  1. Node assertion script mengonfirmasi `initOpenDesignCanvas` auto-init, direct invocation `toggleEditMode()`, sinkronisasi event `DECK_EDIT_MODE_CHANGED`, serta penanganan click `#dock-btn-edit` di `slide_template.js`.
+  2. Node syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  3. Bump versi manifest ke `v2.150.222`.
+
+
 
 
 

@@ -751,5 +751,37 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_prompt.js`: 183 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
 
+## 🎯 38. Slide Deck Realtime Edit Mode Click Activation, Global Bridge & Self-Init Architecture (v2.150.222)
+
+1. **Dual-Surface Click Event Interception & Bridge**:
+   - `attachSlideDeckController` di `canvas_manager.js` beroperasi di capture phase (`useCapture: true`) pada dokumen iframe, kini menyadap klik `#dock-btn-edit` dan `#dock-btn-fullscreen` untuk memicu `win.toggleEditMode()` atau `win.postMessage({ type: 'TOGGLE_EDIT_MODE' }, '*')`.
+   - `slide_template.js` mengimplementasikan penanganan klik `#dock-btn-edit` dan `#dock-btn-fullscreen` di dokumen internal slide deck secara langsung.
+
+2. **Global Method Exposure & Visual Dock Feedback**:
+   - `slide_editor.js` mengekspos `window.toggleEditMode = toggleEditMode` secara global di dalam iframe.
+   - Mengaktifkan class `.active`, background aksen indigo/ungu (`var(--accent, #6366F1)`), dan warna teks `#FFFFFF` pada `#dock-btn-edit`.
+   - Memancarkan event `DECK_EDIT_MODE_CHANGED` ke parent window untuk sinkronisasi tombol `#btn-canvas-edit-mode`.
+
+3. **Canvas Manager Auto-Initialization & State Sync**:
+   - Menambahkan pemanggilan otomatis `initOpenDesignCanvas` pada `DOMContentLoaded` di akhir `canvas_manager.js` dengan idempotency guard (`window.__opendesign_canvas_inited`), menjamin seluruh event listener header canvas selalu terpasang sempurna baik di `newtab.html` maupun `sidepanel.html`.
+   - Header action button `#btn-canvas-edit-mode` otomatis disinkronkan status `.active`-nya dan dapat memicu toggle langsung via `iframe.contentWindow.toggleEditMode()`.
+
+4. **Active State Visual Styling**:
+   - Menambahkan class `.canvas-action-icon-btn.active` di `sidepanel.css` dan `newtab.css` dengan background aksen dan glow highlight.
+
+5. **Strict Sub-800 Line Rule Compliance**:
+   - `canvas_manager.js`: 788 baris.
+   - `slide_template.js`: 788 baris.
+   - `slide_editor.js`: 783 baris.
+   - `slide_styles.js`: 789 baris.
+   - `design_executor.js`: 776 baris.
+   - `design_agent.js`: 626 baris.
+   - `slide_deck_engine.js`: 505 baris.
+   - `slide_themes.js`: 266 baris.
+   - `canvas_exporter.js`: 244 baris.
+   - `design_prompt.js`: 183 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
+
 
 
