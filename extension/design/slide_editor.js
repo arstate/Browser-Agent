@@ -56,61 +56,24 @@ function getSlideDeckEditorCss() {
     .figma-handle-bm { bottom: -5px; left: calc(50% - 4.5px); cursor: ns-resize; }
     .figma-handle-ml { top: calc(50% - 4.5px); left: -5px; cursor: ew-resize; }
     .figma-handle-mr { top: calc(50% - 4.5px); right: -5px; cursor: ew-resize; }
-    .figma-snap-guide-v { position: absolute; top: 0; bottom: 0; width: 1.5px; background: #EC4899; box-shadow: 0 0 6px #EC4899; pointer-events: none; z-index: 10005; }
-    .figma-snap-guide-h { position: absolute; left: 0; right: 0; height: 1.5px; background: #EC4899; box-shadow: 0 0 6px #EC4899; pointer-events: none; z-index: 10005; }
-    .figma-rot-stem {
-      position: absolute; top: -22px; left: 50%; width: 1.5px; height: 18px;
-      background: var(--accent, #6366F1); pointer-events: none; transform: translateX(-50%);
-    }
-    .figma-handle-rot {
-      position: absolute; top: -29px; left: 50%; transform: translateX(-50%);
-      width: 10px; height: 10px; background: #FFFFFF; border: 1.5px solid var(--accent, #6366F1);
-      border-radius: 50%; cursor: crosshair; pointer-events: auto;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 10002;
-    }
+    .figma-snap-guide-v { position: absolute; top: 0; bottom: 0; width: 1px; background: #EC4899; pointer-events: none; z-index: 10005; }
+    .figma-snap-guide-h { position: absolute; left: 0; right: 0; height: 1px; background: #EC4899; pointer-events: none; z-index: 10005; }
+    .figma-rot-stem { position: absolute; top: -22px; left: 50%; width: 1.5px; height: 18px; background: var(--accent, #6366F1); pointer-events: none; transform: translateX(-50%); }
+    .figma-handle-rot { position: absolute; top: -29px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #FFFFFF; border: 1.5px solid var(--accent, #6366F1); border-radius: 50%; cursor: crosshair; pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 10002; }
     .figma-handle-rot:hover { background: var(--accent, #6366F1); }
-    .figma-badge-dim {
-      position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.92); color: #F8FAFC; font-family: ui-monospace, monospace;
-      font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; pointer-events: none;
-      display: none; z-index: 10003;
-    }
-    .deck-editor-toolbar {
-      position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-70px);
-      display: flex; align-items: center; gap: 6px; background: rgba(13, 17, 23, 0.94);
-      border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 9999px; padding: 6px 14px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(99, 102, 241, 0.25);
-      backdrop-filter: blur(24px); z-index: 999999 !important; opacity: 0; pointer-events: none;
-      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
-      color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 12px; max-width: 95vw; overflow-x: auto;
-    }
-    body.deck-edit-mode-active .deck-editor-toolbar {
-      transform: translateX(-50%) translateY(0) !important; opacity: 1 !important; pointer-events: auto !important;
-    }
+    .figma-badge-dim { position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.92); color: #F8FAFC; font-family: ui-monospace, monospace; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; pointer-events: none; display: none; z-index: 10003; }
+    .deck-editor-toolbar { position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-70px); display: flex; align-items: center; gap: 6px; background: rgba(13, 17, 23, 0.94); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 9999px; padding: 6px 14px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(99, 102, 241, 0.25); backdrop-filter: blur(24px); z-index: 999999 !important; opacity: 0; pointer-events: none; transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; max-width: 95vw; overflow-x: auto; }
+    body.deck-edit-mode-active .deck-editor-toolbar { transform: translateX(-50%) translateY(0) !important; opacity: 1 !important; pointer-events: auto !important; }
     .editor-tool-group { display: flex; align-items: center; gap: 4px; }
     .editor-tool-divider { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.14); margin: 0 2px; flex-shrink: 0; }
-    .editor-tool-btn {
-      background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); color: #F1F5F9;
-      padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 11.5px; font-weight: 600;
-      display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 28px; min-width: 28px;
-      transition: all 0.15s;
-    }
+    .editor-tool-btn { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); color: #F1F5F9; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 28px; min-width: 28px; transition: all 0.15s; }
     .editor-tool-btn:hover { background: rgba(255, 255, 255, 0.16); color: #FFFFFF; border-color: rgba(255, 255, 255, 0.24); }
     .editor-tool-btn.active { background: var(--accent, #6366F1); color: #FFFFFF; border-color: var(--accent, #6366F1); box-shadow: 0 0 8px rgba(99, 102, 241, 0.5); }
-    .editor-tool-select {
-      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14); color: #F8FAFC;
-      border-radius: 6px; padding: 3px 6px; font-size: 11.5px; font-weight: 600; height: 28px; cursor: pointer; outline: none;
-    }
+    .editor-tool-select { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14); color: #F8FAFC; border-radius: 6px; padding: 3px 6px; font-size: 11.5px; font-weight: 600; height: 28px; cursor: pointer; outline: none; }
     .editor-tool-select option { background: #111827; color: #F8FAFC; }
     .editor-color-swatch { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.4); cursor: pointer; transition: transform 0.12s, border-color 0.12s; }
     .editor-color-swatch:hover { transform: scale(1.2); border-color: #FFFFFF; }
-    .editor-badge-status {
-      font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px;
-      background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent, #6366F1); border-radius: 9999px;
-      color: var(--accent, #6366F1); display: inline-flex; align-items: center; gap: 5px;
-    }
+    .editor-badge-status { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent, #6366F1); border-radius: 9999px; color: var(--accent, #6366F1); display: inline-flex; align-items: center; gap: 5px; }
     .editor-pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; box-shadow: 0 0 6px #10B981; }
     .editor-btn-save { background: #10B981 !important; color: #FFFFFF !important; border-color: #10B981 !important; font-weight: 700 !important; padding: 4px 12px !important; }
     .editor-btn-save:hover { background: #059669 !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important; }
@@ -224,6 +187,20 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
       function removeSnapGuideV(c) { c.querySelectorAll('.figma-snap-guide-v').forEach(g => g.remove()); }
       function removeSnapGuideH(c) { c.querySelectorAll('.figma-snap-guide-h').forEach(g => g.remove()); }
       function removeFigmaBoxes() { doc.querySelectorAll('.deck-figma-box').forEach(b => b.remove()); removeSnapGuides(); }
+      function initSnapCandidates(el) {
+        const canvas = el?.closest('.slide-canvas');
+        if (!canvas || !el) return;
+        const cRect = canvas.getBoundingClientRect(), pRect = el.getBoundingClientRect();
+        primaryStartBox = { left: pRect.left - cRect.left, top: pRect.top - cRect.top, right: pRect.right - cRect.left, bottom: pRect.bottom - cRect.top, width: pRect.width, height: pRect.height };
+        snapCandidatesX = [cRect.width / 2, 48, cRect.width - 48];
+        snapCandidatesY = [cRect.height / 2, 36, cRect.height - 36];
+        canvas.querySelectorAll('[data-deck-editable="true"], h1, h2, h3, p, .slide-col, .metric-card, .timeline-step, .col-badge, .cover-badge-pill').forEach(sib => {
+          if (sib === el || selectedElements.has(sib) || sib.closest('.deck-figma-box')) return;
+          const sR = sib.getBoundingClientRect(), sL = sR.left - cRect.left, sT = sR.top - cRect.top;
+          snapCandidatesX.push(sL, sL + sR.width / 2, sL + sR.width, primaryStartBox.left + sR.width);
+          snapCandidatesY.push(sT, sT + sR.height / 2, sT + sR.height, primaryStartBox.top + sR.height);
+        });
+      }
 
       function updateFigmaHandles() {
         removeFigmaBoxes();
@@ -478,6 +455,9 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           initialAngle = Math.atan2(startY - centerY, startX - centerX) * (180 / Math.PI);
           initialWidth = parentSelected.offsetWidth || rect.width;
           initialHeight = parentSelected.offsetHeight || rect.height;
+          if (handleType === 'resize-w' || handleType === 'resize-h') {
+            initSnapCandidates(parentSelected);
+          }
           return;
         }
 
@@ -507,20 +487,7 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         selectedElements.forEach(el => {
           initialTransforms.set(el, getParsedTransform(el));
         });
-        const primary = Array.from(selectedElements)[0];
-        const canvas = primary?.closest('.slide-canvas');
-        if (canvas && primary) {
-          const cRect = canvas.getBoundingClientRect(), pRect = primary.getBoundingClientRect();
-          primaryStartBox = { left: pRect.left - cRect.left, top: pRect.top - cRect.top, width: pRect.width, height: pRect.height };
-          snapCandidatesX = [cRect.width / 2, 48, cRect.width - 48];
-          snapCandidatesY = [cRect.height / 2, 36, cRect.height - 36];
-          canvas.querySelectorAll('[data-deck-editable="true"], h1, h2, h3, p, .slide-col, .metric-card, .timeline-step, .col-badge, .cover-badge-pill').forEach(sib => {
-            if (selectedElements.has(sib) || sib.closest('.deck-figma-box')) return;
-            const sR = sib.getBoundingClientRect(), sL = sR.left - cRect.left, sT = sR.top - cRect.top;
-            snapCandidatesX.push(sL, sL + sR.width / 2, sL + sR.width);
-            snapCandidatesY.push(sT, sT + sR.height / 2, sT + sR.height);
-          });
-        }
+        initSnapCandidates(Array.from(selectedElements)[0]);
       });
 
       doc.addEventListener('mousemove', (e) => {
@@ -569,7 +536,20 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           e.preventDefault();
           const s = initialTransform.scale || 1;
           const dx = (e.clientX - startX) / s;
-          const newW = Math.max(20, Math.round(initialWidth + (activeDir === 'mr' ? dx : -dx)));
+          let newW = Math.max(20, Math.round(initialWidth + (activeDir === 'mr' ? dx : -dx)));
+          const canvas = activeElement.closest('.slide-canvas');
+          if (canvas && primaryStartBox) {
+            const edge = (activeDir === 'mr') ? (primaryStartBox.left + newW * s) : (primaryStartBox.right - newW * s);
+            let snapX = null;
+            for (const c of snapCandidatesX) {
+              if (Math.abs(edge - c) <= 7) {
+                newW = Math.max(20, Math.round(activeDir === 'mr' ? ((c - primaryStartBox.left) / s) : ((primaryStartBox.right - c) / s)));
+                snapX = c;
+                break;
+              }
+            }
+            if (snapX !== null) showSnapGuideV(canvas, snapX); else removeSnapGuideV(canvas);
+          }
           activeElement.style.maxWidth = 'none';
           activeElement.style.flexShrink = '0';
           activeElement.style.width = newW + 'px';
@@ -582,7 +562,20 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           e.preventDefault();
           const s = initialTransform.scale || 1;
           const dy = (e.clientY - startY) / s;
-          const newH = Math.max(16, Math.round(initialHeight + (activeDir === 'bm' ? dy : -dy)));
+          let newH = Math.max(16, Math.round(initialHeight + (activeDir === 'bm' ? dy : -dy)));
+          const canvas = activeElement.closest('.slide-canvas');
+          if (canvas && primaryStartBox) {
+            const edge = (activeDir === 'bm') ? (primaryStartBox.top + newH * s) : (primaryStartBox.bottom - newH * s);
+            let snapY = null;
+            for (const c of snapCandidatesY) {
+              if (Math.abs(edge - c) <= 7) {
+                newH = Math.max(16, Math.round(activeDir === 'bm' ? ((c - primaryStartBox.top) / s) : ((primaryStartBox.bottom - c) / s)));
+                snapY = c;
+                break;
+              }
+            }
+            if (snapY !== null) showSnapGuideH(canvas, snapY); else removeSnapGuideH(canvas);
+          }
           activeElement.style.minHeight = 'auto';
           activeElement.style.flexShrink = '0';
           activeElement.style.height = newH + 'px';

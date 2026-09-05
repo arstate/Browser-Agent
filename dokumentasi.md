@@ -395,7 +395,17 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
         - Menjamin kanvas selalu mempertahankan proporsi murni 16:9 widescreen, tidak pernah terdistorsi melebar, dan tidak pernah terpotong/overflow secara vertikal pada resolusi monitor apa pun.
       - **Kompilasi Ulang Rust Native Host (`host/browser_agent_host`)**:
         - Mengompilasi ulang binary release Rust host dengan penyesuaian CSS paginasi 1200px x 675px dan mengganti binary distribusi secara aman.
-    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 783 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 776 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+114. **Slide Deck Dimension Resize Magnetic Snapping & Clean 1px Glow-Free Guides (`v2.150.231`):** Menambahkan fitur magnet snapping pada saat mengubah ukuran panjang/lebar dan tinggi elemen (`resize-w` dan `resize-h`) serta menyederhanakan garis snapping menjadi 1px tajam tanpa efek blur/glow:
+    - **Magnet Snapping pada Pengubahan Dimensi Elemen (`slide_editor.js`)**:
+      - Menyediakan fungsi pembantu `initSnapCandidates(el)` yang mengekstrak koordinat batas tepi elemen saudara (sibling elements), titik tengah kanvas, padding batas kanvas (48px horizontal & 36px vertikal), serta ukuran dimensi saudara untuk snapping ukuran seimbang (*equal-size snapping*).
+      - Saat handle pengatur panjang/lebar samping (`ml` / `mr`) ditarik, tepi elemen yang bergerak secara otomatis mendeteksi kandidat magnet dalam toleransi 7px dan mengunci ukuran `newW` tepat pada garis pandu.
+      - Saat handle pengatur tinggi atas/bawah (`tm` / `bm`) ditarik, tepi elemen yang bergerak otomatis menempel pada kandidat magnet horizontal dan mengunci nilai `newH`.
+    - **Penyederhanaan Visual Garis Pandu Snap 1px Tanpa Glow (`slide_editor.js`)**:
+      - Mengubah aturan CSS `.figma-snap-guide-v` dan `.figma-snap-guide-h` dari `width/height: 1.5px` dengan `box-shadow: 0 0 6px #EC4899;` menjadi garis presisi murni `width/height: 1px;` berlatar `#EC4899` tanpa glow.
+      - Menghilangkan efek silau visual sehingga garis snapping tampak sangat tegas, rapi, dan mudah dibedakan saat bekerja dengan banyak elemen berdekatan di kanvas.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 776 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
 
 

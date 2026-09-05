@@ -6592,6 +6592,30 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi jumlah baris memastikan seluruh file `<= 791` baris.
   4. Bump versi manifest ke `v2.150.230`.
 
+### 🚀 Iterasi 512: Dimension Resize Magnetic Snapping & Glow-Free 1px Razor-Thin Guides (v2.150.231)
+- **User Request:**
+  - "update buat ketika geser geser ukuran panjang salah satu itu juga ada magnetnya snaping bro, update ui garis snap[ingnya tipis aja gausah glow biar lebih jelas bro kalau banyak elemen"
+- **Akar Masalah:**
+  1. Fitur snapping sebelumnya hanya aktif pada aksi memindahkan posisi elemen (`activeAction === 'move'`). Saat pengguna mengubah ukuran panjang/lebar (`resize-w`) atau tinggi (`resize-h`) menggunakan handle samping Figma, kandidat snap tidak diinisialisasi dan tidak ada deteksi magnetik pada tepi yang bergerak.
+  2. Garis pandu `.figma-snap-guide-v` dan `.figma-snap-guide-h` memiliki ketebalan `1.5px` dengan efek blur glowing `box-shadow: 0 0 6px #EC4899;` yang dapat menyilaukan dan mengaburkan batas visual ketika kanvas memiliki banyak elemen berdekatan.
+- **Analisis & Solusi:**
+  1. *Ekspansi Snapping ke Aksi Resize (`slide_editor.js`)*:
+     - Membuat fungsi pembantu terpusat `initSnapCandidates(el)` yang mengekstrak koordinat batas tepi elemen saudara (sibling elements), titik tengah kanvas, batas padding kanvas (48px horizontal & 36px vertikal), serta kandidat ukuran yang sama (*equal-size candidates*).
+     - Memanggil `initSnapCandidates(parentSelected)` saat handle `resize-w` atau `resize-h` mulai ditekan pada `mousedown`.
+     - Pada `mousemove`:
+       - Untuk `resize-w`: Tepi aktif yang bergerak (`mr` atau `ml`) mendeteksi kandidat magnet X terdekat dalam ambang 7px. Mengunci `newW` secara presisi dan menampilkan garis pandu vertikal `.figma-snap-guide-v`.
+       - Untuk `resize-h`: Tepi aktif yang bergerak (`bm` atau `tm`) mendeteksi kandidat magnet Y terdekat dalam ambang 7px. Mengunci `newH` secara presisi dan menampilkan garis pandu horizontal `.figma-snap-guide-h`.
+  2. *Glow-Free 1px Razor-Thin Visual Guides (`slide_editor.js`)*:
+     - Mengubah aturan CSS `.figma-snap-guide-v` dan `.figma-snap-guide-h` menjadi `width/height: 1px;` murni tanpa `box-shadow`.
+     - Menghasilkan garis pandu ultra-tipis, tajam, dan sangat jelas tanpa efek pendar.
+  3. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` patuh di bawah 800 baris (`slide_editor.js`: 776 baris, `canvas_manager.js`: 791 baris, `slide_styles.js`: 790 baris, `slide_template.js`: 781 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Node assertion unit test memverifikasi ketiadaan glow box-shadow, ketebalan 1px pada garis snap guide, keberadaan `initSnapCandidates`, pemanggilan pada `resize-w`/`resize-h`, dan keberadaan logic snap pada pengubahan ukuran panjang/tinggi.
+  2. Node syntax check `node -c extension/design/*.js extension/*.js` lolos 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file `<= 791` baris.
+  4. Bump versi manifest ke `v2.150.231`.
+
 
 
 

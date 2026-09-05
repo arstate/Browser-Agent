@@ -982,7 +982,31 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
      - Menjamin kanvas terkunci pada rasio 16:9 widescreen di semua perangkat layar tanpa distorsi atau overflow.
 
 3. **Strict Sub-800 Line Rule Compliance**:
-   - `slide_editor.js`: 783 baris.
+   - `slide_editor.js`: 776 baris.
+   - `canvas_manager.js`: 791 baris.
+   - `slide_styles.js`: 790 baris.
+   - `slide_template.js`: 781 baris.
+   - `design_executor.js`: 776 baris.
+   - `design_agent.js`: 626 baris.
+   - `slide_deck_engine.js`: 506 baris.
+   - `slide_themes.js`: 266 baris.
+   - `canvas_exporter.js`: 244 baris.
+   - `design_prompt.js`: 183 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
+## 🎨 47. Slide Deck Dimension Resize Magnetic Snapping & Clean 1px Guides (v2.150.231)
+
+1. **Dimension Resize Magnetic Snapping Architecture**:
+   - `initSnapCandidates(el)` mengekstrak kandidat magnet horizontal (center X, padding 48px, tepi & tengah sibling) dan vertikal (center Y, padding 36px, tepi & tengah sibling) saat handle resize (`resize-w` / `resize-h`) ditekan.
+   - Pada pergeseran handle lebar `activeAction === 'resize-w'`, tepi aktif (`edge`) mendeteksi kandidat terdekat dalam rentang 7px dan mengunci `newW`. Garis pandu vertikal `.figma-snap-guide-v` dimunculkan tepat di koordinat kandidat snap.
+   - Pada pergeseran handle tinggi `activeAction === 'resize-h'`, tepi aktif mendeteksi kandidat vertikal terdekat dalam rentang 7px dan mengunci `newH`. Garis pandu horizontal `.figma-snap-guide-h` dimunculkan tepat di koordinat kandidat snap.
+
+2. **Glow-Free 1px Razor-Thin Visual Guides**:
+   - Menghilangkan `box-shadow: 0 0 6px #EC4899;` dan merampingkan ketebalan garis dari `1.5px` menjadi `1px` (`width: 1px;` / `height: 1px;`).
+   - Menyajikan garis perataan presisi ultra-bersih tanpa efek pendar/silau, memudahkan navigasi visual saat kanvas padat elemen.
+
+3. **Strict Sub-800 Line Rule Compliance**:
+   - `slide_editor.js`: 776 baris.
    - `canvas_manager.js`: 791 baris.
    - `slide_styles.js`: 790 baris.
    - `slide_template.js`: 781 baris.
