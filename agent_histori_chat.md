@@ -6005,6 +6005,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   1. Validasi sintaks `node -c extension/design/*.js` lolos 100% tanpa error.
   2. Bump versi manifest ke `v2.150.210`.
 
+### Iterasi 492 (v2.150.211) - 2026-09-05
+- **User Request:**
+  "update ui lebar di input prompt ketika mode canvas itu sisi nya kurang pajang ke kanan sedikit bro yang saya garisin ini bro biar sama kek sisi paling kanan buble chat user bro" (dengan screenshot kotak merah pada input container dan garis vertikal merah pada sisi paling kanan gelembung chat user).
+- **Akar Masalah (Root Cause):**
+  Pada `extension/newtab.css`, aturan `body.canvas-active .chat-input-container` menyetel lebar `width: 408px !important; max-width: 408px !important;` dengan `left: 74px !important;`. Hal ini menyebabkan sisi kanan kotak input berhenti di koordinat `74px + 408px = 482px`. Sementara itu, panel percakapan utama `.fullscreen-chat-main` berukuran `width: 440px` dimulai dari margin kiri sidebar 58px, sehingga sisi kanan konten chat (termasuk kartu asisten dan gelembung chat pengguna) menjangkau koordinat `58px + 440px = 498px`. Hal ini menimbulkan defisit celah asimetris selebar 16px di sisi kanan kotak input prompt.
+- **Analisis & Solusi:**
+  1. *Perataan Sisi Kanan Kotak Prompt Input (`newtab.css`)*:
+     - Memperbarui lebar `body.canvas-active .chat-input-container` menjadi `width: 424px !important; max-width: 424px !important;`.
+     - Dengan `left: 74px`, sisi kanan kotak prompt kini membentang presisi dari 74px hingga 498px (`74 + 424 = 498px`), sejajar rata dan seimbang dengan sisi paling kanan gelembung chat pengguna (*user bubble*).
+  2. *Sub-800 Line Rule Compliance*: Seluruh 9 modul di `extension/design/` terjaga ketat di bawah 800 baris.
+- **Verifikasi:**
+  1. Pengukuran koordinat piksel pada screenshot: celah 16px (482px ke 498px) kini tertutup sempurna.
+  2. Validasi sintaks `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  3. Bump versi manifest ke `v2.150.211`.
+
+
 
 
 

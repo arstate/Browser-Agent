@@ -7618,8 +7618,8 @@ body.canvas-active .chat-messages {
 
 body.canvas-active .chat-input-container {
   left: 74px !important;
-  width: 408px !important;
-  max-width: 408px !important;
+  width: 424px !important;
+  max-width: 424px !important;
   transform: none !important;
   bottom: 16px !important;
 }

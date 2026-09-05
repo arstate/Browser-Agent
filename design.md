@@ -556,6 +556,13 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Memperbarui label item menjadi langsung dan bersih: `"PDF slide deck"` (`.export-item-label`).
    - Mempertahankan integrasi RPC ekspor PDF di latar belakang via headless Chrome dan pintasan keyboard `E` serta `P`.
 
+## 🚀 27. Canvas Mode Input Prompt Right Edge Alignment (v2.150.211)
+
+1. **Input Box Geometry Realignment (`newtab.css`)**:
+   - Memperbarui lebar kotak prompt saat `body.canvas-active` dari `408px` menjadi `424px` (`width: 424px !important; max-width: 424px !important;`).
+   - Dengan `left: 74px`, sisi kanan kotak prompt bergeser dari 482px ke 498px, sejajar rata dengan batas sisi kanan kartu pesan dan gelembung chat pengguna (*user bubble*), mengeliminasi celah asimetris 16px di sebelah kanan.
+
+
 
 
 
