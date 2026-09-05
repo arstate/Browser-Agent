@@ -562,6 +562,13 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Memperbarui lebar kotak prompt saat `body.canvas-active` dari `408px` menjadi `424px` (`width: 424px !important; max-width: 424px !important;`).
    - Dengan `left: 74px`, sisi kanan kotak prompt bergeser dari 482px ke 498px, sejajar rata dengan batas sisi kanan kartu pesan dan gelembung chat pengguna (*user bubble*), mengeliminasi celah asimetris 16px di sebelah kanan.
 
+## 🚀 28. Text-Only Ultra-Clean Floating Dock Export Menu (v2.150.212)
+
+1. **Text-Only Floating Dock Menu**:
+   - Menghapus pembungkus ikon SVG dokumen pada item menu ekspor floating dock (`.dock-export-menu`), menyajikan opsi murni berbasis tipografi: `<span class="export-item-label">PDF slide deck</span>`.
+   - Mengoptimalkan `min-width` menu popover akrilik dari 210px menjadi 146px di `slide_styles.js` agar pas, proporsional, dan minimalis.
+
+
 
 
 

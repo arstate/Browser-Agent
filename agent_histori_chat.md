@@ -6020,6 +6020,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Validasi sintaks `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
   3. Bump versi manifest ke `v2.150.211`.
 
+### Iterasi 493 (v2.150.212) - 2026-09-05
+- **User Request:**
+  "update ui jadi teks only PDF slide deck aja bro biar lebih clean" (dengan screenshot menu dropup export).
+- **Analisis & Solusi:**
+  1. *Text-Only Clean Typography (`slide_template.js`)*:
+     - Menghapus pembungkus ikon SVG dokumen (`.export-item-icon`) dari tombol `#dock-export-pdf-item`, menyisakan label murni berbasis teks: `<span class="export-item-label">PDF slide deck</span>`.
+     - Menghapus ikon SVG pada opsi-opsi berstatus `Soon` (`PPTX`, `HTML`, `PNG`) agar seluruh menu tampil seragam, bersih, dan minimalis.
+  2. *Refined Dropup Width (`slide_styles.js`)*:
+     - Merampingkan `min-width` `.dock-export-menu` dari 210px menjadi 146px agar membungkus menu teks secara proporsional.
+  3. *Sub-800 Line Rule Compliance*:
+     - `slide_template.js`: 392 baris.
+     - `slide_styles.js`: 698 baris.
+     - Seluruh 9 modul di `extension/design/` terjaga ketat di bawah 800 baris.
+- **Verifikasi:**
+  1. Validasi sintaks `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  2. Bump versi manifest ke `v2.150.212`.
+
+
 
 
 

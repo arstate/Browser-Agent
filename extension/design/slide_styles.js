@@ -526,7 +526,7 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
       position: absolute;
       bottom: calc(100% + 10px);
       right: 0;
-      min-width: 210px;
+      min-width: 146px;
       background: #181B22;
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 12px;

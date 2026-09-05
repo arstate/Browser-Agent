@@ -232,39 +232,19 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           </button>
           <div class="dock-export-menu" id="dock-export-menu">
             <button type="button" class="dock-export-item" data-action="export-pdf" id="dock-export-pdf-item">
-              <div class="dock-export-item-left">
-                <span class="export-item-icon">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                </span>
-                <span class="export-item-label">PDF slide deck</span>
-              </div>
+              <span class="export-item-label">PDF slide deck</span>
             </button>
             <div class="dock-export-divider"></div>
             <button type="button" class="dock-export-item disabled" disabled title="Segera hadir">
-              <div class="dock-export-item-left">
-                <span class="export-item-icon">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="12" y1="9" x2="12" y2="15"/></svg>
-                </span>
-                <span class="export-item-label">Export PPTX</span>
-              </div>
+              <span class="export-item-label">PPTX</span>
               <span class="export-item-soon">Soon</span>
             </button>
             <button type="button" class="dock-export-item disabled" disabled title="Segera hadir">
-              <div class="dock-export-item-left">
-                <span class="export-item-icon">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                </span>
-                <span class="export-item-label">Export HTML</span>
-              </div>
+              <span class="export-item-label">HTML</span>
               <span class="export-item-soon">Soon</span>
             </button>
             <button type="button" class="dock-export-item disabled" disabled title="Segera hadir">
-              <div class="dock-export-item-left">
-                <span class="export-item-icon">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                </span>
-                <span class="export-item-label">Export PNG</span>
-              </div>
+              <span class="export-item-label">PNG</span>
               <span class="export-item-soon">Soon</span>
             </button>
           </div>
