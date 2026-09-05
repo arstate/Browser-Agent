@@ -51,8 +51,7 @@ function attachSlideDeckController(iframe) {
       styleTag = doc.createElement('style');
       styleTag.id = 'slide-deck-controller-style';
       styleTag.textContent = `
-        .slide-section { display: none !important; }
-        .slide-section.active { display: flex !important; opacity: 1 !important; transform: scale(1) !important; }
+        @media screen { .slide-section { display: none !important; } .slide-section.active { display: flex !important; opacity: 1 !important; transform: scale(1) !important; } }
         .thumb-item * { pointer-events: none !important; }
         .dock-btn * { pointer-events: none !important; }
         .thumb-item { cursor: pointer !important; user-select: none !important; }

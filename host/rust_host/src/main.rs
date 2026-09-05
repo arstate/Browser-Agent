@@ -958,8 +958,24 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 let tmp_dir = std::env::temp_dir();
                 let html_path = tmp_dir.join(format!("deck_{}.html", ts));
                 let pdf_path = tmp_dir.join(format!("{}_{}.pdf", clean_title, ts));
+                let mut sanitized_html = html_content.to_string();
+                if let Some(start) = sanitized_html.find("id=\"slide-deck-controller-style\"") {
+                    if let Some(tag_open) = sanitized_html[..start].rfind("<style") {
+                        if let Some(tag_close) = sanitized_html[start..].find("</style>") {
+                            sanitized_html.replace_range(tag_open..start + tag_close + 8, "");
+                        }
+                    }
+                }
+                if !sanitized_html.contains("bulletproof-pdf-print-pagination") {
+                    let print_css = "<style id=\"bulletproof-pdf-print-pagination\">\n@page { size: 16in 9in !important; margin: 0 !important; }\n@media print {\n  *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }\n  html, body { background: var(--bg-slide, #0b0f19) !important; color: var(--text-main, #ffffff) !important; overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }\n  .presentation-workspace { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; position: static !important; }\n  .deck-sidebar, .deck-floating-dock, nav, aside, button, .deck-dock-wrap { display: none !important; }\n  .deck-stage-wrap { padding: 0 !important; margin: 0 !important; height: auto !important; display: block !important; overflow: visible !important; background: var(--bg-slide, #0b0f19) !important; position: static !important; }\n  .slide-section { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 16in !important; height: 9in !important; min-width: 16in !important; min-height: 9in !important; max-width: 16in !important; max-height: 9in !important; page-break-after: always !important; page-break-inside: avoid !important; break-after: page !important; break-inside: avoid !important; margin: 0 !important; padding: 40px 48px !important; box-sizing: border-box !important; background: var(--bg-slide, #0b0f19) !important; position: relative !important; }\n  .slide-canvas { height: 100% !important; width: 100% !important; box-shadow: none !important; border-radius: 0 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; }\n}\n</style>";
+                    if let Some(pos) = sanitized_html.find("</head>") {
+                        sanitized_html.insert_str(pos, &format!("{}\n", print_css));
+                    } else {
+                        sanitized_html.insert_str(0, print_css);
+                    }
+                }
 
-                if let Err(e) = fs::write(&html_path, html_content) {
+                if let Err(e) = fs::write(&html_path, &sanitized_html) {
                     json!({ "status": "error", "error": format!("Failed to write temp html: {}", e) })
                 } else {
                     let chrome_candidates = [

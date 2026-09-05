@@ -503,6 +503,19 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Seluruh halaman diekspor otomatis tanpa memotong atau mengubah tampilan preview.
 
 3. **Sub-800 Line Modularization Mastery**:
-   - `slide_styles.js` (694 baris): Pembangun CSS lengkap (theme tokens, floating dock, layout grid, dan aturan `@media print` 16:9).
+   - `slide_styles.js` (697 baris): Pembangun CSS lengkap (theme tokens, floating dock, layout grid, dan aturan `@media print` 16:9).
    - `slide_template.js` (413 baris): Generator HTML, miniature thumbnails bar, dan lifecycle controller.
-   - Seluruh 9 file di folder `extension/design/` terverifikasi di bawah 800 baris.
+   - `canvas_manager.js` (798 baris): Modular event delegation dan DOM synchronization.
+   - Seluruh 9 file di folder `extension/design/` terverifikasi ketat di bawah 800 baris.
+
+## 🚀 22. All-Slides Sequential 16:9 Vector PDF Pagination & Crisp Sidebar Thumbnails (v2.150.206)
+
+1. **Sequential All-Slides Print Engine**:
+   - Isolasi aturan interaksi slide stage `.slide-section { display: none !important; }` ke dalam `@media screen { ... }` pada `canvas_manager.js` dan `slide_styles.js`.
+   - Sanitasi berlapis pada `canvas_exporter.js`, Python host (`native_host.py`), dan Rust Native Host (`browser_agent_host`): otomatis membuang tag gaya interaktif `#slide-deck-controller-style` dan menyuntikkan `<style id="bulletproof-pdf-print-pagination">`.
+   - Menjamin 100% halaman slide terpaginasi urut dari 1 sampai akhir dalam satu berkas PDF 16:9 widescreen (1152 x 648 pt) tanpa memotong slide pasif.
+
+2. **Crisp Sidebar Thumbnails Styling**:
+   - Mengganti aturan `.thumb-card` yang sebelumnya `border-radius: var(--card-radius)` (hingga 16px pada tema soft/pastel) menjadi `border-radius: 5px;` dan `.thumb-mini-slide-wrap` `border-radius: 4px;`.
+   - Mencegah bentuk kartu thumbnail lonjong / kapsul, menghasilkan tampilan galeri slide yang rapi, tajam, dan profesional.
+

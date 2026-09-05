@@ -136,6 +136,28 @@ async function exportSlideDeckPdf(htmlContent, title = "presentation") {
   if (!htmlContent) return;
   notify("📑 Mengompilasi PDF Slide Vektor 16:9 di background...");
 
+  let sanitizedHtml = String(htmlContent || '')
+    .replace(/<style\b[^>]*id=["']slide-deck-controller-style["'][^>]*>[\s\S]*?<\/style>/gi, '');
+
+  const printPaginationCss = `<style id="bulletproof-pdf-print-pagination">
+@page { size: 16in 9in !important; margin: 0 !important; }
+@media print {
+  *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body { background: var(--bg-slide, #0b0f19) !important; color: var(--text-main, #ffffff) !important; overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
+  .presentation-workspace { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; position: static !important; }
+  .deck-sidebar, .deck-floating-dock, nav, aside, button, .deck-dock-wrap { display: none !important; }
+  .deck-stage-wrap { padding: 0 !important; margin: 0 !important; height: auto !important; display: block !important; overflow: visible !important; background: var(--bg-slide, #0b0f19) !important; position: static !important; }
+  .slide-section { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 16in !important; height: 9in !important; min-width: 16in !important; min-height: 9in !important; max-width: 16in !important; max-height: 9in !important; page-break-after: always !important; page-break-inside: avoid !important; break-after: page !important; break-inside: avoid !important; margin: 0 !important; padding: 40px 48px !important; box-sizing: border-box !important; background: var(--bg-slide, #0b0f19) !important; position: relative !important; }
+  .slide-canvas { height: 100% !important; width: 100% !important; box-shadow: none !important; border-radius: 0 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; }
+}
+</style>`;
+
+  if (sanitizedHtml.includes('</head>')) {
+    sanitizedHtml = sanitizedHtml.replace('</head>', printPaginationCss + '\n</head>');
+  } else {
+    sanitizedHtml = printPaginationCss + sanitizedHtml;
+  }
+
   const rawTitle = title || "slide_deck";
   const cleanTitle = rawTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "presentation";
 
@@ -146,7 +168,7 @@ async function exportSlideDeckPdf(htmlContent, title = "presentation") {
 
     if (rpcFn) {
       const res = await rpcFn("export_slide_deck_pdf", {
-        html_content: htmlContent,
+        html_content: sanitizedHtml,
         title: cleanTitle
       });
 
@@ -162,7 +184,7 @@ async function exportSlideDeckPdf(htmlContent, title = "presentation") {
     // Fallback: OpenDesignBridge
     if (typeof window !== "undefined" && window.OpenDesignBridge?.exportArtifact) {
       const res = await window.OpenDesignBridge.exportArtifact({
-        htmlContent: htmlContent,
+        htmlContent: sanitizedHtml,
         format: "pdf"
       });
       if (res?.base64_data) {
@@ -177,7 +199,7 @@ async function exportSlideDeckPdf(htmlContent, title = "presentation") {
     }
 
     // Fallback: download standalone HTML
-    const blob = new Blob([htmlContent], { type: "text/html" });
+    const blob = new Blob([sanitizedHtml], { type: "text/html" });
     triggerDownloadBlob(blob, `${cleanTitle}.html`);
     notify("ℹ️ Mengunduh HTML untuk Print to PDF.");
   } catch (err) {

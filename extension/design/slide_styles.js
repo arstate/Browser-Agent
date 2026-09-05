@@ -91,7 +91,7 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
       height: 60.75px;
       background: var(--bg-slide);
       border: 1.5px solid rgba(255, 255, 255, 0.12);
-      border-radius: var(--card-radius);
+      border-radius: 5px;
       overflow: hidden;
       position: relative;
       flex-shrink: 0;
@@ -106,6 +106,7 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
       height: 100%;
       position: relative;
       overflow: hidden;
+      border-radius: 4px;
       background: var(--bg-slide);
     }
     .thumb-mini-slide {
@@ -219,21 +220,23 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
       padding: 24px 36px 72px 36px;
     }
 
-    .slide-section {
-      display: none !important;
-      width: 100%;
-      height: 100%;
-      max-width: 1220px;
-      max-height: calc(1220px * 9 / 16);
-      aspect-ratio: 16 / 9;
-      opacity: 0;
-      transform: scale(0.99);
-      transition: opacity 0.2s ease, transform 0.2s ease;
-    }
-    .slide-section.active {
-      display: flex !important;
-      opacity: 1 !important;
-      transform: scale(1) !important;
+    @media screen {
+      .slide-section {
+        display: none !important;
+        width: 100%;
+        height: 100%;
+        max-width: 1220px;
+        max-height: calc(1220px * 9 / 16);
+        aspect-ratio: 16 / 9;
+        opacity: 0;
+        transform: scale(0.99);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+      .slide-section.active {
+        display: flex !important;
+        opacity: 1 !important;
+        transform: scale(1) !important;
+      }
     }
 
     .slide-canvas {

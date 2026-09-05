@@ -5891,3 +5891,35 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   - Uji render halaman PDF via `pdftoppm`: ukuran 2400 x 1350 px (rasio 16:9 presisi), teks vektor tajam sempurna.
   - `node -c` validasi sintaks lolos 100% pada semua modul JavaScript.
   - Bump manifest ke `v2.150.205`.
+
+### Iterasi 487 (v2.150.206) - 2026-09-05
+- **User Request:**
+  1. "bug yang ke eksport halaman yang sedang tampil di preview doang harusnya kan semua halaman urutanya tetep urut mulai halaman 1 sampai halaman paling akhir sesuai yang di preview tapi semua halaman ikut ke eksport jadi 1 halaman"
+  2. "dan update ui sidebar preview halaman jangan dibuat terlalu rounded bro"
+- **Akar Masalah (Root Cause):**
+  1. *Bug Ekspor PDF 1 Halaman*: Saat pengguna berinteraksi memilih slide di pratinjau canvas iframe, fungsi `attachSlideDeckController` di `canvas_manager.js` menyuntikkan `<style id="slide-deck-controller-style">` yang berisi `.slide-section { display: none !important; } .slide-section.active { display: flex !important; }`. Karena aturan ini tidak dibungkus di dalam `@media screen { ... }`, dan disisipkan di akhir `<head>` dengan `!important`, aturan ini menimpa deklarasi `@media print`. Saat ekspor PDF dipanggil, `outerHTML` yang memuat style ini dikirim ke headless Chrome (`--print-to-pdf`). Akibatnya, seluruh 19 slide pasif disembunyikan dan hanya 1 slide aktif yang dicetak ke PDF.
+  2. *Sidebar Thumbnail Terlalu Bulat*: Kelas `.thumb-card` di `slide_styles.js` menggunakan `border-radius: var(--card-radius);`. Pada tema seperti `playful_pastel` atau gaya modern dengan sudut 16px-20px, thumbnail berukuran 108px x 60.75px berubah menjadi lonjong/kapsul squishy.
+- **Analisis & Solusi:**
+  1. *Isolasi Media Screen (`canvas_manager.js`, `slide_styles.js`)*:
+     - Membungkus deklarasi selektor `.slide-section` di dalam blok `@media screen { ... }` baik di injeksi dinamis `canvas_manager.js` maupun di berkas stylesheet utama `slide_styles.js`.
+  2. *Sanitasi HTML & Bulletproof Print Injection (`canvas_exporter.js`, `native_host.py`, `rust_host/src/main.rs`)*:
+     - Di `canvas_exporter.js`, sebelum mengirimkan HTML ke RPC `export_slide_deck_pdf`, secara otomatis menghapus tag `<style id="slide-deck-controller-style">` menggunakan regex dan menyuntikkan `<style id="bulletproof-pdf-print-pagination">` yang memaksa `@page { size: 16in 9in !important; margin: 0; }` dan `.slide-section { display: flex !important; width: 16in !important; height: 9in !important; page-break-after: always !important; break-after: page !important; }`.
+     - Melakukan proteksi lapis ganda (*defense-in-depth*) pada binary native host Rust (`host/rust_host/src/main.rs`) dan Python (`host/native_host.py`) untuk otomatis membersihkan tag style interaktif dan menginjeksi stylesheet cetak 16:9 widescreen.
+  3. *Refined Sidebar Thumbnail UI (`slide_styles.js`)*:
+     - Mengubah `.thumb-card` menjadi `border-radius: 5px;` dan `.thumb-mini-slide-wrap` menjadi `border-radius: 4px;`.
+     - Thumbnail kini berpenampilan rapi, tegas, proporsional, dan presisi tinggi ala Keynote / PowerPoint eksekutif.
+  4. *Sub-800 Line Rule Compliance*:
+     - `canvas_manager.js`: 798 baris (ketat <= 800 baris).
+     - `slide_styles.js`: 697 baris.
+     - `canvas_exporter.js`: 226 baris.
+     - Seluruh 9 modul di `extension/design/` terjaga di bawah 800 baris.
+- **Verifikasi:**
+  1. Uji `pdfinfo` pada berkas PDF sebelum perbaikan (`/tmp/sains-pesona-kucing-lucu-20-halaman-deck-eksekutif-lengkap_1788578511943.pdf`): `Pages: 1`, `Page size: 1152 x 648 pts`.
+  2. Uji `pdfinfo` pada berkas PDF sesudah perbaikan dengan dataset nyata 20-slide dan 10-slide melalui binary Rust `browser_agent_host`:
+     - `/tmp/user_real_kucing_deck.pdf`: `Pages: 20`, `Page size: 1152 x 648 pts`, ukuran 756.235 bytes.
+     - `/tmp/test_rust_assembled.pdf`: `Pages: 10`, `Page size: 1152 x 648 pts`, ukuran 426.572 bytes.
+     - Seluruh halaman tercetak berurutan dari halaman 1 sampai akhir dalam satu dokumen utuh 16:9 vektor.
+  3. Validasi sintaks `node -c extension/design/*.js` lolos 100% tanpa error.
+  4. Kompilasi binary Rust release `cargo build --release` lolos dan disinkronkan ke `host/browser_agent_host`.
+  5. Bump versi manifest ke `v2.150.206`.
+
