@@ -374,6 +374,15 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
       - Garis pandu magenta khas Figma (`1.5px solid #EC4899` dengan glow shadow) otomatis muncul membentang di kanvas untuk memandu perataan presisi dan segera dibersihkan saat mouse dilepas (`mouseup`).
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 783 baris, `canvas_manager.js` 790 baris, `slide_styles.js` 789 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+112. **Sidebar Thumbnail Page Numbering Top-Left Alignment (`v2.150.229`):** Menyelaraskan posisi angka penomoran slide (`.thumb-num`) pada sidebar daftar halaman slide deck agar berada di samping kiri atas kartu pratinjau thumbnail:
+    - **Penyelarasan Flexbox Vertikal (`slide_styles.js`)**:
+      - Mengubah aturan alignment pada `.thumb-item` dari `align-items: center;` menjadi `align-items: flex-start;`.
+      - Menyesuaikan `.thumb-num` dengan `line-height: 1; padding-top: 4px;` agar baseline angka penomoran halaman sejajar lurus dengan sudut tepi atas kartu `.thumb-card` (border radius 5px).
+    - **Penguatan Controller Pratinjau Kanvas (`canvas_manager.js`)**:
+      - Menyuntikkan aturan penegasan `align-items: flex-start !important;` pada `.thumb-item` dan `.thumb-num { align-self: flex-start !important; line-height: 1 !important; padding-top: 4px !important; }` di dalam `slide-deck-controller-style`, menjamin presentasi lama yang dimuat di iframe langsung ter-update ke posisi samping kiri atas.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 783 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 791 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+
 
 
 

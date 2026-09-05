@@ -966,6 +966,30 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_prompt.js`: 183 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
 
+## 🎨 45. Sidebar Thumbnail Page Numbering Top-Left Alignment (v2.150.229)
+
+1. **Top-Left Flexbox Layout Alignment**:
+   - Kontainer `.thumb-item` beralih dari `align-items: center` menjadi `align-items: flex-start`, menempatkan angka halaman `.thumb-num` di sudut samping kiri atas kartu thumbnail.
+   - Mengatur `.thumb-num` dengan `line-height: 1; padding-top: 4px;` agar baseline angka sejajar lurus secara optis dengan border atas `.thumb-card` (border radius 5px).
+
+2. **Controller Dynamic Injection Enforcement**:
+   - `attachSlideDeckController` pada `canvas_manager.js` menyuntikkan deklarasi penegasan: `.thumb-item { align-items: flex-start !important; }` dan `.thumb-num { align-self: flex-start !important; line-height: 1 !important; padding-top: 4px !important; }`.
+   - Menjamin bahwa seluruh presentasi lama atau baru di dalam live preview iframe langsung tampil konsisten.
+
+3. **Strict Sub-800 Line Rule Compliance**:
+   - `slide_editor.js`: 783 baris.
+   - `canvas_manager.js`: 791 baris.
+   - `slide_styles.js`: 791 baris.
+   - `slide_template.js`: 781 baris.
+   - `design_executor.js`: 776 baris.
+   - `design_agent.js`: 626 baris.
+   - `slide_deck_engine.js`: 506 baris.
+   - `slide_themes.js`: 266 baris.
+   - `canvas_exporter.js`: 244 baris.
+   - `design_prompt.js`: 183 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
+
 
 
 

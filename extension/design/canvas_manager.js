@@ -82,7 +82,8 @@ function attachSlideDeckController(iframe) {
         @media screen { .slide-section { display: none !important; } .slide-section.active { display: flex !important; opacity: 1 !important; transform: scale(1) !important; } }
         .thumb-item * { pointer-events: none !important; }
         .dock-btn * { pointer-events: none !important; }
-        .thumb-item { cursor: pointer !important; user-select: none !important; }
+        .thumb-item { cursor: pointer !important; user-select: none !important; align-items: flex-start !important; }
+        .thumb-num { align-self: flex-start !important; line-height: 1 !important; padding-top: 4px !important; }
       `;
       doc.head.appendChild(styleTag);
     }
