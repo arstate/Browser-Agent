@@ -407,6 +407,23 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
       - Menghilangkan efek silau visual sehingga garis snapping tampak sangat tegas, rapi, dan mudah dibedakan saat bekerja dengan banyak elemen berdekatan di kanvas.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 776 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+115. **New Tab Clean Welcome Screen & Session Isolation (`v2.150.232`):** Memperbaiki bug di mana membuka tab baru (`newtab.html`) kadang otomatis langsung memuat riwayat percakapan terakhir alih-alih menampilkan layar selamat datang (Welcome Screen):
+    - **Akar Masalah Auto-Restore Global**:
+      - Pada fungsi inisialisasi awal `bootstrap()` di `sidepanel.js`, terdapat pemanggilan `chrome.storage.local.get(['last_active_session_id'])` yang langsung memanggil `resumeSession(sessionRes.last_active_session_id)` jika ID sesi tersimpan di storage lokal ekstensi.
+      - Karena `newtab.html` dan `sidepanel.html` sama-sama mengimpor `sidepanel.js`, dan `chrome.storage.local` bersifat global lintas semua tab dan jendela browser, membuka tab baru via shortcut (Ctrl+T atau tombol `+`) membaca kunci global sesi aktif yang ditinggalkan tab sebelumnya atau sidepanel. Akibatnya, halaman tab baru seketika ter-hijack memuat riwayat obrolan lama, menyembunyikan `#welcome-card` dan bagian 8 situs favorit (*recent sites*).
+    - **Solusi Isolasi Sesi Berbasis Halaman & Tab**:
+      - **Diferensiasi Mode Halaman (`bootstrap()` di `sidepanel.js`)**:
+        - Memeriksa apakah konteks eksekusi adalah halaman New Tab (`window.location.pathname.includes('newtab.html') || document.body.classList.contains('newtab-body')`).
+        - Pada halaman New Tab, tab baru dijamin **SELALU** memulai dalam keadaan bersih di Welcome Screen (`#welcome-card` tampil, `recent-sites-grid` tampil, prompt bar di tengah hero, `currentSessionId = null`).
+        - Pemulihan sesi pada New Tab **HANYA** diizinkan jika terdapat parameter URL eksplisit (`?session=...` / `?sessionId=...`) ATAU jika tab tersebut secara sengaja di-refresh/reload oleh user di tab yang sama (dideteksi via `sessionStorage.getItem('tab_active_session_id')`).
+      - **Isolasi `sessionStorage` Per-Tab**:
+        - Saat sesi baru dibuat (`ensureCurrentSessionInitialized`), sesi dimuat (`resumeSession`), atau sesi disimpan (`saveCurrentSessionToDB`), ID sesi disimpan ke dalam `sessionStorage` tab aktif (`tab_active_session_id`).
+        - Saat tab baru dibuat (Ctrl+T), browser secara inheren menyediakan objek `sessionStorage` yang kosong, sehingga tab baru tidak pernah terkena polusi sesi dari tab lain.
+        - Saat user membuat obrolan baru (`startNewChat`) atau menghapus riwayat (`confirmDeleteSession`), kunci `tab_active_session_id` di `sessionStorage` dan `last_active_session_id` di `chrome.storage.local` langsung dibersihkan.
+      - **Sidepanel Tetap Persisten**:
+        - Mode sidepanel (`sidepanel.html`) tetap mempertahankan fitur auto-restore dari `chrome.storage.local` sehingga obrolan di sidepanel tidak hilang saat sidepanel ditutup dan dibuka kembali.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 776 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
 
 
 

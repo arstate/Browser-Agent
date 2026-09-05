@@ -1018,6 +1018,23 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_prompt.js`: 183 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
 
+## 🎨 48. New Tab Session Isolation & Clean Welcome Screen Guard (v2.150.232)
+
+1. **Page-Context Aware Auto-Restore Architecture**:
+   - `bootstrap()` di `sidepanel.js` membedakan antara lingkungan Full-Screen New Tab (`window.location.pathname.includes('newtab.html') || document.body.classList.contains('newtab-body')`) dan Sidepanel biasa (`sidepanel.html`).
+   - Halaman tab baru (Ctrl+T / tombol `+`) kini diisolasi dari sesi global `last_active_session_id` di `chrome.storage.local`.
+   - Tab baru SELALU menampilkan antarmuka awal yang bersih: `#welcome-card` tampil, hero subtitle aktif, prompt bar berada di tengah kanvas layar, dan 8 ubin situs favorit (`recent-sites-grid`) terlihat rapi.
+
+2. **Per-Tab Session Storage Isolation**:
+   - Menggunakan `sessionStorage` per-tab (`tab_active_session_id`) yang terisolasi secara native oleh browser.
+   - Saat tab baru dibuat, `sessionStorage` kosong sehingga tidak ada riwayat chat yang ter-restore secara tidak sengaja.
+   - Pemulihan sesi pada tab baru hanya terjadi jika tab tersebut di-refresh (F5) atau dibuka dengan parameter URL eksplisit `?session=...`.
+   - Sidepanel tetap mempertahankan kenyamanan persistensi sesi via `chrome.storage.local`.
+
+3. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 776 baris, `canvas_manager.js` 791 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+
 
 
 

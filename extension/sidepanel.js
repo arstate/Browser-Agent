@@ -33,6 +33,9 @@ let currentSessionCreatedAt = null;
 function ensureCurrentSessionInitialized(initialMessage = "", attachments = [], defaultTitle = "Chat Session") {
   if (!currentSessionId) {
     currentSessionId = 'sess_' + Date.now();
+    try {
+      sessionStorage.setItem('tab_active_session_id', currentSessionId);
+    } catch (e) {}
     const fallbackTitle = (attachments && attachments[0] ? attachments[0].name : defaultTitle);
     const rawTitle = (typeof initialMessage === 'string' ? initialMessage : '')
       .replace(/^\[\/[a-zA-Z0-9_-]+\]\s*/, '')
@@ -49,7 +52,13 @@ function ensureCurrentSessionInitialized(initialMessage = "", attachments = [], 
 if (typeof window !== 'undefined') {
   window.ensureCurrentSessionInitialized = ensureCurrentSessionInitialized;
   window.getCurrentSessionId = () => currentSessionId;
-  window.setCurrentSessionId = (id) => { currentSessionId = id; };
+  window.setCurrentSessionId = (id) => {
+    currentSessionId = id;
+    try {
+      if (id) sessionStorage.setItem('tab_active_session_id', id);
+      else sessionStorage.removeItem('tab_active_session_id');
+    } catch (e) {}
+  };
   window.getCurrentSessionTitle = () => currentSessionTitle;
   window.setCurrentSessionTitle = (t) => {
     currentSessionTitle = t;
@@ -11138,6 +11147,9 @@ async function saveCurrentSessionToDB() {
 
   try {
     if (currentSessionId) {
+      try {
+        sessionStorage.setItem('tab_active_session_id', currentSessionId);
+      } catch (e) {}
       await chrome.storage.local.set({ last_active_session_id: currentSessionId });
     }
   } catch (e) {}
@@ -11825,6 +11837,9 @@ async function resumeSession(sessionId) {
   currentSessionIsPinned = !!session.is_pinned;
   currentSessionCreatedAt = session.created_at;
   try {
+    sessionStorage.setItem('tab_active_session_id', session.id);
+  } catch (e) {}
+  try {
     chrome.storage.local.set({ last_active_session_id: session.id });
   } catch (e) {}
   if (Array.isArray(session.messages)) {
@@ -11938,6 +11953,9 @@ function startNewChat() {
   currentSessionIsPinned = false;
   currentSessionCreatedAt = null;
   try {
+    sessionStorage.removeItem('tab_active_session_id');
+  } catch (e) {}
+  try {
     chrome.storage.local.remove(['last_active_session_id']);
   } catch (e) {}
   conversationHistory = [];
@@ -12038,6 +12056,12 @@ async function confirmDeleteSession() {
     currentSessionTitle = "New Chat";
     currentSessionIsPinned = false;
     currentSessionCreatedAt = null;
+    try {
+      sessionStorage.removeItem('tab_active_session_id');
+    } catch (e) {}
+    try {
+      chrome.storage.local.remove(['last_active_session_id']);
+    } catch (e) {}
     conversationHistory = [];
     resetChatMessagesUI();
 
@@ -12074,6 +12098,12 @@ async function confirmDeleteSession() {
     currentSessionTitle = "New Chat";
     currentSessionIsPinned = false;
     currentSessionCreatedAt = null;
+    try {
+      sessionStorage.removeItem('tab_active_session_id');
+    } catch (e) {}
+    try {
+      chrome.storage.local.remove(['last_active_session_id']);
+    } catch (e) {}
     conversationHistory = [];
     resetChatMessagesUI();
   }
@@ -14384,11 +14414,34 @@ async function bootstrap() {
   updateHeaderChatTitle();
   initReverseInfiniteScroll();
 
-  // Auto-restore last active session if refreshing or reopening tab
+  // Auto-restore last active session logic:
+  // For full-screen new tab: brand new tabs (Ctrl+T or + button) MUST stay on the Welcome Screen!
+  // Only restore in new tab if explicit URL param (?session=) or tab was reloaded (sessionStorage).
+  // For sidepanel: auto-restore last_active_session_id from chrome.storage.local.
   try {
-    const sessionRes = await chrome.storage.local.get(['last_active_session_id']);
-    if (sessionRes?.last_active_session_id && !currentSessionId) {
-      await resumeSession(sessionRes.last_active_session_id);
+    const isNewTabPage = (typeof window !== 'undefined' && (window.location.pathname.includes('newtab.html') || document.body?.classList?.contains('newtab-body') || !!document.getElementById('recent-sites-grid')));
+    const urlParams = (typeof window !== 'undefined' && window.location.search) ? new URLSearchParams(window.location.search) : null;
+    const urlSessionId = urlParams ? (urlParams.get('session') || urlParams.get('sessionId')) : null;
+
+    let sessionToRestore = null;
+    if (urlSessionId) {
+      sessionToRestore = urlSessionId;
+    } else if (isNewTabPage) {
+      try {
+        const tabSessionId = sessionStorage.getItem('tab_active_session_id');
+        if (tabSessionId) {
+          sessionToRestore = tabSessionId;
+        }
+      } catch (e) {}
+    } else {
+      const sessionRes = await chrome.storage.local.get(['last_active_session_id']);
+      if (sessionRes?.last_active_session_id) {
+        sessionToRestore = sessionRes.last_active_session_id;
+      }
+    }
+
+    if (sessionToRestore && !currentSessionId) {
+      await resumeSession(sessionToRestore);
     }
   } catch (e) {
     console.warn("Bootstrap auto-restore session notice:", e);

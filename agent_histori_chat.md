@@ -6616,6 +6616,33 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi jumlah baris memastikan seluruh file `<= 791` baris.
   4. Bump versi manifest ke `v2.150.231`.
 
+### 🚀 Iterasi 513: Fix New Tab Auto-Loading Last History Session & Enforce Clean Welcome Screen (v2.150.232)
+- **User Request:**
+  - "update bug kadang kalo sedang buka histori terkahir trus new tab malah otomatis ke histori terakhir itu langsung harusnya kan tetep welcome scren new tab"
+- **Akar Masalah:**
+  1. Pada saat membuka riwayat percakapan (`resumeSession`), ID sesi disimpan secara global di `chrome.storage.local` dengan kunci `last_active_session_id`.
+  2. Saat pengguna membuka tab baru (`newtab.html`), file `sidepanel.js` dieksekusi dan memanggil `bootstrap()`. Di dalam `bootstrap()`, pemanggilan `chrome.storage.local.get(['last_active_session_id'])` langsung memanggil `resumeSession` tanpa membedakan apakah konteksnya adalah tab baru yang baru saja dibuka.
+  3. Akibatnya, tab baru ter-hijack memuat riwayat chat terakhir, menyembunyikan kartu selamat datang (`#welcome-card`) dan 8 situs favorit (`#recent-sites-grid`).
+- **Analisis & Solusi:**
+  1. *Pemeriksaan Konteks Halaman di `bootstrap()` (`sidepanel.js`)*:
+     - Mendeteksi apakah halaman adalah tab baru (`isNewTabPage = window.location.pathname.includes('newtab.html') || document.body.classList.contains('newtab-body')`).
+     - Pada halaman tab baru, auto-restore sesi dari `chrome.storage.local` dinonaktifkan sepenuhnya. Tab baru selalu menampilkan layar selamat datang yang bersih.
+     - Sesi hanya akan dimuat di New Tab jika ada parameter URL eksplisit (`?session=...` / `?sessionId=...`) atau jika tab tersebut sengaja di-reload pengguna (dideteksi via `sessionStorage.getItem('tab_active_session_id')`).
+  2. *Isolasi Sesi Per-Tab Menggunakan `sessionStorage` (`sidepanel.js`)*:
+     - Menambahkan penyimpanan `tab_active_session_id` ke `sessionStorage` pada saat sesi diinisialisasi (`ensureCurrentSessionInitialized`), dimuat (`resumeSession`), dan disimpan (`saveCurrentSessionToDB`).
+     - Mengosongkan `tab_active_session_id` saat pengguna memulai chat baru (`startNewChat`) atau menghapus riwayat (`confirmDeleteSession`).
+     - Karena `sessionStorage` bersifat unik per-tab, pembukaan tab baru (Ctrl+T) selalu memiliki `sessionStorage` kosong sehingga tidak ada risiko memuat riwayat obrolan dari tab lain.
+  3. *Sidepanel Tetap Persisten*:
+     - Mode sidepanel (`sidepanel.html`) tetap membaca `chrome.storage.local.get(['last_active_session_id'])` agar obrolan pengguna di sidepanel tetap tersimpan dan dapat dilanjutkan saat sidepanel dibuka kembali.
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+- **Verifikasi:**
+  1. Unit test skrip otomatis memeriksa 4 skenario: (1) Tab baru Ctrl+T tidak pernah memuat riwayat terakhir dan tetap di Welcome Screen, (2) Tab yang di-reload (F5) tetap mempertahankan sesinya sendiri, (3) Parameter URL eksplisit berhasil memuat sesi yang diminta, (4) Sidepanel tetap memulihkan sesi aktif terakhir.
+  2. Node syntax check `node -c extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file di `extension/design/*.js` `<= 791` baris.
+  4. Bump versi manifest ke `v2.150.232`.
+
+
 
 
 
