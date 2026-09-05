@@ -819,6 +819,20 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Memasang `pointer-events: none;` pada `.apps-header-bar` dan `pointer-events: auto;` pada `.apps-header-center` agar area kosong di bilah atas tidak menghalangi klik pada tombol situs web di bawahnya.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+138. **Penyelarasan Posisi Webview Tepat di Bawah Navbar & Bilah Kaca Murni Tanpa Sekat (`v2.150.255`):**
+    - **Kebutuhan Pengguna**:
+      - Memastikan halaman web tidak menumpuk di bawah navbar (*non-full*) agar kontrol, menu navigasi, dan header web terlihat jelas 100%.
+      - Menempatkan bagian paling atas web tepat di bawah navbar transparan tanpa sekat pembatas atau potongan garis hitam.
+    - **Implementasi Teknis**:
+      1. **Sub-Navbar Viewport Flow (`extension/newtab.css`)**:
+         - Mengembalikan `.fullscreen-apps-overlay` ke `display: flex; flex-direction: column;` dengan background terpadu `#08080a;`.
+         - Menyesuaikan `.apps-overlay-body` dengan `flex: 1; height: calc(100vh - 36px);`, mengalirkan viewport iframe persis dimulai dari tepi bawah bilah navbar (`y = 36px`).
+      2. **Seamless Transparent Glass Navbar (`extension/newtab.css`)**:
+         - Menyetel tinggi `.apps-header-bar` menjadi `36px` dengan `background: transparent;`, `backdrop-filter: blur(24px);`, serta `border: none; border-bottom: none;`.
+         - Menghilangkan garis potongan horizontal, menyatukan visual bilah kontrol dan webview secara mulus dan bersih.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+
 
 
 

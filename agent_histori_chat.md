@@ -7200,6 +7200,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.254` di `manifest.json`.
 
+---
+
+### Iterasi: Penyelarasan Posisi Webview Tepat di Bawah Navbar & Bilah Kaca Murni Tanpa Sekat (`v2.150.255`)
+- **User Request:**
+  - "web jangan di full soalnya jadi ga keliatan tapi bagian paling atas web di pas di bawah avbar blur full transparant"
+- **Solusi & Rekayasa Teknis:**
+  1. *Sub-Navbar Viewport Flow*:
+     - `extension/newtab.css`: Mengembalikan layout `.fullscreen-apps-overlay` ke `display: flex; flex-direction: column;` dan `.apps-overlay-body` ke `flex: 1; height: calc(100vh - 36px);`.
+     - Memastikan webview tidak terpotong atau tertutup navbar, header dan menu website terlihat jelas 100%.
+  2. *Bilah Kaca Transparan Murni Tanpa Sekat*:
+     - `extension/newtab.css`: Menyetel `.apps-header-bar` dengan `height: 36px; background: transparent; backdrop-filter: blur(24px); border: none; border-bottom: none;`.
+     - Menghilangkan sekat border garis horizontal dan menyamakan tone warna latar menjadi `#08080a;`.
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_exact_sub_navbar_placement.js` lulus 100%.
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.255` di `manifest.json`.
+
+
 
 
 

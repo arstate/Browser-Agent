@@ -1551,6 +1551,30 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 71. Sub-Navbar Webview Placement & Zero-Border Glass Navbar (v2.150.255)
+
+### 📐 1. Penyelarasan Webview Non-Full Tepat di Bawah Navbar
+- **Visibilitas Web 100%**: Mengembalikan alur fleksibel vertikal (`flex-direction: column`) dengan kontainer webview `.apps-overlay-body` yang dimulai persis di bawah navbar (`y = 36px`).
+- **Bebas Tertutup**: Header, tombol navigasi, dan seluruh interaksi atas halaman web (seperti pada Google Flow) kini terlihat dan dapat diakses seutuhnya tanpa tertimpa bilah kontrol.
+
+### 🪟 2. Bilah Transparan Tanpa Sekat
+- **Zero Border Cut**: Menghapus seluruh border pada `.apps-header-bar` (`border: none; border-bottom: none;`) sehingga tidak ada lagi garis patahan atau potongan visual di antara navbar dan webview.
+- **Transparansi Murni**: Menggabungkan `background: transparent;` dengan `backdrop-filter: blur(24px);` dan background dasar gelap terpadu `#08080a`, menyajikan transisi yang halus, estetik, dan elegan.
+
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
+
 
 
 
