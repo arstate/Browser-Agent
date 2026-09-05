@@ -88,9 +88,9 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     return;
   }
 
-  const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
+  const checkCanvasOpen = () => (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
   const currentOpenArtifact = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : activeDesignArtifact);
-  const isRevision = Boolean(options.isRevision || (canvasIsOpen && currentOpenArtifact && currentOpenArtifact.html));
+  const isRevision = Boolean(options.isRevision || (checkCanvasOpen() && currentOpenArtifact && currentOpenArtifact.html));
 
   isExecuting = true;
   updateSendButtonState(true);
@@ -361,12 +361,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         window.__activeDesignArtifact = targetArtifact;
       }
 
-      if (contentEl && !cardRendered) {
-        renderOpenDesignCard(contentEl, targetArtifact, { isRevision: false });
-        cardRendered = true;
-      }
-
-      if (canvasIsOpen) {
+      if (checkCanvasOpen()) {
         const iframe = document.getElementById('opendesign-preview-frame');
         if (iframe) {
           iframe.srcdoc = initialDeckHtml;
@@ -381,6 +376,11 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         slideSummaries.join('\n') +
         `\n\n> 🎨 **Master Design** melanjutkan penyusunan slide berikutnya secara bertahap...`;
       updateAssistantText(assistantBubble, initialProgressText, true);
+
+      if (contentEl) {
+        renderOpenDesignCard(contentEl, targetArtifact, { isRevision: false });
+        cardRendered = true;
+      }
 
       // 3. PROGRESSIVE SLIDE 2 .. N LOOP
       for (let sIdx = 1; sIdx < workingSlides.length; sIdx++) {
@@ -447,7 +447,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         if (typeof setActiveDesignArtifact === 'function') {
           setActiveDesignArtifact(targetArtifact);
         }
-        if (canvasIsOpen) {
+        if (checkCanvasOpen()) {
           const iframe = document.getElementById('opendesign-preview-frame');
           if (iframe) {
             iframe.srcdoc = currentHtml;
@@ -462,6 +462,10 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
           slideSummaries.join('\n') +
           `\n\n> 🎨 **Master Design** memvalidasi slide demi slide secara berurutan.`;
         updateAssistantText(assistantBubble, liveProgressText, true);
+
+        if (contentEl) {
+          renderOpenDesignCard(contentEl, targetArtifact, { isRevision: false });
+        }
 
         await new Promise(r => setTimeout(r, 60));
       }
@@ -562,10 +566,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     }
     updateAssistantText(assistantBubble, briefSummaryText, false);
 
-    if (artifact.html && contentEl) {
-      let targetArtifact = (isRevision && currentOpenArtifact) ? currentOpenArtifact : {};
-      targetArtifact.html = artifact.html;
-      targetArtifact.raw = artifact.raw;
+    if (targetArtifact.html && contentEl) {
       targetArtifact.meta = { ...(targetArtifact.meta || {}), ...(meta || {}) };
       targetArtifact.content = briefSummaryText;
       targetArtifact.rawContent = accumulatedContent;
@@ -578,7 +579,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       }
 
       // If canvas is currently open, live update the open drawer in-place!
-      if (canvasIsOpen) {
+      if (checkCanvasOpen()) {
         const iframe = document.getElementById('opendesign-preview-frame');
         if (iframe) {
           iframe.srcdoc = targetArtifact.html;
@@ -610,10 +611,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         }
       }
 
-      if (!cardRendered && contentEl) {
-        renderOpenDesignCard(contentEl, targetArtifact, { isRevision });
-        cardRendered = true;
-      }
+      renderOpenDesignCard(contentEl, targetArtifact, { isRevision });
+      cardRendered = true;
 
       if (window.OpenDesignBridge?.lintArtifact) {
         window.OpenDesignBridge.lintArtifact(targetArtifact.html).catch(() => {});

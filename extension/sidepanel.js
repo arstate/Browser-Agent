@@ -8875,8 +8875,12 @@ let pendingStreamingData = null;
 
 function renderStreamingChunk(data) {
   if (!data || !data.contentEl) return;
+  const existingCard = data.contentEl.querySelector('.opendesign-result-card');
   const formatted = formatMarkdown(data.text);
   data.contentEl.innerHTML = formatted + '<span class="streaming-cursor"></span>';
+  if (existingCard) {
+    data.contentEl.appendChild(existingCard);
+  }
   hydrateLocalImages(data.bubble);
   requestSmoothScrollToBottom(false, data.bubble);
 }
@@ -8885,6 +8889,8 @@ function updateAssistantText(bubble, text, isStreaming = false) {
   const contentEl = bubble?.querySelector('.message-content');
   const actionsEl = bubble?.querySelector('.message-actions');
   if (!contentEl) return;
+
+  const existingCard = contentEl.querySelector('.opendesign-result-card');
 
   if (!isStreaming) {
     // Final flush - execute immediately
@@ -8895,6 +8901,9 @@ function updateAssistantText(bubble, text, isStreaming = false) {
     pendingStreamingData = null;
     contentEl.style.display = 'block';
     contentEl.innerHTML = formatMarkdown(text);
+    if (existingCard) {
+      contentEl.appendChild(existingCard);
+    }
     hydrateLocalImages(bubble);
     hydrateFileActions(bubble);
     if (actionsEl) {

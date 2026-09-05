@@ -232,7 +232,7 @@ function renderOpenDesignCard(containerEl, artifact, options = {}) {
 
   const isDeck = artifact.html?.includes('deck-sidebar') || artifact.html?.includes('presentation-workspace') || 
                  (artifact.meta?.tags || []).some(t => /slide|deck|presentation/i.test(t));
-  const systemBadge = isDeck ? '🖥️ Slide Deck 16:9' : `🎨 ${escapeHtml(artifact.meta?.system || 'OpenDesign')}`;
+  const systemBadge = isDeck ? 'Slide Deck 16:9' : escapeHtml(artifact.meta?.system || 'OpenDesign');
   const categoryBadge = isDeck ? 'Executive Presentation' : escapeHtml(artifact.meta?.category || 'Web UI');
 
   const defaultColors = isDeck ? ['#F5F3EF', '#0D0E12', '#FF4D00', '#111827'] : ['#0A0A0E', '#16181D', '#CEF128', '#FFFFFF'];
@@ -249,7 +249,7 @@ function renderOpenDesignCard(containerEl, artifact, options = {}) {
     ? `<span class="opendesign-status-pill opendesign-revision-pill" style="background: rgba(52, 211, 153, 0.15); color: #34D399; border: 1px solid rgba(52, 211, 153, 0.3);">Live Updated</span>`
     : `<span class="opendesign-status-pill">Canvas Ready</span>`;
 
-  const btnViewText = options.isRevision ? 'View Updated Canvas ↗' : 'View Canvas ↗';
+  const btnViewText = options.isRevision ? 'Buka Canvas (Update) ↗' : 'Buka Canvas ↗';
 
   card.innerHTML = `
     <div class="opendesign-card-badge-row">
@@ -777,22 +777,12 @@ function initOpenDesignCanvas() {
 
 // Global attachments
 if (typeof window !== 'undefined') {
-  window.showUniversalToast = showUniversalToast;
-  window.renderOpenDesignCard = renderOpenDesignCard;
-  window.generateVirtualFiles = generateVirtualFiles;
-  window.runCanvasAutoLint = runCanvasAutoLint;
-  window.showCanvasLintDetails = showCanvasLintDetails;
-  window.triggerDownloadBlob = triggerDownloadBlob;
-  window.base64ToBlob = base64ToBlob;
-  window.handleCanvasExport = handleCanvasExport;
-  window.openOpenDesignCanvas = openOpenDesignCanvas;
-  window.closeOpenDesignCanvas = closeOpenDesignCanvas;
-  window.switchCanvasTab = switchCanvasTab;
-  window.setCanvasViewport = setCanvasViewport;
-  window.initOpenDesignCanvas = initOpenDesignCanvas;
-  window.getActiveDesignArtifact = getActiveDesignArtifact;
-  window.setActiveDesignArtifact = setActiveDesignArtifact;
-  window.isCanvasOpen = isCanvasOpen;
-  window.attachSlideDeckController = attachSlideDeckController;
-  window.updateCanvasVirtualFiles = updateCanvasVirtualFiles;
+  Object.assign(window, {
+    showUniversalToast, renderOpenDesignCard, generateVirtualFiles,
+    runCanvasAutoLint, showCanvasLintDetails, triggerDownloadBlob,
+    base64ToBlob, handleCanvasExport, openOpenDesignCanvas,
+    closeOpenDesignCanvas, switchCanvasTab, setCanvasViewport,
+    initOpenDesignCanvas, getActiveDesignArtifact, setActiveDesignArtifact,
+    isCanvasOpen, attachSlideDeckController, updateCanvasVirtualFiles
+  });
 }

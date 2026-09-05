@@ -617,3 +617,19 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Begitu Master Design menyelesaikan Slide 2, 3, dst., iframe pratinjau canvas (`opendesign-preview-frame`) diperbarui secara real-time.
    - Animasi skeleton bertransformasi seketika menjadi konten nyata dengan transisi mulus.
 
+
+## 🚀 32. Persistent Slide 1 Open Canvas Card & Dynamic Viewport Sync (v2.150.216)
+
+1. **Persistent OpenDesign Result Card Preservation**:
+   - Fungsi `updateAssistantText` dan `renderStreamingChunk` menjaga keberadaan elemen `.opendesign-result-card` saat memperbarui konten markdown.
+   - Kartu dengan tombol *"Buka Canvas ↗"* tidak lagi terhapus oleh pembaruan teks streaming saat slide lanjutan diproses.
+   - Teks tombol diselaraskan menjadi *"Buka Canvas ↗"* (dan *"Buka Canvas (Update) ↗"* untuk revisi) sesuai Zero Emoji Protocol.
+
+2. **Dynamic Live Canvas Detection**:
+   - Deteksi canvas terbuka kini menggunakan fungsi dinamis `checkCanvasOpen()` yang dievaluasi secara real-time pada setiap siklus pembaruan slide.
+   - Ketika pengguna menekan tombol *"Buka Canvas"* segera setelah Slide 1 selesai, pembaruan slide berikutnya (Slide 2..N) seketika menyelaraskan frame pratinjau (`iframe.srcdoc`) tanpa terhenti oleh variabel statis masa lalu.
+
+3. **Zero ReferenceError Stability**:
+   - Penyelarasan artefak pada tahap finalisasi mengikat variabel `targetArtifact.html` yang terverifikasi, mengeliminasi exception `ReferenceError: artifact is not defined` dan menjamin penyelesaian presentasi 100% mulus.
+
+

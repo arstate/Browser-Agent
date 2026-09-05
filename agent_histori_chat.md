@@ -6125,3 +6125,36 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Validasi sintaks `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
   3. Bump versi manifest ke `v2.150.215`.
 
+### Iterasi 497 (v2.150.216) - 2026-09-05
+- **User Request:**
+  1. "eror Design Mode Error: ReferenceError: artifact is not defined Context chrome://newtab/ Stack Trace design/design_executor.js:699 (runDesignModeLoop)"
+  2. "tambahin ketika slide 1 udah selesai ada respon ai yang ada tombol canvas open biar saya bisa buka langsung"
+- **Akar Masalah (Root Cause):**
+  1. Pada `design_executor.js` baris 565, kode memeriksa `if (artifact.html && contentEl)`. Variabel `artifact` tidak dideklarasikan pada lingkup fungsi (`targetArtifact` yang digunakan di pipeline refaktor bertahap). Akibatnya terlempar `ReferenceError: artifact is not defined` yang ditangkap oleh `catch (err)` di baris 699, memicu kotak merah error dan menghentikan finalisasi.
+  2. Ketika Slide 1 selesai dirancang, pemanggilan `updateAssistantText` berikutnya (`contentEl.innerHTML = ...`) menghapus elemen DOM `.opendesign-result-card` yang sebelumnya telah disematkan di dalam `contentEl`. Kartu hasil dan tombol *"Buka Canvas"* menjadi lenyap seketika saat teks progres slide berikutnya diproses.
+  3. Pengecekan status canvas terbuka (`canvasIsOpen`) menggunakan boolean statis yang dihitung satu kali di awal fungsi. Jika pengguna membuka canvas di tengah jalan setelah Slide 1 selesai, proses perancangan slide berikutnya tidak menyadari bahwa canvas sudah terbuka dan tidak memperbarui iframe secara langsung.
+- **Analisis & Solusi:**
+  1. *Fix ReferenceError (`design_executor.js`)*:
+     - Mengubah pemeriksaan menjadi `if (targetArtifact.html && contentEl)`.
+     - Menghapus deklarasi ulang `let targetArtifact` yang redundan di blok finalisasi.
+     - Memastikan `renderOpenDesignCard(contentEl, targetArtifact, { isRevision })` memperbarui kartu final dengan aman tanpa memicu exception.
+  2. *Card Preservation across Streaming & Markdown Updates (`sidepanel.js`)*:
+     - Memperbaiki `renderStreamingChunk` dan `updateAssistantText` agar memeriksa keberadaan `existingCard = contentEl.querySelector('.opendesign-result-card')`.
+     - Setelah pembaruan `contentEl.innerHTML = formatMarkdown(text)`, elemen `existingCard` disambungkan kembali secara utuh (`contentEl.appendChild(existingCard)`).
+     - Menjamin tombol *"Buka Canvas ↗"* tetap aktif dan dapat diklik oleh pengguna kapan saja selama seluruh siklus perancangan slide berlangsung.
+  3. *Slide 1 Instant Card Attachment & Button Text Polish (`design_executor.js`, `canvas_manager.js`)*:
+     - Pada Slide 1, `updateAssistantText` dipanggil terlebih dahulu untuk mencetak ringkasan, diikuti langsung oleh `renderOpenDesignCard` sehingga kartu hasil seketika terpampang di bubble obrolan.
+     - Memperbarui label tombol di `canvas_manager.js` menjadi *"Buka Canvas ↗"* dan *"Buka Canvas (Update) ↗"* sesuai preferensi pengguna dan Zero Emoji Protocol.
+  4. *Dynamic Canvas State Sync (`design_executor.js`)*:
+     - Mengganti variabel statis dengan fungsi pembantu dinamis `checkCanvasOpen()`.
+     - Saat pengguna mengklik *"Buka Canvas"* setelah Slide 1 selesai, setiap pembaruan Slide 2..N langsung mendeteksi bahwa canvas aktif dan seketika memperbarui `iframe.srcdoc` secara real-time.
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - `design_executor.js`: 726 baris (limit <= 800 baris).
+     - `canvas_manager.js`: 788 baris (limit <= 800 baris).
+     - Seluruh 9 modul di `extension/design/` patuh batasan <= 800 baris.
+- **Verifikasi:**
+  1. Validasi sintaks `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  2. Verifikasi batas baris file via `wc -l extension/design/*.js` memastikan seluruh 9 file <= 800 baris.
+  3. Bump versi manifest ke `v2.150.216`.
+
+
