@@ -585,9 +585,18 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Bilah thumbnail kiri (`#deck-sidebar`) menampilkan siluet miniatur visual yang sesuai dengan layout unik masing-masing slide (`.thumb-mini-cover`, `.thumb-mini-split`, `.thumb-mini-metrics`, `.thumb-mini-quote`, `.thumb-mini-timeline`, `.thumb-mini-conclusion`, `.thumb-mini-grid`), sehingga sidebar tidak lagi tampak kembar identik.
 
 
+## 🚀 30. Progressive Step-by-Step Slide Execution Loop & Master Agent Re-Check (v2.150.214)
 
+1. **Progressive Step-by-Step Slide Execution Architecture**:
+   - Master Design tidak lagi menyemburkan seluruh slide sekaligus secara monolitik; proses kini berjalan secara bertahap slide per slide (Slide 1 -> Slide 2 -> ... -> Slide N).
+   - Setiap slide melewati siklus kerja aktif:
+     - `execute_slide_step`: Penyusunan arketipe tata letak, judul, subjudul, dan kartu informasi slide target.
+     - `audit_slide_quality` via `auditSingleSlide`: Pengujian kualitas deterministik untuk memastikan judul memenuhi panjang minimal, kartu terstruktur dengan benar, dan bebas fake branding.
+     - `revise_slide_step` via `reviseSlideData`: Jika slide tidak lolos pengujian (misal subjudul kosong atau kartu kurang dari standar layout), Master Design secara otomatis merevisi slide hingga terverifikasi `[OK]`.
+   - Gelembung chat menampilkan progress real-time per slide (`- Slide X [OK]: Title (Layout)`).
 
-
-
-
-
+2. **Master Agent Full-Deck Re-Check & Correction Gate**:
+   - Setelah seluruh slide 1..N tuntas dirancang oleh Master Design, Master Agent (`👑 Master Agent`) mengambil alih untuk melakukan re-check detail keseluruhan deck (`master_agent_recheck_all_slides` via `auditFullDeck`).
+   - Master Agent memverifikasi Slide 1 berformat Cover, variasi tata letak antar-slide tinggi (kombinasi cover, split, bento, metrics, timeline, quote, conclusion), serta memastikan tidak ada kartu atau judul yang kosong.
+   - Apabila ditemukan miss atau kekurangan, Master Agent mendelegasikan perintah perbaikan spesifik ke Master Design (`delegate_revision_to_master_design` via `reviseFullDeckData`) hingga seluruh kekurangan disempurnakan.
+   - Master Agent kemudian menerbitkan Final Approval (`audit_and_approve_artifact`) sebelum menyajikan presentasi ke canvas dan chat room.

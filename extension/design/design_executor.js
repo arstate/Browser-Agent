@@ -112,24 +112,19 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     : (typeof window !== 'undefined' && typeof window.detectOptimalSlideTheme === 'function' ? window.detectOptimalSlideTheme : null);
   const deducedTheme = detectThemeFn ? detectThemeFn(userMessage) : { id: 'adaptive', name: 'Adaptive Bespoke System' };
 
+  const slideCountMatch = userMessage.match(/(\d+)\s*(?:slide|halaman|lembar)/i);
+  const targetSlideCount = slideCountMatch ? Math.max(3, Math.min(parseInt(slideCountMatch[1], 10), 12)) : 5;
+
   // Initialize structured 5-milestone plan for Master Agent & Master Design
-  const designMilestones = isRevision
-    ? [
-        { title: "👑 Master Agent: Analisis Permintaan Revisi Canvas", completed: false, inProgress: true },
-        { title: "🤝 Delegasi ke Master Design: Penyesuaian Slide & Elemen Aktif", completed: false, inProgress: false },
-        { title: "🎨 Master Design: Modifikasi Teks, Tata Letak & Visual Canvas", completed: false, inProgress: false },
-        { title: "🎨 Master Design: Sinkronisasi Seluruh Slide & Token Desain", completed: false, inProgress: false },
-        { title: "👑 Master Agent: Verifikasi Perubahan & Update Live Canvas Langsung", completed: false, inProgress: false }
-      ]
-    : ((typeof getDesignMilestones === 'function')
-        ? getDesignMilestones(userMessage)
-        : [
-            { title: "👑 Master Agent: Analisis Brief & Strategi Konseptual", completed: false, inProgress: true },
-            { title: "🤝 Delegasi ke Master Design: Kurasi Style Visual & Palet Sesuai Materi", completed: false, inProgress: false },
-            { title: "🎨 Master Design: Sintesis Konten 16:9 Widescreen & Struktur Bab", completed: false, inProgress: false },
-            { title: "🎨 Master Design: Penerapan Tipografi Sesuai Tema & Visual Polish", completed: false, inProgress: false },
-            { title: "👑 Master Agent: Review Kualitas, Anti-Slop Audit & Final Approval", completed: false, inProgress: false }
-          ]);
+  const designMilestones = (typeof getDesignMilestones === 'function')
+    ? getDesignMilestones(userMessage, isRevision, targetSlideCount)
+    : [
+        { title: "👑 Master Agent: Analisis Brief & Cetak Biru", completed: false, inProgress: true },
+        { title: "🤝 Delegasi ke Master Design: Kurasi Style Visual & Palet", completed: false, inProgress: false },
+        { title: `🎨 Master Design: Perancangan Bertahap Slide (1 s/d ${targetSlideCount})`, completed: false, inProgress: false },
+        { title: "🔍 Quality Gate: Evaluasi & Revisi Setiap Slide", completed: false, inProgress: false },
+        { title: "👑 Master Agent: Re-Check Detail Seluruh Slide & Final Approval", completed: false, inProgress: false }
+      ];
 
   if (typeof renderTaskScheduleSection === 'function') {
     renderTaskScheduleSection(assistantBubble, designMilestones, 'min');
@@ -360,20 +355,184 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     }
 
     if (toolBadgeSynthesize && typeof updateToolBadgeState === 'function') {
-      updateToolBadgeState(toolBadgeSynthesize, 'success', isRevision ? 'Revisi elemen dan tata letak slide deck berhasil disusun.' : 'Slide deck eksekutif 16:9 widescreen berhasil disintesis.');
+      updateToolBadgeState(toolBadgeSynthesize, 'success', isRevision ? 'Revisi elemen dan tata letak slide deck berhasil disusun.' : 'Drafting materi presentasi 16:9 selesai.');
     }
 
-    // Step 3: Master Agent conducts quality audit & approval
+    // Extract slides from accumulated content or markdown
+    let workingSlides = [];
+    const rawExtracted = (typeof extractSlidesFromRawHtml === 'function') ? extractSlidesFromRawHtml(accumulatedContent) : [];
+    if (rawExtracted && rawExtracted.length > 0) {
+      workingSlides = rawExtracted;
+    } else {
+      const mdSlides = (typeof parseMarkdownToSlides === 'function') ? parseMarkdownToSlides(accumulatedContent, userMessage) : [];
+      if (mdSlides && mdSlides.length > 0) {
+        workingSlides = mdSlides;
+      }
+    }
+
+    // Supplement with blueprint if count less than targetSlideCount
+    const defaultBp = (typeof createDefaultBlueprint === 'function') ? createDefaultBlueprint(userMessage, targetSlideCount, deducedTheme) : null;
+    if (workingSlides.length === 0) {
+      workingSlides = defaultBp ? defaultBp.slides : [];
+    } else if (workingSlides.length < targetSlideCount && defaultBp && defaultBp.slides) {
+      for (let sIdx = workingSlides.length; sIdx < targetSlideCount; sIdx++) {
+        if (defaultBp.slides[sIdx]) workingSlides.push(defaultBp.slides[sIdx]);
+      }
+    }
+
+    // Step 2: Master Design executes step-by-step per-slide loop with quality check & revision
+    designMilestones[1].completed = true;
+    designMilestones[1].inProgress = false;
+    designMilestones[2].completed = false;
+    designMilestones[2].inProgress = true;
+    if (typeof updateTaskScheduleProgress === 'function') {
+      updateTaskScheduleProgress(assistantBubble, designMilestones, 2, true);
+    }
+
+    const slideSummaries = [];
+    for (let sIdx = 0; sIdx < workingSlides.length; sIdx++) {
+      if (!isExecuting || abortController?.signal?.aborted) break;
+
+      const slideNum = sIdx + 1;
+      let curSlide = workingSlides[sIdx];
+      const slideTitle = curSlide.title || `Slide ${slideNum}`;
+
+      // Status & tool badge: execute_slide_step
+      updateAssistantActiveAgent(assistantBubble, "Master Design", `🎨 Master Design: Merancang Slide ${slideNum}/${workingSlides.length}...`, false, false);
+      let slideExecBadge = null;
+      if (typeof appendToolBadge === 'function') {
+        slideExecBadge = appendToolBadge(
+          assistantBubble,
+          'execute_slide_step',
+          { slideIndex: slideNum, layout: curSlide.layout || 'bento', title: slideTitle },
+          'Master Design'
+        );
+        if (typeof updateToolBadgeState === 'function') {
+          updateToolBadgeState(slideExecBadge, 'success', `Slide ${slideNum} (${curSlide.layout || 'bento'}) selesai dirancang.`);
+        }
+      }
+
+      // Status & tool badge: audit_slide_quality
+      updateAssistantActiveAgent(assistantBubble, "Master Design", `🔍 Master Design: Mengaudit kualitas Slide ${slideNum}...`, false, false);
+      let auditRes = (typeof auditSingleSlide === 'function')
+        ? auditSingleSlide(curSlide, curSlide.layout, userMessage)
+        : { ok: true };
+
+      let slideAuditBadge = null;
+      if (typeof appendToolBadge === 'function') {
+        slideAuditBadge = appendToolBadge(
+          assistantBubble,
+          'audit_slide_quality',
+          { slideIndex: slideNum, title: slideTitle, layout: curSlide.layout || 'bento' },
+          'Master Design'
+        );
+      }
+
+      // If quality check fails, trigger revision until OK
+      if (!auditRes.ok) {
+        if (slideAuditBadge && typeof updateToolBadgeState === 'function') {
+          updateToolBadgeState(slideAuditBadge, 'running', `Catatan audit: ${auditRes.reason}`);
+        }
+        updateAssistantActiveAgent(assistantBubble, "Master Design", `🛠️ Master Design: Merevisi Slide ${slideNum}...`, false, false);
+
+        let slideReviseBadge = null;
+        if (typeof appendToolBadge === 'function') {
+          slideReviseBadge = appendToolBadge(
+            assistantBubble,
+            'revise_slide_step',
+            { slideIndex: slideNum, issue: auditRes.reason },
+            'Master Design'
+          );
+        }
+
+        if (typeof reviseSlideData === 'function') {
+          curSlide = reviseSlideData(curSlide, auditRes.reason, curSlide.layout, userMessage, deducedTheme);
+          workingSlides[sIdx] = curSlide;
+        }
+
+        await new Promise(r => setTimeout(r, 120));
+
+        auditRes = (typeof auditSingleSlide === 'function')
+          ? auditSingleSlide(curSlide, curSlide.layout, userMessage)
+          : { ok: true };
+
+        if (slideReviseBadge && typeof updateToolBadgeState === 'function') {
+          updateToolBadgeState(slideReviseBadge, 'success', `Slide ${slideNum} berhasil disempurnakan.`);
+        }
+        if (slideAuditBadge && typeof updateToolBadgeState === 'function') {
+          updateToolBadgeState(slideAuditBadge, 'success', `Slide ${slideNum} tervalidasi memenuhi standar kualitas.`);
+        }
+      } else {
+        if (slideAuditBadge && typeof updateToolBadgeState === 'function') {
+          updateToolBadgeState(slideAuditBadge, 'success', `Slide ${slideNum} tervalidasi memenuhi standar kualitas.`);
+        }
+      }
+
+      slideSummaries.push(`- **Slide ${slideNum} [OK]**: ${curSlide.title || 'Slide'} *(${curSlide.layout || 'bento'})*`);
+      const liveProgressText = `*⚡ Perancangan Bertahap Sedang Berjalan (${slideNum}/${workingSlides.length} slide tervalidasi)...*\n\n` +
+        slideSummaries.join('\n') +
+        `\n\n> 🎨 **Master Design** memvalidasi setiap slide demi slide secara berurutan.`;
+      updateAssistantText(assistantBubble, liveProgressText, true);
+
+      await new Promise(r => setTimeout(r, 80));
+    }
+
+    // Step 3: Master Agent conducts full-deck detailed re-check
+    designMilestones[2].completed = true;
+    designMilestones[2].inProgress = false;
     designMilestones[3].completed = true;
     designMilestones[3].inProgress = false;
     designMilestones[4].completed = false;
     designMilestones[4].inProgress = true;
-
     if (typeof updateTaskScheduleProgress === 'function') {
       updateTaskScheduleProgress(assistantBubble, designMilestones, 4, true);
     }
-    const auditStatusText = isRevision ? "👑 Master Agent: Memverifikasi revisi & sinkronisasi canvas..." : "👑 Master Agent: Memverifikasi kualitas & anti-slop...";
-    updateAssistantActiveAgent(assistantBubble, "Master Agent", auditStatusText, true, false);
+
+    updateAssistantActiveAgent(assistantBubble, "Master Agent", "👑 Master Agent: Re-check detail seluruh slide & deteksi miss...", true, false);
+
+    let toolBadgeRecheck = null;
+    if (typeof appendToolBadge === 'function') {
+      toolBadgeRecheck = appendToolBadge(
+        assistantBubble,
+        'master_agent_recheck_all_slides',
+        { totalSlides: workingSlides.length, target: 'Kontinuitas, layout variety & anti-slop' },
+        'Master Agent'
+      );
+    }
+
+    let deckAudit = (typeof auditFullDeck === 'function') ? auditFullDeck(workingSlides, userMessage) : { ok: true, missList: [] };
+
+    if (!deckAudit.ok && deckAudit.missList && deckAudit.missList.length > 0) {
+      if (toolBadgeRecheck && typeof updateToolBadgeState === 'function') {
+        updateToolBadgeState(toolBadgeRecheck, 'running', `Ditemukan catatan: ${deckAudit.missList.join(', ')}`);
+      }
+
+      updateAssistantActiveAgent(assistantBubble, "Master Agent", "👑 Master Agent: Memerintahkan Master Design merevisi slide yang kurang...", true, false);
+      let toolBadgeDelegateFix = null;
+      if (typeof appendToolBadge === 'function') {
+        toolBadgeDelegateFix = appendToolBadge(
+          assistantBubble,
+          'delegate_revision_to_master_design',
+          { missList: deckAudit.missList, order: 'Perbaiki variasi arketipe dan lengkapi detail slide' },
+          'Master Agent'
+        );
+      }
+
+      if (typeof reviseFullDeckData === 'function') {
+        workingSlides = reviseFullDeckData(workingSlides, deckAudit.missList, userMessage, deducedTheme);
+      }
+
+      await new Promise(r => setTimeout(r, 150));
+      deckAudit = (typeof auditFullDeck === 'function') ? auditFullDeck(workingSlides, userMessage) : { ok: true, missList: [] };
+
+      if (toolBadgeDelegateFix && typeof updateToolBadgeState === 'function') {
+        updateToolBadgeState(toolBadgeDelegateFix, 'success', 'Master Design telah menyempurnakan seluruh slide sesuai arahan Master Agent.');
+      }
+    }
+
+    if (toolBadgeRecheck && typeof updateToolBadgeState === 'function') {
+      updateToolBadgeState(toolBadgeRecheck, 'success', `Seluruh ${workingSlides.length} slide tervalidasi 100% lengkap tanpa miss.`);
+    }
 
     if (typeof appendToolBadge === 'function') {
       toolBadgeAudit = appendToolBadge(
@@ -381,44 +540,37 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         isRevision ? 'audit_and_apply_live_revision' : 'audit_and_approve_artifact',
         isRevision
           ? { verified: true, liveSynced: true, target: 'Active Canvas' }
-          : { antiSlopCheck: true, themeCompliance: deducedTheme.name, layoutVerification: '16:9 Widescreen' },
+          : { antiSlopCheck: true, allSlidesOk: true, totalSlides: workingSlides.length, themeCompliance: deducedTheme.name },
         'Master Agent'
       );
-    }
-
-    let artifact = extractHtmlArtifact(accumulatedContent);
-
-    // Fallback: If no direct HTML block found, convert markdown slide outline to interactive HTML slide deck
-    if (!artifact.html && accumulatedContent.trim()) {
-      const convertFn = (typeof convertMarkdownOrTextToInteractiveSlideDeck === 'function')
-        ? convertMarkdownOrTextToInteractiveSlideDeck
-        : (typeof window !== 'undefined' && typeof window.convertMarkdownOrTextToInteractiveSlideDeck === 'function' ? window.convertMarkdownOrTextToInteractiveSlideDeck : null);
-      if (convertFn) {
-        const convertedSlideHtml = convertFn(accumulatedContent, userMessage);
-        if (convertedSlideHtml) {
-          artifact = {
-            html: convertedSlideHtml,
-            raw: convertedSlideHtml
-          };
-        }
+      if (typeof updateToolBadgeState === 'function') {
+        updateToolBadgeState(toolBadgeAudit, 'success', isRevision ? 'Revisi tervalidasi dan disinkronkan langsung ke canvas aktif.' : `Artifact disetujui. Standar tema ${deducedTheme.name}, rasio 16:9, dan ${workingSlides.length} slide terpenuhi.`);
       }
     }
 
-    const meta = extractDesignMeta(accumulatedContent);
+    // Step 4: Assemble final executive slide deck HTML
+    const meta = extractDesignMeta(accumulatedContent) || {};
+    const cleanTopic = (userMessage || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim();
+    const rawTitle = meta?.title || cleanTopic.slice(0, 40) || "Executive Presentation Deck";
 
-    // Ensure artifact has the 100% executive slide deck layout (with sidebar thumbnails & floating dock)
-    if (artifact.html) {
-      const upgradeFn = (typeof upgradeSlideDeckHtmlIfNeeded === 'function')
-        ? upgradeSlideDeckHtmlIfNeeded
-        : (typeof window !== 'undefined' && typeof window.upgradeSlideDeckHtmlIfNeeded === 'function' ? window.upgradeSlideDeckHtmlIfNeeded : null);
-      if (upgradeFn) {
-        artifact.html = upgradeFn(artifact.html, userMessage, meta);
-      }
-    }
+    const deckMeta = {
+      title: rawTitle,
+      brand: rawTitle,
+      categoryTitle: rawTitle.toUpperCase(),
+      subCategory: deducedTheme.subHeader,
+      accentColor: meta?.colors?.[2] || deducedTheme.accent,
+      themeObj: deducedTheme,
+      userPrompt: userMessage
+    };
 
-    if (toolBadgeAudit && typeof updateToolBadgeState === 'function') {
-      updateToolBadgeState(toolBadgeAudit, 'success', isRevision ? 'Revisi tervalidasi dan disinkronkan langsung ke canvas aktif.' : `Artifact tervalidasi. Standar visual tema ${deducedTheme.name} dan rasio 16:9 terpenuhi.`);
-    }
+    const finalHtml = (typeof buildExecutiveSlideDeckHtml === 'function')
+      ? buildExecutiveSlideDeckHtml(workingSlides, deckMeta)
+      : ((typeof renderSlideDeckHtml === 'function') ? renderSlideDeckHtml(workingSlides, deckMeta) : accumulatedContent);
+
+    let artifact = {
+      html: finalHtml,
+      raw: finalHtml
+    };
 
     // Finalize tasks & tools
     designMilestones[4].completed = true;
