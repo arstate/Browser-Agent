@@ -839,6 +839,41 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_prompt.js`: 184 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
 
+## 🎨 41. Slide Deck Realtime Edit Mode Injection, Native Text Selection Prevention & Transform Activation (v2.150.225)
+
+1. **Native Text Selection Prevention Architecture (`slide_editor.js`)**:
+   - **Global User-Select Suppression**:
+     - Aturan CSS ketat pada body aktif: `body.deck-edit-mode-active, body.deck-edit-mode-active * { user-select: none !important; -webkit-user-select: none !important; }`.
+     - Pengecualian presisi pada elemen inline editing: `body.deck-edit-mode-active [contenteditable="true"], body.deck-edit-mode-active [contenteditable="true"] * { user-select: text !important; -webkit-user-select: text !important; }`.
+   - **Mousedown Drag Hijack Prevention**:
+     - Pada `mousedown` handler `slide_editor.js`, memanggil `if (!target.isContentEditable) { e.preventDefault(); }` segera setelah elemen target editable terdeteksi. Hal ini mencegah Chrome menginisiasi native text selection highlight berwarna biru saat pengguna mulai mengklik dan menggeser elemen teks di dalam kanvas.
+
+2. **Expanded Target Element Selection (`findEditableTarget`)**:
+   - Meliputi seluruh elemen teks, judul (`h1-h4`), badge (`.cover-badge-pill`, `.col-badge`), metadata (`.cover-meta-item`, `.cover-meta-val`), kutipan, metrik, kartu kolom, dan elemen anak kanvas (`span`, `strong`, `em`, `b`, `i`).
+   - Penanganan khusus untuk void elements (`img`, `input`, `hr`) agar secara otomatis mengarahkan target ke `parentElement`, menjamin bounding box `.deck-figma-box` selalu dapat disisipkan ke DOM tanpa exception.
+
+3. **Ultra-High Z-Index Floating Toolbar**:
+   - `.deck-editor-toolbar` kini memiliki `z-index: 999999 !important;`, menjamin bilah alat terapung selalu berada di lapisan teratas di atas seluruh slide canvas dan dock controller.
+   - State aktif dipaksakan via CSS: `body.deck-edit-mode-active .deck-editor-toolbar { transform: translateX(-50%) translateY(0) !important; opacity: 1 !important; pointer-events: auto !important; }`.
+
+4. **Synchronous Runtime Injection (`ensureSlideEditorInjected` di `canvas_manager.js`)**:
+   - Menyuntikkan style, HTML toolbar, dan mengevaluasi script editor via `win.eval` atau `win.Function` ke dalam konteks `iframe.contentWindow` secara instan bahkan sebelum event toggle dipancarkan.
+   - Status tombol header `#btn-canvas-edit-mode` diverifikasi secara deterministik terhadap kehadiran class `deck-edit-mode-active` pada `iframe.contentDocument.body`.
+
+5. **Strict Sub-800 Line Rule Compliance**:
+   - `slide_editor.js`: 781 baris.
+   - `canvas_manager.js`: 795 baris.
+   - `slide_styles.js`: 789 baris.
+   - `slide_template.js`: 781 baris.
+   - `design_executor.js`: 776 baris.
+   - `design_agent.js`: 626 baris.
+   - `slide_deck_engine.js`: 506 baris.
+   - `slide_themes.js`: 266 baris.
+   - `canvas_exporter.js`: 244 baris.
+   - `design_prompt.js`: 183 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
+
 
 
 

@@ -5,7 +5,12 @@
 
 function getSlideDeckEditorCss() {
   return `
-    body.deck-edit-mode-active .slide-stage-wrap, body.deck-edit-mode-active .deck-stage-wrap { user-select: none; }
+    body.deck-edit-mode-active, body.deck-edit-mode-active * {
+      user-select: none !important; -webkit-user-select: none !important;
+    }
+    body.deck-edit-mode-active [contenteditable="true"], body.deck-edit-mode-active [contenteditable="true"] * {
+      user-select: text !important; -webkit-user-select: text !important;
+    }
     body.deck-edit-mode-active .slide-section.active .slide-canvas { position: relative; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas [data-deck-editable="true"],
     body.deck-edit-mode-active .slide-section.active .slide-canvas h1,
@@ -21,9 +26,7 @@ function getSlideDeckEditorCss() {
     body.deck-edit-mode-active .slide-section.active .slide-canvas .cover-badge-pill {
       cursor: move !important; transition: outline 0.12s, box-shadow 0.12s;
     }
-    body.deck-edit-mode-active .slide-section.active .slide-canvas [contenteditable="true"] {
-      cursor: text !important; user-select: text !important;
-    }
+    body.deck-edit-mode-active .slide-section.active .slide-canvas [contenteditable="true"] { cursor: text !important; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas *:hover {
       outline: 1.5px dashed rgba(99, 102, 241, 0.45); outline-offset: 3px;
     }
@@ -33,16 +36,16 @@ function getSlideDeckEditorCss() {
       box-shadow: 0 0 14px rgba(99, 102, 241, 0.35) !important;
       position: relative !important;
     }
-    span.deck-editable-selected, a.deck-editable-selected, b.deck-editable-selected, i.deck-editable-selected {
+    span.deck-editable-selected, a.deck-editable-selected, b.deck-editable-selected, i.deck-editable-selected, strong.deck-editable-selected {
       display: inline-block !important;
     }
     .deck-figma-box {
-      position: absolute; inset: -5px; pointer-events: none; z-index: 1000;
+      position: absolute; inset: -5px; pointer-events: none; z-index: 10000;
     }
     .figma-handle {
       position: absolute; width: 9px; height: 9px; background: #FFFFFF;
       border: 1.5px solid var(--accent, #6366F1); border-radius: 2px;
-      pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 1002;
+      pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 10002;
     }
     .figma-handle-tl { top: -5px; left: -5px; cursor: nwse-resize; }
     .figma-handle-tr { top: -5px; right: -5px; cursor: nesw-resize; }
@@ -56,7 +59,7 @@ function getSlideDeckEditorCss() {
       position: absolute; top: -29px; left: 50%; transform: translateX(-50%);
       width: 10px; height: 10px; background: #FFFFFF; border: 1.5px solid var(--accent, #6366F1);
       border-radius: 50%; cursor: crosshair; pointer-events: auto;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 1002;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 10002;
     }
     .figma-handle-rot:hover { background: var(--accent, #6366F1); }
     .figma-badge-dim {
@@ -64,20 +67,20 @@ function getSlideDeckEditorCss() {
       background: rgba(15, 23, 42, 0.92); color: #F8FAFC; font-family: ui-monospace, monospace;
       font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
       border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; pointer-events: none;
-      display: none; z-index: 1003;
+      display: none; z-index: 10003;
     }
     .deck-editor-toolbar {
       position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-70px);
       display: flex; align-items: center; gap: 6px; background: rgba(13, 17, 23, 0.94);
       border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 9999px; padding: 6px 14px;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(99, 102, 241, 0.25);
-      backdrop-filter: blur(24px); z-index: 1000; opacity: 0; pointer-events: none;
+      backdrop-filter: blur(24px); z-index: 999999 !important; opacity: 0; pointer-events: none;
       transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
       color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 12px; max-width: 95vw; overflow-x: auto;
     }
     body.deck-edit-mode-active .deck-editor-toolbar {
-      transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto;
+      transform: translateX(-50%) translateY(0) !important; opacity: 1 !important; pointer-events: auto !important;
     }
     .editor-tool-group { display: flex; align-items: center; gap: 4px; }
     .editor-tool-divider { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.14); margin: 0 2px; flex-shrink: 0; }
@@ -354,7 +357,7 @@ function getSlideDeckEditorScript() {
       let lastToggleTime = 0;
       function toggleEditMode(forceState) {
         const now = Date.now();
-        if (typeof forceState !== 'boolean' && (now - lastToggleTime < 300)) return;
+        if (typeof forceState !== 'boolean' && (now - lastToggleTime < 80)) return;
         lastToggleTime = now;
         isEditMode = (typeof forceState === 'boolean') ? forceState : !isEditMode;
         document.body.classList.toggle('deck-edit-mode-active', isEditMode);
@@ -419,13 +422,22 @@ function getSlideDeckEditorScript() {
         if (target.closest('#deck-editor-toolbar') || target.closest('.deck-floating-dock') || target.closest('#deck-sidebar')) {
           return null;
         }
-        return target.closest(
+        let el = target.closest(
           '[data-deck-editable="true"], .slide-main-title, .slide-lead-desc, .col-title, .col-desc, ' +
           '.col-badge, .col-tag-chip, .col-highlight-text, .cover-main-title, .cover-lead-subtitle, ' +
-          '.cover-badge-pill, .metric-val, .metric-title, .metric-desc, .quote-text, .quote-author, ' +
+          '.cover-badge-pill, .cover-meta-item, .cover-meta-val, .metric-val, .metric-title, .metric-desc, .quote-text, .quote-author, ' +
           '.timeline-step-title, .timeline-step-desc, .conclusion-card-title, .conclusion-card-desc, ' +
-          '.slide-col, .split-col, .metric-card, .timeline-step, .conclusion-card, h1, h2, h3, p'
+          '.slide-col, .split-col, .metric-card, .timeline-step, .conclusion-card, h1, h2, h3, h4, p, span, strong, em, b, i'
         );
+        if (el && !el.classList.contains('slide-section') && !el.classList.contains('slide-stage-wrap') && !el.classList.contains('deck-stage-wrap') && !el.classList.contains('slide-canvas')) {
+          if (['IMG', 'INPUT', 'HR'].includes(el.tagName) && el.parentElement) el = el.parentElement;
+          return el;
+        }
+        const canvas = target.closest('.slide-canvas');
+        if (canvas && target !== canvas && !target.classList.contains('slide-header-bar') && !target.classList.contains('slide-footer-bar')) {
+          return target;
+        }
+        return null;
       }
 
       // Interaction: Selection, Move Drag, and Figma Transform Handles
@@ -458,6 +470,10 @@ function getSlideDeckEditorScript() {
         if (!target) {
           clearSelection();
           return;
+        }
+
+        if (!target.isContentEditable) {
+          e.preventDefault();
         }
 
         const isMulti = e.shiftKey || e.ctrlKey || e.metaKey;

@@ -33,12 +33,48 @@ function isCanvasOpen() {
   return Boolean(canvasPane && canvasPane.style.display !== 'none' && document.body.classList.contains('canvas-active'));
 }
 
+function ensureSlideEditorInjected(iframe) {
+  if (!iframe) return false;
+  try {
+    const doc = iframe.contentDocument, win = iframe.contentWindow;
+    if (!doc || !doc.body || !win) return false;
+    if (!doc.getElementById('deck-editor-injected-css')) {
+      const getCss = (typeof getSlideDeckEditorCss === 'function') ? getSlideDeckEditorCss : (typeof window !== 'undefined' ? window.getSlideDeckEditorCss : null);
+      if (getCss) {
+        const s = doc.createElement('style'); s.id = 'deck-editor-injected-css'; s.textContent = getCss(); doc.head.appendChild(s);
+      }
+    }
+    if (!doc.getElementById('deck-editor-toolbar')) {
+      const getHtml = (typeof getSlideDeckEditorHtml === 'function') ? getSlideDeckEditorHtml : (typeof window !== 'undefined' ? window.getSlideDeckEditorHtml : null);
+      if (getHtml) {
+        const wrap = doc.createElement('div'); wrap.innerHTML = getHtml();
+        while (wrap.firstChild) doc.body.appendChild(wrap.firstChild);
+      }
+    }
+    if (typeof win.toggleEditMode !== 'function') {
+      const getScript = (typeof getSlideDeckEditorScript === 'function') ? getSlideDeckEditorScript : (typeof window !== 'undefined' ? window.getSlideDeckEditorScript : null);
+      if (getScript) {
+        const code = getScript();
+        try {
+          if (typeof win.eval === 'function') win.eval(code);
+          else if (win.Function) (new win.Function(code))();
+        } catch (_) {
+          const sc = doc.createElement('script'); sc.textContent = code; doc.body.appendChild(sc);
+        }
+      }
+    }
+    return (typeof win.toggleEditMode === 'function');
+  } catch (_) { return false; }
+}
+
 function attachSlideDeckController(iframe) {
   if (!iframe) return;
   try {
     const doc = iframe.contentDocument;
     const win = iframe.contentWindow;
     if (!doc || !doc.body) return;
+
+    ensureSlideEditorInjected(iframe);
 
     const slides = Array.from(doc.querySelectorAll('.slide-section'));
     if (slides.length === 0) return;
@@ -69,19 +105,6 @@ function attachSlideDeckController(iframe) {
       b.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Edit</span>`;
       if (fsBtn) { dock.insertBefore(div, fsBtn); dock.insertBefore(b, fsBtn); }
       else { dock.appendChild(div); dock.appendChild(b); }
-    }
-
-    if (!doc.getElementById('deck-editor-toolbar')) {
-      if (typeof getSlideDeckEditorCss === 'function') {
-        const s = doc.createElement('style'); s.id = 'deck-editor-injected-css'; s.textContent = getSlideDeckEditorCss(); doc.head.appendChild(s);
-      }
-      if (typeof getSlideDeckEditorHtml === 'function') {
-        const wrap = doc.createElement('div'); wrap.innerHTML = getSlideDeckEditorHtml();
-        while (wrap.firstChild) doc.body.appendChild(wrap.firstChild);
-      }
-      if (typeof getSlideDeckEditorScript === 'function') {
-        const sc = doc.createElement('script'); sc.textContent = getSlideDeckEditorScript(); doc.body.appendChild(sc);
-      }
     }
 
     let currentIndex = 0;
@@ -610,15 +633,10 @@ function initOpenDesignCanvas() {
   });
 
   const previewIframe = document.getElementById('opendesign-preview-frame');
-  if (previewIframe) {
-    previewIframe.addEventListener('load', () => {
-      attachSlideDeckController(previewIframe);
-    });
-  }
+  if (previewIframe) previewIframe.addEventListener('load', () => attachSlideDeckController(previewIframe));
 
   // Refresh
-  const btnRefresh = document.getElementById('btn-canvas-refresh');
-  btnRefresh?.addEventListener('click', () => {
+  document.getElementById('btn-canvas-refresh')?.addEventListener('click', () => {
     const iframe = document.getElementById('opendesign-preview-frame');
     if (iframe && activeDesignArtifact?.html) {
       iframe.srcdoc = activeDesignArtifact.html;
@@ -651,12 +669,15 @@ function initOpenDesignCanvas() {
   btnEditMode?.addEventListener('click', () => {
     const iframe = document.getElementById('opendesign-preview-frame');
     if (!iframe?.contentWindow) return;
+    ensureSlideEditorInjected(iframe);
     if (typeof iframe.contentWindow.toggleEditMode === 'function') {
       iframe.contentWindow.toggleEditMode();
     } else {
       iframe.contentWindow.postMessage({ type: 'TOGGLE_EDIT_MODE' }, '*');
     }
-    const isAct = btnEditMode.classList.toggle('active');
+    const doc = iframe.contentDocument;
+    const isAct = doc?.body ? doc.body.classList.contains('deck-edit-mode-active') : btnEditMode.classList.toggle('active');
+    btnEditMode.classList.toggle('active', isAct);
     btnEditMode.title = isAct ? 'Mode Edit Realtime (Aktif)' : 'Mode Edit Realtime (Geser, Font, Teks)';
     showUniversalToast(isAct ? '✏️ Mode Edit Realtime Aktif' : '💾 Mode Edit Disimpan & Selesai');
   });
@@ -669,31 +690,25 @@ function initOpenDesignCanvas() {
     const isExp = pane.classList.toggle('is-expanded');
     btnExpand.title = isExp ? 'Kembalikan ke Tampilan Split' : 'Maksimalkan Layar Penuh';
     btnExpand.innerHTML = isExp 
-      ? `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6m10-10h-6V4m0 6l7-7M3 21l7-7"/></svg>`
-      : `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
+      ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6m10-10h-6V4m0 6l7-7M3 21l7-7"/></svg>'
+      : '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
   });
 
-  // Close
+  // Close, Copy Code & File
   document.getElementById('btn-canvas-close')?.addEventListener('click', closeOpenDesignCanvas);
-
-  // Copy Code & File
   document.getElementById('btn-canvas-copy-code')?.addEventListener('click', async () => {
     if (!activeDesignArtifact?.html) return;
     try {
       await navigator.clipboard.writeText(activeDesignArtifact.html);
       const label = document.getElementById('canvas-copy-code-text');
       if (label) { label.textContent = 'Copied! ✓'; setTimeout(() => { label.textContent = 'Copy Code'; }, 2000); }
-      showUniversalToast('📋 Kode HTML berhasil disalin ke clipboard');
+      showUniversalToast('📋 Kode HTML berhasil disalin');
     } catch (_) { showUniversalToast('❌ Gagal menyalin kode'); }
   });
-
   document.getElementById('btn-canvas-copy-file')?.addEventListener('click', async () => {
     const text = document.getElementById('canvas-file-code-display')?.textContent;
     if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      showUniversalToast('📋 File berhasil disalin ke clipboard');
-    } catch (_) { showUniversalToast('❌ Gagal menyalin file'); }
+    try { await navigator.clipboard.writeText(text); showUniversalToast('📋 File berhasil disalin'); } catch (_) { showUniversalToast('❌ Gagal'); }
   });
 
   // Anti-Slop Lint Footer Status & Button
@@ -703,10 +718,8 @@ function initOpenDesignCanvas() {
     if (!activeDesignArtifact?.html) return;
     btnLint.disabled = true;
     btnLint.innerHTML = `<span style="display:inline-block;animation:spin 1s linear infinite;">⏳</span><span>Memeriksa...</span>`;
-    try {
-      await runCanvasAutoLint(activeDesignArtifact.html);
-      showCanvasLintDetails();
-    } catch (_) { showUniversalToast('ℹ️ Linter OpenDesign aktif.'); }
+    try { await runCanvasAutoLint(activeDesignArtifact.html); showCanvasLintDetails(); }
+    catch (_) { showUniversalToast('ℹ️ Linter OpenDesign aktif.'); }
     finally {
       btnLint.disabled = false;
       btnLint.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Anti-Slop Lint</span>`;
@@ -717,7 +730,6 @@ function initOpenDesignCanvas() {
   const btnExportTrigger = document.getElementById('btn-canvas-footer-export');
   const exportMenu = document.getElementById('canvas-export-menu');
   const exportWrapper = btnExportTrigger?.closest('.canvas-export-dropdown-wrapper');
-
   btnExportTrigger?.addEventListener('click', (e) => {
     e.stopPropagation();
     if (!exportMenu) return;
@@ -725,7 +737,6 @@ function initOpenDesignCanvas() {
     exportMenu.style.display = isHidden ? 'flex' : 'none';
     exportWrapper?.classList.toggle('open', isHidden);
   });
-
   document.querySelectorAll('.canvas-export-option').forEach(opt => {
     opt.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -734,7 +745,6 @@ function initOpenDesignCanvas() {
       await handleCanvasExport(opt.getAttribute('data-format') || 'html');
     });
   });
-
   document.addEventListener('click', (e) => {
     if (exportMenu && !exportMenu.contains(e.target) && !btnExportTrigger?.contains(e.target)) {
       exportMenu.style.display = 'none';

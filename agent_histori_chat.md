@@ -6445,6 +6445,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/design/*.js extension/*.js` lolos 100% tanpa error.
   4. Bump versi manifest ke `v2.150.224`.
 
+### 🚀 Iterasi 506: Slide Deck Realtime Edit Mode Injection, Native Text Selection Prevention & Transform Activation (v2.150.225)
+- **User Request:**
+  - "mana masih gabisa ngedit gii bro coba lo cek detail lo search web buat cari info" (Pengguna mengunggah tangkapan layar di mana tombol edit header telah aktif berwarna biru, tetapi saat teks slide diseret, browser justru melakukan native blue text selection bukannya memunculkan handle Figma atau memindahkan posisi elemen).
+- **Akar Masalah:**
+  1. Pada handler `mousedown` di `slide_editor.js`, pemanggilan `e.preventDefault()` terlewat saat elemen editable diklik, sehingga Chrome secara default langsung menginisiasi event seleksi teks bawaan (blue highlight rectangle) saat kursor mulai digeser.
+  2. Aturan CSS `user-select: none` sebelumnya hanya terpasang pada pembungkus luar `.slide-stage-wrap` tanpa kata kunci `!important`, sehingga elemen teks internal (`h1`, `p`, `span`) tetap dapat disorot seleksi oleh browser.
+  3. Toolbar terapung `#deck-editor-toolbar` memiliki `z-index: 1000` yang berpotensi tertutup tumpukan layer kanvas lain.
+  4. Selector `findEditableTarget` belum menyertakan elemen metadata, format inline (`strong`, `em`), atau elemen anak kanvas secara komprehensif.
+- **Analisis & Solusi:**
+  1. *Pencegahan Seleksi Teks Bawaan Browser (`slide_editor.js`)*:
+     - Menetapkan aturan CSS global: `body.deck-edit-mode-active, body.deck-edit-mode-active * { user-select: none !important; -webkit-user-select: none !important; }`, dengan proteksi `user-select: text !important` murni untuk elemen `[contenteditable="true"]`.
+     - Menyematkan `if (!target.isContentEditable) { e.preventDefault(); }` pada event `mousedown` sehingga interaksi klik dan geser sepenuhnya diambil alih oleh engine Figma box transform.
+  2. *Elevasi Toolbar & Peringanan Debounce*:
+     - Meningkatkan elevasi `#deck-editor-toolbar` menjadi `z-index: 999999 !important;` dan memaksakan transisi visibilitas saat mode aktif.
+     - Menurunkan debounce threshold pada `toggleEditMode` menjadi 80ms untuk responsivitas instan.
+  3. *Ekspansi `findEditableTarget` & Proteksi Void Element*:
+     - Menyertakan seluruh tag dan class metadata (`.cover-meta-item`, `.cover-meta-val`, `strong`, `em`, `span`, dll). Untuk void element (`img`, `input`, `hr`), target dialihkan ke `parentElement`.
+  4. *Synchronous Injection Guard (`canvas_manager.js`)*:
+     - Memperkuat `ensureSlideEditorInjected` untuk mengevaluasi script editor secara langsung (`win.eval` / `win.Function`) dan menyelaraskan status tombol header dengan memeriksa langsung class pada `iframe.contentDocument.body`.
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` patuh di bawah 800 baris (`slide_editor.js`: 781 baris, `canvas_manager.js`: 795 baris, `slide_styles.js`: 789 baris, `slide_template.js`: 781 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Node assertion test memverifikasi `user-select: none !important`, `z-index: 999999 !important`, `preventDefault` pada mousedown, dan `ensureSlideEditorInjected`.
+  2. Node syntax check `node -c extension/design/*.js extension/*.js` lolos 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file `<= 795` baris.
+  4. Bump versi manifest ke `v2.150.225`.
+
+
 
 
 
