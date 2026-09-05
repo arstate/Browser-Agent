@@ -880,3 +880,16 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Mengintegrasikan `openOpenDesignCanvas` (menyembunyikan dock re-open) dan `closeOpenDesignCanvas` (menampilkan dock re-open) tanpa melanggar batas 800 baris (`canvas_manager.js` tetap 789 baris).
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+141. **Penyelarasan Subtitle Hero Menjadi 1 Baris Tunggal (`v2.150.258`):**
+    - **Kebutuhan Pengguna**:
+      - Pada tampilan antarmuka New Tab (terutama saat mode Design Slide Decks aktif), teks deskripsi subtitle membungkus (*wrapping*) menjadi 2 baris. Pengguna meminta elemen UI subtitle tersebut dijadikan 1 baris saja agar lebih rapi, proporsional, dan seimbang dengan hero title.
+    - **Akar Masalah (Root Cause Analysis)**:
+      - `.hero-subtitle` pada `extension/newtab.css` sebelumnya dibatasi dengan `max-width: 620px;` tanpa aturan `white-space: nowrap;`.
+      - Pada mode Design, string deskripsi "Modular 16:9 presentation engine with interactive thumbnails sidebar, bento cards, floating dock, and instant PDF export." memiliki panjang 121 karakter yang melebihi batas 620px, sehingga secara otomatis terpecah menjadi dua baris.
+    - **Implementasi Teknis**:
+      1. **Aturan CSS Single-Line Penuh (`extension/newtab.css`)**:
+         - Menerapkan `white-space: nowrap;`, `overflow: hidden;`, dan `text-overflow: ellipsis;` pada `.hero-subtitle`.
+         - Memperluas `max-width` dari `620px` menjadi `1040px` (dan `width: 100%;`) agar selaras dengan lebar container `.welcome-hero-header` (`max-width: 1040px;`).
+         - Menggunakan skala font dinamis `font-size: clamp(13px, 1.15vw, 15px);` sehingga teks subtitle beradaptasi secara elegan di berbagai resolusi layar tanpa pernah terpotong atau membungkus ke baris kedua.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+

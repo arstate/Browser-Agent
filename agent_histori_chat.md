@@ -7259,4 +7259,20 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.257` di `manifest.json`.
 
+---
+
+### Iterasi: Penyelarasan Subtitle Hero Menjadi 1 Baris Tunggal (`v2.150.258`)
+- **User Request:**
+  - "UI INI BUAT 1 BARIS AJA" (Menunjuk elemen teks subtitle slide deck di layar New Tab yang sebelumnya terpecah menjadi 2 baris).
+- **Solusi & Rekayasa Teknis:**
+  1. *Aturan Single-Line & No-Wrap CSS (`extension/newtab.css`)*:
+     - `.hero-subtitle`: Menetapkan `white-space: nowrap;`, `overflow: hidden;`, dan `text-overflow: ellipsis;`.
+     - Memperbesar `max-width` dari `620px` menjadi `1040px` (dan `width: 100%;`) selaras dengan container `.welcome-hero-header` (`max-width: 1040px;`).
+     - Menerapkan `font-size: clamp(13px, 1.15vw, 15px);` agar teks beradaptasi dengan mulus di berbagai resolusi layar tanpa pembungkusan baris.
+- **Verifikasi:**
+  1. Unit test `scratch/test_hero_subtitle_single_line.js` lulus 100%.
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.258` di `manifest.json`.
+
 

@@ -1163,7 +1163,7 @@ body.has-messages .chat-messages {
 .welcome-hero-header {
   min-height: 98px;
   width: 100%;
-  max-width: 960px;
+  max-width: 1040px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1194,12 +1194,17 @@ body.has-messages .chat-messages {
 }
 
 .hero-subtitle {
-  font-size: 15px;
+  font-size: clamp(13px, 1.15vw, 15px);
   color: var(--text-secondary);
-  max-width: 620px;
+  max-width: 1040px;
+  width: 100%;
   min-height: 24px;
   line-height: 1.5;
   margin: 0 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 

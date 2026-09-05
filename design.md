@@ -1620,3 +1620,23 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_styles.js`: 737
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
+
+## 74. Penyelarasan Subtitle Hero Menjadi 1 Baris Tunggal (v2.150.258)
+
+### 🪟 1. Layout Subtitle Single-Line Penuh
+- **Peniadaan Text Wrapping**: Menerapkan `white-space: nowrap;` pada `.hero-subtitle` sehingga teks deskripsi tidak lagi terpecah menjadi 2 baris.
+- **Ekspansi Kontainer**: Memperluas `max-width` kontainer `.welcome-hero-header` dan elemen `.hero-subtitle` menjadi `1040px` (`width: 100%;`), memberikan ruang pandang yang seimbang dan simetris terhadap hero title.
+- **Responsive Fluid Typography**: Menggunakan `font-size: clamp(13px, 1.15vw, 15px);` dengan pengaman `overflow: hidden; text-overflow: ellipsis;` untuk resolusi layar ultra-kecil, memastikan tampilan selalu estetik dan konsisten 1 baris.
+
+### 📏 2. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 789
+  - `design_agent.js`: 782
+  - `design_executor.js`: 793
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
