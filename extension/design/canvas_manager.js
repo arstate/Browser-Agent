@@ -225,9 +225,10 @@ function attachSlideDeckController(iframe) {
     if (!win.__slideDeckKeydown) {
       win.__slideDeckKeydown = true;
       win.addEventListener('keydown', function(e) {
+        if (doc.body?.classList?.contains('deck-edit-mode-active') || e.target?.isContentEditable || ['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return;
         if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
           goToSlide(currentIndex + 1);
-        } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+        } else if (e.key === 'ArrowLeft') {
           goToSlide(currentIndex - 1);
         } else if (e.key === 'r' || e.key === 'R') {
           goToSlide(0);
