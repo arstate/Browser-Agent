@@ -538,6 +538,30 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Memodularisasi runtime script navigasi slide ke `slide_deck_engine.js` sehingga `slide_template.js` tetap ramping (686 baris).
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terverifikasi ketat `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 796, `design_agent.js` 636, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 789, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+123. **Optimasi Performa Ekstrem Mode Edit Slide Deck (Anti-Lag, rAF Throttling, Hover Elimination & Debounced Sync) (`v2.150.240`):**
+    - **Akar Masalah (Root Cause)**:
+      - Aturan CSS `*:hover` universal pada kanvas aktif memaksa browser menghitung ulang layout & style (*style recalculation & reflow*) pada seluruh pohon elemen DOM kanvas setiap kursor mouse bergeser 1 piksel.
+      - Event `mousemove` selama operasi drag, resize, rotasi, dan skala dijalankan secara mentah (tanpa `requestAnimationFrame`), menyebabkan banjir kalkulasi trigonometri, manipulasi DOM, dan query selektor `querySelector` hingga 120-240 frame per detik.
+      - `notifyParentContentChanged()` memicu serialisasi string HTML penuh (`outerHTML`), transmisi IPC `postMessage`, dan penulisan database SQLite (`saveCurrentSessionToDB()`) secara instan pada setiap event `mouseup` serta setiap input pergeseran slider color picker.
+      - Pada `canvas_manager.js`, elemen `#canvas-code-display` yang memuat ~100KB markup diserialisasi ulang pada setiap edit mikro kendati pengguna sedang berada di tab Preview.
+    - **Solusi & Implementasi Teknis**:
+      1. **Eliminasi Total Selektor Universal `*:hover` & Akselerasi GPU Hardware (`slide_editor.js`)**:
+         - Menghapus aturan universal `*:hover` dan menggantinya dengan penargetan spesifik hanya pada elemen yang dapat diedit (`[data-deck-editable="true"]:hover`, judul, paragraf, kartu, gambar).
+         - Mengisolasi selektor hover dengan pseudo-kelas `:not(.deck-is-dragging)` sehingga selama interaksi seret/drag berlangsung, seluruh komputasi efek hover dinonaktifkan sepenuhnya.
+         - Menambahkan kelas `body.deck-is-dragging` dengan deklarasi `will-change: transform;` pada elemen terseleksi untuk mempromosikan render layer ke GPU compositor.
+      2. **Penyelarasan Refresh Rate dengan `requestAnimationFrame` (rAF Drag Throttling) (`slide_editor.js`)**:
+         - Menampung koordinat kursor mouse terakhir ke variabel ringkas (`pendingMove`) dan mengonsolidasikan seluruh transformasi drag (move, scale, rotate, resize-w, resize-h) ke dalam siklus `requestAnimationFrame`.
+         - Membatasi eksekusi mutasi DOM tepat satu kali per siklus vsync layar (60Hz / 120Hz), menghilangkan frame drop dan stutter saat menyeret elemen.
+      3. **Caching Elemen Panduan Magnetik & Akses Langsung Handle (`slide_editor.js`)**:
+         - Mengganti pemanggilan berulang `c.querySelector('.figma-snap-guide-v')` dan `c.appendChild()` pada setiap frame menjadi referensi DOM cached (`guideVEl`, `guideHEl`) dengan toggle `display: block / none`.
+         - Menyematkan referensi langsung `el._figmaBox` untuk sinkronisasi translasi instan O(1) tanpa pencarian selector DOM.
+      4. **Debounced Parent Sync & Lazy Code Tab Rendering (`slide_editor.js`, `canvas_manager.js`, `sidepanel.js`)**:
+         - Menambahkan trailing debounce 250ms pada `notifyParentContentChanged()` di iframe editor dan debounce 350ms pada `saveCurrentSessionToDB()` di parent window (`canvas_manager.js` dan `sidepanel.js`).
+         - Menambahkan debounce 200ms pada `applyElementColor` saat input picker warna sehingga slider berjalan mulus 60fps tanpa membebani disk/SQLite.
+         - Memperbarui tab Code secara *lazy* hanya saat pengguna beralih ke tab Code (`switchCanvasTab('code')`), mengeliminasi reflow 100KB HTML saat menyunting di tab Preview.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 636, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 788, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+
 
 
 

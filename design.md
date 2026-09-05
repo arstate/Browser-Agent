@@ -1168,6 +1168,30 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Strict Sub-800 Line Rule Compliance**:
    - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 796, `design_agent.js` 636, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 789, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+## 🎨 56. Slide Deck Edit Mode Extreme Performance Optimization (Anti-Lag, rAF Throttling, Hover Elimination & Debounced Sync) (v2.150.240)
+
+1. **Root Cause Analysis (Reflow Thrashing, Unthrottled Events & Heavy DB Overload)**:
+   - **Universal `*:hover` Reflow Flood**: Aturan `.slide-canvas *:hover` memaksa mesin rendering browser melakukan perhitungan ulang gaya (*style recalculations*) pada seluruh turunan DOM di setiap pergerakan mouse kursor 1px.
+   - **Unthrottled Raw `mousemove`**: Seluruh event drag, resize, rotate, dan scale dieksekusi langsung tanpa throttling `requestAnimationFrame` (rAF), menyebabkan lonjakan eksekusi kalkulasi hingga 120-240Hz dengan query DOM berulang.
+   - **Double Update on `mouseup` & Eager Full Serialization**: Setiap `mouseup` memicu pembersihan dan pemasangan ulang gagang Figma ganda (`takeSnapshot` dan `notifyParentContentChanged`), mengonversi string `outerHTML` secara sinkron, dan langsung memicu transaksi SQLite `saveCurrentSessionToDB()`.
+   - **Code Display Reflow**: Element `#canvas-code-display` memuat ulang 100KB teks HTML pada setiap edit kecil sekalipun pengguna sedang berada di tab Preview.
+
+2. **rAF Drag Engine & Hardware Acceleration (`slide_editor.js`)**:
+   - **Vsync-Aligned Event Loop**: Mengonsolidasikan input mouse ke `pendingMove` dan mengeksekusi mutasi transformasi (`updateActiveDrag`) eksklusif di dalam callback `requestAnimationFrame`, menjamin 60fps/120fps yang sangat mulus tanpa frame drop.
+   - **GPU Layer Promotion**: Menerapkan kelas `body.deck-is-dragging` dengan properti `will-change: transform` pada elemen terpilih saat drag dimulai dan melepaskannya pada `mouseup`.
+   - **Selective Hover Gating**: Mengganti `*:hover` dengan penargetan selektif khusus elemen yang dapat disunting dan mengisolasinya dengan `:not(.deck-is-dragging)`.
+   - **Cached Magnetic Guides & O(1) Box Sync**: Menyimpan referensi elemen panduan magnetik (`guideVEl`, `guideHEl`) untuk manipulasi via `display: block/none` tanpa `querySelector`/`appendChild` berulang. Menyinkronkan translasi elemen void secara instan melalui `el._figmaBox`.
+
+3. **Debounced Serialization & Lazy Code Rendering (`slide_editor.js`, `canvas_manager.js`, `sidepanel.js`)**:
+   - **Debounced Parent Notification**: Menerapkan debounce 250ms pada `notifyParentContentChanged()`, dan segera melakukan flush (`immediate: true`) saat pengguna menekan tombol Simpan atau keluar dari mode edit.
+   - **Debounced SQLite & Storage Saves**: Menambahkan debounce 350ms pada penanganan pesan `SLIDE_DECK_CONTENT_CHANGED` di `canvas_manager.js` dan `sidepanel.js` untuk mencegah penulisan database beruntun.
+   - **Debounced Color Input**: `applyElementColor` menerapkan perubahan visual secara real-time dan menunda snapshot/DB save sebesar 200ms saat slider warna digeser.
+   - **Lazy Code Tab**: Elemen `#canvas-code-display` hanya diperbarui ketika tab Code dibuka (`switchCanvasTab('code')`), menghemat waktu render 100KB teks saat menyunting di kanvas visual.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 636, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 788, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+
 
 
 

@@ -5655,7 +5655,8 @@ try {
 
 // Sync manual slide deck edits from iframe into conversationHistory and DB
 try {
-  window.addEventListener('message', async (e) => {
+  let deckSyncSaveTimer = null;
+  window.addEventListener('message', (e) => {
     if (!e.data || e.data.type !== 'SLIDE_DECK_CONTENT_CHANGED' || !e.data.html) return;
     const newHtml = e.data.html;
     if (Array.isArray(conversationHistory)) {
@@ -5668,7 +5669,11 @@ try {
         }
       }
     }
-    await saveCurrentSessionToDB();
+    if (deckSyncSaveTimer) clearTimeout(deckSyncSaveTimer);
+    deckSyncSaveTimer = setTimeout(() => {
+      deckSyncSaveTimer = null;
+      saveCurrentSessionToDB();
+    }, 350);
   });
 } catch (e) {}
 

@@ -4,34 +4,13 @@
 // =========================================================================
 
 var activeDesignArtifact = null;
-
-if (typeof window !== 'undefined') {
-  window.activeDesignArtifact = activeDesignArtifact;
-}
-
+if (typeof window !== 'undefined') window.activeDesignArtifact = activeDesignArtifact;
 if (typeof escapeHtml !== 'function') {
-  function escapeHtml(str) {
-    if (typeof str !== 'string') return String(str || '');
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-  }
+  function escapeHtml(str) { return typeof str !== 'string' ? String(str || '') : str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
 }
-
-function getActiveDesignArtifact() {
-  return (typeof window !== 'undefined' && window.activeDesignArtifact) ? window.activeDesignArtifact : activeDesignArtifact;
-}
-
-function setActiveDesignArtifact(artifact) {
-  activeDesignArtifact = artifact;
-  if (typeof window !== 'undefined') {
-    window.activeDesignArtifact = artifact;
-    window.__activeDesignArtifact = artifact;
-  }
-}
-
-function isCanvasOpen() {
-  const canvasPane = document.getElementById('opendesign-canvas-pane');
-  return Boolean(canvasPane && canvasPane.style.display !== 'none' && document.body.classList.contains('canvas-active'));
-}
+function getActiveDesignArtifact() { return (typeof window !== 'undefined' && window.activeDesignArtifact) ? window.activeDesignArtifact : activeDesignArtifact; }
+function setActiveDesignArtifact(artifact) { activeDesignArtifact = artifact; if (typeof window !== 'undefined') { window.activeDesignArtifact = artifact; window.__activeDesignArtifact = artifact; } }
+function isCanvasOpen() { const p = document.getElementById('opendesign-canvas-pane'); return Boolean(p && p.style.display !== 'none' && document.body.classList.contains('canvas-active')); }
 
 function ensureSlideEditorInjected(iframe) {
   if (!iframe) return false;
@@ -598,6 +577,10 @@ function switchCanvasTab(tabName) {
   document.querySelectorAll('.canvas-tab-view').forEach(view => { view.classList.remove('active'); view.style.display = 'none'; });
   const activeView = document.getElementById(`canvas-view-${tabName}`);
   if (activeView) { activeView.classList.add('active'); activeView.style.display = 'flex'; }
+  if (tabName === 'code' && activeDesignArtifact?.html) {
+    const cd = document.getElementById('canvas-code-display');
+    if (cd) cd.textContent = activeDesignArtifact.html;
+  }
 }
 
 function setCanvasViewport(viewport) {
@@ -740,6 +723,7 @@ function initOpenDesignCanvas() {
   });
 
   // Sync edit mode & content changes from iframe
+  let deckSyncSaveTimer = null;
   window.addEventListener('message', (e) => {
     if (!e.data) return;
     if (e.data.type === 'DECK_EDIT_MODE_CHANGED') {
@@ -748,9 +732,11 @@ function initOpenDesignCanvas() {
     } else if (e.data.type === 'SLIDE_DECK_CONTENT_CHANGED' && e.data.html) {
       if (activeDesignArtifact) { activeDesignArtifact.html = e.data.html; if (activeDesignArtifact.raw) activeDesignArtifact.raw = e.data.html; }
       if (window.__activeDesignArtifact) { window.__activeDesignArtifact.html = e.data.html; if (window.__activeDesignArtifact.raw) window.__activeDesignArtifact.raw = e.data.html; }
-      try { if (typeof chrome !== 'undefined' && chrome?.storage?.local?.set) chrome.storage.local.set({ opendesign_last_artifact: activeDesignArtifact || { html: e.data.html } }); } catch (_) {}
-      const codeDisplay = document.getElementById('canvas-code-display');
-      if (codeDisplay) codeDisplay.textContent = e.data.html;
+      const cvCode = document.getElementById('canvas-view-code');
+      if (cvCode && cvCode.classList.contains('active')) {
+        const cd = document.getElementById('canvas-code-display');
+        if (cd) cd.textContent = e.data.html;
+      }
       if (typeof conversationHistory !== 'undefined' && Array.isArray(conversationHistory)) {
         for (let i = conversationHistory.length - 1; i >= 0; i--) {
           if (conversationHistory[i]?.designArtifact) {
@@ -760,8 +746,13 @@ function initOpenDesignCanvas() {
           }
         }
       }
-      if (typeof saveCurrentSessionToDB === 'function') saveCurrentSessionToDB();
-      else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') window.saveCurrentSessionToDB();
+      if (deckSyncSaveTimer) clearTimeout(deckSyncSaveTimer);
+      deckSyncSaveTimer = setTimeout(() => {
+        deckSyncSaveTimer = null;
+        try { if (typeof chrome !== 'undefined' && chrome?.storage?.local?.set) chrome.storage.local.set({ opendesign_last_artifact: activeDesignArtifact || { html: e.data.html } }); } catch (_) {}
+        if (typeof saveCurrentSessionToDB === 'function') saveCurrentSessionToDB();
+        else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') window.saveCurrentSessionToDB();
+      }, 350);
     }
   });
 

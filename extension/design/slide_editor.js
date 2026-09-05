@@ -9,9 +9,12 @@ function getSlideDeckEditorCss() {
     body.deck-edit-mode-active [contenteditable="true"], body.deck-edit-mode-active [contenteditable="true"] * { user-select: text !important; -webkit-user-select: text !important; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas { position: relative; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas [data-deck-editable="true"],
-    body.deck-edit-mode-active .slide-section.active .slide-canvas h1, body.deck-edit-mode-active .slide-section.active .slide-canvas h2, body.deck-edit-mode-active .slide-section.active .slide-canvas h3, body.deck-edit-mode-active .slide-section.active .slide-canvas p, body.deck-edit-mode-active .slide-section.active .slide-canvas .slide-col, body.deck-edit-mode-active .slide-section.active .slide-canvas .split-col, body.deck-edit-mode-active .slide-section.active .slide-canvas .metric-card, body.deck-edit-mode-active .slide-section.active .slide-canvas .timeline-step, body.deck-edit-mode-active .slide-section.active .slide-canvas .col-tag-chip, body.deck-edit-mode-active .slide-section.active .slide-canvas .col-badge, body.deck-edit-mode-active .slide-section.active .slide-canvas .cover-badge-pill, body.deck-edit-mode-active .slide-section.active .slide-canvas img, body.deck-edit-mode-active .slide-section.active .slide-canvas picture, body.deck-edit-mode-active .slide-section.active .slide-canvas figure, body.deck-edit-mode-active .slide-section.active .slide-canvas [class*="image"], body.deck-edit-mode-active .slide-section.active .slide-canvas [class*="img"] { cursor: move !important; transition: outline 0.12s, box-shadow 0.12s; }
+    body.deck-edit-mode-active .slide-section.active .slide-canvas h1, body.deck-edit-mode-active .slide-section.active .slide-canvas h2, body.deck-edit-mode-active .slide-section.active .slide-canvas h3, body.deck-edit-mode-active .slide-section.active .slide-canvas p, body.deck-edit-mode-active .slide-section.active .slide-canvas .slide-col, body.deck-edit-mode-active .slide-section.active .slide-canvas .split-col, body.deck-edit-mode-active .slide-section.active .slide-canvas .metric-card, body.deck-edit-mode-active .slide-section.active .slide-canvas .timeline-step, body.deck-edit-mode-active .slide-section.active .slide-canvas .col-tag-chip, body.deck-edit-mode-active .slide-section.active .slide-canvas .col-badge, body.deck-edit-mode-active .slide-section.active .slide-canvas .cover-badge-pill, body.deck-edit-mode-active .slide-section.active .slide-canvas img, body.deck-edit-mode-active .slide-section.active .slide-canvas picture, body.deck-edit-mode-active .slide-section.active .slide-canvas figure, body.deck-edit-mode-active .slide-section.active .slide-canvas [class*="image"], body.deck-edit-mode-active .slide-section.active .slide-canvas [class*="img"] { cursor: move !important; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas [contenteditable="true"] { cursor: text !important; }
-    body.deck-edit-mode-active .slide-section.active .slide-canvas *:hover { outline: 1.5px dashed rgba(99, 102, 241, 0.45); outline-offset: 3px; }
+    body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas [data-deck-editable="true"]:hover,
+    body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas h1:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas h2:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas h3:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas p:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas .slide-col:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas .split-col:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas .metric-card:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas .timeline-step:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas .col-badge:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas .cover-badge-pill:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas img:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas [class*="image"]:hover, body.deck-edit-mode-active:not(.deck-is-dragging) .slide-section.active .slide-canvas [class*="img"]:hover { outline: 1.5px dashed rgba(99, 102, 241, 0.45); outline-offset: 3px; }
+    body.deck-is-dragging { cursor: move !important; }
+    body.deck-is-dragging .deck-editable-selected { will-change: transform; }
     .deck-editable-selected { outline: 1.5px solid var(--accent, #6366F1) !important; outline-offset: 2px !important; box-shadow: 0 0 14px rgba(99, 102, 241, 0.35) !important; position: relative !important; }
     [data-deck-transform], span[data-deck-transform], a[data-deck-transform], b[data-deck-transform], i[data-deck-transform], strong[data-deck-transform], em[data-deck-transform], img[data-deck-transform] { display: inline-block !important; }
     span.deck-editable-selected, a.deck-editable-selected, b.deck-editable-selected, i.deck-editable-selected, strong.deck-editable-selected, img.deck-editable-selected { display: inline-block !important; }
@@ -19,8 +22,8 @@ function getSlideDeckEditorCss() {
     .figma-handle { position: absolute; width: 9px; height: 9px; background: #FFFFFF; border: 1.5px solid var(--accent, #6366F1); border-radius: 2px; pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 10002; }
     .figma-handle-tl { top: -5px; left: -5px; cursor: nwse-resize; } .figma-handle-tr { top: -5px; right: -5px; cursor: nesw-resize; } .figma-handle-bl { bottom: -5px; left: -5px; cursor: nesw-resize; } .figma-handle-br { bottom: -5px; right: -5px; cursor: nwse-resize; }
     .figma-handle-tm { top: -5px; left: calc(50% - 4.5px); cursor: ns-resize; } .figma-handle-bm { bottom: -5px; left: calc(50% - 4.5px); cursor: ns-resize; } .figma-handle-ml { top: calc(50% - 4.5px); left: -5px; cursor: ew-resize; } .figma-handle-mr { top: calc(50% - 4.5px); right: -5px; cursor: ew-resize; }
-    .figma-snap-guide-v { position: absolute; top: 0; bottom: 0; width: 1px; background: #EC4899; pointer-events: none; z-index: 10005; }
-    .figma-snap-guide-h { position: absolute; left: 0; right: 0; height: 1px; background: #EC4899; pointer-events: none; z-index: 10005; }
+    .figma-snap-guide-v { position: absolute; top: 0; bottom: 0; width: 1px; background: #EC4899; pointer-events: none; z-index: 10005; display: none; }
+    .figma-snap-guide-h { position: absolute; left: 0; right: 0; height: 1px; background: #EC4899; pointer-events: none; z-index: 10005; display: none; }
     .figma-rot-stem { position: absolute; top: -22px; left: 50%; width: 1.5px; height: 18px; background: var(--accent, #6366F1); pointer-events: none; transform: translateX(-50%); }
     .figma-handle-rot { position: absolute; top: -29px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #FFFFFF; border: 1.5px solid var(--accent, #6366F1); border-radius: 50%; cursor: crosshair; pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 10002; }
     .figma-handle-rot:hover { background: var(--accent, #6366F1); }
@@ -132,11 +135,27 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         if (redoBtn) redoBtn.disabled = (futureStack.length === 0);
       }
 
-      function removeSnapGuides() { doc.querySelectorAll('.figma-snap-guide-v, .figma-snap-guide-h').forEach(g => g.remove()); }
-      function showSnapGuideV(c, x) { let g = c.querySelector('.figma-snap-guide-v') || doc.createElement('div'); g.className = 'figma-snap-guide-v'; g.style.left = x + 'px'; if (!g.parentNode) c.appendChild(g); }
-      function showSnapGuideH(c, y) { let g = c.querySelector('.figma-snap-guide-h') || doc.createElement('div'); g.className = 'figma-snap-guide-h'; g.style.top = y + 'px'; if (!g.parentNode) c.appendChild(g); }
-      function removeSnapGuideV(c) { c.querySelectorAll('.figma-snap-guide-v').forEach(g => g.remove()); }
-      function removeSnapGuideH(c) { c.querySelectorAll('.figma-snap-guide-h').forEach(g => g.remove()); }
+      let guideVEl = null, guideHEl = null;
+      function showSnapGuideV(c, x) {
+        if (!guideVEl || guideVEl.parentNode !== c) {
+          if (guideVEl) guideVEl.remove();
+          guideVEl = doc.createElement('div'); guideVEl.className = 'figma-snap-guide-v'; c.appendChild(guideVEl);
+        }
+        guideVEl.style.display = 'block'; guideVEl.style.left = x + 'px';
+      }
+      function showSnapGuideH(c, y) {
+        if (!guideHEl || guideHEl.parentNode !== c) {
+          if (guideHEl) guideHEl.remove();
+          guideHEl = doc.createElement('div'); guideHEl.className = 'figma-snap-guide-h'; c.appendChild(guideHEl);
+        }
+        guideHEl.style.display = 'block'; guideHEl.style.top = y + 'px';
+      }
+      function hideSnapGuideV() { if (guideVEl) guideVEl.style.display = 'none'; }
+      function hideSnapGuideH() { if (guideHEl) guideHEl.style.display = 'none'; }
+      function removeSnapGuides() {
+        if (guideVEl) { guideVEl.style.display = 'none'; guideVEl.remove(); guideVEl = null; }
+        if (guideHEl) { guideHEl.style.display = 'none'; guideHEl.remove(); guideHEl = null; }
+      }
       function removeFigmaBoxes() { doc.querySelectorAll('.deck-figma-box').forEach(b => b.remove()); removeSnapGuides(); }
       function initSnapCandidates(el) {
         const canvas = el?.closest('.slide-canvas');
@@ -162,6 +181,7 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           box.className = 'deck-figma-box';
           box.innerHTML = '<div class="figma-handle figma-handle-tl" data-handle="scale" data-dir="tl"></div><div class="figma-handle figma-handle-tr" data-handle="scale" data-dir="tr"></div><div class="figma-handle figma-handle-bl" data-handle="scale" data-dir="bl"></div><div class="figma-handle figma-handle-br" data-handle="scale" data-dir="br"></div><div class="figma-handle figma-handle-tm" data-handle="resize-h" data-dir="tm" title="Atur tinggi"></div><div class="figma-handle figma-handle-bm" data-handle="resize-h" data-dir="bm" title="Atur tinggi"></div><div class="figma-handle figma-handle-ml" data-handle="resize-w" data-dir="ml" title="Atur lebar"></div><div class="figma-handle figma-handle-mr" data-handle="resize-w" data-dir="mr" title="Atur lebar"></div><div class="figma-rot-stem"></div><div class="figma-handle-rot" data-handle="rotate" title="Putar"></div><div class="figma-badge-dim"></div>';
           box._targetElement = el;
+          el._figmaBox = box;
           if (['IMG', 'INPUT', 'HR', 'VIDEO', 'EMBED'].includes(el.tagName)) {
             const p = el.parentElement;
             if (p) {
@@ -256,22 +276,23 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         notifyParentContentChanged();
       }
 
-      function notifyParentContentChanged() {
-        removeFigmaBoxes();
-        const selected = Array.from(selectedElements);
-        selected.forEach(el => el.classList.remove('deck-editable-selected'));
-        const wasEditModeActive = doc.body.classList.contains('deck-edit-mode-active');
-        if (wasEditModeActive) doc.body.classList.remove('deck-edit-mode-active');
-        const html = doc.documentElement.outerHTML;
-        if (wasEditModeActive) doc.body.classList.add('deck-edit-mode-active');
-        selected.forEach(el => el.classList.add('deck-editable-selected'));
-        updateFigmaHandles();
-
-        win.parent.postMessage({
-          type: 'SLIDE_DECK_CONTENT_CHANGED',
-          html: html,
-          title: doc.title || 'Slide Deck'
-        }, '*');
+      let notifyTimer = null;
+      function notifyParentContentChanged(immediate = false) {
+        if (notifyTimer) { clearTimeout(notifyTimer); notifyTimer = null; }
+        const doNotify = () => {
+          removeFigmaBoxes();
+          const selected = Array.from(selectedElements);
+          selected.forEach(el => el.classList.remove('deck-editable-selected'));
+          const wasEditModeActive = doc.body.classList.contains('deck-edit-mode-active');
+          if (wasEditModeActive) doc.body.classList.remove('deck-edit-mode-active');
+          const html = doc.documentElement.outerHTML;
+          if (wasEditModeActive) doc.body.classList.add('deck-edit-mode-active');
+          selected.forEach(el => el.classList.add('deck-editable-selected'));
+          updateFigmaHandles();
+          win.parent.postMessage({ type: 'SLIDE_DECK_CONTENT_CHANGED', html: html, title: doc.title || 'Slide Deck' }, '*');
+        };
+        if (immediate) doNotify();
+        else notifyTimer = setTimeout(doNotify, 250);
       }
 
       function updateSelectionCounter() {
@@ -328,7 +349,7 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           updateUndoRedoButtons();
         } else {
           clearSelection();
-          notifyParentContentChanged();
+          notifyParentContentChanged(true);
         }
 
         win.parent.postMessage({ type: 'DECK_EDIT_MODE_CHANGED', active: isEditMode }, '*');
@@ -429,6 +450,7 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           activeAction = handleType;
           activeDir = handleEl.getAttribute('data-dir');
           activeElement = parentSelected;
+          doc.body.classList.add('deck-is-dragging');
           startX = e.clientX;
           startY = e.clientY;
           const rect = parentSelected.getBoundingClientRect();
@@ -439,87 +461,54 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           initialAngle = Math.atan2(startY - centerY, startX - centerX) * (180 / Math.PI);
           initialWidth = parentSelected.offsetWidth || rect.width;
           initialHeight = parentSelected.offsetHeight || rect.height;
-          if (handleType === 'resize-w' || handleType === 'resize-h') {
-            initSnapCandidates(parentSelected);
-          }
+          if (handleType === 'resize-w' || handleType === 'resize-h') initSnapCandidates(parentSelected);
           return;
         }
 
         const target = findEditableTarget(e.target);
-        if (!target) {
-          clearSelection();
-          return;
-        }
-
-        if (!target.isContentEditable) {
-          e.preventDefault();
-        }
+        if (!target) { clearSelection(); return; }
+        if (!target.isContentEditable) e.preventDefault();
 
         const isMulti = e.shiftKey || e.ctrlKey || e.metaKey;
-        if (!selectedElements.has(target)) {
-          selectElement(target, isMulti);
-        } else if (isMulti) {
-          selectElement(target, true);
-          return;
-        }
+        if (!selectedElements.has(target)) selectElement(target, isMulti);
+        else if (isMulti) { selectElement(target, true); return; }
 
         activeAction = 'move';
         isDragging = true;
+        doc.body.classList.add('deck-is-dragging');
         startX = e.clientX;
         startY = e.clientY;
         initialTransforms.clear();
-        selectedElements.forEach(el => {
-          initialTransforms.set(el, getParsedTransform(el));
-        });
+        selectedElements.forEach(el => initialTransforms.set(el, getParsedTransform(el)));
         initSnapCandidates(Array.from(selectedElements)[0]);
       });
 
-      doc.addEventListener('mousemove', (e) => {
+      let rafId = null, pendingMove = null;
+
+      function updateActiveDrag(mEvent) {
         if (!isEditMode || !activeAction) return;
 
         if (activeAction === 'rotate' && activeElement) {
-          e.preventDefault();
-          const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
-          const deltaAngle = currentAngle - initialAngle;
-          let newRot = Math.round((initialTransform.rotate + deltaAngle) % 360);
-          if (e.shiftKey) newRot = Math.round(newRot / 15) * 15;
-          applyTransform(activeElement, {
-            x: initialTransform.x,
-            y: initialTransform.y,
-            scale: initialTransform.scale,
-            rotate: newRot
-          });
-          const badge = activeElement.querySelector('.figma-badge-dim');
-          if (badge) {
-            badge.style.display = 'block';
-            badge.textContent = newRot + '°';
-          }
+          const curAngle = Math.atan2(mEvent.clientY - centerY, mEvent.clientX - centerX) * (180 / Math.PI);
+          let newRot = Math.round((initialTransform.rotate + curAngle - initialAngle) % 360);
+          if (mEvent.shiftKey) newRot = Math.round(newRot / 15) * 15;
+          applyTransform(activeElement, { x: initialTransform.x, y: initialTransform.y, scale: initialTransform.scale, rotate: newRot });
+          const badge = activeElement.querySelector?.('.figma-badge-dim') || activeElement.parentElement?.querySelector?.('.figma-badge-dim');
+          if (badge) { badge.style.display = 'block'; badge.textContent = newRot + '°'; }
           return;
         }
 
         if (activeAction === 'scale' && activeElement) {
-          e.preventDefault();
-          const currentDist = Math.hypot(e.clientY - centerY, e.clientX - centerX);
-          const ratio = currentDist / initialDistance;
-          const newScale = Math.max(0.2, Math.min(3.5, Number((initialTransform.scale * ratio).toFixed(2))));
-          applyTransform(activeElement, {
-            x: initialTransform.x,
-            y: initialTransform.y,
-            scale: newScale,
-            rotate: initialTransform.rotate
-          });
-          const badge = activeElement.querySelector('.figma-badge-dim');
-          if (badge) {
-            badge.style.display = 'block';
-            badge.textContent = Math.round(newScale * 100) + '%';
-          }
+          const curDist = Math.hypot(mEvent.clientY - centerY, mEvent.clientX - centerX);
+          const newScale = Math.max(0.2, Math.min(3.5, Number((initialTransform.scale * (curDist / initialDistance)).toFixed(2))));
+          applyTransform(activeElement, { x: initialTransform.x, y: initialTransform.y, scale: newScale, rotate: initialTransform.rotate });
+          const badge = activeElement.querySelector?.('.figma-badge-dim') || activeElement.parentElement?.querySelector?.('.figma-badge-dim');
+          if (badge) { badge.style.display = 'block'; badge.textContent = Math.round(newScale * 100) + '%'; }
           return;
         }
 
         if (activeAction === 'resize-w' && activeElement) {
-          e.preventDefault();
-          const s = initialTransform.scale || 1;
-          const dx = (e.clientX - startX) / s;
+          const s = initialTransform.scale || 1, dx = (mEvent.clientX - startX) / s;
           let newW = Math.max(20, Math.round(initialWidth + (activeDir === 'mr' ? dx : -dx)));
           const canvas = activeElement.closest('.slide-canvas');
           if (canvas && primaryStartBox) {
@@ -528,24 +517,19 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
             for (const c of snapCandidatesX) {
               if (Math.abs(edge - c) <= 7) {
                 newW = Math.max(20, Math.round(activeDir === 'mr' ? ((c - primaryStartBox.left) / s) : ((primaryStartBox.right - c) / s)));
-                snapX = c;
-                break;
+                snapX = c; break;
               }
             }
-            if (snapX !== null) showSnapGuideV(canvas, snapX); else removeSnapGuideV(canvas);
+            if (snapX !== null) showSnapGuideV(canvas, snapX); else hideSnapGuideV();
           }
-          activeElement.style.maxWidth = 'none';
-          activeElement.style.flexShrink = '0';
-          activeElement.style.width = newW + 'px';
-          const badge = activeElement.querySelector('.figma-badge-dim');
+          activeElement.style.maxWidth = 'none'; activeElement.style.flexShrink = '0'; activeElement.style.width = newW + 'px';
+          const badge = activeElement.querySelector?.('.figma-badge-dim') || activeElement.parentElement?.querySelector?.('.figma-badge-dim');
           if (badge) { badge.style.display = 'block'; badge.textContent = 'P: ' + newW + 'px'; }
           return;
         }
 
         if (activeAction === 'resize-h' && activeElement) {
-          e.preventDefault();
-          const s = initialTransform.scale || 1;
-          const dy = (e.clientY - startY) / s;
+          const s = initialTransform.scale || 1, dy = (mEvent.clientY - startY) / s;
           let newH = Math.max(16, Math.round(initialHeight + (activeDir === 'bm' ? dy : -dy)));
           const canvas = activeElement.closest('.slide-canvas');
           if (canvas && primaryStartBox) {
@@ -554,32 +538,27 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
             for (const c of snapCandidatesY) {
               if (Math.abs(edge - c) <= 7) {
                 newH = Math.max(16, Math.round(activeDir === 'bm' ? ((c - primaryStartBox.top) / s) : ((primaryStartBox.bottom - c) / s)));
-                snapY = c;
-                break;
+                snapY = c; break;
               }
             }
-            if (snapY !== null) showSnapGuideH(canvas, snapY); else removeSnapGuideH(canvas);
+            if (snapY !== null) showSnapGuideH(canvas, snapY); else hideSnapGuideH();
           }
-          activeElement.style.minHeight = 'auto';
-          activeElement.style.flexShrink = '0';
-          activeElement.style.height = newH + 'px';
-          const badge = activeElement.querySelector('.figma-badge-dim');
+          activeElement.style.minHeight = 'auto'; activeElement.style.flexShrink = '0'; activeElement.style.height = newH + 'px';
+          const badge = activeElement.querySelector?.('.figma-badge-dim') || activeElement.parentElement?.querySelector?.('.figma-badge-dim');
           if (badge) { badge.style.display = 'block'; badge.textContent = 'T: ' + newH + 'px'; }
           return;
         }
 
         if (activeAction === 'move' && isDragging && selectedElements.size > 0) {
-          e.preventDefault();
-          let dx = e.clientX - startX, dy = e.clientY - startY;
-          if (e.shiftKey) {
-            if (Math.abs(dx) >= Math.abs(dy)) dy = 0;
-            else dx = 0;
+          let dx = mEvent.clientX - startX, dy = mEvent.clientY - startY;
+          if (mEvent.shiftKey) {
+            if (Math.abs(dx) >= Math.abs(dy)) dy = 0; else dx = 0;
           }
           const primary = Array.from(selectedElements)[0];
           const canvas = primary?.closest('.slide-canvas');
           if (canvas && primaryStartBox) {
             let snapX = null;
-            if (!e.shiftKey || dy === 0) {
+            if (!mEvent.shiftKey || dy === 0) {
               const targetL = primaryStartBox.left + dx, targetC = targetL + primaryStartBox.width / 2, targetR = targetL + primaryStartBox.width;
               for (const c of snapCandidatesX) {
                 if (Math.abs(targetC - c) <= 7) { dx += (c - targetC); snapX = c; break; }
@@ -587,10 +566,10 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
                 if (Math.abs(targetR - c) <= 7) { dx += (c - targetR); snapX = c; break; }
               }
             }
-            if (snapX !== null) showSnapGuideV(canvas, snapX); else removeSnapGuideV(canvas);
+            if (snapX !== null) showSnapGuideV(canvas, snapX); else hideSnapGuideV();
 
             let snapY = null;
-            if (!e.shiftKey || dx === 0) {
+            if (!mEvent.shiftKey || dx === 0) {
               const targetT = primaryStartBox.top + dy, targetM = targetT + primaryStartBox.height / 2, targetB = targetT + primaryStartBox.height;
               for (const c of snapCandidatesY) {
                 if (Math.abs(targetM - c) <= 7) { dy += (c - targetM); snapY = c; break; }
@@ -598,19 +577,34 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
                 if (Math.abs(targetB - c) <= 7) { dy += (c - targetB); snapY = c; break; }
               }
             }
-            if (snapY !== null) showSnapGuideH(canvas, snapY); else removeSnapGuideH(canvas);
+            if (snapY !== null) showSnapGuideH(canvas, snapY); else hideSnapGuideH();
           }
           selectedElements.forEach(el => {
             const init = initialTransforms.get(el) || { x: 0, y: 0, scale: 1, rotate: 0 };
             applyTransform(el, { x: init.x + dx, y: init.y + dy, scale: init.scale, rotate: init.rotate });
-            const box = el.querySelector?.('.deck-figma-box') || (el.parentElement?.querySelector?.('.deck-figma-box')?._targetElement === el ? el.parentElement.querySelector('.deck-figma-box') : null);
-            if (box && box._targetElement === el) box.style.transform = el.style.transform;
+            const box = el._figmaBox || (el.parentElement?.querySelector?.('.deck-figma-box')?._targetElement === el ? el.parentElement.querySelector('.deck-figma-box') : null);
+            if (box && box.parentElement !== el) box.style.transform = el.style.transform;
+          });
+        }
+      }
+
+      doc.addEventListener('mousemove', (e) => {
+        if (!isEditMode || !activeAction) return;
+        e.preventDefault();
+        pendingMove = { clientX: e.clientX, clientY: e.clientY, shiftKey: e.shiftKey };
+        if (!rafId) {
+          rafId = win.requestAnimationFrame(() => {
+            rafId = null;
+            if (pendingMove) updateActiveDrag(pendingMove);
           });
         }
       });
 
       doc.addEventListener('mouseup', () => {
         if (!activeAction) return;
+        doc.body.classList.remove('deck-is-dragging');
+        if (rafId) { win.cancelAnimationFrame(rafId); rafId = null; }
+        if (pendingMove) { updateActiveDrag(pendingMove); pendingMove = null; }
         if (activeElement) {
           const badge = activeElement.querySelector?.('.figma-badge-dim') || activeElement.parentElement?.querySelector?.('.figma-badge-dim');
           if (badge) badge.style.display = 'none';
@@ -618,7 +612,6 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         removeSnapGuides();
         activeAction = null; activeDir = null; activeElement = null; isDragging = false; primaryStartBox = null;
         snapCandidatesX = []; snapCandidatesY = []; initialTransforms.clear();
-        updateFigmaHandles();
         takeSnapshot();
         notifyParentContentChanged();
       });
@@ -692,7 +685,8 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         takeSnapshot(); notifyParentContentChanged();
       });
 
-      function applyElementColor(hex) {
+      let colorTimer = null;
+      function applyElementColor(hex, immediate = true) {
         if (!hex) return;
         selectedElements.forEach(el => { el.style.color = hex; });
         const preview = doc.getElementById('editor-color-preview');
@@ -701,7 +695,12 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         if (hexInp && !hex.startsWith('var')) hexInp.value = hex.toUpperCase();
         const natInp = doc.getElementById('editor-color-native');
         if (natInp && hex.startsWith('#') && hex.length === 7) natInp.value = hex;
-        takeSnapshot(); notifyParentContentChanged();
+        if (colorTimer) clearTimeout(colorTimer);
+        if (immediate) {
+          takeSnapshot(); notifyParentContentChanged();
+        } else {
+          colorTimer = setTimeout(() => { colorTimer = null; takeSnapshot(); notifyParentContentChanged(); }, 200);
+        }
       }
 
       doc.getElementById('editor-color-btn')?.addEventListener('click', (e) => {
@@ -715,12 +714,12 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         }
       });
 
-      doc.querySelectorAll('.editor-color-swatch').forEach(sw => sw.addEventListener('click', () => applyElementColor(sw.getAttribute('data-color'))));
-      doc.getElementById('editor-color-native')?.addEventListener('input', (e) => applyElementColor(e.target.value));
+      doc.querySelectorAll('.editor-color-swatch').forEach(sw => sw.addEventListener('click', () => applyElementColor(sw.getAttribute('data-color'), true)));
+      doc.getElementById('editor-color-native')?.addEventListener('input', (e) => applyElementColor(e.target.value, false));
       doc.getElementById('editor-color-hex')?.addEventListener('input', (e) => {
         let val = e.target.value.trim();
         if (!val.startsWith('#')) val = '#' + val;
-        if (/^#[0-9A-F]{6}$/i.test(val)) applyElementColor(val);
+        if (/^#[0-9A-F]{6}$/i.test(val)) applyElementColor(val, false);
       });
 
       const adjustTransformProp = (fn) => {

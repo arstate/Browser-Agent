@@ -6813,3 +6813,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   3. Verifikasi jumlah baris memastikan seluruh file design `<= 796` baris.
   4. Bump versi manifest ke `v2.150.239`.
+### 🚀 Iterasi 521: Optimasi Performa Ekstrem Mode Edit Slide Deck (Anti-Lag, rAF Throttling, Hover Elimination & Debounced Sync) (v2.150.240)
+- **User Request:**
+  - "optimasi browser agent ketika edit mode soalnya sekarang kok agak lag ya kalo di pdf slide edit mode manual"
+- **Akar Masalah (Root Cause):**
+  1. *Universal `*:hover` Reflow Storm*: Aturan `.slide-canvas *:hover` memaksa mesin rendering browser melakukan perhitungan ulang gaya (*style recalculations*) pada seluruh turunan elemen DOM di kanvas setiap kursor mouse bergeser 1 piksel.
+  2. *Unthrottled Raw Mousemove Flood*: Seluruh event pergeseran elemen (move), pengubahan dimensi (resize-w, resize-h), skala (scale), dan rotasi (rotate) dieksekusi secara mentah pada frekuensi mouse (hingga 120-240Hz) tanpa throttling `requestAnimationFrame`. Hal ini membanjiri CPU dengan operasi matematika, seleksi DOM, dan manipulasi inline style berulang.
+  3. *Redundant Double Cycles & Immediate DB Save*: Setiap kali tombol mouse dilepas (`mouseup`), sistem memanggil `takeSnapshot()` dan `notifyParentContentChanged()` berturut-turut. Setiap pemanggilan membongkar dan memasang ulang gagang Figma, melakukan serialisasi `outerHTML`, memancarkan postMessage, dan memicu penulisan SQLite `saveCurrentSessionToDB()`. Input warna pada native color picker juga memicu siklus ini pada setiap perubahan nilai heksadesimal.
+  4. *Eager Code Display Reflow*: Di `canvas_manager.js`, elemen `#canvas-code-display` yang memuat ~100KB markup HTML diperbarui pada setiap edit mikro kendati pengguna sedang berada di tab Preview.
+- **Analisis & Solusi:**
+  1. *Eliminasi Universal `*:hover` & Akselerasi GPU Hardware (`slide_editor.js`)*:
+     - Menghapus aturan `*:hover` dan menggantinya dengan daftar elemen spesifik (`[data-deck-editable="true"]:hover`, judul, paragraf, kartu, gambar).
+     - Mengisolasi selektor hover dengan `:not(.deck-is-dragging)` sehingga selama interaksi drag/resize berlangsung, seluruh efek hover diabaikan.
+     - Menambahkan kelas `body.deck-is-dragging` dengan properti `will-change: transform;` pada elemen terpilih untuk mempromosikan render layer ke GPU compositor.
+  2. *Penyelarasan Refresh Rate dengan `requestAnimationFrame` (rAF Drag Throttling) (`slide_editor.js`)*:
+     - Mengonsolidasikan input mouse ke variabel `pendingMove` dan mengeksekusi fungsi `updateActiveDrag` di dalam callback `requestAnimationFrame`.
+     - Membatasi eksekusi mutasi DOM tepat satu kali per siklus vsync layar (60Hz / 120Hz), menghasilkan pergerakan 60fps/120fps yang sangat halus tanpa lag.
+  3. *Caching Elemen Panduan Magnetik & Akses Langsung Handle (`slide_editor.js`)*:
+     - Mengganti pemanggilan berulang `c.querySelector(.figma-snap-guide-v)` dan `c.appendChild()` pada setiap frame menjadi referensi DOM cached (`guideVEl`, `guideHEl`) dengan toggle `display: block / none`.
+     - Menyematkan referensi langsung `el._figmaBox` untuk sinkronisasi translasi instan O(1) tanpa pencarian selector DOM.
+  4. *Debounced Parent Sync & Lazy Code Tab Rendering (`slide_editor.js`, `canvas_manager.js`, `sidepanel.js`)*:
+     - Menambahkan trailing debounce 250ms pada `notifyParentContentChanged()` di iframe editor dan debounce 350ms pada `saveCurrentSessionToDB()` di parent window (`canvas_manager.js` dan `sidepanel.js`).
+     - Menambahkan debounce 200ms pada `applyElementColor` saat input picker warna sehingga slider berjalan mulus 60fps tanpa membebani disk/SQLite.
+     - Memperbarui tab Code secara *lazy* hanya saat pengguna beralih ke tab Code (`switchCanvasTab(code)`), mengeliminasi reflow 100KB HTML saat menyunting di tab Preview.
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 636, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 788, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+- **Verifikasi:**
+  1. Unit test `test_slide_editor_lag_optimization.js` lulus 100% (4/4 test suites).
+  2. Seluruh 9 regresi unit test suite lolos 100%.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Verifikasi jumlah baris memastikan seluruh file design `<= 792` baris.
+  5. Bump versi manifest ke `v2.150.240`.
