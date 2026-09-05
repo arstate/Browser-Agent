@@ -36,12 +36,13 @@ function getSlideDeckEditorCss() {
       box-shadow: 0 0 14px rgba(99, 102, 241, 0.35) !important;
       position: relative !important;
     }
+    [data-deck-transform], span[data-deck-transform], a[data-deck-transform], b[data-deck-transform], i[data-deck-transform], strong[data-deck-transform], em[data-deck-transform] {
+      display: inline-block !important;
+    }
     span.deck-editable-selected, a.deck-editable-selected, b.deck-editable-selected, i.deck-editable-selected, strong.deck-editable-selected {
       display: inline-block !important;
     }
-    .deck-figma-box {
-      position: absolute; inset: -5px; pointer-events: none; z-index: 10000;
-    }
+    .deck-figma-box { position: absolute; inset: -5px; pointer-events: none; z-index: 10000; }
     .figma-handle {
       position: absolute; width: 9px; height: 9px; background: #FFFFFF;
       border: 1.5px solid var(--accent, #6366F1); border-radius: 2px;
@@ -55,6 +56,8 @@ function getSlideDeckEditorCss() {
     .figma-handle-bm { bottom: -5px; left: calc(50% - 4.5px); cursor: ns-resize; }
     .figma-handle-ml { top: calc(50% - 4.5px); left: -5px; cursor: ew-resize; }
     .figma-handle-mr { top: calc(50% - 4.5px); right: -5px; cursor: ew-resize; }
+    .figma-snap-guide-v { position: absolute; top: 0; bottom: 0; width: 1.5px; background: #EC4899; box-shadow: 0 0 6px #EC4899; pointer-events: none; z-index: 10005; }
+    .figma-snap-guide-h { position: absolute; left: 0; right: 0; height: 1.5px; background: #EC4899; box-shadow: 0 0 6px #EC4899; pointer-events: none; z-index: 10005; }
     .figma-rot-stem {
       position: absolute; top: -22px; left: 50%; width: 1.5px; height: 18px;
       background: var(--accent, #6366F1); pointer-events: none; transform: translateX(-50%);
@@ -129,14 +132,7 @@ function getSlideDeckEditorHtml() {
       <div class="editor-tool-divider"></div>
       <div class="editor-tool-group">
         <select class="editor-tool-select" id="editor-font-family" title="Ganti Font Teks">
-          <option value="">Font: Asli</option>
-          <option value="'Inter', sans-serif">Inter</option>
-          <option value="'Outfit', sans-serif">Outfit</option>
-          <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta</option>
-          <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
-          <option value="'Syne', sans-serif">Syne</option>
-          <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
-          <option value="Georgia, serif">Editorial Serif</option>
+          <option value="">Font: Asli</option><option value="'Inter', sans-serif">Inter</option><option value="'Outfit', sans-serif">Outfit</option><option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta</option><option value="'Space Grotesk', sans-serif">Space Grotesk</option><option value="'Syne', sans-serif">Syne</option><option value="'JetBrains Mono', monospace">JetBrains Mono</option><option value="Georgia, serif">Editorial Serif</option>
         </select>
       </div>
       <div class="editor-tool-group">
@@ -154,12 +150,7 @@ function getSlideDeckEditorHtml() {
       </div>
       <div class="editor-tool-divider"></div>
       <div class="editor-tool-group" title="Warna Teks">
-        <span class="editor-color-swatch" data-color="#FFFFFF" style="background: #FFFFFF;"></span>
-        <span class="editor-color-swatch" data-color="var(--accent)" style="background: var(--accent, #6366F1);"></span>
-        <span class="editor-color-swatch" data-color="#38BDF8" style="background: #38BDF8;"></span>
-        <span class="editor-color-swatch" data-color="#F59E0B" style="background: #F59E0B;"></span>
-        <span class="editor-color-swatch" data-color="#F43F5E" style="background: #F43F5E;"></span>
-        <span class="editor-color-swatch" data-color="#94A3B8" style="background: #94A3B8;"></span>
+        <span class="editor-color-swatch" data-color="#FFFFFF" style="background: #FFFFFF;"></span><span class="editor-color-swatch" data-color="var(--accent)" style="background: var(--accent, #6366F1);"></span><span class="editor-color-swatch" data-color="#38BDF8" style="background: #38BDF8;"></span><span class="editor-color-swatch" data-color="#F59E0B" style="background: #F59E0B;"></span><span class="editor-color-swatch" data-color="#F43F5E" style="background: #F43F5E;"></span><span class="editor-color-swatch" data-color="#94A3B8" style="background: #94A3B8;"></span>
       </div>
       <div class="editor-tool-divider"></div>
       <div class="editor-tool-group">
@@ -202,6 +193,7 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
       let initialDistance = 1;
       let initialAngle = 0;
       let initialWidth = 0, initialHeight = 0;
+      let primaryStartBox = null, snapCandidatesX = [], snapCandidatesY = [];
       let initialTransforms = new Map();
       let historyStack = [];
       let futureStack = [];
@@ -226,9 +218,12 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         if (redoBtn) redoBtn.disabled = (futureStack.length === 0);
       }
 
-      function removeFigmaBoxes() {
-        doc.querySelectorAll('.deck-figma-box').forEach(b => b.remove());
-      }
+      function removeSnapGuides() { doc.querySelectorAll('.figma-snap-guide-v, .figma-snap-guide-h').forEach(g => g.remove()); }
+      function showSnapGuideV(c, x) { let g = c.querySelector('.figma-snap-guide-v') || doc.createElement('div'); g.className = 'figma-snap-guide-v'; g.style.left = x + 'px'; if (!g.parentNode) c.appendChild(g); }
+      function showSnapGuideH(c, y) { let g = c.querySelector('.figma-snap-guide-h') || doc.createElement('div'); g.className = 'figma-snap-guide-h'; g.style.top = y + 'px'; if (!g.parentNode) c.appendChild(g); }
+      function removeSnapGuideV(c) { c.querySelectorAll('.figma-snap-guide-v').forEach(g => g.remove()); }
+      function removeSnapGuideH(c) { c.querySelectorAll('.figma-snap-guide-h').forEach(g => g.remove()); }
+      function removeFigmaBoxes() { doc.querySelectorAll('.deck-figma-box').forEach(b => b.remove()); removeSnapGuides(); }
 
       function updateFigmaHandles() {
         removeFigmaBoxes();
@@ -366,6 +361,9 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         el.dataset.deckTransform = transformStr;
         el.style.transform = transformStr;
         el.style.transformOrigin = 'center center';
+        if (['SPAN', 'A', 'B', 'I', 'STRONG', 'EM'].includes(el.tagName) || win.getComputedStyle(el).display === 'inline') {
+          el.style.display = 'inline-block';
+        }
       }
 
       let lastToggleTime = 0;
@@ -509,6 +507,20 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         selectedElements.forEach(el => {
           initialTransforms.set(el, getParsedTransform(el));
         });
+        const primary = Array.from(selectedElements)[0];
+        const canvas = primary?.closest('.slide-canvas');
+        if (canvas && primary) {
+          const cRect = canvas.getBoundingClientRect(), pRect = primary.getBoundingClientRect();
+          primaryStartBox = { left: pRect.left - cRect.left, top: pRect.top - cRect.top, width: pRect.width, height: pRect.height };
+          snapCandidatesX = [cRect.width / 2, 48, cRect.width - 48];
+          snapCandidatesY = [cRect.height / 2, 36, cRect.height - 36];
+          canvas.querySelectorAll('[data-deck-editable="true"], h1, h2, h3, p, .slide-col, .metric-card, .timeline-step, .col-badge, .cover-badge-pill').forEach(sib => {
+            if (selectedElements.has(sib) || sib.closest('.deck-figma-box')) return;
+            const sR = sib.getBoundingClientRect(), sL = sR.left - cRect.left, sT = sR.top - cRect.top;
+            snapCandidatesX.push(sL, sL + sR.width / 2, sL + sR.width);
+            snapCandidatesY.push(sT, sT + sR.height / 2, sT + sR.height);
+          });
+        }
       });
 
       doc.addEventListener('mousemove', (e) => {
@@ -581,16 +593,31 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
 
         if (activeAction === 'move' && isDragging && selectedElements.size > 0) {
           e.preventDefault();
-          const dx = e.clientX - startX;
-          const dy = e.clientY - startY;
+          let dx = e.clientX - startX, dy = e.clientY - startY;
+          const primary = Array.from(selectedElements)[0];
+          const canvas = primary?.closest('.slide-canvas');
+          if (canvas && primaryStartBox) {
+            const targetL = primaryStartBox.left + dx, targetC = targetL + primaryStartBox.width / 2, targetR = targetL + primaryStartBox.width;
+            let snapX = null;
+            for (const c of snapCandidatesX) {
+              if (Math.abs(targetC - c) <= 7) { dx += (c - targetC); snapX = c; break; }
+              if (Math.abs(targetL - c) <= 7) { dx += (c - targetL); snapX = c; break; }
+              if (Math.abs(targetR - c) <= 7) { dx += (c - targetR); snapX = c; break; }
+            }
+            if (snapX !== null) showSnapGuideV(canvas, snapX); else removeSnapGuideV(canvas);
+
+            const targetT = primaryStartBox.top + dy, targetM = targetT + primaryStartBox.height / 2, targetB = targetT + primaryStartBox.height;
+            let snapY = null;
+            for (const c of snapCandidatesY) {
+              if (Math.abs(targetM - c) <= 7) { dy += (c - targetM); snapY = c; break; }
+              if (Math.abs(targetT - c) <= 7) { dy += (c - targetT); snapY = c; break; }
+              if (Math.abs(targetB - c) <= 7) { dy += (c - targetB); snapY = c; break; }
+            }
+            if (snapY !== null) showSnapGuideH(canvas, snapY); else removeSnapGuideH(canvas);
+          }
           selectedElements.forEach(el => {
             const init = initialTransforms.get(el) || { x: 0, y: 0, scale: 1, rotate: 0 };
-            applyTransform(el, {
-              x: init.x + dx,
-              y: init.y + dy,
-              scale: init.scale,
-              rotate: init.rotate
-            });
+            applyTransform(el, { x: init.x + dx, y: init.y + dy, scale: init.scale, rotate: init.rotate });
           });
         }
       });
@@ -601,10 +628,14 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
             const badge = activeElement.querySelector('.figma-badge-dim');
             if (badge) badge.style.display = 'none';
           }
+          removeSnapGuides();
           activeAction = null;
           activeDir = null;
           activeElement = null;
           isDragging = false;
+          primaryStartBox = null;
+          snapCandidatesX = [];
+          snapCandidatesY = [];
           initialTransforms.clear();
           takeSnapshot();
           notifyParentContentChanged();
@@ -696,7 +727,7 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
       doc.getElementById('editor-btn-reset-transform')?.addEventListener('click', () => {
         selectedElements.forEach(el => {
           el.removeAttribute('data-deck-transform');
-          el.style.transform = el.style.transformOrigin = el.style.width = el.style.height = el.style.maxWidth = el.style.minHeight = el.style.flexShrink = '';
+          el.style.transform = el.style.transformOrigin = el.style.width = el.style.height = el.style.maxWidth = el.style.minHeight = el.style.flexShrink = el.style.display = '';
         });
         takeSnapshot(); notifyParentContentChanged();
       });
@@ -705,52 +736,26 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         doc.getElementById('editor-btn-' + id)?.addEventListener('click', fn);
       });
 
-      // Keyboard Shortcuts (Capture phase)
       win.addEventListener('keydown', (e) => {
         if (!isEditMode) return;
-        const activeTag = doc.activeElement?.tagName;
-        const isEditingText = doc.activeElement?.isContentEditable || activeTag === 'INPUT' || activeTag === 'SELECT' || activeTag === 'TEXTAREA';
-
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
-          if (!isEditingText) { e.preventDefault(); e.stopPropagation(); applyUndo(); return; }
-        }
-        if (((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) ||
-            ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'z' || e.key === 'Z'))) {
-          if (!isEditingText) { e.preventDefault(); e.stopPropagation(); applyRedo(); return; }
-        }
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
-          if (!isEditingText && selectedElements.size > 0) { e.preventDefault(); e.stopPropagation(); duplicateSelectedElements(); return; }
-        }
-        if (e.key === 'Delete' || e.key === 'Backspace') {
-          if (!isEditingText && selectedElements.size > 0) { e.preventDefault(); e.stopPropagation(); deleteSelectedElements(); return; }
-        }
-        if (e.key === 'Escape') {
-          if (selectedElements.size > 0) clearSelection();
-          else toggleEditMode(false);
-        }
+        const isEditing = doc.activeElement?.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(doc.activeElement?.tagName);
+        const mod = e.ctrlKey || e.metaKey, k = (e.key || '').toLowerCase();
+        if (isEditing) return;
+        if (mod && k === 'z' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); applyUndo(); }
+        else if ((mod && k === 'y') || (mod && e.shiftKey && k === 'z')) { e.preventDefault(); e.stopPropagation(); applyRedo(); }
+        else if (mod && k === 'd' && selectedElements.size > 0) { e.preventDefault(); e.stopPropagation(); duplicateSelectedElements(); }
+        else if ((k === 'delete' || k === 'backspace') && selectedElements.size > 0) { e.preventDefault(); e.stopPropagation(); deleteSelectedElements(); }
+        else if (k === 'escape') { if (selectedElements.size > 0) clearSelection(); else toggleEditMode(false); }
       }, true);
 
-      doc.getElementById('editor-btn-done')?.addEventListener('click', () => {
-        toggleEditMode(false);
-      });
+      doc.getElementById('editor-btn-done')?.addEventListener('click', () => toggleEditMode(false));
 
-      // Hook up dock buttons
       doc.addEventListener('click', (e) => {
-        const editBtn = e.target.closest('#dock-btn-edit');
-        if (editBtn) {
+        if (e.target.closest('#dock-btn-edit')) { e.preventDefault(); e.stopImmediatePropagation(); toggleEditMode(); }
+        else if (e.target.closest('#dock-btn-fullscreen')) {
           e.preventDefault();
-          e.stopImmediatePropagation();
-          toggleEditMode();
-          return;
-        }
-        const fsBtn = e.target.closest('#dock-btn-fullscreen');
-        if (fsBtn) {
-          e.preventDefault();
-          if (!doc.fullscreenElement) {
-            doc.documentElement.requestFullscreen().catch(() => {});
-          } else {
-            doc.exitFullscreen().catch(() => {});
-          }
+          if (!doc.fullscreenElement) doc.documentElement.requestFullscreen().catch(() => {});
+          else doc.exitFullscreen().catch(() => {});
         }
       });
 

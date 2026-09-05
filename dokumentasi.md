@@ -362,5 +362,18 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
     - **Penyegaran Atur Ulang & Snapshot**: Tombol `#editor-btn-reset-transform` diperluas untuk mengembalikan dimensi inline (`width`, `height`, `maxWidth`, `minHeight`, `flexShrink`) ke default selain mereset translasi dan rotasi.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 778 baris, `canvas_manager.js` 787 baris, `slide_styles.js` 789 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+111. **Slide Deck Magnetic Snapping (Edge & Center) & Persistent Inline-Block Transform Fix (`v2.150.228`):** Menghadirkan fitur magnet snapping perataan ala Figma serta menuntaskan bug elemen melompat kembali ke posisi default saat keluar dari mode edit:
+    - **Akar Masalah Elemen Kembali ke Posisi Default**: Spesifikasi CSS standar menetapkan bahwa properti `transform` diabaikan oleh mesin render browser (Chrome/Blink) pada elemen non-replaced inline (`display: inline` seperti `span`, `b`, `a`). Sebelumnya class `.deck-editable-selected` menyetel `display: inline-block !important;` saat terseleksi, namun saat mode edit ditutup atau seleksi dibersihkan (`clearSelection()`), elemen kembali menjadi `display: inline` sehingga transformasinya tidak dirender oleh browser (tampak kembali ke posisi default). Saat diklik kembali di mode edit, class `.deck-editable-selected` terpasang lagi dan browser seketika merender kembali transformasinya (tampak melompat).
+    - **Solusi Permanen Display Transform**:
+      - Menyematkan aturan CSS global: `[data-deck-transform], span[data-deck-transform], a[data-deck-transform], b[data-deck-transform], i[data-deck-transform], strong[data-deck-transform], em[data-deck-transform] { display: inline-block !important; }`.
+      - Pada `applyTransform()`, langsung mengunci `el.style.display = 'inline-block'` pada elemen sehingga transformasinya tersimpan secara permanen pada atribut `style` inline dan tetap aktif baik di dalam maupun di luar mode edit.
+      - Pada `canvas_manager.js`, event `SLIDE_DECK_CONTENT_CHANGED` kini langsung menyinkronkan dan menyimpan `activeDesignArtifact` ke `chrome.storage.local` (`opendesign_last_artifact`).
+    - **Fitur Magnet Snapping Elemen & Garis Pandu Magenta Figma (`.figma-snap-guide-v`, `.figma-snap-guide-h`)**:
+      - Saat drag memindahkan elemen (`activeAction === 'move'`), sistem secara otomatis mengumpulkan titik magnet (`snapCandidatesX` & `snapCandidatesY`) dari titik tengah kanvas (center X, center Y), padding batas tepi kanvas (48px & 36px), serta tepi kiri, tengah, dan kanan/bawah dari seluruh elemen saudara (sibling elements).
+      - Jika jarak elemen yang diseret berada dalam ambang batas magnet (7px), posisi elemen otomatis menempel (*snap*) tepat pada garis target.
+      - Garis pandu magenta khas Figma (`1.5px solid #EC4899` dengan glow shadow) otomatis muncul membentang di kanvas untuk memandu perataan presisi dan segera dibersihkan saat mouse dilepas (`mouseup`).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 783 baris, `canvas_manager.js` 790 baris, `slide_styles.js` 789 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+
 
 

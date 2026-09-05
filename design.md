@@ -936,6 +936,37 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_prompt.js`: 183 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
 
+## 🎨 44. Slide Deck Magnetic Snapping (Edge & Center) & Persistent Inline-Block Transform Architecture (v2.150.228)
+
+1. **Persistent Inline-Block Transform Architecture**:
+   - Spesifikasi browser W3C menetapkan `transform` tidak memiliki efek komputasi pada elemen dengan `display: inline`.
+   - Mengunci `display: inline-block !important;` pada selector `[data-deck-transform]` serta menetapkan `el.style.display = 'inline-block'` langsung pada atribut inline elemen saat `applyTransform()` dipanggil.
+   - Menjamin bahwa saat mode edit ditutup atau artefak disimpan, transformasi elemen tetap 100% aktif dan tidak melompat kembali ke posisi default.
+   - `canvas_manager.js` menyelaraskan penyimpanan ke `chrome.storage.local` (`opendesign_last_artifact`) seketika saat `SLIDE_DECK_CONTENT_CHANGED` disiarkan.
+
+2. **Magnetic Snapping (Smart Guides) Engine**:
+   - Kandidat snap X dan Y dihimpun saat inisiasi geser (`mousedown`):
+     - Center kanvas: `cRect.width / 2`, padding batas 48px.
+     - Center Y kanvas: `cRect.height / 2`, padding batas 36px.
+     - Sibling elements: bounding box left, center, right, top, middle, bottom.
+   - Ambang batas snap magnet: 7px.
+   - Garis pandu perataan visual Figma: `.figma-snap-guide-v` (vertikal) dan `.figma-snap-guide-h` (horizontal) dengan aksen warna magenta `#EC4899` dan glowing box-shadow.
+   - Pembersihan otomatis: Garis pandu snap segera dibersihkan pada `mouseup`, `removeFigmaBoxes()`, serta sebelum serialisasi snapshot.
+
+3. **Strict Sub-800 Line Rule Compliance**:
+   - `slide_editor.js`: 783 baris.
+   - `canvas_manager.js`: 790 baris.
+   - `slide_styles.js`: 789 baris.
+   - `slide_template.js`: 781 baris.
+   - `design_executor.js`: 776 baris.
+   - `design_agent.js`: 626 baris.
+   - `slide_deck_engine.js`: 506 baris.
+   - `slide_themes.js`: 266 baris.
+   - `canvas_exporter.js`: 244 baris.
+   - `design_prompt.js`: 183 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
+
 
 
 

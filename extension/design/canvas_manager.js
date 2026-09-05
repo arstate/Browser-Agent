@@ -751,7 +751,10 @@ function initOpenDesignCanvas() {
       const btn = document.getElementById('btn-canvas-edit-mode');
       if (btn) btn.classList.toggle('active', Boolean(e.data.active));
     } else if (e.data.type === 'SLIDE_DECK_CONTENT_CHANGED') {
-      if (activeDesignArtifact) activeDesignArtifact.html = e.data.html;
+      if (activeDesignArtifact) {
+        activeDesignArtifact.html = e.data.html;
+        try { if (typeof chrome !== 'undefined' && chrome?.storage?.local?.set) chrome.storage.local.set({ opendesign_last_artifact: activeDesignArtifact }); } catch (_) {}
+      }
       const codeDisplay = document.getElementById('canvas-code-display');
       if (codeDisplay) codeDisplay.textContent = e.data.html;
     }

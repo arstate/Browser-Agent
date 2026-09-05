@@ -6523,6 +6523,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi jumlah baris memastikan seluruh file `<= 789` baris.
   4. Bump versi manifest ke `v2.150.227`.
 
+### 🚀 Iterasi 509: Slide Deck Magnetic Snapping (Edge & Center) & Persistent Inline-Block Transform Fix (v2.150.228)
+- **User Request:**
+  - "tambah fitur magnet saping elemen dan center kek di figma bro ketika geser posisi"
+  - "padahal udah kesimpen editan slide nya tapi kok malah balik lagi ke sebelum di edit manual ya, trus klo di edit lagi elemen nya yang tadi di edit di klik di posisi defaultnya itu malah langsung ke load ke posisi setelah di edit padahl ketika keluar mode edit udah disimpan itu ga kesimpen, please fix it"
+- **Akar Masalah:**
+  1. *Elemen Melompat Kembali ke Posisi Default*: Spesifikasi CSS W3C menyatakan bahwa properti `transform` diabaikan oleh rendering engine browser pada non-replaced inline elements (`display: inline` seperti `span`, `a`, `b`, `i`). Sebelumnya aturan `display: inline-block !important;` hanya terikat pada class `.deck-editable-selected`. Begitu mode edit ditutup atau seleksi dibersihkan, elemen kembali ke `display: inline`, sehingga browser mengabaikan transformasinya (tampak kembali ke posisi asli). Saat pengguna mengklik elemen tersebut di posisi default dalam mode edit, class `.deck-editable-selected` terpasang kembali dan browser mendadak merender kembali transformasinya (tampak melompat).
+  2. *Sinkronisasi Penyimpanan Eksternal*: Pada `canvas_manager.js`, event `SLIDE_DECK_CONTENT_CHANGED` belum menyinkronkan data ke `chrome.storage.local` (`opendesign_last_artifact`), sehingga saat berpindah tab atau memuat ulang, artefak lama dapat tertimpa.
+  3. *Ketiadaan Smart Guides & Magnetic Snapping*: Belum ada deteksi perataan magnetik (snap) terhadap sumbu tengah kanvas, batas padding, dan elemen saudara (siblings) saat menggeser elemen.
+- **Analisis & Solusi:**
+  1. *Persistent Display Rule & Inline-Block Enforcement (`slide_editor.js`)*:
+     - Menetapkan aturan CSS permanen: `[data-deck-transform], span[data-deck-transform], a[data-deck-transform], b[data-deck-transform], i[data-deck-transform], strong[data-deck-transform], em[data-deck-transform] { display: inline-block !important; }`.
+     - Pada `applyTransform()`, langsung menetapkan `el.style.display = 'inline-block'` pada elemen yang ditransformasi sehingga tersimpan langsung ke inline style HTML artefak.
+     - Pada `#editor-btn-reset-transform`, membersihkan `el.style.display = ''` bersama seluruh properti transform lainnya.
+  2. *Penyimpanan Persisten di `canvas_manager.js`*:
+     - Menambahkan penyimpanan sinkron ke `chrome.storage.local.set({ opendesign_last_artifact: activeDesignArtifact })` setiap kali menerima pesan `SLIDE_DECK_CONTENT_CHANGED`.
+  3. *Magnetic Snapping Engine & Figma Magenta Guide Lines*:
+     - Menghimpun koordinat magnet X & Y (`snapCandidatesX`, `snapCandidatesY`) pada event `mousedown`: titik tengah kanvas, batas padding 48px/36px, serta tepi kiri, tengah, dan kanan/bawah dari semua elemen saudara di kanvas.
+     - Pada event `mousemove` aksi `move`: mendeteksi jika jarak pergeseran berada dalam toleransi snap (7px), otomatis menempelkan posisi (`snap`) ke target perataan.
+     - Menampilkan garis pandu magenta visual khas Figma (`.figma-snap-guide-v` dan `.figma-snap-guide-h`, `1.5px solid #EC4899`) dengan efek glowing. Garis pandu otomatis dibersihkan saat mouse dilepas (`mouseup`).
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` patuh di bawah 800 baris (`slide_editor.js`: 783 baris, `canvas_manager.js`: 790 baris, `slide_styles.js`: 789 baris, `slide_template.js`: 781 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Node assertion unit test memverifikasi `figma-snap-guide-v`, `figma-snap-guide-h`, `display: inline-block` pada `[data-deck-transform]`, serta persistensi `opendesign_last_artifact` di `canvas_manager.js`.
+  2. Node syntax check `node -c extension/design/*.js extension/*.js` lolos 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file `<= 790` baris.
+  4. Bump versi manifest ke `v2.150.228`.
+
+
 
 
 
