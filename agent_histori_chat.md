@@ -6496,6 +6496,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi jumlah baris memastikan seluruh file `<= 789` baris.
   4. Bump versi manifest ke `v2.150.226`.
 
+### 🚀 Iterasi 508: Slide Deck Figma-Style Edge Sizing Handles for Width & Height Dimensions (v2.150.227)
+- **User Request:**
+  - "tambah fitur buat mendekin panjang atau tinggi kek di figma bro" (Pengguna mengunggah tangkapan layar elemen pill terseleksi yang hanya memiliki 4 handle sudut untuk skala proporsional dan 1 handle rotasi atas, meminta agar bisa memanjangkan/memendekkan lebar atau meninggikan/memendekkan tinggi elemen secara mandiri seperti di Figma).
+- **Akar Masalah:**
+  1. Sebelumnya kotak pembatas transformasi `.deck-figma-box` hanya memiliki 4 handle sudut (`.figma-handle-tl`, `.tr`, `.bl`, `.br`) yang melakukan scaling proporsional serempak (`scale`) serta 1 handle rotasi (`rotate`).
+  2. Pengguna tidak bisa mengubah dimensi panjang/lebar (`width`) atau tinggi (`height`) sebuah teks, badge, kartu, atau kotak tanpa memperbesar/memperkecil seluruh kontennya secara proporsional.
+- **Analisis & Solusi:**
+  1. *4 Handle Tepi Interaktif Ala Figma (`slide_editor.js`)*:
+     - Menambahkan handle sisi tengah atas (`.figma-handle-tm`, `cursor: ns-resize`, `data-handle="resize-h"`), tengah bawah (`.figma-handle-bm`, `cursor: ns-resize`, `data-handle="resize-h"`), tengah kiri (`.figma-handle-ml`, `cursor: ew-resize`, `data-handle="resize-w"`), dan tengah kanan (`.figma-handle-mr`, `cursor: ew-resize`, `data-handle="resize-w"`).
+     - Posisi handle menggunakan formula presisi `top/left: calc(50% - 4.5px)` sehingga selalu berada tepat di tengah tepi elemen.
+  2. *Scale-Aware Dimension Mutation*:
+     - Delta pergerakan kursor mouse disesuaikan dengan skala elemen (`delta / scale`).
+     - Aksi `resize-w`: Menghitung lebar baru (`Math.max(20, Math.round(initialWidth + (activeDir === 'mr' ? dx : -dx)))`), menyetel `style.maxWidth = 'none'`, `style.flexShrink = '0'`, dan `style.width = newW + 'px'`.
+     - Aksi `resize-h`: Menghitung tinggi baru (`Math.max(16, Math.round(initialHeight + (activeDir === 'bm' ? dy : -dy)))`), menyetel `style.minHeight = 'auto'`, `style.flexShrink = '0'`, dan `style.height = newH + 'px'`.
+     - Badge dimensi visual (`.figma-badge-dim`) menampilkan dimensi real-time (`P: [width]px` atau `T: [height]px`) saat handle ditarik.
+  3. *Perluasan Reset Transform*:
+     - Tombol Reset (`#editor-btn-reset-transform`) kini juga membersihkan properti `width`, `height`, `maxWidth`, `minHeight`, dan `flexShrink`.
+  4. *Optimasi & Kondensasi Kode Toolbar*:
+     - Mengondensasikan helper gaya teks, swatch warna, dan perataan teks untuk menghemat ~30 baris kode sehingga `slide_editor.js` tetap sangat ramping.
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` patuh di bawah 800 baris (`slide_editor.js`: 778 baris, `canvas_manager.js`: 787 baris, `slide_styles.js`: 789 baris, `slide_template.js`: 781 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Node assertion unit test memverifikasi kehadiran CSS kelas `.figma-handle-tm`, `.bm`, `.ml`, `.mr`, markup `data-handle="resize-w"`, `data-handle="resize-h"`, serta logic kalkulasi ukuran.
+  2. Node syntax check `node -c extension/design/*.js extension/*.js` lolos 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file `<= 789` baris.
+  4. Bump versi manifest ke `v2.150.227`.
+
+
 
 
 

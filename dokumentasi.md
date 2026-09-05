@@ -349,4 +349,18 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
     - **Kompatibilitas Ekspor Standalone**: `getSlideDeckEditorScript()` kini mengembalikan representasi serialisasi mandiri `(${initSlideDeckRealtimeEditor.toString()})(document, window);` sehingga file HTML yang diunduh atau dibuka di luar browser extension tetap memiliki fungsionalitas penyuntingan visual 100% utuh.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 788 baris, `canvas_manager.js` 787 baris, `slide_styles.js` 789 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+110. **Slide Deck Figma-Style Edge Sizing Handles for Width & Height Dimensions (`v2.150.227`):** Menambahkan handle tepi interaktif ala Figma pada kotak pembatas transformasi untuk mengatur panjang/lebar dan tinggi elemen secara mandiri:
+    - **4 Handle Tepi Interaktif (`.figma-handle-tm`, `.bm`, `.ml`, `.mr`)**:
+      - *Top-Middle (`.figma-handle-tm`)*: Kursor `ns-resize`, `data-handle="resize-h"`, `data-dir="tm"`.
+      - *Bottom-Middle (`.figma-handle-bm`)*: Kursor `ns-resize`, `data-handle="resize-h"`, `data-dir="bm"`.
+      - *Middle-Left (`.figma-handle-ml`)*: Kursor `ew-resize`, `data-handle="resize-w"`, `data-dir="ml"`.
+      - *Middle-Right (`.figma-handle-mr`)*: Kursor `ew-resize`, `data-handle="resize-w"`, `data-dir="mr"`.
+    - **Kalkulasi Dimensi Skala-Sadar (Scale-Aware Resize)**:
+      - Menyeret handle horizontal (`resize-w`) menghitung pergeseran kursor mouse `dx` dinormalisasi skala (`dx / scale`), memperbarui properti `element.style.width`, menonaktifkan `maxWidth` (`maxWidth = 'none'`), serta mengunci `flexShrink = '0'` agar badge/pill/kartu tidak terkompresi secara elastis oleh flexbox layout.
+      - Menyeret handle vertikal (`resize-h`) menghitung pergeseran kursor `dy` dinormalisasi skala (`dy / scale`), memperbarui properti `element.style.height`, menonaktifkan `minHeight`, serta mengunci `flexShrink = '0'`.
+      - Badge dimensi visual (`.figma-badge-dim`) otomatis menampilkan angka dimensi real-time (`P: 240px` atau `T: 48px`) saat handle ditarik.
+    - **Penyegaran Atur Ulang & Snapshot**: Tombol `#editor-btn-reset-transform` diperluas untuk mengembalikan dimensi inline (`width`, `height`, `maxWidth`, `minHeight`, `flexShrink`) ke default selain mereset translasi dan rotasi.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 778 baris, `canvas_manager.js` 787 baris, `slide_styles.js` 789 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+
 

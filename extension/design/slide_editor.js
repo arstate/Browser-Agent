@@ -51,6 +51,10 @@ function getSlideDeckEditorCss() {
     .figma-handle-tr { top: -5px; right: -5px; cursor: nesw-resize; }
     .figma-handle-bl { bottom: -5px; left: -5px; cursor: nesw-resize; }
     .figma-handle-br { bottom: -5px; right: -5px; cursor: nwse-resize; }
+    .figma-handle-tm { top: -5px; left: calc(50% - 4.5px); cursor: ns-resize; }
+    .figma-handle-bm { bottom: -5px; left: calc(50% - 4.5px); cursor: ns-resize; }
+    .figma-handle-ml { top: calc(50% - 4.5px); left: -5px; cursor: ew-resize; }
+    .figma-handle-mr { top: calc(50% - 4.5px); right: -5px; cursor: ew-resize; }
     .figma-rot-stem {
       position: absolute; top: -22px; left: 50%; width: 1.5px; height: 18px;
       background: var(--accent, #6366F1); pointer-events: none; transform: translateX(-50%);
@@ -190,12 +194,14 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
       let selectedElements = new Set();
       let isDragging = false;
       let activeAction = null;
+      let activeDir = null;
       let activeElement = null;
       let startX = 0, startY = 0;
       let centerX = 0, centerY = 0;
       let initialTransform = { x: 0, y: 0, scale: 1, rotate: 0 };
       let initialDistance = 1;
       let initialAngle = 0;
+      let initialWidth = 0, initialHeight = 0;
       let initialTransforms = new Map();
       let historyStack = [];
       let futureStack = [];
@@ -235,6 +241,10 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
             '<div class="figma-handle figma-handle-tr" data-handle="scale" data-dir="tr"></div>' +
             '<div class="figma-handle figma-handle-bl" data-handle="scale" data-dir="bl"></div>' +
             '<div class="figma-handle figma-handle-br" data-handle="scale" data-dir="br"></div>' +
+            '<div class="figma-handle figma-handle-tm" data-handle="resize-h" data-dir="tm" title="Tarik untuk atur tinggi"></div>' +
+            '<div class="figma-handle figma-handle-bm" data-handle="resize-h" data-dir="bm" title="Tarik untuk atur tinggi"></div>' +
+            '<div class="figma-handle figma-handle-ml" data-handle="resize-w" data-dir="ml" title="Tarik untuk atur lebar/panjang"></div>' +
+            '<div class="figma-handle figma-handle-mr" data-handle="resize-w" data-dir="mr" title="Tarik untuk atur lebar/panjang"></div>' +
             '<div class="figma-rot-stem"></div>' +
             '<div class="figma-handle-rot" data-handle="rotate" title="Tarik untuk memutar elemen"></div>' +
             '<div class="figma-badge-dim"></div>';
@@ -458,6 +468,7 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           if (!parentSelected) return;
 
           activeAction = handleType;
+          activeDir = handleEl.getAttribute('data-dir');
           activeElement = parentSelected;
           startX = e.clientX;
           startY = e.clientY;
@@ -467,6 +478,8 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           initialTransform = getParsedTransform(parentSelected);
           initialDistance = Math.hypot(startX - centerX, startY - centerY) || 1;
           initialAngle = Math.atan2(startY - centerY, startX - centerX) * (180 / Math.PI);
+          initialWidth = parentSelected.offsetWidth || rect.width;
+          initialHeight = parentSelected.offsetHeight || rect.height;
           return;
         }
 
@@ -540,6 +553,32 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           return;
         }
 
+        if (activeAction === 'resize-w' && activeElement) {
+          e.preventDefault();
+          const s = initialTransform.scale || 1;
+          const dx = (e.clientX - startX) / s;
+          const newW = Math.max(20, Math.round(initialWidth + (activeDir === 'mr' ? dx : -dx)));
+          activeElement.style.maxWidth = 'none';
+          activeElement.style.flexShrink = '0';
+          activeElement.style.width = newW + 'px';
+          const badge = activeElement.querySelector('.figma-badge-dim');
+          if (badge) { badge.style.display = 'block'; badge.textContent = 'P: ' + newW + 'px'; }
+          return;
+        }
+
+        if (activeAction === 'resize-h' && activeElement) {
+          e.preventDefault();
+          const s = initialTransform.scale || 1;
+          const dy = (e.clientY - startY) / s;
+          const newH = Math.max(16, Math.round(initialHeight + (activeDir === 'bm' ? dy : -dy)));
+          activeElement.style.minHeight = 'auto';
+          activeElement.style.flexShrink = '0';
+          activeElement.style.height = newH + 'px';
+          const badge = activeElement.querySelector('.figma-badge-dim');
+          if (badge) { badge.style.display = 'block'; badge.textContent = 'T: ' + newH + 'px'; }
+          return;
+        }
+
         if (activeAction === 'move' && isDragging && selectedElements.size > 0) {
           e.preventDefault();
           const dx = e.clientX - startX;
@@ -563,6 +602,7 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
             if (badge) badge.style.display = 'none';
           }
           activeAction = null;
+          activeDir = null;
           activeElement = null;
           isDragging = false;
           initialTransforms.clear();
@@ -623,97 +663,47 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
       doc.getElementById('editor-btn-size-up')?.addEventListener('click', () => adjustFontSize(2));
       doc.getElementById('editor-btn-size-down')?.addEventListener('click', () => adjustFontSize(-2));
 
-      doc.getElementById('editor-btn-bold')?.addEventListener('click', (e) => {
-        selectedElements.forEach(el => {
-          const isBold = el.style.fontWeight === '800' || el.style.fontWeight === 'bold';
-          el.style.fontWeight = isBold ? 'normal' : '800';
-        });
+      const toggleStyle = (prop, val1, val2) => (e) => {
+        selectedElements.forEach(el => { el.style[prop] = (el.style[prop] === val1 ? val2 : val1); });
         e.currentTarget.classList.toggle('active');
-        takeSnapshot();
-        notifyParentContentChanged();
-      });
+        takeSnapshot(); notifyParentContentChanged();
+      };
+      doc.getElementById('editor-btn-bold')?.addEventListener('click', toggleStyle('fontWeight', '800', 'normal'));
+      doc.getElementById('editor-btn-italic')?.addEventListener('click', toggleStyle('fontStyle', 'italic', 'normal'));
+      doc.getElementById('editor-btn-underline')?.addEventListener('click', toggleStyle('textDecoration', 'underline', 'none'));
 
-      doc.getElementById('editor-btn-italic')?.addEventListener('click', (e) => {
-        selectedElements.forEach(el => {
-          const isItalic = el.style.fontStyle === 'italic';
-          el.style.fontStyle = isItalic ? 'normal' : 'italic';
-        });
-        e.currentTarget.classList.toggle('active');
-        takeSnapshot();
-        notifyParentContentChanged();
-      });
+      doc.querySelectorAll('.editor-color-swatch').forEach(sw => sw.addEventListener('click', () => {
+        selectedElements.forEach(el => el.style.color = sw.getAttribute('data-color'));
+        takeSnapshot(); notifyParentContentChanged();
+      }));
 
-      doc.getElementById('editor-btn-underline')?.addEventListener('click', (e) => {
-        selectedElements.forEach(el => {
-          const isU = el.style.textDecoration === 'underline';
-          el.style.textDecoration = isU ? 'none' : 'underline';
-        });
-        e.currentTarget.classList.toggle('active');
-        takeSnapshot();
-        notifyParentContentChanged();
-      });
-
-      doc.querySelectorAll('.editor-color-swatch').forEach(swatch => {
-        swatch.addEventListener('click', () => {
-          const color = swatch.getAttribute('data-color');
-          selectedElements.forEach(el => {
-            el.style.color = color;
-          });
-          takeSnapshot();
-          notifyParentContentChanged();
+      ['left', 'center', 'right'].forEach(align => {
+        doc.getElementById('editor-btn-align-' + align)?.addEventListener('click', () => {
+          selectedElements.forEach(el => el.style.textAlign = align);
+          takeSnapshot(); notifyParentContentChanged();
         });
       });
 
-      function setAlignment(align) {
-        selectedElements.forEach(el => {
-          el.style.textAlign = align;
-        });
-        takeSnapshot();
-        notifyParentContentChanged();
-      }
-      doc.getElementById('editor-btn-align-left')?.addEventListener('click', () => setAlignment('left'));
-      doc.getElementById('editor-btn-align-center')?.addEventListener('click', () => setAlignment('center'));
-      doc.getElementById('editor-btn-align-right')?.addEventListener('click', () => setAlignment('right'));
-
-      function adjustScale(factor) {
-        selectedElements.forEach(el => {
-          const t = getParsedTransform(el);
-          t.scale = Math.max(0.2, Math.min(3.0, t.scale + factor));
-          applyTransform(el, t);
-        });
-        takeSnapshot();
-        notifyParentContentChanged();
-      }
-      doc.getElementById('editor-btn-scale-up')?.addEventListener('click', () => adjustScale(0.1));
-      doc.getElementById('editor-btn-scale-down')?.addEventListener('click', () => adjustScale(-0.1));
-
-      function adjustRotation(deg) {
-        selectedElements.forEach(el => {
-          const t = getParsedTransform(el);
-          t.rotate = (t.rotate + deg) % 360;
-          applyTransform(el, t);
-        });
-        takeSnapshot();
-        notifyParentContentChanged();
-      }
-      doc.getElementById('editor-btn-rot-left')?.addEventListener('click', () => adjustRotation(-15));
-      doc.getElementById('editor-btn-rot-right')?.addEventListener('click', () => adjustRotation(15));
+      const adjustTransformProp = (fn) => {
+        selectedElements.forEach(el => { const t = getParsedTransform(el); fn(t); applyTransform(el, t); });
+        takeSnapshot(); notifyParentContentChanged();
+      };
+      doc.getElementById('editor-btn-scale-up')?.addEventListener('click', () => adjustTransformProp(t => { t.scale = Math.max(0.2, Math.min(3.0, t.scale + 0.1)); }));
+      doc.getElementById('editor-btn-scale-down')?.addEventListener('click', () => adjustTransformProp(t => { t.scale = Math.max(0.2, Math.min(3.0, t.scale - 0.1)); }));
+      doc.getElementById('editor-btn-rot-left')?.addEventListener('click', () => adjustTransformProp(t => { t.rotate = (t.rotate - 15) % 360; }));
+      doc.getElementById('editor-btn-rot-right')?.addEventListener('click', () => adjustTransformProp(t => { t.rotate = (t.rotate + 15) % 360; }));
 
       doc.getElementById('editor-btn-reset-transform')?.addEventListener('click', () => {
         selectedElements.forEach(el => {
           el.removeAttribute('data-deck-transform');
-          el.style.transform = '';
-          el.style.transformOrigin = '';
+          el.style.transform = el.style.transformOrigin = el.style.width = el.style.height = el.style.maxWidth = el.style.minHeight = el.style.flexShrink = '';
         });
-        takeSnapshot();
-        notifyParentContentChanged();
+        takeSnapshot(); notifyParentContentChanged();
       });
 
-      // Undo, Redo, Duplicate, Delete Buttons
-      doc.getElementById('editor-btn-undo')?.addEventListener('click', applyUndo);
-      doc.getElementById('editor-btn-redo')?.addEventListener('click', applyRedo);
-      doc.getElementById('editor-btn-duplicate')?.addEventListener('click', duplicateSelectedElements);
-      doc.getElementById('editor-btn-delete')?.addEventListener('click', deleteSelectedElements);
+      [['undo', applyUndo], ['redo', applyRedo], ['duplicate', duplicateSelectedElements], ['delete', deleteSelectedElements]].forEach(([id, fn]) => {
+        doc.getElementById('editor-btn-' + id)?.addEventListener('click', fn);
+      });
 
       // Keyboard Shortcuts (Capture phase)
       win.addEventListener('keydown', (e) => {

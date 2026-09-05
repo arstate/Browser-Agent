@@ -902,6 +902,40 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_prompt.js`: 183 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
 
+## 🎨 43. Slide Deck Figma-Style Edge Sizing Handles for Width & Height Dimensions (v2.150.227)
+
+1. **Edge Resize Handles Architecture (`.figma-handle-tm`, `.bm`, `.ml`, `.mr`)**:
+   - Kotak pembatas transformasi `.deck-figma-box` kini dilengkapi 4 handle sisi independen berposisi `calc(50% - 4.5px)`:
+     - Top-Middle (`.figma-handle-tm`, cursor `ns-resize`, `data-handle="resize-h"`, `data-dir="tm"`).
+     - Bottom-Middle (`.figma-handle-bm`, cursor `ns-resize`, `data-handle="resize-h"`, `data-dir="bm"`).
+     - Middle-Left (`.figma-handle-ml`, cursor `ew-resize`, `data-handle="resize-w"`, `data-dir="ml"`).
+     - Middle-Right (`.figma-handle-mr`, cursor `ew-resize`, `data-handle="resize-w"`, `data-dir="mr"`).
+
+2. **Scale-Aware Dimension Mutation**:
+   - Delta pergerakan kursor mouse dinormalisasi terhadap skala elemen saat ini (`dx / scale`, `dy / scale`).
+   - Lebar (`resize-w`): `newW = Math.max(20, Math.round(initialWidth + (activeDir === 'mr' ? dx : -dx)))`.
+     Menetapkan `activeElement.style.maxWidth = 'none'`, `flexShrink = '0'`, `width = newW + 'px'`.
+   - Tinggi (`resize-h`): `newH = Math.max(16, Math.round(initialHeight + (activeDir === 'bm' ? dy : -dy)))`.
+     Menetapkan `activeElement.style.minHeight = 'auto'`, `flexShrink = '0'`, `height = newH + 'px'`.
+   - Badge dimensi visual (`.figma-badge-dim`) menampilkan `P: [width]px` atau `T: [height]px` selama aksi drag berlangsung.
+
+3. **Reset & Clean State Restoration**:
+   - Tombol Reset Transformasi (`#editor-btn-reset-transform`) mengembalikan `width`, `height`, `maxWidth`, `minHeight`, dan `flexShrink` ke string kosong selain mereset koordinat translasi dan sudut rotasi.
+   - Fungsi snapshot otomatis merekam mutasi ukuran ke dalam `historyStack` dan menyiarkan pembaruan HTML ke parent canvas.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - `slide_editor.js`: 778 baris.
+   - `canvas_manager.js`: 787 baris.
+   - `slide_styles.js`: 789 baris.
+   - `slide_template.js`: 781 baris.
+   - `design_executor.js`: 776 baris.
+   - `design_agent.js`: 626 baris.
+   - `slide_deck_engine.js`: 506 baris.
+   - `slide_themes.js`: 266 baris.
+   - `canvas_exporter.js`: 244 baris.
+   - `design_prompt.js`: 183 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
 
 
 
