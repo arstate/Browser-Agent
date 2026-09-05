@@ -652,4 +652,19 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Generator kartu kini mengikat variabel topik pengguna secara dinamis dan kontekstual.
 
 
+## 🚀 34. Master Design Visual Style Ideation Engine & Non-Corporate Card Architecture (v2.150.218)
 
+1. **Master Design Visual Style Ideation Engine (`exploreDesignStyleConcept`)**:
+   - Menginisiasi eksplorasi gaya visual, mood, palet warna, dan arah seni sebelum slide dieksekusi (`master_design_ideate_visual_style`).
+   - Memberikan konsep spesifik domain (contoh topik kucing: *"Warm Cozy Pet & Lifestyle Editorial"*, lembut, organik, palet hangat, badge unik non-korporat).
+   - Menyuntikkan konsep ini ke dalam prompt AI Master Design di setiap slide agar layout bervariasi dan tidak mengulang template kaku.
+
+2. **Eliminasi Frame Korporat Kaku (Anti-Enterprise Template)**:
+   - Menghapus label kuno seperti `BAB III //`, `MODULAR RATIO 16:9`, dan `MATERI PRESENTASI RESMI`.
+   - Menggantinya dengan breadcrumbs editorial modern (`.header-topic-crumb` / `.header-chapter-sub` dan `.header-page-tag`) serta footer minimalis yang rapi.
+
+3. **Sleek Tag Chips & Asymmetric Card Highlighting**:
+   - Mengubah elemen `.col-highlight-box` (yang tampak seperti tombol aksi) menjadi `.col-tag-chip` dengan dot penanda aksen warna (`.col-tag-dot`).
+   - Menyematkan kelas `.is-featured` pada kartu sorotan utama dengan aksen border atas dan elevasi visual.
+   - Menghilangkan template badge seragam `PILAR 01/02/03` menjadi label kontekstual murni.
+   - Menginstruksikan AI Master Design untuk menghindari dinding teks padat dan memformat kartu dengan poin-poin ringkas yang scannable.

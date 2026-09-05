@@ -4,25 +4,13 @@
 // =========================================================================
 
 function getEffectiveEndpointUrl(rawEndpoint) {
-  if (typeof getNormalizedChatEndpoint === 'function') {
-    return getNormalizedChatEndpoint(rawEndpoint);
-  }
-  if (typeof window !== 'undefined' && typeof window.getNormalizedChatEndpoint === 'function') {
-    return window.getNormalizedChatEndpoint(rawEndpoint);
-  }
-  if (typeof buildApiUrl === 'function' && buildApiUrl !== getEffectiveEndpointUrl) {
-    return buildApiUrl(rawEndpoint);
-  }
+  if (typeof getNormalizedChatEndpoint === 'function') return getNormalizedChatEndpoint(rawEndpoint);
+  if (typeof window !== 'undefined' && typeof window.getNormalizedChatEndpoint === 'function') return window.getNormalizedChatEndpoint(rawEndpoint);
   let clean = (rawEndpoint || 'https://generativelanguage.googleapis.com/v1beta/openai').trim().replace(/\/+$/, '');
   return clean.endsWith('/chat/completions') ? clean : clean + '/chat/completions';
 }
-
-if (typeof buildApiUrl !== 'function') {
-  var buildApiUrl = getEffectiveEndpointUrl;
-}
-if (typeof window !== 'undefined') {
-  window.buildApiUrl = getEffectiveEndpointUrl;
-}
+if (typeof buildApiUrl !== 'function') var buildApiUrl = getEffectiveEndpointUrl;
+if (typeof window !== 'undefined') window.buildApiUrl = getEffectiveEndpointUrl;
 
 function resolveDesignCandidateModels(agentConfig = {}) {
   let candidates = [];
@@ -47,7 +35,7 @@ function resolveDesignCandidateModels(agentConfig = {}) {
 
 async function fetchSlideContentFromAI(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary, agentConfig, abortSignal) {
   const prompt = (typeof createSlidePromptForMasterDesign === 'function')
-    ? createSlidePromptForMasterDesign(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary)
+    ? createSlidePromptForMasterDesign(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary, agentConfig?.styleConcept)
     : `Rancang konten detail untuk slide ${slideIndex + 1} topik: ${topic}`;
 
   const endpointUrl = getEffectiveEndpointUrl(agentConfig.endpointUrl || agentConfig.endpoint);
@@ -134,32 +122,15 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     if (typeof updateHeaderChatTitle === 'function') updateHeaderChatTitle(currentSessionTitle);
   }
 
-  if (typeof appendUserMessage === 'function') {
-    appendUserMessage(userMessage, attachments);
-  } else if (typeof window !== 'undefined' && typeof window.appendUserMessage === 'function') {
-    window.appendUserMessage(userMessage, attachments);
-  }
+  if (typeof appendUserMessage === 'function') appendUserMessage(userMessage, attachments);
+  else if (typeof window !== 'undefined' && typeof window.appendUserMessage === 'function') window.appendUserMessage(userMessage, attachments);
 
   if (typeof conversationHistory !== 'undefined' && Array.isArray(conversationHistory)) {
-    conversationHistory.push({
-      role: "user",
-      content: userMessage,
-      displayContent: userMessage,
-      attachments: attachments,
-      chatMode: "design"
-    });
+    conversationHistory.push({ role: "user", content: userMessage, displayContent: userMessage, attachments, chatMode: "design" });
   }
-
-  // Save session immediately so user prompt is persisted in history
-  if (typeof saveCurrentSessionToDB === 'function') {
-    saveCurrentSessionToDB();
-  } else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') {
-    window.saveCurrentSessionToDB();
-  }
-
-  if (typeof saveAttachmentsToIndexedDB === 'function' && attachments && attachments.length > 0) {
-    saveAttachmentsToIndexedDB(attachments);
-  }
+  if (typeof saveCurrentSessionToDB === 'function') saveCurrentSessionToDB();
+  else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') window.saveCurrentSessionToDB();
+  if (typeof saveAttachmentsToIndexedDB === 'function' && attachments && attachments.length > 0) saveAttachmentsToIndexedDB(attachments);
 
   // Dual Master Agent Hierarchy: Master Agent (Boss) directing Master Design (Right Hand)
   const agentInfo = (typeof createDesignHierarchyAgentInfo === 'function') 
@@ -238,8 +209,33 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       updateToolBadgeState(toolBadgeDelegate, 'success', isRevision ? 'Arahan revisi canvas aktif diserahkan ke Master Design.' : 'Brief dan spesifikasi slide deck 16:9 diserahkan ke Master Design.');
     }
 
+    const cleanFn = (typeof cleanPresentationTopic === 'function')
+      ? cleanPresentationTopic
+      : (typeof window !== 'undefined' && typeof window.cleanPresentationTopic === 'function' ? window.cleanPresentationTopic : null);
+    const cleanTopic = cleanFn ? cleanFn(userMessage) : (userMessage || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim();
+
+    // Ideasi style desain khusus sesuai materi
+    const exploreStyleFn = (typeof exploreDesignStyleConcept === 'function')
+      ? exploreDesignStyleConcept
+      : (typeof window !== 'undefined' && typeof window.exploreDesignStyleConcept === 'function' ? window.exploreDesignStyleConcept : null);
+    const styleConcept = exploreStyleFn ? exploreStyleFn(cleanTopic, { theme: deducedTheme }) : { conceptName: deducedTheme.name, vibe: 'Modern', theme: deducedTheme };
+    config.styleConcept = styleConcept;
+
+    let toolBadgeStyle = null;
+    if (typeof appendToolBadge === 'function') {
+      toolBadgeStyle = appendToolBadge(
+        assistantBubble,
+        'master_design_ideate_visual_style',
+        { topic: cleanTopic, concept: styleConcept.conceptName, vibe: styleConcept.vibe, palette: styleConcept.paletteSummary },
+        'Master Design'
+      );
+      if (typeof updateToolBadgeState === 'function') {
+        updateToolBadgeState(toolBadgeStyle, 'success', `Ide style terkurasi: ${styleConcept.conceptName}`);
+      }
+    }
+
     // Master Design takes the active execution lead
-    const workingAgentStatus = isRevision ? "🎨 Master Design: Menerapkan revisi pada canvas aktif..." : "🎨 Master Design: Merancang slide 16:9...";
+    const workingAgentStatus = isRevision ? "🎨 Master Design: Menerapkan revisi pada canvas aktif..." : `🎨 Master Design: Merancang slide (${styleConcept.conceptName})...`;
     updateAssistantActiveAgent(assistantBubble, "Master Design", workingAgentStatus, false, false);
 
     let targetArtifact = (isRevision && currentOpenArtifact) ? currentOpenArtifact : {};
@@ -250,11 +246,6 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     const defaultBp = (typeof createDefaultBlueprint === 'function')
       ? createDefaultBlueprint(userMessage, targetSlideCount, deducedTheme)
       : { title: 'Materi Presentasi', slides: [] };
-
-    const cleanFn = (typeof cleanPresentationTopic === 'function')
-      ? cleanPresentationTopic
-      : (typeof window !== 'undefined' && typeof window.cleanPresentationTopic === 'function' ? window.cleanPresentationTopic : null);
-    const cleanTopic = cleanFn ? cleanFn(userMessage) : (userMessage || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim();
 
     const genEdFn = (typeof generateEditorialTitle === 'function')
       ? generateEditorialTitle
@@ -271,6 +262,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       subCategory: deducedTheme.subHeader,
       accentColor: deducedTheme.accent,
       themeObj: deducedTheme,
+      styleConcept,
       userPrompt: userMessage
     };
 

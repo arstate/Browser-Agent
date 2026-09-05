@@ -18,8 +18,12 @@ if (typeof toRoman !== "function") {
 }
 
 function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
-  // Support both (slidesData, deckMeta) and alternate (topic, slidesData)
-  if (typeof slidesData === 'string' && Array.isArray(deckMeta)) {
+  // Support both (slidesData, deckMeta) and alternate (topic, slidesData) or ({ slides, ... }, deckMeta)
+  if (slidesData && !Array.isArray(slidesData) && Array.isArray(slidesData.slides)) {
+    const orig = slidesData;
+    slidesData = orig.slides;
+    deckMeta = { ...orig, ...deckMeta };
+  } else if (typeof slidesData === 'string' && Array.isArray(deckMeta)) {
     const tempSlides = deckMeta;
     deckMeta = { title: slidesData, brand: slidesData };
     slidesData = tempSlides;
@@ -29,7 +33,17 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   }
   const total = slidesData.length || 1;
   const promptOrTitle = deckMeta.userPrompt || deckMeta.title || (slidesData[0]?.title || "");
-  const theme = deckMeta.themeObj || detectOptimalSlideTheme(promptOrTitle, deckMeta);
+  const getThemeFn = (typeof detectOptimalSlideTheme === 'function')
+    ? detectOptimalSlideTheme
+    : (typeof window !== 'undefined' && typeof window.detectOptimalSlideTheme === 'function' ? window.detectOptimalSlideTheme : null);
+  const theme = deckMeta.themeObj || (getThemeFn ? getThemeFn(promptOrTitle, deckMeta) : {
+    id: "dark_luxury_cyber",
+    bg: "#0B0F19",
+    accent: "#6366F1",
+    accentSecondary: "#38BDF8",
+    accentTertiary: "#F43F5E",
+    tag: "PRESENTASI EKSEKUTIF"
+  });
 
   const cleanFn = (typeof cleanPresentationTopic === 'function')
     ? cleanPresentationTopic
@@ -242,13 +256,13 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           <div class="thumb-mini-slide-wrap">
             <div class="thumb-mini-slide">
               <div class="thumb-mini-header">
-                <span class="thumb-mini-chapter">BAB ${toRoman(idx + 1)} // ${escapeHtml(categoryTitle.toUpperCase())}</span>
-                <span class="thumb-mini-page">HALAMAN ${slideNumStr}/${totalStr}</span>
+                <span class="thumb-mini-chapter">${escapeHtml(brandName.slice(0, 20))}</span>
+                <span class="thumb-mini-page">${slideNumStr}/${totalStr}</span>
               </div>
               ${thumbBodyHtml}
               <div class="thumb-mini-footer">
-                <span>${escapeHtml(copyrightText)}</span>
-                <span style="color: ${accentColor}; font-weight: 800;">${escapeHtml(badgeTag)}</span>
+                <span>${escapeHtml(brandName.slice(0, 20))}</span>
+                <span style="color: ${accentColor}; font-weight: 800;">${escapeHtml((badgeTag || 'MODULAR').slice(0, 14))}</span>
               </div>
             </div>
           </div>
@@ -345,15 +359,19 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         <div class="split-grid">
           ${splitCards.map((c, ci) => {
             const bColor = c.badgeColor || (ci === 0 ? accentColor : accentSecondary);
+            const rawBadge = c.badge || '';
+            const cleanBadge = (!rawBadge || /pilar\s*\d+|poin\s*\d+/i.test(rawBadge)) ? (c.title || `FOKUS 0${ci + 1}`).slice(0, 20).toUpperCase() : rawBadge;
+            const cleanHl = c.footerHighlight || c.title || `POIN 0${ci + 1}`;
             return `
-              <div class="split-col">
+              <div class="split-col ${ci === 0 ? 'is-featured' : ''}">
                 <div class="split-col-top">
-                  <div class="col-badge" style="color: ${bColor};">${escapeHtml(c.badge || `PILAR 0${ci + 1} // ANALISIS`)}</div>
-                  <h3 class="split-col-title">${escapeHtml(c.title || `Fokus Strategis 0${ci + 1}`)}</h3>
+                  <div class="col-badge" style="color: ${bColor};">${escapeHtml(cleanBadge)}</div>
+                  <h3 class="split-col-title">${escapeHtml(c.title || `Fokus 0${ci + 1}`)}</h3>
                   <p class="split-col-desc">${escapeHtml(c.desc || '')}</p>
                 </div>
-                <div class="col-highlight-box">
-                  <span class="col-highlight-text" style="color: ${bColor};">${escapeHtml(c.footerHighlight || c.title || `POIN UTAMA 0${ci + 1}`)}</span>
+                <div class="col-tag-chip" style="color: ${bColor}; border-color: ${bColor}44; background: ${bColor}12;">
+                  <span class="col-tag-dot" style="background: ${bColor};"></span>
+                  <span class="col-highlight-text">${escapeHtml(cleanHl)}</span>
                 </div>
               </div>
             `;
@@ -380,8 +398,9 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
                   <div class="metric-title">${escapeHtml(c.title || `Metrik 0${ci + 1}`)}</div>
                   <div class="metric-desc">${escapeHtml(c.desc || '')}</div>
                 </div>
-                <div class="col-highlight-box" style="min-height: 38px; padding: 6px 10px;">
-                  <span class="col-highlight-text" style="color: ${mColor}; font-size: 11px;">${escapeHtml(c.footerHighlight || c.badge || 'INDIKATOR UTAMA')}</span>
+                <div class="col-tag-chip" style="color: ${mColor}; border-color: ${mColor}44; background: ${mColor}12;">
+                  <span class="col-tag-dot" style="background: ${mColor};"></span>
+                  <span class="col-highlight-text">${escapeHtml(c.footerHighlight || c.badge || 'INDIKATOR')}</span>
                 </div>
               </div>
             `;
@@ -416,14 +435,15 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         </div>
         <div class="timeline-grid">
           ${stepCards.map((c, ci) => `
-            <div class="timeline-step">
+            <div class="timeline-step ${ci === 0 ? 'is-featured' : ''}">
               <div>
                 <span class="timeline-step-badge" style="color: ${ci === 0 ? accentColor : accentSecondary};">TAHAP 0${ci + 1}</span>
                 <h3 class="timeline-step-title">${escapeHtml(c.title || `Langkah 0${ci + 1}`)}</h3>
                 <p class="timeline-step-desc">${escapeHtml(c.desc || '')}</p>
               </div>
-              <div class="col-highlight-box" style="min-height: 38px; padding: 6px 10px;">
-                <span class="col-highlight-text" style="color: ${ci === 0 ? accentColor : accentSecondary}; font-size: 11px;">${escapeHtml(c.footerHighlight || 'EKSEKUSI')}</span>
+              <div class="col-tag-chip" style="color: ${ci === 0 ? accentColor : accentSecondary}; border-color: ${ci === 0 ? accentColor : accentSecondary}44; background: ${ci === 0 ? accentColor : accentSecondary}12;">
+                <span class="col-tag-dot" style="background: ${ci === 0 ? accentColor : accentSecondary};"></span>
+                <span class="col-highlight-text">${escapeHtml(c.footerHighlight || 'EKSEKUSI')}</span>
               </div>
             </div>
           `).join('')}
@@ -469,20 +489,21 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       const cardsHtml = cards.map((c, cIdx) => {
         const badgeColor = c.badgeColor || (cIdx === 0 ? accentColor : cIdx === 1 ? accentSecondary : accentTertiary);
         const highlightColor = c.highlightColor || badgeColor;
-        const rawBadge = c.badge || `POIN 0${cIdx + 1} // ANALISIS`;
-        const cleanBadge = (/ORTOGRAFI|FILOSOFI|DIFERENSIASI/i.test(rawBadge) && !/ortografi|filosofi/i.test(c.title || '')) ? `POIN 0${cIdx + 1} // ANALISIS` : rawBadge;
-        const rawHl = c.footerHighlight || c.keyTakeaway || c.title || `POIN UTAMA 0${cIdx + 1}`;
-        const cleanHl = (/"DJ" → JADI|TERWUJUD & SELESAI|DISTINCTIVE BRAND ASSET/i.test(rawHl) && !/djadi/i.test(promptOrTitle)) ? (c.title || `POIN UTAMA 0${cIdx + 1}`).slice(0, 28).toUpperCase() : rawHl;
+        const rawBadge = c.badge || '';
+        const cleanBadge = (!rawBadge || /pilar\s*\d+|poin\s*\d+/i.test(rawBadge)) ? (c.title || `TOPIK 0${cIdx + 1}`).slice(0, 20).toUpperCase() : rawBadge;
+        const rawHl = c.footerHighlight || c.keyTakeaway || c.title || `POIN 0${cIdx + 1}`;
+        const cleanHl = (/"DJ" → JADI|TERWUJUD & SELESAI|DISTINCTIVE BRAND ASSET/i.test(rawHl) && !/djadi/i.test(promptOrTitle)) ? (c.title || `POIN 0${cIdx + 1}`).slice(0, 28).toUpperCase() : rawHl;
 
         return `
-          <div class="slide-col">
+          <div class="slide-col ${cIdx === 0 ? 'is-featured' : ''}">
             <div class="col-top">
               <div class="col-badge" style="color: ${badgeColor};">${escapeHtml(cleanBadge)}</div>
-              <h3 class="col-title">${escapeHtml(c.title || `Poin Strategis 0${cIdx + 1}`)}</h3>
+              <h3 class="col-title">${escapeHtml(c.title || `Poin 0${cIdx + 1}`)}</h3>
               <p class="col-desc">${escapeHtml(c.desc || '')}</p>
             </div>
-            <div class="col-highlight-box">
-              <span class="col-highlight-text" style="color: ${highlightColor};">${escapeHtml(cleanHl)}</span>
+            <div class="col-tag-chip" style="color: ${highlightColor}; border-color: ${highlightColor}44; background: ${highlightColor}12;">
+              <span class="col-tag-dot" style="background: ${highlightColor};"></span>
+              <span class="col-highlight-text">${escapeHtml(cleanHl)}</span>
             </div>
           </div>
         `;
@@ -507,11 +528,12 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         <div class="slide-canvas slide-layout-${layout}">
           <div class="slide-header-bar">
             <div class="header-left">
-              <span class="header-chapter">BAB ${toRoman(idx + 1)} // ${escapeHtml(categoryTitle.toUpperCase())} // ${escapeHtml(subCategory)}</span>
+              <span class="header-topic-crumb">${escapeHtml(brandName)}</span>
+              <span class="header-sep">/</span>
+              <span class="header-chapter-sub">${escapeHtml(categoryTitle)}</span>
             </div>
             <div class="header-right">
-              <span class="header-ratio">MODULAR RATIO 16:9</span>
-              <span class="header-page-tag" style="color: ${accentColor};">HALAMAN ${slideNumStr}/${totalStr}</span>
+              <span class="header-page-tag" style="color: ${accentColor};">${slideNumStr} / ${totalStr}</span>
             </div>
           </div>
 
@@ -519,9 +541,9 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
 
           <div class="slide-footer-bar">
             <div class="footer-meta-block">
-              <div class="footer-line-1">${escapeHtml(copyrightText)}</div>
+              <div class="footer-line-1">${escapeHtml(brandName)}</div>
               <div class="footer-line-2">
-                SLIDE ${idx + 1} DARI ${total} • <span class="footer-status-tag" style="color: ${accentColor}; font-weight: 800;">${escapeHtml(badgeTag)}</span>
+                <span class="footer-status-tag" style="color: ${accentColor}; font-weight: 700;">${escapeHtml(badgeTag || theme.tag || 'MATERI EKSKLUSIF')}</span>
               </div>
             </div>
           </div>

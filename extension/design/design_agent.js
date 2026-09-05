@@ -493,11 +493,14 @@ function reviseFullDeckData(slides, missList = [], topic = '', theme = {}) {
   return revisedSlides;
 }
 
-function createSlidePromptForMasterDesign(slideIndex, totalSlides, topic = '', blueprintSlide = {}, prevSlideSummary = '') {
+function createSlidePromptForMasterDesign(slideIndex, totalSlides, topic = '', blueprintSlide = {}, prevSlideSummary = '', styleConcept = {}) {
   const slideNum = slideIndex + 1;
   const cleanTopic = cleanPresentationTopic(topic || 'Materi Presentasi');
   const layout = blueprintSlide.layout || (slideNum === 1 ? 'cover' : 'bento');
   const title = blueprintSlide.title || `Slide ${slideNum}`;
+  const conceptName = styleConcept.conceptName || 'Bespoke Modern Minimalist';
+  const vibe = styleConcept.vibe || 'Visual ekspresif, estetik, dan scannable';
+  const layoutFeel = styleConcept.layoutFeel || 'Asimetris dinamis, kartu sorotan';
 
   const isCover = (slideNum === 1 || layout === 'cover');
   const coverDirective = isCover
@@ -506,12 +509,17 @@ function createSlidePromptForMasterDesign(slideIndex, totalSlides, topic = '', b
 - Buat subjudul ("subtitle") yang informatif, puitis, dan menggugah minat audiens.`
     : `KHUSUS KONTEN:
 - Seluruh judul kartu, deskripsi, dan metrik HARUS 100% KONSISTEN dengan tema "${cleanTopic}".
-- DILARANG KERAS menggunakan jargon bisnis/korporat klise jika topik adalah non-korporat (hewan, sains, budaya, hobi).`;
+- ANTI-TEMPLATE & ANTI-TEXT-WALL: DILARANG membuat kartu berisi satu dinding paragraf panjang teks monolitik. Buat deskripsi padat (2-3 kalimat tajam atau poin-poin karakteristik penting yang scannable).
+- DILARANG menggunakan kata seragam "PILAR 01", "PILAR 02" pada badge kartu! Berikan badge spesifik topik (misal: "RAS ASLI", "CIRI FISIK", "FAVORIT", "TIPS RAWAT").
+- "footerHighlight": Frasa kunci ringkas (1-3 kata), bukan tombol aksi.`;
 
   return `Kamu adalah 🎨 Master Design (Tangan Kanan Master Agent).
 Tugasmu: Rancang konten SANGAT DETAIL dan SPESIFIK untuk Slide ${slideNum} dari total ${totalSlides} slide presentasi 16:9 widescreen.
 
 Materi Utama: "${cleanTopic}"
+Konsep Art Direction: "${conceptName}"
+Mood & Vibe: "${vibe}"
+Pedoman Tata Letak: "${layoutFeel}"
 Arketipe Tata Letak: ${layout.toUpperCase()}
 Sasaran Topik Slide: "${title}"
 ${prevSlideSummary ? `Konteks Slide Sebelumnya: "${prevSlideSummary}"` : ''}
@@ -519,33 +527,33 @@ ${prevSlideSummary ? `Konteks Slide Sebelumnya: "${prevSlideSummary}"` : ''}
 ${coverDirective}
 
 ATURAN KETAT:
-1. DILARANG menggunakan teks korporat palsu ("Djadi Creative", "GSM v3.0", "Confidential // Enterprise").
-2. Konten harus berbobot, berbasis fakta/analisis/karakteristik nyata mengenai "${cleanTopic}".
+1. DILARANG menggunakan teks korporat palsu ("Djadi Creative", "GSM v3.0", "Confidential // Enterprise", "PILAR 01").
+2. Konten harus berbobot, berbasis fakta/karakteristik nyata mengenai "${cleanTopic}".
 3. Arketipe ${layout}:
    - Jika "cover": Hasilkan judul utama megah, lead subtitle komprehensif, badge status eksklusif.
-   - Jika "split": Minimal 2 kartu perbandingan dengan judul tajam dan deskripsi komparatif tentang ${cleanTopic}.
-   - Jika "metrics": Minimal 3-4 kartu dengan angka riil (contoh: "85%", "12-16 Jam", "4 Juta"), judul metrik, dan deskripsi relevan.
-   - Jika "timeline": Minimal 3-4 kartu langkah berurutan dengan judul fase roadmap ${cleanTopic}.
+   - Jika "split": 2 kartu komparasi visual dengan judul tajam dan deskripsi komparatif tentang ${cleanTopic}.
+   - Jika "metrics": 3-4 kartu metrik dengan angka riil (contoh: "85%", "12-16 Jam", "4 Juta") dan penjelasan dampak.
+   - Jika "timeline": 3-4 kartu langkah berurutan dengan judul fase roadmap ${cleanTopic}.
    - Jika "quote": Kutipan bermakna tentang ${cleanTopic} dan atribusi terpercaya.
    - Jika "conclusion": Ringkasan intisari dan checklist rekomendasi tentang ${cleanTopic}.
-   - Jika "bento": 3 kartu pilar bento dengan analisis mendalam mengenai ${cleanTopic}.
+   - Jika "bento": 3 kartu pilar bento asimetris: kartu 1 sorotan utama, kartu 2 & 3 pendukung dengan poin scannable mengenai ${cleanTopic}.
 
 Balas HANYA berupa JSON valid dalam blok \`\`\`json ... \`\`\` dengan format:
 {
   "title": "${isCover ? 'Judul Editorial yang Menarik' : title}",
   "subtitle": "Penjelasan mendalam konteks slide",
   "layout": "${layout}",
-  "badge": "BADGE ${slideNum}",
+  "badge": "${isCover ? 'EDISI EKSKLUSIF' : 'TOPIK KUNCI'}",
   "quoteText": "",
   "quoteAuthor": "",
   "cards": [
     {
-      "badge": "PILAR 01",
+      "badge": "TAG TOPIK SPESIFIK",
       "title": "Judul Spesifik Topik",
-      "desc": "Penjabaran komprehensif seputar ${cleanTopic}...",
+      "desc": "Penjabaran scannable seputar ${cleanTopic}...",
       "stat": "98%",
       "metricValue": "98%",
-      "footerHighlight": "KEY POINT"
+      "footerHighlight": "POIN KUNCI"
     }
   ]
 }`;

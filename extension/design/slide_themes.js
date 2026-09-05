@@ -206,4 +206,61 @@ function detectOptimalSlideTheme(promptOrTopic = "", rawMeta = {}) {
 if (typeof window !== 'undefined') {
   window.SLIDE_THEMES = SLIDE_THEMES;
   window.detectOptimalSlideTheme = detectOptimalSlideTheme;
+  window.exploreDesignStyleConcept = exploreDesignStyleConcept;
+}
+
+function exploreDesignStyleConcept(promptOrTopic = "", rawMeta = {}) {
+  const theme = detectOptimalSlideTheme(promptOrTopic, rawMeta);
+  const text = (promptOrTopic + " " + (rawMeta?.title || "")).toLowerCase();
+
+  let conceptName = "Bespoke Modern Minimalist";
+  let vibe = "Bersih, terstruktur, fokus pada keterbacaan data dan hierarki visual yang jelas.";
+  let layoutFeel = "Asimetris dinamis, kartu sorotan fokus, chip tag modern, tanpa sekat korporat kaku.";
+  let badgeTone = "KARAKTERISTIK";
+
+  if (theme.id === "playful_pastel") {
+    conceptName = "Warm Cozy Pet & Lifestyle Editorial";
+    vibe = "Hangat, playful, estetik, ramah, dan bersahabat dengan warna pastel organik dan sudut membulat lembut.";
+    layoutFeel = "Kartu sorotan asimetris, tag pill organik (bukan tombol formal), poin ringkas bernafas lega.";
+    badgeTone = "CIRI KHAS UNIK";
+  } else if (theme.id === "dark_luxury_cyber") {
+    conceptName = "Dark Luxury Obsidian & High-Tech HUD";
+    vibe = "Futuristik, sleek, presisi, beraksen neon tajam dengan latar belakang gelap pekat.";
+    layoutFeel = "Grid berteknologi tinggi, chip metrik bercahaya, badge monospaced.";
+    badgeTone = "SYSTEM CORE";
+  } else if (theme.id === "swiss_minimalist") {
+    conceptName = "Swiss Contemporary Executive";
+    vibe = "Rapi, otoritatif, elegan tanpa dekorasi berlebih, menitikberatkan pada tipografi tajam.";
+    layoutFeel = "Proporsi grid modular murni, whitespace lapang, kontras tinggi.";
+    badgeTone = "KEY FINDING";
+  } else if (theme.id === "neo_brutalist") {
+    conceptName = "Vibrant Neo-Brutalist Playbook";
+    vibe = "Ekspresif, berenergi tinggi, kontras berani, cocok untuk audiens modern & Gen-Z.";
+    layoutFeel = "Border tebal berkarakter, badge blok mencolok, tipografi dinamis.";
+    badgeTone = "CORE ACTION";
+  } else if (theme.id === "botanical_sage") {
+    conceptName = "Organic Botanical & Natural Wellness";
+    vibe = "Menenangkan, organik, menyegarkan dengan palet daun sage dan warna bumi alami.";
+    layoutFeel = "Kartu lapang berventilasi, badge pill natural, ritme visual santai.";
+    badgeTone = "PRINSIP ALAMI";
+  } else if (theme.id === "monochrome_minimal") {
+    conceptName = "Noir Architecture & High-Fashion Gallery";
+    vibe = "Sophisticated, artistik, kontras hitam-putih murni layaknya kurasi majalah mode.";
+    layoutFeel = "Tata letak galeri seni, tipografi editorial ekspresif, minimalis ekstrem.";
+    badgeTone = "PORTFOLIO INSIGHT";
+  } else {
+    conceptName = "Warm Magazine Editorial Linen";
+    vibe = "Hangat layaknya kertas linen majalah literatur independen, estetika klasik modern.";
+    layoutFeel = "Kombinasi headline berkarakter dan catatan kurasi tajam.";
+    badgeTone = "CATATAN KURASI";
+  }
+
+  return {
+    theme,
+    conceptName,
+    vibe,
+    layoutFeel,
+    badgeTone,
+    paletteSummary: `${theme.accent} (Aksen), ${theme.accentSecondary} (Sekunder), ${theme.bgSlide} (Latar)`
+  };
 }

@@ -281,13 +281,31 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
       border-bottom: 1.5px solid var(--border-header);
       padding-bottom: 10px;
     }
-    .header-chapter {
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-topic-crumb {
       font-family: var(--font-body);
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
       color: var(--text-main);
       text-transform: uppercase;
+    }
+    .header-sep {
+      color: var(--text-muted);
+      opacity: 0.6;
+      font-size: 11px;
+    }
+    .header-chapter-sub {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
     .header-right {
       display: flex;
@@ -297,9 +315,6 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.04em;
-    }
-    .header-ratio {
-      color: var(--text-muted);
     }
     .header-page-tag {
       font-weight: 800;
@@ -383,25 +398,35 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
       line-height: 1.55;
       margin-bottom: 16px;
     }
-    .col-highlight-box {
-      background: var(--card-box-bg);
-      border: var(--card-border);
-      border-radius: var(--card-radius);
-      padding: 12px 16px;
-      display: flex;
+    .col-tag-chip, .col-highlight-box {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      text-align: center;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-      min-height: 46px;
+      gap: 7px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      border: 1px solid currentColor;
+      align-self: flex-start;
+      margin-top: 8px;
+    }
+    .col-tag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
     }
     .col-highlight-text {
       font-family: var(--font-body);
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
+      line-height: 1;
     }
+    .slide-col.is-featured, .split-col.is-featured, .timeline-step.is-featured {
+      border-top: 2px solid var(--accent);
+      padding-top: 8px;
+    }
+
 
     /* === MULTI-LAYOUT SLIDE ARCHITECTURES === */
     /* Cover / Hero Layout */
