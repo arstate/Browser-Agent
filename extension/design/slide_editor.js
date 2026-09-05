@@ -179,9 +179,13 @@ function getSlideDeckEditorHtml() {
   `;
 }
 
-function getSlideDeckEditorScript() {
-  return `
-    (function initSlideDeckRealtimeEditor() {
+function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
+  const doc = targetDoc || (typeof document !== "undefined" ? document : null);
+  const win = targetWin || (typeof window !== "undefined" ? window : null);
+  if (!doc || !win) return;
+  if (win.__slideDeckEditorInited) return;
+  win.__slideDeckEditorInited = true;
+
       let isEditMode = false;
       let selectedElements = new Set();
       let isDragging = false;
@@ -198,26 +202,26 @@ function getSlideDeckEditorScript() {
       const MAX_HISTORY = 30;
 
       function getSlidesState() {
-        return Array.from(document.querySelectorAll('.slide-section')).map(s => s.innerHTML);
+        return Array.from(doc.querySelectorAll('.slide-section')).map(s => s.innerHTML);
       }
 
       function restoreSlidesState(state) {
         if (!Array.isArray(state)) return;
-        const slides = Array.from(document.querySelectorAll('.slide-section'));
+        const slides = Array.from(doc.querySelectorAll('.slide-section'));
         state.forEach((html, i) => {
           if (slides[i]) slides[i].innerHTML = html;
         });
       }
 
       function updateUndoRedoButtons() {
-        const undoBtn = document.getElementById('editor-btn-undo');
-        const redoBtn = document.getElementById('editor-btn-redo');
+        const undoBtn = doc.getElementById('editor-btn-undo');
+        const redoBtn = doc.getElementById('editor-btn-redo');
         if (undoBtn) undoBtn.disabled = (historyStack.length <= 1);
         if (redoBtn) redoBtn.disabled = (futureStack.length === 0);
       }
 
       function removeFigmaBoxes() {
-        document.querySelectorAll('.deck-figma-box').forEach(b => b.remove());
+        doc.querySelectorAll('.deck-figma-box').forEach(b => b.remove());
       }
 
       function updateFigmaHandles() {
@@ -225,7 +229,7 @@ function getSlideDeckEditorScript() {
         if (!isEditMode) return;
         selectedElements.forEach(el => {
           if (!el || !el.parentNode || el.classList.contains('slide-section')) return;
-          const box = document.createElement('div');
+          const box = doc.createElement('div');
           box.className = 'deck-figma-box';
           box.innerHTML = '<div class="figma-handle figma-handle-tl" data-handle="scale" data-dir="tl"></div>' +
             '<div class="figma-handle figma-handle-tr" data-handle="scale" data-dir="tr"></div>' +
@@ -317,19 +321,19 @@ function getSlideDeckEditorScript() {
         removeFigmaBoxes();
         const selected = Array.from(selectedElements);
         selected.forEach(el => el.classList.remove('deck-editable-selected'));
-        const html = document.documentElement.outerHTML;
+        const html = doc.documentElement.outerHTML;
         selected.forEach(el => el.classList.add('deck-editable-selected'));
         updateFigmaHandles();
 
-        window.parent.postMessage({
+        win.parent.postMessage({
           type: 'SLIDE_DECK_CONTENT_CHANGED',
           html: html,
-          title: document.title || 'Slide Deck'
+          title: doc.title || 'Slide Deck'
         }, '*');
       }
 
       function updateSelectionCounter() {
-        const countEl = document.getElementById('editor-selection-counter');
+        const countEl = doc.getElementById('editor-selection-counter');
         if (!countEl) return;
         const count = selectedElements.size;
         countEl.textContent = count === 0 ? 'Pilih elemen' : (count === 1 ? '1 terpilih' : count + ' terpilih');
@@ -360,14 +364,14 @@ function getSlideDeckEditorScript() {
         if (typeof forceState !== 'boolean' && (now - lastToggleTime < 80)) return;
         lastToggleTime = now;
         isEditMode = (typeof forceState === 'boolean') ? forceState : !isEditMode;
-        document.body.classList.toggle('deck-edit-mode-active', isEditMode);
-        const dockBtn = document.getElementById('dock-btn-edit');
+        doc.body.classList.toggle('deck-edit-mode-active', isEditMode);
+        const dockBtn = doc.getElementById('dock-btn-edit');
         if (dockBtn) {
           dockBtn.classList.toggle('active', isEditMode);
           dockBtn.style.background = isEditMode ? 'var(--accent, #6366F1)' : '';
           dockBtn.style.color = isEditMode ? '#FFFFFF' : '';
         }
-        const toolbar = document.getElementById('deck-editor-toolbar');
+        const toolbar = doc.getElementById('deck-editor-toolbar');
         if (toolbar) {
           toolbar.style.opacity = isEditMode ? '1' : '0';
           toolbar.style.pointerEvents = isEditMode ? 'auto' : 'none';
@@ -382,10 +386,10 @@ function getSlideDeckEditorScript() {
           notifyParentContentChanged();
         }
 
-        window.parent.postMessage({ type: 'DECK_EDIT_MODE_CHANGED', active: isEditMode }, '*');
-        window.parent.postMessage({ type: 'EDIT_MODE_TOGGLED', active: isEditMode }, '*');
+        win.parent.postMessage({ type: 'DECK_EDIT_MODE_CHANGED', active: isEditMode }, '*');
+        win.parent.postMessage({ type: 'EDIT_MODE_TOGGLED', active: isEditMode }, '*');
       }
-      window.toggleEditMode = toggleEditMode;
+      win.toggleEditMode = toggleEditMode;
 
       function clearSelection() {
         removeFigmaBoxes();
@@ -398,7 +402,7 @@ function getSlideDeckEditorScript() {
       }
 
       function selectElement(el, isMulti = false) {
-        if (!el || el === document.body || el.closest('#deck-editor-toolbar') || el.closest('.deck-floating-dock')) return;
+        if (!el || el === doc.body || el.closest('#deck-editor-toolbar') || el.closest('.deck-floating-dock')) return;
 
         if (!isMulti) {
           clearSelection();
@@ -441,7 +445,7 @@ function getSlideDeckEditorScript() {
       }
 
       // Interaction: Selection, Move Drag, and Figma Transform Handles
-      document.addEventListener('mousedown', (e) => {
+      doc.addEventListener('mousedown', (e) => {
         if (!isEditMode) return;
         if (e.target.closest('#deck-editor-toolbar') || e.target.closest('.deck-floating-dock')) return;
 
@@ -494,7 +498,7 @@ function getSlideDeckEditorScript() {
         });
       });
 
-      document.addEventListener('mousemove', (e) => {
+      doc.addEventListener('mousemove', (e) => {
         if (!isEditMode || !activeAction) return;
 
         if (activeAction === 'rotate' && activeElement) {
@@ -552,7 +556,7 @@ function getSlideDeckEditorScript() {
         }
       });
 
-      document.addEventListener('mouseup', () => {
+      doc.addEventListener('mouseup', () => {
         if (activeAction) {
           if (activeElement) {
             const badge = activeElement.querySelector('.figma-badge-dim');
@@ -568,7 +572,7 @@ function getSlideDeckEditorScript() {
       });
 
       // Double-click inline text editing
-      document.addEventListener('dblclick', (e) => {
+      doc.addEventListener('dblclick', (e) => {
         if (!isEditMode) return;
         const target = findEditableTarget(e.target);
         if (!target) return;
@@ -596,7 +600,7 @@ function getSlideDeckEditorScript() {
       });
 
       // Toolbar Controls Hookup
-      const fontSelect = document.getElementById('editor-font-family');
+      const fontSelect = doc.getElementById('editor-font-family');
       fontSelect?.addEventListener('change', (e) => {
         const val = e.target.value;
         selectedElements.forEach(el => {
@@ -609,17 +613,17 @@ function getSlideDeckEditorScript() {
 
       function adjustFontSize(delta) {
         selectedElements.forEach(el => {
-          const curr = window.getComputedStyle(el).fontSize;
+          const curr = win.getComputedStyle(el).fontSize;
           const num = parseFloat(curr) || 14;
           el.style.fontSize = Math.max(8, num + delta) + 'px';
         });
         takeSnapshot();
         notifyParentContentChanged();
       }
-      document.getElementById('editor-btn-size-up')?.addEventListener('click', () => adjustFontSize(2));
-      document.getElementById('editor-btn-size-down')?.addEventListener('click', () => adjustFontSize(-2));
+      doc.getElementById('editor-btn-size-up')?.addEventListener('click', () => adjustFontSize(2));
+      doc.getElementById('editor-btn-size-down')?.addEventListener('click', () => adjustFontSize(-2));
 
-      document.getElementById('editor-btn-bold')?.addEventListener('click', (e) => {
+      doc.getElementById('editor-btn-bold')?.addEventListener('click', (e) => {
         selectedElements.forEach(el => {
           const isBold = el.style.fontWeight === '800' || el.style.fontWeight === 'bold';
           el.style.fontWeight = isBold ? 'normal' : '800';
@@ -629,7 +633,7 @@ function getSlideDeckEditorScript() {
         notifyParentContentChanged();
       });
 
-      document.getElementById('editor-btn-italic')?.addEventListener('click', (e) => {
+      doc.getElementById('editor-btn-italic')?.addEventListener('click', (e) => {
         selectedElements.forEach(el => {
           const isItalic = el.style.fontStyle === 'italic';
           el.style.fontStyle = isItalic ? 'normal' : 'italic';
@@ -639,7 +643,7 @@ function getSlideDeckEditorScript() {
         notifyParentContentChanged();
       });
 
-      document.getElementById('editor-btn-underline')?.addEventListener('click', (e) => {
+      doc.getElementById('editor-btn-underline')?.addEventListener('click', (e) => {
         selectedElements.forEach(el => {
           const isU = el.style.textDecoration === 'underline';
           el.style.textDecoration = isU ? 'none' : 'underline';
@@ -649,7 +653,7 @@ function getSlideDeckEditorScript() {
         notifyParentContentChanged();
       });
 
-      document.querySelectorAll('.editor-color-swatch').forEach(swatch => {
+      doc.querySelectorAll('.editor-color-swatch').forEach(swatch => {
         swatch.addEventListener('click', () => {
           const color = swatch.getAttribute('data-color');
           selectedElements.forEach(el => {
@@ -667,9 +671,9 @@ function getSlideDeckEditorScript() {
         takeSnapshot();
         notifyParentContentChanged();
       }
-      document.getElementById('editor-btn-align-left')?.addEventListener('click', () => setAlignment('left'));
-      document.getElementById('editor-btn-align-center')?.addEventListener('click', () => setAlignment('center'));
-      document.getElementById('editor-btn-align-right')?.addEventListener('click', () => setAlignment('right'));
+      doc.getElementById('editor-btn-align-left')?.addEventListener('click', () => setAlignment('left'));
+      doc.getElementById('editor-btn-align-center')?.addEventListener('click', () => setAlignment('center'));
+      doc.getElementById('editor-btn-align-right')?.addEventListener('click', () => setAlignment('right'));
 
       function adjustScale(factor) {
         selectedElements.forEach(el => {
@@ -680,8 +684,8 @@ function getSlideDeckEditorScript() {
         takeSnapshot();
         notifyParentContentChanged();
       }
-      document.getElementById('editor-btn-scale-up')?.addEventListener('click', () => adjustScale(0.1));
-      document.getElementById('editor-btn-scale-down')?.addEventListener('click', () => adjustScale(-0.1));
+      doc.getElementById('editor-btn-scale-up')?.addEventListener('click', () => adjustScale(0.1));
+      doc.getElementById('editor-btn-scale-down')?.addEventListener('click', () => adjustScale(-0.1));
 
       function adjustRotation(deg) {
         selectedElements.forEach(el => {
@@ -692,10 +696,10 @@ function getSlideDeckEditorScript() {
         takeSnapshot();
         notifyParentContentChanged();
       }
-      document.getElementById('editor-btn-rot-left')?.addEventListener('click', () => adjustRotation(-15));
-      document.getElementById('editor-btn-rot-right')?.addEventListener('click', () => adjustRotation(15));
+      doc.getElementById('editor-btn-rot-left')?.addEventListener('click', () => adjustRotation(-15));
+      doc.getElementById('editor-btn-rot-right')?.addEventListener('click', () => adjustRotation(15));
 
-      document.getElementById('editor-btn-reset-transform')?.addEventListener('click', () => {
+      doc.getElementById('editor-btn-reset-transform')?.addEventListener('click', () => {
         selectedElements.forEach(el => {
           el.removeAttribute('data-deck-transform');
           el.style.transform = '';
@@ -706,16 +710,16 @@ function getSlideDeckEditorScript() {
       });
 
       // Undo, Redo, Duplicate, Delete Buttons
-      document.getElementById('editor-btn-undo')?.addEventListener('click', applyUndo);
-      document.getElementById('editor-btn-redo')?.addEventListener('click', applyRedo);
-      document.getElementById('editor-btn-duplicate')?.addEventListener('click', duplicateSelectedElements);
-      document.getElementById('editor-btn-delete')?.addEventListener('click', deleteSelectedElements);
+      doc.getElementById('editor-btn-undo')?.addEventListener('click', applyUndo);
+      doc.getElementById('editor-btn-redo')?.addEventListener('click', applyRedo);
+      doc.getElementById('editor-btn-duplicate')?.addEventListener('click', duplicateSelectedElements);
+      doc.getElementById('editor-btn-delete')?.addEventListener('click', deleteSelectedElements);
 
       // Keyboard Shortcuts (Capture phase)
-      window.addEventListener('keydown', (e) => {
+      win.addEventListener('keydown', (e) => {
         if (!isEditMode) return;
-        const activeTag = document.activeElement?.tagName;
-        const isEditingText = document.activeElement?.isContentEditable || activeTag === 'INPUT' || activeTag === 'SELECT' || activeTag === 'TEXTAREA';
+        const activeTag = doc.activeElement?.tagName;
+        const isEditingText = doc.activeElement?.isContentEditable || activeTag === 'INPUT' || activeTag === 'SELECT' || activeTag === 'TEXTAREA';
 
         if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
           if (!isEditingText) { e.preventDefault(); e.stopPropagation(); applyUndo(); return; }
@@ -736,12 +740,12 @@ function getSlideDeckEditorScript() {
         }
       }, true);
 
-      document.getElementById('editor-btn-done')?.addEventListener('click', () => {
+      doc.getElementById('editor-btn-done')?.addEventListener('click', () => {
         toggleEditMode(false);
       });
 
       // Hook up dock buttons
-      document.addEventListener('click', (e) => {
+      doc.addEventListener('click', (e) => {
         const editBtn = e.target.closest('#dock-btn-edit');
         if (editBtn) {
           e.preventDefault();
@@ -752,16 +756,16 @@ function getSlideDeckEditorScript() {
         const fsBtn = e.target.closest('#dock-btn-fullscreen');
         if (fsBtn) {
           e.preventDefault();
-          if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
+          if (!doc.fullscreenElement) {
+            doc.documentElement.requestFullscreen().catch(() => {});
           } else {
-            document.exitFullscreen().catch(() => {});
+            doc.exitFullscreen().catch(() => {});
           }
         }
       });
 
       // Window Message Listener (from Parent iframe bridge)
-      window.addEventListener('message', (e) => {
+      win.addEventListener('message', (e) => {
         if (!e.data) return;
         if (e.data.type === 'TOGGLE_EDIT_MODE') {
           toggleEditMode();
@@ -769,13 +773,16 @@ function getSlideDeckEditorScript() {
           toggleEditMode(Boolean(e.data.active));
         }
       });
-    })();
-  `;
+}
+
+function getSlideDeckEditorScript() {
+  return `(${initSlideDeckRealtimeEditor.toString()})(document, window);`;
 }
 
 // Global attachments
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.getSlideDeckEditorCss = getSlideDeckEditorCss;
   window.getSlideDeckEditorHtml = getSlideDeckEditorHtml;
   window.getSlideDeckEditorScript = getSlideDeckEditorScript;
+  window.initSlideDeckRealtimeEditor = initSlideDeckRealtimeEditor;
 }

@@ -52,16 +52,8 @@ function ensureSlideEditorInjected(iframe) {
       }
     }
     if (typeof win.toggleEditMode !== 'function') {
-      const getScript = (typeof getSlideDeckEditorScript === 'function') ? getSlideDeckEditorScript : (typeof window !== 'undefined' ? window.getSlideDeckEditorScript : null);
-      if (getScript) {
-        const code = getScript();
-        try {
-          if (typeof win.eval === 'function') win.eval(code);
-          else if (win.Function) (new win.Function(code))();
-        } catch (_) {
-          const sc = doc.createElement('script'); sc.textContent = code; doc.body.appendChild(sc);
-        }
-      }
+      const initFn = (typeof initSlideDeckRealtimeEditor === 'function') ? initSlideDeckRealtimeEditor : (typeof window !== 'undefined' ? window.initSlideDeckRealtimeEditor : null);
+      if (typeof initFn === 'function') initFn(doc, win);
     }
     return (typeof win.toggleEditMode === 'function');
   } catch (_) { return false; }

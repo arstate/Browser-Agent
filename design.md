@@ -873,6 +873,36 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_prompt.js`: 183 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
 
+## 🎨 42. Zero-CSP Inline Script Elimination & Direct Runtime Editor Context (v2.150.226)
+
+1. **CSP Inline Script & Eval Elimination**:
+   - Menghapus tuntas seluruh pemanggilan `win.eval`, `new win.Function`, dan pembuatan tag dinamis `doc.createElement('script')` dengan inline `textContent` dari `canvas_manager.js`.
+   - Mengeliminasi error pelanggaran Content Security Policy (`script-src 'self'`) pada konteks `chrome://newtab/` dan `sidepanel.html`.
+
+2. **Direct DOM Context Initialization (`initSlideDeckRealtimeEditor`)**:
+   - Engine penyuntingan slide kini berbentuk fungsi JavaScript murni yang beroperasi langsung pada referensi `doc` dan `win`:
+     - Listener tombol toolbar terikat langsung ke elemen DOM di dalam iframe.
+     - Listener dokumen (`mousedown`, `mousemove`, `mouseup`, `dblclick`) terikat ke `doc`.
+     - Keyboard shortcuts dan window message bridge terikat ke `win`.
+     - Fungsi kontrol `win.toggleEditMode` diekspos langsung ke window context iframe tanpa melewati parser script string.
+
+3. **Standalone HTML Export Serialization**:
+   - `getSlideDeckEditorScript()` mengembalikan `(${initSlideDeckRealtimeEditor.toString()})(document, window);`, memastikan file ekspor mandiri tetap dapat menjalankan editor saat dibuka di browser biasa.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - `slide_editor.js`: 788 baris.
+   - `canvas_manager.js`: 787 baris.
+   - `slide_styles.js`: 789 baris.
+   - `slide_template.js`: 781 baris.
+   - `design_executor.js`: 776 baris.
+   - `design_agent.js`: 626 baris.
+   - `slide_deck_engine.js`: 506 baris.
+   - `slide_themes.js`: 266 baris.
+   - `canvas_exporter.js`: 244 baris.
+   - `design_prompt.js`: 183 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
+
 
 
 

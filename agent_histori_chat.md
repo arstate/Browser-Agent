@@ -6472,6 +6472,31 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi jumlah baris memastikan seluruh file `<= 795` baris.
   4. Bump versi manifest ke `v2.150.225`.
 
+### 🚀 Iterasi 507: Zero-CSP Inline Script Elimination & Direct Runtime Editor Context (v2.150.226)
+- **User Request:**
+  - "ada error Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-up85DOY59xXUsVKR7HLVlx6vjUC4ZlNeOY9ZjZyaR18='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. Context: chrome://newtab/ Stack Trace: design/canvas_manager.js:62 (ensureSlideEditorInjected)"
+- **Akar Masalah:**
+  1. Pada `canvas_manager.js:62`, fallback `ensureSlideEditorInjected` mengeksekusi `doc.body.appendChild(sc)` dengan `sc.textContent = code` (atau `win.eval(code)`).
+  2. Karena iframe pratinjau memiliki atribut `sandbox="allow-scripts allow-modals allow-same-origin"`, iframe berada dalam origin ekstensi (`chrome-extension://...`).
+  3. Berdasarkan spesifikasi Chrome Extension Manifest V3, seluruh dokumen dalam origin ekstensi terikat oleh Content Security Policy ketat (`script-src 'self'`) yang melarang mutlak eksekusi script inline (`<script>` dengan textContent) serta `eval()`.
+- **Analisis & Solusi:**
+  1. *Hapus Total Eval dan Script Injection di `canvas_manager.js`*:
+     - Menghapus blok `win.eval`, `new win.Function`, dan `doc.createElement('script')`.
+     - Menggantinya dengan pemanggilan langsung via referensi memori fungsi: `if (typeof win.toggleEditMode !== 'function') { const initFn = typeof initSlideDeckRealtimeEditor === 'function' ? initSlideDeckRealtimeEditor : window.initSlideDeckRealtimeEditor; if (typeof initFn === 'function') initFn(doc, win); }`.
+  2. *Refaktor Arsitektur `slide_editor.js` Menjadi DOM Context Langsung*:
+     - Mengubah IIFE string script menjadi fungsi first-class `function initSlideDeckRealtimeEditor(targetDoc, targetWin)` yang beroperasi langsung pada referensi `doc` dan `win`.
+     - Mengikat seluruh event listener dokumen (`mousedown`, `mousemove`, `mouseup`, `dblclick`), tombol toolbar, shortcut keyboard, serta `win.toggleEditMode` secara langsung tanpa melewati parser skrip string sama sekali.
+  3. *Kompatibilitas Standalone Export*:
+     - Fungsi `getSlideDeckEditorScript()` mengembalikan representasi string serialisasi `(${initSlideDeckRealtimeEditor.toString()})(document, window);` sehingga file HTML mandiri yang diekspor tetap dapat membuka mode edit di peramban reguler tanpa dependensi ekstensi.
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` patuh di bawah 800 baris (`slide_editor.js`: 788 baris, `canvas_manager.js`: 787 baris, `slide_styles.js`: 789 baris, `slide_template.js`: 781 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Node assertion test memverifikasi tidak ada lagi pemanggilan `eval` maupun `createElement('script')` di `canvas_manager.js`.
+  2. Node syntax check `node -c extension/design/*.js extension/*.js` lolos 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file `<= 789` baris.
+  4. Bump versi manifest ke `v2.150.226`.
+
+
 
 
 
