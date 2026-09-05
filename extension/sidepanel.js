@@ -7432,40 +7432,7 @@ function initChatModeDropdown() {
     });
   });
 
-  // Handle nested submenu options inside Design Mode
-  document.querySelectorAll('.chat-mode-suboption').forEach(subopt => {
-    subopt.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (subopt.hasAttribute('disabled') || subopt.classList.contains('mode-disabled')) {
-        showUniversalToast('⏳ Fitur ini segera hadir (Coming Soon)! Saat ini kami memfokuskan 100% pada kesempurnaan Slide Deck Mode.');
-        return;
-      }
-      const submode = subopt.getAttribute('data-submode');
-      if (submode === 'slidedeck') {
-        setChatMode('design');
-      }
-      if (dropup) dropup.style.display = 'none';
-      trigger?.classList.remove('open');
-    });
-  });
 
-  // Smart boundary alignment for flyout submenu in narrow sidepanels
-  const designGroup = document.getElementById('mode-group-design');
-  const designSubmenu = document.getElementById('chat-mode-design-submenu');
-  if (designGroup && designSubmenu) {
-    designGroup.addEventListener('mouseenter', () => {
-      const rect = designGroup.getBoundingClientRect();
-      if (rect.right + 195 > window.innerWidth) {
-        designSubmenu.style.left = 'auto';
-        designSubmenu.style.right = '0';
-        designSubmenu.style.bottom = 'calc(100% + 4px)';
-      } else {
-        designSubmenu.style.left = 'calc(100% + 5px)';
-        designSubmenu.style.right = 'auto';
-        designSubmenu.style.bottom = '-4px';
-      }
-    });
-  }
 
   document.addEventListener('click', (e) => {
     if (dropup && !dropup.contains(e.target) && !trigger?.contains(e.target)) {

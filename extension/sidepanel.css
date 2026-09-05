@@ -3557,13 +3557,13 @@ body.stickman-active .chat-messages {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 0;
-  min-width: 215px;
+  min-width: 116px;
   background: rgba(18, 18, 22, 0.95) !important;
   backdrop-filter: blur(28px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 18px;
-  padding: 5px;
+  border-radius: 14px;
+  padding: 4px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -3575,16 +3575,19 @@ body.stickman-active .chat-messages {
 .chat-mode-option {
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 26px;
+  gap: 7px;
+  height: 28px;
   box-sizing: border-box;
-  padding: 0 9px 0 6px;
+  padding: 0 10px 0 8px;
   border-radius: 9999px;
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
   text-align: left;
   transition: all 0.15s ease;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #D1D5DB;
 }
 
 .chat-mode-option[data-mode="websearch"] {

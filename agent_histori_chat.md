@@ -5850,6 +5850,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
     * Klik thumbnail 6: Menampilkan slide 7 dengan counter `7` (PASS).
   - Bump version to `v2.150.203`.
 
-
-
-
+### Iterasi 485 (v2.150.204) - 2026-09-05
+- **Permintaan Pengguna:**
+  1. Di design mode kok prompt user ngirim prompt kok ilang ya bro.
+  2. Edit panjang UI pilihan mode agent lebih dikecilin yang saya kotakin itu yang dihilangin jadi biar lebih padet dan clean (flyout submenu Design > Web Landing Page & SaaS Dashboard).
+  3. Buat code design lebih dipecah-pecah lagi bro file codenya biar 1 file code ga sampai ribuan baris agar lebih enak saat revisi update dan maintenance (/home/arya/browser-agent/extension/design).
+- **Analisis & Solusi:**
+  1. *Prompt User Hilang*: `runDesignModeLoop` di `design_executor.js` sebelumnya melewatkan `appendUserMessage` dan push ke `conversationHistory`. Ditambahkan sinkronisasi pesan user sehingga chat bubble langsung dirender saat prompt dikirim.
+  2. *Mode Dropup Compact & Clean*: Menghilangkan flyout submenu kanan dan chevron di `sidepanel.html` dan `newtab.html`. Menyetel `min-width: 116px`, padding 4px, dan tinggi item 28px di `sidepanel.css` dan `newtab.css`.
+  3. *Modularisasi Sub-1000 Baris*: Memecah `slide_deck_engine.js` (1.361 baris) dan memangkas `canvas_manager.js` (836 baris) menjadi:
+     - `slide_themes.js` (209 baris)
+     - `slide_template.js` (856 baris)
+     - `slide_deck_engine.js` (359 baris)
+     - `canvas_exporter.js` (153 baris)
+     - `canvas_manager.js` (752 baris)
+     - `design_executor.js` (517 baris)
+     - `design_prompt.js` (178 baris)
+     - `design_agent.js` (78 baris)
+  4. Mendaftarkan seluruh script baru di `sidepanel.html` dan `newtab.html` dalam urutan eksekusi yang valid.
+- **Verifikasi:**
+  - Seluruh file di `extension/design/` terbukti di bawah 1.000 baris (`wc -l` konfirmasi: max 856 baris).
+  - `node -c` validasi sintaks lolos 100% pada semua file JavaScript.
+  - Pengujian pembuatan slide deck, deteksi tema otonom, dan normalisasi slide Markdown berjalan sempurna.
+  - Bump versi manifest ke `v2.150.204`.

@@ -46,6 +46,26 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   updateSendButtonState(true);
   abortController = new AbortController();
 
+  if (typeof appendUserMessage === 'function') {
+    appendUserMessage(userMessage, attachments);
+  } else if (typeof window !== 'undefined' && typeof window.appendUserMessage === 'function') {
+    window.appendUserMessage(userMessage, attachments);
+  }
+
+  if (typeof conversationHistory !== 'undefined' && Array.isArray(conversationHistory)) {
+    conversationHistory.push({
+      role: "user",
+      content: userMessage,
+      displayContent: userMessage,
+      attachments: attachments,
+      chatMode: "design"
+    });
+  }
+
+  if (typeof saveAttachmentsToIndexedDB === 'function' && attachments && attachments.length > 0) {
+    saveAttachmentsToIndexedDB(attachments);
+  }
+
   // Dual Master Agent Hierarchy: Master Agent (Boss) directing Master Design (Right Hand)
   const agentInfo = (typeof createDesignHierarchyAgentInfo === 'function') 
     ? createDesignHierarchyAgentInfo() 

@@ -467,6 +467,22 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Footer: `© 2026 {TOPIK / BRAND} • MATERI PRESENTASI RESMI` dan `.footer-status-tag` tematik (misal: `PANDUAN & ENSIKLOPEDIA`, `EDUKASI & SAINS`).
    - Card Highlight Box: Ditarik langsung dari intisari pilar kartu nyata.
 
+## 📐 20. Sub-1000 Lines Modular Architecture & Compact Mode Dropup UI (v2.150.204)
 
+1. **Prompt Visibility in Design Mode**:
+   - `design_executor.js` memanggil `appendUserMessage(userMessage, attachments)` dan memperbarui `conversationHistory` di awal `runDesignModeLoop`. Gelembung chat pertanyaan pengguna tidak pernah lagi hilang/blank.
 
+2. **Ultra-Compact Mode Dropup Selector**:
+   - Menghapus flyout submenu kanan dan chevron pada opsi `Design`.
+   - Menyetel dropup `min-width: 116px`, `padding: 4px`, `border-radius: 14px`, `gap: 2px`.
+   - Opsi mode `Agent`, `Chat`, dan `Design` tampil ramping dan padat (`height: 28px`, `font-size: 11.5px`).
 
+3. **Modular Sub-1000 Lines Design Architecture**:
+   - `slide_themes.js` (209 lines): 7 visual design archetypes & intelligent detector.
+   - `slide_template.js` (856 lines): 16:9 widescreen HTML builder, CSS variables & live thumbnails.
+   - `slide_deck_engine.js` (359 lines): Markdown parser, slide HTML extractor & interactive upgrader.
+   - `canvas_exporter.js` (153 lines): ZIP bundle, standalone HTML, PDF & PNG exporter.
+   - `canvas_manager.js` (752 lines): Drawer UI, tab view, virtual files, iframe sandbox & in-place updater.
+   - `design_executor.js` (517 lines): Execution loop, streaming milestones & toast dispatch.
+   - `design_prompt.js` (178 lines): System prompt & meta extractor.
+   - `design_agent.js` (78 lines): Agent metadata & tools declaration.
