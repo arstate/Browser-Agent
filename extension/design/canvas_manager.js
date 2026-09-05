@@ -59,6 +59,31 @@ function attachSlideDeckController(iframe) {
       doc.head.appendChild(styleTag);
     }
 
+    // Guarantee realtime editor toolbar, styles, and dock button in iframe (resilient for old artifacts)
+    const dock = doc.querySelector('.deck-floating-dock');
+    if (dock && !doc.getElementById('dock-btn-edit')) {
+      const fsBtn = doc.getElementById('dock-btn-fullscreen');
+      const div = doc.createElement('div'); div.className = 'dock-divider';
+      const b = doc.createElement('button');
+      b.type = 'button'; b.className = 'dock-btn'; b.id = 'dock-btn-edit'; b.title = 'Mode Edit Realtime';
+      b.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Edit</span>`;
+      if (fsBtn) { dock.insertBefore(div, fsBtn); dock.insertBefore(b, fsBtn); }
+      else { dock.appendChild(div); dock.appendChild(b); }
+    }
+
+    if (!doc.getElementById('deck-editor-toolbar')) {
+      if (typeof getSlideDeckEditorCss === 'function') {
+        const s = doc.createElement('style'); s.id = 'deck-editor-injected-css'; s.textContent = getSlideDeckEditorCss(); doc.head.appendChild(s);
+      }
+      if (typeof getSlideDeckEditorHtml === 'function') {
+        const wrap = doc.createElement('div'); wrap.innerHTML = getSlideDeckEditorHtml();
+        while (wrap.firstChild) doc.body.appendChild(wrap.firstChild);
+      }
+      if (typeof getSlideDeckEditorScript === 'function') {
+        const sc = doc.createElement('script'); sc.textContent = getSlideDeckEditorScript(); doc.body.appendChild(sc);
+      }
+    }
+
     let currentIndex = 0;
     const activeIdx = slides.findIndex(s => s.classList.contains('active'));
     if (activeIdx >= 0) currentIndex = activeIdx;
@@ -353,53 +378,19 @@ function renderOpenDesignCard(containerEl, artifact, options = {}) {
 
 function generateVirtualFiles(artifact) {
   if (!artifact || !artifact.html) return [];
-
-  const htmlContent = artifact.html;
-  const meta = artifact.meta || {};
-
-  // Extract <style>...</style> block as tokens.css
+  const htmlContent = artifact.html, meta = artifact.meta || {};
   let cssContent = `/* OpenDesign Extracted Tokens */\n:root {\n`;
-  if (Array.isArray(meta.colors)) {
-    meta.colors.forEach((c, idx) => {
-      cssContent += `  --color-palette-${idx + 1}: ${c};\n`;
-    });
-  }
-  cssContent += `  --design-system: "${meta.system || 'modern-minimal'}";\n`;
-  cssContent += `}\n\n`;
-
+  if (Array.isArray(meta.colors)) meta.colors.forEach((c, i) => { cssContent += `  --color-palette-${i + 1}: ${c};\n`; });
+  cssContent += `  --design-system: "${meta.system || 'modern-minimal'}";\n}\n\n`;
   const styleMatch = htmlContent.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-  if (styleMatch) {
-    cssContent += styleMatch[1].trim();
-  } else {
-    cssContent += `/* Tailwind CSS / Framework classes embedded directly in HTML */`;
-  }
-
+  cssContent += styleMatch ? styleMatch[1].trim() : `/* Embedded directly in HTML */`;
   const jsonMeta = JSON.stringify(meta, null, 2);
-
-  const readmeContent = `# ${meta.title || 'OpenDesign Artifact'}
-
-**Design System:** \`${meta.system || 'modern-minimal'}\`  
-**Category:** ${meta.category || 'Web Application / UI'}  
-**Status:** Standalone Production Ready  
-
----
-
-## 🎨 Overview
-${meta.description || 'Modern, accessible, responsive interface generated natively by OpenDesign in Browser Agent.'}
-
-## 🌈 Visual Palette
-${(meta.colors || []).map(c => `- \`${c}\``).join('\n')}
-
-## 🚀 How to Run
-1. Open \`index.html\` directly in any modern web browser.
-2. All CSS styles, fonts, and scripts are self-contained or loaded via high-speed CDNs.
-`;
-
+  const readme = `# ${meta.title || 'OpenDesign Artifact'}\n\n**Design System:** \`${meta.system || 'modern-minimal'}\`\n**Category:** ${meta.category || 'Web Application / UI'}\n\n## 🎨 Overview\n${meta.description || 'Modern interface generated natively by OpenDesign.'}\n\n## 🌈 Visual Palette\n${(meta.colors || []).map(c => `- \`${c}\``).join('\n')}\n`;
   return [
     { name: 'index.html', lang: 'html', content: htmlContent, icon: '🌐' },
     { name: 'tokens.css', lang: 'css', content: cssContent, icon: '🎨' },
     { name: 'design_meta.json', lang: 'json', content: jsonMeta, icon: '⚙️' },
-    { name: 'README.md', lang: 'markdown', content: readmeContent, icon: '📝' }
+    { name: 'README.md', lang: 'markdown', content: readme, icon: '📝' }
   ];
 }
 
@@ -660,8 +651,14 @@ function initOpenDesignCanvas() {
   btnEditMode?.addEventListener('click', () => {
     const iframe = document.getElementById('opendesign-preview-frame');
     if (!iframe?.contentWindow) return;
-    if (typeof iframe.contentWindow.toggleEditMode === 'function') iframe.contentWindow.toggleEditMode();
-    else iframe.contentWindow.postMessage({ type: 'TOGGLE_EDIT_MODE' }, '*');
+    if (typeof iframe.contentWindow.toggleEditMode === 'function') {
+      iframe.contentWindow.toggleEditMode();
+    } else {
+      iframe.contentWindow.postMessage({ type: 'TOGGLE_EDIT_MODE' }, '*');
+    }
+    const isAct = btnEditMode.classList.toggle('active');
+    btnEditMode.title = isAct ? 'Mode Edit Realtime (Aktif)' : 'Mode Edit Realtime (Geser, Font, Teks)';
+    showUniversalToast(isAct ? '✏️ Mode Edit Realtime Aktif' : '💾 Mode Edit Disimpan & Selesai');
   });
 
   // Expand / Contract

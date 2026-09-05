@@ -452,7 +452,11 @@ function getSlideDeckEditorScript() {
         el.style.transformOrigin = 'center center';
       }
 
+      let lastToggleTime = 0;
       function toggleEditMode(forceState) {
+        const now = Date.now();
+        if (typeof forceState !== 'boolean' && (now - lastToggleTime < 300)) return;
+        lastToggleTime = now;
         isEditMode = (typeof forceState === 'boolean') ? forceState : !isEditMode;
         document.body.classList.toggle('deck-edit-mode-active', isEditMode);
         const dockBtn = document.getElementById('dock-btn-edit');
@@ -460,6 +464,12 @@ function getSlideDeckEditorScript() {
           dockBtn.classList.toggle('active', isEditMode);
           dockBtn.style.background = isEditMode ? 'var(--accent, #6366F1)' : '';
           dockBtn.style.color = isEditMode ? '#FFFFFF' : '';
+        }
+        const toolbar = document.getElementById('deck-editor-toolbar');
+        if (toolbar) {
+          toolbar.style.opacity = isEditMode ? '1' : '0';
+          toolbar.style.pointerEvents = isEditMode ? 'auto' : 'none';
+          toolbar.style.transform = isEditMode ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(-70px)';
         }
 
         if (isEditMode) {
@@ -748,6 +758,7 @@ function getSlideDeckEditorScript() {
         const editBtn = e.target.closest('#dock-btn-edit');
         if (editBtn) {
           e.preventDefault();
+          e.stopImmediatePropagation();
           toggleEditMode();
           return;
         }

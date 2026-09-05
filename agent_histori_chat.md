@@ -6372,6 +6372,44 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Node syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
   3. Bump versi manifest ke `v2.150.222`.
 
+### 🚀 Iterasi 504: Fix Slide Deck Edit Mode Debounce Guard, Legacy Upgrade & Dynamic Injection Architecture (v2.150.223)
+- **User Request:**
+  "masih gabisa edit mode bro"
+- **Akar Masalah (Root Cause):**
+  1. *Instant Double-Toggling on Single Click*: Listener `#dock-btn-edit` di `slide_editor.js` dan `canvas_manager.js` sama-sama menangani event klik tanpa debounce cooldown. Dalam satu kali klik fisik, fungsi `toggleEditMode` terpicu lebih dari sekali (on seketika kembali off) sehingga bagi mata pengguna tombol tampak tidak merespons sama sekali.
+  2. *Legacy Artifact Guard Miss*: Fungsi `upgradeSlideDeckHtmlIfNeeded` di `slide_deck_engine.js` memeriksa `html.includes("thumb-mini-slide") && html.includes("deck-floating-dock") && html.includes("classList.toggle('active'")` namun tidak memeriksa keberadaan `dock-btn-edit` dan `deck-editor-toolbar`. Artefak yang dibuat sebelum penambahan editor dianggap sudah modern sehingga dikembalikan mentah tanpa toolbar dan skrip penyuntingan.
+  3. *Absence of Dynamic Fallback Injection*: `attachSlideDeckController` di `canvas_manager.js` tidak menyuntikkan tombol dock dan toolbar jika dokumen iframe kehilangan elemen-elemen tersebut.
+- **Analisis & Solusi:**
+  1. *Debounce Cooldown & Stop Immediate Propagation (`slide_editor.js`)*:
+     - Menambahkan debounce cooldown 300ms (`now - lastToggleTime < 300`) pada `toggleEditMode` agar kebal terhadap multiple event phases.
+     - Menyematkan `e.stopImmediatePropagation()` pada handler `#dock-btn-edit` di `slide_editor.js` untuk mencegah perambatan klik ke listener lain.
+     - Menjamin `#deck-editor-toolbar` bertransformasi mulus dengan deklarasi style eksplisit saat aktif (`opacity: 1; pointer-events: auto; transform: translateY(0)`).
+  2. *Strict Legacy Artifact Auto-Upgrade (`slide_deck_engine.js`)*:
+     - Menambahkan pengecekan `hasEditor = html.includes("dock-btn-edit") && html.includes("deck-editor-toolbar") && html.includes("initSlideDeckRealtimeEditor")` pada `upgradeSlideDeckHtmlIfNeeded`.
+     - Seluruh artefak lama saat dibuka di Canvas Workspace langsung direkonstruksi otomatis memiliki bilah alat editor.
+  3. *Dynamic Fallback Injection (`canvas_manager.js`)*:
+     - `attachSlideDeckController` secara dinamis memeriksa apakah `#dock-btn-edit` dan `#deck-editor-toolbar` ada di dalam dokumen iframe. Jika belum ada, fungsi secara live menyuntikkan tombol dock, CSS editor, markup DOM toolbar, dan skrip penyunting ke dalam iframe.
+  4. *Instant Optimistic UI Feedback (`canvas_manager.js`)*:
+     - Klik pada `#btn-canvas-edit-mode` di header drawer langsung menampilkan toast interaktif (`✏️ Mode Edit Realtime Aktif` / `💾 Mode Edit Disimpan & Selesai`) serta mengganti atribut title dan class `.active`.
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - `slide_editor.js`: 794 baris.
+     - `canvas_manager.js`: 785 baris.
+     - `slide_template.js`: 781 baris.
+     - `slide_styles.js`: 789 baris.
+     - `design_executor.js`: 776 baris.
+     - `design_agent.js`: 626 baris.
+     - `slide_deck_engine.js`: 506 baris.
+     - `slide_themes.js`: 266 baris.
+     - `canvas_exporter.js`: 244 baris.
+     - `design_prompt.js`: 183 baris.
+     - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+- **Verifikasi:**
+  1. Node unit test memverifikasi `upgradeSlideDeckHtmlIfNeeded` merekonstruksi slide deck lama menjadi memiliki `#dock-btn-edit` dan `#deck-editor-toolbar`.
+  2. Memverifikasi fallback injection pada `attachSlideDeckController`, debounce cooldown 300ms, serta `e.stopImmediatePropagation()`.
+  3. Node syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  4. Bump versi manifest ke `v2.150.223`.
+
+
 
 
 

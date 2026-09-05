@@ -695,13 +695,6 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           return;
         }
 
-        const editBtn = e.target.closest('#dock-btn-edit');
-        if (editBtn) {
-          e.preventDefault();
-          if (typeof window.toggleEditMode === 'function') window.toggleEditMode();
-          else window.postMessage({ type: 'TOGGLE_EDIT_MODE' }, '*');
-          return;
-        }
 
         const fsBtn = e.target.closest('#dock-btn-fullscreen');
         if (fsBtn) {

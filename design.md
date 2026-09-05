@@ -782,6 +782,37 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_prompt.js`: 183 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
 
+## 🛡️ 39. Slide Deck Realtime Edit Mode Debounce Guard, Legacy Upgrade & Dynamic Injection Architecture (v2.150.223)
+
+1. **Debounce Cooldown & Immediate Propagation Guard**:
+   - `slide_editor.js` menerapkan cooldown 300ms (`now - lastToggleTime < 300`) pada fungsi `toggleEditMode` untuk mengeliminasi flipping instan on-off saat tombol diklik.
+   - Menggunakan `e.stopImmediatePropagation()` pada penanganan event click `#dock-btn-edit` sehingga event tidak menyebar ke event listener lain di dokumen iframe yang sama.
+   - Memastikan `#deck-editor-toolbar` bertransformasi mulus dengan deklarasi style eksplisit saat aktif maupun nonaktif.
+
+2. **Strict Legacy Artifact Auto-Upgrade**:
+   - `upgradeSlideDeckHtmlIfNeeded` di `slide_deck_engine.js` kini mewajibkan keberadaan `dock-btn-edit`, `deck-editor-toolbar`, dan `initSlideDeckRealtimeEditor` agar sebuah artefak dianggap up-to-date.
+   - Artefak presentasi lama yang tersimpan dalam riwayat otomatis di-upgrade ke template modern saat dibuka di Canvas Drawer.
+
+3. **Dynamic Fallback Injection**:
+   - `attachSlideDeckController` di `canvas_manager.js` secara runtime memeriksa ketersediaan toolbar `#deck-editor-toolbar` dan tombol `#dock-btn-edit`. Jika salah satu hilang, controller menyuntikkan CSS editor, markup DOM, dan skrip secara live ke dalam iframe.
+
+4. **Instant Optimistic UI Feedback**:
+   - Tombol `#btn-canvas-edit-mode` di header drawer langsung merespons interaksi dengan toast universal interaktif (`✏️ Mode Edit Realtime Aktif` / `💾 Mode Edit Disimpan & Selesai`).
+
+5. **Strict Sub-800 Line Rule Compliance**:
+   - `slide_editor.js`: 794 baris.
+   - `canvas_manager.js`: 785 baris.
+   - `slide_template.js`: 781 baris.
+   - `slide_styles.js`: 789 baris.
+   - `design_executor.js`: 776 baris.
+   - `design_agent.js`: 626 baris.
+   - `slide_deck_engine.js`: 506 baris.
+   - `slide_themes.js`: 266 baris.
+   - `canvas_exporter.js`: 244 baris.
+   - `design_prompt.js`: 183 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
+
 
 
 

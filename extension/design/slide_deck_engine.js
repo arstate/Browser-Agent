@@ -465,8 +465,9 @@ function upgradeSlideDeckHtmlIfNeeded(html, userPrompt = "", meta = {}) {
   // Check if existing deck contains legacy Djadi spill when user prompt is NOT about Djadi
   const hasLegacyDjadiSpill = /DJADI CREATIVE|STANDAR IDENTITAS VISUAL RESMI|CONFIDENTIAL \/\/ ENTERPRISE/i.test(html) && !/djadi/i.test(userPrompt);
 
-  // If already has BOTH the miniature slide thumbnail preview (.thumb-mini-slide), floating dock, modern delegation script, AND no legacy spill, return as-is
-  if (!hasLegacyDjadiSpill && html.includes("thumb-mini-slide") && html.includes("deck-floating-dock") && html.includes("classList.toggle('active'")) {
+  // If already has miniature preview, floating dock, delegation, realtime editor toolbar, and no legacy spill, return as-is
+  const hasEditor = html.includes("dock-btn-edit") && html.includes("deck-editor-toolbar") && html.includes("initSlideDeckRealtimeEditor");
+  if (!hasLegacyDjadiSpill && hasEditor && html.includes("thumb-mini-slide") && html.includes("deck-floating-dock") && html.includes("classList.toggle('active'")) {
     return html;
   }
 
