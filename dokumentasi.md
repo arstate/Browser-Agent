@@ -284,3 +284,18 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
     - **Multi-Model Candidate Retry & Stream Fallback on Revision (`design_executor.js`)**: Pada alur revisi canvas aktif (`isRevision === true`), mengganti pemanggilan model tunggal menjadi loop percobaan kandidat multi-model (`resolveDesignCandidateModels`) dengan parameter eksplisit `stream: false`. Menyelesaikan pembaruan status badge `update_canvas_slides` dan sinkronisasi jadwal tugas (milestones) secara transparan tanpa hang/stuck.
     - **Top-Level Variable Scoping Guard (`accumulatedContent`)**: Memindahkan deklarasi `accumulatedContent` ke tingkat fungsi `runDesignModeLoop` sebelum blok `try-catch`, melenyapkan exception `ReferenceError: accumulatedContent is not defined` saat terjadi kendala eksekusi.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 9 modul di `extension/design/` terjaga ketat di bawah batas 800 baris (`design_executor.js` 776 baris, `slide_styles.js` 789 baris, `slide_template.js` 759 baris, `design_agent.js` 626 baris, `canvas_manager.js` 788 baris, `slide_deck_engine.js` 505 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 226 baris, `design_prompt.js` 183 baris).
+
+103. **Realtime Visual & Text Slide Deck Editor Engine (`v2.150.220`):** Menambahkan fitur mode edit interaktif secara real-time pada slide deck yang sudah jadi sesuai permintaan pengguna:
+    - **Ikon Mode Edit di Sisi Kiri Tombol Fullscreen (`slide_template.js`, `slide_editor.js`, `newtab.html`, `sidepanel.html`)**: Menyematkan tombol Edit (`#dock-btn-edit`) tepat di sebelah kiri tombol Fullscreen (`#dock-btn-fullscreen`) pada floating dock `.deck-floating-dock`, serta menyematkan tombol `#btn-canvas-edit-mode` tepat di sebelah kiri tombol `#btn-canvas-expand` (fullscreen/maximize) pada header kontrol canvas `.canvas-header-actions` di `newtab.html` dan `sidepanel.html`.
+    - **Floating Formatting Toolbar Serbaguna (`#deck-editor-toolbar` di `slide_editor.js`)**: Menyediakan toolbar format mengambang yang responsif saat mode edit aktif, mencakup:
+      - *Pilihan Font Family*: Inter, Outfit, Plus Jakarta Sans, Space Grotesk, Syne, JetBrains Mono, dan Georgia Editorial Serif.
+      - *Pengaturan Ukuran Font*: Tombol A- dan A+ dengan step 2px responsif.
+      - *Styling Teks*: Bold (**B**), Italic (*I*), Underline (<u>U</u>).
+      - *Perataan Teks (Alignment)*: Rata Kiri, Tengah, dan Kanan.
+      - *Palet Warna Teks*: Pilihan warna instan (Putih, Aksen Utama, Biru Langit, Emas, Karang, Slate).
+      - *Transformasi Posisi & Gerak*: Drag-and-drop untuk menggeser teks/elemen secara presisi.
+      - *Multi-Selection*: Mendukung pemilihan banyak elemen sekaligus (Shift / Ctrl + Click) serta pergerakan elemen massal secara bersamaan (lockstep moving).
+      - *Skala & Rotasi*: Tombol Scale Up (+10%), Scale Down (-10%), Rotasi Kiri (-15°), Rotasi Kanan (+15°), dan Reset Transformasi.
+      - *Inline Text Editing*: Pengeditan langsung teks di kanvas slide via double-click (`contenteditable="true"`).
+      - *Penyimpanan Otomatis*: Tombol "Simpan" dan sinkronisasi real-time via `postMessage({ type: 'SLIDE_DECK_CONTENT_CHANGED', html })` ke parent window untuk memperbarui `activeDesignArtifact`, tampilan tab kode, dan penyimpanan lokal.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 605 baris, `canvas_manager.js` 792 baris, `slide_template.js` 772 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_styles.js` 789 baris, `slide_deck_engine.js` 505 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).

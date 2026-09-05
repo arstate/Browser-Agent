@@ -684,3 +684,39 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 3. **Function-Level Variable Scoping (`accumulatedContent`)**:
    - Mendeklarasikan `accumulatedContent` di tingkat fungsi utama sebelum blok `try-catch`, mencegah `ReferenceError` pada penanganan exception di blok `catch`.
 
+
+## 🚀 36. Realtime Visual & Text Slide Deck Editor Engine (v2.150.220)
+
+1. **Dual-Surface Edit Mode Entry Points**:
+   - Tombol `#dock-btn-edit` disematkan tepat di sebelah kiri tombol Fullscreen (`#dock-btn-fullscreen`) pada floating dock `.deck-floating-dock`.
+   - Tombol `#btn-canvas-edit-mode` disematkan tepat di sebelah kiri tombol Fullscreen / Maximize (`#btn-canvas-expand`) pada canvas header actions (`.canvas-header-actions`) di `newtab.html` dan `sidepanel.html`.
+   - Dua arah sinkronisasi via `postMessage`: klik tombol di header canvas mengirimkan `{ type: 'TOGGLE_EDIT_MODE' }` ke iframe slide deck, dan slide deck mengirimkan `{ type: 'EDIT_MODE_TOGGLED', active }` kembali ke header untuk memperbarui status visual aktif.
+
+2. **Floating Formatting Toolbar (`#deck-editor-toolbar` di `slide_editor.js`)**:
+   - Toolbar terapung akrilik modern di bagian atas kanvas slide saat mode edit aktif.
+   - Pilihan Font Family dinamis: Inter, Outfit, Plus Jakarta Sans, Space Grotesk, Syne, JetBrains Mono, dan Georgia Editorial Serif.
+   - Kontrol ukuran font responsif: Tombol `A-` dan `A+` dengan step 2px.
+   - Penataan gaya tipografi: Bold (**B**), Italic (*I*), Underline (<u>U</u>), serta perataan teks (Left, Center, Right).
+   - Palet warna instan 6 aksen: Putih, Aksen Utama, Biru Langit, Emas, Karang, Slate.
+
+3. **Multi-Selection, Transform & Drag-to-Move Architecture**:
+   - Multi-Selection: Pengguna dapat memilih satu atau banyak elemen sekaligus dengan menekan Shift / Ctrl + Click.
+   - Lockstep Multi-Drag: Menggeser salah satu elemen yang terpilih otomatis memindahkan seluruh elemen terpilih lainnya secara proporsional.
+   - Skala & Rotasi: Tombol Scale Up (+10%), Scale Down (-10%), Rotasi Kiri (-15°), Rotasi Kanan (+15°), dan Reset Transformasi tanpa merusak layout dasar CSS.
+   - Inline In-Place Text Editing: Double-click pada elemen teks manapun mengaktifkan `contenteditable="true"` seketika.
+   - Auto-Save & Synchronization: Tombol "Simpan" mengakhiri mode edit dan menyiarkan `{ type: 'SLIDE_DECK_CONTENT_CHANGED', html }` ke parent window untuk memperbarui `activeDesignArtifact`, tab kode HTML, dan penyimpanan lokal.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - `slide_editor.js`: 605 baris.
+   - `canvas_manager.js`: 792 baris.
+   - `slide_template.js`: 772 baris.
+   - `design_executor.js`: 776 baris.
+   - `design_agent.js`: 626 baris.
+   - `slide_styles.js`: 789 baris.
+   - `slide_deck_engine.js`: 505 baris.
+   - `slide_themes.js`: 266 baris.
+   - `canvas_exporter.js`: 244 baris.
+   - `design_prompt.js`: 183 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
+

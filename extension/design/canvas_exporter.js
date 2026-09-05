@@ -211,8 +211,26 @@ async function exportSlideDeckPdf(htmlContent, title = "presentation") {
 if (typeof window !== "undefined" && typeof window.addEventListener === "function" && !window.__slideDeckExportListenerAdded) {
   window.__slideDeckExportListenerAdded = true;
   window.addEventListener("message", (e) => {
-    if (e.data && e.data.type === "EXPORT_SLIDE_DECK_PDF") {
+    if (!e.data) return;
+    if (e.data.type === "EXPORT_SLIDE_DECK_PDF") {
       exportSlideDeckPdf(e.data.html, e.data.title);
+    } else if (e.data.type === "EDIT_MODE_TOGGLED") {
+      const btn = document.getElementById("btn-canvas-edit-mode");
+      if (btn) {
+        btn.classList.toggle("active", Boolean(e.data.active));
+        btn.title = e.data.active ? "Keluar Mode Edit" : "Mode Edit Realtime";
+      }
+    } else if (e.data.type === "SLIDE_DECK_CONTENT_CHANGED" && e.data.html) {
+      if (window.activeDesignArtifact) {
+        window.activeDesignArtifact.html = e.data.html;
+      }
+      const codeDisplay = document.getElementById("canvas-code-display");
+      if (codeDisplay) {
+        codeDisplay.textContent = e.data.html;
+      }
+      if (typeof showUniversalToast === "function") {
+        showUniversalToast("💾 Perubahan slide tersimpan");
+      }
     }
   });
 }

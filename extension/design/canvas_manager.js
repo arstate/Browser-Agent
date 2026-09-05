@@ -659,6 +659,13 @@ function initOpenDesignCanvas() {
     }
   });
 
+  // Realtime Edit Mode Toggle Button
+  const btnEditMode = document.getElementById('btn-canvas-edit-mode');
+  btnEditMode?.addEventListener('click', () => {
+    const iframe = document.getElementById('opendesign-preview-frame');
+    iframe?.contentWindow?.postMessage({ type: 'TOGGLE_EDIT_MODE' }, '*');
+  });
+
   // Expand / Contract
   const btnExpand = document.getElementById('btn-canvas-expand');
   btnExpand?.addEventListener('click', () => {
@@ -672,10 +679,7 @@ function initOpenDesignCanvas() {
   });
 
   // Close
-  const btnClose = document.getElementById('btn-canvas-close');
-  btnClose?.addEventListener('click', () => {
-    closeOpenDesignCanvas();
-  });
+  document.getElementById('btn-canvas-close')?.addEventListener('click', closeOpenDesignCanvas);
 
   // Copy Code in Code Tab
   const btnCopyCode = document.getElementById('btn-canvas-copy-code');

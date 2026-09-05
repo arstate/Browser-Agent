@@ -6258,6 +6258,45 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
   3. Bump versi manifest ke `v2.150.219`.
 
+### Iterasi 501 (v2.150.220) - 2026-09-05
+- **User Request:**
+  "tambah fitur ketika slide deck udah jadi itu tambah fitur bisa edit mode realtime, kalau edit mode realtime tambah icon edit di sebelah kiri tombol fullscreen kalau on bisa gnedit move teks select banyak terus di move langsung banyak scale edit teks edti posisi scale rotation dll bro ganti font juga bisa styling teks bold miring dll juga bro"
+- **Akar Masalah (Root Cause):**
+  1. Setelah slide deck selesai dirancang oleh AI, konten bersifat statis di iframe pratinjau. Pengguna tidak dapat memindahkan teks, mengubah font, menata gaya bold/italic/underline, mengatur skala, memutar orientasi, atau menyunting teks secara langsung di atas slide.
+  2. Belum ada kontrol tombol pengaktif mode edit interaktif baik di floating dock pratinjau (`.deck-floating-dock`) maupun di bilah header kontrol canvas (`.canvas-header-actions`).
+- **Analisis & Solusi:**
+  1. *Realtime Slide Deck Editor Engine (`slide_editor.js`)*:
+     - Dibuat sebagai modul mandiri (605 baris) untuk mematuhi aturan strict sub-800 line limit.
+     - Menyediakan CSS (`getSlideDeckEditorCss`), template HTML toolbar terapung (`getSlideDeckEditorHtml`), dan runtime script interaktif (`getSlideDeckEditorScript`).
+  2. *Penempatan Tombol Edit di Sebelah Kiri Tombol Fullscreen*:
+     - Pada `.deck-floating-dock`: Tombol Edit (`#dock-btn-edit`) disematkan tepat di sebelah kiri tombol Fullscreen (`#dock-btn-fullscreen`).
+     - Pada `.canvas-header-actions` (`newtab.html` & `sidepanel.html`): Tombol `#btn-canvas-edit-mode` disematkan tepat di sebelah kiri tombol Fullscreen / Maximize (`#btn-canvas-expand`).
+  3. *Fitur Visual & Text Editor Interaktif*:
+     - *Font Family Dropdown*: Inter, Outfit, Plus Jakarta Sans, Space Grotesk, Syne, JetBrains Mono, Georgia Editorial Serif.
+     - *Font Size & Styling*: Tombol A- / A+ (step 2px), Bold, Italic, Underline, serta Text Align (Left, Center, Right).
+     - *Palet Warna*: 6 pilihan warna instan (Putih, Aksen, Sky, Emas, Karang, Slate).
+     - *Multi-Selection & Lockstep Drag-to-Move*: Shift/Ctrl + Click untuk memilih banyak elemen, dan seret (drag) untuk memindahkan elemen-elemen terpilih secara presisi bersamaan.
+     - *Skala & Rotasi*: Scale Up (+10%), Scale Down (-10%), Rotasi Kiri (-15°), Rotasi Kanan (+15°), dan Reset Transformasi.
+     - *Inline Text Editing*: Double click untuk mengedit teks langsung di kanvas slide via `contenteditable="true"`.
+     - *Sinkronisasi Otomatis*: Tombol "Simpan" mengakhiri mode edit dan menyiarkan `postMessage({ type: 'SLIDE_DECK_CONTENT_CHANGED', html })` ke parent window untuk memperbarui `activeDesignArtifact`, kode HTML di tab Code, dan notifikasi toast.
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - `slide_editor.js`: 605 baris.
+     - `canvas_manager.js`: 792 baris.
+     - `slide_template.js`: 772 baris.
+     - `design_executor.js`: 776 baris.
+     - `design_agent.js`: 626 baris.
+     - `slide_styles.js`: 789 baris.
+     - `slide_deck_engine.js`: 505 baris.
+     - `slide_themes.js`: 266 baris.
+     - `canvas_exporter.js`: 244 baris.
+     - `design_prompt.js`: 183 baris.
+     - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+- **Verifikasi:**
+  1. Node.js automated test asserting CSS, HTML toolbar, dock placement, canvas header buttons, multi-selection, and script execution lulus 100% (`ALL SLIDE EDITOR TESTS PASSED SUCCESSFULLY!`).
+  2. Syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
+  3. Bump versi manifest ke `v2.150.220`.
+
+
 
 
 

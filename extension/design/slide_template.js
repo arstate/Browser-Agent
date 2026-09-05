@@ -563,6 +563,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=Syne:wght@700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     ${(typeof getExecutiveSlideDeckCss === 'function' ? getExecutiveSlideDeckCss(theme, { accentColor, accentSecondary, accentTertiary }) : (typeof window !== 'undefined' && window.getExecutiveSlideDeckCss ? window.getExecutiveSlideDeckCss(theme, { accentColor, accentSecondary, accentTertiary }) : ''))}
+    ${(typeof getSlideDeckEditorCss === 'function' ? getSlideDeckEditorCss() : (typeof window !== 'undefined' && window.getSlideDeckEditorCss ? window.getSlideDeckEditorCss() : ''))}
   </style>
 </head>
 <body>
@@ -616,6 +617,14 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
             </button>
           </div>
         </div>
+        <div class="dock-divider"></div>
+        <button type="button" class="dock-btn" id="dock-btn-edit" title="Mode Edit Realtime">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>Edit</span>
+        </button>
+        <button type="button" class="dock-btn dock-btn-circle" id="dock-btn-fullscreen" title="Layar Penuh (F)">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
       </nav>
     </main>
   </div>
@@ -746,6 +755,10 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         }
       });
     })();
+  </script>
+  ${(typeof getSlideDeckEditorHtml === 'function' ? getSlideDeckEditorHtml() : (typeof window !== 'undefined' && window.getSlideDeckEditorHtml ? window.getSlideDeckEditorHtml() : ''))}
+  <script>
+    ${(typeof getSlideDeckEditorScript === 'function' ? getSlideDeckEditorScript() : (typeof window !== 'undefined' && window.getSlideDeckEditorScript ? window.getSlideDeckEditorScript() : ''))}
   </script>
 </body>
 </html>`;
