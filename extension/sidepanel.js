@@ -29,6 +29,34 @@ let currentSessionId = null;
 let currentSessionTitle = "New Chat";
 let currentSessionIsPinned = false;
 let currentSessionCreatedAt = null;
+
+function ensureCurrentSessionInitialized(initialMessage = "", attachments = [], defaultTitle = "Chat Session") {
+  if (!currentSessionId) {
+    currentSessionId = 'sess_' + Date.now();
+    const fallbackTitle = (attachments && attachments[0] ? attachments[0].name : defaultTitle);
+    const rawTitle = (typeof initialMessage === 'string' ? initialMessage : '')
+      .replace(/^\[\/[a-zA-Z0-9_-]+\]\s*/, '')
+      .replace(/^@[a-zA-Z0-9_-]+\s*/, '')
+      .trim();
+    currentSessionTitle = (rawTitle || fallbackTitle).slice(0, 45).trim() || defaultTitle;
+    currentSessionCreatedAt = Date.now();
+    if (typeof updateHeaderChatTitle === 'function') {
+      updateHeaderChatTitle(currentSessionTitle);
+    }
+  }
+  return currentSessionId;
+}
+if (typeof window !== 'undefined') {
+  window.ensureCurrentSessionInitialized = ensureCurrentSessionInitialized;
+  window.getCurrentSessionId = () => currentSessionId;
+  window.setCurrentSessionId = (id) => { currentSessionId = id; };
+  window.getCurrentSessionTitle = () => currentSessionTitle;
+  window.setCurrentSessionTitle = (t) => {
+    currentSessionTitle = t;
+    if (typeof updateHeaderChatTitle === 'function') updateHeaderChatTitle(t);
+  };
+}
+
 let sessionToDeleteId = null;
 let sessionToDeleteTitle = "";
 let isExecuting = false;
@@ -5628,13 +5656,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   abortController = new AbortController();
   notifyActiveTabExecutionState(true, 1, 15, "AI Controlling Browser...");
 
-  if (!currentSessionId) {
-    currentSessionId = 'sess_' + Date.now();
-    const fallbackTitle = (attachments[0] ? attachments[0].name : 'Chat Session');
-    currentSessionTitle = (userMessage || fallbackTitle).slice(0, 45).trim();
-    currentSessionCreatedAt = Date.now();
-    updateHeaderChatTitle(currentSessionTitle);
-  }
+  ensureCurrentSessionInitialized(userMessage, attachments, 'Chat Session');
 
   // Construct user content payload
   // Construct user content payload
@@ -7605,13 +7627,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
   updateSendButtonState(true);
   abortController = new AbortController();
 
-  if (!currentSessionId) {
-    currentSessionId = 'sess_' + Date.now();
-    const fallbackTitle = (attachments[0] ? attachments[0].name : 'Chat Session');
-    currentSessionTitle = (userMessage || fallbackTitle).slice(0, 45).trim();
-    currentSessionCreatedAt = Date.now();
-    updateHeaderChatTitle(currentSessionTitle);
-  }
+  ensureCurrentSessionInitialized(userMessage, attachments, 'Chat Session');
 
   // Construct user content payload
   let userPayloadContent = userMessage;
@@ -11021,6 +11037,10 @@ function sanitizeHistoryForStorage(history) {
 }
 
 async function saveCurrentSessionToDB() {
+  if (!currentSessionId) {
+    if (!conversationHistory || conversationHistory.length === 0) return;
+    ensureCurrentSessionInitialized(conversationHistory[0]?.content || "Chat Session");
+  }
   if (!currentSessionId || conversationHistory.length === 0) return;
   const sanitizedMessages = sanitizeHistoryForStorage(conversationHistory);
 
@@ -11112,6 +11132,9 @@ async function saveCurrentSessionToDB() {
       await chrome.storage.local.set({ last_active_session_id: currentSessionId });
     }
   } catch (e) {}
+}
+if (typeof window !== 'undefined') {
+  window.saveCurrentSessionToDB = saveCurrentSessionToDB;
 }
 
 function formatTimeAgo(timestamp) {
@@ -11929,6 +11952,9 @@ function openHistoryModal() {
   if (searchInput) {
     searchInput.value = '';
     searchInput.focus();
+  }
+  if (currentSessionId || (conversationHistory && conversationHistory.length > 0)) {
+    saveCurrentSessionToDB().catch(() => {});
   }
   loadHistoryList("");
 }

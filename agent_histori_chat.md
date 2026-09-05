@@ -5923,3 +5923,30 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Kompilasi binary Rust release `cargo build --release` lolos dan disinkronkan ke `host/browser_agent_host`.
   5. Bump versi manifest ke `v2.150.206`.
 
+### Iterasi 488 (v2.150.207) - 2026-09-05
+- **User Request:**
+  "bug histori chat ga kesimpen di histori chat saya tes buat slide tapi ga kesimpen"
+- **Akar Masalah (Root Cause):**
+  Saat pengguna memulai sesi pembuatan slide presentasi di Design Mode (terutama dari keadaan New Chat atau tab baru), variabel global `currentSessionId` masih bernilai `null` karena fungsi `runDesignModeLoop` di `extension/design/design_executor.js` tidak pernah melakukan inisialisasi sesi `currentSessionId`. Akibatnya, saat `saveCurrentSessionToDB()` dipanggil di akhir pembuatan slide, baris pertama fungsi (`if (!currentSessionId || conversationHistory.length === 0) return;`) langsung keluar (*early return*) tanpa menyimpan riwayat apa pun ke database SQLite maupun ke `chrome.storage.local`.
+- **Analisis & Solusi:**
+  1. *Centralized Session Initializer (`sidepanel.js`)*:
+     - Membuat fungsi global `ensureCurrentSessionInitialized(initialMessage, attachments, defaultTitle)` yang secara deterministik membuat `currentSessionId = 'sess_' + Date.now()` dan `currentSessionTitle` jika belum ada.
+     - Mengekspos fungsi ini ke `window.ensureCurrentSessionInitialized` dan `window.saveCurrentSessionToDB`.
+  2. *Inisialisasi & Penyimpanan Instan di Design Mode (`design_executor.js`)*:
+     - Memanggil `ensureCurrentSessionInitialized(userMessage, attachments, 'Slide Deck Design')` di awal eksekusi `runDesignModeLoop`.
+     - Menyimpan sesi seketika (`saveCurrentSessionToDB()`) begitu pesan pengguna ditambahkan ke `conversationHistory`.
+     - Memperbarui `currentSessionTitle` secara dinamis sesuai judul materi slide yang diekstrak dari `<design_meta>` (misal: `"Sains & Pesona Kucing Lucu"`), lalu menyimpan kembali sesi setelah respon asisten selesai.
+     - Memastikan blok `catch` juga memicu `saveCurrentSessionToDB()` agar riwayat pesan tidak hilang jika terjadi interupsi/error.
+  3. *Fail-Safe Auto-Initialization Guard di DB Saver (`sidepanel.js`)*:
+     - Di dalam `saveCurrentSessionToDB()`, jika `!currentSessionId` namun `conversationHistory.length > 0`, sistem otomatis menginisialisasi sesi dengan aman alih-alih keluar tanpa menyimpan.
+  4. *Pre-Listing Sync saat Laci Riwayat Dibuka (`sidepanel.js`)*:
+     - Pada `openHistoryModal()`, sistem memicu `saveCurrentSessionToDB()` sebelum mengambil daftar riwayat, memastikan sesi slide aktif langsung muncul di daftar tanpa harus refresh.
+  5. *Sub-800 Baris Compliance*:
+     - `design_executor.js`: 559 baris (ketat <= 800 baris).
+     - Seluruh 9 modul di `extension/design/` terjaga di bawah 800 baris.
+- **Verifikasi:**
+  1. Uji skenario Node.js: inisialisasi sesi Design Mode dengan `currentSessionId = null`, penambahan user turn, asisten turn dengan `designArtifact`, pembaruan judul dari metadata slide, dan fallback guard saat ID null. Seluruh pengujian lolos 100%.
+  2. Validasi sintaks `node -c extension/sidepanel.js extension/design/*.js` lolos 100% tanpa error.
+  3. Bump versi manifest ke `v2.150.207`.
+
+

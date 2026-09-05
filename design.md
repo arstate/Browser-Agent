@@ -519,3 +519,14 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Mengganti aturan `.thumb-card` yang sebelumnya `border-radius: var(--card-radius)` (hingga 16px pada tema soft/pastel) menjadi `border-radius: 5px;` dan `.thumb-mini-slide-wrap` `border-radius: 4px;`.
    - Mencegah bentuk kartu thumbnail lonjong / kapsul, menghasilkan tampilan galeri slide yang rapi, tajam, dan profesional.
 
+## 🚀 23. Design Mode Chat History Persistence & Real-Time Sync (v2.150.207)
+
+1. **Design Mode Lifecycle Session Initialization**:
+   - Fungsi global `ensureCurrentSessionInitialized` (`sidepanel.js`) menjamin `currentSessionId`, `currentSessionTitle`, dan timestamp terbuat secara deterministik di awal siklus pembuatan slide.
+   - Mengatasi isu null-session yang sebelumnya memblokir penyimpanan otomatis ke SQLite dan `chrome.storage.local`.
+
+2. **Real-Time Title & State Synchronization**:
+   - Judul sesi otomatis diperbarui dari metadata slide (`meta.title`) saat perakitan selesai.
+   - Laci riwayat chat (`openHistoryModal`) secara otomatis memanggil `saveCurrentSessionToDB()` sebelum membaca daftar riwayat, memastikan sesi pembuatan slide langsung terlihat di kartu riwayat.
+
+

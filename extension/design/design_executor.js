@@ -46,6 +46,18 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   updateSendButtonState(true);
   abortController = new AbortController();
 
+  // Ensure active session is initialized for chat history persistence
+  if (typeof ensureCurrentSessionInitialized === 'function') {
+    ensureCurrentSessionInitialized(userMessage, attachments, 'Slide Deck Design');
+  } else if (typeof window !== 'undefined' && typeof window.ensureCurrentSessionInitialized === 'function') {
+    window.ensureCurrentSessionInitialized(userMessage, attachments, 'Slide Deck Design');
+  } else if (typeof currentSessionId !== 'undefined' && !currentSessionId) {
+    currentSessionId = 'sess_' + Date.now();
+    currentSessionTitle = (userMessage || 'Slide Deck Design').slice(0, 45).trim();
+    currentSessionCreatedAt = Date.now();
+    if (typeof updateHeaderChatTitle === 'function') updateHeaderChatTitle(currentSessionTitle);
+  }
+
   if (typeof appendUserMessage === 'function') {
     appendUserMessage(userMessage, attachments);
   } else if (typeof window !== 'undefined' && typeof window.appendUserMessage === 'function') {
@@ -60,6 +72,13 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       attachments: attachments,
       chatMode: "design"
     });
+  }
+
+  // Save session immediately so user prompt is persisted in history
+  if (typeof saveCurrentSessionToDB === 'function') {
+    saveCurrentSessionToDB();
+  } else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') {
+    window.saveCurrentSessionToDB();
   }
 
   if (typeof saveAttachmentsToIndexedDB === 'function' && attachments && attachments.length > 0) {
@@ -480,6 +499,20 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     const finalStatusText = artifact.html ? "Selesai" : (briefSummaryText ? "Selesai" : "Respon Kosong");
     updateAssistantActiveAgent(assistantBubble, "Master Agent", finalStatusText, true, true);
 
+    if (meta && meta.title) {
+      const cleanMetaTitle = String(meta.title).slice(0, 45).trim();
+      if (cleanMetaTitle) {
+        if (typeof setCurrentSessionTitle === 'function') {
+          setCurrentSessionTitle(cleanMetaTitle);
+        } else if (typeof window !== 'undefined' && typeof window.setCurrentSessionTitle === 'function') {
+          window.setCurrentSessionTitle(cleanMetaTitle);
+        } else if (typeof currentSessionTitle !== 'undefined') {
+          currentSessionTitle = cleanMetaTitle;
+          if (typeof updateHeaderChatTitle === 'function') updateHeaderChatTitle(currentSessionTitle);
+        }
+      }
+    }
+
     conversationHistory.push({
       role: "assistant",
       content: briefSummaryText,
@@ -489,7 +522,11 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       chatMode: "design"
     });
 
-    saveCurrentSessionToDB();
+    if (typeof saveCurrentSessionToDB === 'function') {
+      saveCurrentSessionToDB();
+    } else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') {
+      window.saveCurrentSessionToDB();
+    }
 
   } catch (err) {
     console.error("Design Mode Error:", err);
@@ -500,6 +537,11 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       contentEl.innerHTML = `<div class="error-msg-box" style="color: #EF4444; font-size: 13px; font-weight: 500; line-height: 1.5; padding: 10px 14px; background: rgba(239, 68, 68, 0.08); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.25);">${escapeHtml(friendlyMsg)}</div>`;
     }
     updateFooterStatus("Design Error / Network Issue");
+    if (typeof saveCurrentSessionToDB === 'function') {
+      saveCurrentSessionToDB();
+    } else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') {
+      window.saveCurrentSessionToDB();
+    }
   } finally {
     isExecuting = false;
     updateSendButtonState(false);
