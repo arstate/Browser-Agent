@@ -8488,6 +8488,7 @@ body.canvas-active .chat-input-container {
 }
 
 .apps-header-bar {
+  position: relative;
   height: 38px;
   background: rgba(14, 14, 18, 0.75);
   backdrop-filter: blur(20px);
@@ -8506,8 +8507,8 @@ body.canvas-active .chat-input-container {
 .apps-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 180px;
+  gap: 8px;
+  z-index: 3;
 }
 
 .apps-brand-icon {
@@ -8523,48 +8524,25 @@ body.canvas-active .chat-input-container {
   flex-shrink: 0;
 }
 
-.apps-info-meta {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
 .apps-title {
   font-size: 12px;
   font-weight: 600;
   color: #F8FAFC;
   letter-spacing: -0.01em;
-}
-
-.apps-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 9.5px;
-  font-weight: 600;
-  color: #94A3B8;
-}
-
-.apps-live-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #94A3B8;
-  box-shadow: 0 0 6px rgba(148, 163, 184, 0.4);
-  animation: appsPulseDot 2s infinite ease-in-out;
-}
-
-@keyframes appsPulseDot {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.2); opacity: 0.4; }
+  white-space: nowrap;
 }
 
 .apps-header-center {
-  flex: 1;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   justify-content: center;
-  max-width: 520px;
+  align-items: center;
+  max-width: min(520px, calc(100% - 240px));
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .apps-url-pill {
@@ -8602,6 +8580,7 @@ body.canvas-active .chat-input-container {
   display: flex;
   align-items: center;
   gap: 6px;
+  z-index: 3;
 }
 
 .apps-action-btn {

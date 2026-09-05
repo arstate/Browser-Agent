@@ -7058,5 +7058,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.247` di `manifest.json`.
 
+---
+
+### Iterasi: Pembersihan Status Pill Navbar & Presisi Dead-Center URL Pill Layout (`v2.150.248`)
+- **User Request:**
+  - "ini hapus aja biar lebih clean trus ui link show itu kurang center ke tengah posisi navbar atas"
+  - Uploaded Screenshot: Elemen status pill (`In-App Browser Agent` dan dot status hijau/abu) di dalam kotak merah di samping judul `Aplikasi Terintegrasi`.
+- **Solusi & Rekayasa Teknis:**
+  1. *Eliminasi Status Pill*:
+     - `extension/newtab.html`: Menghapus elemen `<span class="apps-status-pill">...</span>` dan pembungkus `.apps-info-meta`.
+     - Judul `#apps-active-title` kini langsung bersanding secara rapi dan minimalis di samping `.apps-brand-icon`.
+  2. *Dead-Center Layout untuk URL Pill*:
+     - `extension/newtab.css`: Menambahkan `position: relative;` pada `.apps-header-bar`.
+     - Mengatur `.apps-header-center` menjadi `position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);` dengan `max-width: min(520px, calc(100% - 240px));` dan `z-index: 2;`.
+     - Menambahkan `z-index: 3;` pada `.apps-header-left` dan `.apps-header-actions` agar tombol aksi tetap berada di layer atas dan bebas di-klik.
+     - Menghapus aturan CSS usang `.apps-status-pill` dan `.apps-live-dot`.
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_clean_monochrome_ui.js` dan `test_apps_hub_google_flow_integration.js` lulus 100%.
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.248` di `manifest.json`.
+
 
 

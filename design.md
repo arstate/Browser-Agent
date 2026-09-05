@@ -1393,4 +1393,27 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 64. Status Pill Elimination & Absolute Centered URL Display (v2.150.248)
+
+### 🧹 1. Eliminasi Status Pill Navbar
+- **Minimal Header Title**: Menghapus status pill teks `In-App Browser Agent` dan elemen dot pulsa `.apps-live-dot` yang sebelumnya disorot pengguna pada tangkapan layar.
+- **Clean Alignment**: Elemen judul `#apps-active-title` kini bersanding sejajar dan bersih di sebelah logo `.apps-brand-icon`, menghasilkan tampilan yang lapang dan tidak penuh sesak.
+
+### 🎯 2. Absolute Dead-Center Alignment untuk URL Pill
+- **Viewport Relative Centering**: Komponen URL display `.apps-header-center` dialihkan ke model posisi absolut (`left: 50%; top: 50%; transform: translate(-50%, -50%);`), memastikan URL pill berada tepat di titik tengah geometris navbar tanpa terpengaruh oleh perbedaan lebar elemen di sisi kiri (judul) maupun kanan (tombol aksi).
+- **Z-Index Layering**: Memberikan `z-index: 2` pada `.apps-header-center` dan `z-index: 3` pada `.apps-header-left` serta `.apps-header-actions`, dengan batas aman lebar `max-width: min(520px, calc(100% - 240px))`.
+
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
 

@@ -715,4 +715,19 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Membersihkan seluruh kode referensi `btnAppsOpenTab` dan `labelToggleCatalog`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+131. **Pembersihan Status Pill Navbar & Presisi Dead-Center URL Pill Layout (`v2.150.248`):**
+    - **Kebutuhan Pengguna**:
+      - Menghapus elemen status pill (`In-App Browser Agent` dan dot indikator) di samping judul `Aplikasi Terintegrasi` agar header tampil lebih clean, luas, dan minimalis.
+      - Memperbaiki posisi pill penampil URL aplikasi (`.apps-header-center`) agar benar-benar berada di tengah persis (*dead-center*) secara horizontal dan vertikal di navbar atas.
+    - **Implementasi Teknis**:
+      1. **Eliminasi Status Pill (`extension/newtab.html`)**:
+         - Menghapus elemen `<span class="apps-status-pill">...</span>` dan pembungkus `.apps-info-meta`.
+         - Elemen judul `#apps-active-title` kini langsung bersanding secara ringkas dan rapi di sebelah ikon apps `.apps-brand-icon`.
+      2. **Absolute Dead-Center Alignment (`extension/newtab.css`)**:
+         - Menambahkan `position: relative;` pada `.apps-header-bar`.
+         - Mengubah `.apps-header-center` menjadi `position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);` dengan `max-width: min(520px, calc(100% - 240px));` dan `z-index: 2;`.
+         - Menambahkan `z-index: 3;` pada `.apps-header-left` dan `.apps-header-actions` untuk menjamin kontrol klik tetap responsif di layer teratas.
+         - Membersihkan class CSS usang `.apps-status-pill` dan `.apps-live-dot`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
 
