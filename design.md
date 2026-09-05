@@ -812,6 +812,33 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - `design_prompt.js`: 183 baris.
    - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
 
+## 🎨 40. Slide Deck Figma-Style Interactive Transform Box, Corner Scaling & Rotation Handles Architecture (v2.150.224)
+
+1. **Figma Transform Bounding Box Architecture (`.deck-figma-box` di `slide_editor.js`)**:
+   - Setiap kali elemen atau blok teks dipilih saat mode edit realtime aktif (`.deck-editable-selected`), sistem secara otomatis menginjeksi kontainer visual pembatas `.deck-figma-box` dengan `inset: -5px` dan `z-index: 1000`.
+   - Menghadirkan kontrol manipulasi visual setara Canva/Figma:
+     - **4 Corner Resize Handles (`.figma-handle`)**: 4 titik kotak sudut 9x9px dengan styling putih berbingkai aksen `var(--accent, #6366F1)` dan shadow elevasi. Menggunakan kursor arah diagonal `nwse-resize` dan `nesw-resize`. Menyeret handle sudut menghitung rasio jarak Euclidean dari titik pusat elemen (`currentDist / initialDistance`) untuk mengubah nilai `scale(X)` secara mulus (0.2x hingga 3.5x).
+     - **Top Rotation Stem & Handle (`.figma-rot-stem` & `.figma-handle-rot`)**: Batang garis aksen vertikal 18px menghubungkan sisi atas elemen ke titik lingkaran putar di posisi `-29px`. Menggunakan kursor `crosshair`. Menyeret handle rotasi menghitung selisih sudut trigonometri `atan2` dari titik pusat elemen secara presisi 360°, dengan dukungan snapping kelipatan 15° saat menekan tombol `Shift`.
+     - **Dynamic Dimension Pill Badge (`.figma-badge-dim`)**: Badge pill gelap monospace muncul di bawah elemen saat manipulasi berlangsung, menampilkan sudut rotasi aktif (misal `45°`) atau persentase skala aktif (misal `130%`), dan menghilang otomatis saat `mouseup`.
+     - **Direct Body Drag & Inline Text Edit**: Menyeret badan elemen mentranslasikan koordinat `X` dan `Y`. Melakukan double-click pada teks mengaktifkan `contenteditable="true"` dan memfokuskan kursor pengetikan secara in-place.
+
+2. **Snapshot Hygiene & Leak-Proof Export**:
+   - Fungsi `takeSnapshot()` dan `notifyParentContentChanged()` memanggil `removeFigmaBoxes()` sebelum mengonversi DOM atau `outerHTML`, dan memulihkan kembali handle (`updateFigmaHandles()`) seketika setelahnya.
+   - Menjamin bahwa state snapshot Undo/Redo dan kode HTML yang dikirim ke parent drawer atau diekspor ke file selalu bersih murni tanpa residu DOM bounding box.
+
+3. **Strict Sub-800 Line Rule Compliance**:
+   - `slide_editor.js`: 765 baris.
+   - `canvas_manager.js`: 786 baris.
+   - `slide_styles.js`: 790 baris.
+   - `slide_template.js`: 782 baris.
+   - `design_executor.js`: 777 baris.
+   - `design_agent.js`: 627 baris.
+   - `slide_deck_engine.js`: 507 baris.
+   - `slide_themes.js`: 267 baris.
+   - `canvas_exporter.js`: 245 baris.
+   - `design_prompt.js`: 184 baris.
+   - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+
 
 
 

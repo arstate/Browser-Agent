@@ -6409,6 +6409,43 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
   4. Bump versi manifest ke `v2.150.223`.
 
+### 🚀 Iterasi 505: Slide Deck Figma-Style Interactive Transform Box, Corner Scaling & Rotation Handles Architecture (v2.150.224)
+- **User Request:**
+  - "kok masih gabisa ngedit harusnya edit on itu bisa ngedit di klik teks trus muncul kek di figma gitu scale scale rotasi bisa di pindah posisi dll" (Ketika mode edit aktif, saat teks/elemen diklik harus muncul kotak pembatas visual interaktif seperti di Figma/Canva dengan titik handle untuk mengatur skala/scale di sudut-sudutnya, handle rotasi di bagian atas, dan bisa digeser/pindah posisi secara bebas).
+- **Akar Masalah:**
+  1. Pada implementasi sebelumnya, elemen yang dipilih hanya memiliki garis outline biru tipis (`outline: 2px solid`) dan 1 titik pseudo-element tanpa interaktivitas drag untuk skala maupun rotasi.
+  2. Belum ada titik handle sudut (corner resize handles) untuk drag-to-scale.
+  3. Belum ada tangkai rotasi (rotation stem) dan handle rotasi untuk drag-to-rotate.
+  4. Pengguna mengharapkan pengalaman penyuntingan visual layaknya alat desain profesional modern (Figma / Canva / PowerPoint / Keynote).
+- **Analisis & Solusi:**
+  1. *Figma Bounding Box DOM (`.deck-figma-box` di `slide_editor.js`)*:
+     - Menginjeksi kontainer visual pembatas `.deck-figma-box` langsung ke dalam elemen yang sedang dipilih (`.deck-editable-selected`).
+     - Menyediakan 4 Corner Handles (`.figma-handle-tl`, `.tr`, `.bl`, `.br`) berkursor diagonal (`nwse-resize` & `nesw-resize`). Menyeret handle sudut menghitung rasio jarak Euclidean dari titik pusat elemen (`currentDist / initialDistance`) untuk mengubah `scale(X)` (0.2x hingga 3.5x).
+     - Menyediakan Upward Stem (`.figma-rot-stem`) sepanjang 18px dan Rotation Handle (`.figma-handle-rot`) berkursor `crosshair`. Menyeret handle rotasi menghitung selisih sudut trigonometri `atan2` secara kontinu (360°) dengan snapping kelipatan 15° jika menahan `Shift`.
+     - Menyediakan Live Dimension Badge (`.figma-badge-dim`) berlatar gelap monospace yang secara real-time menginformasikan besaran sudut rotasi aktif (misal `45°`) atau persentase skala (misal `120%`).
+     - Mengizinkan direct drag pada badan elemen untuk mentranslasikan posisi X & Y (`cursor: move`).
+     - Double-click pada teks mengaktifkan penyuntingan inline (`contenteditable="true"`).
+  2. *Snapshot & Export Cleanliness*:
+     - Memastikan fungsi `takeSnapshot()` dan `notifyParentContentChanged()` memanggil `removeFigmaBoxes()` sebelum konversi HTML, dan memulihkan kembali handle (`updateFigmaHandles()`) segera setelahnya. Output HTML yang disimpan atau diekspor ke file selalu bersih murni tanpa residu DOM bounding box.
+  3. *Strict Sub-800 Line Rule Compliance*:
+     - `slide_editor.js`: 765 baris.
+     - `canvas_manager.js`: 786 baris.
+     - `slide_styles.js`: 790 baris.
+     - `slide_template.js`: 782 baris.
+     - `design_executor.js`: 777 baris.
+     - `design_agent.js`: 627 baris.
+     - `slide_deck_engine.js`: 507 baris.
+     - `slide_themes.js`: 267 baris.
+     - `canvas_exporter.js`: 245 baris.
+     - `design_prompt.js`: 184 baris.
+     - Seluruh 10 file di `extension/design/` patuh limit <= 800 baris.
+- **Verifikasi:**
+  1. Node assertion test memverifikasi ketersediaan kelas `.deck-figma-box`, `.figma-handle`, `.figma-handle-rot`, `.figma-badge-dim`, dan fungsi `updateFigmaHandles`, `removeFigmaBoxes`, handling `rotate`, `scale`, dan `move`.
+  2. Node line count verifier memastikan seluruh 10 file `extension/design/*.js` tetap berada di bawah 800 baris.
+  3. Node syntax check `node -c extension/design/*.js extension/*.js` lolos 100% tanpa error.
+  4. Bump versi manifest ke `v2.150.224`.
+
+
 
 
 

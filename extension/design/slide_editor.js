@@ -1,18 +1,12 @@
 // =========================================================================
 // SLIDE DECK REALTIME VISUAL & TEXT EDITOR ENGINE
-// In-place Moving, Multi-Selection, Scale, Rotation, Fonts & Text Styling
+// Figma-style Visual Handles (Scale, Rotate, Move), Font & Text Styling
 // =========================================================================
 
 function getSlideDeckEditorCss() {
   return `
-    /* Realtime Editor Mode Styles */
-    body.deck-edit-mode-active .slide-stage-wrap,
-    body.deck-edit-mode-active .deck-stage-wrap {
-      user-select: none;
-    }
-    body.deck-edit-mode-active .slide-section.active .slide-canvas {
-      position: relative;
-    }
+    body.deck-edit-mode-active .slide-stage-wrap, body.deck-edit-mode-active .deck-stage-wrap { user-select: none; }
+    body.deck-edit-mode-active .slide-section.active .slide-canvas { position: relative; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas [data-deck-editable="true"],
     body.deck-edit-mode-active .slide-section.active .slide-canvas h1,
     body.deck-edit-mode-active .slide-section.active .slide-canvas h2,
@@ -25,210 +19,107 @@ function getSlideDeckEditorCss() {
     body.deck-edit-mode-active .slide-section.active .slide-canvas .col-tag-chip,
     body.deck-edit-mode-active .slide-section.active .slide-canvas .col-badge,
     body.deck-edit-mode-active .slide-section.active .slide-canvas .cover-badge-pill {
-      cursor: move !important;
-      transition: outline 0.12s, box-shadow 0.12s;
+      cursor: move !important; transition: outline 0.12s, box-shadow 0.12s;
     }
     body.deck-edit-mode-active .slide-section.active .slide-canvas [contenteditable="true"] {
-      cursor: text !important;
-      user-select: text !important;
+      cursor: text !important; user-select: text !important;
     }
     body.deck-edit-mode-active .slide-section.active .slide-canvas *:hover {
-      outline: 1.5px dashed rgba(99, 102, 241, 0.45);
-      outline-offset: 3px;
+      outline: 1.5px dashed rgba(99, 102, 241, 0.45); outline-offset: 3px;
     }
     .deck-editable-selected {
-      outline: 2px solid var(--accent, #6366F1) !important;
-      outline-offset: 3px !important;
+      outline: 1.5px solid var(--accent, #6366F1) !important;
+      outline-offset: 2px !important;
       box-shadow: 0 0 14px rgba(99, 102, 241, 0.35) !important;
-      position: relative;
+      position: relative !important;
     }
-    .deck-editable-selected::after {
-      content: '';
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      width: 10px;
-      height: 10px;
-      background: var(--accent, #6366F1);
-      border: 1.5px solid #FFFFFF;
-      border-radius: 50%;
-      pointer-events: none;
+    span.deck-editable-selected, a.deck-editable-selected, b.deck-editable-selected, i.deck-editable-selected {
+      display: inline-block !important;
     }
-
-    /* Floating Realtime Editor Toolbar */
+    .deck-figma-box {
+      position: absolute; inset: -5px; pointer-events: none; z-index: 1000;
+    }
+    .figma-handle {
+      position: absolute; width: 9px; height: 9px; background: #FFFFFF;
+      border: 1.5px solid var(--accent, #6366F1); border-radius: 2px;
+      pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 1002;
+    }
+    .figma-handle-tl { top: -5px; left: -5px; cursor: nwse-resize; }
+    .figma-handle-tr { top: -5px; right: -5px; cursor: nesw-resize; }
+    .figma-handle-bl { bottom: -5px; left: -5px; cursor: nesw-resize; }
+    .figma-handle-br { bottom: -5px; right: -5px; cursor: nwse-resize; }
+    .figma-rot-stem {
+      position: absolute; top: -22px; left: 50%; width: 1.5px; height: 18px;
+      background: var(--accent, #6366F1); pointer-events: none; transform: translateX(-50%);
+    }
+    .figma-handle-rot {
+      position: absolute; top: -29px; left: 50%; transform: translateX(-50%);
+      width: 10px; height: 10px; background: #FFFFFF; border: 1.5px solid var(--accent, #6366F1);
+      border-radius: 50%; cursor: crosshair; pointer-events: auto;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 1002;
+    }
+    .figma-handle-rot:hover { background: var(--accent, #6366F1); }
+    .figma-badge-dim {
+      position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.92); color: #F8FAFC; font-family: ui-monospace, monospace;
+      font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; pointer-events: none;
+      display: none; z-index: 1003;
+    }
     .deck-editor-toolbar {
-      position: fixed;
-      top: 14px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-70px);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(13, 17, 23, 0.94);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 9999px;
-      padding: 6px 14px;
+      position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-70px);
+      display: flex; align-items: center; gap: 6px; background: rgba(13, 17, 23, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 9999px; padding: 6px 14px;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(99, 102, 241, 0.25);
-      backdrop-filter: blur(24px);
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
+      backdrop-filter: blur(24px); z-index: 1000; opacity: 0; pointer-events: none;
       transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
-      color: #FFFFFF;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 12px;
-      max-width: 95vw;
-      overflow-x: auto;
+      color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px; max-width: 95vw; overflow-x: auto;
     }
     body.deck-edit-mode-active .deck-editor-toolbar {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-      pointer-events: auto;
+      transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto;
     }
-
-    .editor-tool-group {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .editor-tool-divider {
-      width: 1px;
-      height: 18px;
-      background: rgba(255, 255, 255, 0.14);
-      margin: 0 2px;
-      flex-shrink: 0;
-    }
+    .editor-tool-group { display: flex; align-items: center; gap: 4px; }
+    .editor-tool-divider { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.14); margin: 0 2px; flex-shrink: 0; }
     .editor-tool-btn {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #F1F5F9;
-      padding: 4px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 11.5px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      height: 28px;
-      min-width: 28px;
+      background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); color: #F1F5F9;
+      padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 11.5px; font-weight: 600;
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 28px; min-width: 28px;
       transition: all 0.15s;
     }
-    .editor-tool-btn:hover {
-      background: rgba(255, 255, 255, 0.16);
-      color: #FFFFFF;
-      border-color: rgba(255, 255, 255, 0.24);
-    }
-    .editor-tool-btn.active {
-      background: var(--accent, #6366F1);
-      color: #FFFFFF;
-      border-color: var(--accent, #6366F1);
-      box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
-    }
+    .editor-tool-btn:hover { background: rgba(255, 255, 255, 0.16); color: #FFFFFF; border-color: rgba(255, 255, 255, 0.24); }
+    .editor-tool-btn.active { background: var(--accent, #6366F1); color: #FFFFFF; border-color: var(--accent, #6366F1); box-shadow: 0 0 8px rgba(99, 102, 241, 0.5); }
     .editor-tool-select {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      color: #F8FAFC;
-      border-radius: 6px;
-      padding: 3px 6px;
-      font-size: 11.5px;
-      font-weight: 600;
-      height: 28px;
-      cursor: pointer;
-      outline: none;
+      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14); color: #F8FAFC;
+      border-radius: 6px; padding: 3px 6px; font-size: 11.5px; font-weight: 600; height: 28px; cursor: pointer; outline: none;
     }
-    .editor-tool-select option {
-      background: #111827;
-      color: #F8FAFC;
-    }
-    .editor-color-swatch {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      border: 1.5px solid rgba(255, 255, 255, 0.4);
-      cursor: pointer;
-      transition: transform 0.12s, border-color 0.12s;
-    }
-    .editor-color-swatch:hover {
-      transform: scale(1.2);
-      border-color: #FFFFFF;
-    }
+    .editor-tool-select option { background: #111827; color: #F8FAFC; }
+    .editor-color-swatch { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.4); cursor: pointer; transition: transform 0.12s, border-color 0.12s; }
+    .editor-color-swatch:hover { transform: scale(1.2); border-color: #FFFFFF; }
     .editor-badge-status {
-      font-size: 10.5px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      background: rgba(99, 102, 241, 0.2);
-      border: 1px solid var(--accent, #6366F1);
-      border-radius: 9999px;
-      color: var(--accent, #6366F1);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px;
+      background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent, #6366F1); border-radius: 9999px;
+      color: var(--accent, #6366F1); display: inline-flex; align-items: center; gap: 5px;
     }
-    .editor-pulse-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #10B981;
-      box-shadow: 0 0 6px #10B981;
-    }
-    .editor-btn-save {
-      background: #10B981 !important;
-      color: #FFFFFF !important;
-      border-color: #10B981 !important;
-      font-weight: 700 !important;
-      padding: 4px 12px !important;
-    }
-    .editor-btn-save:hover {
-      background: #059669 !important;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important;
-    }
-    #dock-btn-edit.active {
-      background: var(--accent, #6366F1);
-      color: #FFFFFF;
-      box-shadow: 0 0 12px var(--accent, #6366F1);
-    }
-    .editor-tool-btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-    .editor-btn-danger:hover {
-      background: rgba(239, 68, 68, 0.2) !important;
-      border-color: rgba(239, 68, 68, 0.5) !important;
-      color: #F87171 !important;
-    }
+    .editor-pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; box-shadow: 0 0 6px #10B981; }
+    .editor-btn-save { background: #10B981 !important; color: #FFFFFF !important; border-color: #10B981 !important; font-weight: 700 !important; padding: 4px 12px !important; }
+    .editor-btn-save:hover { background: #059669 !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important; }
+    #dock-btn-edit.active { background: var(--accent, #6366F1); color: #FFFFFF; box-shadow: 0 0 12px var(--accent, #6366F1); }
+    .editor-tool-btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+    .editor-btn-danger:hover { background: rgba(239, 68, 68, 0.2) !important; border-color: rgba(239, 68, 68, 0.5) !important; color: #F87171 !important; }
   `;
 }
 
 function getSlideDeckEditorHtml() {
   return `
     <nav class="deck-editor-toolbar" id="deck-editor-toolbar" aria-label="Toolbar Mode Edit Realtime">
-      <div class="editor-tool-group">
-        <span class="editor-badge-status">
-          <span class="editor-pulse-dot"></span>
-          <span>Edit Mode</span>
-        </span>
-      </div>
-
+      <div class="editor-tool-group"><span class="editor-badge-status"><span class="editor-pulse-dot"></span><span>Edit Mode</span></span></div>
       <div class="editor-tool-divider"></div>
-
-      <!-- Undo / Redo -->
       <div class="editor-tool-group">
-        <button type="button" class="editor-tool-btn" id="editor-btn-undo" title="Undo (Ctrl+Z)" disabled>
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
-        </button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-redo" title="Redo (Ctrl+Y)" disabled>
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
-        </button>
+        <button type="button" class="editor-tool-btn" id="editor-btn-undo" title="Undo (Ctrl+Z)" disabled><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg></button>
+        <button type="button" class="editor-tool-btn" id="editor-btn-redo" title="Redo (Ctrl+Y)" disabled><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg></button>
       </div>
-
       <div class="editor-tool-divider"></div>
-
-      <!-- Font Selector -->
       <div class="editor-tool-group">
         <select class="editor-tool-select" id="editor-font-family" title="Ganti Font Teks">
           <option value="">Font: Asli</option>
@@ -241,8 +132,6 @@ function getSlideDeckEditorHtml() {
           <option value="Georgia, serif">Editorial Serif</option>
         </select>
       </div>
-
-      <!-- Font Size & Formatting -->
       <div class="editor-tool-group">
         <button type="button" class="editor-tool-btn" id="editor-btn-size-down" title="Kecilkan Ukuran Teks">A-</button>
         <button type="button" class="editor-tool-btn" id="editor-btn-size-up" title="Besarkan Ukuran Teks">A+</button>
@@ -250,25 +139,13 @@ function getSlideDeckEditorHtml() {
         <button type="button" class="editor-tool-btn" id="editor-btn-italic" title="Miring (Italic / I)"><i>I</i></button>
         <button type="button" class="editor-tool-btn" id="editor-btn-underline" title="Garis Bawah (Underline / U)"><u>U</u></button>
       </div>
-
       <div class="editor-tool-divider"></div>
-
-      <!-- Text Alignment -->
       <div class="editor-tool-group">
-        <button type="button" class="editor-tool-btn" id="editor-btn-align-left" title="Rata Kiri">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
-        </button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-align-center" title="Rata Tengah">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
-        </button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-align-right" title="Rata Kanan">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
-        </button>
+        <button type="button" class="editor-tool-btn" id="editor-btn-align-left" title="Rata Kiri"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg></button>
+        <button type="button" class="editor-tool-btn" id="editor-btn-align-center" title="Rata Tengah"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg></button>
+        <button type="button" class="editor-tool-btn" id="editor-btn-align-right" title="Rata Kanan"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg></button>
       </div>
-
       <div class="editor-tool-divider"></div>
-
-      <!-- Color Swatches -->
       <div class="editor-tool-group" title="Warna Teks">
         <span class="editor-color-swatch" data-color="#FFFFFF" style="background: #FFFFFF;"></span>
         <span class="editor-color-swatch" data-color="var(--accent)" style="background: var(--accent, #6366F1);"></span>
@@ -277,35 +154,20 @@ function getSlideDeckEditorHtml() {
         <span class="editor-color-swatch" data-color="#F43F5E" style="background: #F43F5E;"></span>
         <span class="editor-color-swatch" data-color="#94A3B8" style="background: #94A3B8;"></span>
       </div>
-
       <div class="editor-tool-divider"></div>
-
-      <!-- Scale & Rotation -->
       <div class="editor-tool-group">
         <button type="button" class="editor-tool-btn" id="editor-btn-scale-down" title="Perkecil Skala (Scale -)">-10%</button>
         <button type="button" class="editor-tool-btn" id="editor-btn-scale-up" title="Perbesar Skala (Scale +)">+10%</button>
         <button type="button" class="editor-tool-btn" id="editor-btn-rot-left" title="Putar Balik Arah Jarum Jam (↺ -15°)">↺</button>
         <button type="button" class="editor-tool-btn" id="editor-btn-rot-right" title="Putar Searah Jarum Jam (↻ +15°)">↻</button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-reset-transform" title="Atur Ulang Posisi & Skala Elemen">Reset</button>
+        <button type="button" class="editor-tool-btn" id="editor-btn-reset-transform" title="Atur Ulang Posisi & Skala">Reset</button>
       </div>
-
       <div class="editor-tool-divider"></div>
-
-      <!-- Duplicate & Delete -->
       <div class="editor-tool-group">
-        <button type="button" class="editor-tool-btn" id="editor-btn-duplicate" title="Duplikat Elemen Terpilih (Ctrl+D)">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          <span>Duplikat</span>
-        </button>
-        <button type="button" class="editor-tool-btn editor-btn-danger" id="editor-btn-delete" title="Hapus Elemen Terpilih (Del / Backspace)">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          <span>Hapus</span>
-        </button>
+        <button type="button" class="editor-tool-btn" id="editor-btn-duplicate" title="Duplikat Elemen (Ctrl+D)"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Duplikat</span></button>
+        <button type="button" class="editor-tool-btn editor-btn-danger" id="editor-btn-delete" title="Hapus Elemen (Del)"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span>Hapus</span></button>
       </div>
-
       <div class="editor-tool-divider"></div>
-
-      <!-- Selection & Done Actions -->
       <div class="editor-tool-group">
         <span id="editor-selection-counter" style="font-size: 11px; opacity: 0.8; padding: 0 4px;">Pilih elemen</span>
         <button type="button" class="editor-tool-btn editor-btn-save" id="editor-btn-done" title="Simpan Perubahan & Selesai">Simpan</button>
@@ -320,7 +182,13 @@ function getSlideDeckEditorScript() {
       let isEditMode = false;
       let selectedElements = new Set();
       let isDragging = false;
+      let activeAction = null;
+      let activeElement = null;
       let startX = 0, startY = 0;
+      let centerX = 0, centerY = 0;
+      let initialTransform = { x: 0, y: 0, scale: 1, rotate: 0 };
+      let initialDistance = 1;
+      let initialAngle = 0;
       let initialTransforms = new Map();
       let historyStack = [];
       let futureStack = [];
@@ -345,10 +213,34 @@ function getSlideDeckEditorScript() {
         if (redoBtn) redoBtn.disabled = (futureStack.length === 0);
       }
 
+      function removeFigmaBoxes() {
+        document.querySelectorAll('.deck-figma-box').forEach(b => b.remove());
+      }
+
+      function updateFigmaHandles() {
+        removeFigmaBoxes();
+        if (!isEditMode) return;
+        selectedElements.forEach(el => {
+          if (!el || !el.parentNode || el.classList.contains('slide-section')) return;
+          const box = document.createElement('div');
+          box.className = 'deck-figma-box';
+          box.innerHTML = '<div class="figma-handle figma-handle-tl" data-handle="scale" data-dir="tl"></div>' +
+            '<div class="figma-handle figma-handle-tr" data-handle="scale" data-dir="tr"></div>' +
+            '<div class="figma-handle figma-handle-bl" data-handle="scale" data-dir="bl"></div>' +
+            '<div class="figma-handle figma-handle-br" data-handle="scale" data-dir="br"></div>' +
+            '<div class="figma-rot-stem"></div>' +
+            '<div class="figma-handle-rot" data-handle="rotate" title="Tarik untuk memutar elemen"></div>' +
+            '<div class="figma-badge-dim"></div>';
+          try { el.appendChild(box); } catch(err) {}
+        });
+      }
+
       function takeSnapshot() {
+        removeFigmaBoxes();
         selectedElements.forEach(el => el.classList.remove('deck-editable-selected'));
         const stateJson = JSON.stringify(getSlidesState());
         selectedElements.forEach(el => el.classList.add('deck-editable-selected'));
+        updateFigmaHandles();
 
         if (historyStack.length > 0 && historyStack[historyStack.length - 1] === stateJson) {
           return;
@@ -361,6 +253,7 @@ function getSlideDeckEditorScript() {
 
       function applyUndo() {
         if (historyStack.length <= 1) return;
+        removeFigmaBoxes();
         selectedElements.forEach(el => el.classList.remove('deck-editable-selected'));
         futureStack.push(JSON.stringify(getSlidesState()));
         historyStack.pop();
@@ -373,6 +266,7 @@ function getSlideDeckEditorScript() {
 
       function applyRedo() {
         if (futureStack.length === 0) return;
+        removeFigmaBoxes();
         const nextStateJson = futureStack.pop();
         selectedElements.forEach(el => el.classList.remove('deck-editable-selected'));
         historyStack.push(JSON.stringify(getSlidesState()));
@@ -384,11 +278,13 @@ function getSlideDeckEditorScript() {
 
       function duplicateSelectedElements() {
         if (selectedElements.size === 0) return;
+        removeFigmaBoxes();
         const newSelected = [];
         selectedElements.forEach(el => {
           if (!el || el.classList.contains('slide-section')) return;
           const clone = el.cloneNode(true);
           clone.classList.remove('deck-editable-selected');
+          clone.querySelectorAll('.deck-figma-box').forEach(b => b.remove());
           const t = getParsedTransform(el);
           applyTransform(clone, { x: t.x + 20, y: t.y + 20, scale: t.scale, rotate: t.rotate });
           el.parentNode.insertBefore(clone, el.nextSibling);
@@ -402,6 +298,7 @@ function getSlideDeckEditorScript() {
 
       function deleteSelectedElements() {
         if (selectedElements.size === 0) return;
+        removeFigmaBoxes();
         selectedElements.forEach(el => {
           if (el && !el.classList.contains('slide-section') && el.parentNode) {
             el.remove();
@@ -414,10 +311,12 @@ function getSlideDeckEditorScript() {
       }
 
       function notifyParentContentChanged() {
+        removeFigmaBoxes();
         const selected = Array.from(selectedElements);
         selected.forEach(el => el.classList.remove('deck-editable-selected'));
         const html = document.documentElement.outerHTML;
         selected.forEach(el => el.classList.add('deck-editable-selected'));
+        updateFigmaHandles();
 
         window.parent.postMessage({
           type: 'SLIDE_DECK_CONTENT_CHANGED',
@@ -436,17 +335,17 @@ function getSlideDeckEditorScript() {
       function getParsedTransform(el) {
         let x = 0, y = 0, scale = 1, rotate = 0;
         const transformStr = el.dataset.deckTransform || '';
-        const matchT = transformStr.match(/translate\\(([-0-9.]+)px,\\s*([-0-9.]+)px\\)/i);
+        const matchT = transformStr.match(/translate\(([-0-9.]+)px,\s*([-0-9.]+)px\)/i);
         if (matchT) { x = parseFloat(matchT[1]) || 0; y = parseFloat(matchT[2]) || 0; }
-        const matchS = transformStr.match(/scale\\(([-0-9.]+)\\)/i);
+        const matchS = transformStr.match(/scale\(([-0-9.]+)\)/i);
         if (matchS) { scale = parseFloat(matchS[1]) || 1; }
-        const matchR = transformStr.match(/rotate\\(([-0-9.]+)deg\\)/i);
+        const matchR = transformStr.match(/rotate\(([-0-9.]+)deg\)/i);
         if (matchR) { rotate = parseFloat(matchR[1]) || 0; }
         return { x, y, scale, rotate };
       }
 
       function applyTransform(el, { x, y, scale, rotate }) {
-        const transformStr = \`translate(\${x.toFixed(1)}px, \${y.toFixed(1)}px) scale(\${scale.toFixed(2)}) rotate(\${rotate.toFixed(1)}deg)\`;
+        const transformStr = 'translate(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px) scale(' + scale.toFixed(2) + ') rotate(' + rotate.toFixed(1) + 'deg)';
         el.dataset.deckTransform = transformStr;
         el.style.transform = transformStr;
         el.style.transformOrigin = 'center center';
@@ -486,6 +385,7 @@ function getSlideDeckEditorScript() {
       window.toggleEditMode = toggleEditMode;
 
       function clearSelection() {
+        removeFigmaBoxes();
         selectedElements.forEach(el => {
           el.classList.remove('deck-editable-selected');
           if (el.hasAttribute('contenteditable')) el.removeAttribute('contenteditable');
@@ -510,6 +410,7 @@ function getSlideDeckEditorScript() {
           el.classList.add('deck-editable-selected');
           selectedElements.add(el);
         }
+        updateFigmaHandles();
         updateSelectionCounter();
       }
 
@@ -527,10 +428,31 @@ function getSlideDeckEditorScript() {
         );
       }
 
-      // Drag & selection interaction
+      // Interaction: Selection, Move Drag, and Figma Transform Handles
       document.addEventListener('mousedown', (e) => {
         if (!isEditMode) return;
         if (e.target.closest('#deck-editor-toolbar') || e.target.closest('.deck-floating-dock')) return;
+
+        const handleEl = e.target.closest('[data-handle]');
+        if (handleEl) {
+          e.preventDefault();
+          e.stopPropagation();
+          const handleType = handleEl.getAttribute('data-handle');
+          const parentSelected = handleEl.closest('.deck-editable-selected');
+          if (!parentSelected) return;
+
+          activeAction = handleType;
+          activeElement = parentSelected;
+          startX = e.clientX;
+          startY = e.clientY;
+          const rect = parentSelected.getBoundingClientRect();
+          centerX = rect.left + rect.width / 2;
+          centerY = rect.top + rect.height / 2;
+          initialTransform = getParsedTransform(parentSelected);
+          initialDistance = Math.hypot(startX - centerX, startY - centerY) || 1;
+          initialAngle = Math.atan2(startY - centerY, startX - centerX) * (180 / Math.PI);
+          return;
+        }
 
         const target = findEditableTarget(e.target);
         if (!target) {
@@ -546,35 +468,82 @@ function getSlideDeckEditorScript() {
           return;
         }
 
+        activeAction = 'move';
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
         initialTransforms.clear();
-
         selectedElements.forEach(el => {
           initialTransforms.set(el, getParsedTransform(el));
         });
       });
 
       document.addEventListener('mousemove', (e) => {
-        if (!isEditMode || !isDragging || selectedElements.size === 0) return;
-        e.preventDefault();
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
+        if (!isEditMode || !activeAction) return;
 
-        selectedElements.forEach(el => {
-          const init = initialTransforms.get(el) || { x: 0, y: 0, scale: 1, rotate: 0 };
-          applyTransform(el, {
-            x: init.x + dx,
-            y: init.y + dy,
-            scale: init.scale,
-            rotate: init.rotate
+        if (activeAction === 'rotate' && activeElement) {
+          e.preventDefault();
+          const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+          const deltaAngle = currentAngle - initialAngle;
+          let newRot = Math.round((initialTransform.rotate + deltaAngle) % 360);
+          if (e.shiftKey) newRot = Math.round(newRot / 15) * 15;
+          applyTransform(activeElement, {
+            x: initialTransform.x,
+            y: initialTransform.y,
+            scale: initialTransform.scale,
+            rotate: newRot
           });
-        });
+          const badge = activeElement.querySelector('.figma-badge-dim');
+          if (badge) {
+            badge.style.display = 'block';
+            badge.textContent = newRot + '°';
+          }
+          return;
+        }
+
+        if (activeAction === 'scale' && activeElement) {
+          e.preventDefault();
+          const currentDist = Math.hypot(e.clientY - centerY, e.clientX - centerX);
+          const ratio = currentDist / initialDistance;
+          const newScale = Math.max(0.2, Math.min(3.5, Number((initialTransform.scale * ratio).toFixed(2))));
+          applyTransform(activeElement, {
+            x: initialTransform.x,
+            y: initialTransform.y,
+            scale: newScale,
+            rotate: initialTransform.rotate
+          });
+          const badge = activeElement.querySelector('.figma-badge-dim');
+          if (badge) {
+            badge.style.display = 'block';
+            badge.textContent = Math.round(newScale * 100) + '%';
+          }
+          return;
+        }
+
+        if (activeAction === 'move' && isDragging && selectedElements.size > 0) {
+          e.preventDefault();
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          selectedElements.forEach(el => {
+            const init = initialTransforms.get(el) || { x: 0, y: 0, scale: 1, rotate: 0 };
+            applyTransform(el, {
+              x: init.x + dx,
+              y: init.y + dy,
+              scale: init.scale,
+              rotate: init.rotate
+            });
+          });
+        }
       });
 
       document.addEventListener('mouseup', () => {
-        if (isDragging) {
+        if (activeAction) {
+          if (activeElement) {
+            const badge = activeElement.querySelector('.figma-badge-dim');
+            if (badge) badge.style.display = 'none';
+          }
+          activeAction = null;
+          activeElement = null;
           isDragging = false;
           initialTransforms.clear();
           takeSnapshot();
@@ -588,6 +557,7 @@ function getSlideDeckEditorScript() {
         const target = findEditableTarget(e.target);
         if (!target) return;
 
+        removeFigmaBoxes();
         let textTarget = target;
         if (target.classList.contains('slide-col') || target.classList.contains('split-col') || target.classList.contains('metric-card')) {
           textTarget = target.querySelector('h1, h2, h3, p, .col-title, .col-desc') || target;
@@ -600,6 +570,7 @@ function getSlideDeckEditorScript() {
         const onBlur = () => {
           textTarget.removeAttribute('contenteditable');
           textTarget.removeEventListener('blur', onBlur);
+          updateFigmaHandles();
           if (textTarget.innerHTML !== initialText) {
             takeSnapshot();
             notifyParentContentChanged();
@@ -724,7 +695,7 @@ function getSlideDeckEditorScript() {
       document.getElementById('editor-btn-duplicate')?.addEventListener('click', duplicateSelectedElements);
       document.getElementById('editor-btn-delete')?.addEventListener('click', deleteSelectedElements);
 
-      // Keyboard Shortcuts (Capture phase to override slide navigation)
+      // Keyboard Shortcuts (Capture phase)
       window.addEventListener('keydown', (e) => {
         if (!isEditMode) return;
         const activeTag = document.activeElement?.tagName;
