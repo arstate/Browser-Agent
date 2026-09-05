@@ -443,7 +443,19 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Pada saat `notifyParentContentChanged()` mengabarkan perubahan konten, class `.deck-edit-mode-active` dilepas sesaat sebelum serialisasi `doc.documentElement.outerHTML` dan dikembalikan seketika, memastikan HTML tersimpan dalam keadaan bersih tanpa artifak visual toolbar aktif.
       4. *Presistensi Status Buka Kanvas (`canvas_manager.js`)*:
          - Menggunakan `sessionStorage.getItem('canvas_was_open')` sehingga jika pengguna me-refresh saat sedang membuka kanvas, kanvas otomatis terbuka kembali dengan hasil editan terbaru.
-    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 779 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 787 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+117. **Shift-Key Straight Axis Movement Constraint (Figma-Style Precision Drag) (`v2.150.234`):** Menambahkan fitur penguncian sumbu gerak lurus horizontal dan vertikal saat memindahkan elemen di kanvas dengan menahan tombol `Shift`:
+    - **Mekanisme Penguncian Sumbu Orthogonal (`slide_editor.js`)**:
+      - Pada saat menyeret elemen (`activeAction === 'move'`), handler memeriksa `e.shiftKey`.
+      - Jika `Shift` ditekan:
+        - Jika jarak geser horizontal lebih dominan (`Math.abs(dx) >= Math.abs(dy)`), delta vertikal dikunci ke nol (`dy = 0`), sehingga elemen hanya bergeser lurus horizontal sejajar sumbu X.
+        - Jika jarak geser vertikal lebih dominan (`Math.abs(dy) > Math.abs(dx)`), delta horizontal dikunci ke nol (`dx = 0`), sehingga elemen hanya bergeser lurus vertikal sejajar sumbu Y.
+      - Menghilangkan getaran tangan atau deviasi diagonal yang tidak diinginkan untuk penataan layout yang sangat rapi dan presisi.
+    - **Harmonisasi dengan Magnetic Snapping**:
+      - Saat sumbu dikunci oleh `Shift`, garis pandu magnet (`.figma-snap-guide-v` / `.figma-snap-guide-h`) hanya aktif pada sumbu gerak aktif dan menonaktifkan garis pandu pada sumbu yang terkunci, mencegah kebingungan visual.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 787 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
 
 
 

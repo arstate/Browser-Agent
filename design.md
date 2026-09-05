@@ -1053,7 +1053,20 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Saat tab di-refresh, kanvas secara mulus terbuka kembali dengan kondisi slide hasil editan manual terakhir.
 
 4. **Strict Sub-800 Line Rule Compliance**:
-   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 779 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 787 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+## 🎨 50. Shift-Key Straight Axis Movement Constraint (v2.150.234)
+
+1. **Orthogonal Axis Drag Constrain (`slide_editor.js`)**:
+   - Menahan tombol `Shift` saat menyeret elemen membatasi pergerakan hanya pada satu sumbu lurus (horizontal atau vertikal) berdasarkan deviasi terbesar (`Math.abs(dx) >= Math.abs(dy)` -> `dy = 0`, selain itu `dx = 0`).
+   - Menyediakan presisi ala Figma dan Adobe Illustrator untuk menyelaraskan elemen secara horizontal atau vertikal tanpa risiko tergeser miring secara diagonal.
+
+2. **Axis-Aware Magnetic Snapping Alignment**:
+   - Garis pandu snapping magnetik (`.figma-snap-guide-v` dan `.figma-snap-guide-h`) terintegrasi dinamis: hanya menampilkan panduan snap pada sumbu yang sedang aktif bergerak dan menyembunyikan panduan pada sumbu yang terkunci nol.
+
+3. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 787 baris, `canvas_manager.js` 784 baris, `slide_styles.js` 790 baris, `slide_template.js` 781 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
 
 
 

@@ -6666,6 +6666,30 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi baris: seluruh file `extension/design/*.js` `<= 790` baris.
   4. Bump versi manifest ke `v2.150.233`.
 
+### 🚀 Iterasi 515: Shift-Key Straight Axis Movement Constraint (Figma-Style Precision Drag) (v2.150.234)
+- **User Request:**
+  - "tambah fitur geser elemen sambil tahan shift akan geser garis horizontal atau vertikal lurus biar bisa presisi"
+- **Akar Masalah & Kebutuhan:**
+  1. Sebelumnya saat pengguna menyeret elemen (`activeAction === 'move'`), pergerakan bebas 2D tanpa batasan sumbu dapat menyebabkan deviasi diagonal yang tidak disengaja.
+  2. Pengguna membutuhkan fitur penahanan tombol `Shift` (standar industri Figma, Illustrator, Photoshop) yang mengunci pergerakan elemen secara presisi hanya pada garis lurus horizontal (sumbu X) atau lurus vertikal (sumbu Y).
+- **Analisis & Solusi:**
+  1. *Deteksi & Penguncian Sumbu `e.shiftKey` (`slide_editor.js`)*:
+     - Pada listener `mousemove` ketika `activeAction === 'move'`, jika `e.shiftKey` bernilai `true`, sistem membandingkan `Math.abs(dx)` dengan `Math.abs(dy)`.
+     - Jika pergeseran horizontal lebih besar atau sama (`Math.abs(dx) >= Math.abs(dy)`), delta vertikal dipaksa ke nol (`dy = 0`).
+     - Jika pergeseran vertikal lebih besar, delta horizontal dipaksa ke nol (`dx = 0`).
+  2. *Sinkronisasi Snapping Guides Sumbu Aktif*:
+     - Garis pandu magnetis vertikal `.figma-snap-guide-v` hanya aktif jika sumbu horizontal bergerak.
+     - Garis pandu horizontal `.figma-snap-guide-h` hanya aktif jika sumbu vertikal bergerak.
+     - Mengeliminasi garis pandu pada sumbu yang terkunci nol.
+  3. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js`: 787 baris, `canvas_manager.js`: 784 baris, `slide_styles.js`: 790 baris, `slide_template.js`: 781 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Unit test otomatis memvalidasi 4 skenario: (1) Gerak dominan horizontal dengan Shift mengunci `dy = 0`, (2) Gerak dominan vertikal dengan Shift mengunci `dx = 0`, (3) Delta sama dengan Shift mengunci ke horizontal, (4) Gerak tanpa Shift bebas 2D.
+  2. Node syntax check `node -c extension/*.js extension/design/*.js` lolos 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file `<= 790` baris.
+  4. Bump versi manifest ke `v2.150.234`.
+
+
 
 
 
