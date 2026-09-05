@@ -6097,7 +6097,31 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - `design_executor.js`: 755 baris (limit <= 800 baris).
      - `design_agent.js`: 404 baris (limit <= 800 baris).
      - Seluruh 9 file di `extension/design/` patuh aturan batasan baris kode <= 800 baris.
+### Iterasi 496 (v2.150.215) - 2026-09-05
+- **User Request:**
+  "harusnya generate slide 1 dulu sampai jadi trus kalau slide 1 udah jadi langsung muncul bisa dibuka canvasnya nanti langsung mucul slide sesuai req user slide berapa nanti tapi masih kek animasi loading gitu jadi bertahap master design garapnya trus master agent bagian ngirim pronmpt ke master design biar konteks token bisa detail dan output bisa sangat detail dan akurat tanpa miss 1 pun"
+- **Akar Masalah (Root Cause):**
+  1. Pada implementasi sebelumnya, kartu preview canvas baru dirender di chat room setelah seluruh slide 1..N selesai digarap. Pengguna tidak bisa langsung membuka canvas saat Slide 1 sudah selesai.
+  2. Alokasi token prompt monolitik sebelumnya membagi token untuk banyak slide sekaligus, sehingga kedalaman detail kartu pada setiap slide rentan terpotong (*token starvation*).
+  3. Belum ada status representasi loading/skeleton visual di bilah samping thumbnail maupun stage canvas saat slide berikutnya sedang diproses secara bertahap.
+- **Analisis & Solusi:**
+  1. *Immediate Slide 1 Canvas Reveal (`design_executor.js`, `slide_template.js`, `slide_styles.js`)*:
+     - Master Design menyelesaikan Slide 1 (Cover / Hero) terlebih dahulu dan mengujinya dengan `auditSingleSlide`.
+     - Begitu Slide 1 berstatus `[OK]`, kartu hasil `.opendesign-result-card` langsung dirender ke chat room dan `activeDesignArtifact` diaktifkan. Tombol *"Buka Canvas"* dapat langsung diklik oleh pengguna.
+     - Seluruh slide yang diminta (misal 5 atau 10 slide) langsung terdaftar di thumbnail sidebar maupun stage canvas; Slide 1 siap dijelajahi, sedangkan Slide 2..N menampilkan skeleton loading shimmer (`.thumb-mini-loading` dan `.slide-loading-skeleton`).
+  2. *Dedicated Per-Slide Token Prompting Pipeline (`design_agent.js`, `design_executor.js`)*:
+     - Master Agent bertindak sebagai Supreme Commander yang meracik prompt individual (`createSlidePromptForMasterDesign`) khusus untuk setiap slide sasaran secara berurutan.
+     - Setiap slide mendapatkan kapasitas token mandiri penuh (~1800 token) sehingga Master Design dapat mengelaborasi judul, pilar analisis, data metrik riil, dan kartu tanpa kompresi token atau miss.
+  3. *Live In-Place Canvas Morphing (`design_executor.js`)*:
+     - Setiap kali Slide 2, 3, dst. selesai dirancang dan divalidasi oleh Master Design, iframe canvas langsung diperbarui secara live (`iframe.srcdoc`). Skeleton loading seketika bertransformasi menjadi konten slide yang utuh dan interaktif.
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - `design_executor.js`: 727 baris (limit <= 800 baris).
+     - `design_agent.js`: 502 baris (limit <= 800 baris).
+     - `slide_styles.js`: 764 baris (limit <= 800 baris).
+     - `slide_template.js`: 727 baris (limit <= 800 baris).
+     - Seluruh 9 modul di `extension/design/` patuh limit <= 800 baris.
 - **Verifikasi:**
-  1. Validasi simulasi alur bertahap (Node.js vm): `getDesignMilestones`, `auditSingleSlide`, `reviseSlideData`, `auditFullDeck`, dan `reviseFullDeckData` lulus 100% tanpa error.
+  1. Validasi simulasi alur bertahap (Node.js vm): Slide 1 render aktif, Slide 2..5 skeleton shimmer render aktif, prompt generator & json parser lulus 100% tanpa error.
   2. Validasi sintaks `node -c extension/design/*.js extension/sidepanel.js extension/newtab.js` lolos 100% tanpa error.
-  3. Bump versi manifest ke `v2.150.214`.
+  3. Bump versi manifest ke `v2.150.215`.
+

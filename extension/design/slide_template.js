@@ -94,7 +94,21 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     const layout = resolveSlideLayout(s, idx, total);
 
     let thumbBodyHtml = '';
-    if (layout === 'cover') {
+    if (s.loading) {
+      thumbBodyHtml = `
+        <div class="thumb-mini-loading">
+          <div class="thumb-mini-skeleton-line shimmer"></div>
+          <div class="thumb-mini-skeleton-line short shimmer"></div>
+          <div class="thumb-mini-loading-grid">
+            <div class="thumb-mini-skeleton-box shimmer"></div>
+            <div class="thumb-mini-skeleton-box shimmer"></div>
+          </div>
+          <div class="thumb-mini-loading-status" style="color: ${accentColor};">
+            <span class="pulse-dot" style="background: ${accentColor};"></span> MENYUSUN
+          </div>
+        </div>
+      `;
+    } else if (layout === 'cover') {
       thumbBodyHtml = `
         <div class="thumb-mini-cover">
           <div class="thumb-mini-cover-tag" style="color: ${accentColor}; border-color: ${accentColor};">${escapeHtml((s.badge || badgeTag || 'COVER').slice(0, 16))}</div>
@@ -249,7 +263,41 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     }
 
     let slideBodyContent = '';
-    if (layout === 'cover') {
+    if (s.loading) {
+      slideBodyContent = `
+        <div class="slide-loading-skeleton">
+          <div class="skeleton-header">
+            <div class="skeleton-badge shimmer"></div>
+            <div class="skeleton-title shimmer"></div>
+            <div class="skeleton-subtitle shimmer"></div>
+          </div>
+          <div class="skeleton-cards-grid">
+            <div class="skeleton-card shimmer">
+              <div class="skeleton-card-badge"></div>
+              <div class="skeleton-card-title"></div>
+              <div class="skeleton-card-desc"></div>
+              <div class="skeleton-card-desc short"></div>
+            </div>
+            <div class="skeleton-card shimmer">
+              <div class="skeleton-card-badge"></div>
+              <div class="skeleton-card-title"></div>
+              <div class="skeleton-card-desc"></div>
+              <div class="skeleton-card-desc short"></div>
+            </div>
+            <div class="skeleton-card shimmer">
+              <div class="skeleton-card-badge"></div>
+              <div class="skeleton-card-title"></div>
+              <div class="skeleton-card-desc"></div>
+              <div class="skeleton-card-desc short"></div>
+            </div>
+          </div>
+          <div class="skeleton-status-pill" style="border-color: ${accentColor}; color: ${accentColor};">
+            <svg class="spin-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
+            <span>Master Design sedang menyusun konten Slide ${slideNumStr}...</span>
+          </div>
+        </div>
+      `;
+    } else if (layout === 'cover') {
       slideBodyContent = `
         <div class="cover-center-content">
           <div class="cover-badge-pill" style="color: ${accentColor}; border-color: ${accentColor};">

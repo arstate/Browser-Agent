@@ -656,6 +656,32 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
       margin: 3px 0;
     }
 
+    /* === SKELETON & PROGRESSIVE SLIDE LOADER === */
+    @keyframes slideShimmer { 0%,100% { opacity:0.25; background-position:-200% 0; } 50% { opacity:0.6; } }
+    @keyframes pulseAnim { 0%,100% { opacity:0.35; transform:scale(0.85); } 50% { opacity:1; transform:scale(1.15); } }
+    @keyframes spinLoader { 100% { transform:rotate(360deg); } }
+    .shimmer { background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 75%); background-size: 200% 100%; animation: slideShimmer 2s infinite ease-in-out; }
+    .thumb-mini-loading { height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 6px 4px; }
+    .thumb-mini-skeleton-line { height: 7px; border-radius: 4px; margin-bottom: 3px; width: 85%; }
+    .thumb-mini-skeleton-line.short { width: 50%; }
+    .thumb-mini-loading-grid { display: flex; gap: 4px; height: 26px; margin: 3px 0; }
+    .thumb-mini-skeleton-box { flex: 1; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+    .thumb-mini-loading-status { font-size: 8px; font-weight: 800; letter-spacing: 0.08em; display: flex; align-items: center; gap: 4px; }
+    .pulse-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; animation: pulseAnim 1.2s infinite ease-in-out; }
+    .slide-loading-skeleton { height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 14px 0; }
+    .skeleton-header { margin-bottom: 18px; }
+    .skeleton-badge { width: 130px; height: 16px; border-radius: 6px; margin-bottom: 10px; }
+    .skeleton-title { width: 58%; height: 32px; border-radius: 8px; margin-bottom: 8px; }
+    .skeleton-subtitle { width: 78%; height: 14px; border-radius: 6px; }
+    .skeleton-cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; flex: 1; margin-bottom: 16px; }
+    .skeleton-card { border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .skeleton-card-badge { width: 60px; height: 10px; border-radius: 3px; background: rgba(255,255,255,0.06); }
+    .skeleton-card-title { width: 75%; height: 18px; border-radius: 5px; background: rgba(255,255,255,0.08); }
+    .skeleton-card-desc { width: 100%; height: 12px; border-radius: 4px; background: rgba(255,255,255,0.04); }
+    .skeleton-card-desc.short { width: 55%; }
+    .skeleton-status-pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; border: 1px solid; background: rgba(0,0,0,0.35); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
+    .spin-svg { animation: spinLoader 1s linear infinite; }
+
     /* === PRINT FOR VECTOR 16:9 PDF EXPORT === */
     @media print {
       @page {

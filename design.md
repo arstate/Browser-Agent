@@ -600,3 +600,20 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Master Agent memverifikasi Slide 1 berformat Cover, variasi tata letak antar-slide tinggi (kombinasi cover, split, bento, metrics, timeline, quote, conclusion), serta memastikan tidak ada kartu atau judul yang kosong.
    - Apabila ditemukan miss atau kekurangan, Master Agent mendelegasikan perintah perbaikan spesifik ke Master Design (`delegate_revision_to_master_design` via `reviseFullDeckData`) hingga seluruh kekurangan disempurnakan.
    - Master Agent kemudian menerbitkan Final Approval (`audit_and_approve_artifact`) sebelum menyajikan presentasi ke canvas dan chat room.
+
+
+## 🚀 31. Immediate Slide 1 Canvas Activation & Dedicated Per-Slide Token Pipeline (v2.150.215)
+
+1. **Immediate Slide 1 Canvas Reveal**:
+   - Master Design menyelesaikan Slide 1 (Cover / Hero) terlebih dahulu dan memvalidasinya.
+   - Segera setelah Slide 1 berstatus `[OK]`, kartu hasil `.opendesign-result-card` langsung dimunculkan di obrolan dengan tombol *"Buka Canvas"* yang aktif.
+   - Canvas pratinjau sudah mendaftarkan seluruh slide yang diminta (misal 5 atau 10 slide), dengan Slide 1 dapat dijelajahi langsung sementara Slide 2..N menampilkan skeleton animasi shimmer (`.thumb-mini-loading` dan `.slide-loading-skeleton`).
+
+2. **Dedicated Token Context Per-Slide**:
+   - Master Agent bertindak sebagai Supreme Commander yang meracik dan mengirimkan prompt terfokus untuk setiap slide (`createSlidePromptForMasterDesign`).
+   - Setiap slide mendapatkan alokasi token terfokus penuh untuk mengeksplorasi data, metrik, dan analisis tanpa terpotong oleh batas token output (*zero token starvation*).
+
+3. **Live In-Place Canvas Morphing**:
+   - Begitu Master Design menyelesaikan Slide 2, 3, dst., iframe pratinjau canvas (`opendesign-preview-frame`) diperbarui secara real-time.
+   - Animasi skeleton bertransformasi seketika menjadi konten nyata dengan transisi mulus.
+

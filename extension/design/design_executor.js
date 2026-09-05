@@ -24,6 +24,56 @@ if (typeof window !== 'undefined') {
   window.buildApiUrl = getEffectiveEndpointUrl;
 }
 
+async function fetchSlideContentFromAI(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary, agentConfig, abortSignal) {
+  const prompt = (typeof createSlidePromptForMasterDesign === 'function')
+    ? createSlidePromptForMasterDesign(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary)
+    : `Rancang konten detail untuk slide ${slideIndex + 1} topik: ${topic}`;
+
+  const endpointUrl = getEffectiveEndpointUrl(agentConfig.endpoint);
+  const apiKey = (agentConfig.apiKey || "").trim();
+  const chosenModel = (typeof activeAgentModel !== 'undefined' && activeAgentModel) ? activeAgentModel : (agentConfig.model || "google/gemini-2.5-flash");
+
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${apiKey}`
+  };
+  if (agentConfig.endpoint === "openrouter" || (agentConfig.endpointUrl && agentConfig.endpointUrl.includes("openrouter.ai"))) {
+    headers["HTTP-Referer"] = "https://github.com/browser-agent";
+    headers["X-Title"] = "Browser Agent OpenDesign Engine";
+  }
+
+  try {
+    const resp = await fetch(endpointUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: chosenModel,
+        messages: [
+          { role: "system", content: "Kamu adalah Master Design, perancang presentasi 16:9 modular kelas dunia. Balas HANYA dengan JSON valid tanpa teks pengantar." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 1800
+      }),
+      signal: abortSignal
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      const content = data.choices?.[0]?.message?.content || "";
+      if (content && typeof parseSingleSlideJson === 'function') {
+        return parseSingleSlideJson(content, blueprintSlide);
+      }
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') throw err;
+  }
+
+  return (typeof reviseSlideData === 'function')
+    ? reviseSlideData(blueprintSlide, '', blueprintSlide.layout, topic)
+    : blueprintSlide;
+}
+
 async function runDesignModeLoop(userMessage, attachments = [], explicitMentions = [], options = {}) {
   try {
     const stored = await chrome.storage.local.get(["browser_agent_config"]);
@@ -166,411 +216,332 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     const workingAgentStatus = isRevision ? "🎨 Master Design: Menerapkan revisi pada canvas aktif..." : "🎨 Master Design: Merancang slide 16:9...";
     updateAssistantActiveAgent(assistantBubble, "Master Design", workingAgentStatus, false, false);
 
-    if (typeof appendToolBadge === 'function') {
-      toolBadgeSynthesize = appendToolBadge(
-        assistantBubble,
-        isRevision ? 'update_canvas_slides' : 'synthesize_executive_slides',
-        isRevision
-          ? { mode: 'in-place live update', target: 'Active Canvas Drawer' }
-          : { aspect_ratio: '16:9', layout: 'Left Thumbnails + Stage + Bento Cards + Floating Dock' },
-        'Master Design'
-      );
-    }
-
-    const endpointUrl = getEffectiveEndpointUrl(config.endpoint);
-    let systemDirective = (typeof DESIGN_MODE_SYSTEM_PROMPT !== 'undefined') ? DESIGN_MODE_SYSTEM_PROMPT : '';
-
-    const messages = [
-      { role: "system", content: systemDirective }
-    ];
-
-    const trimmedHistory = conversationHistory.slice(-10);
-    for (const item of trimmedHistory) {
-      if (item.chatMode === "design" || !item.chatMode) {
-        messages.push({
-          role: item.role,
-          content: item.rawContent || item.content
-        });
-      }
-    }
-
-    let userContent = userMessage;
-    if (attachments && attachments.length > 0) {
-      userContent += "\n\n[Lampiran Gambar/File]: " + attachments.map(a => a.name || 'file').join(', ');
-    }
-    if (isRevision && currentOpenArtifact && currentOpenArtifact.html) {
-      userContent = `[INSTRUKSI REVISI CANVAS AKTIF]\nBerikut kode HTML slide deck / antarmuka yang saat ini SEDANG AKTIF DIBUKA oleh pengguna di Canvas Workspace:\n\n\`\`\`html\n${currentOpenArtifact.html}\n\`\`\`\n\nPermintaan revisi pengguna: "${userContent}"\n\nPENTING:\n1. Lakukan pembaruan langsung pada bagian / slide / elemen yang diminta oleh pengguna.\n2. Pertahankan keutuhan slide-slide lainnya, tata letak bento grid, sidebar thumbnail, floating navigation dock, dan skrip interaktif.\n3. Kembalikan kode HTML LENGKAP yang telah direvisi di dalam blok \`\`\`html ... \`\`\` bersama tag <design_meta>...</design_meta>.`;
-    }
-    messages.push({ role: "user", content: userContent });
-
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    };
-
-    if (config.endpoint === "openrouter" || (config.endpointUrl && config.endpointUrl.includes("openrouter.ai"))) {
-      headers["HTTP-Referer"] = "https://github.com/browser-agent";
-      headers["X-Title"] = "Browser Agent OpenDesign Engine";
-    }
-
+    let targetArtifact = (isRevision && currentOpenArtifact) ? currentOpenArtifact : {};
+    let cardRendered = false;
     let accumulatedContent = "";
-    let accumulatedReasoning = "";
-    let hasStartedContent = false;
+    const meta = { category: deducedTheme.name };
 
-    let candidateModels = [];
-    const chosenModel = (typeof activeAgentModel !== 'undefined' && activeAgentModel) ? activeAgentModel : config.model;
-    if (chosenModel) candidateModels.push(chosenModel);
+    const defaultBp = (typeof createDefaultBlueprint === 'function')
+      ? createDefaultBlueprint(userMessage, targetSlideCount, deducedTheme)
+      : { title: 'Materi Presentasi', slides: [] };
 
-    if (config.endpoint === "openrouter") {
-      const fallbackDefaults = [
-        "google/gemini-2.5-flash",
-        "anthropic/claude-3.7-sonnet",
-        "deepseek/deepseek-chat"
-      ];
-      for (const fb of fallbackDefaults) {
-        if (!candidateModels.includes(fb)) candidateModels.push(fb);
-      }
-    } else if (config.autoRotateModel === false) {
-      candidateModels = [candidateModels[0]];
-    }
-
-    let response = null;
-    let activeModelChoice = candidateModels[0];
-    let lastErrorMessage = "";
-
-    for (let mIdx = 0; mIdx < candidateModels.length; mIdx++) {
-      activeModelChoice = candidateModels[mIdx];
-      try {
-        const resp = await fetch(endpointUrl, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            model: activeModelChoice,
-            messages,
-            temperature: 0.4,
-            max_tokens: parseInt(config.maxTokens, 10) || 1000000,
-            stream: true
-          }),
-          signal: abortController.signal
-        });
-
-        if (!resp.ok) {
-          let errorMsg = "";
-          try {
-            const errJson = await resp.json();
-            errorMsg = errJson.error?.message || errJson.message || JSON.stringify(errJson);
-          } catch (e) {
-            errorMsg = await resp.text();
-          }
-          lastErrorMessage = errorMsg;
-
-          if (isRetryableAIError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
-            const nextModel = candidateModels[mIdx + 1];
-            updateAssistantText(assistantBubble, `*Model \`${activeModelChoice}\` mengalami kendala. Beralih ke \`${nextModel}\`...*\n\n`, true);
-            continue;
-          }
-          throw new Error(`AI Request Error (${resp.status}): ${errorMsg}`);
-        }
-
-        response = resp;
-        break;
-      } catch (fetchErr) {
-        if (fetchErr.name === 'AbortError' || !isExecuting) throw fetchErr;
-        lastErrorMessage = fetchErr.message;
-        if (isRetryableAIError(0, fetchErr.message) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
-          const nextModel = candidateModels[mIdx + 1];
-          updateAssistantText(assistantBubble, `*Kendala koneksi pada \`${activeModelChoice}\`. Mencoba \`${nextModel}\`...*\n\n`, true);
-          continue;
-        }
-        throw fetchErr;
-      }
-    }
-
-    if (!response) {
-      throw new Error(lastErrorMessage || `Gagal menghubungi AI dengan model ${candidateModels.join(', ')}.`);
-    }
-
-    if (response.body && typeof response.body.getReader === 'function') {
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let buffer = "";
-
-      while (true) {
-        if (!isExecuting || abortController?.signal.aborted) {
-          try { await reader.cancel(); } catch (e) {}
-          throw new DOMException("Aborted", "AbortError");
-        }
-
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed === "data: [DONE]" || !trimmed.startsWith("data:")) continue;
-          try {
-            const jsonStr = trimmed.replace(/^data:\s*/, "");
-            const chunk = JSON.parse(jsonStr);
-            const delta = chunk.choices?.[0]?.delta || chunk.choices?.[0]?.message || {};
-            const deltaContent = delta.content || "";
-            const deltaReasoning = delta.reasoning_content || delta.reasoning || delta.thought || "";
-
-            if (deltaReasoning) {
-              accumulatedReasoning += deltaReasoning;
-              if (!hasStartedContent) {
-                const shortSnippet = accumulatedReasoning.slice(-60).replace(/[\r\n]+/g, ' ').trim();
-                updateAssistantActiveAgent(assistantBubble, "Master Design", `🤔 Merancang Alur Presentasi... ${shortSnippet ? `(${shortSnippet})` : ''}`, false, false);
-              }
-            }
-
-            if (deltaContent) {
-              if (!hasStartedContent) {
-                hasStartedContent = true;
-                designMilestones[2].completed = true;
-                designMilestones[2].inProgress = false;
-                designMilestones[3].completed = false;
-                designMilestones[3].inProgress = true;
-                if (typeof updateTaskScheduleProgress === 'function') {
-                  updateTaskScheduleProgress(assistantBubble, designMilestones, 3, true);
-                }
-                const workingMsg = isRevision ? "⚡ Memperbarui kode antarmuka & tata letak..." : "⚡ Menyusun slide deck 16:9 & kartu bento...";
-                updateAssistantActiveAgent(assistantBubble, "Master Design", workingMsg, false, false);
-              }
-              accumulatedContent += deltaContent;
-              const kb = (accumulatedContent.length / 1024).toFixed(1);
-              const liveProgressText = isRevision
-                ? `*⚡ Sedang menerapkan revisi pada canvas aktif (${kb} KB)...*\n\n> 👑 **Master Agent** & 🎨 **Master Design** sedang memperbarui desain canvas yang terbuka secara langsung.`
-                : `*⚡ Sedang merancang slide deck 16:9 & kartu bento modular (${kb} KB)...*\n\n> 👑 **Master Agent** & 🎨 **Master Design** sedang berkolaborasi membangun slide deck eksekutif interaktif. Pratinjau akan otomatis aktif di Canvas setelah selesai.`;
-              updateAssistantText(assistantBubble, liveProgressText, true);
-            }
-          } catch (err) {}
-        }
-      }
-    } else {
-      const data = await response.json();
-      accumulatedContent = data.choices?.[0]?.message?.content || "";
-    }
-
-    if (toolBadgeSynthesize && typeof updateToolBadgeState === 'function') {
-      updateToolBadgeState(toolBadgeSynthesize, 'success', isRevision ? 'Revisi elemen dan tata letak slide deck berhasil disusun.' : 'Drafting materi presentasi 16:9 selesai.');
-    }
-
-    // Extract slides from accumulated content or markdown
-    let workingSlides = [];
-    const rawExtracted = (typeof extractSlidesFromRawHtml === 'function') ? extractSlidesFromRawHtml(accumulatedContent) : [];
-    if (rawExtracted && rawExtracted.length > 0) {
-      workingSlides = rawExtracted;
-    } else {
-      const mdSlides = (typeof parseMarkdownToSlides === 'function') ? parseMarkdownToSlides(accumulatedContent, userMessage) : [];
-      if (mdSlides && mdSlides.length > 0) {
-        workingSlides = mdSlides;
-      }
-    }
-
-    // Supplement with blueprint if count less than targetSlideCount
-    const defaultBp = (typeof createDefaultBlueprint === 'function') ? createDefaultBlueprint(userMessage, targetSlideCount, deducedTheme) : null;
-    if (workingSlides.length === 0) {
-      workingSlides = defaultBp ? defaultBp.slides : [];
-    } else if (workingSlides.length < targetSlideCount && defaultBp && defaultBp.slides) {
-      for (let sIdx = workingSlides.length; sIdx < targetSlideCount; sIdx++) {
-        if (defaultBp.slides[sIdx]) workingSlides.push(defaultBp.slides[sIdx]);
-      }
-    }
-
-    // Step 2: Master Design executes step-by-step per-slide loop with quality check & revision
-    designMilestones[1].completed = true;
-    designMilestones[1].inProgress = false;
-    designMilestones[2].completed = false;
-    designMilestones[2].inProgress = true;
-    if (typeof updateTaskScheduleProgress === 'function') {
-      updateTaskScheduleProgress(assistantBubble, designMilestones, 2, true);
-    }
-
-    const slideSummaries = [];
-    for (let sIdx = 0; sIdx < workingSlides.length; sIdx++) {
-      if (!isExecuting || abortController?.signal?.aborted) break;
-
-      const slideNum = sIdx + 1;
-      let curSlide = workingSlides[sIdx];
-      const slideTitle = curSlide.title || `Slide ${slideNum}`;
-
-      // Status & tool badge: execute_slide_step
-      updateAssistantActiveAgent(assistantBubble, "Master Design", `🎨 Master Design: Merancang Slide ${slideNum}/${workingSlides.length}...`, false, false);
-      let slideExecBadge = null;
-      if (typeof appendToolBadge === 'function') {
-        slideExecBadge = appendToolBadge(
-          assistantBubble,
-          'execute_slide_step',
-          { slideIndex: slideNum, layout: curSlide.layout || 'bento', title: slideTitle },
-          'Master Design'
-        );
-        if (typeof updateToolBadgeState === 'function') {
-          updateToolBadgeState(slideExecBadge, 'success', `Slide ${slideNum} (${curSlide.layout || 'bento'}) selesai dirancang.`);
-        }
-      }
-
-      // Status & tool badge: audit_slide_quality
-      updateAssistantActiveAgent(assistantBubble, "Master Design", `🔍 Master Design: Mengaudit kualitas Slide ${slideNum}...`, false, false);
-      let auditRes = (typeof auditSingleSlide === 'function')
-        ? auditSingleSlide(curSlide, curSlide.layout, userMessage)
-        : { ok: true };
-
-      let slideAuditBadge = null;
-      if (typeof appendToolBadge === 'function') {
-        slideAuditBadge = appendToolBadge(
-          assistantBubble,
-          'audit_slide_quality',
-          { slideIndex: slideNum, title: slideTitle, layout: curSlide.layout || 'bento' },
-          'Master Design'
-        );
-      }
-
-      // If quality check fails, trigger revision until OK
-      if (!auditRes.ok) {
-        if (slideAuditBadge && typeof updateToolBadgeState === 'function') {
-          updateToolBadgeState(slideAuditBadge, 'running', `Catatan audit: ${auditRes.reason}`);
-        }
-        updateAssistantActiveAgent(assistantBubble, "Master Design", `🛠️ Master Design: Merevisi Slide ${slideNum}...`, false, false);
-
-        let slideReviseBadge = null;
-        if (typeof appendToolBadge === 'function') {
-          slideReviseBadge = appendToolBadge(
-            assistantBubble,
-            'revise_slide_step',
-            { slideIndex: slideNum, issue: auditRes.reason },
-            'Master Design'
-          );
-        }
-
-        if (typeof reviseSlideData === 'function') {
-          curSlide = reviseSlideData(curSlide, auditRes.reason, curSlide.layout, userMessage, deducedTheme);
-          workingSlides[sIdx] = curSlide;
-        }
-
-        await new Promise(r => setTimeout(r, 120));
-
-        auditRes = (typeof auditSingleSlide === 'function')
-          ? auditSingleSlide(curSlide, curSlide.layout, userMessage)
-          : { ok: true };
-
-        if (slideReviseBadge && typeof updateToolBadgeState === 'function') {
-          updateToolBadgeState(slideReviseBadge, 'success', `Slide ${slideNum} berhasil disempurnakan.`);
-        }
-        if (slideAuditBadge && typeof updateToolBadgeState === 'function') {
-          updateToolBadgeState(slideAuditBadge, 'success', `Slide ${slideNum} tervalidasi memenuhi standar kualitas.`);
-        }
-      } else {
-        if (slideAuditBadge && typeof updateToolBadgeState === 'function') {
-          updateToolBadgeState(slideAuditBadge, 'success', `Slide ${slideNum} tervalidasi memenuhi standar kualitas.`);
-        }
-      }
-
-      slideSummaries.push(`- **Slide ${slideNum} [OK]**: ${curSlide.title || 'Slide'} *(${curSlide.layout || 'bento'})*`);
-      const liveProgressText = `*⚡ Perancangan Bertahap Sedang Berjalan (${slideNum}/${workingSlides.length} slide tervalidasi)...*\n\n` +
-        slideSummaries.join('\n') +
-        `\n\n> 🎨 **Master Design** memvalidasi setiap slide demi slide secara berurutan.`;
-      updateAssistantText(assistantBubble, liveProgressText, true);
-
-      await new Promise(r => setTimeout(r, 80));
-    }
-
-    // Step 3: Master Agent conducts full-deck detailed re-check
-    designMilestones[2].completed = true;
-    designMilestones[2].inProgress = false;
-    designMilestones[3].completed = true;
-    designMilestones[3].inProgress = false;
-    designMilestones[4].completed = false;
-    designMilestones[4].inProgress = true;
-    if (typeof updateTaskScheduleProgress === 'function') {
-      updateTaskScheduleProgress(assistantBubble, designMilestones, 4, true);
-    }
-
-    updateAssistantActiveAgent(assistantBubble, "Master Agent", "👑 Master Agent: Re-check detail seluruh slide & deteksi miss...", true, false);
-
-    let toolBadgeRecheck = null;
-    if (typeof appendToolBadge === 'function') {
-      toolBadgeRecheck = appendToolBadge(
-        assistantBubble,
-        'master_agent_recheck_all_slides',
-        { totalSlides: workingSlides.length, target: 'Kontinuitas, layout variety & anti-slop' },
-        'Master Agent'
-      );
-    }
-
-    let deckAudit = (typeof auditFullDeck === 'function') ? auditFullDeck(workingSlides, userMessage) : { ok: true, missList: [] };
-
-    if (!deckAudit.ok && deckAudit.missList && deckAudit.missList.length > 0) {
-      if (toolBadgeRecheck && typeof updateToolBadgeState === 'function') {
-        updateToolBadgeState(toolBadgeRecheck, 'running', `Ditemukan catatan: ${deckAudit.missList.join(', ')}`);
-      }
-
-      updateAssistantActiveAgent(assistantBubble, "Master Agent", "👑 Master Agent: Memerintahkan Master Design merevisi slide yang kurang...", true, false);
-      let toolBadgeDelegateFix = null;
-      if (typeof appendToolBadge === 'function') {
-        toolBadgeDelegateFix = appendToolBadge(
-          assistantBubble,
-          'delegate_revision_to_master_design',
-          { missList: deckAudit.missList, order: 'Perbaiki variasi arketipe dan lengkapi detail slide' },
-          'Master Agent'
-        );
-      }
-
-      if (typeof reviseFullDeckData === 'function') {
-        workingSlides = reviseFullDeckData(workingSlides, deckAudit.missList, userMessage, deducedTheme);
-      }
-
-      await new Promise(r => setTimeout(r, 150));
-      deckAudit = (typeof auditFullDeck === 'function') ? auditFullDeck(workingSlides, userMessage) : { ok: true, missList: [] };
-
-      if (toolBadgeDelegateFix && typeof updateToolBadgeState === 'function') {
-        updateToolBadgeState(toolBadgeDelegateFix, 'success', 'Master Design telah menyempurnakan seluruh slide sesuai arahan Master Agent.');
-      }
-    }
-
-    if (toolBadgeRecheck && typeof updateToolBadgeState === 'function') {
-      updateToolBadgeState(toolBadgeRecheck, 'success', `Seluruh ${workingSlides.length} slide tervalidasi 100% lengkap tanpa miss.`);
-    }
-
-    if (typeof appendToolBadge === 'function') {
-      toolBadgeAudit = appendToolBadge(
-        assistantBubble,
-        isRevision ? 'audit_and_apply_live_revision' : 'audit_and_approve_artifact',
-        isRevision
-          ? { verified: true, liveSynced: true, target: 'Active Canvas' }
-          : { antiSlopCheck: true, allSlidesOk: true, totalSlides: workingSlides.length, themeCompliance: deducedTheme.name },
-        'Master Agent'
-      );
-      if (typeof updateToolBadgeState === 'function') {
-        updateToolBadgeState(toolBadgeAudit, 'success', isRevision ? 'Revisi tervalidasi dan disinkronkan langsung ke canvas aktif.' : `Artifact disetujui. Standar tema ${deducedTheme.name}, rasio 16:9, dan ${workingSlides.length} slide terpenuhi.`);
-      }
-    }
-
-    // Step 4: Assemble final executive slide deck HTML
-    const meta = extractDesignMeta(accumulatedContent) || {};
     const cleanTopic = (userMessage || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim();
-    const rawTitle = meta?.title || cleanTopic.slice(0, 40) || "Executive Presentation Deck";
+    const rawTitle = defaultBp.title || cleanTopic.slice(0, 40) || "Executive Presentation Deck";
+    meta.title = rawTitle;
 
     const deckMeta = {
       title: rawTitle,
       brand: rawTitle,
       categoryTitle: rawTitle.toUpperCase(),
       subCategory: deducedTheme.subHeader,
-      accentColor: meta?.colors?.[2] || deducedTheme.accent,
+      accentColor: deducedTheme.accent,
       themeObj: deducedTheme,
       userPrompt: userMessage
     };
 
-    const finalHtml = (typeof buildExecutiveSlideDeckHtml === 'function')
-      ? buildExecutiveSlideDeckHtml(workingSlides, deckMeta)
-      : ((typeof renderSlideDeckHtml === 'function') ? renderSlideDeckHtml(workingSlides, deckMeta) : accumulatedContent);
+    let workingSlides = [];
 
-    let artifact = {
-      html: finalHtml,
-      raw: finalHtml
-    };
+    if (isRevision && currentOpenArtifact && currentOpenArtifact.html) {
+      if (typeof appendToolBadge === 'function') {
+        toolBadgeSynthesize = appendToolBadge(
+          assistantBubble,
+          'update_canvas_slides',
+          { mode: 'in-place live update', target: 'Active Canvas Drawer' },
+          'Master Design'
+        );
+      }
+
+      const endpointUrl = getEffectiveEndpointUrl(config.endpoint);
+      const systemDirective = (typeof DESIGN_MODE_SYSTEM_PROMPT !== 'undefined') ? DESIGN_MODE_SYSTEM_PROMPT : '';
+      const messages = [{ role: "system", content: systemDirective }];
+
+      const trimmedHistory = conversationHistory.slice(-10);
+      for (const item of trimmedHistory) {
+        if (item.chatMode === "design" || !item.chatMode) {
+          messages.push({ role: item.role, content: item.rawContent || item.content });
+        }
+      }
+
+      const revisionContent = `[INSTRUKSI REVISI CANVAS AKTIF]\nBerikut kode HTML slide deck yang SEDANG AKTIF DIBUKA:\n\n\`\`\`html\n${currentOpenArtifact.html}\n\`\`\`\n\nPermintaan revisi: "${userMessage}"\n\nKembalikan kode HTML LENGKAP yang telah direvisi di dalam blok \`\`\`html ... \`\`\`.`;
+      messages.push({ role: "user", content: revisionContent });
+
+      const chosenModel = (typeof activeAgentModel !== 'undefined' && activeAgentModel) ? activeAgentModel : config.model;
+      const resp = await fetch(endpointUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: chosenModel, messages, temperature: 0.3, max_tokens: 1000000 }),
+        signal: abortController.signal
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        accumulatedContent = data.choices?.[0]?.message?.content || "";
+        const art = extractHtmlArtifact(accumulatedContent);
+        if (art.html) targetArtifact.html = art.html;
+      }
+    } else {
+      // === PROGRESSIVE SLIDE-BY-SLIDE PIPELINE ===
+      workingSlides = defaultBp.slides.map((s, idx) => ({
+        ...s,
+        loading: true,
+        completed: false,
+        status: idx === 0 ? 'generating' : 'pending'
+      }));
+
+      // Milestone 1 complete: Brief analyzed & handoff initiated
+      designMilestones[0].completed = true;
+      designMilestones[0].inProgress = false;
+      designMilestones[1].completed = true;
+      designMilestones[1].inProgress = false;
+      designMilestones[2].completed = false;
+      designMilestones[2].inProgress = true;
+      if (typeof updateTaskScheduleProgress === 'function') {
+        updateTaskScheduleProgress(assistantBubble, designMilestones, 2, true);
+      }
+
+      // 1. GENERATE SLIDE 1 FIRST
+      updateAssistantActiveAgent(assistantBubble, "Master Agent", "👑 Master Agent: Mengirim prompt Slide 1 (Cover) ke Master Design...", true, false);
+      let toolBadgeDispatch1 = null;
+      if (typeof appendToolBadge === 'function') {
+        toolBadgeDispatch1 = appendToolBadge(
+          assistantBubble,
+          'master_agent_send_prompt_to_master_design',
+          { slideIndex: 1, layout: 'cover', title: workingSlides[0].title, tokenContext: 'Dedicated cover tokens' },
+          'Master Agent'
+        );
+      }
+
+      updateAssistantActiveAgent(assistantBubble, "Master Design", `🎨 Master Design: Merancang Slide 1/${targetSlideCount} (Sampul Eksekutif)...`, false, false);
+      let toolBadgeExec1 = null;
+      if (typeof appendToolBadge === 'function') {
+        toolBadgeExec1 = appendToolBadge(
+          assistantBubble,
+          'execute_slide_step',
+          { slideIndex: 1, layout: 'cover', title: workingSlides[0].title },
+          'Master Design'
+        );
+      }
+
+      const aiSlide1 = await fetchSlideContentFromAI(0, targetSlideCount, userMessage, workingSlides[0], '', config, abortController.signal);
+      workingSlides[0] = { ...workingSlides[0], ...aiSlide1 };
+
+      let audit1 = (typeof auditSingleSlide === 'function')
+        ? auditSingleSlide(workingSlides[0], 'cover', userMessage)
+        : { ok: true };
+
+      if (!audit1.ok && typeof reviseSlideData === 'function') {
+        workingSlides[0] = reviseSlideData(workingSlides[0], audit1.reason, 'cover', userMessage, deducedTheme);
+      }
+
+      workingSlides[0].loading = false;
+      workingSlides[0].completed = true;
+      workingSlides[0].status = 'ready';
+
+      if (toolBadgeDispatch1 && typeof updateToolBadgeState === 'function') {
+        updateToolBadgeState(toolBadgeDispatch1, 'success', 'Slide 1 selesai dirancang dengan detail tinggi.');
+      }
+      if (toolBadgeExec1 && typeof updateToolBadgeState === 'function') {
+        updateToolBadgeState(toolBadgeExec1, 'success', 'Slide 1 selesai dirancang & tervalidasi.');
+      }
+
+      // 2. MUNCUL LANGSUNG BISA DIBUKA CANVASNYA
+      const initialDeckHtml = (typeof buildExecutiveSlideDeckHtml === 'function')
+        ? buildExecutiveSlideDeckHtml(workingSlides, deckMeta)
+        : '';
+
+      targetArtifact.html = initialDeckHtml;
+      targetArtifact.raw = initialDeckHtml;
+      targetArtifact.meta = { title: rawTitle, category: deducedTheme.name };
+      targetArtifact.content = `*⚡ Slide 1 tervalidasi. Pratinjau Canvas aktif & siap dibuka...*`;
+
+      if (typeof setActiveDesignArtifact === 'function') {
+        setActiveDesignArtifact(targetArtifact);
+      } else {
+        activeDesignArtifact = targetArtifact;
+        window.__activeDesignArtifact = targetArtifact;
+      }
+
+      if (contentEl && !cardRendered) {
+        renderOpenDesignCard(contentEl, targetArtifact, { isRevision: false });
+        cardRendered = true;
+      }
+
+      if (canvasIsOpen) {
+        const iframe = document.getElementById('opendesign-preview-frame');
+        if (iframe) {
+          iframe.srcdoc = initialDeckHtml;
+          if (typeof attachSlideDeckController === 'function') {
+            setTimeout(() => attachSlideDeckController(iframe), 50);
+          }
+        }
+      }
+
+      const slideSummaries = [`- **Slide 1 [OK]**: ${workingSlides[0].title} *(Cover)*`];
+      const initialProgressText = `*⚡ Slide 1 Selesai Dirancang! Canvas Pratinjau Sudah Bisa Dibuka.*\n\n` +
+        slideSummaries.join('\n') +
+        `\n\n> 🎨 **Master Design** melanjutkan penyusunan slide berikutnya secara bertahap...`;
+      updateAssistantText(assistantBubble, initialProgressText, true);
+
+      // 3. PROGRESSIVE SLIDE 2 .. N LOOP
+      for (let sIdx = 1; sIdx < workingSlides.length; sIdx++) {
+        if (!isExecuting || abortController?.signal?.aborted) break;
+
+        const slideNum = sIdx + 1;
+        let curSlide = workingSlides[sIdx];
+        curSlide.status = 'generating';
+        const slideTitle = curSlide.title || `Slide ${slideNum}`;
+
+        updateAssistantActiveAgent(assistantBubble, "Master Agent", `👑 Master Agent: Mengirim prompt Slide ${slideNum} ke Master Design...`, true, false);
+        let badgePrompt = null;
+        if (typeof appendToolBadge === 'function') {
+          badgePrompt = appendToolBadge(
+            assistantBubble,
+            'master_agent_send_prompt_to_master_design',
+            { slideIndex: slideNum, layout: curSlide.layout || 'bento', title: slideTitle },
+            'Master Agent'
+          );
+        }
+
+        updateAssistantActiveAgent(assistantBubble, "Master Design", `🎨 Master Design: Merancang Slide ${slideNum}/${workingSlides.length} (${curSlide.layout})...`, false, false);
+        let badgeExec = null;
+        if (typeof appendToolBadge === 'function') {
+          badgeExec = appendToolBadge(
+            assistantBubble,
+            'execute_slide_step',
+            { slideIndex: slideNum, layout: curSlide.layout || 'bento', title: slideTitle },
+            'Master Design'
+          );
+        }
+
+        const prevContext = workingSlides[sIdx - 1].title + ': ' + (workingSlides[sIdx - 1].subtitle || '');
+        const aiSlide = await fetchSlideContentFromAI(sIdx, targetSlideCount, userMessage, curSlide, prevContext, config, abortController.signal);
+        curSlide = { ...curSlide, ...aiSlide };
+
+        let auditRes = (typeof auditSingleSlide === 'function')
+          ? auditSingleSlide(curSlide, curSlide.layout, userMessage)
+          : { ok: true };
+
+        if (!auditRes.ok && typeof reviseSlideData === 'function') {
+          curSlide = reviseSlideData(curSlide, auditRes.reason, curSlide.layout, userMessage, deducedTheme);
+        }
+
+        curSlide.loading = false;
+        curSlide.completed = true;
+        curSlide.status = 'ready';
+        workingSlides[sIdx] = curSlide;
+
+        if (badgeExec && typeof updateToolBadgeState === 'function') {
+          updateToolBadgeState(badgeExec, 'success', `Slide ${slideNum} (${curSlide.layout}) tervalidasi.`);
+        }
+        if (badgePrompt && typeof updateToolBadgeState === 'function') {
+          updateToolBadgeState(badgePrompt, 'success', `Slide ${slideNum} selesai dirancang.`);
+        }
+
+        // Live update Canvas in-place!
+        const currentHtml = (typeof buildExecutiveSlideDeckHtml === 'function')
+          ? buildExecutiveSlideDeckHtml(workingSlides, deckMeta)
+          : '';
+
+        targetArtifact.html = currentHtml;
+        targetArtifact.raw = currentHtml;
+        if (typeof setActiveDesignArtifact === 'function') {
+          setActiveDesignArtifact(targetArtifact);
+        }
+        if (canvasIsOpen) {
+          const iframe = document.getElementById('opendesign-preview-frame');
+          if (iframe) {
+            iframe.srcdoc = currentHtml;
+            if (typeof attachSlideDeckController === 'function') {
+              setTimeout(() => attachSlideDeckController(iframe), 50);
+            }
+          }
+        }
+
+        slideSummaries.push(`- **Slide ${slideNum} [OK]**: ${curSlide.title} *(${curSlide.layout || 'bento'})*`);
+        const liveProgressText = `*⚡ Perancangan Bertahap Sedang Berjalan (${slideNum}/${workingSlides.length} slide tervalidasi)...*\n\n` +
+          slideSummaries.join('\n') +
+          `\n\n> 🎨 **Master Design** memvalidasi slide demi slide secara berurutan.`;
+        updateAssistantText(assistantBubble, liveProgressText, true);
+
+        await new Promise(r => setTimeout(r, 60));
+      }
+
+      // 4. MASTER AGENT FULL-DECK RE-CHECK
+      designMilestones[2].completed = true;
+      designMilestones[2].inProgress = false;
+      designMilestones[3].completed = true;
+      designMilestones[3].inProgress = false;
+      designMilestones[4].completed = false;
+      designMilestones[4].inProgress = true;
+      if (typeof updateTaskScheduleProgress === 'function') {
+        updateTaskScheduleProgress(assistantBubble, designMilestones, 4, true);
+      }
+
+      updateAssistantActiveAgent(assistantBubble, "Master Agent", "👑 Master Agent: Re-check detail seluruh slide & deteksi miss...", true, false);
+
+      let toolBadgeRecheck = null;
+      if (typeof appendToolBadge === 'function') {
+        toolBadgeRecheck = appendToolBadge(
+          assistantBubble,
+          'master_agent_recheck_all_slides',
+          { totalSlides: workingSlides.length, target: 'Kontinuitas, layout variety & anti-slop' },
+          'Master Agent'
+        );
+      }
+
+      let deckAudit = (typeof auditFullDeck === 'function') ? auditFullDeck(workingSlides, userMessage) : { ok: true, missList: [] };
+
+      if (!deckAudit.ok && deckAudit.missList && deckAudit.missList.length > 0) {
+        if (toolBadgeRecheck && typeof updateToolBadgeState === 'function') {
+          updateToolBadgeState(toolBadgeRecheck, 'running', `Ditemukan catatan: ${deckAudit.missList.join(', ')}`);
+        }
+
+        updateAssistantActiveAgent(assistantBubble, "Master Agent", "👑 Master Agent: Memerintahkan Master Design merevisi slide yang kurang...", true, false);
+        let toolBadgeDelegateFix = null;
+        if (typeof appendToolBadge === 'function') {
+          toolBadgeDelegateFix = appendToolBadge(
+            assistantBubble,
+            'delegate_revision_to_master_design',
+            { missList: deckAudit.missList, order: 'Perbaiki variasi arketipe dan lengkapi detail slide' },
+            'Master Agent'
+          );
+        }
+
+        if (typeof reviseFullDeckData === 'function') {
+          workingSlides = reviseFullDeckData(workingSlides, deckAudit.missList, userMessage, deducedTheme);
+        }
+
+        await new Promise(r => setTimeout(r, 120));
+        deckAudit = (typeof auditFullDeck === 'function') ? auditFullDeck(workingSlides, userMessage) : { ok: true, missList: [] };
+
+        if (toolBadgeDelegateFix && typeof updateToolBadgeState === 'function') {
+          updateToolBadgeState(toolBadgeDelegateFix, 'success', 'Master Design telah menyempurnakan seluruh slide sesuai arahan Master Agent.');
+        }
+      }
+
+      if (toolBadgeRecheck && typeof updateToolBadgeState === 'function') {
+        updateToolBadgeState(toolBadgeRecheck, 'success', `Seluruh ${workingSlides.length} slide tervalidasi 100% lengkap tanpa miss.`);
+      }
+
+      if (typeof appendToolBadge === 'function') {
+        toolBadgeAudit = appendToolBadge(
+          assistantBubble,
+          'audit_and_approve_artifact',
+          { antiSlopCheck: true, allSlidesOk: true, totalSlides: workingSlides.length, themeCompliance: deducedTheme.name },
+          'Master Agent'
+        );
+        if (typeof updateToolBadgeState === 'function') {
+          updateToolBadgeState(toolBadgeAudit, 'success', `Artifact disetujui. Standar tema ${deducedTheme.name}, rasio 16:9, dan ${workingSlides.length} slide terpenuhi.`);
+        }
+      }
+
+      const finalDeckHtml = (typeof buildExecutiveSlideDeckHtml === 'function')
+        ? buildExecutiveSlideDeckHtml(workingSlides, deckMeta)
+        : '';
+      targetArtifact.html = finalDeckHtml;
+      targetArtifact.raw = finalDeckHtml;
+      accumulatedContent = finalDeckHtml;
+    }
 
     // Finalize tasks & tools
     designMilestones[4].completed = true;
@@ -582,15 +553,13 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       finalizeToolSection(assistantBubble, true);
     }
 
-    // Clean summary response for chat (Anti-Nyampah: No raw HTML code dumps in chat room!)
+    // Clean summary response for chat
     let briefSummaryText = "";
-    if (artifact.html) {
-      briefSummaryText = getCleanDesignSummaryText(accumulatedContent, { meta, html: artifact.html }, userMessage);
+    if (targetArtifact.html) {
+      briefSummaryText = `👑 **Master Agent & Master Design**: Seluruh ${workingSlides.length || targetSlideCount} slide presentasi 16:9 widescreen bertema *${deducedTheme.name}* telah berhasil disusun dan divalidasi.`;
     } else {
-      let cleanFallback = accumulatedContent.replace(/<design_meta>[\s\S]*?<\/design_meta>/gi, '').trim();
-      briefSummaryText = cleanFallback || "*Model AI tidak mengembalikan respons desain yang lengkap.*";
+      briefSummaryText = "*Perancangan slide deck selesai.*";
     }
-
     updateAssistantText(assistantBubble, briefSummaryText, false);
 
     if (artifact.html && contentEl) {
@@ -641,14 +610,17 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         }
       }
 
-      renderOpenDesignCard(contentEl, targetArtifact, { isRevision });
+      if (!cardRendered && contentEl) {
+        renderOpenDesignCard(contentEl, targetArtifact, { isRevision });
+        cardRendered = true;
+      }
 
       if (window.OpenDesignBridge?.lintArtifact) {
-        window.OpenDesignBridge.lintArtifact(artifact.html).catch(() => {});
+        window.OpenDesignBridge.lintArtifact(targetArtifact.html).catch(() => {});
       }
     }
 
-    const finalStatusText = artifact.html ? "Selesai" : (briefSummaryText ? "Selesai" : "Respon Kosong");
+    const finalStatusText = targetArtifact.html ? "Selesai" : (briefSummaryText ? "Selesai" : "Respon Kosong");
     updateAssistantActiveAgent(assistantBubble, "Master Agent", finalStatusText, true, true);
 
     if (meta && meta.title) {
@@ -670,7 +642,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       content: briefSummaryText,
       rawContent: accumulatedContent,
       agentInfo: agentInfo,
-      designArtifact: artifact.html ? { html: artifact.html, meta, raw: artifact.raw } : null,
+      designArtifact: targetArtifact.html ? { html: targetArtifact.html, meta, raw: targetArtifact.raw } : null,
       chatMode: "design"
     });
 

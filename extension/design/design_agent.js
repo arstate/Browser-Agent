@@ -391,6 +391,102 @@ function reviseFullDeckData(slides, missList = [], topic = '', theme = {}) {
   return revisedSlides;
 }
 
+function createSlidePromptForMasterDesign(slideIndex, totalSlides, topic = '', blueprintSlide = {}, prevSlideSummary = '') {
+  const slideNum = slideIndex + 1;
+  const cleanTopic = (topic || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim();
+  const layout = blueprintSlide.layout || (slideNum === 1 ? 'cover' : 'bento');
+  const title = blueprintSlide.title || `Slide ${slideNum}`;
+
+  return `Kamu adalah 🎨 Master Design (Tangan Kanan Master Agent).
+Tugasmu: Rancang konten SANGAT DETAIL dan SPESIFIK untuk Slide ${slideNum} dari total ${totalSlides} slide presentasi 16:9 widescreen.
+
+Materi Utama: "${cleanTopic}"
+Arketipe Tata Letak: ${layout.toUpperCase()}
+Judul Sasaran: "${title}"
+${prevSlideSummary ? `Konteks Slide Sebelumnya: "${prevSlideSummary}"` : ''}
+
+ATURAN KETAT:
+1. DILARANG menggunakan teks korporat palsu ("Djadi Creative", "GSM v3.0", "Confidential // Enterprise").
+2. Konten harus berbobot, berbasis fakta/analisis/strategi nyata, tidak klise.
+3. Arketipe ${layout}:
+   - Jika "cover": Hasilkan judul utama megah, lead subtitle komprehensif, badge status eksklusif, dan 2-3 poin ringkasan.
+   - Jika "split": Minimal 2 kartu perbandingan (50:50) dengan judul tajam, deskripsi komparatif, dan footer highlight.
+   - Jika "metrics": Minimal 3-4 kartu dengan angka metrik/KPI riil (contoh: "98.4%", "3.5x", "12-16 Jam"), judul metrik, deskripsi dampak, dan highlight.
+   - Jika "timeline": Minimal 3-4 kartu langkah berurutan (Tahap 01 s/d 04) dengan judul fase dan roadmap eksekusi.
+   - Jika "quote": Kutipan berbobot, signifikansi strategis, dan atribusi otoritatif.
+   - Jika "conclusion": Ringkasan eksekutif dan checklist aksi prioritas.
+   - Jika "bento": 3 kartu pilar bento dengan analisis mendalam.
+
+Balas HANYA berupa JSON valid dalam blok \`\`\`json ... \`\`\` dengan format:
+{
+  "title": "Judul Slide ${slideNum}",
+  "subtitle": "Penjelasan mendalam konteks slide",
+  "layout": "${layout}",
+  "badge": "BADGE ${slideNum}",
+  "quoteText": "",
+  "quoteAuthor": "",
+  "cards": [
+    {
+      "badge": "PILAR 01",
+      "title": "Judul Analitis",
+      "desc": "Penjabaran komprehensif tanpa generalisasi klise...",
+      "stat": "98%",
+      "metricValue": "98%",
+      "footerHighlight": "KEY POINT"
+    }
+  ]
+}`;
+}
+
+function parseSingleSlideJson(rawText, fallbackSlide = {}) {
+  if (!rawText || typeof rawText !== 'string') return fallbackSlide;
+  try {
+    const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/i) || [null, rawText];
+    const targetStr = (jsonMatch[1] || rawText).trim();
+    const firstBrace = targetStr.indexOf('{');
+    const lastBrace = targetStr.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      const cleanJson = targetStr.slice(firstBrace, lastBrace + 1);
+      const parsed = JSON.parse(cleanJson);
+      if (parsed && (parsed.title || parsed.cards)) {
+        return {
+          ...fallbackSlide,
+          ...parsed,
+          layout: parsed.layout || fallbackSlide.layout || 'bento',
+          cards: Array.isArray(parsed.cards) && parsed.cards.length > 0 ? parsed.cards : (fallbackSlide.cards || [])
+        };
+      }
+    }
+  } catch (e) {}
+
+  // Fallback markdown parsing
+  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+  const slide = { ...fallbackSlide };
+  const cards = [];
+  for (const line of lines) {
+    if (line.startsWith('#')) {
+      slide.title = line.replace(/^#+\s*/, '').trim() || slide.title;
+    } else if (/^(?:subjudul|subtitle)[:\s-]/i.test(line)) {
+      slide.subtitle = line.replace(/^(?:subjudul|subtitle)[:\s-]*/i, '').trim();
+    } else if (/^[-*•]\s*/.test(line)) {
+      const item = line.replace(/^[-*•]\s*/, '').trim();
+      const parts = item.split(':');
+      if (parts.length > 1) {
+        cards.push({
+          badge: `PILAR 0${cards.length + 1}`,
+          title: parts[0].replace(/\*\*/g, '').trim(),
+          desc: parts.slice(1).join(':').trim(),
+          stat: `0${cards.length + 1}`,
+          metricValue: `0${cards.length + 1}`,
+          footerHighlight: parts[0].slice(0, 20).toUpperCase()
+        });
+      }
+    }
+  }
+  if (cards.length > 0) slide.cards = cards;
+  return slide;
+}
+
 // Attach to window for global extension access
 if (typeof window !== 'undefined') {
   window.MASTER_DESIGN_AGENT = MASTER_DESIGN_AGENT;
@@ -401,4 +497,6 @@ if (typeof window !== 'undefined') {
   window.createDefaultBlueprint = createDefaultBlueprint;
   window.reviseSlideData = reviseSlideData;
   window.reviseFullDeckData = reviseFullDeckData;
+  window.createSlidePromptForMasterDesign = createSlidePromptForMasterDesign;
+  window.parseSingleSlideJson = parseSingleSlideJson;
 }
