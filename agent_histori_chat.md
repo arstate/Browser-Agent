@@ -6709,6 +6709,32 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi jumlah baris memastikan seluruh file `<= 790` baris.
   4. Bump versi manifest ke `v2.150.235`.
 
+### 🚀 Iterasi 517: Clean Slide Editor Toolbar Overhaul (Dropdown Format, Align Justify, Active Color Circle & Popover)
+- **Masalah Pengguna:**
+  - Toolbar mode edit terlalu padat dengan deretan tombol statis. Pengguna meminta: (1) Hapus badge "EDIT MODE", (2) Kelompokkan tombol `A-`, `A+`, `B`, `I`, `U` ke dalam tombol pilihan dropdown seperti pilihan font agar lebih clean, (3) Kelompokkan rata kiri, tengah, kanan ke tombol pilihan dan tambahkan opsi rata kanan-kiri (justify), (4) Ganti deretan tombol warna menjadi 1 lingkaran yang menampilkan warna elemen yang aktif, dan jika diklik memunculkan popover template warna, picker custom, dan input HEX lengkap, (5) Hapus tombol `-10%` dan `+10%`.
+- **Solusi & Implementasi Teknis:**
+  1. *Pembersihan Badge & Tombol Skala*:
+     - Menghapus badge status `.editor-badge-status` ("EDIT MODE") dan divider kiri dari `getSlideDeckEditorHtml()`.
+     - Menghapus tombol `#editor-btn-scale-down` (-10%) dan `#editor-btn-scale-up` (+10%).
+  2. *Dropdown Format & Ukuran Teks (`#editor-format-select`)*:
+     - Mengelompokkan aksi styling ke `<select class="editor-tool-select">` dengan opsi: Tebal (Bold), Miring (Italic), Garis Bawah (Underline), Ukuran: A+ (Besarkan), Ukuran: A- (Kecilkan).
+     - Otomatis me-reset `select.value = ''` setelah pemilihan sehingga opsi dapat dipilih berulang kali secara mulus.
+  3. *Dropdown Perataan Teks & Dukungan Justify (`#editor-align-select`)*:
+     - Mengelompokkan perataan teks ke dropdown select dengan opsi: Rata Kiri (`left`), Rata Tengah (`center`), Rata Kanan (`right`), dan Rata Kanan-Kiri (`justify`).
+     - Fungsi `syncToolbarForElement(el)` otomatis menyinkronkan nilai select dengan `textAlign` aktual elemen terpilih.
+  4. *Lingkaran Indikator Warna Aktif & Popover Custom HEX*:
+     - Mengganti 6 swatch warna dengan tombol lingkaran tunggal `#editor-color-btn` yang menampung `#editor-color-preview`.
+     - Saat elemen dipilih, `syncToolbarForElement(el)` mengekstrak computed color dan mengonversinya via `rgbToHex()` untuk menyetel warna lingkaran dan nilai input `#editor-color-hex`.
+     - Mengklik lingkaran menampilkan popover akrilik `#editor-color-popover` berisi 8 warna template preset, picker warna native `<input type="color">`, dan text input `#editor-color-hex` dengan validasi instan heksadesimal.
+  5. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js`: 785 baris, `canvas_manager.js`: 785 baris, `slide_styles.js`: 790 baris, `slide_template.js`: 782 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Unit test `test_slide_editor_clean_toolbar.js` memvalidasi ketiadaan badge status dan tombol skala -10%/+10%, keberadaan select format dan perataan teks (termasuk justify), fungsi popover warna template, native color picker, dan konversi `rgbToHex()`.
+  2. Node syntax check `node -c extension/*.js extension/design/*.js` lolos 100% tanpa error.
+  3. Verifikasi baris memastikan seluruh file `<= 790` baris.
+  4. Bump versi manifest ke `v2.150.236`.
+
+
 
 
 

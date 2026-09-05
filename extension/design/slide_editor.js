@@ -5,64 +5,27 @@
 
 function getSlideDeckEditorCss() {
   return `
-    body.deck-edit-mode-active, body.deck-edit-mode-active * {
-      user-select: none !important; -webkit-user-select: none !important;
-    }
-    body.deck-edit-mode-active [contenteditable="true"], body.deck-edit-mode-active [contenteditable="true"] * {
-      user-select: text !important; -webkit-user-select: text !important;
-    }
+    body.deck-edit-mode-active, body.deck-edit-mode-active * { user-select: none !important; -webkit-user-select: none !important; }
+    body.deck-edit-mode-active [contenteditable="true"], body.deck-edit-mode-active [contenteditable="true"] * { user-select: text !important; -webkit-user-select: text !important; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas { position: relative; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas [data-deck-editable="true"],
-    body.deck-edit-mode-active .slide-section.active .slide-canvas h1,
-    body.deck-edit-mode-active .slide-section.active .slide-canvas h2,
-    body.deck-edit-mode-active .slide-section.active .slide-canvas h3,
-    body.deck-edit-mode-active .slide-section.active .slide-canvas p,
-    body.deck-edit-mode-active .slide-section.active .slide-canvas .slide-col,
-    body.deck-edit-mode-active .slide-section.active .slide-canvas .split-col,
-    body.deck-edit-mode-active .slide-section.active .slide-canvas .metric-card,
-    body.deck-edit-mode-active .slide-section.active .slide-canvas .timeline-step,
-    body.deck-edit-mode-active .slide-section.active .slide-canvas .col-tag-chip,
-    body.deck-edit-mode-active .slide-section.active .slide-canvas .col-badge,
-    body.deck-edit-mode-active .slide-section.active .slide-canvas .cover-badge-pill {
-      cursor: move !important; transition: outline 0.12s, box-shadow 0.12s;
-    }
+    body.deck-edit-mode-active .slide-section.active .slide-canvas h1, body.deck-edit-mode-active .slide-section.active .slide-canvas h2, body.deck-edit-mode-active .slide-section.active .slide-canvas h3, body.deck-edit-mode-active .slide-section.active .slide-canvas p, body.deck-edit-mode-active .slide-section.active .slide-canvas .slide-col, body.deck-edit-mode-active .slide-section.active .slide-canvas .split-col, body.deck-edit-mode-active .slide-section.active .slide-canvas .metric-card, body.deck-edit-mode-active .slide-section.active .slide-canvas .timeline-step, body.deck-edit-mode-active .slide-section.active .slide-canvas .col-tag-chip, body.deck-edit-mode-active .slide-section.active .slide-canvas .col-badge, body.deck-edit-mode-active .slide-section.active .slide-canvas .cover-badge-pill { cursor: move !important; transition: outline 0.12s, box-shadow 0.12s; }
     body.deck-edit-mode-active .slide-section.active .slide-canvas [contenteditable="true"] { cursor: text !important; }
-    body.deck-edit-mode-active .slide-section.active .slide-canvas *:hover {
-      outline: 1.5px dashed rgba(99, 102, 241, 0.45); outline-offset: 3px;
-    }
-    .deck-editable-selected {
-      outline: 1.5px solid var(--accent, #6366F1) !important;
-      outline-offset: 2px !important;
-      box-shadow: 0 0 14px rgba(99, 102, 241, 0.35) !important;
-      position: relative !important;
-    }
-    [data-deck-transform], span[data-deck-transform], a[data-deck-transform], b[data-deck-transform], i[data-deck-transform], strong[data-deck-transform], em[data-deck-transform] {
-      display: inline-block !important;
-    }
-    span.deck-editable-selected, a.deck-editable-selected, b.deck-editable-selected, i.deck-editable-selected, strong.deck-editable-selected {
-      display: inline-block !important;
-    }
+    body.deck-edit-mode-active .slide-section.active .slide-canvas *:hover { outline: 1.5px dashed rgba(99, 102, 241, 0.45); outline-offset: 3px; }
+    .deck-editable-selected { outline: 1.5px solid var(--accent, #6366F1) !important; outline-offset: 2px !important; box-shadow: 0 0 14px rgba(99, 102, 241, 0.35) !important; position: relative !important; }
+    [data-deck-transform], span[data-deck-transform], a[data-deck-transform], b[data-deck-transform], i[data-deck-transform], strong[data-deck-transform], em[data-deck-transform] { display: inline-block !important; }
+    span.deck-editable-selected, a.deck-editable-selected, b.deck-editable-selected, i.deck-editable-selected, strong.deck-editable-selected { display: inline-block !important; }
     .deck-figma-box { position: absolute; inset: -5px; pointer-events: none; z-index: 10000; }
-    .figma-handle {
-      position: absolute; width: 9px; height: 9px; background: #FFFFFF;
-      border: 1.5px solid var(--accent, #6366F1); border-radius: 2px;
-      pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 10002;
-    }
-    .figma-handle-tl { top: -5px; left: -5px; cursor: nwse-resize; }
-    .figma-handle-tr { top: -5px; right: -5px; cursor: nesw-resize; }
-    .figma-handle-bl { bottom: -5px; left: -5px; cursor: nesw-resize; }
-    .figma-handle-br { bottom: -5px; right: -5px; cursor: nwse-resize; }
-    .figma-handle-tm { top: -5px; left: calc(50% - 4.5px); cursor: ns-resize; }
-    .figma-handle-bm { bottom: -5px; left: calc(50% - 4.5px); cursor: ns-resize; }
-    .figma-handle-ml { top: calc(50% - 4.5px); left: -5px; cursor: ew-resize; }
-    .figma-handle-mr { top: calc(50% - 4.5px); right: -5px; cursor: ew-resize; }
+    .figma-handle { position: absolute; width: 9px; height: 9px; background: #FFFFFF; border: 1.5px solid var(--accent, #6366F1); border-radius: 2px; pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 10002; }
+    .figma-handle-tl { top: -5px; left: -5px; cursor: nwse-resize; } .figma-handle-tr { top: -5px; right: -5px; cursor: nesw-resize; } .figma-handle-bl { bottom: -5px; left: -5px; cursor: nesw-resize; } .figma-handle-br { bottom: -5px; right: -5px; cursor: nwse-resize; }
+    .figma-handle-tm { top: -5px; left: calc(50% - 4.5px); cursor: ns-resize; } .figma-handle-bm { bottom: -5px; left: calc(50% - 4.5px); cursor: ns-resize; } .figma-handle-ml { top: calc(50% - 4.5px); left: -5px; cursor: ew-resize; } .figma-handle-mr { top: calc(50% - 4.5px); right: -5px; cursor: ew-resize; }
     .figma-snap-guide-v { position: absolute; top: 0; bottom: 0; width: 1px; background: #EC4899; pointer-events: none; z-index: 10005; }
     .figma-snap-guide-h { position: absolute; left: 0; right: 0; height: 1px; background: #EC4899; pointer-events: none; z-index: 10005; }
     .figma-rot-stem { position: absolute; top: -22px; left: 50%; width: 1.5px; height: 18px; background: var(--accent, #6366F1); pointer-events: none; transform: translateX(-50%); }
     .figma-handle-rot { position: absolute; top: -29px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #FFFFFF; border: 1.5px solid var(--accent, #6366F1); border-radius: 50%; cursor: crosshair; pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.35); z-index: 10002; }
     .figma-handle-rot:hover { background: var(--accent, #6366F1); }
     .figma-badge-dim { position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.92); color: #F8FAFC; font-family: ui-monospace, monospace; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; pointer-events: none; display: none; z-index: 10003; }
-    .deck-editor-toolbar { position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-70px); display: flex; align-items: center; gap: 6px; background: rgba(13, 17, 23, 0.94); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 9999px; padding: 6px 14px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(99, 102, 241, 0.25); backdrop-filter: blur(24px); z-index: 999999 !important; opacity: 0; pointer-events: none; transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; max-width: 95vw; overflow-x: auto; }
+    .deck-editor-toolbar { position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-70px); display: flex; align-items: center; gap: 6px; background: rgba(13, 17, 23, 0.94); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 9999px; padding: 6px 14px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(99, 102, 241, 0.25); backdrop-filter: blur(24px); z-index: 999999 !important; opacity: 0; pointer-events: none; transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; max-width: 95vw; }
     body.deck-edit-mode-active .deck-editor-toolbar { transform: translateX(-50%) translateY(0) !important; opacity: 1 !important; pointer-events: auto !important; }
     .editor-tool-group { display: flex; align-items: center; gap: 4px; }
     .editor-tool-divider { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.14); margin: 0 2px; flex-shrink: 0; }
@@ -71,10 +34,18 @@ function getSlideDeckEditorCss() {
     .editor-tool-btn.active { background: var(--accent, #6366F1); color: #FFFFFF; border-color: var(--accent, #6366F1); box-shadow: 0 0 8px rgba(99, 102, 241, 0.5); }
     .editor-tool-select { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14); color: #F8FAFC; border-radius: 6px; padding: 3px 6px; font-size: 11.5px; font-weight: 600; height: 28px; cursor: pointer; outline: none; }
     .editor-tool-select option { background: #111827; color: #F8FAFC; }
+    .editor-color-btn { padding: 3px; border-radius: 50%; min-width: 26px; height: 26px; }
+    .editor-color-preview-circle { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.6); display: block; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    .editor-color-popover { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.96); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 10px; padding: 8px 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.7); display: none; flex-direction: column; gap: 8px; z-index: 1000000; min-width: 140px; backdrop-filter: blur(20px); }
+    .editor-color-popover.open { display: flex; }
+    .editor-color-popover-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255, 255, 255, 0.6); }
+    .editor-color-palette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .editor-color-swatch { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.4); cursor: pointer; transition: transform 0.12s, border-color 0.12s; }
     .editor-color-swatch:hover { transform: scale(1.2); border-color: #FFFFFF; }
-    .editor-badge-status { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; background: rgba(99, 102, 241, 0.2); border: 1px solid var(--accent, #6366F1); border-radius: 9999px; color: var(--accent, #6366F1); display: inline-flex; align-items: center; gap: 5px; }
-    .editor-pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; box-shadow: 0 0 6px #10B981; }
+    .editor-color-custom-row { display: flex; align-items: center; gap: 6px; }
+    .editor-color-native { width: 24px; height: 24px; border: none; border-radius: 4px; cursor: pointer; background: transparent; padding: 0; }
+    .editor-color-hex { flex: 1; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 5px; color: #FFFFFF; font-size: 11px; font-family: monospace; padding: 3px 5px; text-transform: uppercase; outline: none; width: 68px; }
+    .editor-color-hex:focus { border-color: var(--accent, #6366F1); }
     .editor-btn-save { background: #10B981 !important; color: #FFFFFF !important; border-color: #10B981 !important; font-weight: 700 !important; padding: 4px 12px !important; }
     .editor-btn-save:hover { background: #059669 !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important; }
     #dock-btn-edit.active { background: var(--accent, #6366F1); color: #FFFFFF; box-shadow: 0 0 12px var(--accent, #6366F1); }
@@ -86,8 +57,6 @@ function getSlideDeckEditorCss() {
 function getSlideDeckEditorHtml() {
   return `
     <nav class="deck-editor-toolbar" id="deck-editor-toolbar" aria-label="Toolbar Mode Edit Realtime">
-      <div class="editor-tool-group"><span class="editor-badge-status"><span class="editor-pulse-dot"></span><span>Edit Mode</span></span></div>
-      <div class="editor-tool-divider"></div>
       <div class="editor-tool-group">
         <button type="button" class="editor-tool-btn" id="editor-btn-undo" title="Undo (Ctrl+Z)" disabled><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg></button>
         <button type="button" class="editor-tool-btn" id="editor-btn-redo" title="Redo (Ctrl+Y)" disabled><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg></button>
@@ -97,28 +66,25 @@ function getSlideDeckEditorHtml() {
         <select class="editor-tool-select" id="editor-font-family" title="Ganti Font Teks">
           <option value="">Font: Asli</option><option value="'Inter', sans-serif">Inter</option><option value="'Outfit', sans-serif">Outfit</option><option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta</option><option value="'Space Grotesk', sans-serif">Space Grotesk</option><option value="'Syne', sans-serif">Syne</option><option value="'JetBrains Mono', monospace">JetBrains Mono</option><option value="Georgia, serif">Editorial Serif</option>
         </select>
+        <select class="editor-tool-select" id="editor-format-select" title="Format & Ukuran Teks"><option value="">Format: Teks</option><option value="bold">Tebal (Bold)</option><option value="italic">Miring (Italic)</option><option value="underline">Garis Bawah (Underline)</option><option value="size-up">Ukuran: A+ (Besarkan)</option><option value="size-down">Ukuran: A- (Kecilkan)</option></select>
+        <select class="editor-tool-select" id="editor-align-select" title="Perataan Teks"><option value="left">Rata Kiri</option><option value="center">Rata Tengah</option><option value="right">Rata Kanan</option><option value="justify">Rata Kanan-Kiri</option></select>
       </div>
-      <div class="editor-tool-group">
-        <button type="button" class="editor-tool-btn" id="editor-btn-size-down" title="Kecilkan Ukuran Teks">A-</button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-size-up" title="Besarkan Ukuran Teks">A+</button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-bold" title="Tebal (Bold / B)"><b>B</b></button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-italic" title="Miring (Italic / I)"><i>I</i></button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-underline" title="Garis Bawah (Underline / U)"><u>U</u></button>
+      <div class="editor-tool-divider"></div>
+      <div class="editor-tool-group" style="position: relative;">
+        <button type="button" class="editor-tool-btn editor-color-btn" id="editor-color-btn" title="Pilih Warna Elemen"><span class="editor-color-preview-circle" id="editor-color-preview" style="background: #FFFFFF;"></span></button>
+        <div class="editor-color-popover" id="editor-color-popover">
+          <div class="editor-color-popover-title">Warna Template</div>
+          <div class="editor-color-palette">
+            <span class="editor-color-swatch" data-color="#FFFFFF" style="background: #FFFFFF;" title="Putih"></span><span class="editor-color-swatch" data-color="var(--accent, #6366F1)" style="background: var(--accent, #6366F1);" title="Aksen"></span><span class="editor-color-swatch" data-color="#38BDF8" style="background: #38BDF8;" title="Biru"></span><span class="editor-color-swatch" data-color="#F59E0B" style="background: #F59E0B;" title="Kuning"></span><span class="editor-color-swatch" data-color="#F43F5E" style="background: #F43F5E;" title="Merah"></span><span class="editor-color-swatch" data-color="#10B981" style="background: #10B981;" title="Hijau"></span><span class="editor-color-swatch" data-color="#94A3B8" style="background: #94A3B8;" title="Abu-abu"></span><span class="editor-color-swatch" data-color="#0F172A" style="background: #0F172A;" title="Gelap"></span>
+          </div>
+          <div class="editor-color-custom-row">
+            <input type="color" class="editor-color-native" id="editor-color-native" value="#ffffff" title="Picker Warna">
+            <input type="text" class="editor-color-hex" id="editor-color-hex" maxlength="7" value="#FFFFFF" placeholder="#FFFFFF" title="Kode HEX">
+          </div>
+        </div>
       </div>
       <div class="editor-tool-divider"></div>
       <div class="editor-tool-group">
-        <button type="button" class="editor-tool-btn" id="editor-btn-align-left" title="Rata Kiri"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg></button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-align-center" title="Rata Tengah"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg></button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-align-right" title="Rata Kanan"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg></button>
-      </div>
-      <div class="editor-tool-divider"></div>
-      <div class="editor-tool-group" title="Warna Teks">
-        <span class="editor-color-swatch" data-color="#FFFFFF" style="background: #FFFFFF;"></span><span class="editor-color-swatch" data-color="var(--accent)" style="background: var(--accent, #6366F1);"></span><span class="editor-color-swatch" data-color="#38BDF8" style="background: #38BDF8;"></span><span class="editor-color-swatch" data-color="#F59E0B" style="background: #F59E0B;"></span><span class="editor-color-swatch" data-color="#F43F5E" style="background: #F43F5E;"></span><span class="editor-color-swatch" data-color="#94A3B8" style="background: #94A3B8;"></span>
-      </div>
-      <div class="editor-tool-divider"></div>
-      <div class="editor-tool-group">
-        <button type="button" class="editor-tool-btn" id="editor-btn-scale-down" title="Perkecil Skala (Scale -)">-10%</button>
-        <button type="button" class="editor-tool-btn" id="editor-btn-scale-up" title="Perbesar Skala (Scale +)">+10%</button>
         <button type="button" class="editor-tool-btn" id="editor-btn-rot-left" title="Putar Balik Arah Jarum Jam (↺ -15°)">↺</button>
         <button type="button" class="editor-tool-btn" id="editor-btn-rot-right" title="Putar Searah Jarum Jam (↻ +15°)">↻</button>
         <button type="button" class="editor-tool-btn" id="editor-btn-reset-transform" title="Atur Ulang Posisi & Skala">Reset</button>
@@ -209,17 +175,7 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
           if (!el || !el.parentNode || el.classList.contains('slide-section')) return;
           const box = doc.createElement('div');
           box.className = 'deck-figma-box';
-          box.innerHTML = '<div class="figma-handle figma-handle-tl" data-handle="scale" data-dir="tl"></div>' +
-            '<div class="figma-handle figma-handle-tr" data-handle="scale" data-dir="tr"></div>' +
-            '<div class="figma-handle figma-handle-bl" data-handle="scale" data-dir="bl"></div>' +
-            '<div class="figma-handle figma-handle-br" data-handle="scale" data-dir="br"></div>' +
-            '<div class="figma-handle figma-handle-tm" data-handle="resize-h" data-dir="tm" title="Tarik untuk atur tinggi"></div>' +
-            '<div class="figma-handle figma-handle-bm" data-handle="resize-h" data-dir="bm" title="Tarik untuk atur tinggi"></div>' +
-            '<div class="figma-handle figma-handle-ml" data-handle="resize-w" data-dir="ml" title="Tarik untuk atur lebar/panjang"></div>' +
-            '<div class="figma-handle figma-handle-mr" data-handle="resize-w" data-dir="mr" title="Tarik untuk atur lebar/panjang"></div>' +
-            '<div class="figma-rot-stem"></div>' +
-            '<div class="figma-handle-rot" data-handle="rotate" title="Tarik untuk memutar elemen"></div>' +
-            '<div class="figma-badge-dim"></div>';
+          box.innerHTML = '<div class="figma-handle figma-handle-tl" data-handle="scale" data-dir="tl"></div><div class="figma-handle figma-handle-tr" data-handle="scale" data-dir="tr"></div><div class="figma-handle figma-handle-bl" data-handle="scale" data-dir="bl"></div><div class="figma-handle figma-handle-br" data-handle="scale" data-dir="br"></div><div class="figma-handle figma-handle-tm" data-handle="resize-h" data-dir="tm" title="Atur tinggi"></div><div class="figma-handle figma-handle-bm" data-handle="resize-h" data-dir="bm" title="Atur tinggi"></div><div class="figma-handle figma-handle-ml" data-handle="resize-w" data-dir="ml" title="Atur lebar"></div><div class="figma-handle figma-handle-mr" data-handle="resize-w" data-dir="mr" title="Atur lebar"></div><div class="figma-rot-stem"></div><div class="figma-handle-rot" data-handle="rotate" title="Putar"></div><div class="figma-badge-dim"></div>';
           try { el.appendChild(box); } catch(err) {}
         });
       }
@@ -379,6 +335,31 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
       }
       win.toggleEditMode = toggleEditMode;
 
+      function rgbToHex(col) {
+        if (!col) return '#FFFFFF';
+        if (col.startsWith('#')) return col.length === 4 ? '#' + col[1]+col[1]+col[2]+col[2]+col[3]+col[3] : col;
+        const m = col.match(/\d+/g);
+        return (!m || m.length < 3) ? '#FFFFFF' : '#' + [m[0], m[1], m[2]].map(x => parseInt(x, 10).toString(16).padStart(2, '0')).join('');
+      }
+
+      function syncToolbarForElement(el) {
+        if (!el) return;
+        const comp = win.getComputedStyle(el);
+        const col = el.style.color || comp.color || '#FFFFFF';
+        const hex = rgbToHex(col);
+        const preview = doc.getElementById('editor-color-preview');
+        if (preview) preview.style.background = col;
+        const hexInp = doc.getElementById('editor-color-hex');
+        if (hexInp && hex) hexInp.value = hex.toUpperCase();
+        const natInp = doc.getElementById('editor-color-native');
+        if (natInp && hex && hex.length === 7) natInp.value = hex;
+        const alignSel = doc.getElementById('editor-align-select');
+        if (alignSel) {
+          const ta = el.style.textAlign || comp.textAlign || 'left';
+          alignSel.value = ['left', 'center', 'right', 'justify'].includes(ta) ? ta : 'left';
+        }
+      }
+
       function clearSelection() {
         removeFigmaBoxes();
         selectedElements.forEach(el => {
@@ -387,26 +368,21 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         });
         selectedElements.clear();
         updateSelectionCounter();
+        doc.getElementById('editor-color-popover')?.classList.remove('open');
       }
 
       function selectElement(el, isMulti = false) {
         if (!el || el === doc.body || el.closest('#deck-editor-toolbar') || el.closest('.deck-floating-dock')) return;
-
-        if (!isMulti) {
-          clearSelection();
-        }
-
+        if (!isMulti) clearSelection();
         if (selectedElements.has(el)) {
-          if (isMulti) {
-            el.classList.remove('deck-editable-selected');
-            selectedElements.delete(el);
-          }
+          if (isMulti) { el.classList.remove('deck-editable-selected'); selectedElements.delete(el); }
         } else {
           el.classList.add('deck-editable-selected');
           selectedElements.add(el);
         }
         updateFigmaHandles();
         updateSelectionCounter();
+        syncToolbarForElement(el);
       }
 
       function findEditableTarget(target) {
@@ -695,36 +671,58 @@ function initSlideDeckRealtimeEditor(targetDoc, targetWin) {
         takeSnapshot();
         notifyParentContentChanged();
       }
-      doc.getElementById('editor-btn-size-up')?.addEventListener('click', () => adjustFontSize(2));
-      doc.getElementById('editor-btn-size-down')?.addEventListener('click', () => adjustFontSize(-2));
+      doc.getElementById('editor-format-select')?.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (!val) return;
+        if (val === 'size-up') adjustFontSize(2);
+        else if (val === 'size-down') adjustFontSize(-2);
+        else if (val === 'bold') { selectedElements.forEach(el => { el.style.fontWeight = (el.style.fontWeight === '800' || el.style.fontWeight === 'bold') ? 'normal' : '800'; }); takeSnapshot(); notifyParentContentChanged(); }
+        else if (val === 'italic') { selectedElements.forEach(el => { el.style.fontStyle = el.style.fontStyle === 'italic' ? 'normal' : 'italic'; }); takeSnapshot(); notifyParentContentChanged(); }
+        else if (val === 'underline') { selectedElements.forEach(el => { el.style.textDecoration = el.style.textDecoration === 'underline' ? 'none' : 'underline'; }); takeSnapshot(); notifyParentContentChanged(); }
+        e.target.value = '';
+      });
 
-      const toggleStyle = (prop, val1, val2) => (e) => {
-        selectedElements.forEach(el => { el.style[prop] = (el.style[prop] === val1 ? val2 : val1); });
-        e.currentTarget.classList.toggle('active');
+      doc.getElementById('editor-align-select')?.addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        selectedElements.forEach(el => { el.style.textAlign = e.target.value; });
         takeSnapshot(); notifyParentContentChanged();
-      };
-      doc.getElementById('editor-btn-bold')?.addEventListener('click', toggleStyle('fontWeight', '800', 'normal'));
-      doc.getElementById('editor-btn-italic')?.addEventListener('click', toggleStyle('fontStyle', 'italic', 'normal'));
-      doc.getElementById('editor-btn-underline')?.addEventListener('click', toggleStyle('textDecoration', 'underline', 'none'));
+      });
 
-      doc.querySelectorAll('.editor-color-swatch').forEach(sw => sw.addEventListener('click', () => {
-        selectedElements.forEach(el => el.style.color = sw.getAttribute('data-color'));
+      function applyElementColor(hex) {
+        if (!hex) return;
+        selectedElements.forEach(el => { el.style.color = hex; });
+        const preview = doc.getElementById('editor-color-preview');
+        if (preview) preview.style.background = hex;
+        const hexInp = doc.getElementById('editor-color-hex');
+        if (hexInp && !hex.startsWith('var')) hexInp.value = hex.toUpperCase();
+        const natInp = doc.getElementById('editor-color-native');
+        if (natInp && hex.startsWith('#') && hex.length === 7) natInp.value = hex;
         takeSnapshot(); notifyParentContentChanged();
-      }));
+      }
 
-      ['left', 'center', 'right'].forEach(align => {
-        doc.getElementById('editor-btn-align-' + align)?.addEventListener('click', () => {
-          selectedElements.forEach(el => el.style.textAlign = align);
-          takeSnapshot(); notifyParentContentChanged();
-        });
+      doc.getElementById('editor-color-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        doc.getElementById('editor-color-popover')?.classList.toggle('open');
+      });
+
+      doc.addEventListener('click', (e) => {
+        if (!e.target.closest('#editor-color-popover') && !e.target.closest('#editor-color-btn')) {
+          doc.getElementById('editor-color-popover')?.classList.remove('open');
+        }
+      });
+
+      doc.querySelectorAll('.editor-color-swatch').forEach(sw => sw.addEventListener('click', () => applyElementColor(sw.getAttribute('data-color'))));
+      doc.getElementById('editor-color-native')?.addEventListener('input', (e) => applyElementColor(e.target.value));
+      doc.getElementById('editor-color-hex')?.addEventListener('input', (e) => {
+        let val = e.target.value.trim();
+        if (!val.startsWith('#')) val = '#' + val;
+        if (/^#[0-9A-F]{6}$/i.test(val)) applyElementColor(val);
       });
 
       const adjustTransformProp = (fn) => {
         selectedElements.forEach(el => { const t = getParsedTransform(el); fn(t); applyTransform(el, t); });
         takeSnapshot(); notifyParentContentChanged();
       };
-      doc.getElementById('editor-btn-scale-up')?.addEventListener('click', () => adjustTransformProp(t => { t.scale = Math.max(0.2, Math.min(3.0, t.scale + 0.1)); }));
-      doc.getElementById('editor-btn-scale-down')?.addEventListener('click', () => adjustTransformProp(t => { t.scale = Math.max(0.2, Math.min(3.0, t.scale - 0.1)); }));
       doc.getElementById('editor-btn-rot-left')?.addEventListener('click', () => adjustTransformProp(t => { t.rotate = (t.rotate - 15) % 360; }));
       doc.getElementById('editor-btn-rot-right')?.addEventListener('click', () => adjustTransformProp(t => { t.rotate = (t.rotate + 15) % 360; }));
 

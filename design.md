@@ -1083,6 +1083,28 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Strict Sub-800 Line Rule Compliance**:
    - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 787 baris, `canvas_manager.js` 785 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+## 🎨 52. Clean Slide Editor Toolbar Overhaul (v2.150.236)
+
+1. **Elimination of Visual Clutter**:
+   - Menghapus badge `EDIT MODE` yang mendominasi kiri toolbar untuk mengalihkan fokus pengguna sepenuhnya pada kanvas desain.
+   - Menghapus tombol `-10%` dan `+10%` (`#editor-btn-scale-down`, `#editor-btn-scale-up`).
+
+2. **Dropdown Grouping (Format & Perataan Teks)**:
+   - Format teks disatukan ke dalam `<select id="editor-format-select">`: Tebal, Miring, Garis Bawah, Ukuran A+, Ukuran A-.
+   - Perataan teks disatukan ke dalam `<select id="editor-align-select">` dengan tambahan opsi Rata Kanan-Kiri (`justify`).
+   - Penyelarasan otomatis: memilih elemen kanvas langsung menyinkronkan nilai select perataan dengan `textAlign` elemen.
+
+3. **Dynamic Active Color Circle & Full HEX Popover**:
+   - Menggantikan deretan tombol warna statis dengan 1 lingkaran indikator (`#editor-color-preview`) yang merefleksikan warna elemen terpilih secara live.
+   - Popover akrilik (`#editor-color-popover`) menyajikan:
+     - 8 warna template preset terkurasi.
+     - Picker native `<input type="color">`.
+     - Input teks HEX `#editor-color-hex` dengan sinkronisasi dua arah real-time.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 785 baris, `canvas_manager.js` 785 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+
 
 
 

@@ -467,6 +467,24 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
       - Memperbarui prompt interaktif dari `ArrowLeft / Backspace -> Prev slide` menjadi `ArrowLeft -> Prev slide`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 787 baris, `canvas_manager.js` 785 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+119. **Clean Toolbar Redesign: Dropdown Formatting, Alignment Justify, Single Active Color Circle with Popover & Custom HEX (`v2.150.236`):**
+    - **Penghapusan Badge EDIT MODE**: Menghapus lencana status "EDIT MODE" dan garis pemisah di sebelah kiri toolbar untuk tampilan kanvas yang jauh lebih bersih dan lapang.
+    - **Pengelompokan Format & Ukuran Teks ke Dropdown Select (`#editor-format-select`)**:
+      - Mengganti 5 tombol terpisah (`A-`, `A+`, `B`, `I`, `U`) menjadi satu elemen `<select class="editor-tool-select">` ringkas dengan opsi: Tebal (Bold), Miring (Italic), Garis Bawah (Underline), Ukuran: A+ (Besarkan), Ukuran: A- (Kecilkan).
+      - Nilai select otomatis di-reset (`e.target.value = ''`) setelah dieksekusi sehingga pengguna dapat memilih kembali opsi yang sama berulang kali.
+    - **Pengelompokan Perataan Teks & Tambahan Rata Kanan-Kiri / Justify (`#editor-align-select`)**:
+      - Mengganti 3 tombol ikon terpisah menjadi satu dropdown select seragam dengan opsi: Rata Kiri (`left`), Rata Tengah (`center`), Rata Kanan (`right`), dan Rata Kanan-Kiri (`justify`).
+      - Saat elemen dipilih di kanvas, dropdown secara otomatis menyesuaikan tampilan nilainya dengan `textAlign` elemen yang aktif.
+    - **Single Active Color Indicator Circle & Color Popover (`#editor-color-btn`, `#editor-color-popover`)**:
+      - Menggantikan 6 lingkaran warna statis berjejer dengan 1 lingkaran indikator aktif (`#editor-color-preview`) yang secara dinamis menampilkan warna elemen yang sedang dipilih.
+      - Mengklik lingkaran membuka popover elegan berisi:
+        1. 8 warna template preset terkurasi (Putih, Aksen, Biru, Kuning, Merah, Hijau, Abu-abu, Gelap).
+        2. Picker warna custom native `<input type="color">`.
+        3. Input teks kode HEX lengkap (`#editor-color-hex`) dengan validasi instan 6-digit heksadesimal dan sinkronisasi dua arah.
+    - **Penghapusan Tombol -10% dan +10%**: Menghilangkan tombol skala `-10%` dan `+10%` yang memenuhi toolbar, menyederhanakan toolbar ke tombol esensial (Rotasi ↺/↻, Reset Transform, Duplikat, Hapus, Simpan).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 785 baris, `canvas_manager.js` 785 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+
 
 
 
