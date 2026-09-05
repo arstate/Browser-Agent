@@ -787,5 +787,24 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Mengikuti pola zero-preload di mana aplikasi hanya dimuat saat kartu diklik oleh pengguna.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+136. **Kapsul Navigasi Terpadu, Nama Aplikasi Ringkas & Navbar Glasses Blur Murni (`v2.150.253`):**
+    - **Kebutuhan Pengguna**:
+      - Menyajikan nama web yang ringkas (contoh: Google Flow, Notes, Gemini) tanpa URL detail panjang di navbar.
+      - Menyatukan tombol reload dan tombol katalog ke dalam satu kontainer kapsul terpadu agar lebih bersih (*clean*) dan presisi.
+      - Menghapus elemen UI di navbar atas sebelah kiri (ikon dan teks judul).
+      - Menghilangkan *color fill* pada background navbar atas agar menjadi *glasses blur* murni (transparan dengan filter blur).
+    - **Implementasi Teknis**:
+      1. **Pembersihan Header Kiri (`extension/newtab.html`)**:
+         - Menghapus kontainer `.apps-header-left` (ikon aplikasi dan `#apps-active-title`), menyisakan navbar yang lapang dan terfokus pada kontrol tengah.
+      2. **Kapsul Navigasi Terpadu (`extension/newtab.html` & `extension/newtab.css`)**:
+         - Memasukkan `#btn-toggle-apps-catalog`, `#apps-current-url-text`, dan `#btn-apps-reload` ke dalam satu kontainer kapsul `#apps-url-display-pill` (`.apps-nav-capsule`).
+         - Tombol internal (`.apps-capsule-btn`) memiliki dimensi 22px x 22px dengan efek hover halus tanpa border luar ganda.
+      3. **Navbar Transparan Glasses Blur Murni (`extension/newtab.css`)**:
+         - Menetapkan `background: transparent;` dan `backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);` pada `.apps-header-bar` tanpa lapisan warna solid.
+      4. **Nama Aplikasi Ringkas (`extension/newtab.js`)**:
+         - Memperbarui `launchApp` dan `openAppsView` agar menampilkan nama aplikasi ringkas (misal: "Google Flow", "Gemini", "Notes") alih-alih URL teknis lengkap.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+
 
 

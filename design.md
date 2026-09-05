@@ -1503,5 +1503,30 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 69. Unified Navigation Capsule & Pure Glasses Blur Navbar (v2.150.253)
+
+### 💎 1. Kontainer Kapsul Terpadu (Unified Capsule)
+- **Trio In-One Container**: Menggabungkan tombol katalog (`#btn-toggle-apps-catalog`), label nama aplikasi (`#apps-current-url-text`), dan tombol muat ulang (`#btn-apps-reload`) ke dalam satu kontainer kapsul berestetika tinggi (`#apps-url-display-pill`).
+- **Inner Micro-Buttons**: Tombol internal berbentuk circular 22px x 22px dengan latar transparan dan efek hover halus saat disentuh kursor, bebas dari border ganda yang ramai.
+- **Nama Aplikasi Ringkas**: Menampilkan identitas aplikasi yang bersih (contoh: "Google Flow", "Gemini", "Notes") alih-alih URL teknis panjang.
+
+### 🪟 2. Navbar Murni Glasses Blur Tanpa Color Fill
+- **Zero Background Tint**: Menggunakan `background: transparent;` pada `.apps-header-bar` yang dipadukan dengan `backdrop-filter: blur(24px);`, menciptakan efek kaca tembus pandang murni yang mengaburkan elemen di bawahnya secara alami.
+- **Pembersihan Sisi Kiri**: Menghapus total elemen brand/title di sisi kiri navbar untuk memperkuat kesan minimalis dan modern.
+
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
+
 
 

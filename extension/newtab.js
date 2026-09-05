@@ -267,8 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentAppName = '';
         if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'flex';
         btnToggleAppsCatalog?.classList.add('active');
-        if (appsActiveTitle) appsActiveTitle.textContent = 'Aplikasi Terintegrasi';
-        if (appsCurrentUrlText) appsCurrentUrlText.textContent = 'browser-agent://apps';
+        if (appsActiveTitle) appsActiveTitle.textContent = 'Aplikasi';
+        if (appsCurrentUrlText) appsCurrentUrlText.textContent = 'Aplikasi';
         appCards.forEach(card => card.classList.remove('active'));
       }
     }
@@ -284,6 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       currentAppUrl = '';
       currentAppName = '';
+      if (appsCurrentUrlText) appsCurrentUrlText.textContent = 'Aplikasi';
       appCards.forEach(card => card.classList.remove('active'));
       updateActiveSidebarTab('home');
       chatInput?.focus();
@@ -307,7 +308,9 @@ document.addEventListener('DOMContentLoaded', () => {
     currentAppUrl = url;
     currentAppName = name;
     if (appsActiveTitle) appsActiveTitle.textContent = name;
-    if (appsCurrentUrlText) appsCurrentUrlText.textContent = url;
+    if (appsCurrentUrlText) appsCurrentUrlText.textContent = name || 'Aplikasi';
+    const pill = document.getElementById('apps-url-display-pill');
+    if (pill) pill.title = `${name || 'Aplikasi'} (${url})`;
     if (appsIframe) {
       if (forceReload || !appsIframe.src || !appsIframe.src.startsWith('http') || appsIframe.src !== url) {
         appsIframe.src = 'about:blank';

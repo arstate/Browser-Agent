@@ -7156,6 +7156,31 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.252` di `manifest.json`.
 
+---
+
+### Iterasi: Kapsul Navigasi Terpadu, Nama Aplikasi Ringkas & Navbar Glasses Blur Murni (`v2.150.253`)
+- **User Request:**
+  - "update ui gausah link detail cukup nama web misal google flow, notes, Gemini gitu aja bro trus update ui container nya itu kek jadi 1 jadi tombol refresh dan lis app berada di dalam container link biar kelihatan lebih clean dan detail trus ui yang di navbar atas kiri dihapus aja , buat background navbar atas di apps gausah ada color fill apapun jadi emang bener bener glasses blur"
+  - Uploaded Screenshots:
+    1. `uploaded_media_0_1788624107809.png`: Trio navbar terpisah dengan URL panjang.
+    2. `uploaded_media_1_1788624107809.png`: Elemen header kiri (ikon dan title) yang ingin dihapus.
+- **Solusi & Rekayasa Teknis:**
+  1. *Pembersihan Navbar Kiri (`extension/newtab.html`)*:
+     - Menghapus kontainer `.apps-header-left` beserta seluruh ikon dan judulnya.
+  2. *Kontainer Kapsul Terpadu (`extension/newtab.html` & `extension/newtab.css`)*:
+     - Mengelompokkan tombol list apps (`#btn-toggle-apps-catalog`), teks nama web (`#apps-current-url-text`), dan tombol refresh (`#btn-apps-reload`) ke dalam satu kontainer kapsul `#apps-url-display-pill` (`.apps-nav-capsule`).
+     - Mengeliminasi tombol terpisah di luar kontainer; tombol menjadi ikon internal 22px x 22px dengan hover halus.
+  3. *Nama Web Ringkas (`extension/newtab.js`)*:
+     - Menampilkan nama web ringkas (contoh: "Google Flow", "Gemini", "Notes", "AI Studio", "Meta Ads", "Aplikasi") alih-alih URL teknis panjang.
+  4. *Navbar Glasses Blur Murni (`extension/newtab.css`)*:
+     - Menghapus `background` fill gelap, diganti dengan `background: transparent;` dan `backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);`.
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_unified_capsule.js` lulus 100%.
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.253` di `manifest.json`.
+
+
 
 
 
