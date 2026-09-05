@@ -50,6 +50,7 @@ Slide decks must NEVER look visually monotonous or repetitive!
 5. **FOOTER BAR MUST MATCH TOPIC**:
    - Line 1: \`© 2026 {TOPIK MATERI / BRAND} • MATERI PRESENTASI RESMI\`
    - Line 2: \`SLIDE {X} DARI {TOTAL} • {TAG KATEGORI KONTEKSTUAL}\`
+6. **ZERO SCHEMA OR PLACEHOLDER LABELS ON CARDS**: DILARANG KERAS menyisipkan teks metadata outline atau schema tags seperti "4 STAT CARDS", "2 BALANCED SUMMARY CARDS", "PAGE NUMBER", "BADGE:", "TITLE:" ke dalam isi judul atau deskripsi kartu slide! Isi kartu harus berupa metrik nyata, data konkrit, dan wawasan analitis berbobot.
 
 ## 🎯 EXECUTIVE 16:9 PRESENTATION DECK STANDARDS
 1. **Layout & 2-Pane Architecture:**

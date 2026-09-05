@@ -1280,22 +1280,27 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 ### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
 - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+## 60. Protokol 4-Tahap Refinement Slide Deck & Zero Placeholder Schema Slop (v2.150.244)
 
+### 🎯 1. Arsitektur 4-Stage Multi-Turn Refinement (Read ➔ Plan ➔ Execute ➔ Re-Read)
+- **Stage 1 (READ)**: Tool `read_slide_deck` membaca snapshot slide eksisting (Slide 1, 2, dst) dari live DOM kanvas atau memori artefak (`getActiveDesignArtifact()`).
+- **Stage 2 (PLANNING)**: Master Agent merumuskan outline slide baru, memecah kartu konten secara proporsional, dan membersihkan seluruh label outline template.
+- **Stage 3 (EXECUTION)**: Master Agent memanggil `create_slide_deck_design` untuk merakit kembali deck 16:9 yang diperbarui.
+- **Stage 4 (POST-VERIFY RE-READ)**: Master Agent memanggil kembali `read_slide_deck` pasca-eksekusi untuk memverifikasi kebersihan visual, jumlah slide yang sesuai, dan zero template placeholder sebelum merespons ke pengguna.
 
+### 🛡️ 2. Eliminasi Total Template Placeholder Slop
+- **Schema Filter**: `isSchemaOrMetaLine` dan `isPlaceholderCard` di `slide_deck_engine.js` menapis teks penanda outline seperti `4 STAT CARDS`, `2 BALANCED SUMMARY CARDS`, `PAGE NUMBER`, `BADGE:`, `TITLE:` agar tidak pernah dirender menjadi kartu visual.
+- **Metadata Routing**: Informasi riil dari label metadata diekstrak langsung ke atribut slide (`badge`, `title`, `subtitle`, `layout`).
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318

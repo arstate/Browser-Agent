@@ -616,15 +616,29 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Pada `dblclick`, kursor teks langsung diarahkan dan direntangkan ke akhir teks via `win.getSelection()` dan `createRange()` tanpa hambatan thread dari klik sebelumnya.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 781, `design_executor.js` 792, `design_prompt.js` 190, `slide_deck_engine.js` 656, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
-
-
-
-
-
-
-
-
-
-
-
-
+127. **Protokol 4-Tahap Refinement Slide Deck (Read ➔ Plan ➔ Execute ➔ Re-Read), Tool `read_slide_deck`, & Eliminasi Total Placeholder Schema Slop (`v2.150.244`):**
+    - **Latar Belakang & Keluhan Pengguna**:
+      - Saat pengguna meminta revisi atau pemecahan halaman slide (misal: *"slide 3 dipisah jadi 2 halaman aja biar ga terlalu padet"*), hasil keluaran AI masih buruk dan berantakan:
+        1. Slide yang dihasilkan justru memuat kartu teks aneh berupa label skema template mentah (seperti *"4 STAT CARDS / 4 Stat Cards"*, *"2 BALANCED SUMMARY CARDS / 2 Balanced Summary Cards"*, *"PAGE NUMBER / Page Number 02"*, *"BADGE / Badge RINGKASAN EKSEKUTIF"*, *"TITLE / Title Rangkuman Kinerja Finansial"*).
+        2. Alur AI bekerja secara membabi buta tanpa membaca konten slide eksisting di canvas, tidak merencanakan pembagian konten dengan data riil, dan langsung mengumumkan selesai tanpa memeriksa ulang hasil render presentasi.
+    - **Akar Masalah (Root Cause)**:
+      1. *Ketiadaan Tool Pembaca Slide Aktif*: Master Agent di `AGENT_TOOLS` hanya memiliki alat pembuat `create_slide_deck_design`, tetapi TIDAK memiliki alat untuk menginspeksi isi slide yang sedang aktif di Canvas Drawer. Akibatnya, agen berhalusinasi atau mencampuradukkan prompt instruksi saat diminta memecah slide.
+      2. *Parser Markdown Membaca Header Outline sebagai Kartu*: Di `slide_deck_engine.js` (`parseMarkdownToSlides`), setiap baris berawalan `- Teks: Nilai` atau teks non-list langsung dimasukkan ke dalam array `cards`. Ketika LLM menyertakan outline penanda template seperti `**4 STAT CARDS**:` atau `- PAGE NUMBER: Page Number 02`, parser menganggapnya sebagai kartu konten resmi.
+      3. *Ketiadaan Protokol Verifikasi 4-Tahap*: Sistem prompt tidak mewajibkan AI untuk melakukan pembacaan sebelum eksekusi (*pre-read*) dan pembacaan ulang pasca-eksekusi (*post-verify re-read*).
+    - **Solusi & Implementasi Teknis**:
+      1. **Penyediaan Tool `read_slide_deck` (`extension/sidepanel.js`)**:
+         - Mendaftarkan tool `read_slide_deck` di `AGENT_TOOLS` dengan argumen `slide_numbers` (opsional array nomor slide, misal `[3]` atau `[1, 2, 3]`) dan `detail_level` (`"full"` atau `"summary"`).
+         - Mengimplementasikan runtime handler `case "read_slide_deck":` di `executeTool`: membaca live DOM dari iframe kanvas aktif atau artefak memori `getActiveDesignArtifact()`, mengekstrak data terstruktur per slide (nomor, judul, subjudul, layout, badge, jumlah kartu, dan isi kartu/metrik), dan mengembalikannya ke Master Agent.
+      2. **Pembersihan Total Schema Placeholder Slop (`extension/design/slide_deck_engine.js`)**:
+         - Menambahkan filter penapis `isSchemaOrMetaLine` dan `isPlaceholderCard` di `parseMarkdownToSlides` dan `extractSlidesFromRawHtml`.
+         - Mengidentifikasi dan mengekstrak metadata riil (misal `BADGE: ...`, `TITLE: ...`, `SUBTITLE: ...`, `LAYOUT: ...`) ke properti slide yang tepat, serta mengeliminasi baris placeholder struktural seperti `4 STAT CARDS`, `2 BALANCED SUMMARY CARDS`, dan `PAGE NUMBER` agar tidak pernah dijadikan kartu.
+      3. **Protokol 4-Tahap di System Prompt & Runtime Guard (`extension/sidepanel.js`)**:
+         - Memperbarui `buildDynamicSystemPrompt` dengan panduan wajib 4 tahap:
+           - *Tahap 1 (Read)*: Wajib membaca slide aktif via `read_slide_deck`.
+           - *Tahap 2 (Plan)*: Merumuskan rencana restrukturisasi materi tanpa teks placeholder template.
+           - *Tahap 3 (Execute)*: Memanggil `create_slide_deck_design` dengan materi yang rapi dan terencana.
+           - *Tahap 4 (Re-Read / Post-Verify)*: Membaca ulang slide hasil eksekusi untuk memastikan akurasi dan kesempurnaan visual sebelum memberikan jawaban akhir ke pengguna.
+         - Menambahkan runtime guard pada `create_slide_deck_design`: bila pengguna meminta memecah/merevisi slide yang sudah ada tetapi agen belum memanggil `read_slide_deck`, tool menghentikan eksekusi prematur dan menginstruksikan agen untuk membaca slide terlebih dahulu.
+      4. **Penyimpanan Struktur Data Slide pada Artefak (`extension/design/design_agent.js`)**:
+         - Menyematkan array `slides: finalSlides` ke objek artefak `generateSlideDeckArtifactFromOutline` untuk inspeksi instan O(1).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).

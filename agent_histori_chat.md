@@ -6923,4 +6923,39 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   5. Bump versi ke `v2.150.243` di `manifest.json`.
 
-
+### 🚀 Iterasi 525: Protokol 4-Tahap Refinement Slide Deck (Read ➔ Plan ➔ Execute ➔ Re-Read), Tool `read_slide_deck`, & Eliminasi Total Placeholder Schema Slop (v2.150.244)
+- **User Request:**
+  - "ai masih jelek bro hasilnya coba step nya itu jangan langsung eksekusi tapi read slide 1 read slide 2 dst trus planning trus execution trus read ulang slide 1 2 3 dst setelah eksekusi biar hasilnya akurat rapih maksimal dan minim mis"
+  - Uploaded screenshot menunjukkan Slide 3 memuat kartu label template mentah: `4 STAT CARDS / 4 Stat Cards`, `2 BALANCED SUMMARY CARDS / 2 Balanced Summary Cards`, `PAGE NUMBER / Page Number 02`, `BADGE / Badge RINGKASAN EKSEKUTIF`, `TITLE / Title Rangkuman Kinerja Finansial`.
+- **Akar Masalah (Root Cause):**
+  1. *Ketiadaan Tool Pembaca Slide Aktif*: Master Agent di `AGENT_TOOLS` hanya memiliki alat pembuat `create_slide_deck_design`, tetapi TIDAK memiliki alat untuk membaca slide aktif di kanvas.
+  2. *Parser Markdown Membaca Header Outline sebagai Kartu*: Di `slide_deck_engine.js` (`parseMarkdownToSlides`), setiap baris berawalan `- Teks: Nilai` atau teks bebas langsung dimasukkan ke array `cards`.
+  3. *Ketiadaan Protokol Verifikasi 4-Tahap*: Sistem prompt tidak mewajibkan AI membaca slide sebelum revisi dan membaca ulang pasca-eksekusi.
+- **Solusi & Implementasi Teknis:**
+  1. *Tool Baru `read_slide_deck` di `AGENT_TOOLS` & `executeTool` (`extension/sidepanel.js`)*:
+     - Mendukung argumen `slide_numbers` dan `detail_level`.
+     - Membaca live DOM dari iframe kanvas aktif atau objek artefak memori `getActiveDesignArtifact()`.
+  2. *Pembersihan Total Schema Placeholder Slop (`extension/design/slide_deck_engine.js`)*:
+     - Menambahkan fungsi filter `isSchemaOrMetaLine` dan `isPlaceholderCard` di `parseMarkdownToSlides` dan `extractSlidesFromRawHtml`.
+     - Mengekstrak label metadata riil ke properti slide dan membuang baris header penanda template (`4 STAT CARDS`, `PAGE NUMBER`, dll).
+  3. *Protokol 4-Tahap di System Prompt & Runtime Guard (`extension/sidepanel.js`)*:
+     - Mewajibkan urutan: Read (baca slide aktif) ➔ Plan (rancang pemecahan bebas slop) ➔ Execute (`create_slide_deck_design`) ➔ Re-Read (verifikasi ulang pasca-eksekusi).
+     - Menambahkan runtime guard pada `create_slide_deck_design` yang mencegat eksekusi jika pengguna meminta revisi/pemecahan slide tetapi agen belum memanggil `read_slide_deck`.
+  4. *Penyimpanan Array Slide Terstruktur (`extension/design/design_agent.js`)*:
+     - Menyematkan array `slides: finalSlides` pada artefak hasil generate.
+- **Verifikasi:**
+  1. Unit test `test_slide_deck_read_and_schema_filter.js` lulus 100% (3/3 test cases).
+  2. Semua unit test regresi sebelumnya lulus 100%.
+  3. Seluruh 10 file di `extension/design/` strictly `<= 800` baris:
+     - `canvas_exporter.js`: 244
+     - `canvas_manager.js`: 787
+     - `design_agent.js`: 782
+     - `design_executor.js`: 792
+     - `design_prompt.js`: 191
+     - `slide_deck_engine.js`: 724
+     - `slide_editor.js`: 798
+     - `slide_styles.js`: 737
+     - `slide_template.js`: 686
+     - `slide_themes.js`: 318
+  4. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  5. Bump versi ke `v2.150.244` di `manifest.json`.

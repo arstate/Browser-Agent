@@ -1101,12 +1101,18 @@ ATURAN KRUSIAL:
    - TAHAP 1 (ANALISIS MANDIRI): Master Agent WAJIB memeriksa tab browser aktif atau mengekstrak data tabel riil terlebih dahulu (gunakan \`browser_list_tabs\`, \`browser_switch_tab\`, \`browser_extract_table\`, \`browser_snapshot\`, \`browser_evaluate_script\`, dll). DILARANG KERAS langsung memanggil \`create_slide_deck_design\` di Step 1 tanpa mengambil data riil terlebih dahulu!
    - TAHAP 2 (PERUMUSAN PPT SLIDE BRIEF): Setelah temuan data riil terkumpul, Master Agent merumuskan brief presentasi slide-by-slide yang kaya data, metrik konkrit, dan rekomendasi taktis.
    - TAHAP 3 (DELEGASI KE MASTER DESIGN): Barulah Master Agent memanggil tool \`create_slide_deck_design({ topic, slide_count, detailed_outline_or_content, design_archetype })\` dengan menyertakan brief temuan riil tersebut. Master Design akan langsung merancang dan memperbarui slide deck 16:9 widescreen di Canvas Drawer.
+5. 📊 4-STAGE SLIDE REFINEMENT & VERIFICATION PROTOCOL (READ -> PLAN -> EXECUTE -> RE-READ):
+   Setiap kali pengguna meminta mengubah, merevisi, memecah slide (misal: "slide 3 dipisah jadi 2 halaman biar ga terlalu padet"), menambah slide, atau menata ulang slide deck:
+   - TAHAP 1 (BACA SLIDE AKTIF / READ): Master Agent WAJIB memanggil \`read_slide_deck({ slide_numbers: [...] })\` terlebih dahulu untuk membaca konten eksisting (Slide 1, Slide 2, dst) secara presisi. Dilarang keras langsung eksekusi tanpa membaca data slide terlebih dahulu!
+   - TAHAP 2 (PLANNING TERPERINCI): Susun rencana restrukturisasi materi. Tentukan judul spesifik, subjudul, dan alokasi poin untuk setiap slide baru. DILARANG KERAS menyertakan teks placeholder atau label skema seperti "4 STAT CARDS", "2 BALANCED SUMMARY CARDS", "PAGE NUMBER", "BADGE", "TITLE".
+   - TAHAP 3 (EKSEKUSI MASTER DESIGN / EXECUTE): Panggil \`create_slide_deck_design\` dengan materi lengkap yang telah direncanakan secara rapi dan proporsional.
+   - TAHAP 4 (VERIFIKASI ULANG PASCA-EKSEKUSI / RE-READ): Master Agent WAJIB memanggil kembali \`read_slide_deck\` untuk memeriksa ulang slide-slide yang baru dihasilkan (Slide 1, 2, 3, dst). Pastikan jumlah slide sesuai, pemecahan berhasil, dan tidak ada elemen placeholder slop sebelum memberikan jawaban akhir ke pengguna.
 
 === CAPABILITIES & TOOLS AVAILABLE ===
 1. 🧠 Autonomous Brain & Self-Evolution Tools: manage_personal_memory, create_autonomous_skill, update_autonomous_skill, create_autonomous_agent, edit_manual_skill, edit_manual_agent, rollback_brain_item, record_anti_pattern, save_epistemic_triplet, query_epistemic_graph, execute_jit_microtool.
 2. 🌐 Browser Automation Tools: browser_navigate, browser_snapshot, browser_click, browser_type, browser_press_key, browser_hover, browser_scroll, browser_control_media, browser_evaluate_script, browser_screenshot, browser_get_console_logs, browser_extract_table, browser_list_tabs, browser_switch_tab, browser_wait.
 3. 💻 Local PC Tools: local_read_file, local_write_file, local_list_dir, local_run_command.
-4. 🎨 AI Image & Presentation Design: generate_image(prompt, size), create_slide_deck_design(topic, slide_count, detailed_outline_or_content, design_archetype).
+4. 🎨 AI Image & Presentation Design: generate_image(prompt, size), create_slide_deck_design(topic, slide_count, detailed_outline_or_content, design_archetype), read_slide_deck(slide_numbers, detail_level).
 5. 💬 Interactive Clarification & Multi-Agent Swarm: ask_clarification, agent_subtask_analysis, summon_specialist_agent.
 6. 📱 Built-in Connected Apps & Telegram Bot Remote: configure_telegram_bot, get_telegram_bot_status, telegram_send_message.
 7. 📑 Google Workspace REST API Suite: gsuite_create_presentation, gsuite_append_slide, gsuite_create_doc, gsuite_append_doc_text, gsuite_replace_doc_content, gsuite_read_doc, gsuite_create_sheet, gsuite_append_sheet_row, gsuite_update_sheet_range, gsuite_read_sheet, gsuite_send_gmail, gsuite_search_gmail, gsuite_search_drive, gsuite_create_form, gsuite_create_calendar_event, gsuite_create_task, gsuite_search_contacts, gsuite_get_status.
@@ -1354,6 +1360,28 @@ const AGENT_TOOLS = [
           }
         },
         required: ["topic", "detailed_outline_or_content"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "read_slide_deck",
+      description: "Inspects and reads the current 16:9 presentation slide deck from the active OpenDesign Canvas Drawer. Returns structured slide-by-slide details (titles, subtitles, card items, metrics, badges, layouts, and total count). MANDATORY FOR REVISIONS & SLIDE SPLITTING: When asked to edit, split (e.g. 'slide 3 dipisah jadi 2 halaman'), refine, or check slides, you MUST call this tool first (READ), plan your changes (PLAN), execute create_slide_deck_design (EXECUTE), and call this tool again (RE-READ / POST-VERIFY) to confirm perfection.",
+      parameters: {
+        type: "object",
+        properties: {
+          slide_numbers: {
+            type: "array",
+            items: { type: "integer" },
+            description: "Optional array of 1-based slide numbers to inspect (e.g. [1, 2, 3] or [3]). If omitted or empty, all slides in the deck are read."
+          },
+          detail_level: {
+            type: "string",
+            enum: ["full", "summary"],
+            description: "Detail level: 'full' (all card texts, stats, and badges) or 'summary' (titles and layouts only). Defaults to 'full'."
+          }
+        }
       }
     }
   },
@@ -3376,11 +3404,26 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
       const userPromptText = executionContext?.userMessage || "";
       const asksAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|baca)/i.test(userPromptText);
       const pastTools = executionContext?.sessionExecutedTools || [];
-      const hasExecutedAnalysis = pastTools.some(t => t.startsWith("browser_") || t.startsWith("google_") || t === "agent_subtask_analysis" || t.startsWith("local_"));
+      const hasExecutedAnalysis = pastTools.some(t => t.startsWith("browser_") || t.startsWith("google_") || t === "agent_subtask_analysis" || t.startsWith("local_") || t === "read_slide_deck");
 
       if (asksAnalysis && !hasExecutedAnalysis && (executionContext?.currentStep <= 1 || pastTools.length === 0)) {
         return {
           error: "PROTOKOL ANALISIS BELUM SELESAI: Pengguna meminta Anda menganalisis data/iklan terlebih dahulu sebelum membuat atau memperbarui slide deck report. Silakan periksa tab aktif/dashboard Meta Ads menggunakan tool browser (misal browser_list_tabs, browser_extract_table, atau browser_snapshot), lakukan analisis menyeluruh dan dapatkan data riil, lalu panggil kembali create_slide_deck_design dengan menyertakan temuan data riil tersebut pada detailed_outline_or_content."
+        };
+      }
+
+      const hadExistingArtifact = Boolean(
+        (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact()?.html : null) ||
+        (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact?.html : null)
+      );
+
+      // 4-Stage Slide Refinement Guard:
+      // If there's an existing deck and the user requested to split/edit/reorganize slides,
+      // Master Agent MUST have executed read_slide_deck first to read existing slides before executing!
+      const asksSlideRefinement = /(?:pisah|split|pecah|edit\s+slide|ubah\s+slide|revisi\s+slide|tambah\s+slide|ganti\s+slide|rapikan\s+slide|hapus\s+slide|potong\s+slide|buang\s+slide)/i.test(userPromptText);
+      if (hadExistingArtifact && asksSlideRefinement && !pastTools.includes("read_slide_deck") && (executionContext?.currentStep <= 1 || pastTools.length === 0)) {
+        return {
+          error: "PROTOKOL 4-STAGE SLIDE BELUM TERPENUHI: Pengguna meminta memodifikasi atau memecah slide yang sudah ada. Master Agent WAJIB memanggil `read_slide_deck` terlebih dahulu untuk membaca isi eksisting (Slide 1, 2, dst), merumuskan rencana restrukturisasi materi tanpa teks placeholder template (seperti '4 STAT CARDS' / 'PAGE NUMBER'), baru kemudian memanggil create_slide_deck_design, dan memverifikasi hasilnya dengan read_slide_deck kembali."
         };
       }
 
@@ -3403,8 +3446,6 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
       if (!generateFn) {
         return { error: "Engine perancangan slide OpenDesign belum dimuat di runtime." };
       }
-
-      const hadExistingArtifact = Boolean(activeDesignArtifact && activeDesignArtifact.html);
 
       const artifact = generateFn({
         topic,
@@ -3470,6 +3511,86 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
         message: hadExistingArtifact
           ? `Slide deck report berhasil diperbarui dengan hasil analisis terkini (${artifact.slideCount} slide) di Canvas Drawer.`
           : `Presentasi 16:9 widescreen interaktif (${artifact.slideCount} slide) berhasil dirancang oleh Master Design dan langsung dibuka di Canvas Drawer. Pengguna dapat melihat pratinjau, mengedit tiap slide di mode visual, atau mengunduh PDF secara instan.`
+      };
+    }
+
+    case "read_slide_deck": {
+      let activeArt = (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact() : null) ||
+                      (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact : null) ||
+                      (typeof window !== 'undefined' ? window.__activeDesignArtifact : null);
+
+      let htmlToParse = activeArt?.html || "";
+      if (typeof document !== 'undefined') {
+        const iframe = document.getElementById("opendesign-canvas-iframe");
+        if (iframe && iframe.contentDocument && iframe.contentDocument.body && iframe.contentDocument.body.innerHTML.trim().length > 100) {
+          htmlToParse = iframe.contentDocument.documentElement.outerHTML;
+        }
+      }
+
+      if (!htmlToParse && (!activeArt || !Array.isArray(activeArt.slides) || activeArt.slides.length === 0) && typeof chrome !== 'undefined' && chrome?.storage?.local?.get) {
+        try {
+          const stored = await chrome.storage.local.get("opendesign_last_artifact");
+          if (stored?.opendesign_last_artifact) {
+            activeArt = stored.opendesign_last_artifact;
+            if (activeArt.html) htmlToParse = activeArt.html;
+          }
+        } catch (_) {}
+      }
+
+      const extractFn = (typeof extractSlidesFromRawHtml === 'function')
+        ? extractSlidesFromRawHtml
+        : (typeof window !== 'undefined' && typeof window.extractSlidesFromRawHtml === 'function' ? window.extractSlidesFromRawHtml : null);
+
+      let allSlides = [];
+      if (extractFn && htmlToParse) {
+        allSlides = extractFn(htmlToParse);
+      } else if (activeArt && Array.isArray(activeArt.slides) && activeArt.slides.length > 0) {
+        allSlides = activeArt.slides;
+      }
+
+      if (!allSlides || allSlides.length === 0) {
+        return {
+          error: "Belum ada slide deck aktif di Canvas Drawer. Silakan buat slide deck terlebih dahulu menggunakan create_slide_deck_design."
+        };
+      }
+
+      const slideNums = Array.isArray(args.slide_numbers) ? args.slide_numbers.map(n => parseInt(n, 10)).filter(n => !isNaN(n) && n > 0) : [];
+      const detail = args.detail_level || "full";
+
+      const filtered = slideNums.length > 0
+        ? allSlides.filter((s, idx) => slideNums.includes(s.index || idx + 1))
+        : allSlides;
+
+      const formattedSlides = filtered.map((s, idx) => {
+        const num = s.index || idx + 1;
+        const base = {
+          slide_number: num,
+          title: s.title || `Slide ${num}`,
+          subtitle: s.subtitle || "",
+          layout: s.layout || "split",
+          badge: s.badge || "",
+          card_count: Array.isArray(s.cards) ? s.cards.length : 0
+        };
+        if (detail === "full") {
+          base.cards = (s.cards || []).map(c => ({
+            title: c.title || "",
+            desc: c.desc || "",
+            stat: c.stat || c.metricValue || "",
+            badge: c.badge || "",
+            footer_highlight: c.footerHighlight || ""
+          }));
+          if (s.quoteText) base.quote = { text: s.quoteText, author: s.quoteAuthor || "" };
+        }
+        return base;
+      });
+
+      return {
+        status: "success",
+        deck_title: activeArt?.meta?.title || "Slide Deck 16:9",
+        total_slides: allSlides.length,
+        slides_inspected: formattedSlides.length,
+        slides: formattedSlides,
+        guidance: "Tinjau detail slide di atas. Jika ingin memecah/merevisi slide, susun rencana materi baru (bebas placeholder schema tags), lalu panggil create_slide_deck_design dan verifikasi ulang."
       };
     }
 
@@ -6287,7 +6408,7 @@ Tugas Anda:
           const isLocalTool = toolName.startsWith("local_");
           const isAnalysisTool = (toolName === "agent_subtask_analysis");
           const isClarificationTool = (toolName === "ask_clarification");
-          const isDesignTool = (toolName === "create_slide_deck_design");
+          const isDesignTool = (toolName === "create_slide_deck_design" || toolName === "read_slide_deck");
           let activeWorkerAgent = null;
 
           if (isClarificationTool) {
@@ -6329,8 +6450,10 @@ Tugas Anda:
             badgeActionName = `${toolArgs.focus || 'Analisis Data'}`;
           } else if (isClarificationTool) {
             badgeActionName = "Konfirmasi Opsi Pilihan";
-          } else if (isDesignTool) {
+          } else if (toolName === "create_slide_deck_design") {
             badgeActionName = `Merancang Slide Deck 16:9 (${toolArgs.slide_count || 10} Slide)`;
+          } else if (toolName === "read_slide_deck") {
+            badgeActionName = `Membaca Struktur Slide Deck (Audit Slide)`;
           }
 
           // Master Agent Orchestration Visibility in Tool Steps
@@ -6367,6 +6490,7 @@ Tugas Anda:
             else if (toolName.startsWith("gsuite_doc") || toolName.includes("doc")) userFriendlyAction = `Mengakses Google Docs...`;
             else if (toolName.startsWith("gsuite_sheet") || toolName.includes("sheet")) userFriendlyAction = `Mengakses Google Sheets...`;
             else if (toolName === "create_slide_deck_design") userFriendlyAction = `🎨 Merancang slide deck 16:9 di Canvas Drawer...`;
+            else if (toolName === "read_slide_deck") userFriendlyAction = `📖 Memeriksa isi slide di Canvas Drawer...`;
             else userFriendlyAction = `Menjalankan aksi (${badgeActionName})...`;
             
             const statusText = `<b>${escapeHtml(workerName)}:</b> ${userFriendlyAction} (<i>${stepStr}</i>)`;

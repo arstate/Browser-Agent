@@ -758,6 +758,7 @@ function generateSlideDeckArtifactFromOutline({
       tags: ['16:9 Deck', 'Thumbnails', 'PDF Ready', `${finalSlides.length} Slides`]
     },
     raw: detailedOutlineOrContent || deckHtml,
+    slides: finalSlides,
     slideCount: finalSlides.length
   };
 }

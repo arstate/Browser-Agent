@@ -77,22 +77,83 @@ function parseMarkdownToSlides(content, userPrompt = "") {
     let quoteText = "";
     let quoteAuthor = "";
 
+function isSchemaOrMetaLine(str) {
+  if (!str) return false;
+  const clean = str.replace(/^[-*•\d.\s]+/, "").replace(/[*_~`#]/g, "").trim().toLowerCase();
+  if (/^(?:\d+\s+)?(?:stat\s*cards?|summary\s*cards?|balanced\s*summary(?:\s*cards?)?|balanced\s*cards?|grid\s*cards?|pilar\s*cards?|cards?)\b/i.test(clean)) return true;
+  if (/^(?:page\s*number|slide\s*number|nomor\s*slide|halaman|page|slide)\s*[:=-]/i.test(clean)) return true;
+  if (/^(?:badge|kategori|tag|title|judul|subjudul|subtitle|layout|tipe)\s*[:=-]/i.test(clean)) return true;
+  return false;
+}
+
+function isPlaceholderCard(cardTitle, cardDesc) {
+  const t = (cardTitle || "").replace(/[*_~`]/g, "").trim().toLowerCase();
+  const d = (cardDesc || "").replace(/[*_~`]/g, "").trim().toLowerCase();
+  if (/^(?:\d+\s+)?(?:stat\s*cards?|summary\s*cards?|balanced\s*summary(?:\s*cards?)?|page\s*number|slide\s*number|badge|title|subtitle|subjudul|judul)$/i.test(t)) return true;
+  if (/^(?:\d+\s+)?(?:stat\s*cards?|summary\s*cards?|balanced\s*summary(?:\s*cards?)?)$/i.test(d)) return true;
+  if (/^page\s*number\s*\d+$/i.test(d)) return true;
+  if (t === d && /cards?|summary|badge|page/i.test(t)) return true;
+  return false;
+}
+
+    let slideBadge = "";
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      const cleanLine = line.replace(/^[-*•\d.\s]+/, "").replace(/[*_~`]/g, "").trim();
+      const lower = cleanLine.toLowerCase();
+
+      // Check header / metadata markers
+      if (lower.startsWith("badge:") || lower.startsWith("kategori:") || lower.startsWith("tag:")) {
+        slideBadge = cleanLine.replace(/^(?:badge|kategori|tag)[:\s-]*/i, "").trim();
+        continue;
+      }
+      if (lower.startsWith("title:") || lower.startsWith("judul:")) {
+        const extTitle = cleanLine.replace(/^(?:title|judul)[:\s-]*/i, "").trim();
+        if (extTitle && (!title || title.startsWith("Slide "))) title = extTitle;
+        continue;
+      }
+      if (lower.startsWith("subtitle:") || lower.startsWith("subjudul:")) {
+        subtitle = cleanLine.replace(/^(?:subtitle|subjudul)[:\s-]*/i, "").trim();
+        continue;
+      }
+      if (lower.startsWith("layout:") || lower.startsWith("tipe:")) {
+        explicitLayout = cleanLine.replace(/^(?:layout|tipe)[:\s-]*/i, "").trim().toLowerCase();
+        continue;
+      }
+      if (/^(?:page\s*number|slide\s*number|nomor\s*slide|halaman)\s*[:=-]/i.test(lower)) {
+        continue;
+      }
+      if (isSchemaOrMetaLine(cleanLine)) {
+        continue;
+      }
+
       if (i === 0 && (line.startsWith("#") || /^slide\s+\d+/i.test(line))) {
         title = line.replace(/^#+\s*/, "").replace(/^slide\s+\d+[:\s-]*/i, "").trim() || title;
-      } else if (!subtitle && (line.toLowerCase().startsWith("subjudul:") || line.toLowerCase().startsWith("subtitle:"))) {
-        subtitle = line.replace(/^(subjudul|subtitle)[:\s-]*/i, "").trim();
-      } else if (line.toLowerCase().startsWith("layout:") || line.toLowerCase().startsWith("tipe:")) {
-        explicitLayout = line.replace(/^(layout|tipe)[:\s-]*/i, "").trim().toLowerCase();
       } else if (line.startsWith(">") || line.startsWith("“") || line.startsWith('"')) {
         quoteText = line.replace(/^[>“"'\s]+|[”"'\s]+$/g, "").trim();
       } else if (line.startsWith("-") || line.startsWith("*") || line.startsWith("•") || /^\d+\./.test(line)) {
         const itemText = line.replace(/^[-*•\d.]+\s*/, "").trim();
         const colonIdx = itemText.indexOf(":");
         if (colonIdx > 0 && colonIdx < 40) {
-          const cardTitle = itemText.slice(0, colonIdx).replace(/\*\*/g, "").trim();
-          const cardDesc = itemText.slice(colonIdx + 1).trim();
+          const rawTitle = itemText.slice(0, colonIdx).replace(/\*\*/g, "").trim();
+          const rawDesc = itemText.slice(colonIdx + 1).trim();
+          if (isPlaceholderCard(rawTitle, rawDesc)) continue;
+
+          if (/^(?:badge|kategori|tag)$/i.test(rawTitle)) {
+            slideBadge = rawDesc.replace(/^(?:badge|kategori|tag)[:\s-]*/i, "").trim();
+            continue;
+          }
+          if (/^(?:title|judul)$/i.test(rawTitle)) {
+            if (!title || title.startsWith("Slide ")) title = rawDesc;
+            continue;
+          }
+          if (/^(?:subtitle|subjudul)$/i.test(rawTitle)) {
+            if (!subtitle) subtitle = rawDesc;
+            continue;
+          }
+
+          const cardTitle = rawTitle.replace(/^(?:badge|title|subtitle|point|poin)\s+/i, "").trim() || rawTitle;
+          const cardDesc = rawDesc.replace(/^(?:badge|title|subtitle)\s+/i, "").trim() || rawDesc;
           const statMatch = cardTitle.match(/^(\d+(?:[.,]\d+)?%?|\d+x|\d+\s*(?:jam|hari|bln|thn))/i) || cardDesc.match(/^(\d+(?:[.,]\d+)?%?|\d+x)/i);
           cards.push({
             badge: `POIN 0${cards.length + 1} // ANALISIS`,
@@ -103,6 +164,7 @@ function parseMarkdownToSlides(content, userPrompt = "") {
             footerHighlight: cardTitle.toUpperCase().slice(0, 32)
           });
         } else {
+          if (isSchemaOrMetaLine(itemText)) continue;
           cards.push({
             badge: `POIN 0${cards.length + 1} // ANALISIS`,
             title: itemText.slice(0, 32),
@@ -113,6 +175,7 @@ function parseMarkdownToSlides(content, userPrompt = "") {
           });
         }
       } else if (line.length > 0 && !line.startsWith("<design_meta>") && !line.startsWith("```")) {
+        if (isSchemaOrMetaLine(line)) continue;
         if (!subtitle && cards.length === 0) {
           subtitle = line;
         } else {
@@ -200,6 +263,7 @@ function parseMarkdownToSlides(content, userPrompt = "") {
       title,
       subtitle,
       layout,
+      badge: slideBadge || "",
       quoteText,
       quoteAuthor,
       cards,
@@ -293,6 +357,9 @@ function extractSlidesFromRawHtml(html) {
               const statEl = col.querySelector(".metric-val, .stat");
 
               const cTitle = titleNode ? titleNode.textContent.trim() : `Poin 0${cIdx + 1}`;
+              const cDesc = descEl ? descEl.textContent.trim() : "";
+              if (isPlaceholderCard(cTitle, cDesc)) return null;
+
               let rawHl = hlEl ? hlEl.textContent.trim() : cTitle.slice(0, 24).toUpperCase();
               if (/"DJ" → JADI|TERWUJUD & SELESAI/i.test(rawHl)) {
                 rawHl = cTitle.slice(0, 24).toUpperCase();
@@ -305,17 +372,18 @@ function extractSlidesFromRawHtml(html) {
               return {
                 badge: rawBadge,
                 title: cTitle,
-                desc: descEl ? descEl.textContent.trim() : "",
+                desc: cDesc,
                 stat: statEl ? statEl.textContent.trim() : `0${cIdx + 1}`,
                 metricValue: statEl ? statEl.textContent.trim() : `0${cIdx + 1}`,
                 footerHighlight: rawHl
               };
-            });
+            }).filter(Boolean);
           } else {
             const h3s = Array.from(el.querySelectorAll("h3"));
             cards = h3s.map((h, cIdx) => {
               const cTitle = h.textContent.trim();
               const nextP = h.nextElementSibling && h.nextElementSibling.tagName.toLowerCase() === "p" ? h.nextElementSibling.textContent.trim() : "";
+              if (isPlaceholderCard(cTitle, nextP)) return null;
               return {
                 badge: `POIN 0${cIdx + 1} // ANALISIS`,
                 title: cTitle,
@@ -324,7 +392,7 @@ function extractSlidesFromRawHtml(html) {
                 metricValue: `0${cIdx + 1}`,
                 footerHighlight: cTitle.slice(0, 24).toUpperCase()
               };
-            });
+            }).filter(Boolean);
           }
 
           if (!layout) {
