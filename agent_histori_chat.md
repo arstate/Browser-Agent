@@ -5994,6 +5994,18 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Kompilasi binary Rust release `cargo build --release` selesai dan binary `host/browser_agent_host` terpasang.
   5. Bump versi manifest ke `v2.150.209`.
 
+### Iterasi 491 (v2.150.210) - 2026-09-05
+- **User Request:**
+  "ini gaperlu ada bro uinya jadi langsung aja ui teks nya PDF slide deck" (dengan screenshot kotak merah pada badge "VEKTOR 16:9" di menu dropup export).
+- **Analisis & Solusi:**
+  1. *Hapus Badge Vektor 16:9 (`slide_template.js`)*: Menghilangkan elemen badge `<span class="export-item-badge">Vektor 16:9</span>` dari tombol `#dock-export-pdf-item` pada menu dropup export presentasi.
+  2. *Langsung Teks "PDF slide deck" (`slide_template.js`)*: Mengubah label tombol menjadi `<span class="export-item-label">PDF slide deck</span>` berdampingan dengan ikon SVG dokumen PDF tanpa badge tambahan.
+  3. *Sub-800 Line Rule Compliance*: `slide_template.js` terjaga pada 412 baris (ketat <= 800 baris). Seluruh 9 file modul di `extension/design/` patuh aturan batasan baris kode.
+- **Verifikasi:**
+  1. Validasi sintaks `node -c extension/design/*.js` lolos 100% tanpa error.
+  2. Bump versi manifest ke `v2.150.210`.
+
+
 
 
 

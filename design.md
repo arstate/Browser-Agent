@@ -549,6 +549,14 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Menambahkan `box-sizing: border-box !important;` pada `.slide-canvas` sehingga kanvas slide menyentuh batas 16in x 9in secara flush dengan padding internal asli (`36px 48px`), identik 100% dengan tampilan preview canvas di layar tanpa margin kosong/zoom out berlebih.
    - Sinkronisasi CSS paginasi cetak pada `slide_styles.js`, `canvas_exporter.js`, `native_host.py`, dan binary Rust Host `browser_agent_host`.
 
+## 🚀 26. Clean Floating Dock PDF Slide Deck Menu Item UI (v2.150.210)
+
+1. **Clean Minimalist Export Menu Item**:
+   - Menghapus badge hijau `Vektor 16:9` (`.export-item-badge`) pada item ekspor PDF di menu dropup floating dock (`.dock-export-menu`).
+   - Memperbarui label item menjadi langsung dan bersih: `"PDF slide deck"` (`.export-item-label`).
+   - Mempertahankan integrasi RPC ekspor PDF di latar belakang via headless Chrome dan pintasan keyboard `E` serta `P`.
+
+
 
 
 
