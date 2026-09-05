@@ -6734,6 +6734,30 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Verifikasi baris memastikan seluruh file `<= 790` baris.
   4. Bump versi manifest ke `v2.150.236`.
 
+### 🚀 Iterasi 518: Preservasi Posisi Scroll Chat saat Keluar Mode Kanvas & Tombol Floating Gulir ke Chat Terbaru
+- **Masalah Pengguna:**
+  - Saat keluar dari mode kanvas slide PDF, posisi ruang obrolan mengulang kembali dari posisi paling atas halaman (0, 0) sehingga pengguna harus menggulir ulang setiap kali keluar kanvas. Pengguna juga meminta penambahan tombol panah ke bawah mengambang tepat di atas bilah input prompt yang otomatis muncul saat chat room digulir ke atas untuk langsung melompat ke chat terbaru di bagian paling bawah.
+- **Solusi & Implementasi Teknis:**
+  1. *Preservasi Posisi Scroll Chat saat Buka & Tutup Kanvas (`canvas_manager.js`)*:
+     - Pada `openOpenDesignCanvas()`: posisi vertikal fullscreen disimpan ke `window.__savedChatScrollY`, dan kontainer split `.fullscreen-chat-main` otomatis digulirkan ke pesan terbawah (`scrollTop = scrollHeight`).
+     - Pada `closeOpenDesignCanvas()`: sistem mendeteksi apakah posisi pengguna berada di dekat bawah (`isNearBottom`) atau mencatat elemen kartu/pesan terdekat (`anchorMsg`).
+     - Setelah kelas `canvas-active` dilepas, jika berada di bawah maka memicu `forceScrollChatToBottom()`. Jika sedang membaca di atas, posisi dipulihkan secara instan ke elemen jangkar (`anchorMsg.scrollIntoView({ block: 'center' })`) atau `window.scrollTo({ top: window.__savedChatScrollY })`, mencegah scroll reset ke atas layar.
+  2. *Tombol Floating Gulir ke Bawah (`#btn-scroll-to-bottom`)*:
+     - Menambahkan markup tombol di dalam `#chat-input-container` pada `newtab.html` dan `sidepanel.html` dengan ikon SVG panah ke bawah.
+     - Penataan CSS modern: lingkaran akrilik 34x34px dengan efek blur, mengambang di `top: -42px; left: 50%; transform: translateX(-50%)`, dengan transisi highlight neon lime `#CEF128` saat disentuh kursor.
+     - Tersembunyi saat layar awal welcome screen (`body:not(.has-messages)`) atau saat pengguna berada di bagian bawah.
+  3. *Deteksi Gulir Adaptif & Scroll Halus (`sidepanel.js`)*:
+     - Menambahkan fungsi `initScrollToBottomButton()` yang mendengarkan event scroll pada window, `#chat-messages`, dan `.fullscreen-chat-main`.
+     - Mengaktifkan kelas `.visible` saat jarak ke batas bawah melebihi 120-140px.
+     - Menghubungkan klik tombol dengan `scrollToBottom(true)`, yang diperluas untuk mendukung scrolling pada `#chat-messages`, `.fullscreen-chat-main`, dan window.
+  4. *Strict Sub-800 Line Rule Compliance*:
+     - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js`: 785 baris, `canvas_manager.js`: 796 baris, `slide_styles.js`: 790 baris, `slide_template.js`: 782 baris, `design_executor.js`: 776 baris, `design_agent.js`: 626 baris, `slide_deck_engine.js`: 506 baris, `slide_themes.js`: 266 baris, `canvas_exporter.js`: 244 baris, `design_prompt.js`: 183 baris).
+- **Verifikasi:**
+  1. Unit test `test_chat_scroll_and_button.js` memvalidasi markup tombol, aturan styling & visibilitas CSS, logika wiring event listener di `sidepanel.js`, logika preservasi scroll di `canvas_manager.js`, serta 5 skenario emulasi matematis scroll NewTab & Canvas Split.
+  2. Node syntax check `node -c extension/*.js extension/design/*.js` lolos 100% tanpa error.
+  3. Verifikasi jumlah baris memastikan seluruh file design `<= 796` baris.
+  4. Bump versi manifest ke `v2.150.237`.
+
 
 
 

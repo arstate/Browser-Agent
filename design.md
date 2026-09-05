@@ -1104,6 +1104,29 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Strict Sub-800 Line Rule Compliance**:
    - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 785 baris, `canvas_manager.js` 785 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+## 🚀 53. Chat Scroll Retention on Canvas Exit & Floating Scroll to Bottom Button (v2.150.237)
+
+1. **Chat Scroll Position Restoration on Canvas Exit (`canvas_manager.js`)**:
+   - **Problem**: Saat keluar dari mode kanvas slide PDF (`closeOpenDesignCanvas`), tata letak jendela beralih kembali ke layar penuh NewTab dan posisi scroll ruang obrolan kerap ter-reset ke koordinat `0, 0` (paling atas), memaksa pengguna menggulir ulang ke bawah.
+   - **Solusi**:
+     - Saat kanvas dibuka (`openOpenDesignCanvas`), koordinat `window.scrollY` disimpan ke `window.__savedChatScrollY`, dan kontainer split `.fullscreen-chat-main` otomatis digulirkan ke pesan terbaru (`scrollTop = scrollHeight`).
+     - Saat kanvas ditutup (`closeOpenDesignCanvas`), sistem memeriksa apakah pengguna berada di dekat bagian bawah (`isNearBottom`) atau berada di posisi tengah riwayat pesan (`anchorMsg`).
+     - Jika pengguna berada di bawah, `forceScrollChatToBottom()` dipanggil via `requestAnimationFrame`. Jika pengguna sedang membaca pesan lampau di atas, posisi dipulihkan secara instan ke elemen jangkar (`anchorMsg.scrollIntoView({ block: 'center', behavior: 'instant' })`) atau `window.scrollTo({ top: window.__savedChatScrollY })`.
+
+2. **Floating "Scroll to Bottom" Button (`#btn-scroll-to-bottom`)**:
+   - **Desain & Penempatan**:
+     - Ditempatkan mengambang tepat di atas bilah input prompt (`#chat-input-container`), terpusat horizontal (`left: 50%; transform: translateX(-50%)`).
+     - Berbentuk lingkaran akrilik modern 34x34px dengan efek blur kaca, border halus, dan transisi neon lime `#CEF128` saat di-hover.
+   - **Logika Visibilitas Adaptif**:
+     - Tersembunyi saat posisi chat berada di bagian bawah atau pada halaman selamat datang awal (`body:not(.has-messages)`).
+     - Otomatis muncul dengan animasi fade-up (`.visible`) begitu pengguna menggulir ke atas (jarak ke bawah > 120-140px) pada mode NewTab fullscreen, kanvas split pane (`.fullscreen-chat-main`), maupun panel samping SidePanel (`#chat-messages`).
+   - **Aksi Cepat**:
+     - Mengklik tombol secara instan memicu `scrollToBottom(true)`, mengalirkan tampilan obrolan dengan mulus (*smooth scroll*) ke pesan paling akhir.
+
+3. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 785 baris, `canvas_manager.js` 796 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
+
 
 
 

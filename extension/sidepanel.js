@@ -9184,7 +9184,16 @@ function scrollToBottom(smooth = false) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
-  // 2. Scroll window / body / html (Crucial for Full-Screen NewTab mode)
+  // 2. Scroll .fullscreen-chat-main (Canvas split view mode)
+  const fullscreenChatMain = document.querySelector('.fullscreen-chat-main');
+  if (fullscreenChatMain) {
+    fullscreenChatMain.scrollTo({
+      top: fullscreenChatMain.scrollHeight + 1000,
+      behavior: smooth ? 'smooth' : 'auto'
+    });
+  }
+
+  // 3. Scroll window / body / html (Crucial for Full-Screen NewTab mode)
   try {
     const scrollTarget = Math.max(
       document.body.scrollHeight || 0,
@@ -11820,6 +11829,68 @@ function initReverseInfiniteScroll() {
   }
 }
 
+function initScrollToBottomButton() {
+  const btn = document.getElementById('btn-scroll-to-bottom');
+  if (!btn || btn.dataset.boundScrollBtn === 'true') return;
+  btn.dataset.boundScrollBtn = 'true';
+
+  const checkScroll = () => {
+    if (!document.body.classList.contains('has-messages')) {
+      btn.classList.remove('visible');
+      return;
+    }
+
+    let isScrolledUp = false;
+    const fullscreenChat = document.querySelector('.fullscreen-chat-main');
+    const isCanvasActive = document.body.classList.contains('canvas-active');
+
+    if (isCanvasActive && fullscreenChat) {
+      const scrollGap = fullscreenChat.scrollHeight - fullscreenChat.clientHeight - fullscreenChat.scrollTop;
+      if (scrollGap > 120) {
+        isScrolledUp = true;
+      }
+    } else if (chatMessages && (chatMessages.scrollHeight - chatMessages.clientHeight > 20) && window.getComputedStyle(chatMessages).overflowY !== 'visible') {
+      const scrollGap = chatMessages.scrollHeight - chatMessages.clientHeight - chatMessages.scrollTop;
+      if (scrollGap > 120) {
+        isScrolledUp = true;
+      }
+    } else {
+      const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      const scrollHeight = Math.max(document.body.scrollHeight || 0, document.documentElement.scrollHeight || 0);
+      const clientHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      const scrollGap = scrollHeight - clientHeight - scrollY;
+      if (scrollGap > 140) {
+        isScrolledUp = true;
+      }
+    }
+
+    if (isScrolledUp) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  };
+
+  window.addEventListener('scroll', checkScroll, { passive: true });
+  if (chatMessages) {
+    chatMessages.addEventListener('scroll', checkScroll, { passive: true });
+  }
+  document.addEventListener('scroll', (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains('fullscreen-chat-main')) {
+      checkScroll();
+    }
+  }, { capture: true, passive: true });
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    scrollToBottom(true);
+    btn.classList.remove('visible');
+  });
+
+  window.updateScrollToBottomButtonVisibility = checkScroll;
+}
+
 async function resumeSession(sessionId) {
   if (isExecuting) {
     cancelExecution();
@@ -14432,6 +14503,7 @@ async function bootstrap() {
   updateMcpStatus();
   updateHeaderChatTitle();
   initReverseInfiniteScroll();
+  initScrollToBottomButton();
 
   // Auto-restore last active session logic:
   // For full-screen new tab: brand new tabs (Ctrl+T or + button) MUST stay on the Welcome Screen!

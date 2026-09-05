@@ -484,6 +484,20 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
     - **Penghapusan Tombol -10% dan +10%**: Menghilangkan tombol skala `-10%` dan `+10%` yang memenuhi toolbar, menyederhanakan toolbar ke tombol esensial (Rotasi ↺/↻, Reset Transform, Duplikat, Hapus, Simpan).
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 785 baris, `canvas_manager.js` 785 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
 
+120. **Preservasi Posisi Scroll Chat saat Keluar Mode Kanvas & Tombol Floating Gulir ke Chat Terbaru (`v2.150.237`):**
+    - **Preservasi Posisi Scroll Chat saat Keluar Mode Kanvas (`canvas_manager.js`)**:
+      - Menyelesaikan masalah posisi chat yang kembali ke paling atas saat keluar dari mode pratinjau kanvas slide PDF (`closeOpenDesignCanvas()`).
+      - Saat membuka kanvas (`openOpenDesignCanvas()`), posisi scroll layar penuh disimpan ke `window.__savedChatScrollY`, dan kontainer `.fullscreen-chat-main` otomatis digulirkan ke pesan terbawah.
+      - Saat menutup kanvas (`closeOpenDesignCanvas()`), sistem mendeteksi apakah posisi pembacaan berada di bagian bawah (`isNearBottom`) atau mengidentifikasi elemen pesan/kartu terdekat (`anchorMsg`).
+      - Jika di bagian bawah, sistem memicu `forceScrollChatToBottom()`. Jika pengguna sedang membaca riwayat di atas, posisi dipulihkan secara instan ke pesan terkait (`anchorMsg.scrollIntoView()`) atau posisi tersimpan (`window.scrollTo({ top: window.__savedChatScrollY })`), tanpa mereset ke paling atas halaman.
+    - **Tombol Floating Gulir ke Chat Terbaru (`#btn-scroll-to-bottom`)**:
+      - Menambahkan tombol panah ke bawah mengambang (`.btn-scroll-to-bottom`) tepat di atas wadah prompt input (`#chat-input-container`) pada `newtab.html` dan `sidepanel.html`.
+      - Tombol memiliki desain modern melingkar akrilik (34x34px) dengan warna neon lime `#CEF128` saat di-hover, dan terpusat horizontal tepat di atas input prompt.
+      - Secara otomatis muncul (`.visible`) saat pengguna menggulir ke atas (jarak ke bawah > 120-140px) pada mode fullscreen NewTab, panel split kanvas, maupun drawer SidePanel.
+      - Tersembunyi sepenuhnya saat berada di paling bawah atau saat layar selamat datang bersih (`body:not(.has-messages)`).
+      - Mengklik tombol secara instan melakukan *smooth scrolling* ke pesan paling baru di bagian paling bawah.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 modul di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_editor.js` 785 baris, `canvas_manager.js` 796 baris, `slide_styles.js` 790 baris, `slide_template.js` 782 baris, `design_executor.js` 776 baris, `design_agent.js` 626 baris, `slide_deck_engine.js` 506 baris, `slide_themes.js` 266 baris, `canvas_exporter.js` 244 baris, `design_prompt.js` 183 baris).
+
 
 
 

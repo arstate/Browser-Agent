@@ -529,8 +529,11 @@ function openOpenDesignCanvas(artifact) {
   const canvasPane = document.getElementById('opendesign-canvas-pane');
   if (!canvasPane) return;
 
+  window.__savedChatScrollY = window.scrollY || document.documentElement.scrollTop || 0;
   document.body.classList.add('canvas-active');
   canvasPane.style.display = 'flex';
+  const chatMain = document.querySelector('.fullscreen-chat-main');
+  if (chatMain) setTimeout(() => { chatMain.scrollTop = chatMain.scrollHeight; }, 60);
 
   // 1. Set Header
   const titleEl = document.getElementById('canvas-design-title');
@@ -540,9 +543,7 @@ function openOpenDesignCanvas(artifact) {
   const iframe = document.getElementById('opendesign-preview-frame');
   if (iframe) {
     iframe.srcdoc = artifact.html;
-    iframe.onload = () => {
-      attachSlideDeckController(iframe);
-    };
+    iframe.onload = () => attachSlideDeckController(iframe);
     setTimeout(() => attachSlideDeckController(iframe), 50);
     setTimeout(() => attachSlideDeckController(iframe), 250);
   }
@@ -550,36 +551,46 @@ function openOpenDesignCanvas(artifact) {
   // 3. Set Code tab
   const codeDisplay = document.getElementById('canvas-code-display');
   const codeLangLabel = document.getElementById('canvas-code-lang-label');
-  if (codeDisplay) {
-    codeDisplay.textContent = artifact.html;
-  }
-  if (codeLangLabel) {
-    codeLangLabel.textContent = `index.html (HTML5 Standalone • ${(artifact.html.length / 1024).toFixed(1)} KB)`;
-  }
+  if (codeDisplay) codeDisplay.textContent = artifact.html;
+  if (codeLangLabel) codeLangLabel.textContent = `index.html (HTML5 Standalone • ${(artifact.html.length / 1024).toFixed(1)} KB)`;
 
   // 4. Generate & Populate Files Tab
   updateCanvasVirtualFiles(artifact);
-
-  // Reset to preview tab
   switchCanvasTab('preview');
   setCanvasViewport('responsive');
-
-  // Trigger live background Anti-Slop linter
-  if (artifact.html) {
-    runCanvasAutoLint(artifact.html);
-  }
-
-  // Trigger smooth resize/reflow
+  if (artifact.html) runCanvasAutoLint(artifact.html);
   window.dispatchEvent(new Event('resize'));
 }
 
 function closeOpenDesignCanvas() {
   try { sessionStorage.removeItem('canvas_was_open'); } catch (_) {}
+  const chatMain = document.querySelector('.fullscreen-chat-main');
+  let anchorMsg = null, isNearBottom = true;
+  if (chatMain) {
+    isNearBottom = (chatMain.scrollHeight - chatMain.clientHeight - chatMain.scrollTop) < 200;
+    const msgs = Array.from(chatMain.querySelectorAll('.message, .artifact-card'));
+    const cRect = chatMain.getBoundingClientRect();
+    for (const m of msgs) {
+      const r = m.getBoundingClientRect();
+      if (r.top >= cRect.top - 20 && r.bottom <= cRect.bottom + 80) { anchorMsg = m; break; }
+    }
+  }
   document.body.classList.remove('canvas-active');
   const canvasPane = document.getElementById('opendesign-canvas-pane');
   if (canvasPane) { canvasPane.style.display = 'none'; canvasPane.classList.remove('is-expanded'); }
   window.dispatchEvent(new Event('resize'));
   if (chatInput) chatInput.focus();
+  requestAnimationFrame(() => {
+    if (isNearBottom) {
+      if (typeof forceScrollChatToBottom === 'function') forceScrollChatToBottom();
+      else if (typeof scrollToBottom === 'function') scrollToBottom(false);
+      else window.scrollTo(0, document.body.scrollHeight || 99999);
+    } else if (anchorMsg) {
+      anchorMsg.scrollIntoView({ block: 'center', behavior: 'instant' });
+    } else if (window.__savedChatScrollY > 0) {
+      window.scrollTo({ top: window.__savedChatScrollY, behavior: 'instant' });
+    }
+  });
 }
 
 function switchCanvasTab(tabName) {
