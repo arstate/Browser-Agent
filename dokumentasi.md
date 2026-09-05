@@ -805,6 +805,21 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Memperbarui `launchApp` dan `openAppsView` agar menampilkan nama aplikasi ringkas (misal: "Google Flow", "Gemini", "Notes") alih-alih URL teknis lengkap.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+137. **Navbar Melayang Transparan macOS Frosted Glass & Full-Height Webview (`v2.150.254`):**
+    - **Kebutuhan Pengguna**:
+      - Mengeliminasi potongan garis hitam/gap di bagian paling atas website ketika website dimuat.
+      - Menjadikan navbar melayang (*floating*) secara transparan dengan efek frosted glass blur seperti pada macOS sehingga bagian teratas website tampak tembus dan mengalir mulus hingga tepi atas layar tanpa terpotong.
+    - **Implementasi Teknis**:
+      1. **Full-Height Iframe Viewport (`extension/newtab.css`)**:
+         - Mengubah layout `.fullscreen-apps-overlay` menjadi `display: block;` dan `.apps-overlay-body` menjadi `position: absolute; inset: 0; width: 100%; height: 100%;`.
+         - Memastikan iframe `#apps-embedded-iframe` menempati seluruh ruang layar dari koordinat (0,0) hingga dasar tanpa margin-top atau kompensasi tinggi.
+      2. **Floating Frosted Glass Navbar (`extension/newtab.css`)**:
+         - Mengubah `.apps-header-bar` menjadi `position: absolute; top: 0; left: 0; right: 0; height: 42px; z-index: 50;`.
+         - Menerapkan `background: rgba(12, 12, 16, 0.15); backdrop-filter: blur(28px) saturate(190%); -webkit-backdrop-filter: blur(28px) saturate(190%);` dan `border-bottom: 1px solid rgba(255, 255, 255, 0.04);`.
+         - Memasang `pointer-events: none;` pada `.apps-header-bar` dan `pointer-events: auto;` pada `.apps-header-center` agar area kosong di bilah atas tidak menghalangi klik pada tombol situs web di bawahnya.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 787, `design_agent.js` 782, `design_executor.js` 792, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+
+
 
 
 

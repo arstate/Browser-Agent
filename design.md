@@ -1527,6 +1527,31 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 70. Floating Frosted Glass Navbar & Full-Height Webview Architecture (v2.150.254)
+
+### 🌊 1. Zero-Cut Full-Height Webview Architecture
+- **Eliminasi Pemotongan Atas**: Mengubah `.fullscreen-apps-overlay` menjadi `display: block` dan `.apps-overlay-body` menjadi `position: absolute; inset: 0; width: 100%; height: 100%;`.
+- **Iframe Menyeluruh**: Webview iframe dimuat mulai dari titik koordinat paling atas `y: 0`, mengalirkan visual header, hero banner, dan konten situs web secara utuh ke seluruh layar tanpa terhalang sekat hitam 38px.
+
+### 🪟 2. macOS-Style Floating Frosted Glass
+- **Floating Overlay**: `.apps-header-bar` melayang secara absolut (`position: absolute; top: 0; left: 0; right: 0; height: 42px; z-index: 50;`) tepat di atas situs web yang sedang aktif.
+- **Glass Acrylic Backdrop**: Menggunakan `background: rgba(12, 12, 16, 0.15); backdrop-filter: blur(28px) saturate(190%);` yang mengaburkan elemen situs web di bawahnya secara natural seperti Safari di macOS.
+- **Click-Through Usability**: Menerapkan `pointer-events: none` pada area kosong bilah navbar dan `pointer-events: auto` pada kapsul navigasi tengah, menjamin pengguna tetap dapat mengeklik tombol atau navigasi website di sudut kiri/kanan atas secara bebas.
+
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 787
+  - `design_agent.js`: 782
+  - `design_executor.js`: 792
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
+
 
 
 

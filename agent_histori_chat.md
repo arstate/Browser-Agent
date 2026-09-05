@@ -7180,6 +7180,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.253` di `manifest.json`.
 
+---
+
+### Iterasi: Navbar Melayang Transparan macOS Frosted Glass & Full-Height Webview (`v2.150.254`)
+- **User Request:**
+  - "masih ada fill navbar atas buat blur full transparant jadi kalau pas di posisi bagian atas website itu kek efek blur glass full transparant kek di mac gitu jadi biar ga keliatan potongan bagian paling atas website"
+  - Uploaded Screenshot: Menampilkan potongan garis hitam tebal di atas situs web Google Flow karena navbar flex-column memotong viewport iframe.
+- **Solusi & Rekayasa Teknis:**
+  1. *Full-Height Iframe Viewport*:
+     - `extension/newtab.css`: Mengubah layout `.fullscreen-apps-overlay` menjadi `display: block` dan `.apps-overlay-body` menjadi `position: absolute; inset: 0; width: 100%; height: 100%;`.
+     - Iframe webview kini menempati 100% tinggi layar dari koordinat (0,0), mengalirkan seluruh visual situs web di bawah navbar tanpa pemotongan hitam 38px.
+  2. *macOS-Style Floating Frosted Glass Overlay*:
+     - `extension/newtab.css`: `.apps-header-bar` melayang absolut di atas iframe (`position: absolute; top: 0; left: 0; right: 0; height: 42px; z-index: 50;`).
+     - Latar kaca akrilik: `background: rgba(12, 12, 16, 0.15); backdrop-filter: blur(28px) saturate(190%); border-bottom: 1px solid rgba(255, 255, 255, 0.04);`.
+     - `pointer-events: none` pada bar dan `pointer-events: auto` pada kapsul tengah agar interaksi klik pada webview tidak terhalang.
+- **Verifikasi:**
+  1. Unit test `test_apps_hub_floating_frosted_navbar.js` lulus 100%.
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.254` di `manifest.json`.
+
+
 
 
 
