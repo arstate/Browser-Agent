@@ -973,4 +973,39 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menyesuaikan event handler Escape key agar tidak menutup halaman utama Apps ke homescreen.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh file di `extension/apps-integration/` (`apps_manager.js` 293 baris) dan 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+146. **Perbaikan UI Thinking Dropup Menu & Harmonisasi Desain Dark Luxury (`v2.150.263`):**
+    - **Kebutuhan Pengguna**:
+      - Memperbaiki bug tampilan menu dropup pada pilihan intensitas penalaran (Thinking Level: Low, Medium, High, Xhigh, Extreme) yang rusak/unrendered menjadi teks horizontal melayang tanpa background container dan tanpa styling.
+      - Menyelaraskan desain dropup thinking agar identik dengan dropup pilihan mode agent (`.chat-mode-dropup-menu`).
+    - **Akar Masalah (Root Cause Analysis)**:
+      1. **CSS Selector Scope Mismatch**:
+         - Kontainer dropup `.thinking-level-dropup-menu` sebelumnya hanya didefinisikan properti lengkapnya di bawah selector spesifik `.chat-input-header-right .thinking-level-dropup-menu`.
+         - Namun, wrapper `#thinking-level-dropup-wrapper` ditempatkan di dalam `.chat-input-header-left` (bersanding dengan tombol Agent Mode).
+         - Aturan CSS untuk `.chat-input-header-left .thinking-level-dropup-menu` hanya menyetel `left: 0; right: auto;` tanpa mewarisi styling background frosted glass, border, border-radius, padding, box-shadow, maupun `flex-direction: column`.
+         - Saat JavaScript membuka menu via `style.display = 'flex'`, kontainer menggunakan flex row bawaan tanpa styling apapun sehingga pilihan level teks berjajar horizontal secara berantakan.
+      2. **Ketiadaan Ikon Vektor SVG**:
+         - Opsi dropup thinking sebelumnya hanya berupa teks polos tanpa ikon representatif, berbeda dengan agent mode dropup yang memiliki ikon SVG terstruktur dan ter-align secara presisi.
+    - **Implementasi Teknis**:
+      1. **Penyelarasan CSS Dropup Menu (`extension/newtab.css` & `extension/sidepanel.css`)**:
+         - Memindahkan seluruh definisi styling kontainer utama langsung ke selector kelas universal `.thinking-level-dropup-menu`:
+           - Frosted dark acrylic glass: `background: rgba(18, 18, 22, 0.72) !important;` (newtab) dan `rgba(18, 18, 22, 0.95) !important;` (sidepanel).
+           - Backdrop filter: `backdrop-filter: blur(36px) saturate(200%) !important;` (newtab) dan `blur(28px) saturate(180%)` (sidepanel).
+           - Border `1px solid rgba(255, 255, 255, 0.12) !important;`, `border-radius: 14px;`, `padding: 4px;`, `display: flex; flex-direction: column; gap: 2px;`.
+           - Shadow: `box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35);` (newtab) dan `0 12px 32px rgba(0, 0, 0, 0.6);` (sidepanel).
+           - Posisi: `bottom: calc(100% + 8px); left: 0; right: auto;`.
+         - Menyelaraskan opsi `.thinking-level-option`:
+           - Pill geometry: `border-radius: 9999px; height: 28px; padding: 0 10px 0 8px; display: flex; align-items: center; gap: 7px;`.
+           - Hover state: `background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.1);`.
+           - Active state: `background: rgba(206, 241, 40, 0.14) !important; border-color: rgba(206, 241, 40, 0.4) !important; color: var(--accent-lime) !important;`.
+      2. **Injeksi Ikon Vektor SVG Dark Luxury (`extension/newtab.html` & `extension/sidepanel.html`)**:
+         - Menambahkan kontainer `.thinking-option-icon` dengan SVG minimalis untuk tiap level penalaran:
+           - `low`: 1 bar vertical + 2 dots.
+           - `medium`: 2 bar vertical berundak + 1 dot.
+           - `high`: 3 bar vertical berundak penuh.
+           - `xhigh`: 4 bar ascending ladder.
+           - `extreme`: Lightning polygon bolt icon.
+         - Seluruh ikon SVG terikat dengan warna dinamis (`#94A3B8` idle, `#FFFFFF` hover, `var(--accent-lime)` active).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+
+
 

@@ -7360,3 +7360,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
   5. Bump versi ke `v2.150.262` di `manifest.json`.
 
+---
+
+### Iterasi: Perbaikan UI Dropup Thinking Level & Penyelarasan Desain Dark Luxury (`v2.150.263`)
+- **User Request:**
+  - "fix bug dropup meun di pilihan thinking ngebug uinya jadi rusak bro harusnya kek dropup di menu pilihan agent mode pilihan mode"
+- **Solusi & Rekayasa Teknis:**
+  1. *Perbaikan CSS Dropup Selector Scope (`extension/newtab.css` & `extension/sidepanel.css`)*:
+     - Memindahkan properti styling kontainer dropup dari `.chat-input-header-right .thinking-level-dropup-menu` ke selector umum `.thinking-level-dropup-menu` agar elemen tetap ber-style lengkap saat diletakkan di `.chat-input-header-left`.
+     - Mengimplementasikan frosted dark glass (`background: rgba(18, 18, 22, 0.72) !important;` pada newtab dan `rgba(18, 18, 22, 0.95) !important;` pada sidepanel) dengan `backdrop-filter: blur(36px) saturate(200%)`.
+     - Menerapkan layout vertikal `flex-direction: column; gap: 2px;`, border `1px solid rgba(255, 255, 255, 0.12)`, radius `14px`, dan padding `4px`.
+     - Menyelaraskan item opsi `.thinking-level-option` dengan bentuk rounded pill (`border-radius: 9999px; height: 28px; padding: 0 10px 0 8px;`).
+     - Menambahkan highlight hover (`rgba(255, 255, 255, 0.08)`) dan aksen aktif lime green (`rgba(206, 241, 40, 0.14)` dengan warna `var(--accent-lime)`).
+  2. *Injeksi Ikon Vektor SVG Hierarkis (`extension/newtab.html` & `extension/sidepanel.html`)*:
+     - Menambahkan kontainer `.thinking-option-icon` dengan SVG minimalis untuk tiap level: Low (1 bar + 2 dots), Medium (2 bar + 1 dot), High (3 bar), Xhigh (4 bar ladder), Extreme (lightning bolt).
+     - Menghubungkan warna ikon dinamis: idle `#94A3B8`, hover `#FFFFFF`, aktif `var(--accent-lime)`.
+- **Verifikasi:**
+  1. Unit test `scratch/test_thinking_dropup_ui.js` lulus 100% (ALL TESTS PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Seluruh file di `extension/apps-integration/` strictly `<= 800` baris (`apps_manager.js` 293 baris).
+  4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
+  5. Bump versi ke `v2.150.263` di `manifest.json`.
+
+
