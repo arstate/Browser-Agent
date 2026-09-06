@@ -1130,6 +1130,33 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menetapkan `.canvas-quick-reopen-dock, .btn-quick-reopen-canvas { display: none !important; }` guna menjamin tidak ada glitch atau layout shift di area input.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+153. **Penyelarasan Milestone & Multi-Agent Swarm, Eliminasi Polusi Brand Tiar Property & Penambahan Domain Magang/Akademik/Medsos (`v2.150.270`):**
+    - **Akar Masalah**:
+      - Pengguna melaporkan bug di mana saat berdiskusi tentang program studi independen/magang di Diskominfo Surabaya dan merekrut `@Bangga Surabaya Art Director & Content Designer`, sistem justru merender Milestone KPR real estate Tiar Property (*"Simulasi Skema KPR 2026, DP 0% & Perhitungan Angsuran Ringan"* dan *"Kualifikasi Profil Finansial & Penguncian Jadwal Survei Lokasi"*).
+      - Lebih parah lagi, langkah tindakan tool mengeksekusi dan menginstruksikan `Tiar Property - Master On-Site Closer & Survey Experience Specialist`.
+      - Penelusuran mendalam menemukan bahwa `extension/core/goal_tracker.js` dan `extension/sidepanel.js` mengklasifikasikan kata `"surabaya"` dan `"sidoarjo"` secara mentah ke dalam brand `tiar_property` dan cabang `cleanLower.includes('properti') || cleanLower.includes('surabaya')`. Akibatnya, seluruh prompt yang menyebut kota Surabaya (seperti "Diskominfo Surabaya", "UNESA Surabaya", "Pemkot Surabaya") langsung dibajak ke alur KPR Tiar Property. Selain itu, katalog agen yang disuntikkan ke Master Agent mengekspos agen-agen Tiar Property secara bebas tanpa isolasi brand.
+    - **Implementasi Teknis & Solusi**:
+      1. **Eliminasi Pemicu Mentah Nama Kota & Pengetatan Deteksi Brand (`extension/core/goal_tracker.js`, `extension/sidepanel.js`)**:
+         - Menghapus kata mentah `"surabaya"`, `"sidoarjo"`, `"sukodono"`, `"juanda"`, `"sedati"` dari klasifikasi otomatis `tiar_property`. Nama lokasi kini hanya terhitung properti jika digabungkan secara eksplisit dengan istilah hunian (`/(?:rumah|cluster|perumahan|kpr)\s+(?:di|daerah)?\s*(?:surabaya|sidoarjo...)/i`).
+         - Menambahkan deteksi brand eksplisit: `bangga_surabaya` (Bangga Surabaya, Sapawarga, Kominfo, Diskominfo, Pemkot Surabaya, Balai Kota, SIB, Magang Kominfo) dan `unesa` (UNESA, SiPintar, skripsi, thesis, tugas akhir).
+         - Memperbarui `detectBrand(text, workers)` dan `detectBrandEcosystem(text, workers)` untuk memprioritaskan brand dari agen pekerja yang ditugaskan (`workers[0]`).
+      2. **Penyediaan Domain Khusus Magang/Proposal/Akademik & Feed Medsos (`extension/core/goal_tracker.js`)**:
+         - Menambahkan cabang domain `isInternshipProposalQuery` (magang, studi independen, sib, proposal, kominfo, diskominfo, sipintar, logbook, portofolio) dengan milestone profesional:
+           * Milestone 2: `Analisis Brief Kebutuhan, Telaah Berkas Acuan & Identifikasi Parameter Proposal`
+           * Milestone 3: `Perumusan Konsep, Struktur Dokumen Proposal Individu & Evaluasi Substantif`
+           * Milestone 4: `Penyempurnaan Bab/Bagian Dokumen, Verifikasi Format & Finalisasi Rekomendasi`
+           * Milestone 5: `Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas` (Master Agent)
+         - Menambahkan cabang domain `isSocialFeedQuery` (bangga surabaya, sapawarga, feed ig, ngonten medsos) dengan penugasan dinamis ke pekerja aktif.
+         - Menyesuaikan judul milestone copywriting dan desain visual agar adaptif terhadap brand, menghindari pemaksaan label "Dark Luxury Real Estate" pada topik umum atau brand lain.
+      3. **Isolasi Silo Brand pada Direktori Katalog Agen (`extension/sidepanel.js`)**:
+         - Di `buildDynamicSystemPrompt`, direktori `otherCatalogAgents` kini disaring menggunakan `activeBrandContext`. Jika Master Agent sedang bekerja dengan agen `bangga_surabaya`, agen dari brand yang berkonflik (seperti `tiar_property`) dikeluarkan secara mutlak dari direktori yang disajikan ke Master Agent.
+      4. **Pengawal Brand pada Eksekusi Tool Delegation (`extension/sidepanel.js`)**:
+         - Pada penanganan `agent_subtask_analysis`, ditambahkan *Strict Brand Guard*: jika agen bawahan yang diminta model berasal dari brand yang berkonflik dengan pekerja yang ditugaskan oleh Master Agent, delegasi secara otomatis dialihkan kembali ke pekerja aktif (`workerAgents[0]`).
+      5. **Harmonisasi Assertion Unit Test (`test_agentic_loop_engines.py`)**:
+         - Menyelaraskan tes dengan siklus 5 milestone Master Agent dan string header directive `GOAL CHECKLIST MATRIX`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+
+
 
 
 

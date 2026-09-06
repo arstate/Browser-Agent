@@ -7526,6 +7526,51 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
   5. Bump versi ke `v2.150.269` di `manifest.json`.
 
+---
+
+### Iterasi: Penyelarasan Milestone & Multi-Agent Swarm, Eliminasi Polusi Brand Tiar Property & Penambahan Domain Magang/Akademik/Medsos (`v2.150.270`)
+- **User Request:**
+  - "bug milestone malah multi agentnya kok ga sesuai dengan agent yang dipilih master agent ya bro ini pembahasanya tentang saya magang kok malah tiar property"
+- **Akar Masalah & Penyelidikan Mendalam:**
+  1. Pengguna berdiskusi mengenai studi independen/magang di Diskominfo Surabaya dan merekrut `@Bangga Surabaya Art Director & Content Designer` untuk meninjau dan merevisi proposal SIB individu untuk portal SiPintar UNESA.
+  2. Namun komponen Rencana & Jadwal Tugas Master Agent menampilkan:
+     - Milestone 3: "Simulasi Skema KPR 2026, DP 0% & Perhitungan Angsuran Ringan"
+     - Milestone 4: "Kualifikasi Profil Finansial & Penguncian Jadwal Survei Lokasi"
+  3. Langkah tindakan eksekusi alat menampilkan:
+     - `⚡ Instruksikan Tiar Property - Master On-Site Closer & Survey Experience Specialist: Milestone 3...`
+     - `⚡ Milestone 3: Simulasi Skema KPR 2026...` (badge: Tiar Property)
+     - `⚡ Milestone 4: Kualifikasi Profil Finansial...` (badge: Tiar Property)
+  4. Penelusuran pada `extension/core/goal_tracker.js` dan `extension/sidepanel.js` menemukan:
+     - Kata `"surabaya"` dan `"sidoarjo"` dikelompokkan secara mentah ke dalam brand `tiar_property` dan cabang `cleanLower.includes('properti') || cleanLower.includes('surabaya')`. Prompt apa pun yang menyebut nama kota Surabaya langsung dicap sebagai transaksi perumahan/KPR Tiar Property!
+     - `inferAgentForTask` dan `findWorker` memiliki fallback hardcoded ke agen-agen Tiar Property (`Tiar Sales Closer CS`, `Tiar Copywriter Expert`).
+     - Pada `buildDynamicSystemPrompt`, direktori katalog agen yang disajikan ke Master Agent (`otherCatalogAgents`) mengekspos agen-agen Tiar Property tanpa memperhatikan domain aktif.
+     - Pada eksekusi alat `agent_subtask_analysis`, belum ada *Strict Brand Guard* sehingga nama agen lintas brand dapat membajak langkah tindakan.
+- **Solusi & Rekayasa Teknis:**
+  1. *Eliminasi Pemicu Mentah Nama Kota & Pengetatan Brand Detection*:
+     - Menghapus kata mentah `"surabaya"` dan `"sidoarjo"` dari `tiar_property`. Nama kota hanya relevan jika digabungkan dengan istilah hunian (`/(?:rumah|cluster|perumahan|kpr)\s+(?:di|daerah)?\s*(?:surabaya|sidoarjo...)/i`).
+     - Menambahkan deteksi eksplisit brand `bangga_surabaya` (Bangga Surabaya, Sapawarga, Kominfo, Diskominfo, Pemkot Surabaya, Balai Kota, SIB, Magang Kominfo) dan `unesa` (UNESA, SiPintar, skripsi, thesis, tugas akhir).
+     - Memperbarui `detectBrand(text, workers)` dan `detectBrandEcosystem(text, workers)` untuk memprioritaskan brand dari pekerja aktif (`workers[0]`).
+  2. *Domain Khusus Magang / Proposal / Akademik & Feed Medsos di `goal_tracker.js`*:
+     - Menambahkan cabang `isInternshipProposalQuery` (magang, studi independen, sib, proposal, kominfo, diskominfo, sipintar, logbook, portofolio) dengan milestone:
+       * Milestone 2: `Analisis Brief Kebutuhan, Telaah Berkas Acuan & Identifikasi Parameter Proposal`
+       * Milestone 3: `Perumusan Konsep, Struktur Dokumen Proposal Individu & Evaluasi Substantif`
+       * Milestone 4: `Penyempurnaan Bab/Bagian Dokumen, Verifikasi Format & Finalisasi Rekomendasi`
+       * Milestone 5: `Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas` (Master Agent)
+     - Menambahkan cabang `isSocialFeedQuery` (bangga surabaya, sapawarga, feed ig, ngonten medsos).
+     - Menyesuaikan judul milestone copywriting dan desain visual agar adaptif terhadap brand.
+  3. *Isolasi Silo Brand pada Katalog Direktori Master Agent (`extension/sidepanel.js`)*:
+     - Di `buildDynamicSystemPrompt`, menyaring `otherCatalogAgents` menggunakan `activeBrandContext`. Jika sedang dalam domain `bangga_surabaya`, agen Tiar Property 100% disembunyikan dari Master Agent.
+  4. *Strict Brand Guard pada Tool Delegation (`extension/sidepanel.js`)*:
+     - Di penanganan `agent_subtask_analysis`, jika kandidat agen berasal dari brand yang berkonflik dengan pekerja yang ditugaskan oleh Master Agent, delegasi secara otomatis dialihkan kembali ke pekerja aktif (`workerAgents[0]`).
+  5. *Harmonisasi Assertion Unit Test (`test_agentic_loop_engines.py`)*:
+     - Menyesuaikan pengetesan panjang milestone (5 tahapan) dan pengecekan string header directive `GOAL CHECKLIST MATRIX`.
+- **Verifikasi:**
+  1. Unit test `test_agentic_loop_engines.py` (3/3 test suite) lulus 100% `OK`.
+  2. Unit test `scratch/test_milestone_agent_matching.js` memverifikasi prompt magang/proposal SIB Diskominfo Surabaya menghasilkan 5 milestone akademik/proposal yang ditugaskan ke Bangga Surabaya Art Director & Content Designer dengan nol kebocoran KPR.
+  3. Node syntax check `node -c extension/sidepanel.js extension/core/goal_tracker.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.270` di `manifest.json`.
+
+
 
 
 

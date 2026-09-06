@@ -31,6 +31,11 @@
       if (pat.test(clean)) return true;
     }
 
+    // Filter out short casual queries
+    if (clean.length < 25 && (clean.includes('halo') || clean.includes('hai') || clean.includes('apa kabar') || clean.includes('tes'))) {
+      return false;
+    }
+
     return true; // Default to true for full orchestration transparency
   }
 
@@ -44,40 +49,74 @@
     const cleanLower = text.toLowerCase();
     const milestones = [];
 
-    // Helper to detect brand ecosystem from prompt text
-    function detectBrand(t) {
-      if (
-        t.includes("tiar") || t.includes("tiar property") || t.includes("busi jaya") ||
-        t.includes("ningsih") || t.includes("perumahan") || t.includes("kpr") ||
-        t.includes("sidoarjo") || t.includes("surabaya") || t.includes("sukodono") ||
-        t.includes("masangan") || t.includes("anggaswangi") || t.includes("sedati") ||
-        t.includes("juanda") || t.includes("cluster") || t.includes("rumah")
-      ) {
-        return "tiar_property";
+    // Helper to detect brand ecosystem from prompt text or active workers
+    function detectBrand(t, workers = []) {
+      // 1. Primary: If worker agent(s) are already assigned by Master Agent, inherit worker's brand!
+      if (Array.isArray(workers) && workers.length > 0) {
+        for (const w of workers) {
+          const wBrand = getAgentBrand(w);
+          if (wBrand) return wBrand;
+        }
       }
+
+      // 2. Explicit Brand Detection from Prompt Text
+      if (
+        t.includes("bangga surabaya") || t.includes("sapawarga") ||
+        t.includes("kominfo") || t.includes("diskominfo") ||
+        t.includes("pemkot surabaya") || t.includes("balai kota")
+      ) {
+        return "bangga_surabaya";
+      }
+
+      if (
+        t.includes("unesa") || t.includes("sipintar") ||
+        t.includes("skripsi") || t.includes("thesis") || t.includes("tugas akhir")
+      ) {
+        return "unesa";
+      }
+
       if (t.includes("djadi") || t.includes("djadi creative")) {
         return "djadi_creative";
       }
+
       if (t.includes("dga") || t.includes("dapur annisa") || t.includes("annisa")) {
         return "dga";
       }
-      if (t.includes("unesa") || t.includes("skripsi") || t.includes("thesis")) {
-        return "unesa";
+
+      // STRICT REAL ESTATE DETECTION: NEVER classify as tiar_property from naked city names like 'surabaya' or 'sidoarjo'!
+      const isExplicitTiar = (
+        t.includes("tiar") || t.includes("tiar property") || t.includes("busi jaya") ||
+        t.includes("ningsih")
+      );
+      const isRealEstateTerms = (
+        t.includes("perumahan") || t.includes("kpr") || t.includes("beli rumah") ||
+        t.includes("angsuran rumah") || t.includes("cicilan rumah") || t.includes("dp 0%") ||
+        t.includes("utj") || t.includes("cluster hunian") || t.includes("subsidi kpr") ||
+        t.includes("biaya kpr") || t.includes("takeover kpr") || t.includes("tanpa dp") ||
+        t.includes("marketing properti")
+      );
+      // Location only counts for real estate if explicitly combined with house/cluster/property
+      const isLocationWithHouse = /(?:rumah|cluster|perumahan|kpr)\s+(?:di|daerah|area|kawasan)?\s*(?:surabaya|sidoarjo|sukodono|masangan|anggaswangi|sedati|juanda)/i.test(t);
+
+      if (isExplicitTiar || isRealEstateTerms || isLocationWithHouse) {
+        return "tiar_property";
       }
+
       return null;
     }
 
     function getAgentBrand(ag) {
       if (!ag) return null;
       const full = `${String(ag.id || '')} ${String(ag.name || '')} ${String(ag.description || '')}`.toLowerCase();
-      if (full.includes("tiar") || full.includes("ningsih") || full.includes("busi jaya") || (full.includes("properti") && !full.includes("djadi"))) return "tiar_property";
+      if (full.includes("bangga surabaya") || full.includes("sapawarga") || full.includes("kominfo") || full.includes("diskominfo") || full.includes("pemkot")) return "bangga_surabaya";
+      if (full.includes("unesa") || full.includes("skripsi") || full.includes("thesis") || full.includes("academic") || full.includes("sipintar")) return "unesa";
       if (full.includes("djadi")) return "djadi_creative";
-      if (full.includes("dga") || full.includes("annisa")) return "dga";
-      if (full.includes("unesa") || full.includes("skripsi") || full.includes("thesis")) return "unesa";
+      if (full.includes("dga") || full.includes("annisa") || full.includes("dapur")) return "dga";
+      if (full.includes("tiar") || full.includes("ningsih") || full.includes("busi jaya") || (full.includes("properti") && !full.includes("djadi"))) return "tiar_property";
       return null;
     }
 
-    const targetBrand = detectBrand(cleanLower);
+    const targetBrand = detectBrand(cleanLower, matchedWorkers);
 
     // Helper to find specific worker by name/id pattern with strict brand isolation
     function findWorker(pattern, fallbackName) {
@@ -109,6 +148,15 @@
         });
         if (found) return found.name;
       }
+
+      // 3. Fallback neutralization if fallback belongs to conflicting brand
+      if (targetBrand && targetBrand !== 'tiar_property') {
+        const fallbackLower = String(fallbackName || '').toLowerCase();
+        if (fallbackLower.includes('tiar') || fallbackLower.includes('ningsih')) {
+          return matchedWorkers[0]?.name || "Spesialis Terkait";
+        }
+      }
+
       return fallbackName;
     }
 
@@ -118,17 +166,23 @@
       if (lower.includes('deep think') || lower.includes('analisis sasaran') || lower.includes('koordinasi') || lower.includes('validasi') || lower.includes('laporan akhir') || lower.includes('sintesis')) {
         return "Master Agent";
       }
+      if (lower.includes('proposal') || lower.includes('magang') || lower.includes('studi independen') || lower.includes('sib') || lower.includes('kominfo') || lower.includes('sipintar') || lower.includes('logbook') || lower.includes('portofolio')) {
+        return matchedWorkers[0]?.name || findWorker('proposal', findWorker('academic', findWorker('bangga', 'Proposal & Academic Specialist')));
+      }
+      if (lower.includes('bangga') || lower.includes('sapawarga') || lower.includes('feed ig') || lower.includes('feed instagram') || lower.includes('ngonten')) {
+        return matchedWorkers[0]?.name || findWorker('bangga', findWorker('visual', findWorker('desain', 'Bangga Surabaya Art Director & Content Designer')));
+      }
       if (lower.includes('backup') || lower.includes('database') || lower.includes('sqlite') || lower.includes('dump') || lower.includes('sinkron')) {
         return findWorker('backup', findWorker('database', findWorker('coding', 'Database & Brain Backup Specialist')));
       }
       if (lower.includes('lead') || lower.includes('ads') || lower.includes('iklan') || lower.includes('cpr') || lower.includes('boncos') || lower.includes('gacor') || lower.includes('campaign')) {
-        return findWorker('ads', findWorker('auditor', 'Sub-Agent Auditor & Analis Meta Ads'));
+        return (targetBrand === 'tiar_property') ? findWorker('ads', findWorker('auditor', 'Tiar Property - Meta Ads Visual Auditor & Lead Quality Analyst')) : (matchedWorkers[0]?.name || findWorker('ads', 'Meta Ads Specialist'));
       }
       if (lower.includes('copy') || lower.includes('caption') || lower.includes('hook') || lower.includes('naskah') || lower.includes('genz')) {
-        return findWorker('copy', 'Tiar Copywriter Expert');
+        return (targetBrand === 'tiar_property') ? findWorker('copy', 'Tiar Copywriter Expert') : (matchedWorkers[0]?.name || findWorker('copy', 'Copywriter & Content Specialist'));
       }
       if (lower.includes('kpr') || lower.includes('properti') || lower.includes('rumah') || lower.includes('closing') || lower.includes('sales')) {
-        return findWorker('closer', findWorker('sales', 'Tiar Sales Closer CS'));
+        return (targetBrand === 'tiar_property') ? findWorker('closer', findWorker('sales', 'Tiar Sales Closer CS')) : (matchedWorkers[0]?.name || findWorker('closer', 'Sales & Financial Specialist'));
       }
       if (lower.includes('terminal') || lower.includes('bash') || lower.includes('command') || lower.includes('file') || lower.includes('script') || lower.includes('kode') || lower.includes('coding') || lower.includes('zip') || lower.includes('git')) {
         return findWorker('coding', 'Coding & System Engineer');
@@ -137,7 +191,7 @@
         return findWorker('gsuite', 'Google Workspace Specialist');
       }
       if (lower.includes('gambar') || lower.includes('image') || lower.includes('desain') || lower.includes('visual') || lower.includes('poster')) {
-        return findWorker('visual', findWorker('desain', 'AI Visual Designer'));
+        return matchedWorkers[0]?.name || findWorker('visual', findWorker('desain', 'AI Visual Designer'));
       }
       if (lower.includes('skripsi') || lower.includes('jurnal') || lower.includes('tesis') || lower.includes('akademik') || lower.includes('unesa')) {
         return findWorker('thesis', 'Thesis & Academic Assistant');
@@ -255,7 +309,49 @@
           { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
         );
       }
-    } else if (cleanLower.includes('properti') || cleanLower.includes('rumah') || cleanLower.includes('kpr') || cleanLower.includes('surabaya') || cleanLower.includes('sidoarjo') || cleanLower.includes('survei')) {
+    } else if (
+      cleanLower.includes('magang') || cleanLower.includes('studi independen') || cleanLower.includes('sib') ||
+      cleanLower.includes('proposal') || cleanLower.includes('kominfo') || cleanLower.includes('diskominfo') ||
+      cleanLower.includes('sipintar') || cleanLower.includes('portofolio') || cleanLower.includes('laporan magang') ||
+      cleanLower.includes('logbook') || (targetBrand === 'bangga_surabaya' && (cleanLower.includes('proposal') || cleanLower.includes('revisi') || cleanLower.includes('ubah') || cleanLower.includes('review') || cleanLower.includes('bikin')))
+    ) {
+      // -------------------------------------------------------------
+      // DOMAIN: Magang / Studi Independen (SIB) / Proposal / Laporan / Akademik
+      // -------------------------------------------------------------
+      const proposalAgent = matchedWorkers[0]?.name || findWorker('bangga', findWorker('academic', findWorker('proposal', findWorker('desain', 'Proposal & Academic Specialist'))));
+      milestones.push(
+        { id: 2, title: "Analisis Brief Kebutuhan, Telaah Berkas Acuan & Identifikasi Parameter Proposal", assignedAgent: proposalAgent, completed: false, inProgress: false },
+        { id: 3, title: "Perumusan Konsep, Struktur Dokumen Proposal Individu & Evaluasi Substantif", assignedAgent: proposalAgent, completed: false, inProgress: false },
+        { id: 4, title: "Penyempurnaan Bab/Bagian Dokumen, Verifikasi Format & Finalisasi Rekomendasi", assignedAgent: proposalAgent, completed: false, inProgress: false },
+        { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+      );
+    } else if (
+      cleanLower.includes('bangga surabaya') || cleanLower.includes('sapawarga') ||
+      cleanLower.includes('feed ig') || cleanLower.includes('feed instagram') ||
+      (cleanLower.includes('feed') && (cleanLower.includes('desain') || cleanLower.includes('ngonten') || cleanLower.includes('medsos'))) ||
+      (cleanLower.includes('ngonten') && (cleanLower.includes('medsos') || cleanLower.includes('instagram')))
+    ) {
+      // -------------------------------------------------------------
+      // DOMAIN: Social Media Feed / Bangga Surabaya / Sapawarga / Konten Kreatif
+      // -------------------------------------------------------------
+      const contentAgent = matchedWorkers[0]?.name || findWorker('bangga', findWorker('visual', findWorker('desain', 'Bangga Surabaya Art Director & Content Designer')));
+      milestones.push(
+        { id: 2, title: "Analisis Brief Konten, Kurasi Aset Visual & Penentuan Angle Informasi", assignedAgent: contentAgent, completed: false, inProgress: false },
+        { id: 3, title: "Perancangan Layout Desain Carousel, Tipografi & Narasi Edukasi Publik", assignedAgent: contentAgent, completed: false, inProgress: false },
+        { id: 4, title: "Quality Check Komposisi Visual, Safe-Zone 4:5 & Konsistensi Identitas Brand", assignedAgent: contentAgent, completed: false, inProgress: false },
+        { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Finalisasi Aset Siap Tayang", assignedAgent: "Master Agent", completed: false, inProgress: false }
+      );
+    } else if (
+      cleanLower.includes('properti') || cleanLower.includes('perumahan') || cleanLower.includes('kpr') ||
+      cleanLower.includes('beli rumah') || cleanLower.includes('angsuran rumah') || cleanLower.includes('cicilan rumah') ||
+      cleanLower.includes('tiar property') || cleanLower.includes('dp 0%') || cleanLower.includes('biaya kpr') ||
+      cleanLower.includes('takeover kpr') || cleanLower.includes('tanpa dp') ||
+      ((cleanLower.includes('rumah') || cleanLower.includes('cluster') || cleanLower.includes('hunian')) &&
+       (cleanLower.includes('survei') || cleanLower.includes('survey') || cleanLower.includes('unit') || cleanLower.includes('lokasi') || cleanLower.includes('tiar') || cleanLower.includes('harga') || cleanLower.includes('dp') || cleanLower.includes('utj')))
+    ) {
+      // -------------------------------------------------------------
+      // DOMAIN: Real Estate / Properti / KPR (HANYA jika eksplisit properti/rumah)
+      // -------------------------------------------------------------
       const salesAgent = findWorker('closer', findWorker('sales', 'Tiar Sales Closer CS'));
       const adminAgent = findWorker('admin', 'Tiar Admin Customer CS');
       milestones.push(
@@ -265,20 +361,28 @@
         { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('copy') || cleanLower.includes('caption') || cleanLower.includes('hook') || cleanLower.includes('naskah') || cleanLower.includes('genz') || cleanLower.includes('reels') || cleanLower.includes('tiktok') || cleanLower.includes('video')) {
-      const trendAgent = findWorker('trend', 'Tiar Trend Surfer');
-      const copyAgent = findWorker('copy', 'Tiar Copywriter Expert');
-      const visualAgent = findWorker('visual', findWorker('desain', 'AI Visual Designer'));
+      const trendAgent = (targetBrand === 'tiar_property') ? findWorker('trend', 'Tiar Trend Surfer') : (matchedWorkers[0]?.name || findWorker('trend', 'Trend & Content Researcher'));
+      const copyAgent = (targetBrand === 'tiar_property') ? findWorker('copy', 'Tiar Copywriter Expert') : (matchedWorkers[0]?.name || findWorker('copy', 'Copywriter & Content Specialist'));
+      const visualAgent = (targetBrand === 'tiar_property') ? findWorker('visual', findWorker('desain', 'AI Visual Designer')) : (matchedWorkers[0]?.name || findWorker('visual', 'Visual Designer'));
+      
+      const m2Title = (targetBrand === 'tiar_property') ? "Riset Tren FYP Surabaya-Sidoarjo & 8 Formula Hook Viral" : "Riset Tren Audiens, Angle Konten & Formula Hook Relevan";
+      const m3Title = (targetBrand === 'tiar_property') ? "Penulisan Naskah Video Fast-Cuts, AIDA Caption & 7 Mental Triggers" : "Penulisan Naskah / Caption Terstruktur & Penyampaian Pesan Kunci";
+      const m4Title = (targetBrand === 'tiar_property') ? "Arahan Visual Dark Luxury Real Estate & Storyboard Layout" : "Penyelarasan Visual, Tata Letak Grafis & Storyboard Konten";
+
       milestones.push(
-        { id: 2, title: "Riset Tren FYP Surabaya-Sidoarjo & 8 Formula Hook Viral", assignedAgent: trendAgent, completed: false, inProgress: false },
-        { id: 3, title: "Penulisan Naskah Video Fast-Cuts, AIDA Caption & 7 Mental Triggers", assignedAgent: copyAgent, completed: false, inProgress: false },
-        { id: 4, title: "Arahan Visual Dark Luxury Real Estate & Storyboard Layout", assignedAgent: visualAgent, completed: false, inProgress: false },
+        { id: 2, title: m2Title, assignedAgent: trendAgent, completed: false, inProgress: false },
+        { id: 3, title: m3Title, assignedAgent: copyAgent, completed: false, inProgress: false },
+        { id: 4, title: m4Title, assignedAgent: visualAgent, completed: false, inProgress: false },
         { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Finalisasi Konten Siap Upload", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('desain') || cleanLower.includes('design') || cleanLower.includes('visual') || cleanLower.includes('gambar') || cleanLower.includes('poster') || cleanLower.includes('image')) {
-      const visualAgent = findWorker('visual', findWorker('desain', 'AI Visual Designer'));
+      const visualAgent = matchedWorkers[0]?.name || findWorker('visual', findWorker('desain', 'AI Visual Designer'));
+      const m2Title = (targetBrand === 'tiar_property') ? "Eksplorasi Konsep Estetika Dark Luxury & Palet Warna" : "Eksplorasi Konsep Estetika, Palet Warna & Tata Letak Visual";
+      const m3Title = (targetBrand === 'tiar_property') ? "Eksekusi Render Desain Grafis & Pembuatan Layout Visual" : "Eksekusi Desain Grafis, Tipografi & Pembuatan Komposisi Layout";
+
       milestones.push(
-        { id: 2, title: "Eksplorasi Konsep Estetika Dark Luxury & Palet Warna", assignedAgent: visualAgent, completed: false, inProgress: false },
-        { id: 3, title: "Eksekusi Render Desain Grafis & Pembuatan Layout Visual", assignedAgent: visualAgent, completed: false, inProgress: false },
+        { id: 2, title: m2Title, assignedAgent: visualAgent, completed: false, inProgress: false },
+        { id: 3, title: m3Title, assignedAgent: visualAgent, completed: false, inProgress: false },
         { id: 4, title: "Validasi Kualitas 100% (Perfeksionis) & Verifikasi Resolusi Gambar", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
     } else if (cleanLower.includes('unesa') || cleanLower.includes('thesis') || cleanLower.includes('skripsi') || cleanLower.includes('jurnal') || cleanLower.includes('akademik') || cleanLower.includes('literatur')) {

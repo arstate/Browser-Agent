@@ -575,6 +575,91 @@ function sortAgentsByPipeline(agents) {
   return [...agents].sort((a, b) => (priority[a.id] || 5) - (priority[b.id] || 5));
 }
 
+// Global Helper: Detect Brand Ecosystem from Agent Instance
+function getAgentBrand(ag) {
+  if (!ag) return null;
+  const id = String(ag.id || '').toLowerCase();
+  const name = String(ag.name || '').toLowerCase();
+  const desc = String(ag.description || '').toLowerCase();
+  const full = `${id} ${name} ${desc}`;
+
+  if (full.includes("bangga surabaya") || full.includes("sapawarga") || full.includes("kominfo") || full.includes("diskominfo") || full.includes("pemkot")) {
+    return "bangga_surabaya";
+  }
+  if (full.includes("unesa") || full.includes("skripsi") || full.includes("thesis") || full.includes("academic") || full.includes("sipintar")) {
+    return "unesa";
+  }
+  if (full.includes("djadi")) {
+    return "djadi_creative";
+  }
+  if (full.includes("dga") || full.includes("annisa") || full.includes("dapur")) {
+    return "dga";
+  }
+  if (full.includes("tiar") || full.includes("ningsih") || full.includes("busi jaya") || (full.includes("properti") && !full.includes("djadi"))) {
+    return "tiar_property";
+  }
+  return null;
+}
+
+// Global Helper: Detect Brand Ecosystem from User Prompt Text or Assigned Workers
+function detectBrandEcosystem(t = "", workers = []) {
+  const cleanStr = (typeof t === 'string') ? t : (t?.content || t?.textContent || "");
+  const text = cleanStr.toLowerCase().trim();
+
+  // 1. Primary: If worker agent(s) already assigned, inspect their brand first!
+  if (Array.isArray(workers) && workers.length > 0) {
+    for (const w of workers) {
+      const wBrand = getAgentBrand(w);
+      if (wBrand) return wBrand;
+    }
+  }
+
+  // 2. Explicit Brand Detection from Prompt Text
+  if (
+    text.includes("bangga surabaya") || text.includes("sapawarga") ||
+    text.includes("kominfo") || text.includes("diskominfo") ||
+    text.includes("pemkot surabaya") || text.includes("balai kota")
+  ) {
+    return "bangga_surabaya";
+  }
+
+  if (
+    text.includes("unesa") || text.includes("sipintar") ||
+    text.includes("skripsi") || text.includes("thesis") || text.includes("tugas akhir") || text.includes("sidang")
+  ) {
+    return "unesa";
+  }
+
+  if (text.includes("djadi") || text.includes("djadi creative")) {
+    return "djadi_creative";
+  }
+
+  if (text.includes("dga") || text.includes("dapur annisa") || text.includes("annisa") || text.includes("catering")) {
+    return "dga";
+  }
+
+  // STRICT REAL ESTATE DETECTION: NEVER classify as tiar_property from naked city names like 'surabaya' or 'sidoarjo'!
+  const isExplicitTiar = (
+    text.includes("tiar") || text.includes("tiar property") || text.includes("busi jaya") ||
+    text.includes("ningsih")
+  );
+  const isRealEstateTerms = (
+    text.includes("perumahan") || text.includes("kpr") || text.includes("beli rumah") ||
+    text.includes("angsuran rumah") || text.includes("cicilan rumah") || text.includes("dp 0") ||
+    text.includes("utj") || text.includes("cluster hunian") || text.includes("subsidi kpr") ||
+    text.includes("biaya kpr") || text.includes("takeover kpr") || text.includes("tanpa dp") ||
+    text.includes("marketing properti")
+  );
+  // Location only counts for real estate if explicitly combined with house/cluster/property
+  const isLocationWithHouse = /(?:rumah|cluster|perumahan|kpr)\s+(?:di|daerah|area|kawasan)?\s*(?:surabaya|sidoarjo|sukodono|masangan|anggaswangi|sedati|juanda)/i.test(text);
+
+  if (isExplicitTiar || isRealEstateTerms || isLocationWithHouse) {
+    return "tiar_property";
+  }
+
+  return null;
+}
+
 function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
   const cleanStr = (typeof userMessage === 'string') ? userMessage : (userMessage?.content || userMessage?.textContent || "");
   const text = cleanStr.toLowerCase().trim();
@@ -621,54 +706,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     return [getMasterBoss(), ...sortAgentsByPipeline(matchedWorkers)];
   }
 
-  // Helper: Detect Brand Ecosystem from User Prompt
-  function detectBrandEcosystem(t) {
-    if (
-      t.includes("tiar") || t.includes("tiar property") || t.includes("busi jaya") ||
-      t.includes("ningsih") || t.includes("perumahan") || t.includes("kpr") ||
-      t.includes("sidoarjo") || t.includes("surabaya") || t.includes("sukodono") ||
-      t.includes("masangan") || t.includes("anggaswangi") || t.includes("sedati") ||
-      t.includes("juanda") || t.includes("cluster") || t.includes("rumah") ||
-      t.includes("survei") || t.includes("survey") || t.includes("dp 0") || t.includes("utj")
-    ) {
-      return "tiar_property";
-    }
-    if (t.includes("djadi") || t.includes("djadi creative")) {
-      return "djadi_creative";
-    }
-    if (t.includes("dga") || t.includes("dapur annisa") || t.includes("annisa") || t.includes("catering")) {
-      return "dga";
-    }
-    if (t.includes("unesa") || t.includes("skripsi") || t.includes("thesis") || t.includes("tugas akhir") || t.includes("sidang")) {
-      return "unesa";
-    }
-    return null;
-  }
-
-  // Helper: Detect Brand Ecosystem of an Agent
-  function getAgentBrand(ag) {
-    if (!ag) return null;
-    const id = String(ag.id || '').toLowerCase();
-    const name = String(ag.name || '').toLowerCase();
-    const desc = String(ag.description || '').toLowerCase();
-    const full = `${id} ${name} ${desc}`;
-
-    if (full.includes("tiar") || full.includes("ningsih") || full.includes("busi jaya") || (full.includes("properti") && !full.includes("djadi"))) {
-      return "tiar_property";
-    }
-    if (full.includes("djadi")) {
-      return "djadi_creative";
-    }
-    if (full.includes("dga") || full.includes("annisa") || full.includes("dapur")) {
-      return "dga";
-    }
-    if (full.includes("unesa") || full.includes("skripsi") || full.includes("thesis") || full.includes("academic")) {
-      return "unesa";
-    }
-    return null;
-  }
-
-  const targetBrand = detectBrandEcosystem(text);
+  const targetBrand = detectBrandEcosystem(text, matchedWorkers);
 
   // Jobdesk Specific Intent Verbs & Patterns:
   // 1. Audit / Inspection / Check Query
@@ -1073,7 +1111,31 @@ ATURAN KRUSIAL:
   }
 
   // Inject Available Ecosystem Catalog for Hermes Dynamic Multi-Agent Swarm with Full Names & Skills
-  const otherCatalogAgents = customAgents.filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss);
+  let activeBrandContext = null;
+  if (workers.length > 0) {
+    for (const w of workers) {
+      const b = getAgentBrand(w);
+      if (b) {
+        activeBrandContext = b;
+        break;
+      }
+    }
+  }
+  if (!activeBrandContext && typeof userMessage !== 'undefined' && typeof userMessage === 'string') {
+    activeBrandContext = detectBrandEcosystem(userMessage);
+  }
+
+  const otherCatalogAgents = customAgents.filter(a => {
+    if (!a || a.id === "master_agent" || a.id === "boss_agent" || a.is_boss) return false;
+    // CRITICAL BRAND SILO ISOLATION:
+    // If an active brand context is established (e.g. bangga_surabaya, unesa, tiar_property),
+    // NEVER expose conflicting brand agents to Master Agent!
+    if (activeBrandContext) {
+      const aBrand = getAgentBrand(a);
+      if (aBrand && aBrand !== activeBrandContext) return false;
+    }
+    return true;
+  });
   if (otherCatalogAgents.length > 0) {
     prompt += `=== 📋 DIREKTORI LENGKAP MULTI-AGENT & SKILL TERSEDIA (DYNAMIC AGENT SWARM) ===\n`;
     prompt += `Sebagai 👑 Master Agent (Supreme Boss & Perfectionist Orchestrator), Anda membaca seluruh nama lengkap, deskripsi peran, dan keahlian spesifik seluruh agen di bawah ini untuk memilih dan mendelegasikan tugas secara mendalam dan akurat:\n`;
@@ -6444,9 +6506,22 @@ Tugas Anda:
             activeWorkerAgent = { id: "master_design", name: "🎨 Master Design (Slide Architect)", role: "Lead Creative Director & Slide Architect", badge: "Tangan Kanan Master Agent", is_boss: false };
           } else if (isAnalysisTool) {
             const customAgentName = toolArgs.agent_name || "Specialist Sub-Agent";
-            activeWorkerAgent = resolvedAgents.find(a => a.name?.toLowerCase().includes(customAgentName.toLowerCase())) || 
+            let candidateAgent = resolvedAgents.find(a => a.name?.toLowerCase().includes(customAgentName.toLowerCase())) || 
                                 customAgents.find(a => a.name?.toLowerCase().includes(customAgentName.toLowerCase())) || 
                                 { id: "specialist_analyst", name: customAgentName };
+
+            // STRICT BRAND GUARD: If Master Agent has assigned workers (e.g. Bangga Surabaya),
+            // and the candidate agent belongs to a conflicting brand (e.g. Tiar Property),
+            // DO NOT let a cross-brand agent take over! Fall back to assigned worker!
+            if (hasBoss && workerAgents && workerAgents.length > 0) {
+              const assignedWorker = workerAgents[0];
+              const assignedBrand = getAgentBrand(assignedWorker);
+              const candidateBrand = getAgentBrand(candidateAgent);
+              if (assignedBrand && candidateBrand && assignedBrand !== candidateBrand) {
+                candidateAgent = assignedWorker;
+              }
+            }
+            activeWorkerAgent = candidateAgent;
           } else if (toolName === "browser_screenshot") {
             // Master Agent performs the visual walkthrough audit
             activeWorkerAgent = { id: "master_agent", name: "Master Agent (Audit Walkthrough)", is_boss: true };

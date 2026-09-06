@@ -1995,6 +1995,20 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 319
 
+---
+
+## 🛡️ 46. Multi-Agent Task Schedule & Tool Action Alignment (v2.150.270)
+
+1. **Brand-Isolated Task Schedule & Milestones (`.task-schedule-wrapper`)**:
+   - Komponen jadwal tugas merender milestone yang selaras 100% dengan peran domain spesialis yang ditugaskan (`Bangga Surabaya`, `UNESA`, `DGA`, `Tiar Property`).
+   - Melarang keras pemunculan istilah real estate ("Simulasi Skema KPR 2026", "Kualifikasi Profil Finansial & Penguncian Jadwal Survei Lokasi") pada obrolan non-properti seperti magang, studi independen (SIB), review proposal, dan desain feed medsos.
+   - Badge penanggung jawab di sebelah kanan setiap baris milestone menampilkan nama agen pekerja aktif (`Bangga Surabaya Art Director & Content Designer`) atau `Master Agent`.
+
+2. **Action Steps Delegation Integrity (`.tool-section-wrapper`)**:
+   - Badge delegasi `Instruksikan {workerName}: {badgeActionName}` dijamin merujuk pada nama agen karyawan bawahan yang dipilih Master Agent, bebas dari pembajakan nama agen dari brand lain.
+   - Penambahan *Strict Brand Guard* pada penanganan `agent_subtask_analysis` untuk memastikan tidak ada disonansi visual antara pohon tim agen yang ditugaskan (`.agent-tree-branch-container`) dan lencana langkah tindakan.
+
+
 
 
 

@@ -94,19 +94,19 @@ class TestAgenticLoopEngines(unittest.TestCase):
             process.exit(3);
         }
 
-        // Test 2: Milestone extraction
+        // Test 2: Milestone extraction (Deep Thinking + 3 user steps + Final Validation = 5 milestones)
         const milestones = tracker.extractGoalMilestones('1. Buka dashboard\\n2. Ambil data analitik\\n3. Buat laporan PDF');
-        if (milestones.length !== 3) process.exit(4);
-        if (!milestones[0].title.includes('Buka dashboard')) process.exit(5);
+        if (milestones.length !== 5) process.exit(4);
+        if (!milestones[1].title.includes('Buka dashboard')) process.exit(5);
 
         // Test 3: Directive builder
         const directive = tracker.buildGoalPromptDirective(milestones);
-        if (!directive.includes('MANDAT GOAL CHECKLIST MATRIX') || !directive.includes('Milestone 1')) {
+        if (!directive.includes('GOAL CHECKLIST MATRIX') || !directive.includes('Milestone 1')) {
             process.exit(6);
         }
 
         // Test 4: Pending check & continuation prompt
-        if (!tracker.hasPendingMilestones(milestones)) process.exit(7);
+        if (!tracker.hasPendingMilestones(milestones, [{ role: 'tool' }])) process.exit(7);
         const contPrompt = tracker.generateGoalContinuationPrompt(milestones);
         if (!contPrompt.includes('SYSTEM GOAL COMPLETION GUARD') || !contPrompt.includes('Milestone 1')) {
             process.exit(8);
