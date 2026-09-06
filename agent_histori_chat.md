@@ -7275,4 +7275,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.258` di `manifest.json`.
 
+---
+
+### Iterasi: Modularisasi dan Struktur Folder Baru `extension/apps-integration/` (`v2.150.259`)
+- **User Request:**
+  - "/home/arya/browser-agent/extension tambah folder baru untuk fitur apps integration biar rapih bro strukturnya"
+- **Solusi & Rekayasa Teknis:**
+  1. *Struktur Folder dan Berkas Terdedikasi (`extension/apps-integration/`)*:
+     - Dibuat folder baru `extension/apps-integration/` yang memisahkan seluruh logika aplikasi terintegrasi ke dalam modul-modul independen:
+       - `apps_registry.js`: Registry terpusat untuk aplikasi terintegrasi (Google Flow, Cloud Notes, Google Gemini, Google AI Studio, Meta Ads Manager), metadata, Dynamic DeclarativeNetRequest rules generator (ID 9901 & 9902), dan helper display name URL.
+       - `apps_manager.js`: Lifecycle controller in-app webview (`openAppsView`, `closeAppsView`, `toggleAppsCatalog`, `launchApp`, reload, custom URL launcher, dan pembersihan memori iframe via `about:blank`).
+       - `apps_overlay.css`: Dedicated stylesheet untuk layout overlay, header bar kaca transparan murni, kapsul url terpadu, dan catalog grid bento cards.
+       - `README.md`: Panduan arsitektur modul dan dokumentasi API.
+  2. *Refactoring & Integrasi Global*:
+     - `extension/newtab.js`: Memangkas 220+ baris logika apps inline menjadi delegasi bersih ke `window.AppsIntegration.manager`.
+     - `extension/newtab.html`: Menghubungkan `apps-integration/apps_overlay.css`, `apps-integration/apps_registry.js`, dan `apps-integration/apps_manager.js`.
+     - `extension/sidepanel.html`: Memuat `apps_registry.js` dan `apps_manager.js`.
+     - `extension/sidepanel.js`: Memperbarui `openAppsTab()` agar memanfaatkan `window.AppsIntegration.manager`.
+- **Verifikasi:**
+  1. Unit test `scratch/test_apps_integration_modular_folder.js` lulus 100% (6 test suites PASSED).
+  2. Seluruh file modul baru dan 10 file di `extension/design/` strictly `<= 800` baris (`apps_manager.js` 249, `apps_overlay.css` 402, `apps_registry.js` 193, `canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.259` di `manifest.json`.
+
 

@@ -167,228 +167,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- Integrated Apps Hub & In-App Webview Logic (Google Flow, etc.) ---
-  const appsOverlay = document.getElementById('fullscreen-apps-overlay');
-  const btnOpenApps = document.getElementById('btn-open-apps');
-  const appsIframe = document.getElementById('apps-embedded-iframe');
-  const appsActiveTitle = document.getElementById('apps-active-title');
-  const appsCurrentUrlText = document.getElementById('apps-current-url-text');
-  const btnToggleAppsCatalog = document.getElementById('btn-toggle-apps-catalog');
-  const appsCatalogOverlay = document.getElementById('apps-catalog-overlay');
-  const btnCloseCatalogDrawer = document.getElementById('btn-close-catalog-drawer');
-  const btnAppsReload = document.getElementById('btn-apps-reload');
-  const inputCustomAppUrl = document.getElementById('input-custom-app-url');
-  const btnLaunchCustomApp = document.getElementById('btn-launch-custom-app');
-  const appCards = document.querySelectorAll('.apps-bento-card');
-
-  let currentAppUrl = '';
-  let currentAppName = '';
-
-  // Ensure In-App DeclarativeNetRequest dynamic rules are registered with requestHeaders
-  async function ensureInAppDnrRules() {
-    if (typeof chrome !== 'undefined' && chrome.declarativeNetRequest && chrome.declarativeNetRequest.updateDynamicRules) {
-      const RULE_ID_STRIP_HEADERS = 9901;
-      const RULE_ID_GOOGLE_FLOW = 9902;
-      const rules = [
-        {
-          id: RULE_ID_STRIP_HEADERS,
-          priority: 1,
-          action: {
-            type: "modifyHeaders",
-            requestHeaders: [
-              { header: "sec-fetch-site", operation: "set", value: "same-origin" },
-              { header: "sec-fetch-dest", operation: "set", value: "document" },
-              { header: "sec-fetch-mode", operation: "set", value: "navigate" },
-              { header: "sec-fetch-user", operation: "set", value: "?1" }
-            ],
-            responseHeaders: [
-              { header: "x-frame-options", operation: "remove" },
-              { header: "content-security-policy", operation: "remove" },
-              { header: "frame-options", operation: "remove" },
-              { header: "cross-origin-opener-policy", operation: "set", value: "unsafe-none" },
-              { header: "cross-origin-embedder-policy", operation: "remove" },
-              { header: "cross-origin-resource-policy", operation: "set", value: "cross-origin" }
-            ]
-          },
-          condition: {
-            urlFilter: "*",
-            resourceTypes: ["sub_frame"]
-          }
-        },
-        {
-          id: RULE_ID_GOOGLE_FLOW,
-          priority: 2,
-          action: {
-            type: "modifyHeaders",
-            requestHeaders: [
-              { header: "sec-fetch-site", operation: "set", value: "same-origin" },
-              { header: "sec-fetch-dest", operation: "set", value: "document" },
-              { header: "sec-fetch-mode", operation: "set", value: "navigate" },
-              { header: "sec-fetch-user", operation: "set", value: "?1" },
-              { header: "referer", operation: "set", value: "https://flow.google.com/" }
-            ],
-            responseHeaders: [
-              { header: "x-frame-options", operation: "remove" },
-              { header: "content-security-policy", operation: "remove" },
-              { header: "frame-options", operation: "remove" },
-              { header: "cross-origin-opener-policy", operation: "set", value: "unsafe-none" },
-              { header: "cross-origin-embedder-policy", operation: "remove" },
-              { header: "cross-origin-resource-policy", operation: "set", value: "cross-origin" }
-            ]
-          },
-          condition: {
-            urlFilter: "*flow.google.com*",
-            resourceTypes: ["sub_frame", "xmlhttprequest", "script", "other"]
-          }
-        }
-      ];
-      try {
-        await chrome.declarativeNetRequest.updateDynamicRules({
-          removeRuleIds: [RULE_ID_STRIP_HEADERS, RULE_ID_GOOGLE_FLOW],
-          addRules: rules
-        });
-      } catch (e) {}
-    }
+  // --- Integrated Apps Hub & In-App Webview Logic (apps-integration module) ---
+  const appsManager = window.AppsManager || (window.AppsIntegration && window.AppsIntegration.manager);
+  if (appsManager) {
+    appsManager.init().catch(console.warn);
   }
 
   function openAppsView(appUrl = null, appName = null) {
     closeFullscreenSettings();
-    if (appsOverlay) {
-      appsOverlay.style.display = 'flex';
-      updateActiveSidebarTab('apps');
-      if (appUrl && appName) {
-        launchApp(appUrl, appName, false);
-      } else {
-        // Pure empty / blank state so no heavy web is loaded in background
-        if (appsIframe && (!appsIframe.src || appsIframe.src !== 'about:blank')) {
-          appsIframe.src = 'about:blank';
-        }
-        currentAppUrl = '';
-        currentAppName = '';
-        if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'flex';
-        btnToggleAppsCatalog?.classList.add('active');
-        if (appsActiveTitle) appsActiveTitle.textContent = 'Aplikasi';
-        if (appsCurrentUrlText) appsCurrentUrlText.textContent = 'Aplikasi';
-        appCards.forEach(card => card.classList.remove('active'));
-      }
+    if (appsManager) {
+      appsManager.openAppsView(appUrl, appName);
     }
   }
 
   function closeAppsView() {
-    if (appsOverlay) {
-      appsOverlay.style.display = 'none';
-      if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'none';
-      // Free iframe memory when closing Apps
-      if (appsIframe) {
-        appsIframe.src = 'about:blank';
-      }
-      currentAppUrl = '';
-      currentAppName = '';
-      if (appsCurrentUrlText) appsCurrentUrlText.textContent = 'Aplikasi';
-      appCards.forEach(card => card.classList.remove('active'));
-      updateActiveSidebarTab('home');
-      chatInput?.focus();
+    if (appsManager) {
+      appsManager.closeAppsView();
     }
   }
 
-  function toggleAppsCatalog() {
-    if (!appsCatalogOverlay) return;
-    const isHidden = appsCatalogOverlay.style.display === 'none' || !appsCatalogOverlay.style.display;
-    if (isHidden) {
-      appsCatalogOverlay.style.display = 'flex';
-      btnToggleAppsCatalog?.classList.add('active');
-    } else {
-      appsCatalogOverlay.style.display = 'none';
-      btnToggleAppsCatalog?.classList.remove('active');
+  function launchApp(url, name, forceReload = false) {
+    if (appsManager) {
+      appsManager.launchApp(url, name, forceReload);
     }
   }
-
-  async function launchApp(url, name, forceReload = false) {
-    await ensureInAppDnrRules();
-    currentAppUrl = url;
-    currentAppName = name;
-    if (appsActiveTitle) appsActiveTitle.textContent = name;
-    if (appsCurrentUrlText) appsCurrentUrlText.textContent = name || 'Aplikasi';
-    const pill = document.getElementById('apps-url-display-pill');
-    if (pill) pill.title = `${name || 'Aplikasi'} (${url})`;
-    if (appsIframe) {
-      if (forceReload || !appsIframe.src || !appsIframe.src.startsWith('http') || appsIframe.src !== url) {
-        appsIframe.src = 'about:blank';
-        setTimeout(() => {
-          if (appsIframe) appsIframe.src = url;
-        }, 50);
-      }
-    }
-    // Update card selection highlight
-    appCards.forEach(card => {
-      if (card.getAttribute('data-app-url') === url) {
-        card.classList.add('active');
-      } else {
-        card.classList.remove('active');
-      }
-    });
-    // Hide catalog drawer once app is selected
-    if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'none';
-    btnToggleAppsCatalog?.classList.remove('active');
-  }
-
-  // Sidebar Apps Button Trigger
-  btnOpenApps?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openAppsView();
-  });
-
-  // Apps Header Controls
-  btnToggleAppsCatalog?.addEventListener('click', (e) => {
-    e.preventDefault();
-    toggleAppsCatalog();
-  });
-
-  btnCloseCatalogDrawer?.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'none';
-    btnToggleAppsCatalog?.classList.remove('active');
-  });
-
-  btnAppsReload?.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (currentAppUrl) {
-      launchApp(currentAppUrl, currentAppName, true);
-    }
-  });
-
-  // Apps Catalog Cards Selection
-  appCards.forEach(card => {
-    card.addEventListener('click', () => {
-      const url = card.getAttribute('data-app-url');
-      const name = card.getAttribute('data-app-name');
-      if (url && name) {
-        launchApp(url, name);
-      }
-    });
-  });
-
-  // Custom App URL Launcher
-  function handleCustomAppLaunch() {
-    let val = inputCustomAppUrl?.value?.trim();
-    if (!val) return;
-    if (!val.startsWith('http://') && !val.startsWith('https://')) {
-      val = 'https://' + val;
-    }
-    try {
-      const parsed = new URL(val);
-      launchApp(parsed.href, parsed.hostname);
-    } catch (err) {
-      launchApp(val, 'Custom Web App');
-    }
-    if (inputCustomAppUrl) inputCustomAppUrl.value = '';
-  }
-
-  btnLaunchCustomApp?.addEventListener('click', handleCustomAppLaunch);
-  inputCustomAppUrl?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleCustomAppLaunch();
-  });
 
   // Home Button (Back to Chat / Reset to Clean Welcome Screen)
   document.getElementById('btn-header-new-chat')?.addEventListener('click', (e) => {

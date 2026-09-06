@@ -11421,11 +11421,9 @@ async function openAppsTab(e) {
   }
 
   // If in newtab (embedded fullscreen-apps-overlay exists), open in-page overlay directly!
-  const appsOverlay = document.getElementById('fullscreen-apps-overlay');
-  if (appsOverlay) {
-    appsOverlay.style.display = 'flex';
-    const appsCatalogOverlay = document.getElementById('apps-catalog-overlay');
-    if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'flex';
+  const appsManager = window.AppsManager || (window.AppsIntegration && window.AppsIntegration.manager);
+  if (appsManager && document.getElementById('fullscreen-apps-overlay')) {
+    appsManager.openAppsView();
     return;
   }
 

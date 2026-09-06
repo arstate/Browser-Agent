@@ -893,3 +893,19 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menggunakan skala font dinamis `font-size: clamp(13px, 1.15vw, 15px);` sehingga teks subtitle beradaptasi secara elegan di berbagai resolusi layar tanpa pernah terpotong atau membungkus ke baris kedua.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
 
+142. **Modularisasi dan Struktur Folder Baru `extension/apps-integration/` (`v2.150.259`):**
+    - **Kebutuhan Pengguna**:
+      - Menambahkan folder baru khusus untuk fitur Apps Integration (`extension/apps-integration/`) agar arsitektur kode rapi, modular, dan terpisah dari file utama.
+    - **Implementasi Arsitektur Modular**:
+      1. **Direktori Modul Baru (`extension/apps-integration/`)**:
+         - `apps_registry.js`: Menyimpan katalog aplikasi terintegrasi (Google Flow, Cloud Notes, Google Gemini, Google AI Studio, Meta Ads Manager), metadata visual (gradien, ikon SVG, badge), aturan Dynamic DeclarativeNetRequest (DNR Rule 9901 & 9902), serta helper resolusi nama URL.
+         - `apps_manager.js`: Lifecycle manager untuk in-app webview, drawer katalog, trigger reload, peluncur custom URL, pembersihan memori iframe saat ditutup (`about:blank`), dan delegasi global `window.AppsIntegration = { registry, manager }`.
+         - `apps_overlay.css`: Stylesheet terdedikasi untuk overlay fullscreen apps, navbar kaca blur transparan, kapsul link terpadu, dan bento cards katalog.
+         - `README.md`: Dokumentasi teknis mengenai struktur modul, API, dan petunjuk penggunaan.
+      2. **Refactoring & Integrasi Bersih**:
+         - `extension/newtab.js`: Mengganti 220+ baris kode apps inline dengan delegasi bersih ke `window.AppsIntegration.manager`.
+         - `extension/newtab.html`: Menghubungkan `apps_overlay.css`, `apps_registry.js`, dan `apps_manager.js`.
+         - `extension/sidepanel.html`: Memuat `apps_registry.js` dan `apps_manager.js` untuk integrasi global antar tampilan.
+         - `extension/sidepanel.js`: Memperbarui `openAppsTab` agar langsung memanfaatkan `window.AppsIntegration.manager`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh file pada modul baru (`apps_manager.js` 249 baris, `apps_overlay.css` 402 baris, `apps_registry.js` 193 baris) dan 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+

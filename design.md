@@ -1640,3 +1640,27 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_styles.js`: 737
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
+
+## 75. Arsitektur Folder Modular Apps Integration (v2.150.259)
+
+### 🧩 1. Struktur Modul Terpisah (`extension/apps-integration/`)
+- **`apps_registry.js`**: Pusat katalog metadata aplikasi terintegrasi (Google Flow, Cloud Notes, Google Gemini, Google AI Studio, Meta Ads Manager), spesifikasi visual, penanganan Dynamic DNR Rules (ID 9901 & 9902), serta utility resolusi penamaan URL.
+- **`apps_manager.js`**: Pengendali siklus hidup in-app webview, mitigasi memory leak (`about:blank` on close), auto-initialization, dan integrasi global `window.AppsIntegration.manager`.
+- **`apps_overlay.css`**: Lembar gaya terdedikasi untuk overlay webview, bilah kontrol kaca transparan tanpa sekat, kapsul navigasi url terpadu, dan grid bento cards.
+- **`README.md`**: Dokumentasi arsitektur dan panduan pemanggilan API bagi pengembang.
+
+### 📏 2. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh file pada modul baru dan 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `apps-integration/apps_manager.js`: 249
+  - `apps-integration/apps_overlay.css`: 402
+  - `apps-integration/apps_registry.js`: 193
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 789
+  - `design_agent.js`: 782
+  - `design_executor.js`: 793
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
