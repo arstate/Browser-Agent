@@ -1044,6 +1044,33 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menyesuaikan padding horizontal `.btn-thinking-level-trigger` menjadi `0 10px 0 9px` (newtab) dan `0 8px 0 7px` (sidepanel) untuk menghasilkan jarak optis yang proporsional dan presisi.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+149. **Penyelarasan Navbar Atas Ramping 36px, Tombol Monokrom Minimal Glass, & Label Status Pembaruan Ringkas (`v2.150.266`):**
+    - **Kebutuhan Pengguna**:
+      - Memperpendek tinggi bilah navigasi atas (`.fullscreen-header`) di Homescreen dan Chat AI dari `56px` menjadi `36px` agar setara dan selaras dengan bilah atas Integrasi Aplikasi (`.apps-header-bar`) untuk tampilan antarmuka yang jauh lebih bersih (*clean & lightweight*).
+      - Menyederhanakan seluruh tombol selektor dan chip status (`#btn-active-model`, `#btn-active-agent`, `#chip-pc-bridge`, `#chip-system-tab`) menjadi monokrom murni (*full monochrome liquid glass*) dengan sudut lengkung penuh (*full rounded 9999px*) dan ketinggian kapsul `26px`.
+      - Menjaga aksen warna khas Browser Agent (lime green) eksklusif hanya untuk tombol pembaruan (`#chip-check-update`).
+      - Menghilangkan tampilan nomor versi teknis (misal `v2.150.265`) pada label tombol pembaruan; cukup menampilkan status `"Up to date"` jika sudah versi terkini dan `"Update now"` jika pembaruan baru tersedia di GitHub.
+    - **Akar Masalah & Penyesuaian Offset Layout**:
+      - Sebelumnya, `.fullscreen-header` memiliki tinggi `56px` dengan padding `0 24px` dan tombol-tombol berukuran tinggi `32px+` serta warna status dot hijau saturated (`#10B981`) dan chip tab berwarna kehijauan (`.chip-lime`).
+      - Menurunkan tinggi navbar ke `36px` membutuhkan sinkronisasi offset CSS di seluruh ekosistem New Tab: padding atas container utama (`.fullscreen-agent-app`), batas minimum tinggi chat (`min-height: calc(100vh - 36px)`), titik tumpu vertikal kotak input di homescreen awal (`top: calc(50% + 18px)`), serta layout split-screen kanvas OpenDesign (`body.canvas-active .fullscreen-chat-main`, `.opendesign-canvas-pane`).
+    - **Implementasi Teknis**:
+      1. **Geometri Ramping Navbar 36px & Offset Layout Terpadu (`extension/newtab.css`)**:
+         - Mengubah `.fullscreen-header` menjadi `height: 36px; padding: 0 16px; background: rgba(14, 14, 17, 0.88); border-bottom: 1px solid rgba(255, 255, 255, 0.07);`.
+         - Menyelaraskan `.fullscreen-agent-app` dengan `padding-top: 36px;`.
+         - Mengupdate `.fullscreen-chat-main` ke `min-height: calc(100vh - 36px);` dan `top: calc(50% + 18px);` untuk pemusatan kotak input hero.
+         - Menyelaraskan mode split-screen `body.canvas-active`: `.fullscreen-agent-app` `padding-top: 36px !important;`, `.fullscreen-chat-main` `height: calc(100vh - 36px) !important;`, dan `.opendesign-canvas-pane` `height: calc(100vh - 36px); top: 36px !important;`.
+      2. **Kapsul Tombol Monokrom Minimal Glass 26px (`extension/newtab.css` & `extension/newtab.html`)**:
+         - Mengubah `.header-pill-btn` (`#btn-active-model`, `#btn-active-agent`) dan status chips (`#chip-pc-bridge`, `#chip-system-tab`) menjadi kapsul liquid glass dengan tinggi `26px; padding: 0 10px; border-radius: 9999px; font-size: 11px;`.
+         - Menetapkan palet monokrom bersih: latar `rgba(255, 255, 255, 0.06)`, border `rgba(255, 255, 255, 0.1)`, teks `#E2E8F0` / `#94A3B8`, serta dot status monokrom perak-putih `#E2E8F0` yang halus.
+         - Mengganti kelas `#chip-system-tab` di `newtab.html` menjadi `.chip-dark` monokromatik netral.
+      3. **Logika Tombol Pembaruan Tanpa Versi & Aksen Lime Eksklusif (`extension/core/update_bridge_manager.js`, `newtab.css`, & `newtab.html`)**:
+         - Mempertahankan aksen neon lime eksklusif pada `.bento-status-chip.chip-update` (`color: #CEF128; background: rgba(206, 241, 40, 0.08); border-color: rgba(206, 241, 40, 0.25);`).
+         - Mengubah teks awal di `newtab.html` dari `v2.150.109` menjadi `"Up to date"`.
+         - Mengubah metode `checkUpdates` dan `updatePillUI` di `update_bridge_manager.js`:
+           - Jika ada rilis baru: memanggil `this.updatePillUI(true, "Update now");` (dengan tooltip versi tetap tersedia di atribut `title`).
+           - Jika sudah terkini atau gagal terhubung: memanggil `this.updatePillUI(false, "Up to date");`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+
 
 
 

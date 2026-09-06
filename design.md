@@ -1844,6 +1844,48 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 82. Slim 36px Top Navbar, Minimalist Monochrome Liquid Glass Capsules, & Streamlined Update Status (v2.150.266)
+
+### 📐 1. Arsitektur Navbar Ramping 36px & Sinkronisasi Offset Layout
+- **Navbar Slimming (`.fullscreen-header`)**:
+  - Memperpendek ketinggian navbar atas dari `56px` menjadi `36px` dengan padding `0 16px`, menyamakan standar visual secara presisi dengan `.apps-header-bar` di modul Integrasi Aplikasi.
+  - Mengubah latar belakang menjadi `rgba(14, 14, 17, 0.88)` dengan backdrop blur `24px` dan border bawah minimalis `1px solid rgba(255, 255, 255, 0.07)`.
+- **Global Offset Alignment**:
+  - Menyelaraskan padding atas `.fullscreen-agent-app` menjadi `padding-top: 36px`.
+  - Mengatur `min-height: calc(100vh - 36px)` pada `.fullscreen-chat-main`.
+  - Mengatur titik tumpu vertikal pemusatan hero chat input di homescreen awal menjadi `top: calc(50% + 18px)`.
+  - Menyelaraskan tata letak split-screen kanvas OpenDesign (`body.canvas-active .fullscreen-agent-app`, `.fullscreen-chat-main`, dan `.opendesign-canvas-pane`) ke offset `36px`.
+
+### 🔲 2. Minimalist Monochrome Liquid Glass Button Architecture
+- **Kapsul 26px Rounded Penuh (`border-radius: 9999px`)**:
+  - Seluruh tombol selektor (`#btn-active-model`, `#btn-active-agent`) dan status chips (`#chip-pc-bridge`, `#chip-system-tab`) berdimensi seragam: tinggi `26px`, padding `0 10px`, font size `11px`, dan border-radius `9999px`.
+- **Pure Monochrome Palette**:
+  - Mengeliminasi warna saturated hijau/lime pada status chip dan tombol header, digantikan dengan material liquid glass transparan `rgba(255, 255, 255, 0.06)`, border `rgba(255, 255, 255, 0.1)`, teks `#E2E8F0` / `#94A3B8`, serta dot status monokrom perak-putih `#E2E8F0` yang elegan.
+
+### ⚡ 3. Streamlined Update Indicator Logic & Brand Lime Accent Exclusivity
+- **Brand Lime Exclusivity**:
+  - Aksen warna hijau lime (`#CEF128`) dijaga eksklusif hanya untuk tombol status update `#chip-check-update` (`.chip-update`), menjadikannya focal point fungsional yang kontras dan bersih.
+- **Pure Semantic Status (No Version Slop)**:
+  - Mengeliminasi tampilan teks nomor versi mentah (seperti `v2.150.265`) pada tombol update.
+  - Saat versi sudah paling mutakhir, tombol menampilkan `"Up to date"` dengan ikon putar sinkronisasi.
+  - Saat pembaruan GitHub terdeteksi, tombol beralih menampilkan `"Update now"` dengan ikon panah pembaruan, sementara detail nomor versi tetap dapat dilihat pengguna melalui atribut tooltip `title`.
+
+### 📏 4. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` dan seluruh file di `extension/apps-integration/` terjaga ketat di bawah limit 800 baris:
+  - `apps-integration/apps_manager.js`: 293
+  - `apps-integration/apps_overlay.css`: 403
+  - `apps-integration/apps_registry.js`: 193
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 789
+  - `design_agent.js`: 782
+  - `design_executor.js`: 793
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
 
 
 

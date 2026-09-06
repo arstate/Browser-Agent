@@ -117,7 +117,9 @@
       const spinIcon = updatePill?.querySelector('.update-spin-icon');
 
       if (spinIcon) spinIcon.style.animation = 'spin 0.8s linear infinite';
-      if (isManual && updateLabel) updateLabel.innerText = "Memeriksa...";
+      if (isManual && updateLabel) {
+        updateLabel.innerHTML = `<svg class="update-spin-icon" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:-1px; margin-right:4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>Checking...`;
+      }
 
       try {
         // 1. Fetch remote manifest from GitHub raw master
@@ -133,20 +135,20 @@
 
         if (isNewer) {
           this.hasUpdate = true;
-          this.updatePillUI(true, `Update v${remoteVersion}`);
+          this.updatePillUI(true, "Update now");
           if (isManual) {
             this.openUpdateModal();
           }
         } else {
           this.hasUpdate = false;
-          this.updatePillUI(false, `v${this.currentVersion} • Up to Date`);
+          this.updatePillUI(false, "Up to date");
           if (isManual) {
             this.showToast(`Browser Agent sudah menggunakan versi paling mutakhir (v${this.currentVersion}).`);
           }
         }
       } catch (err) {
         console.warn("[UpdateManager] Error checking updates:", err.message);
-        this.updatePillUI(false, `v${this.currentVersion}`);
+        this.updatePillUI(false, "Up to date");
         if (isManual) {
           this.showToast(`Gagal memeriksa update: ${err.message}`);
         }

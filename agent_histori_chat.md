@@ -7427,6 +7427,35 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
   5. Bump versi ke `v2.150.265` di `manifest.json`.
 
+---
+
+### Iterasi: Penyelarasan Navbar Atas Ramping 36px, Tombol Monokrom Minimal Glass, & Label Status Pembaruan Ringkas (`v2.150.266`)
+- **User Request:**
+  - "update ui ukuran navbar atas di homescren dan chat ai lebih di pendekin tingginya kek navbar atas di apps integration biar lebih clean, trus update ui tombol lebih simpel full monochrome kecuali update browser agent tombol dan untuk tombol update gausah show versi cukup kalo udh update cukup up to date kalo ada update ada Update now, pokoknya buat lebih clean full rounded glasses minimal"
+- **Solusi & Rekayasa Teknis:**
+  1. *Penyelarasan Navbar Ramping 36px & Offset Layout (`extension/newtab.css`)*:
+     - Mengubah `.fullscreen-header` dari tinggi `56px` ke `height: 36px; padding: 0 16px; background: rgba(14, 14, 17, 0.88); border-bottom: 1px solid rgba(255, 255, 255, 0.07);`.
+     - Menyelaraskan padding atas `.fullscreen-agent-app` menjadi `padding-top: 36px;`.
+     - Mengubah batas tinggi `.fullscreen-chat-main` ke `min-height: calc(100vh - 36px);` dan posisi centering input awal menjadi `top: calc(50% + 18px);`.
+     - Menyelaraskan seluruh offset mode split-screen kanvas OpenDesign (`body.canvas-active`) ke `36px` (`padding-top: 36px !important;`, `height: calc(100vh - 36px) !important;`, `top: 36px !important;`).
+  2. *Tombol Monokrom Minimalist Liquid Glass 26px (`extension/newtab.css` & `extension/newtab.html`)*:
+     - Mengubah `.header-pill-btn` (`#btn-active-model`, `#btn-active-agent`) dan status chips (`#chip-pc-bridge`, `#chip-system-tab`) menjadi kapsul liquid glass dengan tinggi `26px`, padding `0 10px`, font size `11px`, dan `border-radius: 9999px`.
+     - Menghilangkan warna hijau/lime pada status chip dan menggantinya dengan tema monokrom bersih: border `rgba(255, 255, 255, 0.1)`, teks `#E2E8F0` / `#94A3B8`, status dot monokrom perak-putih `#E2E8F0`.
+     - Menyetel kelas `#chip-system-tab` menjadi `.chip-dark` monokromatik netral.
+  3. *Tombol Pembaruan Tanpa Nomor Versi & Aksen Lime Eksklusif (`extension/core/update_bridge_manager.js`, `newtab.css`, & `newtab.html`)*:
+     - Menjaga aksen lime eksklusif pada `.bento-status-chip.chip-update` (`color: #CEF128; background: rgba(206, 241, 40, 0.08); border: 1px solid rgba(206, 241, 40, 0.25);`).
+     - Mengubah label awal di `newtab.html` dari `v2.150.109` menjadi `"Up to date"`.
+     - Mengubah metode `checkUpdates` dan `updatePillUI` di `update_bridge_manager.js`:
+       - Jika terdeteksi pembaruan GitHub: memanggil `this.updatePillUI(true, "Update now");`.
+       - Jika sudah mutakhir atau gagal fetch: memanggil `this.updatePillUI(false, "Up to date");`.
+       - Nomor versi teknis tetap dapat dilihat via tooltip `title`.
+- **Verifikasi:**
+  1. Unit test `scratch/test_slim_monochrome_navbar.js` lulus 100% (ALL TESTS PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Seluruh file di `extension/apps-integration/` strictly `<= 800` baris (`apps_manager.js` 293 baris).
+  4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js extension/core/*.js` lulus 100% tanpa error.
+  5. Bump versi ke `v2.150.266` di `manifest.json`.
+
 
 
 
