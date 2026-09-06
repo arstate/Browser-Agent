@@ -2,7 +2,7 @@
 // Browser Agent - Full-Screen New Tab Utilities
 // =========================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+function initNewTab() {
   const recentSitesGrid = document.getElementById('recent-sites-grid');
   const chatInput = document.getElementById('chat-input');
 
@@ -177,12 +177,29 @@ document.addEventListener('DOMContentLoaded', () => {
     closeFullscreenSettings();
     if (appsManager) {
       appsManager.openAppsView(appUrl, appName);
+    } else {
+      const appsOverlay = document.getElementById('fullscreen-apps-overlay');
+      if (appsOverlay) appsOverlay.style.display = 'flex';
+      updateActiveSidebarTab('apps');
     }
   }
 
   function closeAppsView() {
     if (appsManager) {
       appsManager.closeAppsView();
+    }
+    const appsOverlay = document.getElementById('fullscreen-apps-overlay');
+    if (appsOverlay) appsOverlay.style.display = 'none';
+    const appsCatalogOverlay = document.getElementById('apps-catalog-overlay');
+    if (appsCatalogOverlay) appsCatalogOverlay.style.display = 'none';
+    document.getElementById('btn-toggle-apps-catalog')?.classList.remove('active');
+    updateActiveSidebarTab('home');
+
+    // Clean hash from URL so refreshing won't reload back into apps
+    if (window.location.hash && (window.location.hash.startsWith('#apps') || window.location.hash.startsWith('#flow'))) {
+      try {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch (e) {}
     }
   }
 
@@ -206,6 +223,19 @@ document.addEventListener('DOMContentLoaded', () => {
     updateActiveSidebarTab('home');
   });
 
+  // Apps Button in Sidebar (Toggles in-page Apps Hub Overlay)
+  document.getElementById('btn-open-apps')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    const appsOverlay = document.getElementById('fullscreen-apps-overlay');
+    if (appsOverlay && appsOverlay.style.display === 'flex') {
+      closeAppsView();
+    } else {
+      openAppsView();
+    }
+  }, true);
+
   // Settings Button in Sidebar (Opens in-page Settings Overlay)
   document.getElementById('btn-open-settings')?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -224,6 +254,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auto-open settings or apps overlay if opened with hash (e.g. newtab.html#settings or newtab.html#apps)
   function checkUrlForAutoSettings() {
+    // If the page was reloaded (F5, Ctrl+R, reload button), ALWAYS default to homescreen
+    const isReload = Boolean(
+      (window.performance?.getEntriesByType?.('navigation')?.[0]?.type === 'reload') ||
+      (window.performance?.navigation?.type === 1)
+    );
+
+    if (isReload) {
+      if (window.location.hash) {
+        try {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        } catch (e) {}
+      }
+      closeAppsView();
+      closeFullscreenSettings();
+      return;
+    }
+
     const hash = window.location.hash;
     if (hash && (hash.startsWith('#apps') || hash.startsWith('#flow'))) {
       if (hash.startsWith('#flow')) {
@@ -231,6 +278,10 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         openAppsView();
       }
+      // Immediately clean hash so subsequent reloads default to homescreen
+      try {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch (e) {}
       return;
     }
     if (hash && (hash.startsWith('#settings') || hash.startsWith('#ai') || hash.startsWith('#models') || hash.startsWith('#agents') || hash.startsWith('#skills') || hash.startsWith('#memory'))) {
@@ -240,6 +291,10 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (hash.includes('skills')) tab = 'skills';
       else if (hash.includes('memory')) tab = 'memory';
       openFullscreenSettings(tab);
+      // Immediately clean hash so subsequent reloads default to homescreen
+      try {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch (e) {}
     }
   }
   checkUrlForAutoSettings();
@@ -306,4 +361,10 @@ document.addEventListener('DOMContentLoaded', () => {
       parallaxAnimFrame = window.requestAnimationFrame(renderGridParallax);
     }
   }, { passive: true });
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initNewTab);
+} else {
+  initNewTab();
+}

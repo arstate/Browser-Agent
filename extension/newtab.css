@@ -288,6 +288,10 @@ body.newtab-body {
   box-sizing: border-box;
 }
 
+.sidebar-nav-item > * {
+  pointer-events: none;
+}
+
 .app-sidebar:hover .sidebar-nav-item {
   width: 100%;
   height: 34px;

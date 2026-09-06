@@ -11427,13 +11427,13 @@ async function openAppsTab(e) {
     return;
   }
 
-  const targetUrl = chrome.runtime.getURL('newtab.html#apps');
+  const targetUrl = chrome.runtime.getURL('newtab.html');
   try {
     const allTabs = await chrome.tabs.query({});
     const existingNewTab = allTabs.find(t => t.url && (t.url.includes('newtab.html') || t.url === 'chrome://newtab/'));
     
     if (existingNewTab) {
-      await chrome.tabs.update(existingNewTab.id, { active: true, url: targetUrl });
+      await chrome.tabs.update(existingNewTab.id, { active: true });
       if (existingNewTab.windowId) {
         await chrome.windows.update(existingNewTab.windowId, { focused: true });
       }
@@ -11443,7 +11443,12 @@ async function openAppsTab(e) {
       return;
     }
 
-    await chrome.tabs.create({ url: targetUrl, active: true });
+    const createdTab = await chrome.tabs.create({ url: targetUrl, active: true });
+    setTimeout(() => {
+      try {
+        chrome.tabs.sendMessage(createdTab.id, { action: 'openAppsOverlay' });
+      } catch (err) {}
+    }, 450);
   } catch (err) {
     chrome.tabs.create({ url: targetUrl, active: true });
   }
@@ -11466,8 +11471,12 @@ function updateBrainDrawerBadge() {
 }
 
 document.getElementById('btn-open-brain-drawer')?.addEventListener('click', openPersistentBrainTab);
-document.getElementById('btn-open-apps')?.addEventListener('click', openAppsTab);
-document.getElementById('btn-open-settings')?.addEventListener('click', openOptionsTab);
+if (!document.getElementById('fullscreen-apps-overlay')) {
+  document.getElementById('btn-open-apps')?.addEventListener('click', openAppsTab);
+}
+if (!document.getElementById('fullscreen-settings-overlay')) {
+  document.getElementById('btn-open-settings')?.addEventListener('click', openOptionsTab);
+}
 document.getElementById('btn-close-settings')?.addEventListener('click', hideSettingsModal);
 document.getElementById('btn-cancel-settings')?.addEventListener('click', hideSettingsModal);
 document.getElementById('btn-save-settings')?.addEventListener('click', saveSettings);

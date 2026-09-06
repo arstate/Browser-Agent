@@ -1688,3 +1688,31 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_styles.js`: 737
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
+
+## 77. Default Homescreen Lifecycle & Robust Sidebar Navigation (v2.150.261)
+
+### 🔄 1. Arsitektur Siklus Hidup Halaman New Tab & Isolasi Interaksi
+- **Navigation Type Reload Detection**:
+  - `checkUrlForAutoSettings()` mendeteksi pemuatan ulang halaman via `performance.getEntriesByType('navigation')[0]?.type === 'reload'` dan fallback `performance.navigation.type === 1`.
+  - Jika navigasi adalah reload, seluruh status overlay ditutup (`closeAppsView()` & `closeFullscreenSettings()`), hash URL disanitasi seketika dengan `history.replaceState(null, '', pathname + search)`, dan halaman new tab dijamin 100% selalu menampilkan homescreen/chat.
+- **URL Hash Sanitization**:
+  - Panggilan `openAppsView()` dari deep link atau penutupan via `closeAppsView()` secara otomatis menghapus hash dari address bar, mencegah persistensi hash `#apps` di history peramban saat pengguna menekan tombol refresh di kemudian hari.
+- **Sidebar Event Conflict Elimination**:
+  - Listener `#btn-open-apps` dan `#btn-open-settings` pada `sidepanel.js` diberi guard DOM `if (!document.getElementById('fullscreen-apps-overlay'))` sehingga tidak akan menduplikasi atau menimpa listener internal pada tab `newtab.html`.
+  - `newtab.js` mengikat capture-phase listener (`true`) dengan `e.stopImmediatePropagation()` pada `#btn-open-apps` untuk mengendalikan aksi buka/tutup (toggle) secara deterministik dan aman dari intervensi script lain.
+- **CSS Event Pass-Through**:
+  - Aturan `.sidebar-nav-item > * { pointer-events: none; }` memastikan setiap interaksi pengguna pada ikon SVG, path, atau label langsung tersampaikan ke tombol navigasi tanpa distorsi target elemen.
+
+### 📏 2. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 789
+  - `design_agent.js`: 782
+  - `design_executor.js`: 793
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+

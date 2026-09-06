@@ -7316,4 +7316,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.260` di `manifest.json`.
 
+---
+
+### Iterasi: Perbaikan Default Homescreen Saat Reload New Tab & Tombol Sidebar Apps (`v2.150.261`)
+- **User Request:**
+  - "bug ketika referesh new tab malah default ke apps, harusnya di homescreen, trus sidebar apps gabisa di klik fix bug ini"
+- **Solusi & Rekayasa Teknis:**
+  1. *Deteksi Reload Halaman & Pembersihan Hash URL*:
+     - Menambahkan deteksi navigasi `performance.getEntriesByType('navigation')[0]?.type === 'reload'` dan `performance.navigation.type === 1` pada `checkUrlForAutoSettings()` di `newtab.js`.
+     - Jika halaman dimuat ulang (reload), hash URL disanitasi via `history.replaceState` dan overlay tertutup penuh sehingga halaman baru selalu default ke homescreen/chat.
+     - `openAppsView()` dan `closeAppsView()` secara proaktif membersihkan hash `#apps`/`#flow` dari address bar peramban.
+  2. *Isolasi Listener Tombol Sidebar Apps (`#btn-open-apps`)*:
+     - Memberikan guard `if (!document.getElementById('fullscreen-apps-overlay'))` di `sidepanel.js` untuk mencegah perebutan event listener `#btn-open-apps` di dalam halaman `newtab.html`.
+     - Menambahkan listener capture-phase eksplisit dengan `e.stopImmediatePropagation()` di `newtab.js` untuk mengontrol toggle Apps secara instan dan deterministik.
+     - Menambahkan fallback kesiapan DOM (`document.readyState === 'loading'`) pada inisialisasi `newtab.js`.
+  3. *CSS Event Propagation*:
+     - Menambahkan `.sidebar-nav-item > * { pointer-events: none; }` di `newtab.css` agar klik pada elemen anak ikon SVG atau label langsung meneruskan target ke tombol induk.
+- **Verifikasi:**
+  1. Unit test `scratch/test_newtab_reload_and_apps_click.js` lulus 100% (ALL TESTS PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.261` di `manifest.json`.
+
+
 

@@ -924,3 +924,27 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Pada `launchApp()`: Memastikan `#fullscreen-apps-overlay` otomatis disetel ke `display: flex` dan tab aktif disinkronkan ke `apps`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh file di `extension/apps-integration/` (`apps_manager.js` 285 baris) dan 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+144. **Perbaikan Default Homescreen Saat Reload New Tab & Tombol Sidebar Apps (`v2.150.261`):**
+    - **Kebutuhan Pengguna**:
+      - Memperbaiki bug saat refresh/reload halaman new tab yang keliru membuka tampilan Apps secara default (seharusnya selalu kembali ke homescreen/chat).
+      - Memperbaiki tombol menu sidebar Apps (`#btn-open-apps`) yang tidak bisa diklik.
+    - **Akar Masalah (Root Cause Analysis)**:
+      1. **Penyebab Reload Default ke Apps**:
+         - Pembukaan tab Apps sebelumnya menggunakan URL dengan hash `newtab.html#apps`. Chromium mempertahankan hash URL tersebut saat pengguna melakukan reload/refresh (F5 atau tombol reload browser).
+         - Fungsi `checkUrlForAutoSettings()` membaca hash `#apps` pada setiap pemuatan halaman tanpa membedakan tipe navigasi reload, sehingga otomatis memicu `openAppsView()`. Selain itu, `closeAppsView()` sebelumnya tidak membersihkan hash dari baris URL browser (`history.replaceState`).
+      2. **Penyebab Tombol Sidebar Apps Tidak Bisa Diklik**:
+         - Terjadi konflik double event-listener pada `#btn-open-apps` di `newtab.html`: `sidepanel.js` (yang dimuat di `newtab.html`) mengikat listener global `openAppsTab` pada `#btn-open-apps`, yang bertabrakan dengan listener internal `apps_manager.js`.
+         - `sidepanel.js` mencoba memanipulasi tab Chrome (`chrome.tabs.query` dan `chrome.tabs.update`) pada tab aktifnya sendiri.
+         - `newtab.js` tidak memiliki penanganan eksplisit capture-phase pada `#btn-open-apps`, dan elemen anak ikon/label tidak memiliki `pointer-events: none` sehingga target klik dapat terdistorsi.
+    - **Implementasi Teknis**:
+      1. **Deteksi Tipe Navigasi Reload & Pembersihan Hash URL (`extension/newtab.js` & `apps_manager.js`)**:
+         - Menerapkan pemeriksaan `performance.getEntriesByType('navigation')[0]?.type === 'reload'` dan `performance.navigation.type === 1` pada `checkUrlForAutoSettings()`. Jika halaman adalah hasil reload, sistem secara tegas membersihkan hash URL via `history.replaceState` dan selalu menyetel tampilan default ke homescreen/chat.
+         - Menyuntikkan pembersihan hash `history.replaceState` seketika saat `openAppsView()` dieksekusi dari deep link maupun saat `closeAppsView()` dipanggil, sehingga URL address bar selalu bersih (`newtab.html`).
+      2. **Isolasi Listener & Eksklusivitas Navigasi Sidebar (`extension/sidepanel.js` & `newtab.js`)**:
+         - Menjaga event listener di `sidepanel.js` dengan guard `if (!document.getElementById('fullscreen-apps-overlay'))` sehingga `sidepanel.js` tidak pernah menimpa listener tombol `#btn-open-apps` saat dieksekusi di dalam konteks `newtab.html`.
+         - Di `newtab.js`, menambahkan capture-phase listener (`true`) dengan `e.stopImmediatePropagation()` pada `#btn-open-apps` yang secara deterministik melakukan toggle antara `openAppsView()` dan `closeAppsView()`.
+         - Memperbarui inisialisasi `newtab.js` agar memeriksa kesiapan dokumen (`document.readyState === 'loading'` fallback) sehingga seluruh elemen DOM selalu terikat dengan sempurna.
+      3. **Robustness Interaksi CSS (`extension/newtab.css`)**:
+         - Menambahkan `.sidebar-nav-item > * { pointer-events: none; }` agar setiap klik pada ikon SVG, path, atau label teks selalu ditangkap langsung oleh elemen tombol induk.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+

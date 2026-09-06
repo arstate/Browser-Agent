@@ -74,6 +74,7 @@
     }
 
     openAppsView(appUrl = null, appName = null) {
+      if (!this.appsOverlay) this.cacheDOMElements();
       if (window.closeFullscreenSettings) {
         window.closeFullscreenSettings();
       }
@@ -117,6 +118,11 @@
         }
         const chatInput = document.getElementById('chat-input');
         chatInput?.focus();
+      }
+      if (typeof window !== 'undefined' && window.location?.hash && (window.location.hash.startsWith('#apps') || window.location.hash.startsWith('#flow'))) {
+        try {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        } catch (e) {}
       }
     }
 
