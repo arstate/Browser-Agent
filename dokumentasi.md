@@ -1071,6 +1071,25 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
            - Jika sudah terkini atau gagal terhubung: memanggil `this.updatePillUI(false, "Up to date");`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+150. **Kapsul Floating Liquid Glass Navbar (Full Rounded & Floating Architecture) (`v2.150.267`):**
+    - **Kebutuhan Pengguna**:
+      - Mengubah bilah navigasi atas (`.fullscreen-header`) di Homescreen dan Chat AI menjadi bilah terapung (*floating navbar*) dengan ujung melengkung penuh (*full rounded pill capsule / border-radius: 9999px*), menyerupai arsitektur modern floating glass (contoh OpenDesign) yang elegan dan transparan.
+      - Menyelaraskan tema warna gelap (*dark luxury*), saturasi blur, border highlight, serta tata letak tombol khas Browser Agent (Model & Agent di kiri, Title obrolan di tengah, dan Status chips di kanan).
+    - **Implementasi Teknis & Geometri Kapsul Terapung**:
+      1. **Arsitektur Floating Capsule (`extension/newtab.css`)**:
+         - Mengubah `.fullscreen-header` dari bilah flat yang menempel di ujung jendela menjadi kapsul terapung:
+           - Posisi: `position: fixed; top: 10px; left: calc(58px + 14px); right: 14px; height: 40px; padding: 0 16px;`.
+           - Bentuk: `border-radius: 9999px;` (*full rounded capsule*).
+           - Material Liquid Glass: `background: rgba(14, 15, 19, 0.72); background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%); backdrop-filter: blur(28px) saturate(190%); border: 1px solid rgba(255, 255, 255, 0.12);`.
+           - Refleksi & Kedalaman: `box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.12);`.
+           - Hover interaktif: transisi halus border `rgba(255, 255, 255, 0.18)` dan elevasi bayangan.
+      2. **Harmonisasi Offset Tata Letak (`extension/newtab.css`)**:
+         - Menyelaraskan padding atas `.fullscreen-agent-app` menjadi `padding-top: 58px;` sehingga konten chat memiliki celah udara 8px di bawah kapsul terapung dan meluncur mulus di baliknya saat di-scroll.
+         - Mengubah `min-height` pada `.fullscreen-chat-main` menjadi `calc(100vh - 58px)`.
+         - Menyelaraskan pemusatan vertikal kotak input di homescreen awal menjadi `top: calc(50% + 29px)`.
+         - Menyesuaikan offset split-screen kanvas OpenDesign (`body.canvas-active`) ke `58px` (`padding-top: 58px !important;`, `height: calc(100vh - 58px) !important;`, `top: 58px !important;`).
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+
 
 
 

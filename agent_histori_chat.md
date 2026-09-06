@@ -7456,6 +7456,30 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js extension/core/*.js` lulus 100% tanpa error.
   5. Bump versi ke `v2.150.266` di `manifest.json`.
 
+---
+
+### Iterasi: Kapsul Floating Liquid Glass Navbar (Full Rounded & Floating Architecture) (`v2.150.267`)
+- **User Request:**
+  - "update ui navbar atas homescreen dan chat jadi floating full rounded kek gini contohnya jadi kek glasses tapi tema warna dan style dan layout disesuaikan dengan browser agent"
+- **Solusi & Rekayasa Teknis:**
+  1. *Arsitektur Kapsul Kaca Terapung (`extension/newtab.css`)*:
+     - Mengubah `.fullscreen-header` menjadi kapsul floating yang terlepas dari batas tepi jendela:
+       - Posisi: `position: fixed; top: 10px; left: calc(58px + 14px); right: 14px; height: 40px; padding: 0 16px;`.
+       - Bentuk: `border-radius: 9999px;` (*full rounded capsule*).
+       - Efek Kaca Cair (*Liquid Glass*): `background: rgba(14, 15, 19, 0.72); background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%); backdrop-filter: blur(28px) saturate(190%); border: 1px solid rgba(255, 255, 255, 0.12);`.
+       - Kedalaman Optis: `box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.12);`.
+  2. *Sinkronisasi Offset Layout Terpadu (`extension/newtab.css`)*:
+     - Menyelaraskan padding atas `.fullscreen-agent-app` menjadi `padding-top: 58px;` sehingga konten chat memiliki celah udara 8px di bawah kapsul dan meluncur mulus di baliknya saat di-scroll.
+     - Mengubah `min-height` pada `.fullscreen-chat-main` ke `calc(100vh - 58px)`.
+     - Mengatur titik tumpu vertikal pemusatan hero chat input di homescreen awal menjadi `top: calc(50% + 29px)`.
+     - Menyelaraskan mode split-screen kanvas OpenDesign (`body.canvas-active`) ke `58px` (`padding-top: 58px !important;`, `height: calc(100vh - 58px) !important;`, `top: 58px !important;`).
+- **Verifikasi:**
+  1. Unit test `scratch/test_floating_glass_navbar.js` lulus 100% (ALL TESTS PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Seluruh file di `extension/apps-integration/` strictly `<= 800` baris (`apps_manager.js` 293 baris).
+  4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js extension/core/*.js` lulus 100% tanpa error.
+  5. Bump versi ke `v2.150.267` di `manifest.json`.
+
 
 
 
