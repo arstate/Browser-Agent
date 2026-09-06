@@ -3079,7 +3079,7 @@ body.has-messages .chat-messages {
   gap: 6px;
   height: 28px;
   box-sizing: border-box;
-  padding: 0 12px;
+  padding: 0 10px 0 9px;
   border-radius: 9999px;
   background: #27272A;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -3099,6 +3099,22 @@ body.has-messages .chat-messages {
 .btn-thinking-level-trigger.open {
   border-color: var(--accent-lime);
   box-shadow: 0 0 12px rgba(206, 241, 40, 0.15);
+}
+
+.thinking-level-trigger-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.thinking-level-trigger-icon svg {
+  width: 12px !important;
+  height: 12px !important;
+  stroke: var(--accent-lime);
+  color: var(--accent-lime);
 }
 
 .thinking-level-label {

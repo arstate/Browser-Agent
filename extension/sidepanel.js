@@ -7441,21 +7441,43 @@ function initSearchEngineDropdown() {
   }
 }
 
+const THINKING_LEVELS_CONFIG = {
+  low: {
+    name: "Low",
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="18" x2="6" y2="15"/><circle cx="12" cy="18" r="1" fill="currentColor"/><circle cx="18" cy="18" r="1" fill="currentColor"/></svg>`
+  },
+  medium: {
+    name: "Medium",
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="18" x2="6" y2="15"/><line x1="12" y1="18" x2="12" y2="11"/><circle cx="18" cy="18" r="1" fill="currentColor"/></svg>`
+  },
+  high: {
+    name: "High",
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="18" x2="6" y2="15"/><line x1="12" y1="18" x2="12" y2="11"/><line x1="18" y1="18" x2="18" y2="7"/></svg>`
+  },
+  xhigh: {
+    name: "Xhigh",
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="18" x2="4" y2="14"/><line x1="9" y1="18" x2="9" y2="10"/><line x1="14" y1="18" x2="14" y2="6"/><line x1="19" y1="18" x2="19" y2="3"/></svg>`
+  },
+  extreme: {
+    name: "Extreme",
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`
+  },
+  max: {
+    name: "Extreme",
+    icon: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`
+  }
+};
+
 function setThinkingLevel(level) {
   if (!['low', 'medium', 'high', 'xhigh', 'extreme', 'max'].includes(level)) level = 'high';
   currentThinkingLevel = level;
 
-  const labels = {
-    low: "Thinking: Low",
-    medium: "Thinking: Medium",
-    high: "Thinking: High",
-    xhigh: "Thinking: Xhigh",
-    extreme: "Thinking: Extreme",
-    max: "Thinking: Extreme"
-  };
-
+  const cfg = THINKING_LEVELS_CONFIG[level] || THINKING_LEVELS_CONFIG.high;
   const labelEl = document.getElementById('thinking-level-label');
-  if (labelEl) labelEl.textContent = labels[level] || "Thinking: High";
+  const iconEl = document.getElementById('thinking-level-trigger-icon');
+
+  if (labelEl) labelEl.textContent = cfg.name;
+  if (iconEl) iconEl.innerHTML = cfg.icon;
 
   document.querySelectorAll('.thinking-level-option').forEach(opt => {
     const optLvl = opt.getAttribute('data-level');

@@ -7405,5 +7405,28 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
   5. Bump versi ke `v2.150.264` di `manifest.json`.
 
+---
+
+### Iterasi: Refaktor Trigger Tombol Thinking: Eliminasi Prefix Teks & Integrasi Ikon Dinamis (`v2.150.265`)
+- **User Request:**
+  - "update ui di tombol gausah ada teks thinking jadi langsung icon dan pilihan teks thinkingnya misal (icon) Extreme"
+- **Solusi & Rekayasa Teknis:**
+  1. *Struktur DOM Trigger Ikon & Label (`extension/newtab.html` & `extension/sidepanel.html`)*:
+     - Menyuntikkan kontainer `<span class="thinking-level-trigger-icon" id="thinking-level-trigger-icon">` ke dalam `#btn-thinking-level-trigger`.
+     - Mengubah teks awal `#thinking-level-label` menjadi hanya nama level murni (`High`) tanpa prefix `"Thinking:"`.
+  2. *Konfigurasi Level & Sinkronisasi Atomik (`extension/sidepanel.js`)*:
+     - Menambahkan `THINKING_LEVELS_CONFIG` yang mendefinisikan nama murni dan ikon vektor SVG untuk level `low`, `medium`, `high`, `xhigh`, dan `extreme`.
+     - Memperbarui `setThinkingLevel` agar secara atomik memperbarui ikon `iconEl.innerHTML = cfg.icon` dan label `labelEl.textContent = cfg.name` saat tingkat penalaran diganti atau dimuat dari local storage.
+  3. *Styling Ikon & Padding Kapsul (`extension/newtab.css` & `extension/sidepanel.css`)*:
+     - Menambahkan aturan `.thinking-level-trigger-icon` dengan `width: 12px; height: 12px;` dan warna aksen `stroke: var(--accent-lime); color: var(--accent-lime);`.
+     - Menyesuaikan padding `.btn-thinking-level-trigger` menjadi `0 10px 0 9px` (newtab) dan `0 8px 0 7px` (sidepanel) agar seimbang dan identik dengan tombol Agent Mode.
+- **Verifikasi:**
+  1. Unit test `scratch/test_thinking_trigger_icon_label.js` lulus 100% (ALL TESTS PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Seluruh file di `extension/apps-integration/` strictly `<= 800` baris (`apps_manager.js` 293 baris).
+  4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
+  5. Bump versi ke `v2.150.265` di `manifest.json`.
+
+
 
 

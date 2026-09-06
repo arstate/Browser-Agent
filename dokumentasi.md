@@ -1026,6 +1026,25 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Seluruh logika pembukaan overlay pengaturan via in-tab fullscreen dan sinkronisasi tab aktif `updateActiveSidebarTab('settings')` tetap beroperasi secara deterministik.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+148. **Refaktor Trigger Tombol Thinking: Eliminasi Prefix Teks & Integrasi Ikon Dinamis (`v2.150.265`):**
+    - **Kebutuhan Pengguna**:
+      - Mengeliminasi kata redundan `"Thinking:"` dari tombol trigger dropup intensitas penalaran (`#btn-thinking-level-trigger`).
+      - Menampilkan ikon vektor tingkat penalaran aktif secara langsung di samping teks level (misal: `[⚡ Extreme ⌵]`, `[📶 High ⌵]`, `[📶 Medium ⌵]`, `[📶 Low ⌵]`).
+    - **Akar Masalah & Desain Ergonomis**:
+      - Sebelumnya, tombol trigger hanya menampilkan teks statis berulang `"Thinking: [Level]"` tanpa ikon, memakan ruang horizontal yang berharga di header input prompt dan tidak selaras dengan tombol Agent Mode di sebelahnya yang memiliki ikon representatif.
+    - **Implementasi Teknis**:
+      1. **Struktur DOM Trigger Ikon & Label (`extension/newtab.html` & `extension/sidepanel.html`)**:
+         - Menambahkan elemen `<span class="thinking-level-trigger-icon" id="thinking-level-trigger-icon">` di dalam `#btn-thinking-level-trigger`.
+         - Memperbarui label `#thinking-level-label` menjadi hanya nama level murni (`High`, `Extreme`, dsb.) tanpa prefix `"Thinking:"`.
+      2. **Konfigurasi Level Terpadu & Sinkronisasi Real-Time (`extension/sidepanel.js`)**:
+         - Mendefinisikan `THINKING_LEVELS_CONFIG` yang memetakan masing-masing level (`low`, `medium`, `high`, `xhigh`, `extreme`) ke nama murni dan kode SVG ikonnya.
+         - Memperbarui fungsi `setThinkingLevel(level)` agar secara otomatis menyuntikkan SVG ikon ke `iconEl.innerHTML` dan menyetel teks `labelEl.textContent = cfg.name`.
+      3. **Penyelarasan Styling Geometri Kapsul (`extension/newtab.css` & `extension/sidepanel.css`)**:
+         - Memberikan styling `.thinking-level-trigger-icon` dengan `width: 12px; height: 12px; flex-shrink: 0;` dan aksen warna `stroke: var(--accent-lime); color: var(--accent-lime);`.
+         - Menyesuaikan padding horizontal `.btn-thinking-level-trigger` menjadi `0 10px 0 9px` (newtab) dan `0 8px 0 7px` (sidepanel) untuk menghasilkan jarak optis yang proporsional dan presisi.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+
+
 
 
 
