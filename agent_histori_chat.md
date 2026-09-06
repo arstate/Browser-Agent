@@ -7506,6 +7506,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
   5. Bump versi ke `v2.150.268` di `manifest.json`.
 
+---
+
+### Iterasi: Eliminasi Tombol Redundan Re-Open Canvas di Atas Input Prompt Bar (`v2.150.269`)
+- **User Request:**
+  - "gausah ada tombol ini bro kan udah ada tombolnya ketika ai send hasil pdf slidedecknya"
+- **Solusi & Rekayasa Teknis:**
+  1. *Pembersihan Tombol Redundan di Atas Input Bar*:
+     - Menghapus tombol floating `#btn-quick-reopen-canvas` (`[Buka Canvas (16:9 Slide) ↗]`) yang menempel di atas chat input bar.
+     - Pengguna menegaskan bahwa saat AI mengirimkan hasil slide deck, sudah ada tombol yang jelas dan clean pada kartu hasil di bubble chat asisten, serta kapsul lampiran slide deck pada bubble pengguna.
+  2. *Hardening Logika & DOM*:
+     - Mengubah fungsi `syncCanvasQuickReopenButton` di `extension/sidepanel.js` agar selalu mengosongkan kontainer dan mengunci `dock.style.display = 'none'`.
+     - Menghapus kontainer markup `<div class="canvas-quick-reopen-dock" ...>` dari `extension/newtab.html` dan `extension/sidepanel.html`.
+     - Menambahkan aturan CSS `.canvas-quick-reopen-dock, .btn-quick-reopen-canvas { display: none !important; }` di `extension/newtab.css` dan `extension/sidepanel.css`.
+- **Verifikasi:**
+  1. Unit test `scratch/test_removed_quick_dock.js` lulus 100% (ALL TESTS PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 749, `design_agent.js` 782, `design_executor.js` 795, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 685, `slide_themes.js` 318).
+  3. Seluruh file di `extension/apps-integration/` strictly `<= 800` baris (`apps_manager.js` 293 baris).
+  4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
+  5. Bump versi ke `v2.150.269` di `manifest.json`.
+
 
 
 

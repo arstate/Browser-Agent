@@ -1114,6 +1114,22 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Di `design_executor.js` dan `runAgentLoop`, menambahkan directive kuat: `[TARGET FILE REVISI: "${activeDeckTitle}"]` dengan instruksi mutlak agar AI fokus memodifikasi file aktif tersebut dan dilarang membuat slide baru dari awal jika merupakan instruksi revisi.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_manager.js` 750 baris, `design_executor.js` 796 baris).
 
+152. **Eliminasi Tombol Redundan Re-Open Canvas di Atas Input Prompt Bar (`v2.150.269`):**
+    - **Kebutuhan Pengguna**:
+      - Menghapus tombol mengambang `[Buka Canvas (16:9 Slide) ↗]` yang menempel di atas bilah input obrolan (`#canvas-quick-reopen-dock` / `.btn-quick-reopen-canvas`).
+      - Pengguna menegaskan bahwa tombol tersebut redundan karena saat AI mengirimkan hasil slide deck, sudah ada tombol `[Buka Canvas ↗]` yang clean pada kartu hasil di bubble obrolan asisten, serta kapsul lampiran slide deck pada bubble pesan pengguna.
+    - **Akar Masalah & Penyesuaian**:
+      - Sebelumnya, fungsi `syncCanvasQuickReopenButton` menyuntikkan tombol dock mengambang `#btn-quick-reopen-canvas` tepat di atas toolbar input setiap kali kanvas ditutup saat artefak slide deck aktif ada di memori.
+      - Keberadaan tombol mengambang ini mengotori area input prompt dan bertabrakan secara visual dengan desain minimalis.
+    - **Implementasi Teknis**:
+      1. **Pembersihan Logika `syncCanvasQuickReopenButton` (`extension/sidepanel.js`)**:
+         - Mengubah fungsi `syncCanvasQuickReopenButton` agar selalu mengosongkan kontainer dan mengunci `dock.style.display = 'none'`, mencegah tombol di-generate ke DOM.
+      2. **Pembersihan HTML Markup (`extension/newtab.html`, `extension/sidepanel.html`)**:
+         - Menghapus elemen kontainer `<div class="canvas-quick-reopen-dock" id="canvas-quick-reopen-dock" style="display: none;"></div>` dari New Tab dan Sidepanel.
+      3. **Penyempurnaan CSS (`extension/newtab.css`, `extension/sidepanel.css`)**:
+         - Menetapkan `.canvas-quick-reopen-dock, .btn-quick-reopen-canvas { display: none !important; }` guna menjamin tidak ada glitch atau layout shift di area input.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+
 
 
 

@@ -8485,33 +8485,8 @@ var activeDesignArtifact = (typeof activeDesignArtifact !== "undefined") ? activ
 
 function syncCanvasQuickReopenButton(forceShow = false) {
   const dock = document.getElementById('canvas-quick-reopen-dock');
-  if (!dock) return;
-
-  const canvasIsOpen = document.body.classList.contains('canvas-active') || 
-                       (typeof isCanvasOpen === 'function' ? isCanvasOpen() : false);
-  const activeArt = (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact() : null) || 
-                    (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact : null) ||
-                    (typeof window !== 'undefined' ? window.__activeDesignArtifact : null);
-
-  if (!canvasIsOpen && activeArt && activeArt.html) {
-    const slideTotal = activeArt.slideCount || (Array.isArray(activeArt.slides) ? activeArt.slides.length : '') || '16:9';
-    dock.innerHTML = `
-      <button type="button" class="btn-quick-reopen-canvas" id="btn-quick-reopen-canvas" title="Buka kembali Canvas Workspace">
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        <span>Buka Canvas (${slideTotal} Slide) ↗</span>
-      </button>
-    `;
-    const btn = dock.querySelector('.btn-quick-reopen-canvas');
-    btn?.addEventListener('click', () => {
-      if (typeof openOpenDesignCanvas === 'function') {
-        openOpenDesignCanvas(activeArt);
-      } else if (typeof window !== 'undefined' && typeof window.openOpenDesignCanvas === 'function') {
-        window.openOpenDesignCanvas(activeArt);
-      }
-      dock.style.display = 'none';
-    });
-    dock.style.display = 'flex';
-  } else {
+  if (dock) {
+    dock.innerHTML = '';
     dock.style.display = 'none';
   }
 }

@@ -1966,6 +1966,36 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 319
 
+## 85. Eliminasi Docking Re-Open Canvas di Atas Input Bar (v2.150.269)
+
+### 🧹 1. De-Cluttering Input Area Architecture
+- **Pembersihan Elemen Redundan**:
+  - Tombol terapung `.btn-quick-reopen-canvas` di atas `#chat-input-bar` dihilangkan total untuk mematuhi filosofi visual clean, minimal, dan fokus.
+  - Akses menuju kanvas kini sepenuhnya terpusat secara kontekstual pada dua titik yang lebih relevan:
+    1. Kartu hasil OpenDesign di bubble chat asisten (`.btn-opendesign-view-canvas`).
+    2. Kapsul lampiran slide deck pada bubble pesan pengguna (`.user-deck-attachment-pill`).
+- **DOM & CSS Hardening**:
+  - `syncCanvasQuickReopenButton` dinonaktifkan sehingga tidak menyuntikkan tombol ke DOM.
+  - Elemen markup `.canvas-quick-reopen-dock` dihapus dari `newtab.html` dan `sidepanel.html`.
+  - CSS mengunci `.canvas-quick-reopen-dock, .btn-quick-reopen-canvas { display: none !important; }`.
+
+### 📏 2. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` dan seluruh file di `extension/apps-integration/` terjaga ketat di bawah limit 800 baris:
+  - `apps-integration/apps_manager.js`: 293
+  - `apps-integration/apps_overlay.css`: 403
+  - `apps-integration/apps_registry.js`: 193
+  - `canvas_exporter.js`: 245
+  - `canvas_manager.js`: 750
+  - `design_agent.js`: 783
+  - `design_executor.js`: 796
+  - `design_prompt.js`: 192
+  - `slide_deck_engine.js`: 725
+  - `slide_editor.js`: 799
+  - `slide_styles.js`: 738
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 319
+
+
 
 
 
