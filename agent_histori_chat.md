@@ -7382,4 +7382,28 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
   5. Bump versi ke `v2.150.263` di `manifest.json`.
 
+---
+
+### Iterasi: Relokasi Tombol Pengaturan ke Bagian Bawah Sidebar di Atas Teks Versi (`v2.150.264`)
+- **User Request:**
+  - "update pindah posisi tombol pengaturan sidebar di homescreen jadi di sidebar di bawah di atas teks versi browser agent"
+- **Solusi & Rekayasa Teknis:**
+  1. *Restrukturisasi DOM Sidebar (`extension/newtab.html`)*:
+     - Memindahkan tombol `#btn-open-settings` dari `.sidebar-nav` ke kontainer `.sidebar-footer` tepat di atas `#sidebar-app-version`.
+     - `.sidebar-nav` kini fokus pada menu kerja atas: `Home`, `Apps`, dan `Riwayat Chat`.
+  2. *Flex Layout & Animasi Hover (`extension/newtab.css`)*:
+     - Mengubah `.sidebar-footer` menjadi `display: flex; flex-direction: column; align-items: center; gap: 6px;` dengan `margin-top: auto;`.
+     - Saat sidebar collapsed (58px): Tombol pengaturan terpusat sirkular `36px x 36px` (`margin: 0 auto; border-radius: 50% !important;`), teks versi disembunyikan (`opacity: 0`).
+     - Saat sidebar di-hover (240px): `.sidebar-footer` meregang dengan padding `8px 10px 14px 10px; align-items: stretch;`, tombol pengaturan melebar mulus menjadi rounded capsule pill `width: 100%; height: 34px; border-radius: 9999px !important;` dengan label teks "Pengaturan", dan teks versi `#sidebar-app-version` tampil di bawahnya (`opacity: 1; padding: 2px 4px; color: #94A3B8;`).
+  3. *Kompatibilitas Selektor JS (`extension/newtab.js`)*:
+     - Selektor `document.querySelectorAll('.app-sidebar .sidebar-nav-item')` tetap memilih `#btn-open-settings` secara otomatis.
+     - Event click listener dan fungsi `updateActiveSidebarTab('settings')` beroperasi normal 100%.
+- **Verifikasi:**
+  1. Unit test `scratch/test_sidebar_settings_bottom_position.js` lulus 100% (ALL TESTS PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Seluruh file di `extension/apps-integration/` strictly `<= 800` baris (`apps_manager.js` 293 baris).
+  4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
+  5. Bump versi ke `v2.150.264` di `manifest.json`.
+
+
 

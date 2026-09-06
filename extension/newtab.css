@@ -228,15 +228,32 @@ body.newtab-body {
   align-items: stretch;
 }
 
-/* Sidebar Footer: App Version (Frameless Clean Typography) */
+/* Sidebar Footer: App Version & Bottom Settings Action (Frameless Clean Typography) */
 .sidebar-footer {
   margin-top: auto;
-  padding: 12px 14px 16px 14px;
+  padding: 8px 0 14px 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 6px;
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
+  transition: padding 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.app-sidebar:hover .sidebar-footer {
+  padding: 8px 10px 14px 10px;
+  align-items: stretch;
+}
+
+.sidebar-footer .sidebar-nav-item {
+  margin: 0 auto;
+}
+
+.app-sidebar:hover .sidebar-footer .sidebar-nav-item {
+  width: 100%;
+  margin: 0;
 }
 
 .sidebar-version-text {
@@ -250,7 +267,7 @@ body.newtab-body {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  padding: 0 !important;
+  padding: 2px 4px !important;
   opacity: 0;
   transform: translateX(-4px);
   transition: opacity 0.18s ease, transform 0.18s ease, color 0.18s ease;

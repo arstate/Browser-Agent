@@ -1783,5 +1783,40 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 80. Bottom-Anchored Settings Navigation & Frameless Footer Layout (v2.150.264)
+
+### 📐 1. Arsitektur Bottom-Anchored Settings Button
+- **Separation of Primary & Utility Navigation**:
+  - Memisahkan navigasi kerja utama (`Home`, `Apps`, `Riwayat Chat`) di bagian atas dari tombol utilitas sistem (`Pengaturan`) di bagian bawah.
+  - Mengeliminasi ruang kosong vertikal yang tidak terpakai dengan memindahkan tombol `#btn-open-settings` ke dalam `.sidebar-footer` yang terdorong ke paling bawah oleh `margin-top: auto;`.
+  - Tombol ditempatkan secara ergonomis tepat di atas indikator versi teks `#sidebar-app-version`.
+
+### 🔄 2. Responsivitas Flexbox Terpadu (Collapsed vs Hover Expanded)
+- **Collapsed Rail (58px)**:
+  - `.sidebar-footer` menerapkan `display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0 14px 0;`.
+  - Tombol Pengaturan berbentuk sirkular 36px x 36px (`border-radius: 50% !important; margin: 0 auto;`), terpusat presisi di tengah rel 58px.
+  - Teks label dan teks versi otomatis disembunyikan (`opacity: 0`).
+- **Expanded Rail (240px on Hover)**:
+  - `.app-sidebar:hover .sidebar-footer` melebarkan padding menjadi `8px 10px 14px 10px; align-items: stretch;`.
+  - Tombol Pengaturan membesar secara mulus menjadi kapsul rounded penuh `width: 100%; height: 34px; border-radius: 9999px !important;` dengan gap 10px dan label "Pengaturan".
+  - Teks versi `#sidebar-app-version` muncul dengan lembut (`opacity: 1; padding: 2px 4px;`) sejajar dengan margin tombol di atasnya.
+
+### 📏 3. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` dan seluruh file di `extension/apps-integration/` terjaga ketat di bawah limit 800 baris:
+  - `apps-integration/apps_manager.js`: 293
+  - `apps-integration/apps_overlay.css`: 403
+  - `apps-integration/apps_registry.js`: 193
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 789
+  - `design_agent.js`: 782
+  - `design_executor.js`: 793
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
+
 
 

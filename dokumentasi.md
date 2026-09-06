@@ -1007,5 +1007,25 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Seluruh ikon SVG terikat dengan warna dinamis (`#94A3B8` idle, `#FFFFFF` hover, `var(--accent-lime)` active).
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+147. **Relokasi Tombol Pengaturan ke Bagian Bawah Sidebar di Atas Teks Versi (`v2.150.264`):**
+    - **Kebutuhan Pengguna**:
+      - Memindahkan posisi tombol **Pengaturan** (`#btn-open-settings`) pada sidebar navigasi Homescreen (`newtab.html`) dari urutan atas di bawah "Riwayat Chat" ke posisi bawah tepat di atas teks versi Browser Agent (`#sidebar-app-version`).
+    - **Akar Masalah & Desain Layout**:
+      - Sebelumnya, tombol `#btn-open-settings` berada di dalam kontainer flex `<nav class="sidebar-nav">` yang memiliki properti `flex: 1;`.
+      - Hal tersebut menyebabkan tombol pengaturan mengelompok di bagian atas bersama Home, Apps, dan Riwayat Chat, meninggalkan ruang kosong yang sangat luas di bagian bawah sebelum teks versi.
+    - **Implementasi Teknis**:
+      1. **Restrukturisasi DOM Sidebar (`extension/newtab.html`)**:
+         - Mengeluarkan elemen `#btn-open-settings` dari `<nav class="sidebar-nav">`.
+         - Memasukkannya ke dalam kontainer `<div class="sidebar-footer">` tepat di atas elemen teks versi `<span class="sidebar-version-text" id="sidebar-app-version">`.
+      2. **Penyelarasan Tata Letak Flex & Responsivitas Hover (`extension/newtab.css`)**:
+         - Mengubah tata letak `.sidebar-footer` menjadi `display: flex; flex-direction: column; align-items: center; gap: 6px;` dengan `margin-top: auto;`.
+         - Pada kondisi sidebar collapsed (58px): Tombol Pengaturan memiliki `margin: 0 auto; width: 36px; height: 36px; border-radius: 50% !important;`, terpusat simetris di tengah rel sidebar dengan teks versi disembunyikan (`opacity: 0`).
+         - Pada kondisi sidebar hover (240px): `.sidebar-footer` menyesuaikan padding menjadi `8px 10px 14px 10px; align-items: stretch;`, tombol Pengaturan membesar mulus menjadi pil rounded `width: 100%; height: 34px; border-radius: 9999px !important;` dengan label teks "Pengaturan" (`opacity: 1`), dan teks versi `#sidebar-app-version` tampil sejajar rapi di bawahnya (`opacity: 1; padding: 2px 4px; color: #94A3B8;`).
+      3. **Integritas Selektor & Event Listener (`extension/newtab.js`)**:
+         - Selektor `document.querySelectorAll('.app-sidebar .sidebar-nav-item')` tetap memilih `#btn-open-settings` secara otomatis karena tombol tetap memiliki kelas `.sidebar-nav-item` di dalam `.app-sidebar`.
+         - Seluruh logika pembukaan overlay pengaturan via in-tab fullscreen dan sinkronisasi tab aktif `updateActiveSidebarTab('settings')` tetap beroperasi secara deterministik.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+
+
 
 
