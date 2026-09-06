@@ -1090,6 +1090,30 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menyesuaikan offset split-screen kanvas OpenDesign (`body.canvas-active`) ke `58px` (`padding-top: 58px !important;`, `height: calc(100vh - 58px) !important;`, `top: 58px !important;`).
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+151. **User Bubble Slide Deck Attachment Pill & Clean OpenDesign Result Card (`v2.150.268`):**
+    - **Kebutuhan Pengguna**:
+      - Saat membuka slide deck di kanvas dan memberikan instruksi revisi kepada AI, pada bubble prompt kiriman user harus terdapat kapsul info lampiran nama file slide deck (dan jumlah slide) yang dapat diklik untuk membuka kanvas tersebut.
+      - AI harus secara mutlak memahami file slide deck mana yang sedang diedit/direvisi (melalui directive `[TARGET FILE REVISI: "..."]`) agar tidak salah edit dan tidak membuat slide deck baru dari nol.
+      - Menyederhanakan tombol buka kanvas di bubble chat assistant (`.opendesign-result-card`) agar lebih simpel dan bersih: menghapus category badge, teks deskripsi panjang, baris meta tags, serta tombol export HTML yang tidak diperlukan.
+    - **Akar Masalah & Penyesuaian**:
+      - Sebelumnya, bubble prompt user tidak menyertakan identitas file presentasi yang sedang dibuka di kanvas. Jika prompt mengandung kata kerja seperti "cek" atau "analisis", sistem dapat keliru mengarahkan ke loop agen umum, atau model AI menghasilkan respons baru yang terpisah dari slide deck kanvas.
+      - Kartu hasil OpenDesign di chat sebelumnya memiliki 4 elemen yang terlalu ramai (category badge ganda, deskripsi berulang, tag teks, dan tombol export file mandiri).
+    - **Implementasi Teknis**:
+      1. **Penyederhanaan Kartu Hasil OpenDesign (`extension/design/canvas_manager.js`, `newtab.css`, `sidepanel.css`)**:
+         - Menghapus category badge (`.opendesign-category-badge`), deskripsi (`.opendesign-card-desc`), baris meta tags (`.opendesign-meta-tags`), dan tombol export (`.btn-opendesign-export` beserta event listener ekspornya) dari `renderOpenDesignCard`.
+         - Menambahkan badge jumlah slide `${slideCountHtml}` (`.opendesign-slide-count-badge`) yang ringkas bersanding dengan palet warna.
+         - Mengubah tombol `.btn-opendesign-view-canvas` menjadi tombol penuh (`width: 100%; height: 34px; border-radius: 9999px;`) dengan warna Bento Lime `#CEF128` tebal dan modern.
+         - Mengurangi baris kode `canvas_manager.js` dari 789 baris menjadi 750 baris (sangat aman di bawah limit 800 baris).
+      2. **Kapsul Lampiran Slide Deck pada Pesan Pengguna (`extension/sidepanel.js`, `newtab.css`, `sidepanel.css`)**:
+         - Menambahkan struktur `.user-deck-attachment-pill` di dalam `.user-msg-container` tepat di atas `.message-content` pada fungsi `appendUserMessage`.
+         - Kapsul didesain dengan tema dark luxury glass: latar `rgba(18, 20, 24, 0.88)`, border `rgba(255, 255, 255, 0.12)`, backdrop blur 12px, ikon presentasi lime, judul slide deck elipsis rapi, badge slide count, serta tombol "Buka ↗".
+         - Menghubungkan interaksi click dan keydown (Enter/Space) ke fungsi `openOpenDesignCanvas` untuk langsung membuka slide deck di kanvas.
+         - Menyimpan field `deckTitle` dan `deckSlideCount` di `conversationHistory` sehingga saat sesi dibuka kembali dari riwayat, kapsul lampiran slide deck dirender secara persisten.
+      3. **Pengikatan Konteks Revisi ke AI & Routing Cerdas (`extension/sidepanel.js`, `extension/design/design_executor.js`)**:
+         - Di `handleSendMessage`, mendeteksi jika kanvas terbuka dengan slide deck aktif (`isDeckRevision`), memprioritaskan pemanggilan `runDesignModeLoop(..., { isRevision: true })` agar instruksi revisi ("analisa slide 2", "ganti warna", dsb.) tidak terpental ke general agent loop.
+         - Di `design_executor.js` dan `runAgentLoop`, menambahkan directive kuat: `[TARGET FILE REVISI: "${activeDeckTitle}"]` dengan instruksi mutlak agar AI fokus memodifikasi file aktif tersebut dan dilarang membuat slide baru dari awal jika merupakan instruksi revisi.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris (`canvas_manager.js` 750 baris, `design_executor.js` 796 baris).
+
 
 
 

@@ -7480,6 +7480,32 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js extension/core/*.js` lulus 100% tanpa error.
   5. Bump versi ke `v2.150.267` di `manifest.json`.
 
+---
+
+### Iterasi: User Bubble Slide Deck Attachment Pill & Minimal OpenDesign Result Card (`v2.150.268`)
+- **User Request:**
+  - "buat ketika membuka slide deck canvas trus nyuruh ai revisi sesuatu di buble send prompt user yang saya kotak in itu harusnya ada kek ui nama pdf slidenya trus kalau di klik bisa open canvas jadi biar ai tau mana file slide deck yang harus di edit revisi biar ga salah edit atau biar ga salah tambah membuat slide deck baru, dan buat ui send chat tombol open canvas slide buat lebih simpel cleanyang saya kotak in hapus aja ga penting"
+- **Solusi & Rekayasa Teknis:**
+  1. *Penyederhanaan Kartu Hasil OpenDesign di Bubble Assistant (`extension/design/canvas_manager.js`, `newtab.css`, `sidepanel.css`)*:
+     - Mengeliminasi 4 elemen yang dikotak-merahkan oleh pengguna dari `renderOpenDesignCard`: category badge (`.opendesign-category-badge`), teks deskripsi panjang (`.opendesign-card-desc`), deretan meta tags (`.opendesign-meta-tags`), dan tombol export HTML mandiri (`.btn-opendesign-export` beserta 30+ baris logic listener ekspornya).
+     - Menambahkan badge jumlah slide ringkas `${slideCountHtml}` (`.opendesign-slide-count-badge`) di baris pratinjau warna.
+     - Mengubah tombol `.btn-opendesign-view-canvas` menjadi tombol penuh (`width: 100%; height: 34px; border-radius: 9999px;`) dengan warna Bento Lime `#CEF128` tebal dan modern.
+     - Mengurangi baris kode `canvas_manager.js` dari 789 baris menjadi 750 baris (sangat aman di bawah limit 800 baris).
+  2. *Kapsul Lampiran Slide Deck pada Bubble Pesan Pengguna (`extension/sidepanel.js`, `newtab.css`, `sidepanel.css`)*:
+     - Menambahkan struktur `.user-deck-attachment-pill` di dalam `.user-msg-container` tepat di atas `.message-content` pada fungsi `appendUserMessage`.
+     - Kapsul didesain dengan tema dark luxury glass: latar `rgba(18, 20, 24, 0.88)`, border `rgba(255, 255, 255, 0.12)`, backdrop blur 12px, ikon presentasi lime, judul slide deck elipsis rapi, badge slide count, serta tombol "Buka ↗".
+     - Menghubungkan interaksi click dan keydown (Enter/Space) ke fungsi `openOpenDesignCanvas` untuk langsung membuka slide deck di kanvas.
+     - Menyimpan field `deckTitle` dan `deckSlideCount` di `conversationHistory` sehingga saat sesi dibuka kembali dari riwayat, kapsul lampiran slide deck dirender secara persisten.
+  3. *Pengikatan Konteks Revisi ke AI & Routing Cerdas (`extension/sidepanel.js`, `extension/design/design_executor.js`)*:
+     - Di `handleSendMessage`, mendeteksi jika kanvas terbuka dengan slide deck aktif (`isDeckRevision`), memprioritaskan pemanggilan `runDesignModeLoop(..., { isRevision: true })` agar instruksi revisi ("analisa slide 2", "ganti warna", dsb.) tidak terpental ke general agent loop.
+     - Di `design_executor.js` dan `runAgentLoop`, menambahkan directive kuat: `[TARGET FILE REVISI: "${activeDeckTitle}"]` dengan instruksi mutlak agar AI fokus memodifikasi file aktif tersebut dan dilarang membuat slide baru dari awal jika merupakan instruksi revisi.
+- **Verifikasi:**
+  1. Unit test `scratch/test_user_deck_pill_and_clean_card.js` & `scratch/test_user_deck_pill_dom.js` lulus 100% (ALL TESTS PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 245, `canvas_manager.js` 750, `design_agent.js` 783, `design_executor.js` 796, `design_prompt.js` 192, `slide_deck_engine.js` 725, `slide_editor.js` 799, `slide_styles.js` 738, `slide_template.js` 686, `slide_themes.js` 319).
+  3. Seluruh file di `extension/apps-integration/` strictly `<= 800` baris (`apps_manager.js` 293 baris).
+  4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
+  5. Bump versi ke `v2.150.268` di `manifest.json`.
+
 
 
 

@@ -375,7 +375,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           <h1 class="slide-main-title">${escapeHtml(s.title)}</h1>
           <div class="hero-sub-row">
             <p class="slide-lead-desc">${escapeHtml(s.subtitle || '')}</p>
-            <div class="slide-big-counter"><span>${slideNumStr} // ${totalStr}</span></div>
+            
           </div>
         </div>
         <div class="split-grid">
@@ -410,7 +410,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           <h1 class="slide-main-title">${escapeHtml(s.title)}</h1>
           <div class="hero-sub-row">
             <p class="slide-lead-desc">${escapeHtml(s.subtitle || '')}</p>
-            <div class="slide-big-counter"><span>${slideNumStr} // ${totalStr}</span></div>
+            
           </div>
         </div>
         <div class="metrics-grid">
@@ -438,7 +438,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           <h1 class="slide-main-title">${escapeHtml(s.title)}</h1>
           <div class="hero-sub-row">
             <p class="slide-lead-desc">${escapeHtml(s.subtitle || '')}</p>
-            <div class="slide-big-counter"><span>${slideNumStr} // ${totalStr}</span></div>
+            
           </div>
         </div>
         <div class="quote-wrap">
@@ -455,7 +455,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           <h1 class="slide-main-title">${escapeHtml(s.title)}</h1>
           <div class="hero-sub-row">
             <p class="slide-lead-desc">${escapeHtml(s.subtitle || '')}</p>
-            <div class="slide-big-counter"><span>${slideNumStr} // ${totalStr}</span></div>
+            
           </div>
         </div>
         <div class="timeline-grid">
@@ -485,7 +485,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           <h1 class="slide-main-title">${escapeHtml(s.title || 'Kesimpulan & Tindak Lanjut')}</h1>
           <div class="hero-sub-row">
             <p class="slide-lead-desc">${escapeHtml(s.subtitle || '')}</p>
-            <div class="slide-big-counter"><span>${slideNumStr} // ${totalStr}</span></div>
+            
           </div>
         </div>
         <div class="conclusion-grid">
@@ -548,7 +548,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           <h1 class="slide-main-title">${escapeHtml(s.title)}</h1>
           <div class="hero-sub-row">
             <p class="slide-lead-desc">${escapeHtml(s.subtitle || '')}</p>
-            <div class="slide-big-counter"><span>${slideNumStr} // ${totalStr}</span></div>
+            
           </div>
         </div>
         <div class="slide-columns-grid" style="grid-template-columns: repeat(${Math.min(cards.length || 3, 4)}, 1fr);">
@@ -570,20 +570,19 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
               <span class="header-sep">/</span>
               <span class="header-chapter-sub">${escapeHtml(categoryTitle)}</span>
             </div>
-            <div class="header-right">
-              <span class="header-page-tag" style="color: ${accentColor};">${slideNumStr} / ${totalStr}</span>
-            </div>
+            
           </div>
 
           ${slideBodyContent}
 
-          <div class="slide-footer-bar">
+          <div class="slide-footer-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <div class="footer-meta-block">
               <div class="footer-line-1">${escapeHtml(brandName)}</div>
               <div class="footer-line-2">
                 <span class="footer-status-tag" style="color: ${accentColor}; font-weight: 700;">${escapeHtml(badgeTag || theme.tag || 'MATERI EKSKLUSIF')}</span>
               </div>
             </div>
+            <div class="footer-page-num" style="font-family: inherit; font-weight: 800; font-size: 16px; letter-spacing: 1.5px; color: ${textColor}; opacity: 0.85;">${slideNumStr}</div>
           </div>
         </div>
       </section>

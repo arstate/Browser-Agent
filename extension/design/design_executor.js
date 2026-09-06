@@ -140,8 +140,9 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     if (typeof updateHeaderChatTitle === 'function') updateHeaderChatTitle(currentSessionTitle);
   }
 
-  if (typeof appendUserMessage === 'function') appendUserMessage(userMessage, attachments);
-  else if (typeof window !== 'undefined' && typeof window.appendUserMessage === 'function') window.appendUserMessage(userMessage, attachments);
+  const userMsgDeckOpts = { activeDeck: isRevision ? currentOpenArtifact : null };
+  if (typeof appendUserMessage === 'function') appendUserMessage(userMessage, attachments, true, true, userMsgDeckOpts);
+  else if (typeof window !== 'undefined' && typeof window.appendUserMessage === 'function') window.appendUserMessage(userMessage, attachments, true, true, userMsgDeckOpts);
 
   let imageAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isImage && a.dataUrl) : [];
   if (imageAttachments.length === 0 && typeof conversationHistory !== 'undefined' && Array.isArray(conversationHistory)) {
@@ -156,7 +157,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   if (typeof window !== 'undefined') window.__lastDesignUserImages = imageAttachments;
 
   if (typeof conversationHistory !== 'undefined' && Array.isArray(conversationHistory)) {
-    conversationHistory.push({ role: "user", content: userMessage, displayContent: userMessage, attachments, chatMode: "design" });
+    conversationHistory.push({ role: "user", content: userMessage, displayContent: userMessage, attachments, chatMode: "design", deckTitle: isRevision ? currentOpenArtifact?.meta?.title : undefined });
   }
   if (typeof saveCurrentSessionToDB === 'function') saveCurrentSessionToDB();
   else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') window.saveCurrentSessionToDB();
@@ -307,7 +308,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         const imgList = imageAttachments.map((img, i) => `- Gambar ${i + 1}: placeholder "__USER_IMG_${i}__"`).join('\n');
         imgInstructions = `\n\n[PENTING - USER MELAMPIRKAN ${imageAttachments.length} GAMBAR]:\nPengguna melampirkan gambar:\n${imgList}\nSANGAT PENTING: Sisipkan tag gambar <div class="card-image-wrap"><img class="card-image" src="__USER_IMG_X__" alt="Foto"></div> ke dalam slide/card yang diminta user!`;
       }
-      const revisionContent = `[INSTRUKSI REVISI CANVAS AKTIF]\nBerikut kode HTML slide deck yang SEDANG AKTIF DIBUKA:\n\n\`\`\`html\n${currentOpenArtifact.html}\n\`\`\`\n\nPermintaan revisi: "${userMessage}"${imgInstructions}\n\nKembalikan kode HTML LENGKAP yang telah direvisi di dalam blok \`\`\`html ... \`\`\`.`;
+      const activeDeckTitle = currentOpenArtifact?.meta?.title || 'Executive Slide Deck';
+      const revisionContent = `[TARGET FILE REVISI: "${activeDeckTitle}"]\nPengguna sedang membuka dan merevisi file "${activeDeckTitle}". JANGAN buat slide deck baru dari nol! Modifikasi HANYA slide deck "${activeDeckTitle}" ini.\n\nBerikut kode HTML slide deck yang SEDANG AKTIF:\n\`\`\`html\n${currentOpenArtifact.html}\n\`\`\`\n\nPermintaan revisi: "${userMessage}"${imgInstructions}\n\nKembalikan kode HTML LENGKAP hasil revisi slide deck "${activeDeckTitle}" di dalam blok \`\`\`html ... \`\`\`.`;
       messages.push({ role: "user", content: revisionContent });
 
       const revisionModels = resolveDesignCandidateModels(config);

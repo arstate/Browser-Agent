@@ -1920,6 +1920,52 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 84. User Bubble Slide Deck Attachment Pill & Minimal OpenDesign Result Card (v2.150.268)
+
+### 🏷️ 1. User Message Slide Deck Attachment Pill Architecture
+- **In-Bubble File Binding Capsule (`.user-deck-attachment-pill`)**:
+  - Ditempatkan di dalam `.user-msg-container`, persis di atas teks instruksi `.message-content`.
+  - Memberikan visual feedback instan kepada pengguna bahwa pesan revisi mereka terikat pada slide deck yang sedang aktif di kanvas.
+  - Komponen kapsul:
+    - `.user-deck-icon-badge`: Wadah persegi rounded 6px dengan warna aksen Bento Lime `#CEF128` (15% opacity bg) dan ikon slide presentasi.
+    - `.user-deck-info`: Wadah flex berisi judul slide deck yang terpotong rapi dengan elipsis (`.user-deck-title`) dan tag jumlah slide (`.user-deck-tag`).
+    - `.user-deck-open-btn`: Tombol micro-action "Buka ↗" yang berubah menjadi solid lime saat kapsul di-hover.
+  - Interaktivitas & Aksesibilitas: Menangani klik langsung dan keyboard navigation (Enter/Space) untuk memanggil `openOpenDesignCanvas(targetDeck)`.
+  - Persistensi Sesi: Properti `deckTitle` dan `deckSlideCount` disimpan ke dalam `conversationHistory`, memastikan saat sesi chat lama dibuka kembali, kapsul lampiran slide deck dirender ulang secara akurat.
+
+### 🎯 2. Strict AI Context Revision Binding & Smart Loop Routing
+- **AI Context Anchor Directive**:
+  - Saat kanvas aktif, prompt pengguna diikat dengan instruksi keras:
+    `[TARGET FILE REVISI: "${activeDeckTitle}"]`
+    `Pengguna sedang membuka dan merevisi file "${activeDeckTitle}". JANGAN buat slide deck baru dari nol! Modifikasi HANYA slide deck "${activeDeckTitle}" ini.`
+  - Menghilangkan ambiguitas sehingga model AI tidak keliru menginterpretasikan revisi sebagai permintaan pembuatan slide deck baru dari awal.
+- **Smart Loop Prioritization**:
+  - Pada `handleSendMessage`, jika kanvas sedang terbuka dan memiliki artefak aktif (`isDeckRevision`), pesan otomatis diarahkan ke `runDesignModeLoop(..., { isRevision: true })` bahkan jika prompt mengandung kata umum seperti "cek", "analisa", atau "evaluasi", kecuali jika pengguna secara eksplisit meminta navigasi URL eksternal.
+
+### 🧹 3. Streamlined OpenDesign Assistant Result Card
+- **Eliminasi 4 Elemen Distraktif**:
+  - Menghapus category badge ganda (`.opendesign-category-badge`), teks deskripsi panjang berulang (`.opendesign-card-desc`), deretan meta tags (`.opendesign-meta-tags`), dan tombol export HTML mandiri (`.btn-opendesign-export` beserta 30+ baris logic listener ekspornya).
+- **Clean Focus UI**:
+  - Menampilkan baris badge ringkas (`Slide Deck 16:9` + `Canvas Ready` / `Live Updated`).
+  - Menampilkan judul kartu dan baris palet warna bersanding dengan badge slide count bersih (`.opendesign-slide-count-badge`).
+  - Tombol `.btn-opendesign-view-canvas` kini membentang penuh (*full-width 100%*) dengan tinggi 34px, sudut lengkung penuh (9999px), teks bold hitam kontras tinggi di atas aksen Bento Lime `#CEF128`.
+
+### 📏 4. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` dan seluruh file di `extension/apps-integration/` terjaga ketat di bawah limit 800 baris:
+  - `apps-integration/apps_manager.js`: 293
+  - `apps-integration/apps_overlay.css`: 403
+  - `apps-integration/apps_registry.js`: 193
+  - `canvas_exporter.js`: 245
+  - `canvas_manager.js`: 750 (Turun dari 789 baris)
+  - `design_agent.js`: 783
+  - `design_executor.js`: 796
+  - `design_prompt.js`: 192
+  - `slide_deck_engine.js`: 725
+  - `slide_editor.js`: 799
+  - `slide_styles.js`: 738
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 319
+
 
 
 

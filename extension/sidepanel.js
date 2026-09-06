@@ -5981,6 +5981,20 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     combinedPrompt = combinedPrompt ? `${combinedPrompt}\n\n${videoDocs}` : videoDocs;
   }
 
+  const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
+  const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
+  const isDeckRevisionContext = Boolean(canvasIsOpen && activeArt && activeArt.html);
+
+  if (isDeckRevisionContext) {
+    const deckTitle = activeArt.meta?.title || "Slide Deck";
+    const slideCount = activeArt.slideCount || (activeArt.html?.match(/class=["'][^"']*deck-slide(?:\s|["'])/g) || []).length || "";
+    const deckContextPrefix = `[TARGET FILE REVISI: "${deckTitle}" (${slideCount ? slideCount + ' Slide' : 'Slide Deck'} aktif di Canvas)]\n` +
+      `Pengguna sedang membuka dan merevisi file "${deckTitle}".\n` +
+      `INSTRUKSI MUTLAK: Perintah pengguna di bawah ini adalah instruksi REVISI / PERBAIKAN terhadap file slide deck "${deckTitle}" yang sedang aktif ini. JANGAN membuat file baru dari nol jika ini revisi! Perbarui dan sesuaikan slide deck "${deckTitle}" yang sedang aktif.\n\n` +
+      `Perintah Pengguna:\n`;
+    combinedPrompt = deckContextPrefix + combinedPrompt;
+  }
+
   if (imageAttachments.length > 0 || videoAttachments.length > 0) {
     userPayloadContent = [
       { type: "text", text: combinedPrompt || "Tolong analisis gambar/video/file terlampir ini." }
@@ -6028,9 +6042,11 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     role: "user",
     content: userPayloadContent,
     displayContent: userMessage,
-    attachments: attachments
+    attachments: attachments,
+    deckTitle: isDeckRevisionContext ? (activeArt.meta?.title || 'Slide Deck') : undefined,
+    deckSlideCount: isDeckRevisionContext ? (activeArt.slideCount || (activeArt.html?.match(/class=["'][^"']*deck-slide(?:\s|["'])/g) || []).length || undefined) : undefined
   });
-  appendUserMessage(userMessage, attachments);
+  appendUserMessage(userMessage, attachments, true, true, { activeDeck: isDeckRevisionContext ? activeArt : null });
   saveAttachmentsToIndexedDB(attachments);
 
   const isAutoMode = (activeAgentId === AUTO_AGENT_ID || !activeAgentId);
@@ -8099,7 +8115,11 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
     userPayloadContent = combinedPrompt;
   }
 
-  appendUserMessage(userMessage, attachments);
+  const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
+  const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
+  const isDeckRevisionContext = Boolean(canvasIsOpen && activeArt && activeArt.html);
+
+  appendUserMessage(userMessage, attachments, true, true, { activeDeck: isDeckRevisionContext ? activeArt : null });
   saveVideoAttachmentsToIndexedDB(attachments);
 
   // Resolve Master Agent and custom skills / memories identical to Agent Mode
@@ -8137,7 +8157,9 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
     role: "user",
     content: userPayloadContent,
     displayContent: userMessage || "",
-    attachments: attachments
+    attachments: attachments,
+    deckTitle: isDeckRevisionContext ? (activeArt.meta?.title || 'Slide Deck') : undefined,
+    deckSlideCount: isDeckRevisionContext ? (activeArt.slideCount || (activeArt.html?.match(/class=["'][^"']*deck-slide(?:\s|["'])/g) || []).length || undefined) : undefined
   });
 
     let accumulatedContent = "";
@@ -8536,7 +8558,7 @@ const chatInput = document.getElementById('chat-input');
 const btnSend = document.getElementById('btn-send');
 const welcomeCard = document.getElementById('welcome-card');
 
-function appendUserMessage(text, attachments = [], autoScroll = true, attachToDom = true) {
+function appendUserMessage(text, attachments = [], autoScroll = true, attachToDom = true, options = {}) {
   if (typeof text === 'object' && text !== null) {
     text = text.text || "";
   }
@@ -8650,6 +8672,56 @@ function appendUserMessage(text, attachments = [], autoScroll = true, attachToDo
     `;
   }
 
+  // Auto-detect or resolve target slide deck for revision binding
+  const curCanvasOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
+  const curActiveArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
+
+  let targetDeck = null;
+  let deckTitle = "";
+  let deckSlideCount = null;
+
+  if (options && options.activeDeck) {
+    targetDeck = options.activeDeck;
+    deckTitle = targetDeck.meta?.title || targetDeck.title || 'Slide Deck 16:9';
+    deckSlideCount = targetDeck.slideCount || (targetDeck.html ? (targetDeck.html.match(/class=["'][^"']*deck-slide(?:\s|["'])/g) || []).length : null);
+  } else if (options && options.deckTitle) {
+    deckTitle = options.deckTitle;
+    deckSlideCount = options.deckSlideCount || null;
+    targetDeck = curActiveArt;
+  } else if (curCanvasOpen && curActiveArt && curActiveArt.html && (!options || options.activeDeck !== false)) {
+    targetDeck = curActiveArt;
+    deckTitle = targetDeck.meta?.title || 'Slide Deck 16:9';
+    deckSlideCount = targetDeck.slideCount || (targetDeck.html ? (targetDeck.html.match(/class=["'][^"']*deck-slide(?:\s|["'])/g) || []).length : null);
+  }
+
+  let deckAttachmentHtml = '';
+  if (deckTitle) {
+    const slideTagText = deckSlideCount ? `${deckSlideCount} Slides` : 'Slide Deck';
+    deckAttachmentHtml = `
+      <div class="user-deck-attachment-pill" role="button" tabindex="0" title="Buka Canvas: ${escapeHtml(deckTitle)}">
+        <div class="user-deck-icon-badge">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+        </div>
+        <div class="user-deck-info">
+          <span class="user-deck-title" title="${escapeHtml(deckTitle)}">${escapeHtml(deckTitle)}</span>
+          <span class="user-deck-tag">${escapeHtml(slideTagText)}</span>
+        </div>
+        <div class="user-deck-open-btn">
+          <span>Buka</span>
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </div>
+      </div>
+    `;
+  }
+
   // Check if message is long enough to warrant collapsible minimizing (>550 chars or >=8 newlines)
   const isLongMessage = userContent.length > 550 || (userContent.match(/\n/g) || []).length >= 8;
 
@@ -8659,6 +8731,7 @@ function appendUserMessage(text, attachments = [], autoScroll = true, attachToDo
       contentHtml = `
         <div class="user-msg-container">
           ${tagsHeaderHtml}
+          ${deckAttachmentHtml}
           <div class="message-content user-collapsible is-collapsed" title="Klik untuk melihat seluruh pesan">
             <div class="user-content-inner">${formattedUserContent}</div>
             <div class="user-collapse-fade"></div>
@@ -8675,14 +8748,16 @@ function appendUserMessage(text, attachments = [], autoScroll = true, attachToDo
       contentHtml = `
         <div class="user-msg-container">
           ${tagsHeaderHtml}
+          ${deckAttachmentHtml}
           <div class="message-content">${formattedUserContent}</div>
         </div>
       `;
     }
-  } else if (tagsHeaderHtml) {
+  } else if (tagsHeaderHtml || deckAttachmentHtml) {
     contentHtml = `
       <div class="user-msg-container">
         ${tagsHeaderHtml}
+        ${deckAttachmentHtml}
       </div>
     `;
   }
@@ -8743,6 +8818,38 @@ function appendUserMessage(text, attachments = [], autoScroll = true, attachToDo
     if (label) label.textContent = 'Copied!';
     setTimeout(() => { if (label) label.textContent = 'Copy'; }, 1500);
   });
+  const deckPill = msg.querySelector('.user-deck-attachment-pill');
+  if (deckPill) {
+    const handleOpenDeckCanvas = (e) => {
+      if (e) e.stopPropagation();
+      const artToOpen = targetDeck || (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact() : null) || (typeof window !== 'undefined' ? window.__activeDesignArtifact : null);
+      if (artToOpen) {
+        if (typeof openOpenDesignCanvas === 'function') {
+          openOpenDesignCanvas(artToOpen);
+        } else if (typeof window !== 'undefined' && typeof window.openOpenDesignCanvas === 'function') {
+          window.openOpenDesignCanvas(artToOpen);
+        }
+      } else if (typeof chrome !== 'undefined' && chrome?.storage?.local?.get) {
+        chrome.storage.local.get(['opendesign_last_artifact'], (res) => {
+          if (res?.opendesign_last_artifact) {
+            if (typeof openOpenDesignCanvas === 'function') openOpenDesignCanvas(res.opendesign_last_artifact);
+            else if (typeof window !== 'undefined' && typeof window.openOpenDesignCanvas === 'function') window.openOpenDesignCanvas(res.opendesign_last_artifact);
+          }
+        });
+      }
+      if (typeof showUniversalToast === 'function') {
+        showUniversalToast(`🎨 Membuka Canvas: ${deckTitle || 'Slide Deck'}`);
+      }
+    };
+    deckPill.addEventListener('click', handleOpenDeckCanvas);
+    deckPill.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleOpenDeckCanvas(e);
+      }
+    });
+  }
+
   if (attachToDom && chatMessages) {
     chatMessages.appendChild(msg);
     if (autoScroll && !isLoadingEarlierMessages) {
@@ -12124,7 +12231,11 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
       }
       const cleanDisplay = typeof displayText === 'string' ? displayText.trim() : "";
       if ((cleanDisplay && cleanDisplay !== "{}" && cleanDisplay !== "[object Object]") || hasAttachments) {
-        const userBubble = appendUserMessage(cleanDisplay, msg.attachments || [], false, false);
+        const userBubble = appendUserMessage(cleanDisplay, msg.attachments || [], false, false, {
+          deckTitle: msg.deckTitle,
+          deckSlideCount: msg.deckSlideCount,
+          activeDeck: msg.deckTitle ? { meta: { title: msg.deckTitle }, slideCount: msg.deckSlideCount } : false
+        });
         if (userBubble) {
           fragment.appendChild(userBubble);
         }
@@ -13717,18 +13828,18 @@ function handleSendMessage() {
   const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
   const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
 
+  const isDeckRevision = Boolean(canvasIsOpen && activeArt && activeArt.html);
+  const isExplicitExternalWeb = /^(?:https?:\/\/|www\.)|(?:buka\s+(?:url|web|situs|link|tab\s+baru))\s+https?:/i.test(displayMessage || "");
   const hasAgentActionOrAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|tab|browser|url|web)/i.test(displayMessage || "");
 
-  if (currentChatMode === 'chat') {
+  if (isDeckRevision && !isExplicitExternalWeb && currentChatMode !== 'chat') {
+    runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
+  } else if (currentChatMode === 'chat') {
     runChatModeLoop(displayMessage, currentAttachments, currentMentions);
   } else if (currentChatMode === 'agent' || hasAgentActionOrAnalysis) {
     runAgentLoop(displayMessage, currentAttachments, currentMentions);
-  } else if (currentChatMode === 'design' && canvasIsOpen && activeArt && activeArt.html) {
-    runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
   } else if (currentChatMode === 'design') {
     runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
-  } else if (canvasIsOpen && activeArt && activeArt.html) {
-    runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
   } else {
     runAgentLoop(displayMessage, currentAttachments, currentMentions);
   }

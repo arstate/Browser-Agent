@@ -272,48 +272,41 @@ function renderOpenDesignCard(containerEl, artifact, options = {}) {
   const isDeck = artifact.html?.includes('deck-sidebar') || artifact.html?.includes('presentation-workspace') || 
                  (artifact.meta?.tags || []).some(t => /slide|deck|presentation/i.test(t));
   const systemBadge = isDeck ? 'Slide Deck 16:9' : escapeHtml(artifact.meta?.system || 'OpenDesign');
-  const categoryBadge = isDeck ? 'Executive Presentation' : escapeHtml(artifact.meta?.category || 'Web UI');
 
   const defaultColors = isDeck ? ['#F5F3EF', '#0D0E12', '#FF4D00', '#111827'] : ['#0A0A0E', '#16181D', '#CEF128', '#FFFFFF'];
   const swatchesHtml = (artifact.meta?.colors || defaultColors)
     .map(c => `<span class="swatch" style="background: ${escapeHtml(c)};" title="${escapeHtml(c)}"></span>`)
     .join('');
 
-  const defaultTags = isDeck ? ['16:9 Deck', 'Thumbnails', 'PDF Ready'] : ['HTML5', 'Tokens'];
-  const tagsHtml = (artifact.meta?.tags || defaultTags)
-    .map(t => `<span class="meta-tag">${escapeHtml(t)}</span>`)
-    .join('');
+  const slideCount = artifact.slideCount || 
+    (artifact.html ? (artifact.html.match(/class=["'][^"']*deck-slide(?:\s|["'])/g) || []).length : 0);
+  const slideCountHtml = (isDeck && slideCount > 0)
+    ? `<span class="opendesign-slide-count-badge">${slideCount} Slides</span>`
+    : '';
 
   const statusBadgeHtml = options.isRevision
     ? `<span class="opendesign-status-pill opendesign-revision-pill" style="background: rgba(52, 211, 153, 0.15); color: #34D399; border: 1px solid rgba(52, 211, 153, 0.3);">Live Updated</span>`
     : `<span class="opendesign-status-pill">Canvas Ready</span>`;
 
   const btnViewText = options.isRevision ? 'Buka Canvas (Update) ↗' : 'Buka Canvas ↗';
+  const cardTitle = artifact.meta?.title || (isDeck ? 'Executive Slide Deck' : 'Rancangan Antarmuka');
 
   card.innerHTML = `
     <div class="opendesign-card-badge-row">
       <span class="opendesign-system-badge">${systemBadge}</span>
-      <span class="opendesign-category-badge">${categoryBadge}</span>
       ${statusBadgeHtml}
     </div>
-    <h4 class="opendesign-card-title">${escapeHtml(artifact.meta?.title || (isDeck ? 'Executive Slide Deck' : 'Rancangan Antarmuka'))}</h4>
-    <p class="opendesign-card-desc">${escapeHtml(artifact.meta?.description || (isDeck ? 'Presentasi 16:9 widescreen interaktif dengan sidebar thumbnail dan floating navigation dock.' : 'Desain interaktif siap dipratinjau dan diekspor.'))}</p>
+    <h4 class="opendesign-card-title">${escapeHtml(cardTitle)}</h4>
     <div class="opendesign-card-preview-bar">
       <div class="opendesign-palette-swatches">
         ${swatchesHtml}
       </div>
-      <div class="opendesign-meta-tags">
-        ${tagsHtml}
-      </div>
+      ${slideCountHtml}
     </div>
     <div class="opendesign-card-actions">
       <button type="button" class="btn-opendesign-view-canvas">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         <span>${btnViewText}</span>
-      </button>
-      <button type="button" class="btn-opendesign-export" title="Unduh File HTML Mandiri">
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span>Export HTML</span>
       </button>
     </div>
   `;
@@ -330,39 +323,6 @@ function renderOpenDesignCard(containerEl, artifact, options = {}) {
     }));
 
     showUniversalToast(options.isRevision ? '🎨 Membuka Canvas Workspace yang telah diperbarui...' : '🎨 Membuka Canvas Workspace...');
-  });
-
-  const btnExport = card.querySelector('.btn-opendesign-export');
-  btnExport?.addEventListener('click', async () => {
-    if (!artifact.html) return;
-    btnExport.disabled = true;
-    btnExport.textContent = 'Mengekspor...';
-    try {
-      if (window.OpenDesignBridge?.exportArtifact) {
-        const res = await window.OpenDesignBridge.exportArtifact({
-          htmlContent: artifact.html,
-          format: 'html'
-        });
-        if (res?.out_path) {
-          showUniversalToast(`✅ Berhasil diekspor: ${res.out_path}`);
-        }
-      } else {
-        const blob = new Blob([artifact.html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${(artifact.meta?.title || 'design').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.html`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showUniversalToast('✅ File HTML berhasil diunduh!');
-      }
-    } catch (e) {
-      console.error('Export error:', e);
-      showUniversalToast('❌ Gagal mengekspor: ' + (e.message || String(e)));
-    } finally {
-      btnExport.disabled = false;
-      btnExport.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export HTML</span>`;
-    }
   });
 
   containerEl.appendChild(card);

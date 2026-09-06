@@ -1519,6 +1519,101 @@ body.stickman-active .chat-messages {
   max-width: 100%;
 }
 
+/* User Attached Slide Deck Capsule Pill */
+.user-deck-attachment-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 20, 24, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 6px 10px 6px 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-width: 100%;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.user-deck-attachment-pill:hover {
+  background: rgba(28, 32, 40, 0.95);
+  border-color: rgba(206, 241, 40, 0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(206, 241, 40, 0.12);
+}
+
+.user-deck-attachment-pill:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.user-deck-icon-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(206, 241, 40, 0.15);
+  color: #CEF128;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-deck-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.user-deck-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.user-deck-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: #94A3B8;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.user-deck-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #CEF128;
+  background: rgba(206, 241, 40, 0.12);
+  border: 1px solid rgba(206, 241, 40, 0.25);
+  border-radius: 6px;
+  padding: 2px 7px;
+  margin-left: 2px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.user-deck-attachment-pill:hover .user-deck-open-btn {
+  background: #CEF128;
+  color: #000000;
+  border-color: #CEF128;
+}
+
 .message.user .message-content {
   background: linear-gradient(135deg, rgba(206, 241, 40, 0.95) 0%, rgba(190, 224, 29, 0.95) 100%);
   color: #0E0E11;
@@ -8007,6 +8102,20 @@ body.no-glass-blur {
   flex-shrink: 0;
 }
 
+.opendesign-slide-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #E2E8F0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+
 .opendesign-meta-tags {
   display: flex;
   align-items: center;
@@ -8028,7 +8137,8 @@ body.no-glass-blur {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 2px;
+  margin-top: 4px;
+  width: 100%;
 }
 
 .btn-opendesign-view-canvas {
@@ -8036,12 +8146,13 @@ body.no-glass-blur {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 32px;
-  padding: 0 14px;
+  width: 100%;
+  height: 34px;
+  padding: 0 16px;
   border-radius: 9999px;
   background: #CEF128;
   color: #000000;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
   border: none;
   cursor: pointer;
