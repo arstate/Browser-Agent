@@ -7298,4 +7298,22 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.259` di `manifest.json`.
 
+---
+
+### Iterasi: Penanganan Close Apps Saat Belum Ada Aplikasi Aktif (`v2.150.260`)
+- **User Request:**
+  - "ketika baru buka apps itu gabisa di close soalnya belum ada app yang dibuka"
+- **Solusi & Rekayasa Teknis:**
+  1. *Perbaikan Penutupan Cerdas (`extension/apps-integration/apps_manager.js`)*:
+     - `btnCloseCatalogDrawer` (`[x]`): Jika `!this.currentAppUrl` (belum ada aplikasi terbuka), tombol close langsung memanggil `this.closeAppsView()`, menutup seluruh overlay apps dan kembali ke chat/home.
+     - `toggleAppsCatalog` (`[::]`): Menutup katalog saat tidak ada aplikasi yang dibuka kini otomatis menutup tampilan overlay apps.
+     - `btnOpenApps` (Sidebar): Menjadi tombol toggle dua arah; jika apps overlay sedang terbuka (`display: flex`), klik ulang langsung menutupnya.
+     - Backdrop click & Escape key: Mengakomodasi penutupan langsung ke halaman chat saat `!this.currentAppUrl`.
+     - `launchApp()`: Memastikan `appsOverlay` otomatis berstatus `display: flex` dan tab aktif sinkron ke `apps`.
+- **Verifikasi:**
+  1. Unit test `scratch/test_apps_catalog_close_when_no_app_open.js` lulus 100% (7 test scenarios PASSED).
+  2. Seluruh file di `extension/apps-integration/` (`apps_manager.js` 285 baris) dan 10 file di `extension/design/` strictly `<= 800` baris.
+  3. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.260` di `manifest.json`.
+
 

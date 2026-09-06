@@ -100,9 +100,11 @@
     }
 
     closeAppsView() {
+      if (!this.appsOverlay) this.cacheDOMElements();
       if (this.appsOverlay) {
         this.appsOverlay.style.display = 'none';
         if (this.appsCatalogOverlay) this.appsCatalogOverlay.style.display = 'none';
+        this.btnToggleAppsCatalog?.classList.remove('active');
         if (this.appsIframe) {
           this.appsIframe.src = 'about:blank';
         }
@@ -119,21 +121,35 @@
     }
 
     toggleAppsCatalog() {
+      if (!this.appsCatalogOverlay) this.cacheDOMElements();
       if (!this.appsCatalogOverlay) return;
       const isHidden = this.appsCatalogOverlay.style.display === 'none' || !this.appsCatalogOverlay.style.display;
       if (isHidden) {
         this.appsCatalogOverlay.style.display = 'flex';
         this.btnToggleAppsCatalog?.classList.add('active');
       } else {
+        // Jika belum ada aplikasi yang dibuka, menutup katalog drawer berarti menutup seluruh Apps view!
+        if (!this.currentAppUrl) {
+          this.closeAppsView();
+          return;
+        }
         this.appsCatalogOverlay.style.display = 'none';
         this.btnToggleAppsCatalog?.classList.remove('active');
       }
     }
 
     async launchApp(url, name, forceReload = false) {
+      if (!this.appsOverlay) this.cacheDOMElements();
       await this.ensureInAppDnrRules();
       this.currentAppUrl = url;
       this.currentAppName = name;
+
+      if (this.appsOverlay) {
+        this.appsOverlay.style.display = 'flex';
+      }
+      if (window.updateActiveSidebarTab) {
+        window.updateActiveSidebarTab('apps');
+      }
 
       const registry = window.AppsRegistry || (window.AppsIntegration && window.AppsIntegration.registry);
       const displayName = registry ? registry.getDisplayNameForUrl(url, name) : (name || 'Aplikasi');
@@ -182,7 +198,11 @@
       this.btnOpenApps?.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.openAppsView();
+        if (this.appsOverlay && this.appsOverlay.style.display === 'flex') {
+          this.closeAppsView();
+        } else {
+          this.openAppsView();
+        }
       });
 
       this.btnToggleAppsCatalog?.addEventListener('click', (e) => {
@@ -192,8 +212,26 @@
 
       this.btnCloseCatalogDrawer?.addEventListener('click', (e) => {
         e.preventDefault();
-        if (this.appsCatalogOverlay) this.appsCatalogOverlay.style.display = 'none';
-        this.btnToggleAppsCatalog?.classList.remove('active');
+        // Jika belum ada aplikasi yang dibuka, tombol close [x] menutup seluruh Apps overlay dan kembali ke chat
+        if (!this.currentAppUrl) {
+          this.closeAppsView();
+        } else {
+          if (this.appsCatalogOverlay) this.appsCatalogOverlay.style.display = 'none';
+          this.btnToggleAppsCatalog?.classList.remove('active');
+        }
+      });
+
+      // Klik backdrop di luar konten katalog menutup katalog / apps view
+      this.appsCatalogOverlay?.addEventListener('click', (e) => {
+        if (e.target === this.appsCatalogOverlay) {
+          e.preventDefault();
+          if (!this.currentAppUrl) {
+            this.closeAppsView();
+          } else {
+            this.appsCatalogOverlay.style.display = 'none';
+            this.btnToggleAppsCatalog?.classList.remove('active');
+          }
+        }
       });
 
       this.btnAppsReload?.addEventListener('click', (e) => {
@@ -227,11 +265,17 @@
 
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-          if (this.appsCatalogOverlay && this.appsCatalogOverlay.style.display !== 'none' && this.currentAppUrl) {
-            this.appsCatalogOverlay.style.display = 'none';
-            this.btnToggleAppsCatalog?.classList.remove('active');
-          } else if (this.appsOverlay && this.appsOverlay.style.display !== 'none') {
-            this.closeAppsView();
+          if (this.appsOverlay && this.appsOverlay.style.display !== 'none') {
+            if (this.appsCatalogOverlay && this.appsCatalogOverlay.style.display !== 'none') {
+              if (!this.currentAppUrl) {
+                this.closeAppsView();
+              } else {
+                this.appsCatalogOverlay.style.display = 'none';
+                this.btnToggleAppsCatalog?.classList.remove('active');
+              }
+            } else {
+              this.closeAppsView();
+            }
           }
         }
       });

@@ -909,3 +909,18 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - `extension/sidepanel.js`: Memperbarui `openAppsTab` agar langsung memanfaatkan `window.AppsIntegration.manager`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh file pada modul baru (`apps_manager.js` 249 baris, `apps_overlay.css` 402 baris, `apps_registry.js` 193 baris) dan 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+143. **Penanganan Close Apps Saat Belum Ada Aplikasi Terbuka (`v2.150.260`):**
+    - **Kebutuhan Pengguna**:
+      - Ketika pengguna baru membuka menu Apps dari sidebar navigation dan katalog aplikasi ditampilkan, pengguna tidak bisa menutup tampilan Apps jika belum ada aplikasi yang dipilih/dibuka.
+    - **Akar Masalah (Root Cause Analysis)**:
+      - Event listener pada tombol close `[x]` katalog (`#btn-close-catalog-drawer`) sebelumnya hanya menyetel `this.appsCatalogOverlay.style.display = 'none'` tanpa mengecek apakah ada aplikasi yang sedang berjalan (`this.currentAppUrl`).
+      - Akibatnya, saat belum ada aplikasi yang diluncurkan, menyembunyikan katalog meninggalkan pengguna terjebak pada layar hitam kosong dari `iframe` `about:blank` di dalam `#fullscreen-apps-overlay` tanpa kontrol penutup.
+    - **Implementasi Teknis**:
+      1. **Logika Close Cerdas Berbasis State Aplikasi (`extension/apps-integration/apps_manager.js`)**:
+         - Pada tombol close katalog `[x]`: Jika `!this.currentAppUrl`, otomatis memanggil `this.closeAppsView()` sehingga seluruh overlay apps tertutup dan pengguna langsung kembali ke antarmuka chat/home. Jika ada aplikasi aktif, hanya drawer katalog yang ditutup.
+         - Pada tombol toggle katalog `[::]` (`#btn-toggle-apps-catalog`): Jika `!this.currentAppUrl` dan drawer ditutup, memicu `this.closeAppsView()`.
+         - Pada tombol sidebar Apps (`#btn-open-apps`): Dijadikan toggle dua arah; jika `#fullscreen-apps-overlay` sedang tampil (`display: flex`), klik kedua langsung menutup apps view.
+         - Pada klik backdrop & tombol Escape: Menutup seluruh overlay apps secara mulus saat `!this.currentAppUrl`.
+         - Pada `launchApp()`: Memastikan `#fullscreen-apps-overlay` otomatis disetel ke `display: flex` dan tab aktif disinkronkan ke `apps`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh file di `extension/apps-integration/` (`apps_manager.js` 285 baris) dan 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+

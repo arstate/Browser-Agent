@@ -1664,3 +1664,27 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_styles.js`: 737
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
+
+## 76. Penanganan Close Apps Saat Belum Ada Aplikasi Aktif (v2.150.260)
+
+### 🚪 1. Smart Close Navigation Lifecycle
+- **Adaptive Drawer Close**: Tombol `[x]` pada katalog aplikasi (`#btn-close-catalog-drawer`) membedakan status `currentAppUrl`. Jika belum ada aplikasi yang diluncurkan, klik langsung memanggil `closeAppsView()`, mengembalikan pengguna ke tampilan obrolan utama.
+- **Toggle State Sync**: Menutup katalog saat tidak ada aplikasi yang dibuka via tombol kapsul `[::]` (`#btn-toggle-apps-catalog`) secara otomatis menutup overlay penuh.
+- **Bidirectional Sidebar Navigation**: Tombol Apps pada sidebar (`#btn-open-apps`) mendukung interaksi toggle; mengklik saat overlay terbuka langsung menutupnya seketika.
+- **Esc & Backdrop Fallback**: Menekan tombol Escape atau mengklik latar belakang katalog saat `!currentAppUrl` langsung menghentikan overlay dan mengembalikan fokus ke bilah pesan input.
+
+### 📏 2. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh file di `extension/apps-integration/` dan 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris:
+  - `apps-integration/apps_manager.js`: 285
+  - `apps-integration/apps_overlay.css`: 402
+  - `apps-integration/apps_registry.js`: 193
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 789
+  - `design_agent.js`: 782
+  - `design_executor.js`: 793
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
