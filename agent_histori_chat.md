@@ -7337,6 +7337,26 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
   3. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.261` di `manifest.json`.
+---
 
-
+### Iterasi: Transisi Penuh Halaman Apps Hub, Sinkronisasi Sidebar Selection, dan Proteksi Klik Area Kosong (`v2.150.262`)
+- **User Request:**
+  - "harusnya ketika di app integration itu sidebar selection pindah ke apps, trus kalau buka apps dari sidebar itu bukan popup dari homescreen tapi pindah halaman dari homescreen ke aapps, jadi kalau di halaman apps itu kalau sekarang di klik di halaman kosong jadi nutup kembali ke homescreen"
+- **Solusi & Rekayasa Teknis:**
+  1. *Sinkronisasi Seleksi Tab Sidebar ke Apps*:
+     - Mengekspos `window.updateActiveSidebarTab` secara global dari `newtab.js` agar sinkronisasi tab dari modul eksternal (`apps_manager.js`) berfungsi aktif.
+     - Memanggil `updateActiveSidebarTab('apps')` langsung pada `openAppsView()`, sehingga ikon dan pill tombol `#btn-open-apps` menyala aktif dan tombol Home dinonaktifkan saat memasuki tampilan Apps.
+  2. *Navigasi Halaman Penuh (Page Paradigm) Tanpa Toggle*:
+     - Mengubah listener klik `#btn-open-apps` di `newtab.js` dan `apps_manager.js` menjadi pemanggilan navigasi langsung `openAppsView()`, bukan lagi penutupan toggle ke chat.
+     - Pengguna kembali ke antarmuka obrolan secara eksplisit melalui tombol **Home** (`#btn-header-new-chat`).
+  3. *Proteksi Halaman Kosong (Non-Dismissable Page Canvas)*:
+     - Memperbarui event listener `appsCatalogOverlay`: Klik pada area kosong (halaman kosong / background backdrop) tidak akan lagi menutup halaman saat `!this.currentAppUrl`.
+     - Tombol drawer close `[x]` (`#btn-close-catalog-drawer`) disembunyikan secara default saat berada di halaman utama Apps dan hanya diaktifkan saat ada web app yang berjalan di latar belakang iframe.
+     - Menyesuaikan event Escape key agar tidak menutup halaman utama Apps ke homescreen.
+- **Verifikasi:**
+  1. Unit test `scratch/test_apps_page_navigation.js` lulus 100% (ALL TESTS PASSED).
+  2. Seluruh 10 file di `extension/design/` strictly `<= 800` baris (`canvas_exporter.js` 244, `canvas_manager.js` 789, `design_agent.js` 782, `design_executor.js` 793, `design_prompt.js` 191, `slide_deck_engine.js` 724, `slide_editor.js` 798, `slide_styles.js` 737, `slide_template.js` 686, `slide_themes.js` 318).
+  3. Seluruh file di `extension/apps-integration/` strictly `<= 800` baris (`apps_manager.js` 293 baris).
+  4. Node syntax check `node -c extension/*.js extension/design/*.js extension/apps-integration/*.js` lulus 100% tanpa error.
+  5. Bump versi ke `v2.150.262` di `manifest.json`.
 

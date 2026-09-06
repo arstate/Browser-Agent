@@ -96,6 +96,9 @@
           if (this.appsActiveTitle) this.appsActiveTitle.textContent = 'Aplikasi';
           if (this.appsCurrentUrlText) this.appsCurrentUrlText.textContent = 'Aplikasi';
           this.appCards.forEach(card => card.classList.remove('active'));
+          if (this.btnCloseCatalogDrawer) {
+            this.btnCloseCatalogDrawer.style.display = 'none';
+          }
         }
       }
     }
@@ -133,10 +136,12 @@
       if (isHidden) {
         this.appsCatalogOverlay.style.display = 'flex';
         this.btnToggleAppsCatalog?.classList.add('active');
+        if (this.btnCloseCatalogDrawer) {
+          this.btnCloseCatalogDrawer.style.display = this.currentAppUrl ? 'flex' : 'none';
+        }
       } else {
-        // Jika belum ada aplikasi yang dibuka, menutup katalog drawer berarti menutup seluruh Apps view!
+        // Jika belum ada aplikasi yang dibuka, katalog adalah halaman utama: jangan ditutup jadi layar kosong
         if (!this.currentAppUrl) {
-          this.closeAppsView();
           return;
         }
         this.appsCatalogOverlay.style.display = 'none';
@@ -183,6 +188,9 @@
 
       if (this.appsCatalogOverlay) this.appsCatalogOverlay.style.display = 'none';
       this.btnToggleAppsCatalog?.classList.remove('active');
+      if (this.btnCloseCatalogDrawer) {
+        this.btnCloseCatalogDrawer.style.display = 'flex';
+      }
     }
 
     handleCustomAppLaunch() {
@@ -204,11 +212,7 @@
       this.btnOpenApps?.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (this.appsOverlay && this.appsOverlay.style.display === 'flex') {
-          this.closeAppsView();
-        } else {
-          this.openAppsView();
-        }
+        this.openAppsView();
       });
 
       this.btnToggleAppsCatalog?.addEventListener('click', (e) => {
@@ -218,25 +222,24 @@
 
       this.btnCloseCatalogDrawer?.addEventListener('click', (e) => {
         e.preventDefault();
-        // Jika belum ada aplikasi yang dibuka, tombol close [x] menutup seluruh Apps overlay dan kembali ke chat
-        if (!this.currentAppUrl) {
-          this.closeAppsView();
-        } else {
+        if (this.currentAppUrl) {
           if (this.appsCatalogOverlay) this.appsCatalogOverlay.style.display = 'none';
           this.btnToggleAppsCatalog?.classList.remove('active');
+        } else {
+          this.closeAppsView();
         }
       });
 
-      // Klik backdrop di luar konten katalog menutup katalog / apps view
+      // Klik backdrop di luar konten katalog
       this.appsCatalogOverlay?.addEventListener('click', (e) => {
         if (e.target === this.appsCatalogOverlay) {
           e.preventDefault();
-          if (!this.currentAppUrl) {
-            this.closeAppsView();
-          } else {
+          // Hanya jika sedang menjalankan aplikasi web, klik luar drawer menutup katalog kembali ke aplikasi
+          if (this.currentAppUrl) {
             this.appsCatalogOverlay.style.display = 'none';
             this.btnToggleAppsCatalog?.classList.remove('active');
           }
+          // Jika belum ada aplikasi yang dibuka (halaman Apps utama), klik halaman kosong tidak menutup halaman!
         }
       });
 
@@ -273,14 +276,10 @@
         if (e.key === 'Escape') {
           if (this.appsOverlay && this.appsOverlay.style.display !== 'none') {
             if (this.appsCatalogOverlay && this.appsCatalogOverlay.style.display !== 'none') {
-              if (!this.currentAppUrl) {
-                this.closeAppsView();
-              } else {
+              if (this.currentAppUrl) {
                 this.appsCatalogOverlay.style.display = 'none';
                 this.btnToggleAppsCatalog?.classList.remove('active');
               }
-            } else {
-              this.closeAppsView();
             }
           }
         }

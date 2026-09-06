@@ -948,3 +948,29 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menambahkan `.sidebar-nav-item > * { pointer-events: none; }` agar setiap klik pada ikon SVG, path, atau label teks selalu ditangkap langsung oleh elemen tombol induk.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+145. **Transisi Penuh Halaman Apps Hub, Sinkronisasi Sidebar Selection, dan Proteksi Klik Area Kosong (`v2.150.262`):**
+    - **Kebutuhan Pengguna**:
+      - Memastikan saat berada di tampilan App Integration, seleksi item pada sidebar navigation secara presisi berpindah ke tombol **Apps** (`#btn-open-apps`, `data-tab="apps"`), bukan tertinggal di **Home**.
+      - Menjadikan Apps Hub sebagai transisi halaman penuh (Full-Page View) yang mandiri, bukan modal popup mengambang.
+      - Menghentikan perilaku keliru di mana mengklik area kosong (halaman kosong / background backdrop) pada tampilan Apps menyebabkan halaman tertutup dan kembali ke homescreen.
+    - **Akar Masalah (Root Cause Analysis)**:
+      1. **Sidebar Selection Tertinggal di Home**:
+         - Fungsi `updateActiveSidebarTab()` di `newtab.js` sebelumnya dideklarasikan sebagai fungsi privat lokal di dalam closure dan tidak diekspos ke objek `window`.
+         - Akibatnya, pemanggilan `window.updateActiveSidebarTab('apps')` dari `apps_manager.js` gagal dieksekusi secara hening (`undefined`), sehingga item Home tetap berstatus `.active`.
+      2. **Perilaku Modal Popup Saat Klik Halaman Kosong**:
+         - Event listener `appsCatalogOverlay` mendeteksi klik pada container backdrop luar (`e.target === this.appsCatalogOverlay`) dan sebelumnya memanggil `this.closeAppsView()` jika `!this.currentAppUrl`.
+         - Hal ini memperlakukan seluruh halaman utama Apps sebagai dialog modal dismissable alih-alih sebagai halaman kerja utama.
+         - Tombol close drawer `[x]` (`#btn-close-catalog-drawer`) tetap tampil di pojok kanan atas meski belum ada aplikasi yang diluncurkan, memperkuat impresi keliru bahwa halaman tersebut adalah popup.
+         - Tombol sidebar `#btn-open-apps` sebelumnya melakukan toggle (buka/tutup) saat diklik ulang, bukan navigasi halaman yang persisten.
+    - **Implementasi Teknis**:
+      1. **Global Sidebar Selection & Page Routing (`extension/newtab.js`)**:
+         - Mengekspos `window.updateActiveSidebarTab` secara global pada `window`.
+         - Memanggil `updateActiveSidebarTab('apps')` secara langsung di dalam `openAppsView()`.
+         - Mengubah aksi tombol sidebar `#btn-open-apps` menjadi navigasi langsung `openAppsView()` (tidak lagi toggle kembali ke chat). Navigasi kembali ke obrolan dilakukan secara eksplisit via tombol **Home** (`#btn-header-new-chat`).
+      2. **Proteksi Klik Halaman Kosong & Status Drawer Adaptif (`extension/apps-integration/apps_manager.js` & `newtab.html`)**:
+         - Memperbarui listener klik pada `appsCatalogOverlay`: Jika `!this.currentAppUrl` (halaman Apps utama), klik pada area kosong/backdrop tidak akan pernah menutup halaman atau kembali ke homescreen. Klik luar hanya menutup drawer saat sebuah web application (iframe) sedang aktif berjalan di latar belakang.
+         - Menyembunyikan tombol close drawer `[x]` (`#btn-close-catalog-drawer`) secara default saat `!this.currentAppUrl`, dan hanya menampilkannya ketika aplikasi telah diluncurkan ke iframe (`launchApp()`).
+         - Menyesuaikan event handler Escape key agar tidak menutup halaman utama Apps ke homescreen.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh file di `extension/apps-integration/` (`apps_manager.js` 293 baris) dan 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
+
+

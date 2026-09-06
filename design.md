@@ -1716,3 +1716,33 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
   - `slide_template.js`: 686
   - `slide_themes.js`: 318
 
+## 78. Full-Page Apps View Transition & Non-Dismissable Page Canvas (v2.150.262)
+
+### 🖥️ 1. Standar Navigasi Halaman Utama (Page Paradigm vs Modal Popup)
+- **Active Tab Synchronization**:
+  - `window.updateActiveSidebarTab` dipublikasikan secara global agar dapat diakses oleh modul internal `newtab.js` dan modul eksternal `apps_manager.js`.
+  - Saat `openAppsView()` dipanggil, seleksi sidebar langsung beralih ke tombol **Apps** (`#btn-open-apps`, `data-tab="apps"`), memberikan indikator visual Lime Pill yang konsisten bahwa pengguna sedang berada di halaman Aplikasi.
+- **Dedicated Page Navigation**:
+  - Tombol sidebar `#btn-open-apps` beroperasi sebagai navigasi halaman langsung (tidak lagi melakukan toggle ke chat).
+  - Navigasi kembali ke halaman utama chat dikendalikan secara presisi oleh tombol **Home** (`#btn-header-new-chat`).
+- **Non-Dismissable Page Canvas**:
+  - Mengeliminasi penutupan overlay saat area kosong/backdrop diklik (`e.target === this.appsCatalogOverlay`) ketika `!this.currentAppUrl`. Halaman katalog adalah kanvas kerja utama sehingga klik di luar elemen kartu tidak akan membubarkan halaman.
+  - Tombol close drawer `(×)` disembunyikan pada halaman katalog utama dan hanya dimunculkan sebagai drawer overlay ketika ada aplikasi web yang sedang aktif berjalan di dalam iframe (`this.currentAppUrl`).
+
+### 📏 2. Kepatuhan Ketat Aturan Sub-800 Baris
+- Seluruh 10 file di `extension/design/` dan seluruh file di `extension/apps-integration/` terjaga ketat di bawah limit 800 baris:
+  - `apps-integration/apps_manager.js`: 293
+  - `apps-integration/apps_overlay.css`: 403
+  - `apps-integration/apps_registry.js`: 193
+  - `canvas_exporter.js`: 244
+  - `canvas_manager.js`: 789
+  - `design_agent.js`: 782
+  - `design_executor.js`: 793
+  - `design_prompt.js`: 191
+  - `slide_deck_engine.js`: 724
+  - `slide_editor.js`: 798
+  - `slide_styles.js`: 737
+  - `slide_template.js`: 686
+  - `slide_themes.js`: 318
+
+

@@ -134,13 +134,14 @@ function initNewTab() {
   function updateActiveSidebarTab(tabName) {
     sidebarItems.forEach(item => {
       const itemTab = item.getAttribute('data-tab');
-      if (itemTab === tabName) {
+      if (itemTab === tabName || (itemTab === 'settings' && (tabName === 'settings' || tabName === 'ai' || tabName === 'models' || tabName === 'agents' || tabName === 'skills' || tabName === 'memory'))) {
         item.classList.add('active');
       } else {
         item.classList.remove('active');
       }
     });
   }
+  window.updateActiveSidebarTab = updateActiveSidebarTab;
 
   function openFullscreenSettings(tabName = 'ai') {
     if (settingsOverlay) {
@@ -158,6 +159,7 @@ function initNewTab() {
       }
     }
   }
+  window.openFullscreenSettings = openFullscreenSettings;
 
   function closeFullscreenSettings() {
     if (settingsOverlay) {
@@ -166,6 +168,7 @@ function initNewTab() {
       chatInput?.focus();
     }
   }
+  window.closeFullscreenSettings = closeFullscreenSettings;
 
   // --- Integrated Apps Hub & In-App Webview Logic (apps-integration module) ---
   const appsManager = window.AppsManager || (window.AppsIntegration && window.AppsIntegration.manager);
@@ -175,14 +178,15 @@ function initNewTab() {
 
   function openAppsView(appUrl = null, appName = null) {
     closeFullscreenSettings();
+    updateActiveSidebarTab('apps');
     if (appsManager) {
       appsManager.openAppsView(appUrl, appName);
     } else {
       const appsOverlay = document.getElementById('fullscreen-apps-overlay');
       if (appsOverlay) appsOverlay.style.display = 'flex';
-      updateActiveSidebarTab('apps');
     }
   }
+  window.openAppsView = openAppsView;
 
   function closeAppsView() {
     if (appsManager) {
@@ -202,6 +206,7 @@ function initNewTab() {
       } catch (e) {}
     }
   }
+  window.closeAppsView = closeAppsView;
 
   function launchApp(url, name, forceReload = false) {
     if (appsManager) {
@@ -223,17 +228,12 @@ function initNewTab() {
     updateActiveSidebarTab('home');
   });
 
-  // Apps Button in Sidebar (Toggles in-page Apps Hub Overlay)
+  // Apps Page Button in Sidebar (Navigates to Apps Page)
   document.getElementById('btn-open-apps')?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    const appsOverlay = document.getElementById('fullscreen-apps-overlay');
-    if (appsOverlay && appsOverlay.style.display === 'flex') {
-      closeAppsView();
-    } else {
-      openAppsView();
-    }
+    openAppsView();
   }, true);
 
   // Settings Button in Sidebar (Opens in-page Settings Overlay)
@@ -322,11 +322,13 @@ function initNewTab() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      const appsManagerInstance = window.AppsManager || (window.AppsIntegration && window.AppsIntegration.manager);
+      const appsCatalogOverlay = document.getElementById('apps-catalog-overlay');
       if (appsCatalogOverlay && appsCatalogOverlay.style.display !== 'none') {
-        appsCatalogOverlay.style.display = 'none';
-        btnToggleAppsCatalog?.classList.remove('active');
-      } else if (appsOverlay && appsOverlay.style.display !== 'none') {
-        closeAppsView();
+        if (appsManagerInstance && appsManagerInstance.currentAppUrl) {
+          appsCatalogOverlay.style.display = 'none';
+          document.getElementById('btn-toggle-apps-catalog')?.classList.remove('active');
+        }
       } else if (settingsOverlay && settingsOverlay.style.display !== 'none') {
         closeFullscreenSettings();
       }
