@@ -1249,3 +1249,19 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
       7. **Kompaksi Riwayat Sintesis Master Agent**:
          - Menyaring dan memadatkan `cleanTextHistory` pada tahap sintesis laporan akhir Master Agent agar tidak melampaui batas konteks input.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap konsisten di bawah limit 800 baris.
+
+158. **Mode Max Output Tokens Otomatis / Unlimited (Tanpa Batas Buatan) untuk Deep Research & Full-Length Generation (`v2.150.275`):**
+    - **Akar Masalah**:
+      - Pengguna membutuhkan fleksibilitas penuh untuk tugas *deep research*, penulisan laporan komprehensif, kode ribuan baris, dan perancangan slide deck tanpa risiko terpotong di tengah jalan.
+      - Jika nilai `max_tokens` dibatasi angka kecil (misal 2048 atau 4096), respon model terpotong sebelum tuntas. Sebaliknya, jika pengguna memasukkan angka raksasa (seperti 1.000.000), validator API Google menolak mentah-mentah dengan error `400 INVALID_ARGUMENT`.
+    - **Implementasi Teknis & Solusi**:
+      1. **Standarisasi Mode Otomatis / Unlimited (`0` = Tanpa Batas Output)**:
+         - Menetapkan nilai default `maxTokens: 0` pada seluruh konfigurasi ekstensi.
+         - Fungsi `getSafeMaxOutputTokens(val)` mengembalikan `null` jika bernilai `0`, kosong, atau `"auto"`.
+      2. **Omission Transmisi Parameter `max_tokens`**:
+         - Pada `runAgentLoop` dan `runChatModeLoop` di `sidepanel.js`, jika `safeMaxTokens` bernilai `null`, properti `max_tokens` sepenuhnya dihilangkan dari muatan request JSON (`...(safeMaxTokens ? { max_tokens: safeMaxTokens } : {})`).
+         - Sesuai protokol resmi OpenAI dan Gemini, ketiadaan parameter `max_tokens` memerintahkan endpoint untuk memberikan kuota output MAKSIMAL bawaan arsitektur model secara alami (sampai model mengeluarkan stop token / `EOS`).
+      3. **Pembaruan Antarmuka Pengaturan (`options.html`, `sidepanel.html`, `newtab.html`, `options.js`)**:
+         - Label input diperbarui menjadi `Max Output Tokens (0 = Otomatis / Unlimited)` dengan placeholder `0 (Otomatis / Unlimited)` dan rentang nilai aman `min="0" max="65536"`.
+         - Mempertahankan proteksi jika pengguna memasukkan angka ekstrem (>65536) agar otomatis dinormalisasi ke batas aman tanpa menyebabkan crash `400`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap konsisten di bawah 800 baris.

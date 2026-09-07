@@ -11,7 +11,7 @@ let config = {
   selectedModelChoice: "auto",
   imageModel: "dall-e-3",
   temperature: 0.2,
-  maxTokens: 4096,
+  maxTokens: 0,
   autoRotateModel: true,
   models: [],
   customModels: []
@@ -5553,9 +5553,10 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
 // =========================================================================
 
 function getSafeMaxOutputTokens(val) {
+  if (val === undefined || val === null || val === "" || val === "auto" || val === "unlimited") return null;
   const parsed = parseInt(val, 10);
-  if (!parsed || isNaN(parsed) || parsed <= 0) return 4096;
-  if (parsed > 16384) return 8192;
+  if (isNaN(parsed) || parsed <= 0) return null; // 0 = Otomatis / Unlimited (biarkan model generate full output tanpa batas buatan)
+  if (parsed > 65536) return 32768; // Pelindung jika user memasukkan angka raksasa seperti 1.000.000
   return parsed;
 }
 
@@ -6526,6 +6527,7 @@ Tugas Anda:
         activeModelChoice = candidateModels[mIdx];
 
         try {
+          const safeMaxTokens = getSafeMaxOutputTokens(config.maxTokens);
           const resp = await fetch(endpointUrl, {
             method: "POST",
             headers,
@@ -6535,7 +6537,7 @@ Tugas Anda:
               tools: isPlanningTurn ? undefined : AGENT_TOOLS,
               tool_choice: isPlanningTurn ? undefined : "auto",
               temperature: parseFloat(config.temperature) || 0.2,
-              max_tokens: getSafeMaxOutputTokens(config.maxTokens),
+              ...(safeMaxTokens ? { max_tokens: safeMaxTokens } : {}),
               stream: true
             }),
             signal: abortController.signal
@@ -8571,6 +8573,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
         activeModelChoice = candidateModels[mIdx];
 
         try {
+          const safeMaxTokens = getSafeMaxOutputTokens(config.maxTokens);
           const resp = await fetch(endpointUrl, {
             method: "POST",
             headers,
@@ -8578,7 +8581,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
               model: activeModelChoice,
               messages,
               temperature: parseFloat(config.temperature) || 0.7,
-              max_tokens: getSafeMaxOutputTokens(config.maxTokens),
+              ...(safeMaxTokens ? { max_tokens: safeMaxTokens } : {}),
               stream: true
             }),
             signal: abortController.signal
@@ -11161,7 +11164,7 @@ function saveSettings() {
   config.endpoint = document.getElementById('setting-endpoint').value.trim();
   config.apiKey = document.getElementById('setting-apikey').value.trim();
   config.temperature = parseFloat(document.getElementById('setting-temp').value) || 0.2;
-  config.maxTokens = getSafeMaxOutputTokens(document.getElementById('setting-max-tokens')?.value);
+  config.maxTokens = getSafeMaxOutputTokens(document.getElementById('setting-max-tokens')?.value) || 0;
 
   // Collect all model inputs from rows in priority order
   const modelCards = document.querySelectorAll('.model-row-item');
@@ -11298,7 +11301,7 @@ function applyConfigToUI() {
   if (settingTemp) settingTemp.value = config.temperature || 0.2;
 
   const settingMaxTokens = document.getElementById('setting-max-tokens');
-  if (settingMaxTokens) settingMaxTokens.value = getSafeMaxOutputTokens(config.maxTokens);
+  if (settingMaxTokens) settingMaxTokens.value = (config.maxTokens ? getSafeMaxOutputTokens(config.maxTokens) : 0) ?? 0;
 }
 
 function renderModelDropdown() {

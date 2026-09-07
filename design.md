@@ -2082,3 +2082,13 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 5. **Self-Healing Token Overflow Handler**:
    - Loop agen mendeteksi kesalahan batas konteks (error 400/503) via `isTokenLimitError`.
    - Secara otomatis mengaktifkan *Emergency Compaction* (budget 60.000 token, pemangkasan tool output ke 250 karakter) dan mengulang panggilan API secara instan tanpa memunculkan kartu kegagalan ke antarmuka pengguna.
+
+## ⚙️ 51. Uncapped Output Generation: Automatic & Unlimited Max Tokens Architecture (v2.150.275)
+
+1. **Protocol-Compliant Output Omission (`max_tokens: undefined`)**:
+   - Jika pengguna memilih mode otomatis (`0` atau dikosongkan), parameter `max_tokens` ditiadakan dari payload JSON request ke server AI.
+   - Mengikuti spesifikasi resmi Google Generative AI dan OpenAI, ketiadaan parameter ini mengaktifkan kapasitas generasi output maksimal bawaan model (untruncated full-length generation) yang sangat ideal untuk tugas *deep research*, laporan analitis, dan penulisan dokumen ekstensif.
+
+2. **Unified Settings Control & Label Ergonomics**:
+   - Label di `options.html`, `sidepanel.html`, dan `newtab.html` kini menyertakan panduan visual jelas: `Max Output Tokens (0 = Otomatis / Unlimited)`.
+   - Field menerima nilai `0` sebagai representasi mode tanpa batas, dengan opsi pengisian angka manual (misal 8192, 16384, atau 32768) jika pengguna ingin membatasi kuota output secara terukur.

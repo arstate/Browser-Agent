@@ -7697,3 +7697,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Syntax check `node -c extension/sidepanel.js extension/options.js` lulus 100% tanpa error.
   3. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh di bawah limit 800 baris.
   4. Bump versi ke `v2.150.274` di `manifest.json`.
+
+### Iterasi: Mode Max Output Tokens Otomatis / Unlimited (Tanpa Batas Buatan) untuk Deep Research (`v2.150.275`)
+- **User Request:**
+  - "untuk max token itu buat otomatis jadi gaada maksimalnya soalnya saya butuh untuk research butuh max token panjang, mau tanya dulu saya ini bisa ga"
+  - "oke gaskan ini"
+- **Akar Masalah & Penyelidikan Mendalam:**
+  - Pembatasan output statis di angka 4096 atau 8192 token memotong respon AI di tengah jalan saat melakukan riset literatur yang mendalam atau menyusun laporan komprehensif.
+  - Namun jika kolom `max_tokens` diisi angka 1.000.000, validator Google Gemini menolak dengan error `400 INVALID_ARGUMENT`.
+  - Protokol standar OpenAI/Gemini menentukan bahwa penghilangan parameter `max_tokens` dari request body secara otomatis mengaktifkan generasi teks tanpa batas buatan hingga kapasitas native model tercapai.
+- **Solusi & Rekayasa Teknis:**
+  1. *Omission Logic (`sidepanel.js`)*:
+     - Memperbarui `getSafeMaxOutputTokens(val)` agar mengembalikan `null` jika bernilai `0`, `"auto"`, atau kosong.
+     - Menyusun muatan JSON request menggunakan `...(safeMaxTokens ? { max_tokens: safeMaxTokens } : {})`.
+     - Ketika bernilai `null`, properti `max_tokens` tidak dikirim sama sekali ke endpoint, membebaskan AI menulis respon sedalam dan sepanjang kapasitas aslinya tanpa batasan.
+  2. *Antarmuka Pengaturan Terintegrasi (`options.html`, `sidepanel.html`, `newtab.html`, `options.js`)*:
+     - Memperbarui label input menjadi `Max Output Tokens (0 = Otomatis / Unlimited)` dan nilai default `0`.
+     - Memberikan fleksibilitas bagi pengguna untuk tetap memasukkan angka manual (misal 8192 atau 16384) jika ingin membatasi kuota.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Pengujian serialisasi Node.js membuktikan nilai 0 menghasilkan JSON bersih tanpa field `max_tokens`.
+  2. `node -c extension/sidepanel.js extension/options.js` sukses tanpa error.
+  3. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
+  4. Bump versi ke `v2.150.275` di `manifest.json`.

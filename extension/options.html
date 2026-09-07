@@ -529,8 +529,8 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="setting-max-tokens">Max Output Tokens</label>
-                  <input type="number" id="setting-max-tokens" min="512" max="16384" step="512" value="4096">
+                  <label for="setting-max-tokens">Max Output Tokens <span style="font-size: 11px; color: var(--text-muted); font-weight: 400;">(0 = Otomatis / Unlimited)</span></label>
+                  <input type="number" id="setting-max-tokens" min="0" max="65536" step="512" placeholder="0 (Otomatis / Unlimited)" value="0">
                 </div>
               </div>
             </div>
