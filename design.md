@@ -2023,6 +2023,25 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Menambahkan mekanisme fallback ekstraksi judul markdown (`# Heading`) pada fungsi `list_agents` sehingga agen tidak lagi muncul sebagai angka (`@40`, `@67`, `@14`) saat nama tidak tercantum di frontmatter.
    - Menyinkronkan agen `ARYA-MAGANG-KOMINFO`, `Djadi Creative - Master Agency Orchestrator`, dan `Djadi Creative - Visual Designer & Art Director` di kedua layer penyimpanan (Markdown `.md` dan database SQLite `chat_history.db`).
 
+---
+
+## 🛡️ 48. Zero-Duplicate Multi-Agent Architecture & 4-Layer Deduplication (v2.150.272)
+
+1. **Eliminasi Berkas Numerik & Semantic Path Canonicalization (`~/.browser-agent/agents/`)**:
+   - Menghapus seluruh berkas agen peninggalan bernomor ID (`14.md`, `40.md`, `67.md`, `72.md`, `73.md`).
+   - Setiap agen kini memiliki berkas dan ID semantik tunggal yang representatif:
+     * `arya_magang_kominfo.md` -> `ARYA-MAGANG-KOMINFO`
+     * `djadi_master_orchestrator.md` -> `Djadi Creative - Master Agency Orchestrator`
+     * `djadi_visual_designer.md` -> `Djadi Creative - Visual Designer & Art Director`
+     * `djadi_meta_ads_strategist.md` -> `Djadi Creative - Meta Ads Strategist & Performance Director`
+     * `djadi_sales_closer.md` -> `Djadi Creative - Inbound Sales Closer & Client Success`
+
+2. **Multi-Layer Deduplication Guard (Rust Host + Extension Frontend)**:
+   - **Rust Host Native (`main.rs`)**: RPC `list_agents` menerapkan filter `HashSet<String>` untuk `seen_ids` dan `seen_names`, menjamin JSON payload bebas duplikat sebelum mencapai Chrome Extension.
+   - **Options Settings Manager (`options.js`)**: `loadAgents` menyaring entitas bernama sama dan otomatis mempromosikan entitas ke semantic ID jika menemukan duplikat numerik lama.
+   - **Sidepanel UI & Mention Dropdown (`sidepanel.js`)**: `loadAgentsAndSkills` dan `getMentionableAgents` melakukan deduplikasi real-time berbasis normalized name, mencegah nama yang sama muncul berulang pada popup `@mention`.
+
+
 
 
 

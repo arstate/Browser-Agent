@@ -1842,7 +1842,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
 
         "list_agents" => {
             let agents_dir = get_db_dir().join("agents");
-            let mut items = vec![];
+            let mut raw_items = vec![];
             if let Ok(entries) = fs::read_dir(agents_dir) {
                 for entry in entries.flatten() {
                     let p = entry.path();
@@ -1875,11 +1875,36 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                             }
                             meta["content"] = json!(content);
                             meta["file_path"] = json!(p.to_string_lossy());
-                            items.push(meta);
+                            raw_items.push(meta);
                         }
                     }
                 }
             }
+
+            // Deduplicate items by normalized name and ID
+            let mut items = vec![];
+            let mut seen_ids = std::collections::HashSet::new();
+            let mut seen_names = std::collections::HashSet::new();
+
+            for item in raw_items {
+                let id = item.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let name = item.get("name").and_then(|v| v.as_str()).unwrap_or("").to_lowercase().trim().to_string();
+
+                if !id.is_empty() && seen_ids.contains(&id) {
+                    continue;
+                }
+                if !name.is_empty() && seen_names.contains(&name) {
+                    continue;
+                }
+                if !id.is_empty() {
+                    seen_ids.insert(id);
+                }
+                if !name.is_empty() {
+                    seen_names.insert(name);
+                }
+                items.push(item);
+            }
+
             json!({ "status": "ok", "items": items })
         }
 

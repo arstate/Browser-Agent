@@ -7607,6 +7607,36 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Baris kode `extension/design/slide_template.js` terjaga pada 686 baris (sub-800 line rule dipatuhi ketat).
   4. Bump versi ke `v2.150.271` di `manifest.json`.
 
+---
+
+### Iterasi: Eliminasi Total Duplikasi Multi-Agent & Pengawal Dedup 4 Lapis (`v2.150.272`)
+- **User Request:**
+  - "KOK ARYA MAGANG KOMINFO MULTI AGENT DAN BEBEAPA MULTI AGENT ADA YANG DUPLIKAT YA BRO COBA LO CEK DAN FIX"
+- **Akar Masalah & Penyelidikan Mendalam:**
+  1. Direktori berkas `~/.browser-agent/agents/` memuat berkas numerik lama berdampingan dengan berkas alias semantik baru:
+     - `14.md` dan `arya_magang_kominfo.md` (keduanya bernama ARYA-MAGANG-KOMINFO).
+     - `40.md` dan `djadi_master_orchestrator.md` (keduanya bernama Djadi Creative - Master Agency Orchestrator).
+     - `67.md` dan `djadi_visual_designer.md` (keduanya bernama Djadi Creative - Visual Designer & Art Director).
+     - `72.md` dan `73.md` yang masih menggunakan ID numerik.
+  2. Implementasi RPC `list_agents` di `rust_host` mengembalikan seluruh berkas tanpa penyaringan duplikat nama, dan frontend (`options.js`, `sidepanel.js`) hanya memeriksa kecocokan ID (`item.id === ag.id`), sehingga dua agen dengan nama identik tetapi ID berbeda tetap lolos ke menu pilihan dan dropdown `@mention`.
+- **Solusi & Rekayasa Teknis:**
+  1. *Pembersihan Direktori Berkas Agen*:
+     - Menghapus seluruh berkas numerik `14.md`, `40.md`, `67.md`, `72.md`, `73.md`.
+     - Menyimpan berkas dengan ID semantik bersih: `arya_magang_kominfo.md`, `djadi_master_orchestrator.md`, `djadi_visual_designer.md`, `djadi_meta_ads_strategist.md`, `djadi_sales_closer.md`.
+  2. *Pembersihan Database SQLite `chat_history.db`*:
+     - Menghapus baris ID numerik pada tabel `autonomous_agents` (`WHERE id IN ('14', '40', '67')`), menyisakan tepat satu baris per entitas agen.
+  3. *Pengawal Dedup Rust Host (`host/rust_host/src/main.rs`)*:
+     - Memperbarui `list_agents` dengan set `seen_ids` dan `seen_names` (case-insensitive & trimmed) sehingga Rust Host hanya mengeluarkan 1 entitas per nama unik.
+  4. *Pengawal Dedup Frontend (`extension/options.js`, `extension/sidepanel.js`)*:
+     - Di `options.js`: `loadAgents` membandingkan normalized name dan otomatis meng-upgrade ID numerik ke ID semantik.
+     - Di `sidepanel.js`: `loadAgentsAndSkills` dan `getMentionableAgents` melakukan deduplikasi real-time dan menyinkronkan kembali cache bersih ke `chrome.storage.local`.
+- **Verifikasi:**
+  1. Uji RPC `list_agents` via terminal menghasilkan tepat 17 agen unik dengan 0 duplikat (ALL AGENTS 100% UNIQUE).
+  2. Seluruh berkas di `extension/design/` dan `extension/apps-integration/` mematuhi sub-800 line rule.
+  3. Syntax check JavaScript dan Rust host compilation lulus 100% tanpa error.
+  4. Bump versi ke `v2.150.272` di `manifest.json`.
+
+
 
 
 

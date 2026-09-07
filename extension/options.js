@@ -1461,11 +1461,19 @@ async function loadAgents() {
         });
       }
     } else {
-      // Remove duplicates by ID and deduplicate skills/memories
-      if (!cleanedList.some(item => item.id === ag.id)) {
+      // Remove duplicates by ID and normalized Name, and deduplicate skills/memories
+      const existingIdx = cleanedList.findIndex(item => item.id === ag.id || (item.name && ag.name && item.name.toLowerCase().trim() === ag.name.toLowerCase().trim()));
+      if (existingIdx === -1) {
         ag.skills = [...new Set(ag.skills || [])];
         ag.memories = [...new Set(ag.memories || [])];
         cleanedList.push(ag);
+      } else {
+        // If current item has numeric ID but incoming has semantic string ID, upgrade to semantic ID
+        if (/^\d+$/.test(cleanedList[existingIdx].id) && !/^\d+$/.test(ag.id)) {
+          ag.skills = [...new Set([...(cleanedList[existingIdx].skills || []), ...(ag.skills || [])])];
+          ag.memories = [...new Set([...(cleanedList[existingIdx].memories || []), ...(ag.memories || [])])];
+          cleanedList[existingIdx] = ag;
+        }
       }
     }
   }

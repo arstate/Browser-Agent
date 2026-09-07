@@ -11209,7 +11209,26 @@ const btnActiveAgent = document.getElementById('btn-active-agent');
 async function loadAgentsAndSkills() {
   const res = await chrome.storage.local.get(['custom_agents', 'custom_skills', 'custom_memories', 'active_agent_id']);
   if (res && Array.isArray(res.custom_agents) && res.custom_agents.length > 0) {
-    customAgents = res.custom_agents;
+    // Deduplicate custom_agents by normalized name and ID, preferring semantic IDs
+    const seenNames = new Map();
+    const deduped = [];
+    for (const ag of res.custom_agents) {
+      if (!ag || !ag.name || ag.name === "Untitled" || ag.name === "Untitled Agent" || ag.name === "Untitled Sub-Agent") continue;
+      const normName = String(ag.name).toLowerCase().trim();
+      if (seenNames.has(normName)) {
+        const prevIdx = seenNames.get(normName);
+        if (/^\d+$/.test(deduped[prevIdx].id) && !/^\d+$/.test(ag.id)) {
+          deduped[prevIdx] = { ...deduped[prevIdx], ...ag };
+        }
+        continue;
+      }
+      seenNames.set(normName, deduped.length);
+      deduped.push(ag);
+    }
+    customAgents = deduped;
+    if (deduped.length !== res.custom_agents.length) {
+      chrome.storage.local.set({ custom_agents: deduped }).catch(() => {});
+    }
   } else {
     customAgents = [
       {
@@ -14020,17 +14039,25 @@ function clearMentionAgents() {
 
 function getMentionableAgents(query = "") {
   const q = String(query || "").toLowerCase().trim();
-  // Filter out boss agents and untitled/empty agents
-  const list = customAgents.filter(ag => 
-    ag && 
-    String(ag.id || '') !== "master_agent" && 
-    String(ag.id || '') !== "boss_agent" && 
-    !ag.is_boss && 
-    ag.name && 
-    ag.name !== "Untitled" && 
-    ag.name !== "Untitled Agent" &&
-    ag.name !== "Untitled Sub-Agent"
-  );
+  // Filter out boss agents, untitled/empty agents, and deduplicate by normalized name and ID
+  const seenNames = new Set();
+  const seenIds = new Set();
+  const list = [];
+
+  for (const ag of (Array.isArray(customAgents) ? customAgents : [])) {
+    if (!ag || !ag.name) continue;
+    const agId = String(ag.id || '');
+    if (agId === "master_agent" || agId === "boss_agent" || ag.is_boss) continue;
+    if (ag.name === "Untitled" || ag.name === "Untitled Agent" || ag.name === "Untitled Sub-Agent") continue;
+
+    const normName = ag.name.toLowerCase().trim();
+    if (seenNames.has(normName) || (agId && seenIds.has(agId))) {
+      continue;
+    }
+    seenNames.add(normName);
+    if (agId) seenIds.add(agId);
+    list.push(ag);
+  }
 
   if (!q) return list;
 
