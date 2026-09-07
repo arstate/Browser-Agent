@@ -164,12 +164,39 @@ function auditFullDeck(slides, topic = '') {
 
 function cleanPresentationTopic(rawPrompt = "") {
   let text = String(rawPrompt || "").trim();
-  text = text.replace(/^(?:tolong\s+)?(?:buatkan|bikin|buat|generate|create|siapkan|rancang|tampilkan|sajikan)\s+/i, "");
-  text = text.replace(/^(?:(?:\d+\s+)?(?:slide|slides|deck|presentasi|presentation|ppt|pdf|materi|dokumen|kanvas|canvas)\s*)+(?:tentang|mengenai|seputar|topik|tema|bahas|soal)?\s+/i, "");
-  text = text.replace(/^(?:tentang|mengenai|seputar|topik|tema|bahas|soal)\s+/i, "");
-  text = text.replace(/\s+(?:sebanyak\s+)?\d+\s*(?:slide|slides|halaman|lembar|page|pages|hal)?\s*$/i, "");
-  text = text.replace(/\s+(?:format\s+)?(?:pdf|ppt|powerpoint|deck|16:9|widescreen)\s*$/i, "");
-  text = text.replace(/^[:\-\s]+|[:\-\s]+$/g, "").trim();
+  const explicitMatch = text.match(/(?:judul|title|topik|tema|materi)\s*(?:presentasi|slide|deck)?\s*[:=]\s*["']?([^"'\n\r]+)["']?/i);
+  if (explicitMatch && explicitMatch[1]?.trim()) {
+    text = explicitMatch[1].trim();
+  } else {
+    text = text.replace(/@[-a-zA-Z0-9_.]+/g, " ");
+    const lines = text.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+    let candidate = "";
+    for (const line of lines) {
+      const l = line.replace(/@[-a-zA-Z0-9_.]+/g, " ")
+        .replace(/^(?:halo|hai|bro|sis|min|kawan|tolong|coba|buatin|bikin|buat|generate|create|siapkan|rancang|minta|plis|please)\s+/gi, "")
+        .replace(/^(?:(?:\d+\s+)?(?:slide|slides|deck|presentasi|presentation|ppt|pdf|materi|dokumen|kanvas)\s*)+(?:tentang|mengenai|seputar|topik|tema|bahas|soal)?\s+/gi, "")
+        .replace(/^(?:tentang|mengenai|seputar|topik|tema|bahas|soal)\s+/gi, "")
+        .replace(/^[:\-\s]+|[:\-\s]+$/g, "").trim();
+      if (l.length > 3 && !/^(?:berikut|dibawah|template|prompt|catatan|instruksi|aturan|note)/i.test(l)) {
+        candidate = l;
+        break;
+      }
+    }
+    text = candidate || lines[0] || text;
+    text = text.replace(/`+[^`]*`+/g, " ").replace(/[#*_\\[\]()]/g, " ").replace(/https?:\/\/\S+/g, " ");
+    text = text.replace(/\b(?:buatin|bikin|buat|generate|create|siapkan|rancang|tampilkan|sajikan|tolong|coba|minta)\b/gi, " ");
+    text = text.replace(/\b(?:slide|slides|deck|presentasi|presentation|ppt|pdf|materi|dokumen|kanvas|canvas)\b/gi, " ");
+    text = text.replace(/\b(?:tentang|mengenai|seputar|topik|tema|bahas|soal)\b/gi, " ");
+    text = text.replace(/(?:\bsebanyak\s+)?\b\d+\s*(?:slide|slides|halaman|lembar|page|pages|hal)\b/gi, " ");
+    text = text.replace(/\b(?:format\s+)?(?:powerpoint|16:9|widescreen)\b/gi, " ");
+    text = text.replace(/\b(?:bro|sis|dong|ya|pls|please|cepet|deh|bang|kak)\b/gi, " ");
+  }
+  text = text.replace(/^[:\-\s]+|[:\-\s]+$/g, "").replace(/\s{2,}/g, " ").trim();
+  if (text.length > 45) {
+    const truncated = text.slice(0, 45);
+    const lastSpace = truncated.lastIndexOf(" ");
+    text = (lastSpace > 18 ? truncated.slice(0, lastSpace) : truncated).trim();
+  }
   return text || "Materi Presentasi";
 }
 
@@ -183,40 +210,20 @@ function toTitleCaseIndonesian(str) {
 
 function generateEditorialTitle(cleanTopic, themeId = "playful_pastel") {
   const titleCase = toTitleCaseIndonesian(cleanTopic);
-  if (/kucing|hewan|anjing|pet|fauna|satwa|binatang/i.test(cleanTopic)) {
-    return {
-      title: `Pesona & Ragam ${titleCase}`,
-      subtitle: `Mengenal keunikan ras nusantara, tingkah menggemaskan si anabul, dan panduan merawat penuh kasih.`
-    };
+  if (titleCase.length > 25 || titleCase.split(/\s+/).length >= 4 || titleCase.includes(':')) {
+    return { title: titleCase.slice(0, 50), subtitle: `Analisis komprehensif, ringkasan pilar utama, dan panduan terstruktur seputar ${cleanTopic.toLowerCase()}.` };
   }
-  if (/kopi|kuliner|makanan|masakan|resep|minuman/i.test(cleanTopic)) {
-    return {
-      title: `Cita Rasa & Eksplorasi ${titleCase}`,
-      subtitle: `Menjelajahi asal-usul rasa autentik, seni peracikan, dan keistimewaan tradisi nusantara.`
-    };
+  const presets = [
+    [/kucing|hewan|anjing|pet|fauna|satwa|binatang/i, `Pesona & Ragam ${titleCase}`, `Mengenal keunikan ras nusantara, tingkah anabul, dan panduan merawat penuh kasih.`],
+    [/kopi|kuliner|makanan|masakan|resep|minuman/i, `Cita Rasa & Eksplorasi ${titleCase}`, `Menjelajahi asal-usul rasa autentik, seni peracikan, dan tradisi nusantara.`],
+    [/ai|coding|tech|cyber|software|startup|data|cloud/i, `Inovasi Modern: ${titleCase}`, `Analisis arsitektur sistem modern dan peta jalan teknologi terdepan.`],
+    [/sejarah|budaya|nusantara|indonesia|seni|tradisi/i, `Warisan Sejarah: ${titleCase}`, `Kilas balik mendalam, nilai luhur peradaban, dan relevansinya di era modern.`],
+    [/kesehatan|medis|wellness|olahraga|nutrisi|mental/i, `Panduan Sehat: ${titleCase}`, `Pendekatan komprehensif dan langkah praktis mewujudkan kebugaran optimal.`]
+  ];
+  for (const [re, t, s] of presets) {
+    if (re.test(cleanTopic)) return { title: t, subtitle: s };
   }
-  if (/ai|coding|tech|cyber|software|startup|data|cloud|devops/i.test(cleanTopic)) {
-    return {
-      title: `Inovasi & Masa Depan: ${titleCase}`,
-      subtitle: `Analisis arsitektur sistem modern, peluang transformasi digital, dan peta jalan teknologi terdepan.`
-    };
-  }
-  if (/sejarah|budaya|nusantara|indonesia|seni|tradisi/i.test(cleanTopic)) {
-    return {
-      title: `Warisan & Jejak Sejarah: ${titleCase}`,
-      subtitle: `Kilas balik mendalam, nilai-nilai luhur peradaban, dan relevansinya di era modern.`
-    };
-  }
-  if (/kesehatan|medis|wellness|olahraga|nutrisi|mental/i.test(cleanTopic)) {
-    return {
-      title: `Harmoni & Panduan Hidup Sehat: ${titleCase}`,
-      subtitle: `Pendekatan komprehensif, pemahaman fundamental, dan langkah praktis mewujudkan kebugaran optimal.`
-    };
-  }
-  return {
-    title: `Eksplorasi Komprehensif: ${titleCase}`,
-    subtitle: `Wawasan mendalam, analisis pilar utama, dan panduan terstruktur seputar ${cleanTopic.toLowerCase()}.`
-  };
+  return { title: `Eksplorasi: ${titleCase}`, subtitle: `Wawasan mendalam dan panduan terstruktur seputar ${cleanTopic.toLowerCase()}.` };
 }
 
 function createDefaultBlueprint(topic = 'Presentasi', targetSlideCount = 5, theme = {}) {

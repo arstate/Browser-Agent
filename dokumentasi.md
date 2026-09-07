@@ -1197,6 +1197,27 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Di `sidepanel.js` (`loadAgentsAndSkills` & `getMentionableAgents`), menerapkan filter dedup instan dan otomatis menyinkronkan data bersih kembali ke `chrome.storage.local`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas `extension/design/` dan `extension/apps-integration/` tetap konsisten di bawah 800 baris.
 
+156. **Sanitasi Judul Slide Deck Panjang, Pengawal Preservasi Judul Revisi, Inline Edit Judul & Pencegahan Overflow Ekspor PDF (`v2.150.273`):**
+    - **Akar Masalah**:
+      - Ketika pengguna mengirimkan prompt panjang/kompleks (misalnya menyertakan template proposal magang, arahan teknis ratusan kata, atau `@mention`), fungsi ekstraksi topik (`cleanPresentationTopic`) dan generator judul editorial (`generateEditorialTitle`) di `design_agent.js` menangkap seluruh isi prompt mentah sehingga kartu hasil di obrolan menampilkan judul raksasa puluhan baris (`Inovasi & Masa Depan: @arya-magang-kominfo Buatin Pdf Bro...`).
+      - Ketika pengguna melakukan revisi (misal: "revisi slide 2 tolong ubah warnanya"), sistem di `design_executor.js` dan `sidepanel.js` menimpa judul slide deck dengan teks instruksi revisi pengguna alih-alih mempertahankan judul deck awal/aktif.
+      - Pengguna tidak memiliki mekanisme untuk mengedit/mengubah judul slide deck secara langsung di kartu obrolan atau header canvas, dan AI tidak mengingat judul kustom yang telah diubah pengguna.
+      - String judul yang sangat panjang menyebabkan proses ekspor PDF (`export_slide_deck_pdf`) di host OS melampaui limit panjang nama berkas filesystem (255 byte), memicu error fatal saat pembuatan berkas sementara.
+    - **Implementasi Teknis & Solusi**:
+      1. **Sanitasi Agresif Topik & Judul Editorial (`extension/design/design_agent.js`)**:
+         - Memperbarui `cleanPresentationTopic` untuk menyaring `@mentions`, blok markdown/kode, URL, kata perintah/pembuka/penutup percakapan (`buatin pdf bro`, `tolong bikinin`, dll), dan mendukung pendeteksian judul eksplisit (`judul: "..."` atau `topik: "..."`).
+         - Mengunci panjang topik maksimal 45 karakter pada batas kata (*word boundary*).
+         - Memperbarui `generateEditorialTitle`: jika topik sudah merupakan frasa lengkap (>25 karakter atau >=4 kata), judul langsung menggunakan frasa tersebut tanpa menambahkan prefix panjang (`Inovasi & Masa Depan:`), dan panjang judul dijamin <= 50 karakter.
+      2. **Preservasi Judul Deck pada Mode Revisi (`extension/design/design_executor.js`, `extension/sidepanel.js`)**:
+         - Di `design_executor.js`: jika `isRevision` aktif dan `currentOpenArtifact?.meta?.title` tersedia, gunakan `existingTitle` secara konsisten tanpa menimpa judul dengan `userMessage`.
+         - Di `sidepanel.js` (`create_slide_deck_design`): jika terdapat `hadExistingArtifact` dan `activeArtTitle`, pertahankan `activeArtTitle` kecuali pengguna secara eksplisit meminta pengubahan judul (misal: "ganti judul deck jadi X").
+      3. **Antarmuka Pengeditan Judul Interaktif & AI Memory Synchronization (`extension/design/canvas_manager.js`, `extension/sidepanel.css`, `extension/newtab.css`)**:
+         - Menambahkan tombol edit pensil dan klik pada `.opendesign-card-title` yang memunculkan input inline (`.opendesign-title-edit-box`) dengan tombol Simpan (✓) dan Batal (✕) serta pintasan keyboard `Enter` / `Escape`.
+         - Saat disimpan, memperbarui `artifact.meta.title`, `artifact.meta.customTitle = true`, `artifact.meta.userEdited = true`, slide cover, tag `<title>`, cache `chrome.storage.local` (`opendesign_last_artifact`, `opendesign_user_custom_title`), header canvas `#canvas-design-title`, serta catatan riwayat obrolan (`conversationHistory`), sehingga AI secara permanen mengingat dan memprioritaskan judul editan pengguna.
+      4. **Pencegahan Overflow Ekspor PDF (`extension/design/canvas_exporter.js`, `host/native_host.py`, `host/rust_host/src/main.rs`)**:
+         - Menambahkan sanitasi batas panjang `cleanTitle.slice(0, 50)` di frontend JavaScript, Python Native Host, dan Rust Native Host binary (`browser_agent_host`) sebelum membentuk path berkas PDF, menjamin proses cetak vektor 16:9 stabil tanpa risiko error `ENAMETOOLONG`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh berkas di `extension/design/` (`canvas_manager.js` 795, `design_agent.js` 789, `design_executor.js` 797, `slide_editor.js` 798) dan `extension/apps-integration/` tetap patuh di bawah limit 800 baris.
+
 
 
 

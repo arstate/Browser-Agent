@@ -7636,6 +7636,37 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Syntax check JavaScript dan Rust host compilation lulus 100% tanpa error.
   4. Bump versi ke `v2.150.272` di `manifest.json`.
 
+---
+
+### Iterasi: Sanitasi Judul Slide Deck Panjang, Pengawal Preservasi Judul Revisi, Inline Edit Judul & Pencegahan Overflow Ekspor PDF (`v2.150.273`)
+- **User Request:**
+  - "fix bug design mater agent ketika kirim pdf slide decknya bro kalau promptnya sangat panjang jadi kek gini ngebug bro jadi judulnya panjang banget coba lo fix bro , ok judul revisi slide decknya kok prompt dari user ya harusnya kan judulnya tetep sama kek di judul ketika awal membuat slide deck, trus buat user bisa edit judul slide deck yang di kirim ai dan kesimpen dan ai akan inget judul yg di edit bukan judul yang dia but bro, fix dan update bug ini bro"
+- **Akar Masalah & Penyelidikan Mendalam:**
+  1. *Prompt-to-Title Overflow*: Ketika pengguna menyertakan prompt panjang (misalnya template proposal magang ratusan karakter atau `@mention`), fungsi `cleanPresentationTopic` dan `generateEditorialTitle` di `design_agent.js` menangkap seluruh isi teks prompt tanpa pemotongan batas kata yang aman, menghasilkan judul raksasa seperti `Inovasi & Masa Depan: @arya-magang-kominfo Buatin Pdf Bro...`.
+  2. *Revision Title Overwrite*: Saat revisi slide deck diminta (misal: "revisi slide 2 tolong ganti warna biru"), `design_executor.js` dan `sidepanel.js` mengekstraksi ulang topik dari pesan instruksi revisi pengguna dan menimpa `meta.title`, alih-alih mempertahankan judul deck awal yang sedang aktif.
+  3. *Missing User Title Editing*: Kartu hasil slide deck di obrolan hanya menampilkan elemen teks statis tanpa antarmuka pengeditan judul, dan perubahan judul tidak disinkronkan ke memori AI / riwayat sesi.
+  4. *PDF Export Filename Limit Overflow*: Judul yang terlalu panjang membuat fungsi pembentuk nama berkas `clean_title` menghasilkan string melebihi batas 255 byte filesystem OS, memicu kegagalan fatal pada RPC `export_slide_deck_pdf`.
+- **Solusi & Rekayasa Teknis:**
+  1. *Sanitasi Agresif Topik & Judul Editorial (`extension/design/design_agent.js`)*:
+     - Melucuti seluruh `@mentions`, blok kode markdown, URL, serta variasi filler percakapan (`buatin pdf bro`, `tolong bikinin`, dll).
+     - Menambahkan deteksi judul eksplisit (`judul: "..."` atau `topik: "..."`).
+     - Mengunci batas panjang topik maksimal 45 karakter pada batas kata (*word boundary*).
+     - Mengoptimasi `generateEditorialTitle` agar langsung memakai frasa topik jika sudah spesifik (>25 karakter / >=4 kata) dan membatasi panjang judul maksimal 50 karakter.
+  2. *Preservasi Judul Deck pada Mode Revisi (`extension/design/design_executor.js`, `extension/sidepanel.js`)*:
+     - Membaca `currentOpenArtifact?.meta?.title` dan `activeArtTitle`.
+     - Jika sedang dalam mode revisi (`isRevision` / `hadExistingArtifact`), mengunci judul eksisting dan mengabaikan teks instruksi perbaikan kecuali pengguna secara eksplisit meminta ganti judul (*explicit rename*).
+  3. *Komponen Edit Judul Inline & Sinkronisasi Realtime AI (`extension/design/canvas_manager.js`, `sidepanel.css`, `newtab.css`)*:
+     - Menghadirkan tombol pensil edit dan interaksi klik pada `.opendesign-card-title`.
+     - Membuka kotak input inline (`.opendesign-title-edit-box`) dengan tombol Simpan (✓), Batal (✕), dan penanganan tombol `Enter`/`Escape`.
+     - Menyimpan pembaruan ke `artifact.meta.title`, `artifact.meta.customTitle = true`, cover slide, tag `<title>`, cache `chrome.storage.local`, header canvas `#canvas-design-title`, serta `conversationHistory`, menjamin AI selalu mengingat judul kustom pengguna.
+  4. *Proteksi Panjang Nama Berkas Ekspor PDF (`canvas_exporter.js`, `native_host.py`, `rust_host/src/main.rs`)*:
+     - Memotong `clean_title` maksimal 50 karakter di lapisan JavaScript, Python, dan Rust Host binary (`browser_agent_host`) sebelum membuat berkas PDF di direktori sementara `/tmp/`.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Automated test via Node.js membuktikan prompt panjang ratusan baris kini terangkum rapi menjadi judul ringkas dan presisi tanpa filler kata.
+  2. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
+  3. Syntax check JavaScript dan Python serta kompilasi Rust Host binary lulus tanpa error.
+  4. Bump versi ke `v2.150.273` di `manifest.json`.
+
 
 
 

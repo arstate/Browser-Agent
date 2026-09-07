@@ -296,7 +296,12 @@ function renderOpenDesignCard(containerEl, artifact, options = {}) {
       <span class="opendesign-system-badge">${systemBadge}</span>
       ${statusBadgeHtml}
     </div>
-    <h4 class="opendesign-card-title">${escapeHtml(cardTitle)}</h4>
+    <div class="opendesign-card-title-row">
+      <h4 class="opendesign-card-title" title="Klik untuk edit judul">${escapeHtml(cardTitle)}</h4>
+      <button type="button" class="btn-opendesign-edit-title" title="Edit Judul">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </button>
+    </div>
     <div class="opendesign-card-preview-bar">
       <div class="opendesign-palette-swatches">
         ${swatchesHtml}
@@ -310,6 +315,65 @@ function renderOpenDesignCard(containerEl, artifact, options = {}) {
       </button>
     </div>
   `;
+
+  const titleRow = card.querySelector('.opendesign-card-title-row');
+  const triggerTitleEdit = (e) => {
+    e?.stopPropagation();
+    if (titleRow.querySelector('.opendesign-title-edit-input')) return;
+    const cur = artifact.meta?.title || cardTitle;
+    titleRow.innerHTML = `
+      <div class="opendesign-title-edit-box">
+        <input type="text" class="opendesign-title-edit-input" value="${escapeHtml(cur)}" maxlength="65" />
+        <button type="button" class="btn-opendesign-title-action btn-opendesign-title-save" title="Simpan">✓</button>
+        <button type="button" class="btn-opendesign-title-action btn-opendesign-title-cancel" title="Batal">✕</button>
+      </div>`;
+    const input = titleRow.querySelector('.opendesign-title-edit-input');
+    input?.focus(); input?.select();
+
+    const commit = (saved) => {
+      const val = input ? input.value.trim() : '';
+      if (saved && val) {
+        if (!artifact.meta) artifact.meta = {};
+        artifact.meta.title = val; artifact.meta.customTitle = true; artifact.meta.userEdited = true;
+        if (Array.isArray(artifact.slides) && artifact.slides[0]?.layout === 'cover') artifact.slides[0].title = val;
+        if (artifact.html) {
+          artifact.html = artifact.html.replace(/(<h1\b[^>]*class=["'][^"']*slide-(?:cover-)?title[^"']*["'][^>]*>)([\s\S]*?)(<\/h1>)/i, `$1${escapeHtml(val)}$3`);
+          artifact.html = artifact.html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(val)}</title>`);
+        }
+        activeDesignArtifact = artifact;
+        if (typeof window !== 'undefined') window.__activeDesignArtifact = artifact;
+        try { if (chrome?.storage?.local?.set) chrome.storage.local.set({ opendesign_last_artifact: artifact, opendesign_user_custom_title: val }); } catch (_) {}
+        if (typeof conversationHistory !== 'undefined' && Array.isArray(conversationHistory)) {
+          for (let i = conversationHistory.length - 1; i >= 0; i--) {
+            if (conversationHistory[i]?.activeDesignArtifact) conversationHistory[i].activeDesignArtifact.meta = { ...(conversationHistory[i].activeDesignArtifact.meta || {}), title: val, customTitle: true };
+          }
+        }
+        const cTitle = document.getElementById('canvas-design-title');
+        if (cTitle) cTitle.textContent = val;
+        window.dispatchEvent(new CustomEvent('opendesign-title-updated', { detail: { newTitle: val, artifact } }));
+        if (typeof showUniversalToast === 'function') showUniversalToast(`✏️ Judul slide deck disimpan: "${val}"`);
+      }
+      renderRow();
+    };
+    titleRow.querySelector('.btn-opendesign-title-save')?.addEventListener('click', (ev) => { ev.stopPropagation(); commit(true); });
+    titleRow.querySelector('.btn-opendesign-title-cancel')?.addEventListener('click', (ev) => { ev.stopPropagation(); commit(false); });
+    input?.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); commit(true); }
+      else if (ev.key === 'Escape') { ev.preventDefault(); commit(false); }
+    });
+  };
+
+  const renderRow = () => {
+    const disp = artifact.meta?.title || cardTitle;
+    titleRow.innerHTML = `
+      <h4 class="opendesign-card-title" title="Klik untuk edit judul">${escapeHtml(disp)}</h4>
+      <button type="button" class="btn-opendesign-edit-title" title="Edit Judul">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </button>`;
+    titleRow.querySelector('.btn-opendesign-edit-title')?.addEventListener('click', triggerTitleEdit);
+    titleRow.querySelector('.opendesign-card-title')?.addEventListener('click', triggerTitleEdit);
+  };
+  renderRow();
 
   const btnView = card.querySelector('.btn-opendesign-view-canvas');
   btnView?.addEventListener('click', () => {
@@ -335,19 +399,12 @@ function renderOpenDesignCard(containerEl, artifact, options = {}) {
 function generateVirtualFiles(artifact) {
   if (!artifact || !artifact.html) return [];
   const htmlContent = artifact.html, meta = artifact.meta || {};
-  let cssContent = `/* OpenDesign Extracted Tokens */\n:root {\n`;
-  if (Array.isArray(meta.colors)) meta.colors.forEach((c, i) => { cssContent += `  --color-palette-${i + 1}: ${c};\n`; });
-  cssContent += `  --design-system: "${meta.system || 'modern-minimal'}";\n}\n\n`;
+  let cssContent = `/* OpenDesign Extracted Tokens */\n:root {\n` + (Array.isArray(meta.colors) ? meta.colors.map((c, i) => `  --color-palette-${i + 1}: ${c};\n`).join('') : '') + `  --design-system: "${meta.system || 'modern-minimal'}";\n}\n\n`;
   const styleMatch = htmlContent.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
   cssContent += styleMatch ? styleMatch[1].trim() : `/* Embedded directly in HTML */`;
   const jsonMeta = JSON.stringify(meta, null, 2);
   const readme = `# ${meta.title || 'OpenDesign Artifact'}\n\n**Design System:** \`${meta.system || 'modern-minimal'}\`\n**Category:** ${meta.category || 'Web Application / UI'}\n\n## 🎨 Overview\n${meta.description || 'Modern interface generated natively by OpenDesign.'}\n\n## 🌈 Visual Palette\n${(meta.colors || []).map(c => `- \`${c}\``).join('\n')}\n`;
-  return [
-    { name: 'index.html', lang: 'html', content: htmlContent, icon: '🌐' },
-    { name: 'tokens.css', lang: 'css', content: cssContent, icon: '🎨' },
-    { name: 'design_meta.json', lang: 'json', content: jsonMeta, icon: '⚙️' },
-    { name: 'README.md', lang: 'markdown', content: readme, icon: '📝' }
-  ];
+  return [{ name: 'index.html', lang: 'html', content: htmlContent, icon: '🌐' }, { name: 'tokens.css', lang: 'css', content: cssContent, icon: '🎨' }, { name: 'design_meta.json', lang: 'json', content: jsonMeta, icon: '⚙️' }, { name: 'README.md', lang: 'markdown', content: readme, icon: '📝' }];
 }
 
 let lastCanvasLintResult = null;
@@ -399,15 +456,9 @@ function triggerDownloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function base64ToBlob(b64Data, contentType = '', sliceSize = 512) {
-  if (typeof window !== 'undefined' && window.base64ToBlob && window.base64ToBlob !== base64ToBlob) return window.base64ToBlob(b64Data, contentType, sliceSize);
-  const byteChars = atob(b64Data), byteArrays = [];
-  for (let offset = 0; offset < byteChars.length; offset += sliceSize) {
-    const slice = byteChars.slice(offset, offset + sliceSize), nums = new Array(slice.length);
-    for (let i = 0; i < slice.length; i++) nums[i] = slice.charCodeAt(i);
-    byteArrays.push(new Uint8Array(nums));
-  }
-  return new Blob(byteArrays, { type: contentType });
+function base64ToBlob(b64Data, contentType = '') {
+  if (typeof window !== 'undefined' && window.base64ToBlob && window.base64ToBlob !== base64ToBlob) return window.base64ToBlob(b64Data, contentType);
+  return new Blob([Uint8Array.from(atob(b64Data), c => c.charCodeAt(0))], { type: contentType });
 }
 
 async function handleCanvasExport(format) {
@@ -416,14 +467,10 @@ async function handleCanvasExport(format) {
   }
 }
 
-
 function updateCanvasVirtualFiles(artifact) {
   if (!artifact) return;
   const virtualFiles = generateVirtualFiles(artifact);
-  const filesListEl = document.getElementById('canvas-files-list');
-  const fileTitleEl = document.getElementById('canvas-active-file-title');
-  const fileCodeEl = document.getElementById('canvas-file-code-display');
-
+  const filesListEl = document.getElementById('canvas-files-list'), fileTitleEl = document.getElementById('canvas-active-file-title'), fileCodeEl = document.getElementById('canvas-file-code-display');
   if (filesListEl) {
     filesListEl.innerHTML = '';
     virtualFiles.forEach((f, idx) => {
@@ -438,7 +485,6 @@ function updateCanvasVirtualFiles(artifact) {
       });
       filesListEl.appendChild(item);
     });
-
     if (virtualFiles.length > 0) {
       if (fileTitleEl) fileTitleEl.textContent = virtualFiles[0].name;
       if (fileCodeEl) fileCodeEl.textContent = virtualFiles[0].content;

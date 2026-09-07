@@ -959,7 +959,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                     .filter(|s| !s.is_empty())
                     .collect::<Vec<_>>()
                     .join("-");
-                let clean_title = if clean_title.is_empty() { "presentation".to_string() } else { clean_title };
+                let clean_title = if clean_title.is_empty() { "presentation".to_string() } else if clean_title.len() > 50 { clean_title[..50].to_string() } else { clean_title };
 
                 let ts = SystemTime::now()
                     .duration_since(UNIX_EPOCH)

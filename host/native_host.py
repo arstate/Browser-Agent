@@ -3733,7 +3733,7 @@ def export_slide_deck_pdf(html_content="", title="presentation"):
     if not html_content:
         return {"status": "error", "error": "No html_content provided"}
     try:
-        clean_title = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-') or 'presentation'
+        clean_title = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')[:50] or 'presentation'
         ts = int(time.time() * 1000)
         tmp_html = f"/tmp/deck_{ts}.html"
         tmp_pdf = f"/tmp/{clean_title}_{ts}.pdf"

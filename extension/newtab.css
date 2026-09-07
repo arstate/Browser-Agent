@@ -7722,6 +7722,14 @@ body.no-glass-blur {
   box-shadow: 0 0 8px #10B981;
 }
 
+.opendesign-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  position: relative;
+}
+
 .opendesign-card-title {
   margin: 0;
   font-size: 15px;
@@ -7729,6 +7737,90 @@ body.no-glass-blur {
   color: #FFFFFF;
   line-height: 1.35;
   letter-spacing: -0.01em;
+  word-break: break-word;
+  cursor: pointer;
+  flex: 1;
+}
+
+.opendesign-card-title:hover {
+  color: #A5B4FC;
+}
+
+.btn-opendesign-edit-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-opendesign-edit-title:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #818CF8;
+}
+
+.opendesign-title-edit-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.opendesign-title-edit-input {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #6366F1;
+  border-radius: 6px;
+  color: #F8FAFC;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 4px 8px;
+  outline: none;
+  font-family: inherit;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}
+
+.btn-opendesign-title-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.btn-opendesign-title-save {
+  background: #10B981;
+  color: #FFFFFF;
+}
+
+.btn-opendesign-title-save:hover {
+  background: #059669;
+}
+
+.btn-opendesign-title-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+}
+
+.btn-opendesign-title-cancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #F1F5F9;
 }
 
 .opendesign-card-desc {

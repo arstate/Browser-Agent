@@ -3455,8 +3455,18 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
     }
 
     case "create_slide_deck_design": {
-      const activeArtTitle = (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact()?.meta?.title : null) || (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact?.meta?.title : null);
-      const topic = args.topic || activeArtTitle || "Laporan Eksekutif";
+      const activeArt = (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact() : null) || (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact : null);
+      const activeArtTitle = activeArt?.meta?.title || null;
+      const hadExistingArtifact = Boolean(activeArt?.html);
+
+      const userPromptText = executionContext?.userMessage || "";
+      const isExplicitRename = /(?:ganti|ubah|rename|set)\s+(?:judul|title|nama\s+deck)\s+(?:menjadi|ke|jadi|=)?\s*["']?([^"'\n]+)["']?/i.test(userPromptText);
+      let topic = args.topic;
+      if (hadExistingArtifact && activeArtTitle && !isExplicitRename) {
+        topic = activeArtTitle;
+      } else if (!topic) {
+        topic = activeArtTitle || "Laporan Eksekutif";
+      }
       const slideCount = parseInt(args.slide_count, 10) || 10;
       const detailedOutlineOrContent = args.detailed_outline_or_content || "";
       const designArchetype = args.design_archetype || "auto";
@@ -3464,7 +3474,6 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
       // Strict Staged Execution Guard:
       // If user prompt requested data analysis, audit, or inspection (e.g. Meta Ads audit),
       // Master Agent MUST have executed browser or data analysis tools first before delegating to Master Design!
-      const userPromptText = executionContext?.userMessage || "";
       const asksAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|baca)/i.test(userPromptText);
       const pastTools = executionContext?.sessionExecutedTools || [];
       const hasExecutedAnalysis = pastTools.some(t => t.startsWith("browser_") || t.startsWith("google_") || t === "agent_subtask_analysis" || t.startsWith("local_") || t === "read_slide_deck");
@@ -3474,11 +3483,6 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
           error: "PROTOKOL ANALISIS BELUM SELESAI: Pengguna meminta Anda menganalisis data/iklan terlebih dahulu sebelum membuat atau memperbarui slide deck report. Silakan periksa tab aktif/dashboard Meta Ads menggunakan tool browser (misal browser_list_tabs, browser_extract_table, atau browser_snapshot), lakukan analisis menyeluruh dan dapatkan data riil, lalu panggil kembali create_slide_deck_design dengan menyertakan temuan data riil tersebut pada detailed_outline_or_content."
         };
       }
-
-      const hadExistingArtifact = Boolean(
-        (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact()?.html : null) ||
-        (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact?.html : null)
-      );
 
       // 4-Stage Slide Refinement Guard:
       // If there's an existing deck and the user requested to split/edit/reorganize slides,
@@ -3520,6 +3524,12 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
 
       if (!artifact || !artifact.html) {
         return { error: "Gagal merakit presentasi 16:9 widescreen dari materi yang diberikan." };
+      }
+
+      if (hadExistingArtifact && activeArtTitle && !isExplicitRename) {
+        if (!artifact.meta) artifact.meta = {};
+        artifact.meta.title = activeArtTitle;
+        if (activeArt?.meta?.customTitle) artifact.meta.customTitle = true;
       }
 
       // Set global active artifact

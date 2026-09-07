@@ -222,10 +222,11 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       updateToolBadgeState(toolBadgeDelegate, 'success', isRevision ? 'Arahan revisi canvas aktif diserahkan ke Master Design.' : 'Brief dan spesifikasi slide deck 16:9 diserahkan ke Master Design.');
     }
 
+    const existingTitle = (isRevision && currentOpenArtifact?.meta?.title) ? currentOpenArtifact.meta.title : null;
     const cleanFn = (typeof cleanPresentationTopic === 'function')
       ? cleanPresentationTopic
       : (typeof window !== 'undefined' && typeof window.cleanPresentationTopic === 'function' ? window.cleanPresentationTopic : null);
-    const cleanTopic = cleanFn ? cleanFn(userMessage) : (userMessage || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim();
+    const cleanTopic = existingTitle || (cleanFn ? cleanFn(userMessage) : (userMessage || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim());
 
     // Ideasi style desain khusus sesuai materi
     const exploreStyleFn = (typeof exploreDesignStyleConcept === 'function')
@@ -257,7 +258,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     const meta = { category: deducedTheme.name };
 
     const defaultBp = (typeof createDefaultBlueprint === 'function')
-      ? createDefaultBlueprint(userMessage, targetSlideCount, deducedTheme)
+      ? createDefaultBlueprint(cleanTopic, targetSlideCount, deducedTheme)
       : { title: 'Materi Presentasi', slides: [] };
 
     const genEdFn = (typeof generateEditorialTitle === 'function')
@@ -265,8 +266,9 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
       : (typeof window !== 'undefined' && typeof window.generateEditorialTitle === 'function' ? window.generateEditorialTitle : null);
     const edTitleObj = genEdFn ? genEdFn(cleanTopic, deducedTheme.id) : { title: defaultBp.title, subtitle: '' };
 
-    const rawTitle = defaultBp.title || edTitleObj.title || cleanTopic.slice(0, 40) || "Executive Presentation Deck";
+    const rawTitle = existingTitle || defaultBp.title || edTitleObj.title || cleanTopic.slice(0, 40) || "Executive Presentation Deck";
     meta.title = rawTitle;
+    if (existingTitle && currentOpenArtifact?.meta?.customTitle) meta.customTitle = true;
 
     const deckMeta = {
       title: rawTitle,

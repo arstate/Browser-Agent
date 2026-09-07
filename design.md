@@ -2041,6 +2041,26 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - **Options Settings Manager (`options.js`)**: `loadAgents` menyaring entitas bernama sama dan otomatis mempromosikan entitas ke semantic ID jika menemukan duplikat numerik lama.
    - **Sidepanel UI & Mention Dropdown (`sidepanel.js`)**: `loadAgentsAndSkills` dan `getMentionableAgents` melakukan deduplikasi real-time berbasis normalized name, mencegah nama yang sama muncul berulang pada popup `@mention`.
 
+## 🎨 49. Slide Deck Title Architecture: Prompt Sanitization, Revision Title Lock & Realtime Inline Title Editor (v2.150.273)
+
+1. **Intelligent Prompt Sanitization & Word-Boundary Truncation (`design_agent.js`)**:
+   - `cleanPresentationTopic` secara agresif melucuti `@mentions` (`@arya-magang-kominfo`), blok kode markdown, tautan HTTP, serta frasa percakapan (`buatin pdf bro`, `tolong bikinin`, dll).
+   - Mendukung deteksi eksplisit judul melalui pola `judul: "..."` atau `topik: "..."`.
+   - Mengunci panjang topik maksimal 45 karakter pada batas kata (*word boundary*).
+   - `generateEditorialTitle` langsung menggunakan teks topik jika sudah merupakan frasa lengkap (>25 karakter atau >=4 kata) dengan batas maksimal 50 karakter, mencegah judul bertumpuk yang memecah kartu obrolan.
+
+2. **Revision Title Locking & User Preference Memory (`design_executor.js`, `sidepanel.js`)**:
+   - Menghilangkan bug di mana instruksi revisi pengguna (misal "revisi slide 2 tolong ubah warnanya") menimpa judul slide deck.
+   - Mengunci `existingTitle` / `activeArtTitle` pada saat `isRevision` atau `hadExistingArtifact` bernilai true, kecuali jika pengguna secara eksplisit meminta pengubahan judul (*explicit rename*).
+
+3. **Inline Editable Title Component & AI Sync (`canvas_manager.js`, `sidepanel.css`, `newtab.css`)**:
+   - Komponen `.opendesign-card-title-row` dilengkapi tombol pensil edit (`.btn-opendesign-edit-title`) dan klik langsung pada teks judul.
+   - Membuka kotak input inline (`.opendesign-title-edit-box`) dengan kontrol simpan/batal via klik tombol dan tombol keyboard `Enter`/`Escape`.
+   - Sinkronisasi instan ke seluruh ekosistem: `artifact.meta.title`, `activeDesignArtifact`, `chrome.storage.local`, cover slide, tag `<title>`, header canvas `#canvas-design-title`, serta `conversationHistory`, memastikan AI di percakapan berikutnya selalu mengenali dan menggunakan judul yang telah diedit oleh pengguna.
+
+4. **Vector PDF Export Filename Overflow Protection (`canvas_exporter.js`, `native_host.py`, `rust_host/src/main.rs`)**:
+   - Membatasi `clean_title` menjadi maksimal 50 karakter sebelum merangkai path berkas `/tmp/{clean_title}_{ts}.pdf`, meniadakan risiko kegagalan ekspor PDF akibat batas panjang nama berkas OS (*file name too long*).
+
 
 
 

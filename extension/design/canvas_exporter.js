@@ -159,7 +159,7 @@ async function exportSlideDeckPdf(htmlContent, title = "presentation") {
   }
 
   const rawTitle = title || "slide_deck";
-  const cleanTitle = rawTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "presentation";
+  const cleanTitle = rawTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50) || "presentation";
 
   try {
     const rpcFn = (typeof sendNativeRpc === "function")
