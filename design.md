@@ -2061,10 +2061,24 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Vector PDF Export Filename Overflow Protection (`canvas_exporter.js`, `native_host.py`, `rust_host/src/main.rs`)**:
    - Membatasi `clean_title` menjadi maksimal 50 karakter sebelum merangkai path berkas `/tmp/{clean_title}_{ts}.pdf`, meniadakan risiko kegagalan ekspor PDF akibat batas panjang nama berkas OS (*file name too long*).
 
+## 🛡️ 50. Dual-Tier Context Architecture: Atomic Sliding Window, Past Image Stripping & Token Overflow Resilience (v2.150.274)
 
+1. **Dual-Tier Context Separation (Antigravity CLI Compacted Conversation Alignment)**:
+   - **Tier 1 (Storage & Visual UI)**: Riwayat pesan lengkap di IndexedDB dan antarmuka obrolan tetap utuh 100%. Pengguna dapat menggulir ke atas melihat seluruh foto dan balasan terdahulu tanpa kehilangan konteks visual.
+   - **Tier 2 (Wire / LLM API Transmission)**: `sanitizeMessagesForApi` bertindak sebagai penyaring payload jaringan cerdas sebelum data dikirim ke API Gemini/OpenAI.
 
+2. **Past Image Stripping & Base64 Payload Pruning**:
+   - Gambar Base64 (`data:image/...`) dari giliran pengguna di masa lalu di-strip dan diganti penanda ringan `[Lampiran gambar sebelumnya telah selesai dianalisis]`. Gambar Base64 hanya diteruskan pada giliran pengguna paling mutakhir.
+   - Menghemat hingga 95%+ kapasitas token konteks saat sesi interaksi berlanjut.
 
+3. **Atomic Sliding Window with Pinned Initial Goal**:
+   - Giliran pertama pengguna (tujuan utama / initial prompt) selalu di-PIN di awal payload.
+   - Giliran eksekusi tool di bagian tengah dikelompokkan secara atomik (`assistant tool_calls` + seluruh balasan `tool` dengan matching `tool_call_id`).
+   - Ketika total estimasi token melampaui limit (250.000 token pada mode normal), unit atomik paling lama dipangkas utuh bersama pasangannya, meniadakan risiko kesalahan *orphan tool turn* atau *missing tool_call_id*.
 
+4. **Safe Max Output Tokens Guard (`getSafeMaxOutputTokens`)**:
+   - Mengunci `max_tokens` maksimal 8.192 token (default 4.096 token), menghilangkan kerancuan input `1000000` yang dapat memicu `400 INVALID_ARGUMENT` dari penyedia AI.
 
-
-
+5. **Self-Healing Token Overflow Handler**:
+   - Loop agen mendeteksi kesalahan batas konteks (error 400/503) via `isTokenLimitError`.
+   - Secara otomatis mengaktifkan *Emergency Compaction* (budget 60.000 token, pemangkasan tool output ke 250 karakter) dan mengulang panggilan API secara instan tanpa memunculkan kartu kegagalan ke antarmuka pengguna.

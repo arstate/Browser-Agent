@@ -1218,9 +1218,34 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menambahkan sanitasi batas panjang `cleanTitle.slice(0, 50)` di frontend JavaScript, Python Native Host, dan Rust Native Host binary (`browser_agent_host`) sebelum membentuk path berkas PDF, menjamin proses cetak vektor 16:9 stabil tanpa risiko error `ENAMETOOLONG`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh berkas di `extension/design/` (`canvas_manager.js` 795, `design_agent.js` 789, `design_executor.js` 797, `slide_editor.js` 798) dan `extension/apps-integration/` tetap patuh di bawah limit 800 baris.
 
-
-
-
-
-
-
+157. **Arsitektur Dual-Tier Context Manager: Sliding Window Atomik, Past Image Stripping, Safe Max Output Tokens & Self-Healing Token Overflow (`v2.150.274`):**
+    - **Akar Masalah**:
+      - Pada sesi obrolan yang panjang atau ketika pengguna mengunggah banyak tangkapan layar/video, sistem mengalami error fatal: `AI Request Error (503): [antigravity/gemini-3.8-flash-high] [400]: { "error": { "code": 400, "message": "The input token count exceeds the maximum number of tokens allowed 1048576.", "status": "INVALID_ARGUMENT" } }`.
+      - Penyebabnya:
+        1. Seluruh riwayat obrolan (`conversationHistory`) diteruskan secara mentah ke payload API (`sanitizeMessagesForApi`) tanpa sliding window atau anggaran token.
+        2. String gambar Base64 dari giliran pengguna di masa lalu (`msg.content` berupa array objek `image_url` dengan `data:image/...`) dikirim ulang berulang kali di setiap giliran baru, menghabiskan ratusan ribu token per permintaan.
+        3. Hasil eksekusi tool (terutama cuplikan DOM, snapshot halaman, dan pohon aksesibilitas) terakumulasi puluhan kali giliran.
+        4. Nilai cadangan `max_tokens: 1000000` di antarmuka konfigurasi mengacaukan perhitungan kapasitas output model pada gateway OpenAI/Gemini (yang batas output maksimalnya adalah 8.192 token).
+        5. Tidak adanya mekanisme penyembuhan mandiri (*self-healing*) ketika batas token tercapai, sehingga agen langsung berhenti dengan kartu error merah.
+    - **Implementasi Teknis & Solusi**:
+      1. **Arsitektur Dual-Tier Context Manager (Konsep Identik dengan Compacted Conversation Antigravity CLI)**:
+         - **Tier 1 (Penyimpanan Lokal & UI)**: Seluruh riwayat percakapan lengkap, lampiran berkas asli, gambar, dan log tool tetap tersimpan utuh 100% di IndexedDB dan UI sidepanel agar pengguna bebas menggulir riwayat tanpa ada data yang hilang.
+         - **Tier 2 (Wire / API Payload Transmission)**: Serializer API (`sanitizeMessagesForApi`) memangkas muatan jaringan secara cerdas sebelum dikirim ke endpoint model.
+      2. **Pembersihan Gambar Riwayat Masa Lalu (*Past Image Stripping*)**:
+         - Gambar Base64 pada giliran pengguna sebelum giliran terakhir dipangkas dan digantikan penanda ringan `[Lampiran gambar sebelumnya telah selesai dianalisis]`. Gambar hanya dipertahankan pada giliran pengguna yang paling mutakhir.
+         - Pada pesan asisten dan tool, tautan gambar Base64 digantikan penanda teks ringkas (`[Gambar AI telah digenerate]` / `[screenshot tersimpan]`).
+      3. **Pemangkasan Cerdas Output Tool (*Intelligent Tool Pruning*)**:
+         - Output tool dari 4 giliran terakhir dipertahankan untuk referensi operasional (dibatasi 15.000 karakter).
+         - Output tool yang lebih lama dari 4 giliran dipangkas agresif menjadi 250–400 karakter (status, judul, URL, dan ringkasan eksekusi).
+      4. **Sliding Window Atomik & Pinned Initial Goal**:
+         - Pesan giliran pertama pengguna (tujuan utama / instruksi awal) selalu diproteksi (*pinned*) agar AI tidak pernah amnesia terhadap misi utamanya.
+         - Pesan asisten yang memiliki `tool_calls` dan seluruh pesan balasan `tool` dengan `tool_call_id` terkait dikelompokkan menjadi satu **Unit Atomik**.
+         - Ketika total token melampaui anggaran (250.000 token pada mode normal), unit atomik paling lama di bagian tengah dipangkas secara bersamaan tanpa memecah pasangan panggilan/jawaban tool, sehingga spesifikasi grammar Gemini/OpenAI Function Calling tetap valid 100% tanpa error *orphan tool turn*.
+      5. **Pengawal Batas Maksimal Token Output Aman (*Safe Max Output Tokens*)**:
+         - Menambahkan fungsi pembatas `getSafeMaxOutputTokens(val)` yang mengoreksi input `1000000` menjadi maksimal 8.192 token pada `sidepanel.js`, `options.js`, dan `options.html`.
+      6. **Penanganan Pemulihan Otomatis Saat Overflow (*Self-Healing Token Overflow Handler*)**:
+         - Menambahkan fungsi pendeteksi `isTokenLimitError(status, errorMsg)` pada `runAgentLoop` dan `runChatModeLoop`.
+         - Jika model mengembalikan error 400/503 terkait limit token, agen secara otomatis mengaktifkan *Emergency Compaction* (anggaran token diturunkan ke 60.000 token, pemangkasan lebih agresif) dan langsung mengulang panggilan API secara mulus tanpa menampilkan pesan kegagalan ke antarmuka pengguna.
+      7. **Kompaksi Riwayat Sintesis Master Agent**:
+         - Menyaring dan memadatkan `cleanTextHistory` pada tahap sintesis laporan akhir Master Agent agar tidak melampaui batas konteks input.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap konsisten di bawah limit 800 baris.

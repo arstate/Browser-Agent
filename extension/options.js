@@ -491,7 +491,7 @@ function applyConfigToUI() {
     settingTemp.value = config.temperature ?? 0.2;
     if (tempValDisplay) tempValDisplay.textContent = Number(config.temperature ?? 0.2).toFixed(2);
   }
-  if (settingMaxTokens) settingMaxTokens.value = config.maxTokens || 1000000;
+  if (settingMaxTokens) settingMaxTokens.value = (config.maxTokens && config.maxTokens <= 16384) ? config.maxTokens : 4096;
   const settingStickman = document.getElementById('setting-stickman-animation');
   if (settingStickman) {
     settingStickman.checked = (config.stickmanAnimation !== false);
@@ -659,7 +659,7 @@ async function saveAllConfig(silent = false) {
   config.apiKey = settingApiKey ? settingApiKey.value.trim() : config.apiKey;
   config.imageModel = settingImageModel ? settingImageModel.value.trim() : config.imageModel;
   config.temperature = settingTemp ? parseFloat(settingTemp.value) : config.temperature;
-  config.maxTokens = settingMaxTokens ? parseInt(settingMaxTokens.value, 10) : config.maxTokens;
+  config.maxTokens = settingMaxTokens ? (parseInt(settingMaxTokens.value, 10) > 16384 ? 8192 : (parseInt(settingMaxTokens.value, 10) || 4096)) : (config.maxTokens || 4096);
   const settingStickman = document.getElementById('setting-stickman-animation');
   config.stickmanAnimation = settingStickman ? settingStickman.checked : (config.stickmanAnimation !== false);
   const settingFloatingBtn = document.getElementById('setting-floating-button');

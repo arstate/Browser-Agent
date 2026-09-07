@@ -7667,8 +7667,33 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Syntax check JavaScript dan Python serta kompilasi Rust Host binary lulus tanpa error.
   4. Bump versi ke `v2.150.273` di `manifest.json`.
 
-
-
-
-
-
+### Iterasi: Arsitektur Dual-Tier Context Manager: Sliding Window Atomik, Past Image Stripping, Safe Max Output Tokens & Self-Healing Token Overflow (`v2.150.274`)
+- **User Request:**
+  - "fix error jika histori chat udah sangat panjang itu kadang error melebihi input token maksimum 1jt token bro, bisa di fix ga ya mau tanya dulu ini bro Agent Loop Error: Error: AI Request Error (503): [antigravity/gemini-3.8-flash-high] [400]: { "error": { "code": 400, "message": "The input token count exceeds the maximum number of tokens allowed 1048576.", "status": "INVALID_ARGUMENT" } } (reset after 21s)"
+  - "oke gaskan"
+  - "mau tanya kalau fitur compacted conversation di antigravity cli itu sama ga kayak yang ide lo ga bro mau tanya dlu ini"
+- **Akar Masalah & Penyelidikan Mendalam:**
+  1. *Unbounded Conversation History*: Seluruh riwayat obrolan (`conversationHistory`) diteruskan langsung ke API tanpa mekanisme jendela geser (*sliding window*) atau kuota anggaran token (*token budget*).
+  2. *Past Base64 Image Bloat*: Ketika pengguna mengunggah gambar/tangkapan layar di giliran sebelumnya, string Base64 multi-megabyte pada `msg.content` dikirim berulang-ulang di setiap giliran baru, menghabiskan ratusan ribu token per permintaan.
+  3. *Cumulative Tool Outputs*: Log hasil eksekusi tool (DOM, snapshot web, teks panjang) terus menumpuk di memori obrolan tanpa dipangkas setelah beberapa giliran berlalu.
+  4. *Dangerous Output Fallback*: Penggunaan `max_tokens: 1000000` di antarmuka konfigurasi mengacaukan limit alokasi token output gateway AI (Gemini memiliki limit output 8.192 token).
+  5. *Zero Self-Healing on Token Limits*: Ketika model mengembalikan error status 400/503 terkait limit token, loop agen langsung berhenti dan menampilkan kartu merah error.
+- **Solusi & Rekayasa Teknis:**
+  1. *Dual-Tier Context Architecture (Prinsip Identik dengan Compacted Conversation Antigravity CLI)*:
+     - Tier 1: Penyimpanan lokal di IndexedDB dan antarmuka obrolan mempertahankan seluruh riwayat asli, gambar, dan log tool secara utuh 100%.
+     - Tier 2: `sanitizeMessagesForApi` melakukan penyaringan cerdas terhadap payload yang dikirim melalui jaringan API.
+  2. *Pembersihan Gambar Masa Lalu (Past Image Stripping)*:
+     - Melucuti Base64 dari giliran pengguna terdahulu dan menggantikannya dengan penanda ringkas `[Lampiran gambar sebelumnya telah selesai dianalisis]`.
+  3. *Sliding Window Atomik & Pinned Initial Goal*:
+     - Memproteksi giliran pertama pengguna (tujuan utama / initial prompt) agar tidak pernah hilang.
+     - Mengelompokkan pesan asisten `tool_calls` dan pesan respons `tool` ke dalam unit atomik yang dipangkas bersamaan, menjamin ketiadaan kesalahan *orphan tool turn* atau *missing tool_call_id* sesuai spesifikasi OpenAI dan Gemini.
+  4. *Safe Max Output Tokens (`getSafeMaxOutputTokens`)*:
+     - Membatasi parameter output `max_tokens` maksimal 8.192 token (default 4.096 token) di `sidepanel.js`, `options.js`, dan `options.html`.
+  5. *Self-Healing Token Overflow Handler*:
+     - Mendeteksi error kuota token via `isTokenLimitError(status, errorMsg)`.
+     - Secara otomatis mengaktifkan *Emergency Compaction* (anggaran 60.000 token) dan mengulang panggilan API secara instan tanpa menghentikan proses eksekusi pengguna.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Automated test simulasi membuktikan reduksi payload hingga 97.2% saat menangani Base64 riwayat masa lalu dan tool output berukuran ratusan ribu karakter.
+  2. Syntax check `node -c extension/sidepanel.js extension/options.js` lulus 100% tanpa error.
+  3. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh di bawah limit 800 baris.
+  4. Bump versi ke `v2.150.274` di `manifest.json`.

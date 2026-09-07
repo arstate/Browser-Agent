@@ -11,7 +11,7 @@ let config = {
   selectedModelChoice: "auto",
   imageModel: "dall-e-3",
   temperature: 0.2,
-  maxTokens: 1000000,
+  maxTokens: 4096,
   autoRotateModel: true,
   models: [],
   customModels: []
@@ -5549,27 +5549,109 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
 }
 
 // =========================================================================
-// Standalone Autonomous Agent Loop (OpenAI Format)
+// Context Management & Compaction Engine (Token Budget & Sliding Window)
 // =========================================================================
-function sanitizeMessagesForApi(history, isChatOnly = false) {
+
+function getSafeMaxOutputTokens(val) {
+  const parsed = parseInt(val, 10);
+  if (!parsed || isNaN(parsed) || parsed <= 0) return 4096;
+  if (parsed > 16384) return 8192;
+  return parsed;
+}
+
+function estimateMessageTokens(msg) {
+  if (!msg) return 0;
+  let tokens = 0;
+  if (typeof msg.content === 'string') {
+    tokens += Math.ceil(msg.content.length / 3.2);
+  } else if (Array.isArray(msg.content)) {
+    for (const part of msg.content) {
+      if (!part) continue;
+      if (part.type === 'text') {
+        tokens += Math.ceil((part.text || '').length / 3.2);
+      } else if (part.type === 'image_url') {
+        tokens += 1200;
+      }
+    }
+  }
+  if (msg.tool_calls && Array.isArray(msg.tool_calls)) {
+    tokens += Math.ceil(JSON.stringify(msg.tool_calls).length / 3.2);
+  }
+  return tokens + 10;
+}
+
+function isTokenLimitError(status, errorMsg = "") {
+  const str = String(errorMsg || "").toLowerCase();
+  return (
+    str.includes("token count exceeds") ||
+    str.includes("exceeds the maximum number of tokens") ||
+    str.includes("maximum context length") ||
+    str.includes("context_length_exceeded") ||
+    str.includes("too many tokens") ||
+    str.includes("prompt is too long") ||
+    str.includes("input token count") ||
+    str.includes("token limit") ||
+    str.includes("exceeds context limit") ||
+    (str.includes("1048576") && (str.includes("token") || str.includes("400") || str.includes("limit") || str.includes("argument")))
+  );
+}
+
+function sanitizeMessagesForApi(history, isChatOnly = false, isEmergency = false) {
   if (!Array.isArray(history)) return [];
+
+  // Find index of the latest user message in history
+  let lastUserIdx = -1;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i] && history[i].role === 'user') {
+      lastUserIdx = i;
+      break;
+    }
+  }
 
   if (isChatOnly) {
     // In Chat-only mode: only pass pure user and assistant messages with textual content.
-    // Strip tool messages and assistant tool_calls so standard LLM endpoints (without tools schema) accept the request cleanly.
+    // Strip tool messages and assistant tool_calls so standard LLM endpoints accept cleanly.
     const textHistory = [];
-    for (const msg of history) {
+    for (let i = 0; i < history.length; i++) {
+      const msg = history[i];
       if (!msg) continue;
       if (msg.role === 'user') {
-        textHistory.push({
-          role: 'user',
-          content: msg.content
-        });
+        let userText = "";
+        if (typeof msg.content === 'string') {
+          userText = msg.content;
+          if (i < lastUserIdx || isEmergency) {
+            userText = userText.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[data:image stripped]');
+          }
+        } else if (Array.isArray(msg.content)) {
+          const parts = [];
+          for (const p of msg.content) {
+            if (!p) continue;
+            if (p.type === 'text') {
+              parts.push(p.text || '');
+            } else if (p.type === 'image_url') {
+              if (i === lastUserIdx && !isEmergency) {
+                parts.push('[Lampiran Gambar]');
+              } else {
+                parts.push('[Lampiran gambar sebelumnya telah dianalisis]');
+              }
+            }
+          }
+          userText = parts.join('\n').trim() || (msg.displayContent || "");
+        } else {
+          userText = msg.displayContent || "";
+        }
+
+        if (userText) {
+          textHistory.push({
+            role: 'user',
+            content: userText
+          });
+        }
       } else if (msg.role === 'assistant') {
         let textContent = (typeof msg.content === 'string') ? msg.content : (msg.displayContent || "");
         if (textContent && textContent.trim()) {
-          // Clean up large image data URLs if any
           textContent = textContent.replace(/!\[([^\]]*)\]\((?:data:image\/[^\s)]+|local-img:\/\/[^\s)]+)\)/g, '[Gambar: $1]');
+          textContent = textContent.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[data:image stripped]');
           textHistory.push({
             role: 'assistant',
             content: textContent
@@ -5578,7 +5660,21 @@ function sanitizeMessagesForApi(history, isChatOnly = false) {
       }
     }
 
-    // Ensure it doesn't end with an assistant turn
+    // Sliding window for Chat-Only mode
+    const chatMaxTokens = isEmergency ? 50000 : 200000;
+    let chatTokens = textHistory.reduce((s, m) => s + estimateMessageTokens(m), 0);
+    if (chatTokens > chatMaxTokens && textHistory.length > 4) {
+      const firstTurn = textHistory[0];
+      const minTail = Math.min(10, textHistory.length - 1);
+      while (chatTokens > chatMaxTokens && textHistory.length > minTail + 1) {
+        const dropped = textHistory.splice(1, 1)[0];
+        chatTokens -= estimateMessageTokens(dropped);
+      }
+      if (textHistory[0] !== firstTurn) {
+        textHistory.unshift(firstTurn);
+      }
+    }
+
     while (textHistory.length > 0 && textHistory[textHistory.length - 1].role === 'assistant') {
       textHistory.pop();
     }
@@ -5589,23 +5685,63 @@ function sanitizeMessagesForApi(history, isChatOnly = false) {
   // Filter out any messages without valid roles
   const valid = history.filter(m => m && (m.role === 'user' || m.role === 'assistant' || m.role === 'tool' || m.role === 'system'));
 
+  const ponytail = cachedPluginSettings?.ponytail || { enabled: true, maxRecentTurns: 6, maxToolOutputChars: 1200 };
+  const maxRecent = (ponytail.enabled !== false) ? (ponytail.maxRecentTurns || 6) : 4;
+  const maxChars = isEmergency ? 250 : ((ponytail.enabled !== false) ? (ponytail.maxToolOutputChars || 1200) : 800);
+
   let cleaned = valid.map((msg, index, arr) => {
     let content = msg.content;
 
-    // Strip huge base64 data URLs or local-img protocol from assistant messages sent to API to protect context tokens
+    // 1. User messages: strip past base64 images from earlier turns
+    if (msg.role === 'user') {
+      if (Array.isArray(content)) {
+        if (index < lastUserIdx || isEmergency) {
+          const textParts = [];
+          let hadImg = false;
+          for (const item of content) {
+            if (!item) continue;
+            if (item.type === 'text' && item.text) {
+              textParts.push(item.text);
+            } else if (item.type === 'image_url') {
+              hadImg = true;
+            }
+          }
+          let merged = textParts.join('\n').trim();
+          if (hadImg) {
+            merged = (merged ? merged + '\n' : '') + '[Lampiran gambar sebelumnya telah selesai dianalisis]';
+          }
+          content = merged || (msg.displayContent || '[Pesan pengguna]');
+        } else {
+          content = content.map(part => {
+            if (part && part.type === 'image_url' && part.image_url?.url) {
+              return {
+                type: 'image_url',
+                image_url: { url: part.image_url.url }
+              };
+            }
+            return part;
+          });
+        }
+      } else if (typeof content === 'string') {
+        if (index < lastUserIdx || isEmergency) {
+          content = content.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[data:image stripped]');
+        }
+      }
+    }
+
+    // 2. Assistant messages: strip huge base64 data URLs or local-img protocol to protect context tokens
     if (msg.role === 'assistant' && typeof content === 'string') {
       content = content.replace(/!\[([^\]]*)\]\((?:data:image\/[^\s)]+|local-img:\/\/[^\s)]+)\)/g, (match, alt) => {
         return `[Gambar AI telah digenerate: ${alt || 'Image'}]`;
       });
+      content = content.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[data:image stripped]');
     }
 
-    // Handle tool message content trimming via Ponytail plugin to prevent context limit errors
-    const ponytail = cachedPluginSettings?.ponytail || { enabled: true, maxRecentTurns: 6, maxToolOutputChars: 1200 };
-    const maxRecent = (ponytail.enabled !== false) ? (ponytail.maxRecentTurns || 6) : 4;
-    const maxChars = (ponytail.enabled !== false) ? (ponytail.maxToolOutputChars || 1200) : 800;
-
+    // 3. Tool messages: intelligent output trimming to prevent context limit errors
     if (msg.role === 'tool' && typeof content === 'string') {
-      const isRecent = index >= arr.length - maxRecent;
+      content = content.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[screenshot tersimpan]');
+
+      const isRecent = index >= arr.length - maxRecent && !isEmergency;
       if (!isRecent && content.length > maxChars) {
         try {
           const parsed = JSON.parse(content);
@@ -5613,13 +5749,13 @@ function sanitizeMessagesForApi(history, isChatOnly = false) {
             status: parsed.status || "success",
             title: parsed.pageTitle || parsed.title || undefined,
             url: parsed.url || undefined,
-            summary: `Output pruned by Ponytail plugin (${content.length - maxChars} chars saved)`
+            summary: `Output dipangkas oleh Context Manager (${content.length - maxChars} karakter dihemat)`
           });
         } catch (e) {
-          content = content.slice(0, maxChars) + "... [trimmed by Ponytail]";
+          content = content.slice(0, maxChars) + "... [dipangkas Context Manager]";
         }
-      } else if (content.length > 30000) {
-        content = content.slice(0, 30000) + "\n... [truncated to prevent token limit]";
+      } else if (content.length > (isEmergency ? 2000 : 15000)) {
+        content = content.slice(0, isEmergency ? 2000 : 15000) + "\n... [dipangkas agar muat dalam batas token]";
       }
     }
 
@@ -5707,6 +5843,94 @@ function sanitizeMessagesForApi(history, isChatOnly = false) {
     } else {
       break;
     }
+  }
+
+  // =========================================================================
+  // Atomic Sliding Window & Token Budget Engine
+  // =========================================================================
+  const MAX_TOKEN_BUDGET = isEmergency ? 60000 : 250000;
+  let currentTokens = sequenced.reduce((sum, m) => sum + estimateMessageTokens(m), 0);
+
+  if (currentTokens > MAX_TOKEN_BUDGET && sequenced.length > 4) {
+    // 1. Group sequenced messages into Atomic Units to prevent orphan tool calls or responses
+    const atomicUnits = [];
+    for (let i = 0; i < sequenced.length; i++) {
+      const msg = sequenced[i];
+      if (msg.role === 'assistant' && Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
+        const group = [msg];
+        const callIds = new Set(msg.tool_calls.map(tc => tc.id));
+        while (i + 1 < sequenced.length && sequenced[i + 1].role === 'tool' && callIds.has(sequenced[i + 1].tool_call_id)) {
+          group.push(sequenced[++i]);
+        }
+        atomicUnits.push({ type: 'tool_group', messages: group });
+      } else {
+        atomicUnits.push({ type: 'single', messages: [msg] });
+      }
+    }
+
+    // 2. Identify pinned initial user unit (first turn containing user prompt)
+    let firstUserUnitIdx = -1;
+    for (let i = 0; i < atomicUnits.length; i++) {
+      if (atomicUnits[i].messages.some(m => m.role === 'user')) {
+        firstUserUnitIdx = i;
+        break;
+      }
+    }
+
+    // Keep at least the latest units
+    const minTailUnits = isEmergency ? 2 : Math.min(6, Math.max(2, atomicUnits.length - 2));
+    const tailStartIdx = Math.max(0, atomicUnits.length - minTailUnits);
+
+    // 3. Prune middle units atomically from oldest to newest
+    while (currentTokens > MAX_TOKEN_BUDGET) {
+      let pruneIdx = -1;
+      for (let i = firstUserUnitIdx + 1; i < tailStartIdx && i < atomicUnits.length; i++) {
+        if (atomicUnits[i]) {
+          pruneIdx = i;
+          break;
+        }
+      }
+      if (pruneIdx === -1) break;
+
+      const removedUnit = atomicUnits[pruneIdx];
+      const removedTokens = removedUnit.messages.reduce((sum, m) => sum + estimateMessageTokens(m), 0);
+      currentTokens -= removedTokens;
+      atomicUnits.splice(pruneIdx, 1);
+    }
+
+    // 4. Flatten back into message list
+    const flattened = atomicUnits.flatMap(u => u.messages);
+
+    // 5. Re-sanitize consecutive turns after middle pruning
+    const reSequenced = [];
+    for (let i = 0; i < flattened.length; i++) {
+      const cur = flattened[i];
+      if (reSequenced.length > 0) {
+        const prev = reSequenced[reSequenced.length - 1];
+        if (cur.role === 'user' && prev.role === 'user') {
+          if (typeof prev.content === 'string' && typeof cur.content === 'string') {
+            prev.content = (prev.content + '\n\n' + cur.content).trim();
+            continue;
+          }
+        } else if (cur.role === 'assistant' && prev.role === 'assistant' && !cur.tool_calls && !prev.tool_calls) {
+          prev.content = ((prev.content || '') + '\n\n' + (cur.content || '')).trim();
+          continue;
+        }
+      }
+      reSequenced.push(cur);
+    }
+
+    // Ensure it doesn't end with an assistant turn without tool_calls
+    while (reSequenced.length > 0) {
+      const last = reSequenced[reSequenced.length - 1];
+      if (last.role === 'assistant' && (!last.tool_calls || last.tool_calls.length === 0)) {
+        reSequenced.pop();
+      } else {
+        break;
+      }
+    }
+
+    return reSequenced;
   }
 
   return sequenced;
@@ -6267,7 +6491,8 @@ Tugas Anda:
 3. Tutup dengan 1 kalimat singkat menanyakan kesiapan pengguna untuk memulai eksekusi.`;
       }
 
-      const messages = [
+      let isEmergencyCompacted = false;
+      let messages = [
         { role: "system", content: dynamicSystemPrompt },
         ...sanitizeMessagesForApi(conversationHistory)
       ];
@@ -6310,7 +6535,7 @@ Tugas Anda:
               tools: isPlanningTurn ? undefined : AGENT_TOOLS,
               tool_choice: isPlanningTurn ? undefined : "auto",
               temperature: parseFloat(config.temperature) || 0.2,
-              max_tokens: parseInt(config.maxTokens, 10) || 1000000,
+              max_tokens: getSafeMaxOutputTokens(config.maxTokens),
               stream: true
             }),
             signal: abortController.signal
@@ -6325,6 +6550,19 @@ Tugas Anda:
               errorMsg = await resp.text();
             }
             lastErrorMessage = errorMsg;
+
+            if (isTokenLimitError(resp.status, errorMsg) && !isEmergencyCompacted) {
+              isEmergencyCompacted = true;
+              console.warn(`[Auto-Compaction] Context window overflow detected (${resp.status}: ${errorMsg}). Activating Emergency Context Compaction...`);
+              updateFooterStatus(`🔄 Mengoptimalkan riwayat konteks (Auto Token Pruning)...`);
+              updateAssistantActiveAgent(assistantBubble, hasBoss ? "Master Agent" : initialAgentName, `🔄 Memadatkan riwayat percakapan agar muat dalam batas token model...`, true, false);
+              messages = [
+                { role: "system", content: dynamicSystemPrompt },
+                ...sanitizeMessagesForApi(conversationHistory, false, true)
+              ];
+              mIdx--;
+              continue;
+            }
 
             if (isRetryableAIError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
               const nextModel = candidateModels[mIdx + 1];
@@ -6351,6 +6589,18 @@ Tugas Anda:
         } catch (fetchErr) {
           if (fetchErr.name === 'AbortError' || !isExecuting) throw fetchErr;
           lastErrorMessage = fetchErr.message;
+          if (isTokenLimitError(0, fetchErr.message) && !isEmergencyCompacted) {
+            isEmergencyCompacted = true;
+            console.warn(`[Auto-Compaction] Context window overflow in exception. Activating Emergency Context Compaction...`, fetchErr);
+            updateFooterStatus(`🔄 Mengoptimalkan riwayat konteks (Auto Token Pruning)...`);
+            updateAssistantActiveAgent(assistantBubble, hasBoss ? "Master Agent" : initialAgentName, `🔄 Memadatkan riwayat percakapan agar muat dalam batas token model...`, true, false);
+            messages = [
+              { role: "system", content: dynamicSystemPrompt },
+              ...sanitizeMessagesForApi(conversationHistory, false, true)
+            ];
+            mIdx--;
+            continue;
+          }
           if (isRetryableAIError(0, fetchErr.message) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
             const nextModel = candidateModels[mIdx + 1];
             console.warn(`[Auto-Rotate] Network/Connection Exception on '${activeModelChoice}'. Rotating to '${nextModel}'...`, fetchErr);
@@ -6763,22 +7013,57 @@ Tugas Anda:
         }
 
         // 1. Build a clean, universal textual history of previous tool actions (100% LLM API compatible)
-        const cleanTextHistory = conversationHistory.map(msg => {
+        let cleanTextHistory = conversationHistory.map((msg, idx, arr) => {
           if (msg.role === 'tool') {
+            let toolText = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+            toolText = toolText.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[screenshot tersimpan]');
+            if (toolText.length > 800) {
+              toolText = toolText.slice(0, 800) + '... [ringkasan output tool]';
+            }
             return {
               role: "user",
-              content: `[Hasil Eksekusi Tool '${msg.name || 'tool'}']:\n${typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)}`
+              content: `[Hasil Eksekusi Tool '${msg.name || 'tool'}']:\n${toolText}`
             };
           }
-          if (msg.role === 'assistant' && Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
-            const callsSummary = msg.tool_calls.map(tc => `${tc.function?.name || 'tool'}(${tc.function?.arguments || ''})`).join(", ");
+          if (msg.role === 'assistant') {
+            if (Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
+              const callsSummary = msg.tool_calls.map(tc => `${tc.function?.name || 'tool'}(${tc.function?.arguments || ''})`).join(", ");
+              return {
+                role: "assistant",
+                content: `Mengeksekusi tool: ${callsSummary}`
+              };
+            }
+            let asstText = (typeof msg.content === 'string') ? msg.content : (msg.displayContent || "");
+            asstText = asstText.replace(/!\[([^\]]*)\]\((?:data:image\/[^\s)]+|local-img:\/\/[^\s)]+)\)/g, '[Gambar: $1]');
+            asstText = asstText.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[data:image stripped]');
             return {
               role: "assistant",
-              content: `Mengeksekusi tool: ${callsSummary}`
+              content: asstText
+            };
+          }
+          if (msg.role === 'user') {
+            let userText = "";
+            if (typeof msg.content === 'string') {
+              userText = msg.content.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[lampiran gambar]');
+            } else if (Array.isArray(msg.content)) {
+              userText = msg.content.filter(p => p && p.type === 'text').map(p => p.text).join('\n') || (msg.displayContent || '[Pesan pengguna]');
+            } else {
+              userText = msg.displayContent || '[Pesan pengguna]';
+            }
+            return {
+              role: "user",
+              content: userText
             };
           }
           return msg;
-        });
+        }).filter(m => m && m.content && String(m.content).trim());
+
+        // Context compaction for synthesis: retain initial user goal + latest 14 turns if long
+        if (cleanTextHistory.length > 16) {
+          const initialUserGoal = cleanTextHistory[0];
+          const recentTail = cleanTextHistory.slice(-14);
+          cleanTextHistory = [initialUserGoal, ...recentTail];
+        }
 
         // 2. Generate final answer with strict Master Agent recap prompt
         const cleanUserPrompt = typeof userMessage === 'string' ? userMessage.trim() : "permintaan saya";
@@ -8260,8 +8545,8 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 
       const dynamicMasterPrompt = buildDynamicSystemPrompt(resolvedAgents) + `\n\n` + CHAT_ONLY_SYSTEM_PROMPT;
 
-      // Build chat-only messages array with sanitized text-only turns
-      const messages = [
+      let isEmergencyCompacted = false;
+      let messages = [
         { role: "system", content: dynamicMasterPrompt },
         ...sanitizeMessagesForApi(conversationHistory, true)
       ];
@@ -8293,7 +8578,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
               model: activeModelChoice,
               messages,
               temperature: parseFloat(config.temperature) || 0.7,
-              max_tokens: parseInt(config.maxTokens, 10) || 1000000,
+              max_tokens: getSafeMaxOutputTokens(config.maxTokens),
               stream: true
             }),
             signal: abortController.signal
@@ -8308,6 +8593,18 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
               errorMsg = await resp.text();
             }
             lastErrorMessage = errorMsg;
+
+            if (isTokenLimitError(resp.status, errorMsg) && !isEmergencyCompacted) {
+              isEmergencyCompacted = true;
+              console.warn(`[Auto-Compaction Chat] Context overflow (${resp.status}: ${errorMsg}). Compacting...`);
+              updateAssistantText(assistantBubble, `*Memadatkan riwayat percakapan agar muat dalam batas token model...*\n\n`, true);
+              messages = [
+                { role: "system", content: dynamicMasterPrompt },
+                ...sanitizeMessagesForApi(conversationHistory, true, true)
+              ];
+              mIdx--;
+              continue;
+            }
 
             if (isRetryableAIError(resp.status, errorMsg) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
               const nextModel = candidateModels[mIdx + 1];
@@ -8329,6 +8626,17 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
         } catch (fetchErr) {
           if (fetchErr.name === 'AbortError' || !isExecuting) throw fetchErr;
           lastErrorMessage = fetchErr.message;
+          if (isTokenLimitError(0, fetchErr.message) && !isEmergencyCompacted) {
+            isEmergencyCompacted = true;
+            console.warn(`[Auto-Compaction Chat] Context overflow in catch. Compacting...`, fetchErr);
+            updateAssistantText(assistantBubble, `*Memadatkan riwayat percakapan agar muat dalam batas token model...*\n\n`, true);
+            messages = [
+              { role: "system", content: dynamicMasterPrompt },
+              ...sanitizeMessagesForApi(conversationHistory, true, true)
+            ];
+            mIdx--;
+            continue;
+          }
           if (isRetryableAIError(0, fetchErr.message) && mIdx < candidateModels.length - 1 && config.autoRotateModel !== false) {
             const nextModel = candidateModels[mIdx + 1];
             console.warn(`[Auto-Rotate Chat] Connection Exception on '${activeModelChoice}'. Rotating to '${nextModel}'...`, fetchErr);
@@ -10853,7 +11161,7 @@ function saveSettings() {
   config.endpoint = document.getElementById('setting-endpoint').value.trim();
   config.apiKey = document.getElementById('setting-apikey').value.trim();
   config.temperature = parseFloat(document.getElementById('setting-temp').value) || 0.2;
-  config.maxTokens = parseInt(document.getElementById('setting-max-tokens').value, 10) || 1000000;
+  config.maxTokens = getSafeMaxOutputTokens(document.getElementById('setting-max-tokens')?.value);
 
   // Collect all model inputs from rows in priority order
   const modelCards = document.querySelectorAll('.model-row-item');
@@ -10990,7 +11298,7 @@ function applyConfigToUI() {
   if (settingTemp) settingTemp.value = config.temperature || 0.2;
 
   const settingMaxTokens = document.getElementById('setting-max-tokens');
-  if (settingMaxTokens) settingMaxTokens.value = config.maxTokens || 1000000;
+  if (settingMaxTokens) settingMaxTokens.value = getSafeMaxOutputTokens(config.maxTokens);
 }
 
 function renderModelDropdown() {
