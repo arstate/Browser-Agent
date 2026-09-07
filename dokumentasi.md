@@ -1156,6 +1156,29 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menyelaraskan tes dengan siklus 5 milestone Master Agent dan string header directive `GOAL CHECKLIST MATRIX`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 10 file di `extension/design/` terjaga ketat di bawah limit 800 baris.
 
+154. **Perbaikan Slide Deck Builder Runtime Crash, Rekoneksi 9Router, dan Sinkronisasi Penamaan Multi-Agent (`v2.150.271`):**
+    - **Akar Masalah**:
+      1. Fitur Slide Deck Builder mengalami crash fatal `Design Mode Error: ReferenceError: textColor is not defined` di `design/design_executor.js:766` (`runDesignModeLoop`). Penelusuran pada `extension/design/slide_template.js:585` menemukan bahwa variabel `textColor` dipanggil di dalam template HTML footer nomor halaman slide (`.footer-page-num`), namun belum pernah dideklarasikan dalam fungsi `buildExecutiveSlideDeckHtml`.
+      2. Panggilan agent loop gagal dengan `Agent Loop Error: TypeError: Failed to fetch` di `sidepanel.js:6307` (`runAgentLoop`) akibat proses backend 9Router di port 20128 berada dalam status *zombie/stale process* yang tidak merespons soket jaringan, serta API key extension belum terdaftar di database otentikasi lokal 9Router.
+      3. Agen baru yang dibuat (seperti `ARYA-MAGANG-KOMINFO`, `40.md`, `67.md`) muncul sebagai ID angka `@40`, `@67` di bilah dropdown `@mention` dan tidak tersimpan ke tabel SQLite `autonomous_agents`. Hal ini disebabkan berkas markdown `40.md` dan `67.md` tidak memiliki field `name:` di frontmatter YAML sehingga Rust Host jatuh ke fallback nama file stem (`"40"`, `"67"`), serta implementasi RPC `db_save_autonomous_agent` dan `db_save_autonomous_skill` di `main.rs` hanya membaca field level root tanpa memeriksa objek bersarang `{ agent: { ... } }` dan `{ skill: { ... } }` yang dikirim dari extension.
+    - **Implementasi Teknis & Solusi**:
+      1. **Pencegahan ReferenceError pada Template Slide Deck (`extension/design/slide_template.js`)**:
+         - Mendeklarasikan `const textColor = deckMeta.textColor || theme.textMain || theme.textColor || (theme.bgSlide === '#FFFFFF' ? '#0F172A' : '#F8FAFC');` tepat setelah `accentTertiary`.
+         - Memastikan footer slide deck merender nomor halaman dengan kontras warna adaptif tanpa pernah melempar `ReferenceError`.
+      2. **Restorasi Layanan 9Router & Otentikasi API Key**:
+         - Mematikan PID zombie 9Router dan menyalakan ulang daemon 9Router pada port 20128 (`0.0.0.0:20128`).
+         - Menyisipkan API key extension (`sk-47024d86a10c3a4b-2att59-c53bbf8a`) ke database otentikasi SQLite 9Router (`~/.9router/db/data.sqlite`).
+         - Memverifikasi endpoint `/v1/chat/completions` merespons streaming chunk HTTP 200 secara instan.
+      3. **Penyelarasan Host Rust untuk Multi-Agent Naming & Persistence (`host/rust_host/src/main.rs`)**:
+         - Memperbarui handler `db_save_autonomous_agent` dan `db_save_autonomous_skill` agar mendukung pembacaan payload bersarang (`msg.get("agent")` dan `msg.get("skill")`), mengekstrak string/array `assigned_skills`, serta menggenerasi fallback ID (`agent_auto_{timestamp}` / `skill_auto_{timestamp}`) jika ID kosong.
+         - Memperbarui `save_md_item` agar memisahkan `system_prompt` dan `workflow_markdown` ke dalam body markdown di bawah `---`, bukan menumpuknya di dalam frontmatter YAML.
+         - Menambahkan fallback ekstraksi judul markdown (`# Heading`) pada fungsi `list_agents` sehingga berkas tanpa metadata `name` otomatis mengambil nama dari heading dokumen markdown, mengeliminasi tampilan nama angka seperti `@40` atau `@67`.
+      4. **Penyelarasan Data Agen & Pembersihan Database SQLite (`~/.browser-agent/`)**:
+         - Memformat ulang frontmatter YAML pada `40.md`, `67.md`, dan `14.md` dengan metadata `name` dan `description` yang tepat.
+         - Menyalin/menautkan alias `djadi_master_orchestrator.md`, `djadi_visual_designer.md`, dan `arya_magang_kominfo.md`.
+         - Menghapus baris kosong (`id = ''`) pada tabel SQLite `autonomous_agents` dan `autonomous_skills`, serta menyinkronkan data agen ke dalam tabel SQLite `autonomous_agents`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh berkas di `extension/design/` terjaga ketat di bawah limit 800 baris (`slide_template.js` 686 baris).
+
 
 
 

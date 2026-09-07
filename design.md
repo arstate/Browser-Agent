@@ -2008,6 +2008,21 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Badge delegasi `Instruksikan {workerName}: {badgeActionName}` dijamin merujuk pada nama agen karyawan bawahan yang dipilih Master Agent, bebas dari pembajakan nama agen dari brand lain.
    - Penambahan *Strict Brand Guard* pada penanganan `agent_subtask_analysis` untuk memastikan tidak ada disonansi visual antara pohon tim agen yang ditugaskan (`.agent-tree-branch-container`) dan lencana langkah tindakan.
 
+---
+
+## 🎨 47. Slide Deck Template Scope Integrity & Multi-Agent Naming Persistence (v2.150.271)
+
+1. **Slide Deck Engine Variable Scope Hardening (`extension/design/slide_template.js`)**:
+   - Mendefinisikan variabel `textColor` di `buildExecutiveSlideDeckHtml`:
+     `const textColor = deckMeta.textColor || theme.textMain || theme.textColor || (theme.bgSlide === '#FFFFFF' ? '#0F172A' : '#F8FAFC');`
+   - Mengeliminasi `ReferenceError: textColor is not defined` yang terjadi saat merender nomor halaman footer slide deck (`.footer-page-num`).
+   - Menjaga ukuran berkas `slide_template.js` pada 686 baris (jauh di bawah batas 800 baris).
+
+2. **Autonomous Multi-Agent Naming & Persistence Synchronization (`host/rust_host/src/main.rs`, `~/.browser-agent/agents/`)**:
+   - Memperbaiki deserialisasi RPC `db_save_autonomous_agent` dan `db_save_autonomous_skill` pada binary Rust Host agar dapat membaca objek bersarang `{ agent: { ... } }` dan `{ skill: { ... } }` dari extension, serta otomatis menggenerasi fallback ID jika kosong.
+   - Menambahkan mekanisme fallback ekstraksi judul markdown (`# Heading`) pada fungsi `list_agents` sehingga agen tidak lagi muncul sebagai angka (`@40`, `@67`, `@14`) saat nama tidak tercantum di frontmatter.
+   - Menyinkronkan agen `ARYA-MAGANG-KOMINFO`, `Djadi Creative - Master Agency Orchestrator`, dan `Djadi Creative - Visual Designer & Art Director` di kedua layer penyimpanan (Markdown `.md` dan database SQLite `chat_history.db`).
+
 
 
 

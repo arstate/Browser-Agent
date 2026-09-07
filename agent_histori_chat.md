@@ -7570,6 +7570,43 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Node syntax check `node -c extension/sidepanel.js extension/core/goal_tracker.js` lulus 100% tanpa error.
   4. Bump versi ke `v2.150.270` di `manifest.json`.
 
+---
+
+### Iterasi: Perbaikan Slide Deck Builder Runtime Crash, Rekoneksi 9Router, dan Sinkronisasi Penamaan Multi-Agent (`v2.150.271`)
+- **User Request:**
+  - "error fitur slide deck builder Agent Loop Error: TypeError: Failed to fetch Context chrome://newtab/ Stack Trace sidepanel.js:6307 (runAgentLoop)..."
+  - "Design Mode Error: ReferenceError: textColor is not defined at buildExecutiveSlideDeckHtml (slide_template.js:585)"
+  - "mau tanya agent yang dibuat oleh agent browser agent di pc saya kok gaikut kesimpen di database local ya bro di sini /home/arya/.browser-agent padahal chat histori ikut kesimpen bro... perasaaan ada multi agent namanya itu arya-magang-kominfo kesimpenya namanya jadi id multi agent aa bro"
+- **Akar Masalah & Penyelidikan Mendalam:**
+  1. *Slide Deck Builder Runtime Crash*:
+     - Di `extension/design/slide_template.js:585`, variabel `textColor` dipanggil di dalam template HTML footer nomor halaman slide (`<div class="footer-page-num" style="... color: ${textColor}; ...">`), namun variabel ini belum pernah dideklarasikan di lingkup fungsi `buildExecutiveSlideDeckHtml`.
+  2. *9Router Fetch Failure*:
+     - Panggilan agent loop gagal dengan `Agent Loop Error: TypeError: Failed to fetch` di `sidepanel.js:6307` (`runAgentLoop`) akibat proses backend 9Router di port 20128 berada dalam status zombie yang tidak merespons soket jaringan, serta API key extension belum terdaftar di database otentikasi lokal 9Router.
+  3. *Multi-Agent Naming & Persistence Mismatch*:
+     - Berkas markdown `40.md` dan `67.md` tidak memiliki field `name:` di frontmatter YAML sehingga Rust Host jatuh ke fallback nama file stem (`"40"`, `"67"`), menghasilkan tampilan `@40` dan `@67` pada dropdown `@mention`.
+     - Implementasi RPC `db_save_autonomous_agent` dan `db_save_autonomous_skill` di `main.rs` hanya membaca field level root tanpa memeriksa objek bersarang `{ agent: { ... } }` dan `{ skill: { ... } }` yang dikirim dari extension. Akibatnya, agen tersimpan sebagai baris kosong (`id = ''`).
+     - Berkas `14.md` memiliki format frontmatter di mana `system_prompt` ditaruh di dalam frontmatter YAML daripada sebagai body markdown terpisah.
+- **Solusi & Rekayasa Teknis:**
+  1. *Pencegahan ReferenceError pada Slide Deck Template*:
+     - Mendeklarasikan `const textColor = deckMeta.textColor || theme.textMain || theme.textColor || (theme.bgSlide === '#FFFFFF' ? '#0F172A' : '#F8FAFC');` tepat setelah `accentTertiary` di `extension/design/slide_template.js`.
+  2. *Restorasi Layanan 9Router & Otentikasi API Key*:
+     - Menghentikan proses zombie 9Router dan memulai kembali layanan pada `0.0.0.0:20128`.
+     - Menyisipkan API key extension (`sk-47024d86a10c3a4b-2att59-c53bbf8a`) ke database otentikasi SQLite 9Router (`~/.9router/db/data.sqlite`).
+     - Menguji streaming chunk HTTP 200 via curl untuk memastikan inferensi lancar.
+  3. *Penyelarasan Host Rust untuk Multi-Agent Naming & Persistence*:
+     - Memperbarui handler `db_save_autonomous_agent` dan `db_save_autonomous_skill` di `host/rust_host/src/main.rs` untuk membaca payload bersarang (`msg.get("agent")` dan `msg.get("skill")`), mengekstrak string/array `assigned_skills`, serta menggenerasi fallback ID jika kosong.
+     - Memperbarui `save_md_item` agar memisahkan `system_prompt` dan `workflow_markdown` ke dalam body markdown di bawah `---`.
+     - Menambahkan fallback ekstraksi judul markdown (`# Heading`) pada fungsi `list_agents` sehingga berkas tanpa metadata `name` otomatis mengambil nama dari heading dokumen markdown.
+  4. *Penyelarasan Data Agen & Pembersihan Database SQLite*:
+     - Memformat ulang frontmatter YAML pada `40.md`, `67.md`, dan `14.md` dengan metadata `name` dan `description` yang tepat.
+     - Menyalin/menautkan alias `djadi_master_orchestrator.md`, `djadi_visual_designer.md`, dan `arya_magang_kominfo.md`.
+     - Menghapus baris kosong (`id = ''`) pada tabel SQLite `autonomous_agents` dan `autonomous_skills`, serta menyinkronkan data agen ke dalam tabel SQLite `autonomous_agents`.
+- **Verifikasi:**
+  1. Pengujian runtime Node.js untuk `buildExecutiveSlideDeckHtml` sukses tanpa `ReferenceError` (HTML length: 7541 byte).
+  2. Database SQLite `autonomous_agents` terverifikasi bersih dan memuat `ARYA-MAGANG-KOMINFO`, `Djadi Creative - Master Agency Orchestrator`, dan `Djadi Creative - Visual Designer & Art Director`.
+  3. Baris kode `extension/design/slide_template.js` terjaga pada 686 baris (sub-800 line rule dipatuhi ketat).
+  4. Bump versi ke `v2.150.271` di `manifest.json`.
+
 
 
 

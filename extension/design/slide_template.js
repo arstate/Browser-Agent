@@ -75,6 +75,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
   const accentColor = deckMeta.accentColor || theme.accent;
   const accentSecondary = deckMeta.accentSecondary || theme.accentSecondary;
   const accentTertiary = deckMeta.accentTertiary || theme.accentTertiary;
+  const textColor = deckMeta.textColor || theme.textMain || theme.textColor || (theme.bgSlide === '#FFFFFF' ? '#0F172A' : '#F8FAFC');
 
   // Copyright text: NEVER hardcode STANDAR IDENTITAS VISUAL RESMI!
   let copyrightText = deckMeta.copyright;

@@ -425,6 +425,14 @@ fn parse_md_file(path: &Path) -> Option<(Value, String)> {
         }
     }
 
+    if content.is_empty() {
+        if let Some(sys) = meta.get("system_prompt").and_then(|v| v.as_str()) {
+            if !sys.is_empty() {
+                content = sys.to_string();
+            }
+        }
+    }
+
     Some((meta, content))
 }
 
@@ -439,12 +447,14 @@ fn save_md_item(dir: &Path, item: &Value) -> Result<String, String> {
 
     let content = item.get("content").and_then(|v| v.as_str())
         .or_else(|| item.get("prompt").and_then(|v| v.as_str()))
+        .or_else(|| item.get("system_prompt").and_then(|v| v.as_str()))
+        .or_else(|| item.get("workflow_markdown").and_then(|v| v.as_str()))
         .unwrap_or("");
 
     let mut frontmatter = String::from("---\n");
     if let Some(obj) = item.as_object() {
         for (k, v) in obj {
-            if k != "content" && k != "file_path" {
+            if k != "content" && k != "file_path" && k != "system_prompt" && k != "workflow_markdown" && k != "prompt" {
                 if let Some(s) = v.as_str() {
                     frontmatter.push_str(&format!("{}: \"{}\"\n", k, s.replace('"', "\\\"")));
                 } else {
@@ -1626,13 +1636,24 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         }
 
         "db_save_autonomous_skill" => {
-            let id = msg.get("id").and_then(|v| v.as_str()).unwrap_or("");
-            let name = msg.get("name").and_then(|v| v.as_str()).unwrap_or("");
-            let desc = msg.get("description").and_then(|v| v.as_str()).unwrap_or("");
-            let md = msg.get("workflow_markdown").and_then(|v| v.as_str()).unwrap_or("");
-            let ver = msg.get("version").and_then(|v| v.as_str()).unwrap_or("v1.0.0");
-            let src = msg.get("source").and_then(|v| v.as_str()).unwrap_or("autonomous_ai");
+            let skill_obj = msg.get("skill");
+            let raw_id = msg.get("id")
+                .or_else(|| msg.get("skill_id"))
+                .or_else(|| skill_obj.and_then(|s| s.get("id")))
+                .or_else(|| skill_obj.and_then(|s| s.get("skill_id")))
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
             let now = now_millis();
+            let id = if raw_id.trim().is_empty() {
+                format!("skill_auto_{}", now)
+            } else {
+                raw_id.trim().to_string()
+            };
+            let name = msg.get("name").or_else(|| skill_obj.and_then(|s| s.get("name"))).and_then(|v| v.as_str()).unwrap_or("");
+            let desc = msg.get("description").or_else(|| skill_obj.and_then(|s| s.get("description"))).and_then(|v| v.as_str()).unwrap_or("");
+            let md = msg.get("workflow_markdown").or_else(|| skill_obj.and_then(|s| s.get("workflow_markdown"))).and_then(|v| v.as_str()).unwrap_or("");
+            let ver = msg.get("version").or_else(|| skill_obj.and_then(|s| s.get("version"))).and_then(|v| v.as_str()).unwrap_or("v1.0.0");
+            let src = msg.get("source").or_else(|| skill_obj.and_then(|s| s.get("source"))).and_then(|v| v.as_str()).unwrap_or("autonomous_ai");
 
             let res = conn.execute(
                 "INSERT INTO autonomous_skills (id, name, description, workflow_markdown, version, source, created_at, updated_at)
@@ -1641,20 +1662,53 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 params![id, name, desc, md, ver, src, now],
             );
             match res {
-                Ok(_) => json!({ "status": "ok", "id": id }),
+                Ok(_) => json!({ "status": "ok", "id": id, "name": name, "version": ver }),
                 Err(e) => json!({ "status": "error", "error": e.to_string() }),
             }
         }
 
         "db_save_autonomous_agent" => {
-            let id = msg.get("id").and_then(|v| v.as_str()).unwrap_or("");
-            let name = msg.get("name").and_then(|v| v.as_str()).unwrap_or("");
-            let desc = msg.get("role_description").and_then(|v| v.as_str()).unwrap_or("");
-            let prompt = msg.get("system_prompt").and_then(|v| v.as_str()).unwrap_or("");
-            let skills = msg.get("assigned_skills_json").and_then(|v| v.as_str()).unwrap_or("[]");
-            let src = msg.get("source").and_then(|v| v.as_str()).unwrap_or("autonomous_ai");
-            let reason = msg.get("reason").and_then(|v| v.as_str()).unwrap_or("");
+            let agent_obj = msg.get("agent");
+            let raw_id = msg.get("id")
+                .or_else(|| msg.get("agent_id"))
+                .or_else(|| agent_obj.and_then(|a| a.get("id")))
+                .or_else(|| agent_obj.and_then(|a| a.get("agent_id")))
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
             let now = now_millis();
+            let id = if raw_id.trim().is_empty() {
+                format!("agent_auto_{}", now)
+            } else {
+                raw_id.trim().to_string()
+            };
+            let name = msg.get("name").or_else(|| agent_obj.and_then(|a| a.get("name"))).and_then(|v| v.as_str()).unwrap_or("");
+            let desc = msg.get("role_description")
+                .or_else(|| agent_obj.and_then(|a| a.get("role_description")))
+                .or_else(|| msg.get("description"))
+                .or_else(|| agent_obj.and_then(|a| a.get("description")))
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            let prompt = msg.get("system_prompt")
+                .or_else(|| agent_obj.and_then(|a| a.get("system_prompt")))
+                .or_else(|| msg.get("content"))
+                .or_else(|| agent_obj.and_then(|a| a.get("content")))
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+
+            let skills_val = msg.get("assigned_skills_json")
+                .or_else(|| agent_obj.and_then(|a| a.get("assigned_skills_json")))
+                .or_else(|| msg.get("assigned_skills"))
+                .or_else(|| agent_obj.and_then(|a| a.get("assigned_skills")))
+                .or_else(|| msg.get("skills"))
+                .or_else(|| agent_obj.and_then(|a| a.get("skills")));
+            let skills = match skills_val {
+                Some(Value::String(s)) => s.clone(),
+                Some(Value::Array(_)) => serde_json::to_string(skills_val.unwrap()).unwrap_or_else(|_| "[]".to_string()),
+                _ => "[]".to_string(),
+            };
+
+            let src = msg.get("source").or_else(|| agent_obj.and_then(|a| a.get("source"))).and_then(|v| v.as_str()).unwrap_or("autonomous_ai");
+            let reason = msg.get("reason").or_else(|| agent_obj.and_then(|a| a.get("reason"))).and_then(|v| v.as_str()).unwrap_or("");
 
             let res = conn.execute(
                 "INSERT INTO autonomous_agents (id, name, role_description, system_prompt, assigned_skills_json, source, reason, created_at, updated_at)
@@ -1663,7 +1717,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 params![id, name, desc, prompt, skills, src, reason, now],
             );
             match res {
-                Ok(_) => json!({ "status": "ok", "id": id }),
+                Ok(_) => json!({ "status": "ok", "id": id, "name": name }),
                 Err(e) => json!({ "status": "error", "error": e.to_string() }),
             }
         }
@@ -1800,8 +1854,24 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                                 meta["id"] = json!(file_stem);
                             }
                             let cur_name = meta.get("name").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
-                            if cur_name.is_empty() {
-                                meta["name"] = json!(file_stem);
+                            let is_numeric_or_empty = cur_name.is_empty()
+                                || cur_name == file_stem
+                                || cur_name.chars().all(|c| c.is_ascii_digit());
+
+                            if is_numeric_or_empty {
+                                let sys_prompt = meta.get("system_prompt").and_then(|v| v.as_str()).unwrap_or("");
+                                let search_text = if !content.trim().is_empty() { &content } else { sys_prompt };
+                                let extracted_title = search_text.lines()
+                                    .find(|l| l.trim().starts_with("# "))
+                                    .map(|l| {
+                                        l.trim().trim_start_matches('#').trim().to_string()
+                                    });
+
+                                if let Some(title) = extracted_title.filter(|t| !t.is_empty()) {
+                                    meta["name"] = json!(title);
+                                } else if cur_name.is_empty() {
+                                    meta["name"] = json!(file_stem);
+                                }
                             }
                             meta["content"] = json!(content);
                             meta["file_path"] = json!(p.to_string_lossy());
