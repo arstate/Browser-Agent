@@ -8164,11 +8164,11 @@ function setChatMode(mode) {
     clearAttachments();
     clearMentionAgents();
   } else if (mode === 'design') {
-    if (chatInput) chatInput.placeholder = 'Ketik topik materi slide deck (contoh: ppt pitch deck startup AI 10 slide)...';
-    if (agentStatusEl) agentStatusEl.textContent = 'Slide Deck Engine Ready';
+    if (chatInput) chatInput.placeholder = 'Ketik topik apa saja untuk otomatis membuat slide deck 16:9 (contoh: Strategi Pemasaran AI, Kucing Lucu)...';
+    if (agentStatusEl) agentStatusEl.textContent = 'Design Mode • Auto Slide Deck 16:9';
     if (btnSendEl) btnSendEl.title = 'Rancang Slide Deck (16:9 Presentation)';
     if (heroTitleEl) scrambleText(heroTitleEl, 'Design stunning <span class="hero-highlight">Executive Slide Decks</span> in seconds', 340);
-    if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Modular 16:9 presentation engine with interactive thumbnails sidebar, bento cards, floating dock, and instant PDF export.');
+    if (heroSubtitleEl) updateHeroSubtitleSmooth(heroSubtitleEl, 'Dedicated 16:9 presentation engine: ketik topik apa saja langsung jadi slide deck interaktif dengan floating dock & ekspor PDF.');
     hideWebSearchSuggestions();
     if (window.OpenDesignBridge?.ensureDaemon) {
       window.OpenDesignBridge.ensureDaemon().catch(() => {});
@@ -14045,18 +14045,27 @@ function checkAndProcessNextPromptQueue() {
     const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
     const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
 
+    const isDeckRevision = Boolean(canvasIsOpen && activeArt && activeArt.html);
+    const isExplicitExternalWeb = /^(?:https?:\/\/|www\.)|(?:buka\s+(?:url|web|situs|link|tab\s+baru))\s+https?:/i.test(nextItem.text || "");
+    const isExplicitSlideDeckIntent = /(?:buat|bikin|rancang|generate|create|siapkan)\s+(?:(?:sebuah|beberapa|\d+)\s+)?(?:slide|slides|deck|slide\s+deck|presentasi|presentation|ppt)\b/i.test(nextItem.text || "") ||
+      /^(?:slide|slides|deck|slide\s+deck|presentasi|presentation|ppt)\s*[:=]/i.test(nextItem.text || "");
     const hasAgentActionOrAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|tab|browser|url|web)/i.test(nextItem.text || "");
 
-    if (nextItem.chatMode === 'chat') {
+    if (nextItem.chatMode === 'design') {
+      if (isDeckRevision && !isExplicitExternalWeb) {
+        runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
+      } else {
+        runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
+      }
+    } else if (isExplicitSlideDeckIntent && !isExplicitExternalWeb && nextItem.chatMode !== 'chat') {
+      if (typeof setChatMode === 'function') setChatMode('design');
+      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
+    } else if (isDeckRevision && !isExplicitExternalWeb && nextItem.chatMode !== 'chat') {
+      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
+    } else if (nextItem.chatMode === 'chat') {
       runChatModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
     } else if (nextItem.chatMode === 'agent' || hasAgentActionOrAnalysis) {
       runAgentLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
-    } else if (nextItem.chatMode === 'design' && canvasIsOpen && activeArt && activeArt.html) {
-      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
-    } else if (nextItem.chatMode === 'design') {
-      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
-    } else if (canvasIsOpen && activeArt && activeArt.html) {
-      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
     } else {
       runAgentLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
     }
@@ -14326,16 +14335,26 @@ function handleSendMessage() {
 
   const isDeckRevision = Boolean(canvasIsOpen && activeArt && activeArt.html);
   const isExplicitExternalWeb = /^(?:https?:\/\/|www\.)|(?:buka\s+(?:url|web|situs|link|tab\s+baru))\s+https?:/i.test(displayMessage || "");
+  const isExplicitSlideDeckIntent = /(?:buat|bikin|rancang|generate|create|siapkan)\s+(?:(?:sebuah|beberapa|\d+)\s+)?(?:slide|slides|deck|slide\s+deck|presentasi|presentation|ppt)\b/i.test(displayMessage || "") ||
+    /^(?:slide|slides|deck|slide\s+deck|presentasi|presentation|ppt)\s*[:=]/i.test(displayMessage || "");
   const hasAgentActionOrAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|tab|browser|url|web)/i.test(displayMessage || "");
 
-  if (isDeckRevision && !isExplicitExternalWeb && currentChatMode !== 'chat') {
+  if (currentChatMode === 'design') {
+    // Mode Design = 100% Otomatis Membuat atau Merevisi Slide Deck Eksekutif 16:9 untuk Topik Apa Pun
+    if (isDeckRevision && !isExplicitExternalWeb) {
+      runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
+    } else {
+      runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
+    }
+  } else if (isExplicitSlideDeckIntent && !isExplicitExternalWeb && currentChatMode !== 'chat') {
+    if (typeof setChatMode === 'function') setChatMode('design');
+    runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
+  } else if (isDeckRevision && !isExplicitExternalWeb && currentChatMode !== 'chat') {
     runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
   } else if (currentChatMode === 'chat') {
     runChatModeLoop(displayMessage, currentAttachments, currentMentions);
   } else if (currentChatMode === 'agent' || hasAgentActionOrAnalysis) {
     runAgentLoop(displayMessage, currentAttachments, currentMentions);
-  } else if (currentChatMode === 'design') {
-    runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
   } else {
     runAgentLoop(displayMessage, currentAttachments, currentMentions);
   }

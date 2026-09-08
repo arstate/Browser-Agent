@@ -7835,5 +7835,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
   4. Bump versi ke `v2.150.279` di `manifest.json`.
 
-
-
+### Iterasi: Dedicated Slide Deck Auto-Generation & Anti-Hijack Mode Dispatcher (`v2.150.280`)
+- **User Request:**
+  - "update slide deck mode design mode otomatis membat slide deck bro"
+  - Menunjukkan tangkapan layar mode `Design` aktif dengan placeholder `Ketik topik materi slide deck (con...`.
+- **Akar Masalah & Investigasi:**
+  1. Pada `extension/sidepanel.js` di fungsi `handleSendMessage` dan `processNextPromptQueueItem`, pengecekan kondisi `currentChatMode === 'agent' || hasAgentActionOrAnalysis` dievaluasi sebelum `currentChatMode === 'design'`.
+  2. Akibatnya, saat pengguna berada di Mode Design dan mengetikkan topik presentasi yang mengandung kata-kata seperti *"analisis"*, *"analisa"*, *"evaluasi"*, *"riset"*, *"hitung"*, *"kaji"*, atau *"cek"* (misalnya *"analisis pasar AI"*, *"riset startup fintech"*, *"evaluasi bisnis"*), prompt tersebut ter-hijack dan dijalankan oleh `runAgentLoop` alih-alih `runDesignModeLoop`.
+  3. Selain itu, pengguna menginginkan agar di Mode Design, pengetikan topik materi apa pun (bahkan hanya 1-2 kata topik tanpa kata kunci pemicu "buatkan slide" atau "bikin ppt") 100% otomatis menghasilkan slide deck interaktif 16:9 widescreen.
+- **Solusi & Rekayasa Teknis:**
+  1. *Prioritas Tertinggi Dispatching Mode Design (`extension/sidepanel.js`)*:
+     - Memindahkan branch `currentChatMode === 'design'` ke urutan pertama di `handleSendMessage` dan `processNextPromptQueueItem`, sehingga tidak ada keyword analisis yang dapat membelokkan eksekusi.
+     - Menambahkan detektor maksud eksplisit `isExplicitSlideDeckIntent`: jika pengguna sedang di Mode Agent namun mengetik perintah membuat slide deck/presentasi/ppt, sistem otomatis mengalihkan mode ke `design` (`setChatMode('design')`) dan mengeksekusi `runDesignModeLoop`.
+  2. *Mandatori Auto-Slide Directives (`extension/design/design_prompt.js`)*:
+     - Menambahkan bagian `MANDATORY AUTO-SLIDE DECK GENERATION IN DESIGN MODE` pada `DESIGN_MODE_SYSTEM_PROMPT`. Model AI diprogram secara tegas bahwa saat berada di Mode Design, input pengguna mutlak diartikan sebagai topik presentasi dan wajib langsung disintesis menjadi slide deck 16:9 widescreen lengkap tanpa teks obrolan biasa.
+  3. *Pembersihan & Ekstraksi Topik Cerdas (`extension/design/design_executor.js`)*:
+     - Memperbarui pembersihan topik (`cleanTopic`) agar kata-kata singkat, istilah bisnis, maupun topik teknis langsung terisolasi sebagai judul presentasi berbobot.
+  4. *Pembaruan UI Placeholder & Status (`extension/sidepanel.js`)*:
+     - Memperbarui placeholder input bar Mode Design: *"Ketik topik apa saja untuk otomatis membuat slide deck 16:9 (contoh: Strategi Pemasaran AI, Kucing Lucu)..."* dengan status header *"Design Mode • Auto Slide Deck 16:9"*.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Validasi sintaksis `node -c extension/sidepanel.js && node -c extension/design/design_executor.js && node -c extension/design/design_prompt.js` lulus 100% tanpa error.
+  2. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris (`design_executor.js`: 792 baris, `design_prompt.js`: 197 baris, `slide_deck_engine.js`: 795 baris, `slide_editor.js`: 798 baris).
+  3. Bump versi ke `v2.150.280` di `manifest.json`.

@@ -2164,5 +2164,21 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Pengecekan ketat pada `upgradeSlideDeckHtmlIfNeeded`: hanya dokumen yang memiliki `dock-export-wrapper`, `dock-export-pdf-item`, `dock-btn-reset`, `dock-btn-edit`, `dock-btn-fullscreen`, dan `slide-deck-controller-script` yang dipertahankan. Dokumen lama atau dock darurat AI otomatis diekstrak slidenya (mempertahankan custom canvas HTML 1:1) dan dibungkus ulang dengan shell paten resmi.
    - Deteksi in-DOM pada `attachSlideDeckController` di `canvas_manager.js`: jika dock tidak memiliki `dock-export-wrapper`, dock darurat langsung digantikan secara instan dengan `getPatentedFloatingDockHtml()`.
 
+## 🛡️ 56. Dedicated Slide Deck Auto-Generation & Anti-Hijack Mode Dispatcher (v2.150.280)
+
+1. **Anti-Hijack Dispatching Architecture**:
+   - Menyelesaikan masalah di mana topik presentasi yang mengandung istilah analitis/riset (misal *"analisis pasar AI"*, *"evaluasi strategi"*, *"kaji performa"*) secara keliru dibelokkan ke Mode Agent biasa.
+   - Mengatur prioritas evaluasi di `handleSendMessage` dan `processNextPromptQueueItem`:
+     - **Tingkat 1**: Jika `currentChatMode === 'design'`, SELURUH masukan pengguna secara mutlak dialirkan ke `runDesignModeLoop`.
+     - **Tingkat 2**: Jika pengguna berada di mode Agent namun secara eksplisit menyertakan niat pembuatan slide (`isExplicitSlideDeckIntent`), sistem secara otomatis mengubah mode menjadi `design` (`setChatMode('design')`) dan mengeksekusi `runDesignModeLoop`.
+     - **Tingkat 3**: Eksekusi mode Chat, Agent, dan Web Search sesuai konfigurasi normal.
+
+2. **Zero-Friction Prompting (Just Type the Topic)**:
+   - Pengguna di Mode Design tidak lagi diwajibkan menuliskan frasa perintah formal seperti *"buatkan slide"*, *"bikin presentasi"*, atau *"generate ppt"*.
+   - Cukup mengetikkan topik materi (misal *"Kucing Lucu"*, *"Strategi Bisnis Kopi"*, *"Pertanian Vertikal"*), arsitektur dual-agent (Master Agent & Master Design) secara otomatis mengidentifikasi topik, mengurasi tema visual adaptif, dan merancang seluruh slide 16:9 widescreen interaktif secara bertahap.
+
+3. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` dipelihara dengan cermat di bawah 798 baris untuk menjaga kebersihan arsitektur dan stabilitas kode.
+
 
 

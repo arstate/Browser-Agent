@@ -226,12 +226,17 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     const cleanFn = (typeof cleanPresentationTopic === 'function')
       ? cleanPresentationTopic
       : (typeof window !== 'undefined' && typeof window.cleanPresentationTopic === 'function' ? window.cleanPresentationTopic : null);
-    const cleanTopic = existingTitle || (cleanFn ? cleanFn(userMessage) : (userMessage || 'Materi Presentasi').replace(/^buatkan\s+(?:\d+\s+)?(?:slide|halaman)?\s*/i, '').trim());
+    let extractedTopic = existingTitle || (cleanFn ? cleanFn(userMessage) : '');
+    if (!extractedTopic || extractedTopic.length < 2 || extractedTopic.toLowerCase() === 'materi presentasi') {
+      extractedTopic = (userMessage || 'Materi Presentasi')
+        .replace(/@[-a-zA-Z0-9_.]+/g, '')
+        .replace(/^(?:halo|hai|bro|tolong|coba|buatin|bikin|buat|generate|create|rancang)\s+(?:sebuah\s+)?(?:\d+\s+)?(?:slide|slides|deck|presentasi|ppt)?\s*(?:tentang|mengenai|seputar|topik)?\s*/i, '')
+        .trim();
+    }
+    const cleanTopic = extractedTopic || 'Executive Slide Deck';
 
     // Ideasi style desain khusus sesuai materi
-    const exploreStyleFn = (typeof exploreDesignStyleConcept === 'function')
-      ? exploreDesignStyleConcept
-      : (typeof window !== 'undefined' && typeof window.exploreDesignStyleConcept === 'function' ? window.exploreDesignStyleConcept : null);
+    const exploreStyleFn = (typeof exploreDesignStyleConcept === 'function') ? exploreDesignStyleConcept : (typeof window !== 'undefined' && typeof window.exploreDesignStyleConcept === 'function' ? window.exploreDesignStyleConcept : null);
     const styleConcept = exploreStyleFn ? exploreStyleFn(cleanTopic, { theme: deducedTheme }) : { conceptName: deducedTheme.name, vibe: 'Modern', theme: deducedTheme };
     config.styleConcept = styleConcept;
 
@@ -257,13 +262,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     accumulatedContent = "";
     const meta = { category: deducedTheme.name };
 
-    const defaultBp = (typeof createDefaultBlueprint === 'function')
-      ? createDefaultBlueprint(cleanTopic, targetSlideCount, deducedTheme)
-      : { title: 'Materi Presentasi', slides: [] };
-
-    const genEdFn = (typeof generateEditorialTitle === 'function')
-      ? generateEditorialTitle
-      : (typeof window !== 'undefined' && typeof window.generateEditorialTitle === 'function' ? window.generateEditorialTitle : null);
+    const defaultBp = (typeof createDefaultBlueprint === 'function') ? createDefaultBlueprint(cleanTopic, targetSlideCount, deducedTheme) : { title: 'Materi Presentasi', slides: [] };
+    const genEdFn = (typeof generateEditorialTitle === 'function') ? generateEditorialTitle : (typeof window !== 'undefined' && typeof window.generateEditorialTitle === 'function' ? window.generateEditorialTitle : null);
     const edTitleObj = genEdFn ? genEdFn(cleanTopic, deducedTheme.id) : { title: defaultBp.title, subtitle: '' };
 
     const rawTitle = existingTitle || defaultBp.title || edTitleObj.title || cleanTopic.slice(0, 40) || "Executive Presentation Deck";
@@ -774,11 +774,8 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         contentEl.innerHTML = `<div class="error-msg-box" style="color: #EF4444; font-size: 13px; font-weight: 500; line-height: 1.5; padding: 10px 14px; background: rgba(239, 68, 68, 0.08); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.25);">${escapeHtml(friendlyMsg)}</div>`;
       }
       updateFooterStatus("Design Error / Network Issue");
-      if (typeof saveCurrentSessionToDB === 'function') {
-        saveCurrentSessionToDB();
-      } else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') {
-        window.saveCurrentSessionToDB();
-      }
+      if (typeof saveCurrentSessionToDB === 'function') saveCurrentSessionToDB();
+      else if (typeof window !== 'undefined' && typeof window.saveCurrentSessionToDB === 'function') window.saveCurrentSessionToDB();
     }
   } finally {
     isExecuting = false;
@@ -792,7 +789,4 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
   }
 }
 
-// Global attachment
-if (typeof window !== 'undefined') {
-  window.runDesignModeLoop = runDesignModeLoop;
-}
+if (typeof window !== 'undefined') window.runDesignModeLoop = runDesignModeLoop;
