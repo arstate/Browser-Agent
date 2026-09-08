@@ -2421,6 +2421,29 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
 
+## 🏛️ 68. Presisi Brief Master Design, Fixed 16:9 Virtual Canvas Autoscale, Cross-Platform Windows PDF Export, & Fitur Temporary Chat Icon-Only (v2.150.292)
+
+1. **Akurasi Brief Prompt pada Master Design**:
+   - Menghilangkan distorsi topik pada Design Mode dengan meneruskan teks brief lengkap (`userMessage`) ke `fetchSlideContentFromAI()` dan `createSlidePromptForMasterDesign()`.
+   - Mengintegrasikan `extractCustomUserOutline()` ke `createDefaultBlueprint()` untuk mengekstrak pembagian slide custom yang diinputkan pengguna.
+
+2. **Fixed Virtual 16:9 Canvas (1200x675 px) & Proportional CSS Transform Autoscale**:
+   - Mengunci container `.slide-section` pada ukuran absolut `1200px x 675px` dengan `position: absolute; transform-origin: center center;`.
+   - Menerapkan fungsi `initSlideDeckAutoscale()` di `slide_deck_engine.js` yang menghitung `scale = Math.min(availW / 1200, availH / 675)` dan memperbarui CSS transform saat window di-resize atau drawer digeser. Tidak ada lagi teks patah, layout pecah, atau overflow elemen.
+
+3. **Cross-Platform PDF Export Engine (Windows / Mac / Linux)**:
+   - Mengganti path statis Unix `/tmp/` dengan `tempfile.gettempdir()` pada `host/native_host.py` (`export_slide_deck_pdf`).
+   - Menambahkan deteksi binary Windows Chrome dan Edge (`%ProgramFiles%\Google\Chrome`, `%ProgramFiles(x86)%\Microsoft\Edge`, `chrome.exe`, `msedge.exe`).
+
+4. **Fitur Temporary Chat (Icon-Only Capsule)**:
+   - Menambahkan tombol `#btn-temporary-chat` di navbar kanan New Tab (`.header-right`) di samping `#chip-system-tab`.
+   - Menggunakan ikon SVG fedora hat + glasses dengan state `.active` beraksen amber glow.
+   - Mengimplementasikan guard `if (isTemporaryChatActive) return;` di `sidepanel.js` untuk membypass penyimpanan ke IndexedDB dan Chrome Storage.
+
+5. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
+
+
 
 
 

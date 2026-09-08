@@ -507,52 +507,24 @@ function extractSlidesFromRawHtml(html) {
       });
     }
 
-    if (!layout) {
-      if (i === 0) layout = 'cover';
-      else if (i === totalSections - 1 && totalSections >= 4) layout = 'conclusion';
-      else if (cards.length === 2) layout = 'split';
-      else if (cards.length === 4) layout = 'metrics';
-      else layout = 'bento';
-    }
-
-    extracted.push({
-      title,
-      subtitle,
-      layout,
-      cards,
-      index: i + 1
-    });
+    if (!layout) layout = (i === 0) ? 'cover' : (i === totalSections - 1 && totalSections >= 4) ? 'conclusion' : (cards.length === 2) ? 'split' : (cards.length === 4) ? 'metrics' : 'bento';
+    extracted.push({ title, subtitle, layout, cards, index: i + 1 });
   }
-
   return extracted;
 }
 
 function upgradeSlideDeckHtmlIfNeeded(html, userPrompt = "", meta = {}) {
   if (!html || typeof html !== "string") return html;
-  
-  // Check if existing deck contains legacy Djadi spill when user prompt is NOT about Djadi
   const hasLegacyDjadiSpill = /DJADI CREATIVE|STANDAR IDENTITAS VISUAL RESMI|CONFIDENTIAL \/\/ ENTERPRISE/i.test(html) && !/djadi/i.test(userPrompt);
-
-  // Only bypass if the deck ALREADY has the 100% official patented UI shell
   const hasPatentedUi = html.includes("dock-export-wrapper") && html.includes("dock-export-pdf-item") && html.includes("dock-btn-reset") && html.includes("slide-deck-controller-script");
   if (!hasLegacyDjadiSpill && hasPatentedUi && (html.includes("slide-section") || html.includes("slide-stage-wrap"))) {
     return (typeof ensureLatestSlideDeckRuntimeScript === 'function') ? ensureLatestSlideDeckRuntimeScript(html) : html;
   }
-
-  // If HTML contains slide elements, upgrade to full executive layout
   const extractedSlides = extractSlidesFromRawHtml(html);
   if (extractedSlides.length >= 1) {
     const rawTitle = meta?.title || (userPrompt || extractedSlides[0]?.title || "Executive Presentation Deck").slice(0, 40);
     const theme = resolveSlideDeckTheme(userPrompt || rawTitle, meta);
-    const deckMeta = {
-      title: rawTitle,
-      brand: rawTitle,
-      categoryTitle: rawTitle.toUpperCase(),
-      subCategory: theme.subHeader,
-      accentColor: meta?.colors?.[2] || theme.accent,
-      themeObj: theme,
-      userPrompt: userPrompt
-    };
+    const deckMeta = { title: rawTitle, brand: rawTitle, categoryTitle: rawTitle.toUpperCase(), subCategory: theme.subHeader, accentColor: meta?.colors?.[2] || theme.accent, themeObj: theme, userPrompt };
     return renderSlideDeckHtml(extractedSlides, deckMeta);
   }
 
@@ -574,24 +546,35 @@ function getSlideDeckRuntimeScript() {
       window.currentIndex = 0;
 
       function goToSlide(targetIdx) {
-        let idx = parseInt(targetIdx, 10);
-        if (isNaN(idx)) idx = 0;
-        if (idx < 0) idx = 0;
-        if (idx >= slides.length) idx = Math.max(0, slides.length - 1);
-        currentIndex = idx;
-        window.currentIndex = idx;
-
+        let idx = Math.max(0, Math.min(parseInt(targetIdx, 10) || 0, Math.max(0, slides.length - 1)));
+        currentIndex = idx; window.currentIndex = idx;
         for (let i = 0; i < slides.length; i++) slides[i].classList.toggle('active', i === idx);
         for (let i = 0; i < thumbs.length; i++) {
           const isActive = (i === idx);
           thumbs[i].classList.toggle('active', isActive);
-          if (isActive) {
-            try { thumbs[i].scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (_) {}
-          }
+          if (isActive) { try { thumbs[i].scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (_) {} }
         }
         if (currSlideEl) currSlideEl.textContent = String(idx + 1);
       }
       window.goToSlide = goToSlide;
+
+      function initSlideDeckAutoscale() {
+        const stage = document.getElementById('deck-stage-wrap');
+        if (!stage) return;
+        function updateScale() {
+          const availW = Math.max(200, stage.clientWidth - 48);
+          const availH = Math.max(150, stage.clientHeight - 96);
+          const scale = Math.min(availW / 1200, availH / 675);
+          for (let i = 0; i < slides.length; i++) {
+            slides[i].style.transform = `scale(${scale})`;
+            slides[i].style.transformOrigin = 'center center';
+          }
+        }
+        window.addEventListener('resize', updateScale);
+        if (window.ResizeObserver) new ResizeObserver(updateScale).observe(stage);
+        setTimeout(updateScale, 20);
+      }
+      initSlideDeckAutoscale();
 
       function showDeckToast(text) {
         let toast = document.getElementById('deck-toast-msg');
@@ -601,14 +584,9 @@ function getSlideDeckRuntimeScript() {
           toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.92);color:#fff;padding:9px 18px;border-radius:24px;font-family:system-ui,-apple-system,sans-serif;font-size:12px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,0.35);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.12);z-index:999999;pointer-events:none;transition:all 0.25s ease;opacity:0;';
           document.body.appendChild(toast);
         }
-        toast.textContent = text;
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateX(-50%) translateY(0)';
+        toast.textContent = text; toast.style.opacity = '1'; toast.style.transform = 'translateX(-50%) translateY(0)';
         clearTimeout(toast.__timer);
-        toast.__timer = setTimeout(() => {
-          toast.style.opacity = '0';
-          toast.style.transform = 'translateX(-50%) translateY(8px)';
-        }, 3000);
+        toast.__timer = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(-50%) translateY(8px)'; }, 3000);
       }
 
       function exportDeckAsPdf() {

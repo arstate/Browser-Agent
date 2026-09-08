@@ -12480,10 +12480,40 @@ function sanitizeHistoryForStorage(history) {
   });
 }
 
+let isTemporaryChatActive = false;
 let isSavingSession = false;
 let saveSessionDebounceTimer = null;
 
+function toggleTemporaryChat(forceState) {
+  if (typeof forceState === 'boolean') {
+    isTemporaryChatActive = forceState;
+  } else {
+    isTemporaryChatActive = !isTemporaryChatActive;
+  }
+  window.isTemporaryChatActive = isTemporaryChatActive;
+
+  const btn = document.getElementById('btn-temporary-chat');
+  if (btn) {
+    btn.classList.toggle('active', isTemporaryChatActive);
+    btn.setAttribute('aria-pressed', isTemporaryChatActive ? 'true' : 'false');
+    btn.title = isTemporaryChatActive
+      ? 'Mode Chat Sementara: AKTIF (Percakapan tidak disimpan ke riwayat)'
+      : 'Mode Chat Sementara (Klik untuk mengaktifkan)';
+  }
+
+  if (isTemporaryChatActive) {
+    if (typeof showUniversalToast === 'function') {
+      showUniversalToast('🕶️ Mode Chat Sementara Aktif: Pesan tidak akan disimpan ke riwayat.');
+    }
+  } else {
+    if (typeof showUniversalToast === 'function') {
+      showUniversalToast('💾 Mode Chat Normal: Pesan disimpan ke riwayat.');
+    }
+  }
+}
+
 async function saveCurrentSessionToDB(immediate = false) {
+  if (isTemporaryChatActive) return;
   if (!immediate) {
     if (saveSessionDebounceTimer) {
       clearTimeout(saveSessionDebounceTimer);
@@ -12506,6 +12536,7 @@ async function saveCurrentSessionToDB(immediate = false) {
 }
 
 async function executeSaveCurrentSessionToDB() {
+  if (isTemporaryChatActive) return;
   if (isSavingSession) return;
   isSavingSession = true;
   try {
@@ -13688,6 +13719,10 @@ inputHistoryImportFile?.addEventListener('change', (e) => {
 document.getElementById('btn-history-new-chat')?.addEventListener('click', startNewChat);
 document.getElementById('btn-header-new-chat')?.addEventListener('click', startNewChat);
 document.getElementById('btn-clear-all-history')?.addEventListener('click', openClearAllConfirmModal);
+document.getElementById('btn-temporary-chat')?.addEventListener('click', () => toggleTemporaryChat());
+if (typeof window !== 'undefined') {
+  window.toggleTemporaryChat = toggleTemporaryChat;
+}
 
 async function exportFullDatabaseFromSidepanel() {
   try {

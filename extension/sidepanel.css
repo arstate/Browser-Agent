@@ -1187,6 +1187,31 @@ body::before {
   border-color: rgba(255, 255, 255, 0.18);
 }
 
+.btn-temporary-chat {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #94A3B8;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-temporary-chat:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #F1F5F9;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.btn-temporary-chat.active {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.55);
+  color: #FBBF24;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.28);
+}
+
 .bento-status-chip .status-dot {
   width: 6px;
   height: 6px;

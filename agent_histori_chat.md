@@ -8214,6 +8214,41 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris.
   3. Bump versi ke `v2.150.291` di `extension/manifest.json`.
 
+### 🚀 Iterasi 175: Presisi Brief Master Design, Fixed 16:9 Virtual Canvas Autoscale, Cross-Platform Windows PDF Export, & Fitur Temporary Chat Icon-Only
+- **Waktu Eksekusi**: 2026-09-09 01:15 WIB
+- **Versi**: `v2.150.292`
+- **Problem Statement Pengguna**:
+  1. *"ketika mode design mode itu kana syaa kirim brief prmpt untuk generate slidenya ya tapi agentnya malah gagal paham bro dan generate slide materinya ngawur tapi kalau saua di mode open canvas baru dia paham revisi slide baru paham slidenya bro, ini gimana ya bro msalaha dan solusinya"*
+  2. *"trus di canvas mode di slide deck pdf preview di canvas mode open itu kok tampilanya responsif kalau layar di zzomom in zoom out browser ui scaleya itu ikut besar kecil elemenya harusnya kan fix bro, coba bro kenapa ya itu mau tanya saya"*
+  3. *"trus ketika di jalanin di windows slide deck nya itu ketika eksport ada error open design error apa gitu bro kenapa ya itu bro"*
+  4. *"tambah fitur temporary chat bro ketika di home itu ada tombol temporary chat icon only"*
+  5. *"gas ini"*
+- **Akar Masalah (Root Causes)**:
+  1. *Pemotongan Brief Desain*: Fungsi `cleanPresentationTopic` memotong input string menjadi 45 karakter dan hanya meneruskan judul topik generic ke `createSlidePromptForMasterDesign`, sehingga AI kehilangan konteks instruksi/bab mendalam pengguna.
+  2. *Slide Deck CSS Responsive / Cair*: `.slide-section` menggunakan CSS `width: min(1200px, 100%, ...)`, sementara font dan padding menggunakan pixel statis. Akibatnya saat zoom browser atau drawer menyempit, wadah mengecil tapi font tetap besar sehingga teks membungkus (word-wrap) canggung dan kartu meluap keluar batas 16:9.
+  3. *Error PDF Windows*: Path `/tmp/` di `host/native_host.py` tidak valid di OS Windows (memicu `FileNotFoundError: No such file or directory: '/tmp/...'`) serta tidak adanya path binary Chrome/Edge Windows.
+  4. *Kebutuhan Mode Percakapan Tanpa Jejak*: Pengguna menginginkan obrolan sementara (*ephemeral chat*) yang dapat diaktifkan lewat satu klik tombol ikon di navbar homescreen.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Presisi Brief Prompt AI (`design_agent.js` & `design_executor.js`)**:
+     - Memperbarui `createSlidePromptForMasterDesign` untuk menerima `userBrief` dan menyisipkan `BRIEF & INSTRUKSI LENGKAP PENGGUNA`.
+     - Menambahkan fungsi `extractCustomUserOutline` pada `createDefaultBlueprint` untuk mengekstrak pembagian bab/slide khusus.
+     - Meneruskan `userMessage` ke pemanggilan `fetchSlideContentFromAI` di slide cover dan slide konten.
+  2. **Fixed Virtual 16:9 Canvas & Proportional Transform Scaling (`slide_styles.js` & `slide_deck_engine.js`)**:
+     - Mengunci `.slide-section` pada ukuran tetap `1200px x 675px` (`position: absolute; transform-origin: center center;`).
+     - Mengimplementasikan `initSlideDeckAutoscale()` di `slide_deck_engine.js` yang menghitung rasio skala `Math.min(availW / 1200, availH / 675)` dan memperbarui CSS transform secara dinamis.
+  3. **Universal Cross-Platform Native PDF Export (`host/native_host.py`)**:
+     - Menggunakan `tempfile.gettempdir()` dan `os.path.join()` menggantikan hardcoded `/tmp/`.
+     - Menambahkan jalur pencarian Chrome dan Microsoft Edge Windows/macOS.
+  4. **Fitur Temporary Chat Icon-Only (`newtab.html`, `newtab.css`, `sidepanel.css`, `sidepanel.js`)**:
+     - Menambahkan tombol `#btn-temporary-chat` (ikon fedora hat + glasses) di navbar kanan New Tab di samping `#chip-system-tab`.
+     - Styling active glow amber pada `.btn-temporary-chat.active`.
+     - Menerapkan bypass penyimpanan `if (isTemporaryChatActive) return;` di `saveCurrentSessionToDB()` dan `executeSaveCurrentSessionToDB()`.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Validasi sintaksis `node -c extension/design/*.js extension/sidepanel.js` dan `python3 -m py_compile host/native_host.py` lolos 100% tanpa error.
+  2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris.
+  3. Bump versi ke `v2.150.292` di `extension/manifest.json`.
+
+
 
 
 

@@ -1669,3 +1669,29 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Validasi sintaksis `node -c` lulus 100% pada semua berkas JavaScript terkait.
      - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
 
+### 175. Rilis Versi v2.150.292 - Presisi Brief Master Design, Fixed 16:9 Virtual Canvas Autoscale, Cross-Platform Windows PDF Export, dan Fitur Temporary Chat Icon-Only
+- **Waktu Rilis**: 2026-09-09 01:15 WIB
+- **Fokus Utama**: Memperbaiki 4 masalah kritis dalam ekosistem perancangan slide OpenDesign dan privasi sesi obrolan:
+  1. *Akurasi Brief Desain*: Master Design memahami brief pengguna secara akurat sejak pembuatan awal (Design Mode) tanpa mengalami distorsi atau halusinasi ("ngawur"), sejajar dengan kapabilitas revisi Open Canvas.
+  2. *Fixed 16:9 Virtual Canvas & CSS Transform Autoscale*: Tampilan slide terkunci pada rasio 16:9 virtual murni (1200x675 px) dengan autoscale proporsional ala PowerPoint/Canva/PDF saat jendela di-zoom in / zoom out atau drawer diubah ukurannya, mengeliminasi layout pecah atau teks meluap.
+  3. *Cross-Platform PDF Export (Windows Fix)*: Eliminasi error "open design error" pada Windows dengan mengganti path Unix statis `/tmp/` menggunakan `tempfile.gettempdir()` dan mendeteksi executable Chrome/Edge Windows/macOS.
+  4. *Fitur Temporary Chat Icon-Only*: Menambahkan tombol toggle chat sementara berbasis ikon di navbar kanan New Tab (`#btn-temporary-chat`) yang mencegah penyimpanan percakapan ke IndexedDB riwayat saat aktif.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Injeksi Brief Lengkap ke Master Design Prompt (`design_agent.js` & `design_executor.js`)**:
+     - Memperbarui `createSlidePromptForMasterDesign` untuk menerima parameter `userBrief` dan menyuntikkan section `BRIEF & INSTRUKSI LENGKAP PENGGUNA` ke prompt AI.
+     - Menyertakan parser `extractCustomUserOutline` pada `createDefaultBlueprint` untuk membaca pembagian bab/slide khusus dari input pengguna.
+     - Menghubungkan parameter `userMessage` ke pemanggilan `fetchSlideContentFromAI` untuk Slide 1 (Cover) dan Slide konten.
+  2. **Fixed Virtual Canvas & Proportional Transform Scaling (`slide_styles.js` & `slide_deck_engine.js`)**:
+     - Mengunci `.slide-section` pada ukuran tetap `width: 1200px !important; height: 675px !important; min-width: 1200px; min-height: 675px; position: absolute; transform-origin: center center;`.
+     - Mengimplementasikan `initSlideDeckAutoscale()` pada `slide_deck_engine.js` yang menghitung `scaleFactor = Math.min(availW / 1200, availH / 675)` dan menyetel `transform: scale(...)` secara dinamis pada `window.resize` dan `ResizeObserver`.
+  3. **Universal Cross-Platform PDF Rendering Host (`host/native_host.py`)**:
+     - Menggunakan `tempfile.gettempdir()` dan `os.path.join()` untuk menyimpan file sementara `deck_{ts}.html` dan `{title}_{ts}.pdf` sehingga kompatibel di Windows (`AppData\Local\Temp`), Linux (`/tmp`), dan macOS.
+     - Memperluas daftar `chrome_candidates` dengan path standar Windows (`%ProgramFiles%\Google\Chrome`, `%ProgramFiles(x86)%\Microsoft\Edge`, `chrome.exe`, `msedge.exe`).
+  4. **Tombol Temporary Chat Icon-Only & Bypass Penyimpanan (`newtab.html`, `newtab.css`, `sidepanel.css`, `sidepanel.js`)**:
+     - Menambahkan `<button id="btn-temporary-chat" class="bento-status-chip chip-dark btn-temporary-chat">` dengan ikon SVG fedora hat + glasses pada navbar New Tab.
+     - Memberikan styling active glow amber pada `.btn-temporary-chat.active`.
+     - Menerapkan guard `if (isTemporaryChatActive) return;` pada `saveCurrentSessionToDB()` dan `executeSaveCurrentSessionToDB()` di `sidepanel.js`.
+  5. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Validasi sintaksis `node -c extension/design/*.js extension/sidepanel.js` dan `python3 -m py_compile host/native_host.py` lulus 100% tanpa error.
+     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+

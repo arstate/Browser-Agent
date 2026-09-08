@@ -1034,13 +1034,13 @@ def save_and_parse_uploaded_file(file_name, file_data, mime_type="", session_id=
             try:
                 from doc_parser import parse_document_to_markdown
                 parsed = parse_document_to_markdown(file_path)
-            if parsed.get("status") == "ok":
-                markdown_content = parsed.get("markdown", "")
-                fmt = parsed.get("format", fmt)
-                char_count = parsed.get("char_count", len(markdown_content))
-                approx_tokens = parsed.get("approx_tokens", max(1, (len(markdown_content) + 3) // 4))
-        except Exception as ep:
-            log(f"doc_parser notice in save_and_parse_uploaded_file: {ep}")
+                if parsed.get("status") == "ok":
+                    markdown_content = parsed.get("markdown", "")
+                    fmt = parsed.get("format", fmt)
+                    char_count = parsed.get("char_count", len(markdown_content))
+                    approx_tokens = parsed.get("approx_tokens", max(1, (len(markdown_content) + 3) // 4))
+            except Exception as ep:
+                log(f"doc_parser notice in save_and_parse_uploaded_file: {ep}")
 
         if not markdown_content:
             try:
@@ -3912,8 +3912,9 @@ def export_slide_deck_pdf(html_content="", title="presentation"):
     try:
         clean_title = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')[:50] or 'presentation'
         ts = int(time.time() * 1000)
-        tmp_html = f"/tmp/deck_{ts}.html"
-        tmp_pdf = f"/tmp/{clean_title}_{ts}.pdf"
+        temp_dir = tempfile.gettempdir()
+        tmp_html = os.path.join(temp_dir, f"deck_{ts}.html")
+        tmp_pdf = os.path.join(temp_dir, f"{clean_title}_{ts}.pdf")
 
         # Sanitize injected interactive styles and enforce all-slides 16:9 vector print styles
         sanitized_html = re.sub(r'<style\b[^>]*id=["\']slide-deck-controller-style["\'][^>]*>[\s\S]*?</style>', '', html_content, flags=re.IGNORECASE)
@@ -3946,7 +3947,18 @@ def export_slide_deck_pdf(html_content="", title="presentation"):
             "chromium-browser",
             "/usr/bin/google-chrome-stable",
             "/usr/bin/google-chrome",
-            "/usr/bin/chromium"
+            "/usr/bin/chromium",
+            os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
+            os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+            "chrome.exe",
+            "msedge.exe",
+            "chrome",
+            "msedge"
         ]
         chrome_bin = None
         for cand in chrome_candidates:

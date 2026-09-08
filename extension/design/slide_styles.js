@@ -245,18 +245,21 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
     @media screen {
       .slide-section {
         display: none !important;
-        width: min(1200px, 100%, calc((100vh - 96px) * (16 / 9)));
-        max-width: 1200px;
-        max-height: 675px;
+        width: 1200px !important;
+        height: 675px !important;
+        min-width: 1200px !important;
+        min-height: 675px !important;
+        max-width: 1200px !important;
+        max-height: 675px !important;
         aspect-ratio: 16 / 9;
         opacity: 0;
-        transform: scale(0.99);
-        transition: opacity 0.2s ease, transform 0.2s ease;
+        position: absolute;
+        transform-origin: center center;
+        transition: opacity 0.2s ease;
       }
       .slide-section.active {
         display: flex !important;
         opacity: 1 !important;
-        transform: scale(1) !important;
       }
     }
 

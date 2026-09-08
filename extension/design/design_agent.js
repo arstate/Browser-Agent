@@ -226,8 +226,20 @@ function generateEditorialTitle(cleanTopic, themeId = "playful_pastel") {
   return { title: `Eksplorasi: ${titleCase}`, subtitle: `Wawasan mendalam dan panduan terstruktur seputar ${cleanTopic.toLowerCase()}.` };
 }
 
-function createDefaultBlueprint(topic = 'Presentasi', targetSlideCount = 5, theme = {}) {
-  const count = Math.max(3, Math.min(parseInt(targetSlideCount, 10) || 5, 30));
+function extractCustomUserOutline(rawText) {
+  if (!rawText || typeof rawText !== 'string') return [];
+  const lines = rawText.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+  const list = [];
+  for (const line of lines) {
+    const m = line.match(/^(?:slide\s*\d+|halaman\s*\d+|\d+[\.\)])\s*[:\-]?\s*(.+)$/i);
+    if (m && m[1].length > 2) list.push(m[1].trim());
+  }
+  return list;
+}
+
+function createDefaultBlueprint(topic = 'Presentasi', targetSlideCount = 5, theme = {}, userRawBrief = '') {
+  const customOutlines = extractCustomUserOutline(userRawBrief || topic);
+  const count = customOutlines.length >= 3 ? customOutlines.length : Math.max(3, Math.min(parseInt(targetSlideCount, 10) || 5, 30));
   const cleanTopic = cleanPresentationTopic(topic);
   const edObj = generateEditorialTitle(cleanTopic, theme.id);
   const titleCase = toTitleCaseIndonesian(cleanTopic);
@@ -237,7 +249,7 @@ function createDefaultBlueprint(topic = 'Presentasi', targetSlideCount = 5, them
 
   slides.push({
     index: 1,
-    title: edObj.title,
+    title: (customOutlines[0] && !/cover/i.test(customOutlines[0])) ? customOutlines[0] : edObj.title,
     subtitle: edObj.subtitle,
     layout: 'cover',
     badge: theme.tag || 'EDISI EKSKLUSIF'
@@ -316,24 +328,25 @@ function createDefaultBlueprint(topic = 'Presentasi', targetSlideCount = 5, them
 
   for (let i = 2; i < count; i++) {
     const layout = archetypes[(i - 2) % archetypes.length];
-    const outlineIdx = (i - 2) % outlineTitles.length;
-    const outlineItem = outlineTitles[outlineIdx];
+    const customTitle = customOutlines[i - 1];
+    const outlineItem = outlineTitles[(i - 2) % outlineTitles.length];
     const suffix = (i - 2 >= outlineTitles.length) ? ` // Lanjutan ${Math.floor((i - 2) / outlineTitles.length) + 1}` : '';
     slides.push({
       index: i,
-      title: outlineItem.title + suffix,
-      subtitle: outlineItem.sub,
-      layout: layout,
+      title: customTitle || (outlineItem.title + suffix),
+      subtitle: customTitle ? `Eksplorasi mendalam seputar ${customTitle}.` : outlineItem.sub,
+      layout,
       badge: `BAB ${String(i).padStart(2, '0')} // ${cleanTopic.slice(0, 16).toUpperCase()}`
     });
   }
 
   if (count >= 3) {
     const lastOutline = outlineTitles[outlineTitles.length - 1];
+    const customLast = customOutlines[count - 1];
     slides.push({
       index: count,
-      title: lastOutline.title || `Rangkuman & Kesimpulan: ${titleCase}`,
-      subtitle: lastOutline.sub || `Intisari pemahaman dan rekomendasi terbaik seputar ${cleanTopic.toLowerCase()}.`,
+      title: customLast || lastOutline.title || `Rangkuman: ${titleCase}`,
+      subtitle: customLast ? `Intisari pemahaman dan rekomendasi strategis.` : (lastOutline.sub || `Intisari pemahaman seputar ${cleanTopic.toLowerCase()}.`),
       layout: 'conclusion',
       badge: 'KESIMPULAN'
     });
@@ -416,12 +429,8 @@ function reviseSlideData(slide, auditReason = '', expectedLayout = '', topic = '
       });
     }
   } else if (layout === 'quote') {
-    if (!revised.quoteText) {
-      revised.quoteText = revised.subtitle || `Memahami seluk-beluk ${cleanTopic.toLowerCase()} memberikan wawasan mendalam dan perspektif baru yang berharga.`;
-    }
-    if (!revised.quoteAuthor) {
-      revised.quoteAuthor = `${titleCase} Insights`;
-    }
+    if (!revised.quoteText) revised.quoteText = revised.subtitle || `Memahami seluk-beluk ${cleanTopic.toLowerCase()} memberikan wawasan mendalam dan perspektif baru yang berharga.`;
+    if (!revised.quoteAuthor) revised.quoteAuthor = `${titleCase} Insights`;
   } else if (layout === 'timeline') {
     while (revised.cards.length < 3) {
       const idx = revised.cards.length + 1;
@@ -509,7 +518,7 @@ function reviseFullDeckData(slides, missList = [], topic = '', theme = {}) {
   return revisedSlides;
 }
 
-function createSlidePromptForMasterDesign(slideIndex, totalSlides, topic = '', blueprintSlide = {}, prevSlideSummary = '', styleConcept = {}) {
+function createSlidePromptForMasterDesign(slideIndex, totalSlides, topic = '', blueprintSlide = {}, prevSlideSummary = '', styleConcept = {}, userBrief = '') {
   const slideNum = slideIndex + 1;
   const cleanTopic = cleanPresentationTopic(topic || 'Materi Presentasi');
   const layout = blueprintSlide.layout || (slideNum === 1 ? 'cover' : 'bento');
@@ -521,27 +530,21 @@ function createSlidePromptForMasterDesign(slideIndex, totalSlides, topic = '', b
   const isPlayful = Boolean(styleConcept?.theme?.isPlayful || /lucu|cute|gemes|gemoy|kucing|cat|kitten|paw|coretan|kartun|anabul/i.test(cleanTopic));
   const isCover = (slideNum === 1 || layout === 'cover');
   const coverDirective = isCover
-    ? `KHUSUS COVER:
-- Buat judul utama ("title") yang ARTISTIK, KREATIF, dan MEMIKAT (BUKAN teks perintah seperti "Slide PDF tentang...", "Buatkan...", dsb). Contoh: "Pesona & Ragam Kucing Lucu di Indonesia".
-- Buat subjudul ("subtitle") yang informatif, puitis, dan menggugah minat audiens.${isPlayful ? '\n- Gaya Playful / Kawaii: Gunakan judul ceria, hangat, bersahabat dengan sentuhan kasih sayang anabul.' : ''}`
-    : `KHUSUS KONTEN:
-- Seluruh judul kartu, deskripsi, dan metrik HARUS 100% KONSISTEN dengan tema "${cleanTopic}".
-- ANTI-TEMPLATE & ANTI-TEXT-WALL: Buat deskripsi padat (2-3 kalimat tajam atau poin-poin karakteristik penting yang scannable).
-- DILARANG menggunakan kata seragam "PILAR 01", "PILAR 02" pada badge kartu! Berikan badge spesifik topik (misal: "${isPlayful ? '🐾 RAS ASLI' : 'CIRI FISIK'}", "${isPlayful ? '🐱 TINGKAH GEMAS' : 'FAVORIT'}", "${isPlayful ? '✨ FAKTA LUCU' : 'TIPS RAWAT'}").
-- "footerHighlight": Frasa kunci ringkas (1-3 kata), bukan tombol aksi.${isPlayful ? '\n- Hindari istilah korporat kaku seperti "Action Playbook", "Eksekutif", "Implementasi", "KPI"!' : ''}`;
+    ? `KHUSUS COVER:\n- Buat judul utama ("title") yang ARTISTIK, KREATIF, dan MEMIKAT (BUKAN teks perintah seperti "Slide PDF tentang..."). Contoh: "Pesona & Ragam Kucing Lucu di Indonesia".\n- Buat subjudul ("subtitle") yang informatif, puitis, dan menggugah minat audiens.${isPlayful ? '\n- Gaya Playful: Gunakan judul ceria, hangat, bersahabat.' : ''}`
+    : `KHUSUS KONTEN:\n- Seluruh judul kartu, deskripsi, dan metrik HARUS 100% KONSISTEN dengan tema "${cleanTopic}".\n- ANTI-TEMPLATE & ANTI-TEXT-WALL: Buat deskripsi padat (2-3 kalimat tajam atau poin-poin karakteristik penting yang scannable).\n- DILARANG menggunakan kata seragam "PILAR 01" pada badge kartu! Berikan badge spesifik topik.\n- "footerHighlight": Frasa kunci ringkas (1-3 kata), bukan tombol aksi.`;
 
   return `Kamu adalah 🎨 Master Design (Tangan Kanan Master Agent).
 Tugasmu: Rancang konten SANGAT DETAIL dan SPESIFIK untuk Slide ${slideNum} dari total ${totalSlides} slide presentasi 16:9 widescreen.
 
 Materi Utama: "${cleanTopic}"
-Konsep Art Direction: "${conceptName}"
+${userBrief && String(userBrief).trim() ? `BRIEF & INSTRUKSI LENGKAP PENGGUNA:\n"""\n${String(userBrief).slice(0, 1500)}\n"""\n` : ''}Konsep Art Direction: "${conceptName}"
 Mood & Vibe: "${vibe}"
 Pedoman Tata Letak: "${layoutFeel}"
 Arketipe Tata Letak: ${layout.toUpperCase()}
 Sasaran Topik Slide: "${title}"
 ${prevSlideSummary ? `Konteks Slide Sebelumnya: "${prevSlideSummary}"` : ''}
 
-${coverDirective}
+${coverDirective}`
 
 ATURAN KETAT:
 1. DILARANG menggunakan teks korporat palsu ("Djadi Creative", "GSM v3.0", "Confidential // Enterprise", "PILAR 01"${isPlayful ? ', "Action Playbook", "Eksekutif"' : ''}).

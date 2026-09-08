@@ -50,9 +50,9 @@ async function readAiResponseContent(resp) {
   }
 }
 
-async function fetchSlideContentFromAI(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary, agentConfig, abortSignal) {
+async function fetchSlideContentFromAI(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary, agentConfig, abortSignal, userBrief = '') {
   const prompt = (typeof createSlidePromptForMasterDesign === 'function')
-    ? createSlidePromptForMasterDesign(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary, agentConfig?.styleConcept)
+    ? createSlidePromptForMasterDesign(slideIndex, totalSlides, topic, blueprintSlide, prevSlideSummary, agentConfig?.styleConcept, userBrief || topic)
     : `Rancang konten detail untuk slide ${slideIndex + 1} topik: ${topic}`;
 
   const endpointUrl = getEffectiveEndpointUrl(agentConfig.endpointUrl || agentConfig.endpoint);
@@ -262,7 +262,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     accumulatedContent = "";
     const meta = { category: deducedTheme.name };
 
-    const defaultBp = (typeof createDefaultBlueprint === 'function') ? createDefaultBlueprint(cleanTopic, targetSlideCount, deducedTheme) : { title: 'Materi Presentasi', slides: [] };
+    const defaultBp = (typeof createDefaultBlueprint === 'function') ? createDefaultBlueprint(cleanTopic, targetSlideCount, deducedTheme, userMessage) : { title: 'Materi Presentasi', slides: [] };
     const genEdFn = (typeof generateEditorialTitle === 'function') ? generateEditorialTitle : (typeof window !== 'undefined' && typeof window.generateEditorialTitle === 'function' ? window.generateEditorialTitle : null);
     const edTitleObj = genEdFn ? genEdFn(cleanTopic, deducedTheme.id) : { title: defaultBp.title, subtitle: '' };
 
@@ -407,7 +407,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         );
       }
 
-      const aiSlide1 = await fetchSlideContentFromAI(0, targetSlideCount, userMessage, workingSlides[0], '', config, abortController.signal);
+      const aiSlide1 = await fetchSlideContentFromAI(0, targetSlideCount, userMessage, workingSlides[0], '', config, abortController.signal, userMessage);
       workingSlides[0] = { ...workingSlides[0], ...aiSlide1 };
 
       let audit1 = (typeof auditSingleSlide === 'function')
@@ -510,7 +510,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
         }
 
         const prevContext = workingSlides[sIdx - 1].title + ': ' + (workingSlides[sIdx - 1].subtitle || '');
-        const aiSlide = await fetchSlideContentFromAI(sIdx, targetSlideCount, userMessage, curSlide, prevContext, config, abortController.signal);
+        const aiSlide = await fetchSlideContentFromAI(sIdx, targetSlideCount, userMessage, curSlide, prevContext, config, abortController.signal, userMessage);
         curSlide = { ...curSlide, ...aiSlide };
 
         let auditRes = (typeof auditSingleSlide === 'function')
