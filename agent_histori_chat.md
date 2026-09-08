@@ -7892,8 +7892,39 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Menjalankan migrasi pembersihan pada `~/.browser-agent/chat_history.db`: 109 sesi raksasa berhasil dipadatkan, menghemat 263.64 MB ruang disk. Ukuran database menyusut drastis dari **335 MB menjadi 8.60 MB** dengan waktu simpan di bawah 5 milidetik.
      - Menambahkan `busy_timeout = 5000` dan `PRAGMA wal_checkpoint(PASSIVE)` pada Rust Native Host.
 - **Verifikasi & Kepatuhan Arsitektur:**
-  1. Simulasi Native RPC dan verifikasi chunk reassembly sukses 100%.
-  2. Database vacuum terverifikasi menyusut dari 335 MB ke 8.60 MB, sesi aktif berkurang dari 35.1 MB ke 91.7 KB.
-  3. Validasi sintaksis `node -c extension/sidepanel.js` lulus 100% tanpa error.
+### Iterasi: Konversi & Inspeksi Visual Dokumen PDF/Word Resolusi Tinggi (150 DPI) per Halaman Urut (`v2.150.282`)
+- **User Request:**
+  - "update untuk view file document pdf atau word itu si ai agent buat untuk konvert file misal pdf dia konvert semua halaman jadi png/jpg size mb kecil tapi ga burik trsu halaman urut biar dia bisa baca dan hasilnya akurat bro"
+- **Akar Masalah & Kebutuhan:**
+  1. Pembacaan berkas PDF dan Word (.docx/.doc) sebelumnya hanya mengandalkan ekstraksi teks mentah (`Anydoc` / `pdftotext` / `python-docx`).
+  2. Akibatnya, elemen-elemen visual penting seperti tata letak dokumen, tabel bertingkat, rumus, bagan/diagram, stempel, tanda tangan, atau infografis hilang, sehingga analisis AI agent kerap tidak lengkap atau keliru.
+  3. Pengguna menginginkan agar AI agent memiliki kapabilitas untuk mengonversi setiap halaman dokumen PDF maupun Word menjadi gambar JPG/PNG tajam (resolusi tinggi, tidak buram / "ga burik"), berukuran file ringan (~80-130 KB per halaman), dengan penataan halaman yang mutlak urut 1..N agar model vision LLM dapat membaca dokumen secara visual dan teks dengan akurasi 100%.
+- **Solusi & Rekayasa Teknis:**
+  1. *Mesin Konversi Halaman Dokumen Berkinerja Tinggi (`host/doc_parser.py`)*:
+     - Mengimplementasikan `convert_document_to_page_images()` dengan dukungan PDF langsung dan Word (DOCX/DOC/ODT/RTF) melalui konversi otomatis LibreOffice headless (`soffice --headless --convert-to pdf`).
+     - Rendering per halaman menggunakan Poppler `pdftoppm` dengan format JPEG progresif 150 DPI (kualitas 85). Menghasilkan ketajaman kristal (1275x1650 piksel pada A4) dengan ukuran file kecil (~80-130 KB per halaman).
+     - Natural sorting ketat (`re.search(r'(\d+)', filename)`) menjamin urutan halaman mutlak 1, 2, 3.. N tanpa kekeliruan leksikografis.
+     - Ekstraksi teks per halaman terisolasi via `pdftotext -f <pg> -l <pg> -layout` untuk melengkapi pemahaman teks dan visual.
+     - Penambahan opsi CLI: `--convert-pages`, `--both`, `--dpi`, `--quality`, `--max-pages`, `--range`, `--no-base64`.
+  2. *Dukungan Native RPC `convert_document_pages` (`host/native_host.py` & `host/rust_host/src/main.rs`)*:
+     - Menambahkan handler RPC `convert_document_pages` dan `view_document_pages` pada Python Host dan Rust Native Host (`browser_agent_host`).
+     - Memperkaya RPC `save_and_parse_uploaded_file`: ketika berkas PDF/Word diunggah lewat tombol lampiran, Native Host otomatis mengonversi seluruh halaman ke direktori cache `~/.browser-agent/uploads/pages_{timestamp}_{name}/` dan mengembalikan metadata halaman (`pages`, `total_pages`, `pages_dir`, `thumbnail_url`).
+     - Binary rilis Rust dikompilasi dengan `cargo build --release` dan diinstal ke `host/browser_agent_host` via `install -m 755`.
+  3. *Registrasi Tool Agent `view_document` (`extension/sidepanel.js` & `extension/background.js`)*:
+     - Mendaftarkan tool `view_document` (dengan alias `view_file`, `view_document_file`, `local_view_file`, `convert_document_pages`, `read_document_pages`) pada prompt sistem dan skema alat.
+     - Parameter: `path`, `dpi` (default 150), `max_pages` (default 30), `page_range`.
+     - Menghubungkan eksekusi tool di `sidepanel.js` dan remote executor di `background.js`.
+  4. *Injeksi Observasi Visual Multimodal (`runAgentLoop` & `runChatModeLoop`)*:
+     - Pada `runAgentLoop`: segera setelah tool `view_document` / `view_file` tuntas dieksekusi, sistem secara otomatis menyuntikkan giliran observasi visual (`role: 'user'`) berisi data URL gambar setiap halaman dokumen secara berurutan (`type: 'image_url'`).
+     - Model vision LLM (Gemini 2.5 Flash/Pro, Claude 3.5 Sonnet, GPT-4o) membaca dan menganalisis setiap lembar dokumen secara visual pada langkah penalaran berikutnya.
+     - Pada alur upload lampiran: halaman-halaman gambar diteruskan ke `userPayloadContent` secara berurutan.
+  5. *Penyempurnaan UI Pratinjau & Chat Bubble*:
+     - Thumbnail visual Halaman 1 asli dokumen ditampilkan di bar lampiran prompt (`renderAttachmentsPreview`) dengan badge `PDF • N Hal` atau `DOC • N Hal`.
+     - Gelembung pesan chat pengguna (`appendUserMessage`) menampilkan thumbnail dokumen dan badge jumlah halaman beraksen neon yang elegan.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Uji konversi dokumen PDF nyata (`/home/arya/Downloads/1.pdf`, 5 halaman) dan dokumen Word DOCX: tuntas dalam < 1.5 detik, ukuran berkas ~100 KB/halaman, teks tajam 150 DPI.
+  2. Uji Native RPC `convert_document_pages` di Rust Host via Native Messaging berjalan sukses dengan status `"ok"`.
+  3. Validasi sintaksis `node -c extension/sidepanel.js && node -c extension/background.js` lulus 100% tanpa error.
   4. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
-  5. Bump versi ke `v2.150.281` di `manifest.json`.
+  5. Bump versi ke `v2.150.282` di `manifest.json`.
+

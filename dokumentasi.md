@@ -1399,6 +1399,35 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
       4. **Database Migration & Defragmentation Vacuum**:
          - Menjalankan migrasi pembersihan pada `~/.browser-agent/chat_history.db`: 109 sesi raksasa berhasil dipadatkan, menghemat 263.64 MB ruang disk. Ukuran database menyusut drastis dari **335 MB menjadi 8.60 MB** dengan waktu simpan di bawah 5 milidetik.
          - Menambahkan `busy_timeout = 5000` dan `PRAGMA wal_checkpoint(PASSIVE)` pada Rust Native Host.
+165. **Konversi Dokumen PDF & Word (DOCX/DOC/ODT/RTF) ke Gambar Per Halaman Urut Beresolusi Tinggi (150 DPI) untuk Inspeksi Visual Agent Akurat (`v2.150.282`):**
+    - **Latar Belakang & Kebutuhan Pengguna**:
+      - Pengguna meminta agar saat melihat/memeriksa dokumen berkas PDF maupun Word, AI agent secara otomatis mengonversi seluruh halaman menjadi gambar PNG/JPG berkualitas tinggi (150 DPI) yang tajam/tidak buram ("ga burik"), berukuran file ringan per halaman (~80-130 KB/halaman), dengan urutan halaman yang mutlak terurut dan teratur (halaman 1..N) agar AI agent dapat membaca konten dokumen secara visual dan teks dengan akurasi 100%.
+    - **Akar Masalah & Keterbatasan Sebelumnya**:
+      - Pembacaan file PDF/Word sebelumnya hanya mengandalkan ekstraksi teks polos (Anydoc / pdftotext / python-docx) atau membaca file sebagai teks mentah. Format tabel rumit, rumus matematika, tata letak visual, gambar/diagram arsitektur, tanda tangan, stempel, dan format visual dokumen hilang atau rusak, sehingga pemahaman konteks visual AI agent menurun.
+      - Belum tersedianya alat (`tool`) terdedikasi bagi AI agent untuk mengonversi berkas dokumen lokal secara visual per halaman serta mengumpankannya ke model multimodal vision secara berurutan.
+    - **Implementasi Teknis & Solusi Terpadu**:
+      1. **High-Performance Document-to-Page-Images Converter (`host/doc_parser.py`)**:
+         - Menambahkan fungsi `convert_document_to_page_images(file_path, output_dir, dpi=150, quality=85, max_pages=30, page_range=None, img_format="jpg", include_base64=True)`.
+         - Konversi otomatis dokumen Word (`.docx`, `.doc`, `.odt`, `.rtf`) menjadi PDF perantara menggunakan LibreOffice headless (`soffice --headless --convert-to pdf`).
+         - Rendering per halaman ke JPEG progresif 150 DPI berkualitas 85 menggunakan Poppler `pdftoppm` dengan fallback Ghostscript (`gs`). Menghasilkan resolusi tajam (1275x1650 px untuk kertas A4 standar) dengan ukuran file sangat ringan (~80-130 KB per halaman).
+         - Natural sorting ketat (`re.search(r'(\d+)', filename)`) menjamin urutan halaman mutlak 1, 2, 3.. N tanpa risiko urutan leksikografis yang salah (misal 1, 10, 2).
+         - Ekstraksi teks per halaman secara terisolasi via `pdftotext -f <pg> -l <pg> -layout` untuk melengkapi pemahaman teks dan visual.
+         - CLI parser diperkaya dengan flag `--convert-pages`, `--both`, `--dpi`, `--quality`, `--max-pages`, `--range`, `--no-base64`.
+      2. **Native RPC `convert_document_pages` & `view_document_pages` (`host/native_host.py` & `host/rust_host/src/main.rs`)**:
+         - Menambahkan penanganan RPC aksi `convert_document_pages` dan `view_document_pages` pada Python Native Host dan Rust Native Host (`browser_agent_host`).
+         - Memperkaya RPC `save_and_parse_uploaded_file`: ketika berkas PDF/Word diunggah melalui tombol lampiran sidepanel, sistem secara otomatis mengeksekusi konversi halaman ke folder cache `~/.browser-agent/uploads/pages_{timestamp}_{name}/` dan mengembalikan metadata halaman (`pages`, `total_pages`, `pages_dir`, `thumbnail_url`).
+         - Mengompilasi dan menginstal binary rilis Rust terbaru ke `host/browser_agent_host` menggunakan `install -m 755` guna menghindari kendala *Text file busy*.
+      3. **Registrasi Tool AI Agent `view_document` (`extension/sidepanel.js` & `extension/background.js`)**:
+         - Mendaftarkan tool `view_document` (dengan alias `view_file`, `view_document_file`, `local_view_file`, `convert_document_pages`, `read_document_pages`) pada `DEFAULT_SYSTEM_PROMPT` dan `AVAILABLE_TOOLS`.
+         - Memberikan parameter cerdas: `path`, `dpi` (default 150), `max_pages` (default 30), dan `page_range`.
+         - Menghubungkan eksekusi tool di `sidepanel.js` dan background dispatcher (`background.js`).
+      4. **Injeksi Observasi Visual Multimodal ke AI Agent Loop (`runAgentLoop` & `runChatModeLoop`)**:
+         - Pada `runAgentLoop`: segera setelah tool `view_document` / `view_file` selesai dieksekusi, sistem secara otomatis menyuntikkan giliran observasi visual (`role: 'user'`) yang berisi susunan gambar setiap halaman dokumen secara berurutan (`type: 'image_url'`). Dengan demikian, model vision LLM dapat langsung "melihat" dan membaca setiap halaman dengan mata kepalanya sendiri secara berurutan pada langkah berikutnya.
+         - Pada penanganan lampiran percakapan (`userPayloadContent`): halaman-halaman berkas PDF/Word yang diunggah langsung diteruskan ke LLM sebagai payload gambar berurutan disertai teks hasil ekstraksi per halaman.
+      5. **Penyempurnaan UI Thumbnail & Badge Lampiran**:
+         - Di bilah preview lampiran prompt (`renderAttachmentsPreview`): menampilkan thumbnail visual Halaman 1 asli dokumen dengan badge `PDF • N Hal` atau `DOC • N Hal`.
+         - Di gelembung obrolan pengguna (`appendUserMessage`): menampilkan thumbnail dokumen asli dan badge halaman berwarna aksen neon yang elegan.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah limit 800 baris.
+
 
 

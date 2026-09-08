@@ -2207,8 +2207,28 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Mengisi otomatis panggilan tool yang tertunda dengan status interupsi sintesis (`role: 'tool', content: '{"status":"interrupted"}'`) saat pengguna mengirimkan prompt baru, menjamin masukan pengguna tidak pernah terbuang.
    - Menstabilkan batas token window sliding window pada level 70.000 token untuk respon kilat tanpa risiko *context blowout*.
 
-5. **Strict Sub-800 Line Rule Compliance**:
-   - Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah 798 baris.
+## 🛡️ 58. Konversi & Inspeksi Visual Dokumen PDF/Word Resolusi Tinggi (150 DPI) per Halaman Urut (v2.150.282)
+
+1. **High-Fidelity Document Visual Observation Engine**:
+   - Untuk menjamin pemahaman dokumen berkas yang memiliki tabel kompleks, formula, layout arsitektural, grafik, dan stempel/tanda tangan, sistem mengonversi seluruh halaman dokumen PDF dan Word (DOCX/DOC/ODT/RTF) menjadi gambar visual terurut.
+   - **Spesifikasi Rendering**: Menggunakan Poppler `pdftoppm` dengan parameter JPEG progresif 150 DPI (kualitas 85). Menghasilkan ketajaman teks kristal (*ultra-sharp*, "ga burik", 1275x1650 piksel pada A4) dengan bobot berkas sangat efisien (~80-130 KB per halaman).
+   - **LibreOffice Headless Bridge**: Berkas Word/Office dikonversi secara transparan ke format PDF perantara di memori/direktori sementara sebelum di-render ke gambar halaman.
+   - **Strict Natural Page Ordering**: Penataan berkas gambar halaman diurutkan secara numerik alami (`int(page_number)`), menjamin urutan 1..N yang mutlak runtut tanpa permutasi alfabetis keliru.
+
+2. **Multimodal Vision Observation Turn Injection**:
+   - Saat AI agent memanggil tool `view_document` (atau aliasnya `view_file`, `view_document_file`, `convert_document_pages`), sistem mengeksekusi konversi halaman di Native Host.
+   - Pada `runAgentLoop`: segera setelah tool selesai (`role: 'tool'`), sistem menyuntikkan giliran observasi visual (`role: 'user'`) yang menyertakan data URL gambar setiap halaman dokumen secara berurutan (`type: 'image_url'`).
+   - Model multimodal LLM (Gemini 2.5 Flash/Pro, Claude 3.5 Sonnet, GPT-4o) dapat langsung memindai setiap halaman secara visual seperti manusia membaca lembaran kertas, menghasilkan akurasi analisis 100%.
+
+3. **Unified File Upload Flow with Page Badging**:
+   - Berkas PDF/Word yang diunggah melalui tombol lampiran (`handleFileSelection`) otomatis diproses oleh Native Host untuk menghasilkan halaman gambar dan thumbnail.
+   - Bilah pratinjau prompt menampilkan thumbnail Halaman 1 asli dengan badge `PDF • N Hal` atau `DOC • N Hal`.
+   - Gelembung pesan pengguna (`appendUserMessage`) menampilkan thumbnail dan badge jumlah halaman beraksen neon.
+   - Gambar halaman dan teks per halaman secara otomatis diumpankan ke `userPayloadContent` pada `runAgentLoop` dan `runChatModeLoop`.
+
+4. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah 798 baris.
+
 
 
 

@@ -12,6 +12,10 @@ import re
 import subprocess
 import zipfile
 import xml.etree.ElementTree as ET
+import time
+import shutil
+import tempfile
+import base64
 
 # Try importing anydoc (Rust-powered high performance parser by Firecrawl)
 try:
@@ -209,11 +213,299 @@ def parse_document_to_markdown(file_path: str, format_hint: str = "") -> dict:
         "engine": engine_used
     }
 
+def convert_document_to_page_images(
+    file_path: str,
+    output_dir: str = None,
+    dpi: int = 150,
+    quality: int = 85,
+    max_pages: int = 30,
+    page_range: str = None,
+    img_format: str = "jpg",
+    include_base64: bool = True
+) -> dict:
+    """
+    Converts all pages of a PDF, Word (DOCX/DOC), ODT, RTF, or PPTX document
+    into sequential, high-resolution, lightweight page images (150 DPI JPG/PNG).
+    Ensures:
+      - Low file size (approx. 80-140 KB per page)
+      - Razor-sharp clarity (not blurry / 'ga burik')
+      - Strict sequential page ordering (halaman urut 1, 2, 3... N)
+      - Extracted per-page text for multimodal LLM vision & text accuracy.
+    """
+    file_path = os.path.expanduser(file_path)
+    if not os.path.exists(file_path):
+        return {"status": "error", "error": f"File not found: {file_path}"}
+
+    orig_name = os.path.basename(file_path)
+    clean_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', orig_name).strip('_') or "document"
+    ext = os.path.splitext(file_path)[1].lower()
+    
+    doc_convert_exts = {".docx", ".doc", ".odt", ".rtf", ".pptx", ".ppt"}
+    supported_exts = {".pdf"}.union(doc_convert_exts)
+    if ext not in supported_exts:
+        return {"status": "error", "error": f"Unsupported file format {ext}. Supported: PDF, DOCX, DOC, ODT, RTF, PPTX"}
+
+    temp_pdf_dir = None
+    pdf_path = file_path
+
+    # Step 1: If Word or presentation, convert to PDF via LibreOffice headless
+    if ext in doc_convert_exts:
+        soffice_bin = shutil.which("soffice") or shutil.which("libreoffice")
+        if not soffice_bin:
+            return {"status": "error", "error": "LibreOffice (soffice) not found to convert Word/presentation to PDF"}
+        
+        temp_pdf_dir = tempfile.mkdtemp(prefix="ba_doc2pdf_")
+        try:
+            conv_cmd = [soffice_bin, "--headless", "--convert-to", "pdf", "--outdir", temp_pdf_dir, file_path]
+            conv_res = subprocess.run(conv_cmd, capture_output=True, text=True, timeout=90)
+            if conv_res.returncode != 0:
+                shutil.rmtree(temp_pdf_dir, ignore_errors=True)
+                return {"status": "error", "error": f"Failed to convert {orig_name} to PDF: {conv_res.stderr}"}
+            
+            pdf_candidates = [f for f in os.listdir(temp_pdf_dir) if f.lower().endswith(".pdf")]
+            if not pdf_candidates:
+                shutil.rmtree(temp_pdf_dir, ignore_errors=True)
+                return {"status": "error", "error": f"No PDF generated from {orig_name}"}
+            pdf_path = os.path.join(temp_pdf_dir, pdf_candidates[0])
+        except Exception as e:
+            if temp_pdf_dir and os.path.exists(temp_pdf_dir):
+                shutil.rmtree(temp_pdf_dir, ignore_errors=True)
+            return {"status": "error", "error": f"Word to PDF conversion failed: {e}"}
+
+    try:
+        # Step 2: Determine total pages in PDF
+        total_pages = 0
+        if shutil.which("pdfinfo"):
+            try:
+                info_res = subprocess.run(["pdfinfo", pdf_path], capture_output=True, text=True, timeout=15)
+                for line in info_res.stdout.splitlines():
+                    if line.startswith("Pages:"):
+                        total_pages = int(line.split(":", 1)[1].strip())
+                        break
+            except Exception:
+                pass
+
+        if total_pages == 0:
+            try:
+                with open(pdf_path, "rb") as f:
+                    pdf_data = f.read()
+                    matches = re.findall(rb'/Type\s*/Page\b', pdf_data)
+                    total_pages = len(matches) if matches else 1
+            except Exception:
+                total_pages = 1
+
+        # Step 3: Determine page bounds
+        first_page = 1
+        last_page = min(total_pages, max_pages) if total_pages > 0 else max_pages
+        if page_range and page_range.lower() != "all":
+            m = re.match(r'(\d+)\s*[-:]\s*(\d+)', page_range.strip())
+            if m:
+                first_page = max(1, int(m.group(1)))
+                last_page = min(total_pages or 9999, int(m.group(2)))
+            else:
+                try:
+                    single_pg = int(page_range.strip())
+                    first_page = single_pg
+                    last_page = single_pg
+                except ValueError:
+                    pass
+
+        # Step 4: Setup output directory
+        if not output_dir:
+            uploads_dir = os.path.expanduser("~/.browser-agent/uploads")
+            os.makedirs(uploads_dir, exist_ok=True)
+            timestamp = int(time.time() * 1000)
+            output_dir = os.path.join(uploads_dir, f"pages_{timestamp}_{clean_name}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        raw_tmp_dir = tempfile.mkdtemp(prefix="ba_render_pages_")
+        prefix = os.path.join(raw_tmp_dir, "raw_page")
+
+        # Step 5: Render pages via pdftoppm or gs fallback
+        rendered = False
+        if shutil.which("pdftoppm"):
+            render_cmd = [
+                "pdftoppm",
+                "-f", str(first_page),
+                "-l", str(last_page),
+                "-jpeg" if img_format in ("jpg", "jpeg") else "-png",
+                "-r", str(dpi)
+            ]
+            if img_format in ("jpg", "jpeg"):
+                render_cmd.extend(["-jpegopt", f"quality={quality},progressive=y"])
+            render_cmd.extend([pdf_path, prefix])
+
+            res_render = subprocess.run(render_cmd, capture_output=True, text=True, timeout=90)
+            if res_render.returncode == 0:
+                rendered = True
+
+        # Fallback to gs if pdftoppm failed
+        if not rendered and shutil.which("gs"):
+            gs_cmd = [
+                "gs", "-dNOPAUSE", "-dBATCH",
+                f"-sDEVICE=jpeg" if img_format in ("jpg", "jpeg") else "-sDEVICE=png16m",
+                f"-r{dpi}",
+                f"-dJPEGQ={quality}",
+                f"-dFirstPage={first_page}",
+                f"-dLastPage={last_page}",
+                f"-sOutputFile={prefix}-%d.{img_format}",
+                pdf_path
+            ]
+            res_gs = subprocess.run(gs_cmd, capture_output=True, text=True, timeout=90)
+            if res_gs.returncode == 0:
+                rendered = True
+
+        if not rendered:
+            shutil.rmtree(raw_tmp_dir, ignore_errors=True)
+            return {"status": "error", "error": "No suitable renderer found (pdftoppm or gs)"}
+
+        # Step 6: Collect, sort naturally, and organize pages sequentially
+        raw_files = [f for f in os.listdir(raw_tmp_dir) if f.startswith("raw_page")]
+        def get_pg_num(fn):
+            match = re.search(r'raw_page[^\d]*(\d+)', fn)
+            return int(match.group(1)) if match else 0
+
+        # Sort naturally by page number (1, 2, 3... 10)
+        raw_files.sort(key=get_pg_num)
+
+        pages = []
+        for raw_f in raw_files:
+            pg_idx = get_pg_num(raw_f)
+            src_p = os.path.join(raw_tmp_dir, raw_f)
+            dest_filename = f"page_{pg_idx:03d}.{img_format}"
+            dest_path = os.path.join(output_dir, dest_filename)
+            shutil.copy2(src_p, dest_path)
+
+            file_sz = os.path.getsize(dest_path)
+            
+            # Extract page text
+            page_text = ""
+            if shutil.which("pdftotext"):
+                try:
+                    txt_cmd = ["pdftotext", "-f", str(pg_idx), "-l", str(pg_idx), "-layout", pdf_path, "-"]
+                    res_txt = subprocess.run(txt_cmd, capture_output=True, text=True, timeout=15)
+                    if res_txt.returncode == 0:
+                        page_text = res_txt.stdout.strip()
+                except Exception:
+                    pass
+
+            b64_url = ""
+            if include_base64:
+                try:
+                    with open(dest_path, "rb") as img_f:
+                        raw_img_bytes = img_f.read()
+                        mime = "image/jpeg" if img_format in ("jpg", "jpeg") else "image/png"
+                        b64_str = base64.b64encode(raw_img_bytes).decode("ascii")
+                        b64_url = f"data:{mime};base64,{b64_str}"
+                except Exception:
+                    pass
+
+            pages.append({
+                "page": pg_idx,
+                "file_name": dest_filename,
+                "file_path": dest_path,
+                "file_size": file_sz,
+                "file_size_kb": round(file_sz / 1024, 1),
+                "char_count": len(page_text),
+                "text": page_text,
+                "data_url": b64_url
+            })
+
+        shutil.rmtree(raw_tmp_dir, ignore_errors=True)
+
+        return {
+            "status": "ok",
+            "file_name": orig_name,
+            "file_path": file_path,
+            "total_pages": total_pages or len(pages),
+            "pages_converted": len(pages),
+            "pages_dir": output_dir,
+            "dpi": dpi,
+            "format": img_format,
+            "pages": pages
+        }
+    finally:
+        if temp_pdf_dir and os.path.exists(temp_pdf_dir):
+            shutil.rmtree(temp_pdf_dir, ignore_errors=True)
+
+def parse_and_convert_document(file_path: str, max_pages: int = 30) -> dict:
+    """Convenience helper returning both clean Markdown and page images."""
+    md_res = parse_document_to_markdown(file_path)
+    pages_res = convert_document_to_page_images(file_path, max_pages=max_pages)
+    return {
+        "status": "ok" if (md_res.get("status") == "ok" or pages_res.get("status") == "ok") else "error",
+        "file_name": os.path.basename(file_path),
+        "file_path": file_path,
+        "markdown": md_res.get("markdown", ""),
+        "char_count": md_res.get("char_count", 0),
+        "total_pages": pages_res.get("total_pages", 0),
+        "pages_converted": pages_res.get("pages_converted", 0),
+        "pages_dir": pages_res.get("pages_dir", ""),
+        "pages": pages_res.get("pages", [])
+    }
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print(json.dumps({"status": "error", "error": "Usage: doc_parser.py <file_path>"}))
+        print(json.dumps({"status": "error", "error": "Usage: doc_parser.py <file_path> [--convert-pages] [--both] [--output-dir DIR] [--dpi 150] [--quality 85] [--max-pages 30] [--range 1-10] [--no-base64]"}))
         sys.exit(1)
 
-    target_path = sys.argv[1]
-    result = parse_document_to_markdown(target_path)
+    args = sys.argv[1:]
+    convert_mode = False
+    both_mode = False
+    target_path = None
+    output_dir = None
+    dpi = 150
+    quality = 85
+    max_pages = 30
+    page_range = None
+    include_base64 = True
+
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == "--convert-pages":
+            convert_mode = True
+        elif arg == "--both":
+            both_mode = True
+        elif arg == "--output-dir" and i + 1 < len(args):
+            output_dir = args[i + 1]
+            i += 1
+        elif arg == "--dpi" and i + 1 < len(args):
+            dpi = int(args[i + 1])
+            i += 1
+        elif arg == "--quality" and i + 1 < len(args):
+            quality = int(args[i + 1])
+            i += 1
+        elif arg == "--max-pages" and i + 1 < len(args):
+            max_pages = int(args[i + 1])
+            i += 1
+        elif arg in ("--range", "--page-range") and i + 1 < len(args):
+            page_range = args[i + 1]
+            i += 1
+        elif arg == "--no-base64":
+            include_base64 = False
+        elif not arg.startswith("--") and target_path is None:
+            target_path = arg
+        i += 1
+
+    if not target_path:
+        print(json.dumps({"status": "error", "error": "No target file path specified"}))
+        sys.exit(1)
+
+    if both_mode:
+        result = parse_and_convert_document(target_path, max_pages=max_pages)
+    elif convert_mode:
+        result = convert_document_to_page_images(
+            target_path,
+            output_dir=output_dir,
+            dpi=dpi,
+            quality=quality,
+            max_pages=max_pages,
+            page_range=page_range,
+            include_base64=include_base64
+        )
+    else:
+        result = parse_document_to_markdown(target_path)
+
     print(json.dumps(result))
+

@@ -1049,6 +1049,28 @@ def save_and_parse_uploaded_file(file_name, file_data, mime_type="", session_id=
             except Exception:
                 pass
 
+        # Convert document pages to sequential crisp images (PDF, Word, etc.)
+        pages_result = None
+        doc_page_exts = (".pdf", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".ppt")
+        clean_ext = os.path.splitext(clean_name)[1].lower()
+        if clean_ext in doc_page_exts:
+            try:
+                from doc_parser import convert_document_to_page_images
+                pages_dir = os.path.join(UPLOADS_DIR, f"pages_{timestamp}_{clean_name}")
+                p_res = convert_document_to_page_images(
+                    file_path=file_path,
+                    output_dir=pages_dir,
+                    dpi=150,
+                    quality=85,
+                    max_pages=20,
+                    include_base64=True
+                )
+                if p_res.get("status") == "ok":
+                    pages_result = p_res
+                    log(f"Converted document {clean_name} to {p_res.get('pages_converted', 0)} page images in {pages_dir}")
+            except Exception as e_conv:
+                log(f"convert_document_to_page_images notice in save_and_parse_uploaded_file: {e_conv}")
+
         file_id = f"file_{timestamp}_{uuid.uuid4().hex[:6]}"
 
         # Save record to SQLite uploaded_files
@@ -1072,7 +1094,11 @@ def save_and_parse_uploaded_file(file_name, file_data, mime_type="", session_id=
             "is_document": is_doc,
             "markdown": markdown_content,
             "char_count": char_count,
-            "approx_tokens": approx_tokens
+            "approx_tokens": approx_tokens,
+            "total_pages": pages_result.get("total_pages", 1) if pages_result else 1,
+            "pages_converted": pages_result.get("pages_converted", 0) if pages_result else 0,
+            "pages_dir": pages_result.get("pages_dir", "") if pages_result else "",
+            "pages": pages_result.get("pages", []) if pages_result else []
         }
     except Exception as e:
         log(f"Error in save_and_parse_uploaded_file: {e}\n{traceback.format_exc()}")
@@ -4334,6 +4360,38 @@ def handle_local_rpc(msg):
         res["id"] = req_id
         return res
 
+    elif action in ("convert_document_pages", "view_document_pages"):
+        path = os.path.expanduser(msg.get("path", ""))
+        pages_range = msg.get("pages") or msg.get("page_range")
+        max_pages = int(msg.get("max_pages") or 25)
+        dpi = int(msg.get("dpi") or 150)
+        quality = int(msg.get("quality") or 85)
+        img_format = msg.get("format") or "jpg"
+        include_base64 = msg.get("include_base64", True)
+        output_dir = msg.get("output_dir")
+
+        if not path:
+            return {"id": req_id, "status": "error", "error": "No file path provided"}
+        if not os.path.exists(path):
+            return {"id": req_id, "status": "error", "error": f"File not found: {path}"}
+
+        try:
+            from doc_parser import convert_document_to_page_images
+            res = convert_document_to_page_images(
+                file_path=path,
+                output_dir=output_dir,
+                dpi=dpi,
+                quality=quality,
+                max_pages=max_pages,
+                page_range=pages_range,
+                img_format=img_format,
+                include_base64=include_base64
+            )
+            res["id"] = req_id
+            return res
+        except Exception as e:
+            return {"id": req_id, "status": "error", "error": str(e)}
+
     elif action == "capture_os_screenshot":
         try:
             tmp_path = "/tmp/browser_agent_os_screenshot.png"
@@ -4566,7 +4624,7 @@ def handle_local_rpc(msg):
                     parsed = parse_document_to_markdown(path)
                     if parsed.get("status") == "ok":
                         md = parsed.get("markdown", "")
-                        return {
+                        resp = {
                             "id": req_id,
                             "status": "ok",
                             "content": md,
@@ -4575,6 +4633,22 @@ def handle_local_rpc(msg):
                             "format": parsed.get("format", ext.lstrip(".")),
                             "is_parsed_document": True
                         }
+                        if msg.get("with_pages", False) and ext in (".pdf", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".ppt"):
+                            try:
+                                from doc_parser import convert_document_to_page_images
+                                p_res = convert_document_to_page_images(
+                                    file_path=path,
+                                    max_pages=int(msg.get("max_pages") or 20),
+                                    include_base64=msg.get("include_base64", True)
+                                )
+                                if p_res.get("status") == "ok":
+                                    resp["total_pages"] = p_res.get("total_pages", 1)
+                                    resp["pages_converted"] = p_res.get("pages_converted", 0)
+                                    resp["pages_dir"] = p_res.get("pages_dir", "")
+                                    resp["pages"] = p_res.get("pages", [])
+                            except Exception as e_p:
+                                log(f"with_pages conversion in read_file notice: {e_p}")
+                        return resp
                 except Exception as e_parse:
                     log(f"doc_parser fallback in read_file for {path}: {e_parse}")
 

@@ -284,6 +284,7 @@ You have access to 3 categories of tools:
    - browser_get_console_logs(): Check page errors.
 
 2. LOCAL PC TOOLS (via Local Native Host):
+   - view_document(path, pages, max_pages): Convert and view all pages of a document file (PDF, Word DOCX/DOC, RTF, PPTX) into sequential, high-resolution, lightweight page images (150 DPI JPG/PNG, ~80-140 KB/page) and extract text per page. Essential for viewing and reading documents with 100% visual accuracy in exact page order.
    - local_read_file(path): Read file contents from user's local PC.
    - local_write_file(path, content): Create or overwrite a file on user's PC.
    - local_list_dir(path): List files and directories on local PC.
@@ -1173,7 +1174,7 @@ ATURAN KRUSIAL:
 === CAPABILITIES & TOOLS AVAILABLE ===
 1. 🧠 Autonomous Brain & Self-Evolution Tools: manage_personal_memory, create_autonomous_skill, update_autonomous_skill, create_autonomous_agent, edit_manual_skill, edit_manual_agent, rollback_brain_item, record_anti_pattern, save_epistemic_triplet, query_epistemic_graph, execute_jit_microtool.
 2. 🌐 Browser Automation Tools: browser_navigate, browser_snapshot, browser_click, browser_type, browser_press_key, browser_hover, browser_scroll, browser_control_media, browser_evaluate_script, browser_screenshot, browser_get_console_logs, browser_extract_table, browser_list_tabs, browser_switch_tab, browser_wait.
-3. 💻 Local PC Tools: local_read_file, local_write_file, local_list_dir, local_run_command.
+3. 💻 Local PC Tools: view_document, local_read_file, local_write_file, local_list_dir, local_run_command.
 4. 🎨 AI Image & Presentation Design: generate_image(prompt, size), create_slide_deck_design(topic, slide_count, detailed_outline_or_content, design_archetype), read_slide_deck(slide_numbers, detail_level).
 5. 💬 Interactive Clarification & Multi-Agent Swarm: ask_clarification, agent_subtask_analysis, summon_specialist_agent.
 6. 📱 Built-in Connected Apps & Telegram Bot Remote: configure_telegram_bot, get_telegram_bot_status, telegram_send_message.
@@ -1731,6 +1732,23 @@ const AGENT_TOOLS = [
       parameters: {
         type: "object",
         properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "view_document",
+      description: "Convert and view all pages of a document file (PDF, Word DOCX/DOC, RTF, PPTX) into sequential, high-resolution, lightweight page images (150 DPI JPG/PNG, ~80-140 KB/page) and extract text per page. Essential for viewing and reading documents with 100% visual accuracy in exact page order (tables, layout, charts, scanned text).",
+      parameters: {
+        type: "object",
+        properties: {
+          path: { type: "string", description: "Absolute or relative file path to the PDF or Word document on user's PC" },
+          pages: { type: "string", description: "Optional page range to convert, e.g. '1-10', '1,2,3', or 'all' (default 'all')" },
+          max_pages: { type: "number", description: "Maximum number of pages to convert (default 20, max 50)" },
+          dpi: { type: "number", description: "Resolution in DPI (default 150 for crisp non-blurry rendering)" }
+        },
+        required: ["path"]
       }
     }
   },
@@ -4586,9 +4604,53 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
       return { logs: consoleLogs.slice(-20) };
     }
 
+    case "view_document":
+    case "view_file":
+    case "view_document_file":
+    case "local_view_file":
+    case "convert_document_pages":
+    case "read_document_pages": {
+      const res = await sendNativeRpc("convert_document_pages", {
+        path: args.path,
+        pages: args.pages || args.page_range || "all",
+        max_pages: args.max_pages || 20,
+        dpi: args.dpi || 150
+      });
+      if (!res || res.status !== "ok") {
+        return { error: res?.error || "Gagal mengonversi halaman dokumen." };
+      }
+      return {
+        status: "success",
+        file_name: res.file_name,
+        file_path: res.file_path,
+        total_pages: res.total_pages,
+        pages_converted: res.pages_converted,
+        pages_dir: res.pages_dir,
+        pages: (res.pages || []).map(p => ({
+          page: p.page,
+          file_name: p.file_name,
+          file_path: p.file_path,
+          file_size_kb: p.file_size_kb,
+          char_count: p.char_count,
+          text_snippet: (p.text || "").slice(0, 300),
+          data_url: p.data_url
+        })),
+        hint: `Dokumen ${res.file_name} berhasil dikonversi menjadi ${res.pages_converted} gambar halaman urut tajam (150 DPI) di folder: "${res.pages_dir}". Gambar visual tiap halaman telah disuntikkan ke konteks untuk Anda telaah secara akurat.`
+      };
+    }
+
     case "local_read_file": {
-      const res = await sendNativeRpc("read_file", { path: args.path });
-      return { path: res.path, size: res.size, content: res.content };
+      const res = await sendNativeRpc("read_file", { path: args.path, with_pages: true });
+      return {
+        path: res.path,
+        size: res.size,
+        content: res.content,
+        is_document: res.is_parsed_document || false,
+        total_pages: res.total_pages || 1,
+        pages_converted: res.pages_converted || 0,
+        pages_dir: res.pages_dir || "",
+        pages: res.pages || []
+      };
     }
 
     case "local_write_file": {
@@ -6294,6 +6356,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   let userPayloadContent = userMessage;
   const imageAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isImage && a.dataUrl) : [];
   const videoAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isVideo) : [];
+  const docAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isDocument && Array.isArray(a.pages) && a.pages.length > 0) : [];
   const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && (a.textContent || a.parsedMarkdown)) : [];
 
   let combinedPrompt = userMessage || "";
@@ -6327,9 +6390,9 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     combinedPrompt = deckContextPrefix + combinedPrompt;
   }
 
-  if (imageAttachments.length > 0 || videoAttachments.length > 0) {
+  if (imageAttachments.length > 0 || videoAttachments.length > 0 || docAttachments.length > 0) {
     userPayloadContent = [
-      { type: "text", text: combinedPrompt || "Tolong analisis gambar/video/file terlampir ini." }
+      { type: "text", text: combinedPrompt || "Tolong analisis gambar/video/dokumen terlampir ini." }
     ];
 
     // Add images
@@ -6338,6 +6401,25 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
         type: "image_url",
         image_url: {
           url: img.dataUrl
+        }
+      });
+    });
+
+    // Add document page images in strict sequential order
+    docAttachments.forEach(doc => {
+      const pagesToShow = doc.pages.slice(0, 20);
+      pagesToShow.forEach(p => {
+        if (p.data_url) {
+          userPayloadContent.push({
+            type: "text",
+            text: `--- [Dokumen: "${doc.name}" - Halaman ${p.page} dari ${doc.totalPages || doc.pages.length} (150 DPI)] ---`
+          });
+          userPayloadContent.push({
+            type: "image_url",
+            image_url: {
+              url: p.data_url
+            }
+          });
         }
       });
     });
@@ -6853,6 +6935,9 @@ Tugas Anda:
             badgeActionName = `Merancang Slide Deck 16:9 (${toolArgs.slide_count || 10} Slide)`;
           } else if (toolName === "read_slide_deck") {
             badgeActionName = `Membaca Struktur Slide Deck (Audit Slide)`;
+          } else if (toolName === "view_document" || toolName === "view_file" || toolName === "view_document_file" || toolName === "local_view_file" || toolName === "convert_document_pages" || toolName === "read_document_pages") {
+            const shortName = toolArgs.path ? toolArgs.path.split('/').pop() : 'Dokumen';
+            badgeActionName = `Konversi & Inspeksi Visual Dokumen (${shortName})`;
           }
 
           // Master Agent Orchestration Visibility in Tool Steps
@@ -6890,6 +6975,7 @@ Tugas Anda:
             else if (toolName.startsWith("gsuite_sheet") || toolName.includes("sheet")) userFriendlyAction = `Mengakses Google Sheets...`;
             else if (toolName === "create_slide_deck_design") userFriendlyAction = `🎨 Merancang slide deck 16:9 di Canvas Drawer...`;
             else if (toolName === "read_slide_deck") userFriendlyAction = `📖 Memeriksa isi slide di Canvas Drawer...`;
+            else if (toolName.includes("view_document") || toolName.includes("view_file") || toolName.includes("convert_document_pages")) userFriendlyAction = `📄 Mengonversi & memeriksa dokumen visual (PDF/Word)...`;
             else userFriendlyAction = `Menjalankan aksi (${badgeActionName})...`;
             
             const statusText = `<b>${escapeHtml(workerName)}:</b> ${userFriendlyAction} (<i>${stepStr}</i>)`;
@@ -6966,6 +7052,15 @@ Tugas Anda:
             }
           }
 
+          // Record visual document pages if tool produced page images
+          if (toolOutput && Array.isArray(toolOutput.pages) && toolOutput.pages.length > 0) {
+            pendingVisualDocPages.push({
+              file_name: toolOutput.file_name || (toolArgs.path ? toolArgs.path.split('/').pop() : 'Dokumen'),
+              total_pages: toolOutput.total_pages || toolOutput.pages.length,
+              pages: toolOutput.pages
+            });
+          }
+
           // Push tool response into history
           conversationHistory.push({
             role: "tool",
@@ -6979,6 +7074,36 @@ Tugas Anda:
             shouldStopTurn = true;
             break;
           }
+        }
+
+        // Multimodal Visual Document Inspection Injection
+        if (Array.isArray(pendingVisualDocPages) && pendingVisualDocPages.length > 0) {
+          for (const docInfo of pendingVisualDocPages) {
+            const visualParts = [
+              {
+                type: "text",
+                text: `👁️ [Inspeksi Visual Dokumen: ${docInfo.file_name} - Total ${docInfo.total_pages} Halaman Urut (150 DPI)]\nBerikut adalah pratinjau visual tajam per halaman secara urut dari halaman 1 sampai ${docInfo.pages.length} dengan resolusi tajam (150 DPI) dan ukuran ringan. Mohon telaah detail visual, teks, tabel, bagan, dan tata letak per halaman secara akurat:`
+              }
+            ];
+            const pagesToShow = docInfo.pages.slice(0, 15);
+            pagesToShow.forEach(p => {
+              if (p.data_url) {
+                visualParts.push({
+                  type: "text",
+                  text: `--- [Halaman ${p.page} dari ${docInfo.total_pages} (File: ${p.file_name || docInfo.file_name})] ---`
+                });
+                visualParts.push({
+                  type: "image_url",
+                  image_url: { url: p.data_url }
+                });
+              }
+            });
+            conversationHistory.push({
+              role: "user",
+              content: visualParts
+            });
+          }
+          pendingVisualDocPages = [];
         }
       } else {
         // No more tool calls: Option 3 Completion Guard check (only when tools were actually used)
@@ -8491,6 +8616,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
   let userPayloadContent = userMessage;
   const imageAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isImage && a.dataUrl) : [];
   const videoAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isVideo) : [];
+  const docAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isDocument && Array.isArray(a.pages) && a.pages.length > 0) : [];
   const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && (a.textContent || a.parsedMarkdown)) : [];
 
   let combinedPrompt = userMessage || "";
@@ -8510,14 +8636,30 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
     combinedPrompt = combinedPrompt ? `${combinedPrompt}\n\n${videoDocs}` : videoDocs;
   }
 
-  if (imageAttachments.length > 0 || videoAttachments.length > 0) {
+  if (imageAttachments.length > 0 || videoAttachments.length > 0 || docAttachments.length > 0) {
     userPayloadContent = [
-      { type: "text", text: combinedPrompt || "Tolong analisis gambar/video/file terlampir ini." }
+      { type: "text", text: combinedPrompt || "Tolong analisis gambar/video/dokumen terlampir ini." }
     ];
     imageAttachments.forEach(img => {
       userPayloadContent.push({
         type: "image_url",
         image_url: { url: img.dataUrl }
+      });
+    });
+    // Add document page images in strict sequential order
+    docAttachments.forEach(doc => {
+      const pagesToShow = doc.pages.slice(0, 20);
+      pagesToShow.forEach(p => {
+        if (p.data_url) {
+          userPayloadContent.push({
+            type: "text",
+            text: `--- [Dokumen: "${doc.name}" - Halaman ${p.page} dari ${doc.totalPages || doc.pages.length} (150 DPI)] ---`
+          });
+          userPayloadContent.push({
+            type: "image_url",
+            image_url: { url: p.data_url }
+          });
+        }
       });
     });
     videoAttachments.forEach(vid => {
@@ -9068,16 +9210,19 @@ function appendUserMessage(text, attachments = [], autoScroll = true, attachToDo
       } else {
         const sizeStr = formatFileSize(att.size || (att.text ? att.text.length : 0));
         const hasPath = Boolean(att.filePath);
+        const isDocWithPages = Boolean(att.pages && att.pages.length);
+        const pageBadge = isDocWithPages ? `${att.pages.length} Hal` : (att.totalPages ? `${att.totalPages} Hal` : '');
+        const docBadgeLabel = pageBadge ? `${(att.name && att.name.toLowerCase().endsWith('.pdf')) ? 'PDF' : 'DOC'} • ${pageBadge}` : ((att.isDocument || att.parsedMarkdown) ? 'Anydoc MD' : '');
         attachmentsHtml += `
           <div class="user-attached-file-pill ${hasPath ? 'clickable-file' : ''}" data-file-path="${escapeHtml(att.filePath || '')}" title="${hasPath ? `Klik untuk lihat file di folder: ${escapeHtml(att.filePath)}` : escapeHtml(att.name || 'File')}">
             <div class="attached-file-icon-wrapper">
-              ${getMacOsFileIconSvg(att.name || 'File', 18, 22)}
+              ${att.thumbnailUrl ? `<img src="${att.thumbnailUrl}" style="width:20px;height:24px;object-fit:cover;border-radius:3px;border:1px solid rgba(255,255,255,0.15);" alt="thumbnail"/>` : getMacOsFileIconSvg(att.name || 'File', 18, 22)}
             </div>
             <div class="attached-file-info">
               <span class="attached-file-name">${escapeHtml(att.name || 'File')}</span>
               <div style="display:flex;align-items:center;gap:6px;">
                 ${sizeStr ? `<span class="attached-file-size">${sizeStr}</span>` : ''}
-                ${(att.isDocument || att.parsedMarkdown) ? `<span class="attached-file-badge" style="font-size:9.5px;color:#CEF128;font-weight:600;">Anydoc MD</span>` : ''}
+                ${docBadgeLabel ? `<span class="attached-file-badge" style="font-size:9.5px;color:#CEF128;font-weight:600;background:rgba(206,241,40,0.12);padding:1px 5px;border-radius:4px;border:1px solid rgba(206,241,40,0.25);">${docBadgeLabel}</span>` : ''}
               </div>
             </div>
           </div>
@@ -13697,6 +13842,25 @@ function renderAttachmentsPreview() {
         </div>
         <button type="button" class="attachment-remove-btn" title="Hapus video">×</button>
       `;
+    } else if (att.isDocument && att.thumbnailUrl) {
+      const pageCount = att.totalPages || (att.pages ? att.pages.length : 1);
+      const isPdf = att.name.toLowerCase().endsWith('.pdf');
+      const docBadge = isPdf ? `PDF • ${pageCount} Hal` : `Doc • ${pageCount} Hal`;
+      card.innerHTML = `
+        <div style="position:relative;width:42px;height:48px;border-radius:6px;overflow:hidden;background:#0F172A;border:1px solid rgba(255,255,255,0.12);flex-shrink:0;">
+          <img src="${att.thumbnailUrl}" alt="${escapeHtml(att.name)}" style="width:100%;height:100%;object-fit:cover;object-position:top;">
+          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(15,23,42,0.85);font-size:8px;font-weight:700;color:#CEF128;text-align:center;padding:1px 0;line-height:1.2;">
+            1/${pageCount}
+          </div>
+        </div>
+        <div class="attachment-file-meta">
+          <span class="attachment-file-name" title="${escapeHtml(att.name)}">${escapeHtml(att.name)}</span>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(206,241,40,0.15);color:#CEF128;font-weight:600;">${docBadge}</span>
+          </div>
+        </div>
+        <button type="button" class="attachment-remove-btn" title="Hapus file">×</button>
+      `;
     } else {
       const sizeStr = formatFileSize(att.size || (att.text ? att.text.length : 0));
       const hasAnydoc = att.isDocument || att.parsedMarkdown || att.filePath;
@@ -13920,7 +14084,12 @@ async function handleFileSelection(files) {
         }
       }
 
-      const isDoc = /\.(pdf|docx|doc|xlsx|xls|pptx|ppt|rtf|odt|ods|odp|epub|csv|tsv)$/i.test(file.name) || parsedWithAnydoc;
+      const pages = (upRes && Array.isArray(upRes.pages)) ? upRes.pages : [];
+      const totalPages = (upRes && upRes.total_pages) ? upRes.total_pages : (pages.length || 1);
+      const pagesDir = (upRes && upRes.pages_dir) ? upRes.pages_dir : "";
+      const firstPageThumb = (pages.length > 0 && pages[0].data_url) ? pages[0].data_url : "";
+
+      const isDoc = /\.(pdf|docx|doc|xlsx|xls|pptx|ppt|rtf|odt|ods|odp|epub|csv|tsv)$/i.test(file.name) || parsedWithAnydoc || pages.length > 0;
 
       pendingAttachments.push({
         id: 'att_doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
@@ -13934,7 +14103,11 @@ async function handleFileSelection(files) {
         textContent,
         parsedMarkdown: textContent,
         format,
-        charCount
+        charCount,
+        totalPages,
+        pagesDir,
+        pages,
+        thumbnailUrl: firstPageThumb
       });
     }
   }

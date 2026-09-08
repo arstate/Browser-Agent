@@ -2310,10 +2310,48 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
       return { error: rpcRes?.error || "Gagal mengetik ke jendela aktif." };
     }
 
-    if (toolName === "read_os_file" || toolName === "local_read_file") {
-      const rpcRes = await sendNativeRpcInBackground("read_file", { path: toolArgs.path });
+    if (toolName === "view_document" || toolName === "view_file" || toolName === "view_document_file" || toolName === "convert_document_pages" || toolName === "read_document_pages") {
+      const targetPath = toolArgs.path || toolArgs.file_path || toolArgs.filePath || "";
+      const dpi = toolArgs.dpi || 150;
+      const maxPages = toolArgs.max_pages || 30;
+      const pageRange = toolArgs.page_range || toolArgs.pages || null;
+      const rpcRes = await sendNativeRpcInBackground("convert_document_pages", {
+        path: targetPath,
+        dpi,
+        max_pages: maxPages,
+        page_range: pageRange
+      });
       if (rpcRes && rpcRes.status === "ok") {
-        return { status: "success", content: rpcRes.content, path: rpcRes.path, size: rpcRes.size };
+        return {
+          status: "success",
+          path: rpcRes.path,
+          total_pages: rpcRes.total_pages,
+          pages_count: rpcRes.pages_count,
+          pages_dir: rpcRes.pages_dir,
+          pages: (rpcRes.pages || []).map(p => ({
+            page_num: p.page_num,
+            image_path: p.image_path,
+            has_image: Boolean(p.data_url || p.image_base64),
+            text_preview: (p.text || "").slice(0, 300)
+          })),
+          full_text_preview: (rpcRes.full_text || "").slice(0, 4000),
+          message: `Berhasil mengonversi ${rpcRes.pages_count} dari total ${rpcRes.total_pages} halaman dokumen jadi gambar visual 150 DPI siap inspeksi.`
+        };
+      }
+      return { error: rpcRes?.error || "Gagal mengonversi atau membaca halaman dokumen." };
+    }
+
+    if (toolName === "read_os_file" || toolName === "local_read_file") {
+      const rpcRes = await sendNativeRpcInBackground("read_file", { path: toolArgs.path, with_pages: true });
+      if (rpcRes && rpcRes.status === "ok") {
+        return {
+          status: "success",
+          content: rpcRes.content,
+          path: rpcRes.path,
+          size: rpcRes.size,
+          pages: rpcRes.pages,
+          total_pages: rpcRes.total_pages
+        };
       }
       return { error: rpcRes?.error || "Gagal membaca file." };
     }

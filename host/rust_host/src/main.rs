@@ -1011,9 +1011,22 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 let mut fmt = target_path.extension().and_then(|s| s.to_str()).unwrap_or("").to_string();
                 let mut char_count = 0;
                 let mut approx_tokens = 0;
+                let mut total_pages: u64 = 1;
+                let mut pages_converted: u64 = 0;
+                let mut pages_dir = String::new();
+                let mut pages_val = Value::Array(Vec::new());
 
                 if parser_script.exists() {
-                    if let Ok(out) = Command::new("python3").args([parser_script.to_string_lossy().as_ref(), target_path.to_string_lossy().as_ref()]).output() {
+                    let is_doc = ["pdf", "docx", "doc", "odt", "rtf", "pptx", "ppt"].contains(&fmt.as_str());
+                    let mut cmd = Command::new("python3");
+                    cmd.arg(parser_script.to_string_lossy().as_ref());
+                    if is_doc {
+                        cmd.arg("--both");
+                        cmd.args(["--max-pages", "20"]);
+                    }
+                    cmd.arg(target_path.to_string_lossy().as_ref());
+
+                    if let Ok(out) = cmd.output() {
                         if out.status.success() {
                             if let Ok(parsed_json) = serde_json::from_slice::<Value>(&out.stdout) {
                                 if parsed_json.get("status").and_then(|v| v.as_str()) == Some("ok") {
@@ -1021,6 +1034,12 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                                     fmt = parsed_json.get("format").and_then(|v| v.as_str()).unwrap_or(&fmt).to_string();
                                     char_count = parsed_json.get("char_count").and_then(|v| v.as_u64()).unwrap_or(markdown.len() as u64) as usize;
                                     approx_tokens = parsed_json.get("approx_tokens").and_then(|v| v.as_u64()).unwrap_or((char_count as u64 + 3) / 4) as usize;
+                                    total_pages = parsed_json.get("total_pages").and_then(|v| v.as_u64()).unwrap_or(1);
+                                    pages_converted = parsed_json.get("pages_converted").and_then(|v| v.as_u64()).unwrap_or(0);
+                                    pages_dir = parsed_json.get("pages_dir").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                                    if let Some(arr) = parsed_json.get("pages").cloned() {
+                                        pages_val = arr;
+                                    }
                                 }
                             }
                         }
@@ -1063,8 +1082,60 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                     "is_document": true,
                     "markdown": markdown,
                     "char_count": char_count,
-                    "approx_tokens": approx_tokens
+                    "approx_tokens": approx_tokens,
+                    "total_pages": total_pages,
+                    "pages_converted": pages_converted,
+                    "pages_dir": pages_dir,
+                    "pages": pages_val
                 })
+            }
+        }
+
+        "convert_document_pages" | "view_document_pages" => {
+            let raw_path = msg.get("path").and_then(|v| v.as_str()).unwrap_or("");
+            if raw_path.is_empty() {
+                json!({ "status": "error", "error": "No file path provided" })
+            } else {
+                let p = expand_path(raw_path);
+                if !p.exists() {
+                    json!({ "status": "error", "error": format!("File not found: {}", p.display()) })
+                } else {
+                    let mut parser_script = get_host_dir().join("doc_parser.py");
+                    if !parser_script.exists() {
+                        parser_script = PathBuf::from("/home/arya/browser-agent/host/doc_parser.py");
+                    }
+                    if !parser_script.exists() {
+                        json!({ "status": "error", "error": "doc_parser.py script not found" })
+                    } else {
+                        let max_pages = msg.get("max_pages").and_then(|v| v.as_u64()).unwrap_or(25).to_string();
+                        let dpi = msg.get("dpi").and_then(|v| v.as_u64()).unwrap_or(150).to_string();
+                        let mut cmd = Command::new("python3");
+                        cmd.args([
+                            parser_script.to_string_lossy().as_ref(),
+                            "--convert-pages",
+                            p.to_string_lossy().as_ref(),
+                            "--max-pages",
+                            &max_pages,
+                            "--dpi",
+                            &dpi,
+                        ]);
+                        if let Some(range) = msg.get("pages").or_else(|| msg.get("page_range")).and_then(|v| v.as_str()) {
+                            if !range.is_empty() && range != "all" {
+                                cmd.args(["--range", range]);
+                            }
+                        }
+                        match cmd.output() {
+                            Ok(out) => {
+                                if let Ok(parsed_json) = serde_json::from_slice::<Value>(&out.stdout) {
+                                    parsed_json
+                                } else {
+                                    json!({ "status": "error", "error": String::from_utf8_lossy(&out.stderr).to_string() })
+                                }
+                            }
+                            Err(e) => json!({ "status": "error", "error": format!("Failed to run doc_parser: {}", e) })
+                        }
+                    }
+                }
             }
         }
 
