@@ -930,6 +930,45 @@
     </div>
   </div>
 
+  <!-- Interactive Document Filmstrip Modal (Visual Page Carousel & Selective Vision) -->
+  <div class="doc-filmstrip-modal" id="doc-filmstrip-modal" style="display: none;">
+    <div class="filmstrip-backdrop" id="filmstrip-backdrop"></div>
+    <div class="filmstrip-container">
+      <div class="filmstrip-header">
+        <div class="filmstrip-title-group">
+          <span class="filmstrip-badge">DOCUMENT VISION</span>
+          <h4 class="filmstrip-filename" id="filmstrip-filename">Dokumen</h4>
+          <span class="filmstrip-page-counter" id="filmstrip-page-counter">Hal 1 dari 20</span>
+        </div>
+        <div class="filmstrip-actions">
+          <button type="button" class="btn-filmstrip-action" id="btn-filmstrip-select-all" title="Pilih Semua Halaman">Pilih Semua</button>
+          <button type="button" class="btn-filmstrip-action" id="btn-filmstrip-clear-selection" title="Pilih Halaman Ini Saja">Halaman Ini Saja</button>
+          <button type="button" class="btn-filmstrip-close" id="btn-close-filmstrip" title="Tutup (Esc)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="filmstrip-main-viewport">
+        <div class="filmstrip-img-wrapper" id="filmstrip-img-wrapper">
+          <img src="" id="filmstrip-active-img" alt="Active Page Preview">
+          <div class="filmstrip-active-info" id="filmstrip-active-info">
+            <span id="filmstrip-active-page-label">Halaman 1</span>
+            <span id="filmstrip-active-char-label">0 Karakter</span>
+          </div>
+        </div>
+        <div class="filmstrip-sidebar" id="filmstrip-sidebar">
+          <div class="filmstrip-sidebar-title">Garis Besar & Teks Digital</div>
+          <div class="filmstrip-sidebar-content" id="filmstrip-sidebar-content">
+            <!-- Outline items & extracted text snippet -->
+          </div>
+        </div>
+      </div>
+      <div class="filmstrip-carousel-bar" id="filmstrip-carousel-bar">
+        <!-- Thumbnails of all pages will be rendered here dynamically -->
+      </div>
+    </div>
+  </div>
+
   <!-- Fullscreen Media Lightbox Modal (Image & Video) -->
   <div class="image-lightbox-modal" id="image-lightbox-modal" style="display: none;">
     <div class="lightbox-backdrop" id="lightbox-backdrop"></div>

@@ -285,6 +285,7 @@ You have access to 3 categories of tools:
 
 2. LOCAL PC TOOLS (via Local Native Host):
    - view_document(path, pages, max_pages): Convert and view all pages of a document file (PDF, Word DOCX/DOC, RTF, PPTX) into sequential, high-resolution, lightweight page images (150 DPI JPG/PNG, ~80-140 KB/page) and extract text per page. Essential for viewing and reading documents with 100% visual accuracy in exact page order.
+   - inspect_page_detail(path, page_number, region, dpi): Inspect microscopic detail of a specific document page at ultra-high resolution (250 DPI zoom). Use this for complex tables, tiny footnotes, or fine print.
    - local_read_file(path): Read file contents from user's local PC.
    - local_write_file(path, content): Create or overwrite a file on user's PC.
    - local_list_dir(path): List files and directories on local PC.
@@ -1174,7 +1175,7 @@ ATURAN KRUSIAL:
 === CAPABILITIES & TOOLS AVAILABLE ===
 1. 🧠 Autonomous Brain & Self-Evolution Tools: manage_personal_memory, create_autonomous_skill, update_autonomous_skill, create_autonomous_agent, edit_manual_skill, edit_manual_agent, rollback_brain_item, record_anti_pattern, save_epistemic_triplet, query_epistemic_graph, execute_jit_microtool.
 2. 🌐 Browser Automation Tools: browser_navigate, browser_snapshot, browser_click, browser_type, browser_press_key, browser_hover, browser_scroll, browser_control_media, browser_evaluate_script, browser_screenshot, browser_get_console_logs, browser_extract_table, browser_list_tabs, browser_switch_tab, browser_wait.
-3. 💻 Local PC Tools: view_document, local_read_file, local_write_file, local_list_dir, local_run_command.
+3. 💻 Local PC Tools: view_document, inspect_page_detail, local_read_file, local_write_file, local_list_dir, local_run_command.
 4. 🎨 AI Image & Presentation Design: generate_image(prompt, size), create_slide_deck_design(topic, slide_count, detailed_outline_or_content, design_archetype), read_slide_deck(slide_numbers, detail_level).
 5. 💬 Interactive Clarification & Multi-Agent Swarm: ask_clarification, agent_subtask_analysis, summon_specialist_agent.
 6. 📱 Built-in Connected Apps & Telegram Bot Remote: configure_telegram_bot, get_telegram_bot_status, telegram_send_message.
@@ -1749,6 +1750,23 @@ const AGENT_TOOLS = [
           dpi: { type: "number", description: "Resolution in DPI (default 150 for crisp non-blurry rendering)" }
         },
         required: ["path"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "inspect_page_detail",
+      description: "Inspect microscopic visual detail of a specific document page at ultra-high resolution (250 DPI zoom). Use this when reading small-font text, complex tables, footnotes, budgets, or stamps that need extreme clarity.",
+      parameters: {
+        type: "object",
+        properties: {
+          path: { type: "string", description: "Absolute or relative file path to the PDF or Word document on user's PC" },
+          page_number: { type: "number", description: "Page number to zoom in (1-indexed)" },
+          region: { type: "string", enum: ["all", "top", "bottom", "center", "table"], description: "Optional specific region of the page to crop and inspect (default 'all')" },
+          dpi: { type: "number", description: "Zoom DPI resolution (default 250)" }
+        },
+        required: ["path", "page_number"]
       }
     }
   },
@@ -4639,6 +4657,28 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
       };
     }
 
+    case "inspect_page_detail":
+    case "zoom_page_detail": {
+      const res = await sendNativeRpc("inspect_page_detail", {
+        path: args.path,
+        page_number: args.page_number || args.page || 1,
+        region: args.region || "all",
+        dpi: args.dpi || 250
+      });
+      if (!res || res.status !== "ok") {
+        return { error: res?.error || "Gagal melakukan zoom detail halaman dokumen." };
+      }
+      return {
+        status: "success",
+        page: res.page,
+        region: res.region,
+        dpi: res.dpi,
+        data_url: res.data_url,
+        file_path: res.file_path,
+        hint: `Detail resolusi tinggi halaman ${res.page} (${res.dpi} DPI, region: ${res.region}) berhasil dirender untuk analisis visual mendalam.`
+      };
+    }
+
     case "local_read_file": {
       const res = await sendNativeRpc("read_file", { path: args.path, with_pages: true });
       return {
@@ -6418,16 +6458,17 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
       });
     });
 
-    // Add document page images in strict sequential order with digital text & visual clarity
+    // Add document page images in strict sequential order with digital text & visual clarity (Dual-Layer Ground Truth)
     docAttachments.forEach(doc => {
       const pagesToShow = doc.pages.slice(0, 35);
+      const totalP = doc.totalPages || doc.pages.length;
       pagesToShow.forEach(p => {
         if (p.data_url) {
           const pNum = p.page_num || p.page || 1;
-          const textSnippet = p.text ? `\n[Teks Digital Halaman ${pNum}]:\n${p.text}\n` : '';
+          const textSnippet = p.text ? `\n[Teks Digital Ground-Truth (Stream Asli) Halaman ${pNum}]:\n${p.text}\n` : '';
           userPayloadContent.push({
             type: "text",
-            text: `--- [Dokumen: "${doc.name}" - Halaman ${pNum} dari ${doc.totalPages || doc.pages.length} (140 DPI)] ---${textSnippet}[Pratinjau Visual Halaman ${pNum}]:`
+            text: `=== [DOKUMEN: "${doc.name}" | HALAMAN ${pNum} DARI ${totalP}] ===${textSnippet}\n[Pratinjau Visual Halaman ${pNum} (140 DPI)]: `
           });
           userPayloadContent.push({
             type: "image_url",
@@ -6954,6 +6995,9 @@ Tugas Anda:
           } else if (toolName === "view_document" || toolName === "view_file" || toolName === "view_document_file" || toolName === "local_view_file" || toolName === "convert_document_pages" || toolName === "read_document_pages") {
             const shortName = toolArgs.path ? toolArgs.path.split('/').pop() : 'Dokumen';
             badgeActionName = `Konversi & Inspeksi Visual Dokumen (${shortName})`;
+          } else if (toolName === "inspect_page_detail" || toolName === "zoom_page_detail") {
+            const shortName = toolArgs.path ? toolArgs.path.split('/').pop() : 'Dokumen';
+            badgeActionName = `Zoom Hal ${toolArgs.page_number || toolArgs.page || 1} (${toolArgs.region || 'detail'}) 250 DPI`;
           }
 
           // Master Agent Orchestration Visibility in Tool Steps
@@ -6992,6 +7036,7 @@ Tugas Anda:
             else if (toolName === "create_slide_deck_design") userFriendlyAction = `🎨 Merancang slide deck 16:9 di Canvas Drawer...`;
             else if (toolName === "read_slide_deck") userFriendlyAction = `📖 Memeriksa isi slide di Canvas Drawer...`;
             else if (toolName.includes("view_document") || toolName.includes("view_file") || toolName.includes("convert_document_pages")) userFriendlyAction = `📄 Mengonversi & memeriksa dokumen visual (PDF/Word)...`;
+            else if (toolName === "inspect_page_detail" || toolName === "zoom_page_detail") userFriendlyAction = `🔍 Zoom detail visual halaman dokumen (250 DPI)...`;
             else userFriendlyAction = `Menjalankan aksi (${badgeActionName})...`;
             
             const statusText = `<b>${escapeHtml(workerName)}:</b> ${userFriendlyAction} (<i>${stepStr}</i>)`;
@@ -8677,16 +8722,17 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
         image_url: { url: img.dataUrl }
       });
     });
-    // Add document page images in strict sequential order with digital text & visual clarity
+    // Add document page images in strict sequential order with digital text & visual clarity (Dual-Layer Ground Truth)
     docAttachments.forEach(doc => {
       const pagesToShow = doc.pages.slice(0, 35);
+      const totalP = doc.totalPages || doc.pages.length;
       pagesToShow.forEach(p => {
         if (p.data_url) {
           const pNum = p.page_num || p.page || 1;
-          const textSnippet = p.text ? `\n[Teks Digital Halaman ${pNum}]:\n${p.text}\n` : '';
+          const textSnippet = p.text ? `\n[Teks Digital Ground-Truth (Stream Asli) Halaman ${pNum}]:\n${p.text}\n` : '';
           userPayloadContent.push({
             type: "text",
-            text: `--- [Dokumen: "${doc.name}" - Halaman ${pNum} dari ${doc.totalPages || doc.pages.length} (140 DPI)] ---${textSnippet}[Pratinjau Visual Halaman ${pNum}]:`
+            text: `=== [DOKUMEN: "${doc.name}" | HALAMAN ${pNum} DARI ${totalP}] ===${textSnippet}\n[Pratinjau Visual Halaman ${pNum} (140 DPI)]: `
           });
           userPayloadContent.push({
             type: "image_url",
@@ -13881,6 +13927,8 @@ function renderAttachmentsPreview() {
       const isPdf = safeName.toLowerCase().endsWith('.pdf');
       const isWord = /\.(docx?|odt|rtf)$/i.test(safeName);
       const docBadge = isPdf ? `PDF • ${pageCount} Hal` : (isWord ? `DOC • ${pageCount} Hal` : `Doc • ${pageCount} Hal`);
+      card.style.cursor = 'pointer';
+      card.title = `Klik untuk membuka Interactive Filmstrip (${pageCount} Halaman)`;
       card.innerHTML = `
         <div style="position:relative;width:42px;height:48px;border-radius:6px;overflow:hidden;background:#0F172A;border:1px solid rgba(255,255,255,0.12);flex-shrink:0;">
           <img src="${att.thumbnailUrl}" alt="${escapeHtml(safeName)}" style="width:100%;height:100%;object-fit:cover;object-position:top;">
@@ -13896,6 +13944,11 @@ function renderAttachmentsPreview() {
         </div>
         <button type="button" class="attachment-remove-btn" title="Hapus file">×</button>
       `;
+
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.attachment-remove-btn')) return;
+        openDocumentFilmstrip(att);
+      });
     } else {
       const sizeStr = formatFileSize(att.size || (att.text ? att.text.length : 0));
       const hasAnydoc = att.isDocument || att.parsedMarkdown || att.filePath;
@@ -14148,8 +14201,10 @@ async function handleFileSelection(files) {
             newAtt.format = upRes.format || "";
             newAtt.charCount = upRes.char_count || (newAtt.textContent ? newAtt.textContent.length : 0);
             newAtt.pages = Array.isArray(upRes.pages) ? upRes.pages : [];
+            newAtt._originalPages = [...newAtt.pages];
             newAtt.totalPages = upRes.total_pages || (newAtt.pages.length || 1);
             newAtt.pagesDir = upRes.pages_dir || "";
+            newAtt.outline = upRes.outline || [];
             if (newAtt.pages.length > 0 && newAtt.pages[0].data_url) {
               newAtt.thumbnailUrl = newAtt.pages[0].data_url;
             }
@@ -16092,5 +16147,144 @@ async function bootstrap() {
     syncCanvasQuickReopenButton();
   } catch (_) {}
 }
+
+// =========================================================================
+// Interactive Document Filmstrip Modal (Next-Gen AI Vision Engine)
+// =========================================================================
+let currentFilmstripDoc = null;
+let currentFilmstripActivePageIndex = 0;
+
+function openDocumentFilmstrip(att) {
+  if (!att || !att.pages || att.pages.length === 0) return;
+  const modal = document.getElementById('doc-filmstrip-modal');
+  if (!modal) return;
+
+  currentFilmstripDoc = att;
+  if (!att._originalPages) {
+    att._originalPages = [...att.pages];
+  }
+  currentFilmstripActivePageIndex = 0;
+
+  const fnEl = document.getElementById('filmstrip-filename');
+  if (fnEl) fnEl.textContent = att.name || 'Dokumen';
+
+  renderFilmstripThumbnails();
+  displayFilmstripActivePage(0);
+
+  modal.style.display = 'flex';
+}
+
+function closeDocumentFilmstrip() {
+  const modal = document.getElementById('doc-filmstrip-modal');
+  if (modal) modal.style.display = 'none';
+  currentFilmstripDoc = null;
+}
+
+function displayFilmstripActivePage(idx) {
+  if (!currentFilmstripDoc || !currentFilmstripDoc.pages) return;
+  const pages = currentFilmstripDoc.pages;
+  if (idx < 0 || idx >= pages.length) return;
+
+  currentFilmstripActivePageIndex = idx;
+  const pageObj = pages[idx];
+  const pNum = pageObj.page_num || pageObj.page || (idx + 1);
+
+  const imgEl = document.getElementById('filmstrip-active-img');
+  if (imgEl) imgEl.src = pageObj.data_url || '';
+
+  const counterEl = document.getElementById('filmstrip-page-counter');
+  if (counterEl) counterEl.textContent = `Hal ${pNum} dari ${currentFilmstripDoc.totalPages || pages.length}`;
+
+  const pageLabel = document.getElementById('filmstrip-active-page-label');
+  if (pageLabel) pageLabel.textContent = `Halaman ${pNum}`;
+
+  const charLabel = document.getElementById('filmstrip-active-char-label');
+  if (charLabel) charLabel.textContent = `${pageObj.char_count || (pageObj.text ? pageObj.text.length : 0)} Karakter`;
+
+  // Update active thumbnail highlight
+  const carouselBar = document.getElementById('filmstrip-carousel-bar');
+  if (carouselBar) {
+    const cards = carouselBar.querySelectorAll('.filmstrip-thumb-card');
+    cards.forEach((c, cIdx) => {
+      c.classList.toggle('active', cIdx === idx);
+    });
+    const activeCard = cards[idx];
+    if (activeCard) {
+      activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }
+
+  // Update sidebar outline and page digital text
+  const sidebarContent = document.getElementById('filmstrip-sidebar-content');
+  if (sidebarContent) {
+    const outlineItems = currentFilmstripDoc.outline || [];
+    let outlineHtml = '';
+    if (outlineItems.length > 0) {
+      outlineHtml = `<div style="margin-bottom:12px;"><strong style="color:#CEF128;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;">📑 Struktur Dokumen:</strong><ul style="margin:6px 0 10px 14px;padding:0;font-size:11px;color:#94A3B8;">` +
+        outlineItems.slice(0, 15).map(o => `<li style="margin-bottom:3px;">${escapeHtml(o.title || o)}</li>`).join('') +
+        `</ul></div>`;
+    }
+    const txt = pageObj.text || 'Tidak ada teks digital pada halaman ini.';
+    sidebarContent.innerHTML = `${outlineHtml}<strong style="color:#F8FAFC;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;">📄 Teks Halaman ${pNum}:</strong><pre style="margin-top:6px;font-size:11px;color:#CBD5E1;line-height:1.5;">${escapeHtml(txt)}</pre>`;
+  }
+}
+
+function renderFilmstripThumbnails() {
+  const carouselBar = document.getElementById('filmstrip-carousel-bar');
+  if (!carouselBar || !currentFilmstripDoc || !currentFilmstripDoc.pages) return;
+  carouselBar.innerHTML = '';
+
+  currentFilmstripDoc.pages.forEach((p, idx) => {
+    const pNum = p.page_num || p.page || (idx + 1);
+    const card = document.createElement('div');
+    card.className = `filmstrip-thumb-card ${idx === currentFilmstripActivePageIndex ? 'active' : ''}`;
+    card.title = `Klik untuk melihat Halaman ${pNum}`;
+    card.innerHTML = `
+      <img src="${p.data_url || ''}" alt="Hal ${pNum}" loading="lazy">
+      <div class="filmstrip-thumb-badge">${pNum}</div>
+    `;
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      displayFilmstripActivePage(idx);
+    });
+    carouselBar.appendChild(card);
+  });
+}
+
+// Filmstrip Action Handlers (Select All, Clear/Single Selection, Close)
+document.getElementById('btn-close-filmstrip')?.addEventListener('click', closeDocumentFilmstrip);
+document.getElementById('filmstrip-backdrop')?.addEventListener('click', closeDocumentFilmstrip);
+
+document.getElementById('btn-filmstrip-select-all')?.addEventListener('click', () => {
+  if (currentFilmstripDoc && currentFilmstripDoc._originalPages) {
+    currentFilmstripDoc.pages = [...currentFilmstripDoc._originalPages];
+    currentFilmstripDoc.totalPages = currentFilmstripDoc._originalPages.length;
+    renderAttachmentsPreview();
+    renderFilmstripThumbnails();
+    displayFilmstripActivePage(currentFilmstripActivePageIndex);
+  }
+});
+
+document.getElementById('btn-filmstrip-clear-selection')?.addEventListener('click', () => {
+  if (currentFilmstripDoc && currentFilmstripDoc.pages) {
+    const activePage = currentFilmstripDoc.pages[currentFilmstripActivePageIndex];
+    if (activePage) {
+      currentFilmstripDoc.pages = [activePage];
+      currentFilmstripDoc.totalPages = 1;
+      currentFilmstripActivePageIndex = 0;
+      renderAttachmentsPreview();
+      closeDocumentFilmstrip();
+    }
+  }
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('doc-filmstrip-modal');
+    if (modal && modal.style.display === 'flex') {
+      closeDocumentFilmstrip();
+    }
+  }
+});
 
 bootstrap();

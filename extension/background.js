@@ -2341,6 +2341,30 @@ async function executeBackgroundTool(toolName, toolArgs, senderId, botToken, cfg
       return { error: rpcRes?.error || "Gagal mengonversi atau membaca halaman dokumen." };
     }
 
+    if (toolName === "inspect_page_detail" || toolName === "zoom_page_detail") {
+      const targetPath = toolArgs.path || toolArgs.file_path || toolArgs.filePath || "";
+      const pageNum = toolArgs.page_number || toolArgs.page || 1;
+      const region = toolArgs.region || "all";
+      const dpi = toolArgs.dpi || 250;
+      const rpcRes = await sendNativeRpcInBackground("inspect_page_detail", {
+        path: targetPath,
+        page_number: pageNum,
+        region,
+        dpi
+      });
+      if (rpcRes && rpcRes.status === "ok") {
+        return {
+          status: "success",
+          page: rpcRes.page,
+          region: rpcRes.region,
+          dpi: rpcRes.dpi,
+          data_url: rpcRes.data_url,
+          message: `Detail resolusi tinggi halaman ${rpcRes.page} (${rpcRes.dpi} DPI, region: ${rpcRes.region}) berhasil dirender.`
+        };
+      }
+      return { error: rpcRes?.error || "Gagal melakukan inspeksi zoom halaman dokumen." };
+    }
+
     if (toolName === "read_os_file" || toolName === "local_read_file") {
       const rpcRes = await sendNativeRpcInBackground("read_file", { path: toolArgs.path, with_pages: true });
       if (rpcRes && rpcRes.status === "ok") {

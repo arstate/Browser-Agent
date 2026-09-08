@@ -1058,10 +1058,9 @@ def save_and_parse_uploaded_file(file_name, file_data, mime_type="", session_id=
         if clean_ext in doc_page_exts:
             try:
                 from doc_parser import convert_document_to_page_images
-                pages_dir = os.path.join(UPLOADS_DIR, f"pages_{timestamp}_{clean_name}")
                 p_res = convert_document_to_page_images(
                     file_path=file_path,
-                    output_dir=pages_dir,
+                    output_dir=None,
                     dpi=140,
                     quality=80,
                     max_pages=35,
@@ -1069,19 +1068,32 @@ def save_and_parse_uploaded_file(file_name, file_data, mime_type="", session_id=
                 )
                 if p_res.get("status") == "ok":
                     pages_result = p_res
-                    log(f"Converted document {clean_name} to {p_res.get('pages_converted', 0)} page images in {pages_dir}")
+                    log(f"Converted document {clean_name} to {p_res.get('pages_converted', 0)} page images in {p_res.get('pages_dir')}")
             except Exception as e_conv:
                 log(f"convert_document_to_page_images notice in save_and_parse_uploaded_file: {e_conv}")
 
         file_id = f"file_{timestamp}_{uuid.uuid4().hex[:6]}"
 
-        # Save record to SQLite uploaded_files
+        # Save record to SQLite uploaded_files & auto-index to user_memories
         with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO uploaded_files (id, session_id, file_name, file_path, file_size, mime_type, parsed_markdown, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (file_id, str(session_id or ""), str(file_name), str(file_path), int(file_size), str(mime_type), str(markdown_content), int(timestamp)))
+
+            # Auto-register document knowledge card for eternal memory
+            if is_doc or (pages_result and pages_result.get("total_pages", 0) > 0) or markdown_content:
+                tot_p = pages_result.get("total_pages", 1) if pages_result else 1
+                mem_id = f"mem_doc_{file_id}"
+                snippet = (markdown_content or "")[:400].replace("\n", " ").strip()
+                mem_content = f"Dokumen: \"{file_name}\" ({tot_p} Halaman, format: {fmt}). Tersimpan permanen di: {file_path}. Ringkasan awal: {snippet}"
+                cursor.execute("""
+                    INSERT INTO user_memories (id, category, content, source, reason, confidence, created_at, updated_at)
+                    VALUES (?, 'document_knowledge', ?, 'document_upload', 'Auto-indexed document knowledge for long-term recall', 1.0, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at
+                """, (mem_id, mem_content, int(timestamp), int(timestamp)))
+
             conn.commit()
 
         log(f"Saved & parsed uploaded file: {file_name} -> {file_path} ({char_count} chars, {approx_tokens} tokens)")
@@ -4389,6 +4401,43 @@ def handle_local_rpc(msg):
                 img_format=img_format,
                 include_base64=include_base64
             )
+            res["id"] = req_id
+            return res
+        except Exception as e:
+            return {"id": req_id, "status": "error", "error": str(e)}
+
+    elif action in ("inspect_page_detail", "zoom_page_detail"):
+        path = os.path.expanduser(msg.get("path", ""))
+        page_number = int(msg.get("page_number") or msg.get("page") or 1)
+        region = msg.get("region") or "all"
+        dpi = int(msg.get("dpi") or 250)
+        quality = int(msg.get("quality") or 90)
+
+        if not path:
+            return {"id": req_id, "status": "error", "error": "No file path provided"}
+        if not os.path.exists(path):
+            return {"id": req_id, "status": "error", "error": f"File not found: {path}"}
+
+        try:
+            from doc_parser import inspect_document_region
+            res = inspect_document_region(
+                file_path=path,
+                page_num=page_number,
+                region=region,
+                dpi=dpi,
+                quality=quality
+            )
+            res["id"] = req_id
+            return res
+        except Exception as e:
+            return {"id": req_id, "status": "error", "error": str(e)}
+
+    elif action in ("clean_document_cache", "purge_document_cache"):
+        max_age_hours = int(msg.get("max_age_hours") or 24)
+        max_cache_mb = int(msg.get("max_cache_mb") or 50)
+        try:
+            from doc_parser import auto_purge_document_cache
+            res = auto_purge_document_cache(max_age_hours=max_age_hours, max_cache_mb=max_cache_mb)
             res["id"] = req_id
             return res
         except Exception as e:

@@ -16,6 +16,7 @@ import time
 import shutil
 import tempfile
 import base64
+import concurrent.futures
 
 # Try importing anydoc (Rust-powered high performance parser by Firecrawl)
 try:
@@ -213,6 +214,229 @@ def parse_document_to_markdown(file_path: str, format_hint: str = "") -> dict:
         "engine": engine_used
     }
 
+def auto_purge_document_cache(max_age_hours: int = 24, max_cache_mb: int = 50) -> dict:
+    """
+    Cleans up old ephemeral page images:
+    - Scans ~/.browser-agent/cache/document_pages/ and legacy ~/.browser-agent/uploads/pages_*
+    - Removes folders older than max_age_hours (default 24h)
+    - If total remaining size > max_cache_mb (default 50MB), removes oldest folders first
+    Preserves all original master PDF/DOCX files.
+    """
+    cache_dirs = []
+    base_cache = os.path.expanduser("~/.browser-agent/cache/document_pages")
+    uploads_dir = os.path.expanduser("~/.browser-agent/uploads")
+
+    if os.path.exists(base_cache):
+        for item in os.listdir(base_cache):
+            p = os.path.join(base_cache, item)
+            if os.path.isdir(p) and item.startswith("pages_"):
+                cache_dirs.append(p)
+
+    if os.path.exists(uploads_dir):
+        for item in os.listdir(uploads_dir):
+            p = os.path.join(uploads_dir, item)
+            if os.path.isdir(p) and item.startswith("pages_"):
+                cache_dirs.append(p)
+
+    now = time.time()
+    deleted_count = 0
+    freed_bytes = 0
+    remaining_dirs = []
+
+    def get_dir_size(d):
+        total = 0
+        try:
+            for root, _, files in os.walk(d):
+                for f in files:
+                    fp = os.path.join(root, f)
+                    if not os.path.islink(fp):
+                        total += os.path.getsize(fp)
+        except Exception:
+            pass
+        return total
+
+    for d in cache_dirs:
+        try:
+            mtime = os.path.getmtime(d)
+            age_hours = (now - mtime) / 3600.0
+            if age_hours > max_age_hours:
+                sz = get_dir_size(d)
+                shutil.rmtree(d, ignore_errors=True)
+                deleted_count += 1
+                freed_bytes += sz
+            else:
+                remaining_dirs.append((d, mtime, get_dir_size(d)))
+        except Exception:
+            pass
+
+    total_remaining = sum(item[2] for item in remaining_dirs)
+    max_bytes = max_cache_mb * 1024 * 1024
+    if total_remaining > max_bytes:
+        remaining_dirs.sort(key=lambda x: x[1])
+        target_size = int(max_bytes * 0.7)
+        for d, mtime, sz in remaining_dirs:
+            try:
+                shutil.rmtree(d, ignore_errors=True)
+                deleted_count += 1
+                freed_bytes += sz
+                total_remaining -= sz
+                if total_remaining <= target_size:
+                    break
+            except Exception:
+                pass
+
+    return {
+        "status": "ok",
+        "deleted_dirs": deleted_count,
+        "freed_mb": round(freed_bytes / (1024 * 1024), 2),
+        "remaining_mb": round(total_remaining / (1024 * 1024), 2)
+    }
+
+def extract_document_outline(text: str, total_pages: int = 1) -> list:
+    """
+    Extracts high-level document chapters, sections, and structural bookmarks
+    (e.g., BAB I, BAB II, DAFTAR ISI, DAFTAR TABEL, LAMPIRAN) to build a fast navigation index.
+    """
+    if not text:
+        return []
+
+    outline = []
+    lines = text.splitlines()
+    seen = set()
+
+    patterns = [
+        re.compile(r'^(BAB\s+[IVXLCDM\d]+[^\n\r]*)', re.IGNORECASE),
+        re.compile(r'^(DAFTAR\s+(?:ISI|TABEL|GAMBAR|LAMPIRAN|PUSTAKA)[^\n\r]*)', re.IGNORECASE),
+        re.compile(r'^(KATA\s+PENGANTAR[^\n\r]*)', re.IGNORECASE),
+        re.compile(r'^(RINGKASAN|ABSTRAK|EXECUTIVE\s+SUMMARY)[^\n\r]*', re.IGNORECASE),
+        re.compile(r'^(LAMPIRAN(?:\s+[A-Z0-9]+)?[^\n\r]*)', re.IGNORECASE),
+        re.compile(r'^(\d+\.\d+\s+[A-Z][^\n\r]{3,60})', re.IGNORECASE),
+    ]
+
+    for line in lines:
+        cleaned = line.strip()
+        if not cleaned or len(cleaned) > 100 or len(cleaned) < 3:
+            continue
+
+        for pat in patterns:
+            m = pat.match(cleaned)
+            if m:
+                heading = m.group(1).strip()
+                norm = re.sub(r'\s+', ' ', heading).upper()
+                if norm not in seen:
+                    seen.add(norm)
+                    outline.append({
+                        "title": heading,
+                        "raw": cleaned
+                    })
+                break
+
+    return outline
+
+def inspect_document_region(
+    file_path: str,
+    page_num: int = 1,
+    region: str = "all",
+    dpi: int = 250,
+    quality: int = 90
+) -> dict:
+    """
+    Renders a specific page at ultra-high resolution (250 DPI) and optionally crops to
+    a target region ('top', 'bottom', 'center', 'table' / middle-third) using Pillow if available.
+    """
+    file_path = os.path.expanduser(file_path)
+    if not os.path.exists(file_path):
+        return {"status": "error", "error": f"File not found: {file_path}"}
+
+    ext = os.path.splitext(file_path)[1].lower()
+    temp_pdf_dir = None
+    pdf_path = file_path
+
+    if ext in {".docx", ".doc", ".odt", ".rtf", ".pptx", ".ppt"}:
+        soffice_bin = shutil.which("soffice") or shutil.which("libreoffice")
+        if not soffice_bin:
+            return {"status": "error", "error": "LibreOffice not found to convert document"}
+        temp_pdf_dir = tempfile.mkdtemp(prefix="ba_inspect_doc_")
+        conv_cmd = [soffice_bin, "--headless", "--convert-to", "pdf", "--outdir", temp_pdf_dir, file_path]
+        res = subprocess.run(conv_cmd, capture_output=True, text=True, timeout=60)
+        if res.returncode != 0:
+            if temp_pdf_dir and os.path.exists(temp_pdf_dir):
+                shutil.rmtree(temp_pdf_dir, ignore_errors=True)
+            return {"status": "error", "error": f"Failed to convert document: {res.stderr}"}
+        pdf_cands = [f for f in os.listdir(temp_pdf_dir) if f.lower().endswith(".pdf")]
+        if not pdf_cands:
+            shutil.rmtree(temp_pdf_dir, ignore_errors=True)
+            return {"status": "error", "error": "No PDF generated"}
+        pdf_path = os.path.join(temp_pdf_dir, pdf_cands[0])
+
+    tmp_dir = tempfile.mkdtemp(prefix="ba_inspect_page_")
+    prefix = os.path.join(tmp_dir, f"inspect_p{page_num}")
+
+    try:
+        render_cmd = [
+            "pdftoppm",
+            "-f", str(page_num),
+            "-l", str(page_num),
+            "-jpeg",
+            "-r", str(dpi),
+            "-jpegopt", f"quality={quality},progressive=y",
+            pdf_path,
+            prefix
+        ]
+        res_r = subprocess.run(render_cmd, capture_output=True, text=True, timeout=30)
+        if res_r.returncode != 0:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            return {"status": "error", "error": f"pdftoppm render failed: {res_r.stderr}"}
+
+        rendered_files = [f for f in os.listdir(tmp_dir) if f.endswith(".jpg")]
+        if not rendered_files:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            return {"status": "error", "error": "No image generated"}
+
+        rendered_img_path = os.path.join(tmp_dir, rendered_files[0])
+        final_img_path = rendered_img_path
+
+        if region in ("top", "bottom", "center", "table"):
+            try:
+                from PIL import Image
+                with Image.open(rendered_img_path) as im:
+                    w, h = im.size
+                    crop_box = None
+                    if region == "top":
+                        crop_box = (0, 0, w, int(h * 0.45))
+                    elif region == "bottom":
+                        crop_box = (0, int(h * 0.55), w, h)
+                    elif region in ("center", "table"):
+                        crop_box = (0, int(h * 0.25), w, int(h * 0.75))
+
+                    if crop_box:
+                        cropped = im.crop(crop_box)
+                        cropped_path = os.path.join(tmp_dir, f"cropped_{region}.jpg")
+                        cropped.save(cropped_path, format="JPEG", quality=quality)
+                        final_img_path = cropped_path
+            except Exception:
+                pass
+
+        with open(final_img_path, "rb") as f:
+            raw_bytes = f.read()
+            b64 = base64.b64encode(raw_bytes).decode("ascii")
+            data_url = f"data:image/jpeg;base64,{b64}"
+
+        return {
+            "status": "ok",
+            "page": page_num,
+            "region": region,
+            "dpi": dpi,
+            "file_name": os.path.basename(file_path),
+            "file_path": file_path,
+            "data_url": data_url,
+            "file_size_kb": round(len(raw_bytes) / 1024, 1)
+        }
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        if temp_pdf_dir and os.path.exists(temp_pdf_dir):
+            shutil.rmtree(temp_pdf_dir, ignore_errors=True)
+
 def convert_document_to_page_images(
     file_path: str,
     output_dir: str = None,
@@ -224,22 +448,30 @@ def convert_document_to_page_images(
     include_base64: bool = True
 ) -> dict:
     """
-    Converts all pages of a PDF, Word (DOCX/DOC), ODT, RTF, or PPTX document
-    into sequential, high-resolution, lightweight page images (150 DPI JPG/PNG).
-    Ensures:
-      - Low file size (approx. 80-140 KB per page)
-      - Razor-sharp clarity (not blurry / 'ga burik')
-      - Strict sequential page ordering (halaman urut 1, 2, 3... N)
-      - Extracted per-page text for multimodal LLM vision & text accuracy.
+    Converts pages of a PDF, Word (DOCX/DOC), ODT, RTF, or PPTX document
+    into sequential, high-resolution, lightweight page images (140 DPI JPG/PNG).
+    Features:
+      - 4x Multi-Core Parallel Chunked Rendering via ThreadPoolExecutor
+      - Ephemeral Cache Isolation in ~/.browser-agent/cache/document_pages/
+      - Auto-Purge of expired caches (TTL 24h, 50MB quota cap)
+      - Document Structure & Outline Mapping
+      - Strict sequential page ordering (1, 2, 3... N)
+      - Extracted per-page text for dual-layer vision & text accuracy.
     """
     file_path = os.path.expanduser(file_path)
     if not os.path.exists(file_path):
         return {"status": "error", "error": f"File not found: {file_path}"}
 
+    # Proactively trigger auto-purge on old transient cache
+    try:
+        auto_purge_document_cache(max_age_hours=24, max_cache_mb=50)
+    except Exception:
+        pass
+
     orig_name = os.path.basename(file_path)
     clean_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', orig_name).strip('_') or "document"
     ext = os.path.splitext(file_path)[1].lower()
-    
+
     doc_convert_exts = {".docx", ".doc", ".odt", ".rtf", ".pptx", ".ppt"}
     supported_exts = {".pdf"}.union(doc_convert_exts)
     if ext not in supported_exts:
@@ -253,7 +485,7 @@ def convert_document_to_page_images(
         soffice_bin = shutil.which("soffice") or shutil.which("libreoffice")
         if not soffice_bin:
             return {"status": "error", "error": "LibreOffice (soffice) not found to convert Word/presentation to PDF"}
-        
+
         temp_pdf_dir = tempfile.mkdtemp(prefix="ba_doc2pdf_")
         try:
             conv_cmd = [soffice_bin, "--headless", "--convert-to", "pdf", "--outdir", temp_pdf_dir, file_path]
@@ -261,7 +493,7 @@ def convert_document_to_page_images(
             if conv_res.returncode != 0:
                 shutil.rmtree(temp_pdf_dir, ignore_errors=True)
                 return {"status": "error", "error": f"Failed to convert {orig_name} to PDF: {conv_res.stderr}"}
-            
+
             pdf_candidates = [f for f in os.listdir(temp_pdf_dir) if f.lower().endswith(".pdf")]
             if not pdf_candidates:
                 shutil.rmtree(temp_pdf_dir, ignore_errors=True)
@@ -310,20 +542,55 @@ def convert_document_to_page_images(
                 except ValueError:
                     pass
 
-        # Step 4: Setup output directory
+        # Step 4: Setup output directory in cache
         if not output_dir:
-            uploads_dir = os.path.expanduser("~/.browser-agent/uploads")
-            os.makedirs(uploads_dir, exist_ok=True)
+            cache_base = os.path.expanduser("~/.browser-agent/cache/document_pages")
+            os.makedirs(cache_base, exist_ok=True)
             timestamp = int(time.time() * 1000)
-            output_dir = os.path.join(uploads_dir, f"pages_{timestamp}_{clean_name}")
+            output_dir = os.path.join(cache_base, f"pages_{timestamp}_{clean_name}")
         os.makedirs(output_dir, exist_ok=True)
 
         raw_tmp_dir = tempfile.mkdtemp(prefix="ba_render_pages_")
-        prefix = os.path.join(raw_tmp_dir, "raw_page")
 
-        # Step 5: Render pages via pdftoppm or gs fallback
+        # Step 5: Render pages - Multi-Core ThreadPool Parallel Rendering
         rendered = False
-        if shutil.which("pdftoppm"):
+        total_to_render = max(1, last_page - first_page + 1)
+        available_cores = os.cpu_count() or 4
+        num_workers = min(4, available_cores, total_to_render)
+
+        if shutil.which("pdftoppm") and total_to_render >= 4 and num_workers > 1:
+            chunk_size = (total_to_render + num_workers - 1) // num_workers
+            chunks = []
+            curr = first_page
+            while curr <= last_page:
+                chunk_end = min(curr + chunk_size - 1, last_page)
+                chunks.append((curr, chunk_end, len(chunks)))
+                curr = chunk_end + 1
+
+            def render_chunk(f_pg, l_pg, chunk_id):
+                c_prefix = os.path.join(raw_tmp_dir, f"chunk_{chunk_id}")
+                cmd = [
+                    "pdftoppm",
+                    "-f", str(f_pg),
+                    "-l", str(l_pg),
+                    "-jpeg" if img_format in ("jpg", "jpeg") else "-png",
+                    "-r", str(dpi)
+                ]
+                if img_format in ("jpg", "jpeg"):
+                    cmd.extend(["-jpegopt", f"quality={quality},progressive=y"])
+                cmd.extend([pdf_path, c_prefix])
+                res = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+                return res.returncode == 0
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+                futures = [executor.submit(render_chunk, c[0], c[1], c[2]) for c in chunks]
+                results = [f.result() for f in concurrent.futures.as_completed(futures)]
+                if all(results):
+                    rendered = True
+
+        # Sequential pdftoppm fallback if parallel wasn't used or had an error
+        if not rendered and shutil.which("pdftoppm"):
+            prefix = os.path.join(raw_tmp_dir, "raw_page")
             render_cmd = [
                 "pdftoppm",
                 "-f", str(first_page),
@@ -341,6 +608,7 @@ def convert_document_to_page_images(
 
         # Fallback to gs if pdftoppm failed
         if not rendered and shutil.which("gs"):
+            prefix = os.path.join(raw_tmp_dir, "raw_page")
             gs_cmd = [
                 "gs", "-dNOPAUSE", "-dBATCH",
                 f"-sDEVICE=jpeg" if img_format in ("jpg", "jpeg") else "-sDEVICE=png16m",
@@ -360,27 +628,34 @@ def convert_document_to_page_images(
             return {"status": "error", "error": "No suitable renderer found (pdftoppm or gs)"}
 
         # Step 6: Collect, sort naturally, and organize pages sequentially
-        raw_files = [f for f in os.listdir(raw_tmp_dir) if f.startswith("raw_page")]
+        raw_files = [f for f in os.listdir(raw_tmp_dir) if f.endswith(f".{img_format}") or f.endswith(".jpg") or f.endswith(".png")]
         def get_pg_num(fn):
-            match = re.search(r'raw_page[^\d]*(\d+)', fn)
-            return int(match.group(1)) if match else 0
+            match = re.search(r'-(\d+)\.[a-zA-Z0-9]+$', fn)
+            if match:
+                return int(match.group(1))
+            m2 = re.search(r'(\d+)', fn)
+            return int(m2.group(1)) if m2 else 0
 
-        # Sort naturally by page number (1, 2, 3... 10)
+        # Sort naturally by exact page number (1, 2, 3... N)
         raw_files.sort(key=get_pg_num)
 
         # Fast single-pass page text extraction via pdftotext form-feed (\x0c)
         page_texts = {}
+        all_extracted_text = ""
         if shutil.which("pdftotext"):
             try:
                 txt_cmd = ["pdftotext", "-f", str(first_page), "-l", str(last_page), "-layout", pdf_path, "-"]
                 res_txt = subprocess.run(txt_cmd, capture_output=True, text=True, timeout=20)
                 if res_txt.returncode == 0 and res_txt.stdout:
+                    all_extracted_text = res_txt.stdout
                     chunks = res_txt.stdout.split("\x0c")
                     for offset, chunk in enumerate(chunks):
                         pg_num = first_page + offset
                         page_texts[pg_num] = chunk.strip()
             except Exception:
                 pass
+
+        doc_outline = extract_document_outline(all_extracted_text, total_pages=total_pages)
 
         pages = []
         for raw_f in raw_files:
@@ -391,8 +666,7 @@ def convert_document_to_page_images(
             shutil.copy2(src_p, dest_path)
 
             file_sz = os.path.getsize(dest_path)
-            
-            # Extract page text from pre-extracted dictionary with single-page fallback
+
             page_text = page_texts.get(pg_idx, "")
             if not page_text and shutil.which("pdftotext"):
                 try:
@@ -436,6 +710,9 @@ def convert_document_to_page_images(
             "pages_dir": output_dir,
             "dpi": dpi,
             "format": img_format,
+            "parallel_engine": num_workers > 1,
+            "workers_used": num_workers if rendered else 1,
+            "outline": doc_outline,
             "pages": pages
         }
     finally:
@@ -446,6 +723,7 @@ def parse_and_convert_document(file_path: str, max_pages: int = 35, dpi: int = 1
     """Convenience helper returning both clean Markdown and page images."""
     md_res = parse_document_to_markdown(file_path)
     pages_res = convert_document_to_page_images(file_path, max_pages=max_pages, dpi=dpi, quality=quality)
+    outline = pages_res.get("outline") or extract_document_outline(md_res.get("markdown", ""))
     return {
         "status": "ok" if (md_res.get("status") == "ok" or pages_res.get("status") == "ok") else "error",
         "file_name": os.path.basename(file_path),
@@ -455,22 +733,31 @@ def parse_and_convert_document(file_path: str, max_pages: int = 35, dpi: int = 1
         "total_pages": pages_res.get("total_pages", 0),
         "pages_converted": pages_res.get("pages_converted", 0),
         "pages_dir": pages_res.get("pages_dir", ""),
+        "outline": outline,
         "pages": pages_res.get("pages", [])
     }
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print(json.dumps({"status": "error", "error": "Usage: doc_parser.py <file_path> [--convert-pages] [--both] [--output-dir DIR] [--dpi 150] [--quality 85] [--max-pages 30] [--range 1-10] [--no-base64]"}))
+        print(json.dumps({"status": "error", "error": "Usage: doc_parser.py <file_path> [--convert-pages] [--both] [--inspect-page N] [--region R] [--clean-cache]"}))
         sys.exit(1)
 
     args = sys.argv[1:]
+    if "--clean-cache" in args:
+        res = auto_purge_document_cache(max_age_hours=24, max_cache_mb=50)
+        print(json.dumps(res))
+        sys.exit(0)
+
     convert_mode = False
     both_mode = False
+    inspect_mode = False
+    inspect_page_num = 1
+    inspect_region = "all"
     target_path = None
     output_dir = None
-    dpi = 150
-    quality = 85
-    max_pages = 30
+    dpi = 140
+    quality = 80
+    max_pages = 35
     page_range = None
     include_base64 = True
 
@@ -481,6 +768,16 @@ if __name__ == "__main__":
             convert_mode = True
         elif arg == "--both":
             both_mode = True
+        elif arg == "--inspect-page" and i + 1 < len(args):
+            inspect_mode = True
+            try:
+                inspect_page_num = int(args[i + 1])
+            except ValueError:
+                inspect_page_num = 1
+            i += 1
+        elif arg == "--region" and i + 1 < len(args):
+            inspect_region = args[i + 1]
+            i += 1
         elif arg == "--output-dir" and i + 1 < len(args):
             output_dir = args[i + 1]
             i += 1
@@ -506,8 +803,16 @@ if __name__ == "__main__":
         print(json.dumps({"status": "error", "error": "No target file path specified"}))
         sys.exit(1)
 
-    if both_mode:
-        result = parse_and_convert_document(target_path, max_pages=max_pages)
+    if inspect_mode:
+        result = inspect_document_region(
+            target_path,
+            page_num=inspect_page_num,
+            region=inspect_region,
+            dpi=dpi if dpi != 140 else 250,
+            quality=quality if quality != 80 else 90
+        )
+    elif both_mode:
+        result = parse_and_convert_document(target_path, max_pages=max_pages, dpi=dpi, quality=quality)
     elif convert_mode:
         result = convert_document_to_page_images(
             target_path,

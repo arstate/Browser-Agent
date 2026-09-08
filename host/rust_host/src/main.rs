@@ -1073,6 +1073,22 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                     ],
                 );
 
+                // Auto-register document knowledge card for eternal memory
+                if is_img == false && (total_pages > 0 || !markdown.is_empty()) {
+                    let mem_id = format!("mem_doc_{}", file_id);
+                    let snippet: String = markdown.chars().take(400).collect();
+                    let mem_content = format!(
+                        "Dokumen: \"{}\" ({} Halaman, format: {}). Tersimpan permanen di: {}. Garis besar awal: {}",
+                        file_name, total_pages, fmt, target_path.to_string_lossy(), snippet.replace('\n', " ")
+                    );
+                    let _ = conn.execute(
+                        "INSERT INTO user_memories (id, category, content, source, reason, confidence, created_at, updated_at)
+                         VALUES (?1, 'document_knowledge', ?2, 'document_upload', 'Auto-indexed document knowledge for long-term recall', 1.0, ?3, ?3)
+                         ON CONFLICT(id) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at",
+                        params![mem_id, mem_content, now as i64],
+                    );
+                }
+
                 json!({
                     "status": "ok",
                     "file_id": file_id,
@@ -1137,6 +1153,79 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                             Err(e) => json!({ "status": "error", "error": format!("Failed to run doc_parser: {}", e) })
                         }
                     }
+                }
+            }
+        }
+
+        "inspect_page_detail" | "zoom_page_detail" => {
+            let raw_path = msg.get("path").and_then(|v| v.as_str()).unwrap_or("");
+            if raw_path.is_empty() {
+                json!({ "status": "error", "error": "No file path provided" })
+            } else {
+                let p = expand_path(raw_path);
+                if !p.exists() {
+                    json!({ "status": "error", "error": format!("File not found: {}", p.display()) })
+                } else {
+                    let mut parser_script = get_host_dir().join("doc_parser.py");
+                    if !parser_script.exists() {
+                        parser_script = PathBuf::from("/home/arya/browser-agent/host/doc_parser.py");
+                    }
+                    if !parser_script.exists() {
+                        json!({ "status": "error", "error": "doc_parser.py script not found" })
+                    } else {
+                        let page_num = msg.get("page_number").or_else(|| msg.get("page")).and_then(|v| v.as_u64()).unwrap_or(1).to_string();
+                        let region = msg.get("region").and_then(|v| v.as_str()).unwrap_or("all");
+                        let dpi = msg.get("dpi").and_then(|v| v.as_u64()).unwrap_or(250).to_string();
+
+                        let mut cmd = Command::new("python3");
+                        cmd.args([
+                            parser_script.to_string_lossy().as_ref(),
+                            p.to_string_lossy().as_ref(),
+                            "--inspect-page",
+                            &page_num,
+                            "--region",
+                            region,
+                            "--dpi",
+                            &dpi,
+                        ]);
+
+                        match cmd.output() {
+                            Ok(out) => {
+                                if let Ok(parsed_json) = serde_json::from_slice::<Value>(&out.stdout) {
+                                    parsed_json
+                                } else {
+                                    json!({ "status": "error", "error": String::from_utf8_lossy(&out.stderr).to_string() })
+                                }
+                            }
+                            Err(e) => json!({ "status": "error", "error": format!("Failed to run doc_parser: {}", e) }),
+                        }
+                    }
+                }
+            }
+        }
+
+        "clean_document_cache" | "purge_document_cache" => {
+            let mut parser_script = get_host_dir().join("doc_parser.py");
+            if !parser_script.exists() {
+                parser_script = PathBuf::from("/home/arya/browser-agent/host/doc_parser.py");
+            }
+            if !parser_script.exists() {
+                json!({ "status": "error", "error": "doc_parser.py script not found" })
+            } else {
+                let mut cmd = Command::new("python3");
+                cmd.args([
+                    parser_script.to_string_lossy().as_ref(),
+                    "--clean-cache",
+                ]);
+                match cmd.output() {
+                    Ok(out) => {
+                        if let Ok(parsed_json) = serde_json::from_slice::<Value>(&out.stdout) {
+                            parsed_json
+                        } else {
+                            json!({ "status": "error", "error": String::from_utf8_lossy(&out.stderr).to_string() })
+                        }
+                    }
+                    Err(e) => json!({ "status": "error", "error": format!("Failed to run clean cache: {}", e) }),
                 }
             }
         }
@@ -2310,6 +2399,19 @@ fn main() {
             return;
         }
     };
+
+    // Spawn non-blocking background thread to quietly purge old transient page caches on startup
+    std::thread::spawn(|| {
+        let mut parser_script = get_host_dir().join("doc_parser.py");
+        if !parser_script.exists() {
+            parser_script = PathBuf::from("/home/arya/browser-agent/host/doc_parser.py");
+        }
+        if parser_script.exists() {
+            let _ = Command::new("python3")
+                .args([parser_script.to_string_lossy().as_ref(), "--clean-cache"])
+                .output();
+        }
+    });
 
     let mut stdin = io::stdin();
     let mut stdout = io::stdout();
