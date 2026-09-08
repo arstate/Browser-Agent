@@ -2092,3 +2092,19 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 2. **Unified Settings Control & Label Ergonomics**:
    - Label di `options.html`, `sidepanel.html`, dan `newtab.html` kini menyertakan panduan visual jelas: `Max Output Tokens (0 = Otomatis / Unlimited)`.
    - Field menerima nilai `0` sebagai representasi mode tanpa batas, dengan opsi pengisian angka manual (misal 8192, 16384, atau 32768) jika pengguna ingin membatasi kuota output secara terukur.
+
+## 📂 52. Firecrawl Anydoc Document Engine & Local Filesystem Upload Persistence (v2.150.276)
+
+1. **Firecrawl Anydoc Rust-Powered Clean Markdown Conversion (`host/doc_parser.py`)**:
+   - Menghubungkan library [Firecrawl Anydoc](https://github.com/firecrawl/anydoc) untuk konversi dokumen multi-format (PDF, DOCX, DOC, XLSX, XLS, PPTX, PPT, RTF, ODT, ODS, ODP, EPUB, CSV, kode) ke format GitHub-Flavored Markdown (GFM) terstruktur dalam hitungan milidetik.
+   - Hasil konversi mempertahankan struktur tabel, daftar poin, dan hierarki heading dengan reduksi ukuran payload token hingga 95%+, membebaskan AI dari jebakan token bloat atau binary garbage.
+   - Dilengkapi sistem cadangan *multi-tier*: `pdftotext` untuk PDF bermasalah, parser XML zip internal untuk Office docs, dan UTF-8 decoder untuk teks polos.
+
+2. **Penyimpanan Lokal Fisik & Database Registri (`~/.browser-agent/uploads/` & `chat_history.db`)**:
+   - Seluruh berkas yang dilampirkan pengguna disimpan ke path permanen `~/.browser-agent/uploads/{timestamp}_{clean_name}`.
+   - Tercatat secara terstruktur pada tabel SQLite `uploaded_files` (`id`, `session_id`, `file_name`, `file_path`, `file_size`, `mime_type`, `parsed_markdown`, `created_at`).
+   - Agen di seluruh histori chat masa lalu dapat membuka, membaca ulang, dan mengakses berkas fisik tersebut sewaktu-waktu.
+
+3. **Komponen Visual UI & Akses Langsung (`sidepanel.js`)**:
+   - Kartu preview lampiran dan bubble pesan obrolan menampilkan lencana status `Anydoc MD` serta icon file Mac OS modern.
+   - Pill berkas interaktif di bubble obrolan dapat diklik langsung untuk memanggil `reveal_file` / `open_file`, membuka folder penyimpanan lokal di file manager OS secara instan.

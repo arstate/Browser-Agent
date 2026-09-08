@@ -72,9 +72,19 @@ fn expand_path(raw: &str) -> PathBuf {
     }
 }
 
+fn get_host_dir() -> PathBuf {
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(parent) = exe_path.parent() {
+            return parent.to_path_buf();
+        }
+    }
+    PathBuf::from("/home/arya/browser-agent/host")
+}
+
 fn init_db() -> Result<Connection, rusqlite::Error> {
     let db_dir = get_db_dir();
     let _ = fs::create_dir_all(&db_dir);
+    let _ = fs::create_dir_all(db_dir.join("uploads"));
     let _ = fs::create_dir_all(db_dir.join("generated_images"));
     let _ = fs::create_dir_all(db_dir.join("walkthrough_screenshots"));
     let _ = fs::create_dir_all(db_dir.join("agents"));
@@ -152,6 +162,19 @@ fn init_db() -> Result<Connection, rusqlite::Error> {
             created_at INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_exp_ledger_created ON experience_ledger(created_at DESC);
+
+        CREATE TABLE IF NOT EXISTS uploaded_files (
+            id TEXT PRIMARY KEY,
+            session_id TEXT DEFAULT '',
+            file_name TEXT NOT NULL,
+            file_path TEXT NOT NULL,
+            file_size INTEGER DEFAULT 0,
+            mime_type TEXT DEFAULT '',
+            parsed_markdown TEXT DEFAULT '',
+            created_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_uploaded_files_session ON uploaded_files(session_id);
+        CREATE INDEX IF NOT EXISTS idx_uploaded_files_created ON uploaded_files(created_at DESC);
 
         CREATE TABLE IF NOT EXISTS anti_patterns (
             id TEXT PRIMARY KEY,
@@ -764,18 +787,53 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
         // ==========================================
         "read_file" => {
             let raw_path = msg.get("path").and_then(|v| v.as_str()).unwrap_or("");
+            let as_raw = msg.get("raw").and_then(|v| v.as_bool()).unwrap_or(false);
             if raw_path.is_empty() {
                 json!({ "status": "error", "error": "No file path provided" })
             } else {
                 let p = expand_path(raw_path);
-                match fs::read_to_string(&p) {
-                    Ok(content) => json!({
-                        "status": "ok",
-                        "content": content,
-                        "path": p.to_string_lossy(),
-                        "size": content.len()
-                    }),
-                    Err(e) => json!({ "status": "error", "error": format!("Read error: {}", e) }),
+                let ext = p.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
+                let doc_exts = ["pdf", "docx", "doc", "xlsx", "xls", "pptx", "ppt", "rtf", "epub", "odt", "ods", "odp", "csv", "tsv"];
+
+                let mut return_parsed: Option<Value> = None;
+                if !as_raw && doc_exts.contains(&ext.as_str()) {
+                    let mut parser_script = get_host_dir().join("doc_parser.py");
+                    if !parser_script.exists() {
+                        parser_script = PathBuf::from("/home/arya/browser-agent/host/doc_parser.py");
+                    }
+                    if parser_script.exists() {
+                        if let Ok(out) = Command::new("python3").args([parser_script.to_string_lossy().as_ref(), p.to_string_lossy().as_ref()]).output() {
+                            if out.status.success() {
+                                if let Ok(parsed_json) = serde_json::from_slice::<Value>(&out.stdout) {
+                                    if parsed_json.get("status").and_then(|v| v.as_str()) == Some("ok") {
+                                        let md = parsed_json.get("markdown").and_then(|v| v.as_str()).unwrap_or("");
+                                        return_parsed = Some(json!({
+                                            "status": "ok",
+                                            "content": md,
+                                            "path": p.to_string_lossy(),
+                                            "size": md.len(),
+                                            "format": parsed_json.get("format").and_then(|v| v.as_str()).unwrap_or(&ext),
+                                            "is_parsed_document": true
+                                        }));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if let Some(resp) = return_parsed {
+                    resp
+                } else {
+                    match fs::read_to_string(&p) {
+                        Ok(content) => json!({
+                            "status": "ok",
+                            "content": content,
+                            "path": p.to_string_lossy(),
+                            "size": content.len()
+                        }),
+                        Err(e) => json!({ "status": "error", "error": format!("Read error: {}", e) }),
+                    }
                 }
             }
         }
@@ -903,6 +961,187 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 },
                 Err(e) => json!({ "status": "error", "error": format!("Base64 decode error: {}", e) }),
             }
+        }
+
+        "save_and_parse_uploaded_file" => {
+            let file_name = msg.get("file_name").and_then(|v| v.as_str()).unwrap_or("uploaded_file");
+            let mut file_data = msg.get("file_data").and_then(|v| v.as_str()).unwrap_or("").to_string();
+            let mime_type = msg.get("mime_type").and_then(|v| v.as_str()).unwrap_or("");
+            let session_id = msg.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
+
+            let uploads_dir = get_db_dir().join("uploads");
+            let _ = fs::create_dir_all(&uploads_dir);
+
+            let now = now_millis();
+            let clean_name: String = file_name
+                .chars()
+                .map(|c| if c.is_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' })
+                .collect();
+            let safe_name = if clean_name.trim_matches('_').is_empty() { "document".to_string() } else { clean_name };
+            let target_filename = format!("{}_{}", now, safe_name);
+            let target_path = uploads_dir.join(&target_filename);
+
+            let write_res = if file_data.contains(";base64,") {
+                if let Some(comma_pos) = file_data.find(',') {
+                    file_data = file_data[comma_pos + 1..].to_string();
+                }
+                match BASE64_STANDARD.decode(file_data.trim()) {
+                    Ok(bytes) => fs::write(&target_path, &bytes),
+                    Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+                }
+            } else {
+                match BASE64_STANDARD.decode(file_data.trim()) {
+                    Ok(bytes) => fs::write(&target_path, &bytes),
+                    Err(_) => fs::write(&target_path, file_data.as_bytes()),
+                }
+            };
+
+            if let Err(e) = write_res {
+                json!({ "status": "error", "error": format!("Write file error: {}", e) })
+            } else {
+                let file_size = fs::metadata(&target_path).map(|m| m.len()).unwrap_or(0);
+                
+                let mut parser_script = get_host_dir().join("doc_parser.py");
+                if !parser_script.exists() {
+                    parser_script = PathBuf::from("/home/arya/browser-agent/host/doc_parser.py");
+                }
+
+                let mut markdown = String::new();
+                let mut fmt = target_path.extension().and_then(|s| s.to_str()).unwrap_or("").to_string();
+                let mut char_count = 0;
+                let mut approx_tokens = 0;
+
+                if parser_script.exists() {
+                    if let Ok(out) = Command::new("python3").args([parser_script.to_string_lossy().as_ref(), target_path.to_string_lossy().as_ref()]).output() {
+                        if out.status.success() {
+                            if let Ok(parsed_json) = serde_json::from_slice::<Value>(&out.stdout) {
+                                if parsed_json.get("status").and_then(|v| v.as_str()) == Some("ok") {
+                                    markdown = parsed_json.get("markdown").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                                    fmt = parsed_json.get("format").and_then(|v| v.as_str()).unwrap_or(&fmt).to_string();
+                                    char_count = parsed_json.get("char_count").and_then(|v| v.as_u64()).unwrap_or(markdown.len() as u64) as usize;
+                                    approx_tokens = parsed_json.get("approx_tokens").and_then(|v| v.as_u64()).unwrap_or((char_count as u64 + 3) / 4) as usize;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if markdown.is_empty() {
+                    if let Ok(plain) = fs::read_to_string(&target_path) {
+                        markdown = plain;
+                        char_count = markdown.len();
+                        approx_tokens = (char_count + 3) / 4;
+                    }
+                }
+
+                let file_id = format!("file_{}_{:04x}", now, (now % 65535));
+
+                let _ = conn.execute(
+                    "INSERT INTO uploaded_files (id, session_id, file_name, file_path, file_size, mime_type, parsed_markdown, created_at)
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                    params![
+                        file_id,
+                        session_id,
+                        file_name,
+                        target_path.to_string_lossy().to_string(),
+                        file_size as i64,
+                        mime_type,
+                        markdown,
+                        now as i64
+                    ],
+                );
+
+                json!({
+                    "status": "ok",
+                    "file_id": file_id,
+                    "file_name": file_name,
+                    "file_path": target_path.to_string_lossy(),
+                    "file_size": file_size,
+                    "mime_type": mime_type,
+                    "format": fmt,
+                    "is_document": true,
+                    "markdown": markdown,
+                    "char_count": char_count,
+                    "approx_tokens": approx_tokens
+                })
+            }
+        }
+
+        "get_uploaded_file" => {
+            let file_id = msg.get("file_id").and_then(|v| v.as_str()).unwrap_or("");
+            let file_path = msg.get("file_path").and_then(|v| v.as_str()).unwrap_or("");
+            
+            let query = if !file_id.is_empty() {
+                "SELECT id, session_id, file_name, file_path, file_size, mime_type, parsed_markdown, created_at FROM uploaded_files WHERE id = ?1"
+            } else if !file_path.is_empty() {
+                "SELECT id, session_id, file_name, file_path, file_size, mime_type, parsed_markdown, created_at FROM uploaded_files WHERE file_path = ?1"
+            } else {
+                return json!({ "status": "error", "error": "No file_id or file_path provided" });
+            };
+            let param = if !file_id.is_empty() { file_id } else { file_path };
+
+            let mut stmt = match conn.prepare(query) {
+                Ok(s) => s,
+                Err(e) => return json!({ "status": "error", "error": e.to_string() }),
+            };
+            let row_res = stmt.query_row(params![param], |r| {
+                Ok(json!({
+                    "id": r.get::<_, String>(0)?,
+                    "session_id": r.get::<_, String>(1)?,
+                    "file_name": r.get::<_, String>(2)?,
+                    "file_path": r.get::<_, String>(3)?,
+                    "file_size": r.get::<_, i64>(4)?,
+                    "mime_type": r.get::<_, String>(5)?,
+                    "parsed_markdown": r.get::<_, String>(6)?,
+                    "created_at": r.get::<_, i64>(7)?
+                }))
+            });
+
+            match row_res {
+                Ok(val) => json!({ "status": "ok", "file": val }),
+                Err(e) => json!({ "status": "error", "error": format!("File not found: {}", e) }),
+            }
+        }
+
+        "list_uploaded_files" => {
+            let session_id = msg.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
+            let (query, has_param) = if !session_id.is_empty() {
+                ("SELECT id, session_id, file_name, file_path, file_size, mime_type, parsed_markdown, created_at FROM uploaded_files WHERE session_id = ?1 ORDER BY created_at DESC", true)
+            } else {
+                ("SELECT id, session_id, file_name, file_path, file_size, mime_type, parsed_markdown, created_at FROM uploaded_files ORDER BY created_at DESC LIMIT 100", false)
+            };
+
+            let mut stmt = match conn.prepare(query) {
+                Ok(s) => s,
+                Err(e) => return json!({ "status": "error", "error": e.to_string() }),
+            };
+
+            let map_file = |r: &Row| -> Result<Value, rusqlite::Error> {
+                Ok(json!({
+                    "id": r.get::<_, String>(0)?,
+                    "session_id": r.get::<_, String>(1)?,
+                    "file_name": r.get::<_, String>(2)?,
+                    "file_path": r.get::<_, String>(3)?,
+                    "file_size": r.get::<_, i64>(4)?,
+                    "mime_type": r.get::<_, String>(5)?,
+                    "parsed_markdown": r.get::<_, String>(6)?,
+                    "created_at": r.get::<_, i64>(7)?
+                }))
+            };
+
+            let files: Vec<Value> = if has_param {
+                match stmt.query_map(params![session_id], map_file) {
+                    Ok(mapped) => mapped.flatten().collect(),
+                    Err(_) => vec![],
+                }
+            } else {
+                match stmt.query_map([], map_file) {
+                    Ok(mapped) => mapped.flatten().collect(),
+                    Err(_) => vec![],
+                }
+            };
+
+            json!({ "status": "ok", "files": files })
         }
 
         "save_generated_image" => {

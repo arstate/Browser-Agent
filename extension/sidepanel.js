@@ -6263,11 +6263,15 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   let userPayloadContent = userMessage;
   const imageAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isImage && a.dataUrl) : [];
   const videoAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isVideo) : [];
-  const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && a.textContent) : [];
+  const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && (a.textContent || a.parsedMarkdown)) : [];
 
   let combinedPrompt = userMessage || "";
   if (textAttachments.length > 0) {
-    const fileDocs = textAttachments.map(f => `--- [File Lampiran: ${f.name}] ---\n${f.textContent}`).join("\n\n");
+    const fileDocs = textAttachments.map(f => {
+      const pathInfo = f.filePath ? ` (Tersimpan di: ${f.filePath})` : '';
+      const content = f.textContent || f.parsedMarkdown || '';
+      return `--- [File Lampiran: ${f.name}${pathInfo}] ---\n${content}`;
+    }).join("\n\n");
     combinedPrompt = combinedPrompt ? `${combinedPrompt}\n\n${fileDocs}` : fileDocs;
   }
 
@@ -8439,11 +8443,15 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
   let userPayloadContent = userMessage;
   const imageAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isImage && a.dataUrl) : [];
   const videoAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isVideo) : [];
-  const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && a.textContent) : [];
+  const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && (a.textContent || a.parsedMarkdown)) : [];
 
   let combinedPrompt = userMessage || "";
   if (textAttachments.length > 0) {
-    const fileDocs = textAttachments.map(f => `--- [File Lampiran: ${f.name}] ---\n${f.textContent}`).join("\n\n");
+    const fileDocs = textAttachments.map(f => {
+      const pathInfo = f.filePath ? ` (Tersimpan di: ${f.filePath})` : '';
+      const content = f.textContent || f.parsedMarkdown || '';
+      return `--- [File Lampiran: ${f.name}${pathInfo}] ---\n${content}`;
+    }).join("\n\n");
     combinedPrompt = combinedPrompt ? `${combinedPrompt}\n\n${fileDocs}` : fileDocs;
   }
 
@@ -9011,14 +9019,18 @@ function appendUserMessage(text, attachments = [], autoScroll = true, attachToDo
         }
       } else {
         const sizeStr = formatFileSize(att.size || (att.text ? att.text.length : 0));
+        const hasPath = Boolean(att.filePath);
         attachmentsHtml += `
-          <div class="user-attached-file-pill" title="${escapeHtml(att.name || 'File')}">
+          <div class="user-attached-file-pill ${hasPath ? 'clickable-file' : ''}" data-file-path="${escapeHtml(att.filePath || '')}" title="${hasPath ? `Klik untuk lihat file di folder: ${escapeHtml(att.filePath)}` : escapeHtml(att.name || 'File')}">
             <div class="attached-file-icon-wrapper">
               ${getMacOsFileIconSvg(att.name || 'File', 18, 22)}
             </div>
             <div class="attached-file-info">
               <span class="attached-file-name">${escapeHtml(att.name || 'File')}</span>
-              ${sizeStr ? `<span class="attached-file-size">${sizeStr}</span>` : ''}
+              <div style="display:flex;align-items:center;gap:6px;">
+                ${sizeStr ? `<span class="attached-file-size">${sizeStr}</span>` : ''}
+                ${(att.isDocument || att.parsedMarkdown) ? `<span class="attached-file-badge" style="font-size:9.5px;color:#CEF128;font-weight:600;">Anydoc MD</span>` : ''}
+              </div>
             </div>
           </div>
         `;
@@ -9189,6 +9201,22 @@ function appendUserMessage(text, attachments = [], autoScroll = true, attachToDo
     if (label) label.textContent = 'Copied!';
     setTimeout(() => { if (label) label.textContent = 'Copy'; }, 1500);
   });
+
+  msg.querySelectorAll('.user-attached-file-pill[data-file-path]').forEach(pill => {
+    const fp = pill.getAttribute('data-file-path');
+    if (fp) {
+      pill.style.cursor = 'pointer';
+      pill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (typeof sendNativeRpc === 'function') {
+          sendNativeRpc('reveal_file', { path: fp }).catch(() => {
+            sendNativeRpc('open_file', { path: fp }).catch(() => {});
+          });
+        }
+      });
+    }
+  });
+
   const deckPill = msg.querySelector('.user-deck-attachment-pill');
   if (deckPill) {
     const handleOpenDeckCanvas = (e) => {
@@ -13535,13 +13563,17 @@ function renderAttachmentsPreview() {
       `;
     } else {
       const sizeStr = formatFileSize(att.size || (att.text ? att.text.length : 0));
+      const hasAnydoc = att.isDocument || att.parsedMarkdown || att.filePath;
       card.innerHTML = `
         <div class="attachment-file-icon-box">
           ${getMacOsFileIconSvg(att.name, 20, 24)}
         </div>
         <div class="attachment-file-meta">
           <span class="attachment-file-name" title="${escapeHtml(att.name)}">${escapeHtml(att.name)}</span>
-          ${sizeStr ? `<span class="attachment-file-size">${sizeStr}</span>` : ''}
+          <div style="display:flex;align-items:center;gap:4px;">
+            ${sizeStr ? `<span class="attachment-file-size">${sizeStr}</span>` : ''}
+            ${hasAnydoc ? `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(206,241,40,0.15);color:#CEF128;font-weight:600;">Anydoc MD</span>` : ''}
+          </div>
         </div>
         <button type="button" class="attachment-remove-btn" title="Hapus file">×</button>
       `;
@@ -13660,6 +13692,24 @@ async function handleFileSelection(files) {
       // Persist full image dataUrl into IndexedDB asynchronously
       saveImageToIndexedDB(attId, dataUrl, file.name || 'image.png');
 
+      // Also persist to ~/.browser-agent/uploads/ via native host
+      let filePath = "";
+      if (typeof sendNativeRpc === 'function') {
+        try {
+          const upRes = await sendNativeRpc("save_and_parse_uploaded_file", {
+            file_name: file.name || 'image.png',
+            file_data: dataUrl,
+            mime_type: file.type || 'image/png',
+            session_id: currentSessionId || ''
+          });
+          if (upRes && upRes.status === 'ok') {
+            filePath = upRes.file_path || "";
+          }
+        } catch (e) {
+          console.warn("Upload image to local uploads notice:", e);
+        }
+      }
+
       pendingAttachments.push({
         id: attId,
         name: file.name || 'image.png',
@@ -13667,6 +13717,8 @@ async function handleFileSelection(files) {
         size: file.size,
         isImage: true,
         isVideo: false,
+        isDocument: false,
+        filePath,
         dataUrl,
         thumbnailUrl: dataUrl
       });
@@ -13685,6 +13737,7 @@ async function handleFileSelection(files) {
         size: file.size,
         isImage: false,
         isVideo: true,
+        isDocument: false,
         dataUrl,
         duration: meta.duration,
         width: meta.width,
@@ -13693,21 +13746,59 @@ async function handleFileSelection(files) {
         thumbnailUrl: meta.thumbnailUrl
       });
     } else {
-      // Treat text/code/document files
+      // Document / Data / Text files (PDF, Word DOCX/DOC, Excel XLSX/XLS, PPTX, CSV, TXT, MD, Code, etc.)
+      const dataUrl = await readFileAsDataURL(file);
       let textContent = "";
-      try {
-        textContent = await readFileAsText(file);
-      } catch (e) {
-        console.warn("Could not read as text:", e);
+      let filePath = "";
+      let parsedWithAnydoc = false;
+      let format = "";
+      let charCount = 0;
+
+      // Primary: Save to ~/.browser-agent/uploads/ and parse to clean Markdown via Firecrawl Anydoc
+      if (typeof sendNativeRpc === 'function') {
+        try {
+          const upRes = await sendNativeRpc("save_and_parse_uploaded_file", {
+            file_name: file.name || 'document',
+            file_data: dataUrl,
+            mime_type: file.type || 'application/octet-stream',
+            session_id: currentSessionId || ''
+          });
+          if (upRes && upRes.status === 'ok') {
+            filePath = upRes.file_path || "";
+            textContent = upRes.markdown || "";
+            format = upRes.format || "";
+            charCount = upRes.char_count || textContent.length;
+            parsedWithAnydoc = true;
+          }
+        } catch (e) {
+          console.warn("Anydoc parse via native host notice:", e);
+        }
       }
+
+      // Fallback if native host returned empty or unavailable
+      if (!textContent) {
+        try {
+          textContent = await readFileAsText(file);
+        } catch (e) {
+          console.warn("Could not read as text:", e);
+        }
+      }
+
+      const isDoc = /\.(pdf|docx|doc|xlsx|xls|pptx|ppt|rtf|odt|ods|odp|epub|csv|tsv)$/i.test(file.name) || parsedWithAnydoc;
+
       pendingAttachments.push({
-        id: 'att_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        id: 'att_doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
         name: file.name || 'file',
         type: file.type || 'text/plain',
         size: file.size,
         isImage: false,
         isVideo: false,
-        textContent
+        isDocument: isDoc,
+        filePath,
+        textContent,
+        parsedMarkdown: textContent,
+        format,
+        charCount
       });
     }
   }

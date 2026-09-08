@@ -127,6 +127,7 @@ if sys.platform == "win32":
     DB_DIR = os.path.join(os.environ.get("USERPROFILE", os.environ.get("APPDATA", "C:\\")), ".browser-agent")
 
 DB_PATH = os.path.join(DB_DIR, "chat_history.db")
+UPLOADS_DIR = os.path.join(DB_DIR, "uploads")
 IMAGES_DIR = os.path.join(DB_DIR, "generated_images")
 SCREENSHOTS_DIR = os.path.join(DB_DIR, "walkthrough_screenshots")
 AGENTS_DIR = os.path.join(DB_DIR, "agents")
@@ -158,6 +159,7 @@ import math
 def init_db():
     try:
         os.makedirs(DB_DIR, exist_ok=True)
+        os.makedirs(UPLOADS_DIR, exist_ok=True)
         os.makedirs(IMAGES_DIR, exist_ok=True)
         os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
         os.makedirs(AGENTS_DIR, exist_ok=True)
@@ -249,6 +251,22 @@ def init_db():
                 )
             """)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_exp_ledger_created ON experience_ledger(created_at DESC)")
+
+            # Dedicated Uploaded Files Registry (Firecrawl Anydoc Clean Markdown)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS uploaded_files (
+                    id TEXT PRIMARY KEY,
+                    session_id TEXT DEFAULT '',
+                    file_name TEXT NOT NULL,
+                    file_path TEXT NOT NULL,
+                    file_size INTEGER DEFAULT 0,
+                    mime_type TEXT DEFAULT '',
+                    parsed_markdown TEXT DEFAULT '',
+                    created_at INTEGER NOT NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_uploaded_files_session ON uploaded_files(session_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_uploaded_files_created ON uploaded_files(created_at DESC)")
 
             # 3. Anti-Patterns & Failure Learnings Vault
             cursor.execute("""
@@ -973,6 +991,125 @@ def save_screenshot(screenshot_id, image_data, label="", session_id=""):
         }
     except Exception as e:
         log(f"Error saving screenshot: {e}")
+        return {"status": "error", "error": str(e)}
+
+def save_and_parse_uploaded_file(file_name, file_data, mime_type="", session_id=""):
+    try:
+        os.makedirs(UPLOADS_DIR, exist_ok=True)
+        if not file_name:
+            file_name = "uploaded_file"
+        clean_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', os.path.basename(file_name)).strip("_")
+        if not clean_name:
+            clean_name = "document"
+        timestamp = int(time.time() * 1000)
+        saved_file_name = f"{timestamp}_{clean_name}"
+        file_path = os.path.join(UPLOADS_DIR, saved_file_name)
+
+        # Write data to file
+        if file_data.startswith("data:") and ";base64," in file_data:
+            _, b64 = file_data.split(";base64,", 1)
+            raw_bytes = base64.b64decode(b64)
+            with open(file_path, "wb") as f:
+                f.write(raw_bytes)
+        else:
+            try:
+                raw_bytes = base64.b64decode(file_data)
+                with open(file_path, "wb") as f:
+                    f.write(raw_bytes)
+            except Exception:
+                with open(file_path, "w", encoding="utf-8", errors="replace") as f:
+                    f.write(file_data)
+
+        file_size = os.path.getsize(file_path)
+
+        # Parse document to clean Markdown via doc_parser (powered by Firecrawl Anydoc)
+        markdown_content = ""
+        fmt = os.path.splitext(clean_name)[1].lstrip(".").lower()
+        char_count = 0
+        approx_tokens = 0
+        is_doc = True
+
+        try:
+            from doc_parser import parse_document_to_markdown
+            parsed = parse_document_to_markdown(file_path)
+            if parsed.get("status") == "ok":
+                markdown_content = parsed.get("markdown", "")
+                fmt = parsed.get("format", fmt)
+                char_count = parsed.get("char_count", len(markdown_content))
+                approx_tokens = parsed.get("approx_tokens", max(1, (len(markdown_content) + 3) // 4))
+        except Exception as ep:
+            log(f"doc_parser notice in save_and_parse_uploaded_file: {ep}")
+
+        if not markdown_content:
+            try:
+                with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                    markdown_content = f.read()
+                    char_count = len(markdown_content)
+                    approx_tokens = max(1, (char_count + 3) // 4)
+            except Exception:
+                pass
+
+        file_id = f"file_{timestamp}_{uuid.uuid4().hex[:6]}"
+
+        # Save record to SQLite uploaded_files
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO uploaded_files (id, session_id, file_name, file_path, file_size, mime_type, parsed_markdown, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (file_id, str(session_id or ""), str(file_name), str(file_path), int(file_size), str(mime_type), str(markdown_content), int(timestamp)))
+            conn.commit()
+
+        log(f"Saved & parsed uploaded file: {file_name} -> {file_path} ({char_count} chars, {approx_tokens} tokens)")
+        return {
+            "status": "ok",
+            "file_id": file_id,
+            "file_name": file_name,
+            "file_path": file_path,
+            "file_size": file_size,
+            "mime_type": mime_type,
+            "format": fmt,
+            "is_document": is_doc,
+            "markdown": markdown_content,
+            "char_count": char_count,
+            "approx_tokens": approx_tokens
+        }
+    except Exception as e:
+        log(f"Error in save_and_parse_uploaded_file: {e}\n{traceback.format_exc()}")
+        return {"status": "error", "error": str(e)}
+
+def get_uploaded_file(file_id="", file_path=""):
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            if file_id:
+                cursor.execute("SELECT * FROM uploaded_files WHERE id = ?", (file_id,))
+            elif file_path:
+                cursor.execute("SELECT * FROM uploaded_files WHERE file_path = ?", (file_path,))
+            else:
+                return {"status": "error", "error": "No file_id or file_path provided"}
+            row = cursor.fetchone()
+            if not row:
+                return {"status": "error", "error": "Uploaded file not found"}
+            return {"status": "ok", "file": dict(row)}
+    except Exception as e:
+        log(f"Error in get_uploaded_file: {e}")
+        return {"status": "error", "error": str(e)}
+
+def list_uploaded_files(session_id=""):
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            if session_id:
+                cursor.execute("SELECT * FROM uploaded_files WHERE session_id = ? ORDER BY created_at DESC", (session_id,))
+            else:
+                cursor.execute("SELECT * FROM uploaded_files ORDER BY created_at DESC LIMIT 100")
+            rows = cursor.fetchall()
+            return {"status": "ok", "files": [dict(r) for r in rows]}
+    except Exception as e:
+        log(f"Error in list_uploaded_files: {e}")
         return {"status": "error", "error": str(e)}
 
 def extract_text_preview(content):
@@ -4177,6 +4314,26 @@ def handle_local_rpc(msg):
         res["id"] = req_id
         return res
 
+    elif action == "save_and_parse_uploaded_file":
+        res = save_and_parse_uploaded_file(
+            file_name=msg.get("file_name", ""),
+            file_data=msg.get("file_data", ""),
+            mime_type=msg.get("mime_type", ""),
+            session_id=msg.get("session_id", "")
+        )
+        res["id"] = req_id
+        return res
+
+    elif action == "get_uploaded_file":
+        res = get_uploaded_file(file_id=msg.get("file_id", ""), file_path=msg.get("file_path", ""))
+        res["id"] = req_id
+        return res
+
+    elif action == "list_uploaded_files":
+        res = list_uploaded_files(session_id=msg.get("session_id", ""))
+        res["id"] = req_id
+        return res
+
     elif action == "capture_os_screenshot":
         try:
             tmp_path = "/tmp/browser_agent_os_screenshot.png"
@@ -4395,11 +4552,32 @@ def handle_local_rpc(msg):
 
     elif action == "read_file":
         path = os.path.expanduser(msg.get("path", ""))
+        as_raw = msg.get("raw", False)
         if not path:
             return {"id": req_id, "status": "error", "error": "No file path provided"}
         try:
             if not os.path.exists(path):
                 return {"id": req_id, "status": "error", "error": f"File not found: {path}"}
+            ext = os.path.splitext(path)[1].lower()
+            doc_exts = (".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".rtf", ".odt", ".ods", ".odp", ".epub", ".csv", ".tsv")
+            if not as_raw and ext in doc_exts:
+                try:
+                    from doc_parser import parse_document_to_markdown
+                    parsed = parse_document_to_markdown(path)
+                    if parsed.get("status") == "ok":
+                        md = parsed.get("markdown", "")
+                        return {
+                            "id": req_id,
+                            "status": "ok",
+                            "content": md,
+                            "path": path,
+                            "size": len(md),
+                            "format": parsed.get("format", ext.lstrip(".")),
+                            "is_parsed_document": True
+                        }
+                except Exception as e_parse:
+                    log(f"doc_parser fallback in read_file for {path}: {e_parse}")
+
             with open(path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
             return {"id": req_id, "status": "ok", "content": content, "path": path, "size": len(content)}
