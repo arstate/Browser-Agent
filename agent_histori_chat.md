@@ -8163,5 +8163,29 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris.
   4. Bump versi ke `v2.150.289` di `extension/manifest.json`.
 
+### 🚀 Iterasi 173: Distilasi Kognitif Claude Fable & Claude Opus 5 Menjadi 3-Baris Ringkas (~30 Token), Eliminasi XML Bloat, dan Penguatan Karakter High-Dignity
+- **Waktu Eksekusi**: 2026-09-09 00:35 WIB
+- **Versi**: `v2.150.290`
+- **Problem Statement Pengguna**:
+  1. *"1. Kalau lo suka karakter jawabannya yang tegas, anti-minta maaf, dan gak basa-basi: Gausah aktifin esai panjang 500 token itu. Cukup kita comot intinya jadi 3 baris ringkas (~30 token) di custom system prompt. Efek psikologi tegasnya dapet 100%, tapi lo ngemat 470 token di setiap chat!"*
+  2. *"gas opsi 1"*
+- **Akar Masalah (Root Causes)**:
+  1. *Token Bloat ~500 Token*: Direktif Claude Fable dan Claude Opus 5 sebelumnya menyuntikkan narasi taksonomi file markdown Obsidian dan tag XML `<antml:reasoning_effort>` yang memboroskan ratusan token per chat.
+  2. *XML Tag Placebo di 9Router*: Tag internal Anthropic diabaikan total oleh routing OpenAI/Google di 9Router.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Distilasi 3-Baris Presisi (`extension/plugins/claude_fable/claude_fable_optimizer.js` & `claude_opus_5_optimizer.js`)**:
+     - Mengompresi fungsi `getClaudeFableSystemDirective` dan `getClaudeOpus5SystemDirective` menjadi direktif 3 baris padat (~30 token):
+       1) *Accountability Without Self-Abasement*: Langsung beri solusi teknis lugas. DILARANG minta maaf berlebihan atau bersikap submissive saat dikritik.
+       2) *Direct Prose & Zero Fluff*: Langsung ke poin inti jawaban tanpa kalimat pembuka/penutup klise. DILARANG menarasikan memori ("Berdasarkan ingatan...").
+       3) *Truth-Seeking & Anti-Sycophancy*: Utamakan kebenaran faktual di atas kepatuhan buta (anti-flattery). Berani berikan sanggahan konstruktif demi solusi terbaik.
+     - Menghapus total tag XML palsu dan taksonomi file.
+  2. **Penanaman ke Default Core System Prompt (`sidepanel.js` & `background.js`)**:
+     - Memasukkan standar 3 baris ini langsung ke `DEFAULT_SYSTEM_PROMPT` (Agent Mode), `CHAT_ONLY_SYSTEM_PROMPT` (Chat Mode), dan `systemInstruction` (Telegram Bot). Karakter tegas dan lugas aktif secara permanen tanpa membuang token.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Validasi sintaksis `node -c extension/sidepanel.js`, `node -c extension/background.js`, `node -c extension/plugins/claude_fable/claude_fable_optimizer.js`, dan `node -c extension/plugins/claude_opus_5/claude_opus_5_optimizer.js` lolos 100% tanpa error.
+  2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris.
+  3. Bump versi ke `v2.150.290` di `extension/manifest.json`.
+
+
 
 

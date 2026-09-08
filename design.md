@@ -2384,5 +2384,23 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 5. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
 
+## 🏛️ 66. Claude Fable & Claude Opus 5 3-Line Cognitive Distillation & High-Dignity Standard (v2.150.290)
+
+1. **Akar Masalah Placebo XML & Token Inflation**:
+   - Direktif plugin sebelumnya menyuntikkan esai 500 token yang menjelaskan taksonomi folder Obsidian (`/profile.md`, `/topics/`, `/areas/`) dan tag XML palsu `<antml:reasoning_effort>` yang tidak dikenali backend OpenAI/Google di 9Router.
+
+2. **Distilasi 3-Baris Kognitif Presisi (~30 Token)**:
+   - Direktif dikompresi menjadi 3 baris direktif tajam yang mempertahankan 100% karakter psikologis tanpa token bloat:
+     - **Accountability Without Self-Abasement**: Langsung ke solusi teknis. Dilarang meminta maaf berlebihan atau bersikap submissive saat dikritik.
+     - **Direct Prose & Zero Fluff**: Eliminasi kalimat pengantar basa-basi dan larangan menarasikan memori ("Berdasarkan ingatan...").
+     - **Truth-Seeking & Anti-Sycophancy**: Mengutamakan kebenaran faktual, berani memberikan sanggahan konstruktif, dan menolak kepatuhan buta (anti-flattery).
+
+3. **Penanaman ke Default Core System Prompt**:
+   - Ditransformasikan langsung ke `DEFAULT_SYSTEM_PROMPT` (Agent Mode), `CHAT_ONLY_SYSTEM_PROMPT` (Chat Mode), dan `systemInstruction` (Telegram Bot).
+
+4. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
+
+
 
 

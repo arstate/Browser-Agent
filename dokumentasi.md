@@ -1626,3 +1626,22 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
   6. **Verifikasi Pengujian & Standar Sub-800 Baris**:
      - Menjalankan simulasi Node.js multi-turn 2-turn conversation: Turn 0 (System) dan Turn 1 (First User Turn) terbukti 100% identik bit-for-bit antar giliran.
      - Memastikan seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+
+### 173. Rilis Versi v2.150.290 - Distilasi Kognitif Claude Fable & Claude Opus 5 Menjadi 3-Baris Ringkas (~30 Token), Eliminasi Esai XML Bloat, dan Penguatan Karakter High-Dignity
+- **Waktu Rilis**: 2026-09-09 00:35 WIB
+- **Fokus Utama**: Mengompresi direktif Claude Fable dan Claude Opus 5 dari esai panjang ~500 token yang membengkakkan kuota menjadi direktif kognitif presisi 3 baris ringkas (~30 token). Menghapus tag XML palsu `<antml:reasoning_effort>` yang tidak diproses oleh model backend 9Router (OpenAI/Google), namun mempertahankan 100% karakter psikologis tegas (high-dignity, anti-minta maaf berlebihan, direct prose, dan anti-sycophancy) langsung ke dalam System Prompt default (Agent Mode, Chat Mode, dan Telegram Bot).
+- **Akar Masalah (Root Causes)**:
+  1. *Prompt Inflation 500 Token*: Sebelumnya plugin menyuntikkan teks panjang mengenai taksonomi folder Obsidian (`/profile.md`, `/topics/`, `/areas/`), tag `- [stated]`, dan tes horizon yang menghabiskan ~500 token per chat.
+  2. *XML Tag Placebo di 9Router*: Tag `<antml:reasoning_effort>` adalah format internal Anthropic API yang diabaikan oleh OpenAI/Google routing di 9Router.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Distilasi 3-Baris Presisi (`extension/plugins/claude_fable/claude_fable_optimizer.js` & `claude_opus_5_optimizer.js`)**:
+     - Memadatkan `getClaudeFableSystemDirective()` dan `getClaudeOpus5SystemDirective()` menjadi 3 pilar:
+       1) *Accountability Without Self-Abasement*: Akui kesalahan secara objektif & langsung fokus ke solusi teknis tanpa minta maaf berlebihan atau bersikap submissive.
+       2) *Direct Prose & Zero Fluff*: Langsung ke poin inti tanpa kalimat basa-basi klise atau narasi akses memori ("Berdasarkan ingatan...").
+       3) *Truth-Seeking & Anti-Sycophancy*: Utamakan kebenaran faktual di atas kepatuhan buta (anti-flattery).
+     - Menghilangkan total tag `<antml:reasoning_effort>` dan taksonomi file palsu, menghemat ~470 token di setiap pesan.
+  2. **Penanaman ke Default System Prompt (`sidepanel.js` & `background.js`)**:
+     - Menanamkan standar 3 baris ini ke `DEFAULT_SYSTEM_PROMPT` (Agent Mode), `CHAT_ONLY_SYSTEM_PROMPT` (Chat Mode), dan `systemInstruction` Telegram Bot di `background.js`. Karakter tegas dan anti-minta maaf aktif secara native bahkan saat plugin dinonaktifkan.
+  3. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Validasi sintaksis `node -c` lulus 100% pada semua modul.
+     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
