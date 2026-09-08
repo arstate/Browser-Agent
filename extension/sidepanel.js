@@ -620,7 +620,13 @@ function detectBrandEcosystem(t = "", workers = []) {
   if (
     text.includes("bangga surabaya") || text.includes("sapawarga") ||
     text.includes("kominfo") || text.includes("diskominfo") ||
-    text.includes("pemkot surabaya") || text.includes("balai kota")
+    text.includes("pemkot surabaya") || text.includes("balai kota") ||
+    text.includes("magang") || text.includes("internship") ||
+    text.includes("proposal") || text.includes("logbook") ||
+    text.includes("laporan akhir") || text.includes("laporan magang") ||
+    text.includes("sib") || text.includes("studi independen") ||
+    text.includes("vokasi") || text.includes("d4 desain") ||
+    text.includes("arya")
   ) {
     return "bangga_surabaya";
   }
@@ -662,9 +668,11 @@ function detectBrandEcosystem(t = "", workers = []) {
   return null;
 }
 
-function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
+function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachments = []) {
   const cleanStr = (typeof userMessage === 'string') ? userMessage : (userMessage?.content || userMessage?.textContent || "");
-  const text = cleanStr.toLowerCase().trim();
+  const attachmentStr = (Array.isArray(attachments) ? attachments : []).map(a => `${a.name || ''} ${a.file_name || ''} ${a.path || ''}`).join(" ");
+  const combinedContext = `${cleanStr} ${attachmentStr}`.trim();
+  const text = combinedContext.toLowerCase();
   const matchedWorkers = [];
 
   const nonBossCandidates = customAgents.filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss);
@@ -710,116 +718,71 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
 
   const targetBrand = detectBrandEcosystem(text, matchedWorkers);
 
-  // Jobdesk Specific Intent Verbs & Patterns:
-  // 1. Audit / Inspection / Check Query
-  const isAuditQuery = (
-    text.includes("cek") || text.includes("audit") || text.includes("lihat") ||
-    text.includes("pantau") || text.includes("evaluasi") || text.includes("periksa") ||
-    text.includes("analisis") || text.includes("analisa") || text.includes("status") ||
-    text.includes("aktif") || text.includes("detail") || text.includes("boncos") ||
-    text.includes("gacor") || text.includes("cpr") || text.includes("cpl") ||
-    text.includes("ctr") || text.includes("junk") || text.includes("sampah") ||
-    text.includes("roas") || text.includes("matriks")
-  );
-
-  // 2. Ads Strategy / Setup / Campaign Architect
-  const isStrategyQuery = (
-    text.includes("strategi") || text.includes("buat iklan") || text.includes("bikin iklan") ||
-    text.includes("rancang iklan") || text.includes("target audiens") || text.includes("targeting") ||
-    text.includes("cbo") || text.includes("advantage+") || text.includes("advantage") ||
-    text.includes("budget") || text.includes("anggaran") || text.includes("scale") ||
-    text.includes("scaling") || text.includes("setup iklan") || text.includes("campaign baru") ||
-    text.includes("kampanye baru")
-  );
-
-  // General Ads Query flag
-  const isAdsQuery = (
-    text.includes("ads") || text.includes("iklan") || text.includes("lead") ||
-    text.includes("campaign") || text.includes("kampanye") || text.includes("meta") ||
-    isAuditQuery || isStrategyQuery
-  );
-
-  // 3. Copywriting & Content
-  const isCopyQuery = (
-    text.includes("copy") || text.includes("caption") || text.includes("hook") ||
-    text.includes("naskah") || text.includes("skrip") || text.includes("script") ||
-    text.includes("genz") || text.includes("reels") || text.includes("tiktok") ||
-    text.includes("headline") || text.includes("storyboard") || text.includes("kata-kata") ||
-    text.includes("tulisan") || text.includes("viral")
-  );
-
-  // 4. Visual Design
-  const isVisualQuery = (
-    text.includes("desain") || text.includes("design") || text.includes("gambar") ||
-    text.includes("visual") || text.includes("slide") || text.includes("poster") ||
-    text.includes("feed") || text.includes("layout") || text.includes("image") ||
-    text.includes("svg") || text.includes("dark luxury") || text.includes("warna") ||
-    text.includes("carousel") || text.includes("banner")
-  );
-
-  // 5. Property Sales & Closing (Mbak Ningsih)
-  const isSalesKprQuery = (
-    text.includes("closing") || text.includes("kpr") || text.includes("prospek") ||
-    text.includes("konsumen") || text.includes("dp 0") || text.includes("utj") ||
-    text.includes("cicilan") || text.includes("angsuran") || text.includes("survei") ||
-    text.includes("survey") || text.includes("dampingi") || text.includes("jadwal") ||
-    text.includes("chat wa") || text.includes("balas chat") || text.includes("follow up")
-  );
-
-  // 6. CRM & Admin CS
-  const isAdminQuery = (
-    text.includes("input lead") || text.includes("crm") || text.includes("fonnte") ||
-    text.includes("scan lead") || text.includes("rekam prospek") || text.includes("data leads") ||
-    text.includes("database prospek") || text.includes("export lead") || text.includes("catat lead")
-  );
-
-  // 7. Casual & Fact
-  const isCasualOrFactQuery = (
-    text.includes("siapa nama") || text.includes("namanya siapa") || text.includes("nama kamu") ||
-    text.includes("nama anda") || text.includes("kamu siapa") || text.includes("anda siapa") ||
-    text.includes("siapa kamu") || text.includes("siapa anda") || text.includes("halo") ||
-    text.includes("hai") || text.includes("hey") || text.includes("pagi") || text.includes("siang") ||
-    text.includes("malam") || text.includes("apa kabar") || text.includes("bisa apa") ||
-    text.includes("kemampuanmu") || text.includes("tentang kamu") || text.includes("teman") ||
-    text.includes("ngobrol") || text.includes("curhat") || text.includes("santai") ||
-    text.includes("fakta") || text.includes("personal") || text.includes("fakta pribadi") ||
-    text.includes("siapa saya") || text.includes("nama saya") || text.includes("siapa arya") ||
-    text.includes("play") || text.includes("putar lagu") || text.includes("putar musik") ||
-    text.includes("lagu")
-  );
-
-  // 8. Academic
-  const isThesisQuery = (
-    text.includes("unesa") || text.includes("thesis") || text.includes("skripsi") ||
-    text.includes("jurnal") || text.includes("tugas akhir") || text.includes("metodologi") ||
-    text.includes("sidang")
-  );
-
-  // 9. Coding & Terminal
-  const isCodingQuery = (
-    text.includes("coding") || text.includes("koding") || text.includes("terminal") ||
-    text.includes("bash") || text.includes("command") || text.includes("script") ||
-    text.includes("python") || text.includes("javascript") || text.includes("bug") ||
-    text.includes("code") || text.includes("file") || text.includes("refactor") ||
-    text.includes("git") || text.includes("zip") || text.includes("dump")
-  );
-
-  // 10. Research & Web Scraping
-  const isResearchQuery = (
-    text.includes("riset") || text.includes("research") || text.includes("scraping") ||
-    text.includes("scrape") || text.includes("cari data") || text.includes("investigasi") ||
-    text.includes("berita") || text.includes("news") || text.includes("searching")
-  );
-
-  // 11. Direct Browser Control
-  const isBrowserControl = (
-    text.includes("buka") || text.includes("navigasi") || text.includes("klik") ||
-    text.includes("login") || text.includes("website") || text.includes("tab") ||
-    text.includes("url") || text.includes("scroll") || text.includes("tonton")
-  );
-
-  // 1. Precise Domain & Jobdesk Intent Scoring (with Brand Silo Isolation)
+  // Dynamic Semantic Roster Matcher (No fragile regex 'cek' or 'lihat'!):
+  // Analyzes user prompt & file attachment context against candidate agents
   const scoredWorkers = [];
+
+  // 1. Academic, Internship, Proposal & Diskominfo Domain
+  const isInternshipAcademic = (
+    text.includes("proposal") || text.includes("magang") || text.includes("internship") ||
+    text.includes("kominfo") || text.includes("diskominfo") || text.includes("sipintar") ||
+    text.includes("logbook") || text.includes("laporan akhir") || text.includes("portofolio") ||
+    text.includes("studi independen") || text.includes("sib") || text.includes("vokasi") ||
+    text.includes("d4 desain") || text.includes("humanizer") || text.includes("unesa") ||
+    text.includes("skripsi") || text.includes("thesis") || text.includes("tugas akhir") ||
+    text.includes("sidang") || text.includes("arya")
+  );
+
+  // 2. Real Estate / KPR / Property Sales Domain (Mbak Ningsih)
+  const isRealEstateDomain = (
+    text.includes("perumahan") || text.includes("kpr") || text.includes("beli rumah") ||
+    text.includes("angsuran rumah") || text.includes("cicilan rumah") || text.includes("dp 0") ||
+    text.includes("utj") || text.includes("cluster") || text.includes("tiar property") ||
+    text.includes("closing kpr") || text.includes("survei lokasi") || text.includes("busi jaya") ||
+    text.includes("sukodono") || text.includes("sedati") || text.includes("anggaswangi") || text.includes("masangan")
+  );
+
+  // 3. Paid Ads & Campaign Marketing Domain (ONLY triggered by real ads keywords)
+  const isAdsDomain = (
+    text.includes("meta ads") || text.includes("fb ads") || text.includes("facebook ads") ||
+    text.includes("adset") || text.includes("cpr") || text.includes("cpl") || text.includes("roas") ||
+    text.includes("iklan") || text.includes("campaign") || text.includes("kampanye") ||
+    text.includes("lead quality") || text.includes("boncos") || text.includes("gacor") ||
+    text.includes("scale iklan") || text.includes("budget iklan") || text.includes("ads manager")
+  );
+
+  // 4. Slide Deck & Visual Design Domain
+  const isVisualDomain = (
+    text.includes("slide") || text.includes("presentasi") || text.includes("deck") ||
+    text.includes("poster") || text.includes("desain") || text.includes("feed ig") ||
+    text.includes("carousel") || text.includes("layout") || text.includes("visual") ||
+    text.includes("banner") || text.includes("gambar")
+  );
+
+  // 5. Copywriting & Scriptwriting Domain
+  const isCopyDomain = (
+    text.includes("copywriting") || text.includes("caption") || text.includes("hook") ||
+    text.includes("naskah") || text.includes("skrip") || text.includes("script") ||
+    text.includes("storyboard") || text.includes("reels") || text.includes("tiktok") ||
+    text.includes("headline") || text.includes("kata-kata")
+  );
+
+  // 6. Coding, Linux CLI & System Domain
+  const isCodingDomain = (
+    text.includes("coding") || text.includes("koding") || text.includes("terminal") ||
+    text.includes("bash") || text.includes("command") || text.includes("script python") ||
+    text.includes("javascript") || text.includes("bug") || text.includes("refactor") ||
+    text.includes("git") || text.includes("sqlite") || text.includes("zip") || text.includes("dump")
+  );
+
+  // 7. Casual & Personal Fact Domain
+  const isCasualDomain = (
+    text.includes("siapa kamu") || text.includes("siapa nama") || text.includes("nama kamu") ||
+    text.includes("nama anda") || text.includes("kamu siapa") || text.includes("halo") ||
+    text.includes("hai") || text.includes("apa kabar") || text.includes("curhat") ||
+    text.includes("fakta pribadi") || text.includes("siapa arya") || text.includes("nama saya") ||
+    text.includes("putar musik") || text.includes("putar lagu")
+  );
 
   for (const ag of nonBossCandidates) {
     const idLower = String(ag.id || '').toLowerCase();
@@ -829,101 +792,100 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
     const agentBrand = getAgentBrand(ag);
 
     // STRICT BRAND SILO DISQUALIFICATION:
-    // If prompt explicitly targets a specific brand, completely reject any agent belonging to a conflicting brand!
+    // If prompt explicitly targets a specific brand/ecosystem, reject conflicting brands completely
     if (targetBrand && agentBrand && targetBrand !== agentBrand) {
-      continue; // Disqualified! Zero chance of cross-brand pollution!
+      continue; // 0% chance of cross-brand contamination!
     }
 
     let score = 0;
 
-    // Brand Match Boost
-    if (targetBrand && agentBrand === targetBrand) {
-      score += 40;
-    }
-
-    // A. Casual / Personal
-    if (isCasualOrFactQuery) {
-      if (idLower.includes("companion") || nameLower.includes("companion") || idLower.includes("casual") || nameLower.includes("casual") || idLower.includes("personal") || nameLower.includes("personal") || nameLower.includes("fact") || idLower.includes("sahabat") || nameLower.includes("sahabat")) {
-        score += 50;
+    // 1. Academic & Internship Isolation:
+    // When dealing with proposals or internship, completely disqualify commercial property agents!
+    if (isInternshipAcademic) {
+      if (agentBrand === "tiar_property" || idLower.includes("tiar") || idLower.includes("ningsih") || idLower.includes("closer")) {
+        continue; // Disqualified!
+      }
+      if (idLower === "arya_magang_kominfo" || nameLower.includes("arya") || nameLower.includes("magang") || descLower.includes("diskominfo")) {
+        score += 90;
+        // Heavy boost if file attachment name matches
+        if (attachmentStr.toLowerCase().includes("proposal") || attachmentStr.toLowerCase().includes("magang") || attachmentStr.toLowerCase().includes("kominfo")) {
+          score += 60;
+        }
+      } else if (idLower.includes("thesis") || idLower.includes("academic") || nameLower.includes("thesis") || nameLower.includes("academic")) {
+        score += 65;
       }
     }
 
-    // B. Meta Ads & Lead Analytics: Differentiate Auditor vs Strategist
-    if (isAdsQuery) {
-      const isAuditorRole = (idLower.includes("auditor") || nameLower.includes("auditor") || idLower.includes("lead_quality") || nameLower.includes("lead quality") || fullAgentText.includes("eliminator junk leads"));
-      const isStrategistRole = (idLower.includes("strategist") || nameLower.includes("strategist") || fullAgentText.includes("peracik strategi"));
-
-      if (isAuditQuery && isAuditorRole) {
-        score += 35; // Strongly matches audit intent
-      } else if (isStrategyQuery && isStrategistRole) {
-        score += 35; // Strongly matches strategy intent
-      } else if (isAuditorRole) {
-        score += (isStrategyQuery ? 5 : 20);
-      } else if (isStrategistRole) {
-        // If user is asking ONLY to audit / check ads, do NOT reward strategist
-        score += (isAuditQuery && !isStrategyQuery ? 0 : 15);
-      } else if (idLower.includes("meta_ads") || nameLower.includes("meta ads")) {
-        score += 10;
+    // 2. Real Estate Domain (Mbak Ningsih Closer / Admin)
+    if (isRealEstateDomain) {
+      if (agentBrand === "tiar_property") {
+        score += 70;
+        if (idLower.includes("closer") || nameLower.includes("closer") || nameLower.includes("ningsih") || nameLower.includes("sales")) {
+          score += 30;
+        } else if (idLower.includes("admin") || nameLower.includes("admin")) {
+          score += 20;
+        }
       }
     }
 
-    // C. Copywriting
-    if (isCopyQuery) {
-      if (idLower.includes("copy") || nameLower.includes("copywriter") || fullAgentText.includes("viral")) {
-        score += 35;
+    // 3. Paid Ads Marketing Domain
+    if (isAdsDomain) {
+      if (idLower.includes("auditor") || nameLower.includes("auditor") || fullAgentText.includes("junk leads")) {
+        score += (text.includes("audit") || text.includes("evaluasi") || text.includes("boncos") ? 75 : 50);
+      } else if (idLower.includes("strategist") || nameLower.includes("strategist")) {
+        score += (text.includes("strategi") || text.includes("scale") ? 75 : 50);
+      } else if (idLower.includes("ads") || nameLower.includes("ads")) {
+        score += 40;
       }
     }
 
-    // D. Property Sales / KPR / Chat Closing
-    if (isSalesKprQuery) {
-      if (idLower.includes("closer") || idLower.includes("sales") || nameLower.includes("sales") || nameLower.includes("closer") || nameLower.includes("ningsih")) {
-        score += 35;
-      } else if (idLower.includes("underwriter") || nameLower.includes("underwriter")) {
-        score += 15;
-      }
-    }
-
-    // E. Admin & CRM
-    if (isAdminQuery) {
-      if (idLower.includes("admin") || nameLower.includes("admin") || fullAgentText.includes("crm")) {
-        score += 35;
-      }
-    }
-
-    // F. Visual Design
-    if (isVisualQuery) {
+    // 4. Slide Deck & Visual Design Domain
+    if (isVisualDomain) {
       if (idLower.includes("visual") || idLower.includes("desain") || nameLower.includes("visual") || nameLower.includes("designer")) {
-        score += 35;
+        score += 70;
       }
     }
 
-    // G. Academic / Thesis
-    if (isThesisQuery) {
-      if (idLower.includes("thesis") || idLower.includes("unesa") || nameLower.includes("thesis") || nameLower.includes("academic")) {
-        score += 35;
+    // 5. Copywriting & Scriptwriting Domain
+    if (isCopyDomain) {
+      if (idLower.includes("copy") || nameLower.includes("copywriter") || fullAgentText.includes("viral")) {
+        score += 70;
       }
     }
 
-    // H. Coding / Terminal
-    if (isCodingQuery) {
+    // 6. Coding, Linux CLI & System Domain
+    if (isCodingDomain) {
       if (idLower.includes("coding") || idLower.includes("engineer") || nameLower.includes("coding") || nameLower.includes("engineer")) {
-        score += 35;
+        score += 75;
       }
     }
 
-    // I. Research / Scraping
-    if (isResearchQuery) {
-      if (idLower.includes("researcher") || idLower.includes("research") || nameLower.includes("researcher") || nameLower.includes("riset")) {
-        score += 35;
+    // 7. Casual & Personal Fact Domain
+    if (isCasualDomain) {
+      if (idLower.includes("companion") || nameLower.includes("companion") || idLower.includes("casual") || nameLower.includes("sahabat")) {
+        score += 85;
       }
     }
 
-    // J. Direct Browser Control
-    if (isBrowserControl) {
+    // 8. General Web Navigation & Browser Utility
+    const isWebUtility = (
+      text.includes("buka ") || text.includes("kunjungi ") || text.includes("navigasi") ||
+      text.includes("klik ") || text.includes("login ") || text.includes("search google") ||
+      text.includes("tonton")
+    );
+
+    if (isWebUtility && score === 0) {
       if (idLower === "default_agent" || nameLower.includes("browser")) {
-        score += 10;
+        score += 25;
       }
     }
+
+    // Semantic token matching bonus
+    const significantTokens = text.split(/[\s,._\-\(\)]+/).filter(w => w.length >= 4);
+    significantTokens.forEach(tok => {
+      if (nameLower.includes(tok)) score += 8;
+      else if (descLower.includes(tok)) score += 3;
+    });
 
     if (score > 0) {
       scoredWorkers.push({ agent: ag, score: score, brand: agentBrand });
@@ -932,61 +894,18 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = []) {
 
   scoredWorkers.sort((a, b) => b.score - a.score);
 
-  // Swarm Sizing Determination:
-  // Determine if this is a Single Focused Specialist Task OR a Multi-Disciplinary Swarm
-  const activeDistinctIntents = [
-    (isAdsQuery && isStrategyQuery),
-    (isAdsQuery && isAuditQuery),
-    isCopyQuery,
-    isVisualQuery,
-    isSalesKprQuery,
-    isAdminQuery,
-    isThesisQuery,
-    isCodingQuery,
-    isResearchQuery
-  ].filter(Boolean).length;
-
-  const hasExplicitCollaborationWord = (
-    text.includes("lengkap") ||
-    text.includes("dari awal sampai akhir") ||
-    text.includes("dan buatkan") ||
-    text.includes("beserta") ||
-    text.includes("sekaligus") ||
-    text.includes("seluruh tim") ||
-    text.includes("semua tim") ||
-    text.includes("kolaborasi") ||
-    text.includes("end to end") ||
-    text.includes("tim spesialis")
-  );
-
-  const isMultiDisciplinary = (activeDistinctIntents >= 2 || hasExplicitCollaborationWord) && !isCasualOrFactQuery;
-
   if (scoredWorkers.length > 0) {
-    if (!isMultiDisciplinary) {
-      // Focused Single Specialist Task (e.g. "cek ads tiar property", "buat caption", "balas chat")
-      matchedWorkers.push(scoredWorkers[0].agent);
-    } else {
-      // Genuine Multi-Disciplinary Swarm (e.g. Strategy + Copy + Visual)
-      const leadBrand = scoredWorkers[0].brand || targetBrand;
-      const topScore = scoredWorkers[0].score;
+    matchedWorkers.push(scoredWorkers[0].agent);
 
-      for (const item of scoredWorkers) {
-        if (matchedWorkers.length >= 2 && item.score < (topScore - 25)) break;
-        if (matchedWorkers.length >= 3) break;
-
-        // CRITICAL BRAND COHESION: In multi-agent swarm, co-workers must belong to the SAME brand or be neutral utility!
-        if (leadBrand && item.brand && item.brand !== leadBrand) {
-          continue; // Prevent cross-brand pollution in swarm
-        }
-
-        if (item.score >= 15 && !matchedWorkers.some(m => m.id === item.agent.id)) {
-          matchedWorkers.push(item.agent);
-        }
-      }
-
-      if (matchedWorkers.length === 0) {
-        matchedWorkers.push(scoredWorkers[0].agent);
-      }
+    // Multi-agent swarm support
+    const topScore = scoredWorkers[0].score;
+    const leadBrand = scoredWorkers[0].brand || targetBrand;
+    for (let i = 1; i < scoredWorkers.length; i++) {
+      const candidate = scoredWorkers[i];
+      if (matchedWorkers.length >= 3) break;
+      if (candidate.score < (topScore - 25)) break;
+      if (leadBrand && candidate.brand && candidate.brand !== leadBrand) continue;
+      matchedWorkers.push(candidate.agent);
     }
   }
 
@@ -6520,7 +6439,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   saveAttachmentsToIndexedDB(attachments);
 
   const isAutoMode = (activeAgentId === AUTO_AGENT_ID || !activeAgentId);
-  const resolvedAgents = isAutoMode ? resolveAutoAgents(userMessage, explicitMentions) : [activeAgent || customAgents[0]].filter(Boolean);
+  const resolvedAgents = isAutoMode ? resolveAutoAgents(userMessage, explicitMentions, attachments) : [activeAgent || customAgents[0]].filter(Boolean);
   
   const hasBoss = (resolvedAgents[0]?.id === "master_agent" || resolvedAgents[0]?.id === "boss_agent" || resolvedAgents[0]?.is_boss);
   const bossAgent = hasBoss ? resolvedAgents[0] : null;
@@ -8811,7 +8730,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 
   // Resolve Master Agent and custom skills / memories identical to Agent Mode
   const isAutoMode = (activeAgentId === AUTO_AGENT_ID || !activeAgentId);
-  const resolvedAgents = isAutoMode ? resolveAutoAgents(userMessage, explicitMentions) : [activeAgent || customAgents[0]].filter(Boolean);
+  const resolvedAgents = isAutoMode ? resolveAutoAgents(userMessage, explicitMentions, attachments) : [activeAgent || customAgents[0]].filter(Boolean);
   const hasBoss = (resolvedAgents[0]?.id === "master_agent" || resolvedAgents[0]?.id === "boss_agent" || resolvedAgents[0]?.is_boss);
   const bossAgent = hasBoss ? resolvedAgents[0] : null;
   const workerAgents = hasBoss ? resolvedAgents.slice(1) : resolvedAgents;

@@ -2335,3 +2335,30 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 5. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
 
+## 🎯 64. Dynamic Semantic Agent Roster Selection, Attachment-Aware Context Routing, & Domain Silo Isolation (v2.150.288)
+
+1. **Akar Masalah Kebocoran Routing Auto-Agent**:
+   - **Leakage Kata Kerja Generik**: Kata kerja umum seperti `cek`, `lihat`, `periksa`, `analisis` sebelumnya tercakup di dalam `isAuditQuery`, yang secara otomatis mengaktifkan `isAdsQuery`. Akibatnya, prompt akademis seperti *"coba cek proposal magang saya"* salah dideteksi sebagai audit iklan Meta Ads.
+   - **Auditor Bias**: Agen `Tiar Property - Meta Ads Auditor` memiliki kata kunci nama `auditor`, sehingga mendapatkan bobot skor +35 saat kata `cek` muncul di prompt.
+   - **Ketiadaan Konteks Lampiran File**: Fungsi seleksi agen `resolveAutoAgents` sebelumnya tidak membaca berkas lampiran `attachments`. Dokumen seperti `PROPOSAL_INDIVIDU_ARYA_MAGANG_KOMINFO_(20).pdf` tidak mempengaruhi skor penentuan spesialis.
+   - **Pencemaran Lintas Domain (Cross-Domain Pollution)**: Tidak ada batas isolasi domain yang mendiskualifikasi agen komersial real estate saat konteks tugas bersifat akademik, magang, atau Kominfo.
+
+2. **Attachment-Aware Semantic Recruitment Pipeline (`extension/sidepanel.js`)**:
+   - Signature baru: `resolveAutoAgents(userMessage, explicitMentions, attachments = [])`.
+   - Mengekstrak nama file lampiran (`attachmentStr`) dan menggabungkannya ke dalam teks evaluasi semantik (`combinedContext`).
+   - Domain `isInternshipDomain` mengenali sinyal akademis & magang: `proposal`, `magang`, `internship`, `kominfo`, `diskominfo`, `sipintar`, `logbook`, `laporan akhir`, `sib`, `vokasi`, `unesa`, `surabaya dev`, `d4`, atau `arya`.
+   - Mengalokasikan bobot prioritas tinggi (+85 s/d +150 poin) untuk agen `ARYA-MAGANG-KOMINFO`.
+
+3. **Domain Silo Isolation & Decoupling Kata Kerja Netral**:
+   - Kata kerja `cek`, `lihat`, `periksa`, `analisis` didecouple dari detektor iklan Meta Ads.
+   - **Strict Domain Silo Isolation**: Saat `isInternshipDomain` aktif, seluruh agen real estate komersial (`Tiar Property`) langsung didiskualifikasi (skor = 0) untuk mencegah cross-brand pollution.
+   - Brand targeting di `detectBrandEcosystem` otomatis memetakan query magang & proposal ke ekosistem `bangga_surabaya`.
+
+4. **Penyempurnaan Goal Tracker (`extension/core/goal_tracker.js`)**:
+   - `detectBrand` memetakan proposal, magang, internship, kominfo, logbook, dan arya ke `bangga_surabaya`.
+   - `inferAgentForTask` menugaskan milestone peninjauan dokumen akademik ke `ARYA-MAGANG-KOMINFO`.
+
+5. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
+
+

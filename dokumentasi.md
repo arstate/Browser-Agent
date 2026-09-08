@@ -1571,3 +1571,30 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Menjalankan unit test Node.js: pengujian ekstraksi batasan, deteksi kekurangan poin, early-exit, dan auto-fulfill berhasil 100% tanpa regresi.
      - Memastikan seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh di bawah batas 798 baris.
 
+### 171. Rilis Versi v2.150.288 - Dynamic Semantic Agent Roster Selection, Attachment-Aware Context Routing, Decoupling Kata Kerja Generik, dan Domain Silo Isolation
+- **Waktu Rilis**: 2026-09-09 00:08 WIB
+- **Fokus Utama**: Menghilangkan kegagalan routing auto-agent di mana permintaan pengguna terkait proposal magang/akademik salah dialihkan ke agen Tiar Property (Meta Ads Auditor). Membangun sistem **Dynamic Semantic Agent Roster Selection & Attachment-Aware Context Routing** sehingga AI secara presisi menyimpulkan dan memilih agent yang relevan berdasarkan deskripsi peran agent dan lampiran dokumen (PDF/DOCX), tanpa kebocoran kata kunci generik.
+- **Akar Masalah (Root Causes)**:
+  1. *Kebocoran Kata Kerja Generik pada Detektor Iklan (`isAdsQuery`)*: Variabel `isAuditQuery` sebelumnya mendeteksi kata-kata kerja umum bahasa Indonesia seperti `cek`, `lihat`, `periksa`, `analisis`. Karena `isAdsQuery` didefinisikan sebagai `(isAdsQuery || isAuditQuery)`, kalimat seperti *"coba cek proposal magang saya"* secara keliru ditandai sebagai query Meta Ads.
+  2. *Bias Nama Agent Auditor*: Agen `Tiar Property - Meta Ads Auditor` memiliki kata kunci `auditor` yang mendapatkan bonus skor +35 ketika prompt memiliki kata `cek`.
+  3. *Blindness terhadap Attachment Dokumen*: Fungsi `resolveAutoAgents(userMessage, explicitMentions)` sebelumnya tidak menerima parameter lampiran `attachments`. Saat pengguna melampirkan berkas seperti `PROPOSAL_INDIVIDU_ARYA_MAGANG_KOMINFO_(20).pdf` dengan instruksi singkat *"tolong periksa halaman 3"*, sistem sama sekali tidak mengetahui konteks proposal magang.
+  4. *Ketiadaan Silo Isolasi Domain*: Tidak ada mekanisme diskualifikasi otomatis yang mencegah agen komersial real estate terpilih saat konteks tugas bersifat akademik, magang, atau pemerintahan Kominfo.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Dynamic Semantic Agent Roster Selection (`extension/sidepanel.js`)**:
+     - Memperbarui signature `resolveAutoAgents(userMessage, explicitMentions, attachments = [])` untuk menerima lampiran berkas.
+     - Mengekstrak nama file lampiran (`attachmentStr`) dan menggabungkannya ke dalam teks evaluasi semantik (`combinedContext`).
+     - Menghapus kata kerja umum (`cek`, `lihat`, `periksa`, `analisis`) dari `isAdsDomain`. Kata kerja tersebut dikembalikan sebagai kata kerja bantu netral. Domain Meta Ads kini hanya aktif jika terdapat kata domain spesifik seperti `meta ads`, `iklan`, `fb ads`, `ads manager`, `cpr`, `boncos`, atau `skala iklan`.
+  2. **Attachment-Aware Context Routing & Domain Silo Isolation**:
+     - Menambahkan domain evaluasi semantik `isInternshipDomain` yang mendeteksi kata kunci `proposal`, `magang`, `internship`, `kominfo`, `diskominfo`, `sipintar`, `logbook`, `laporan akhir`, `sib`, `vokasi`, `unesa`, `surabaya dev`, `d4`, atau `arya`.
+     - Memberikan bobot prioritas tinggi (+85 s/d +150 poin) untuk agen `ARYA-MAGANG-KOMINFO` jika konteks proposal/magang terdeteksi.
+     - Menerapkan aturan **Domain Silo Isolation**: Jika domain akademik/magang terdeteksi, agen real estate komersial (`Tiar Property`) otomatis didiskualifikasi (skor = 0) guna menjamin kebersihan dan isolasi domain 100%.
+  3. **Penyempurnaan Goal Tracker (`extension/core/goal_tracker.js`)**:
+     - Memperbarui `detectBrand` agar kata kunci proposal/magang/internship/kominfo/logbook/arya otomatis dipetakan ke ekosistem `bangga_surabaya`.
+     - Memperbarui `inferAgentForTask` agar tugas-tugas peninjauan proposal, magang, dan studi independen secara akurat dialokasikan ke `ARYA-MAGANG-KOMINFO`.
+  4. **Penerusan Parameter Lampiran di Runtime Loop**:
+     - Memperbarui panggilan `resolveAutoAgents(userMessage, explicitMentions, attachments)` di `runAgentLoop` dan `runChatModeLoop`.
+  5. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Menjalankan simulasi Node.js pada 5 skenario nyata (proposal via prompt, proposal via attachment PDF, audit iklan Meta, simulasi KPR Tiar Property, dan skrip coding Linux): seluruh 5 skenario lolos 100% akurat.
+     - Memastikan seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+
+

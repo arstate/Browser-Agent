@@ -63,7 +63,13 @@
       if (
         t.includes("bangga surabaya") || t.includes("sapawarga") ||
         t.includes("kominfo") || t.includes("diskominfo") ||
-        t.includes("pemkot surabaya") || t.includes("balai kota")
+        t.includes("pemkot surabaya") || t.includes("balai kota") ||
+        t.includes("magang") || t.includes("internship") ||
+        t.includes("proposal") || t.includes("logbook") ||
+        t.includes("laporan akhir") || t.includes("laporan magang") ||
+        t.includes("sib") || t.includes("studi independen") ||
+        t.includes("vokasi") || t.includes("d4 desain") ||
+        t.includes("arya")
       ) {
         return "bangga_surabaya";
       }
@@ -166,8 +172,8 @@
       if (lower.includes('deep think') || lower.includes('analisis sasaran') || lower.includes('koordinasi') || lower.includes('validasi') || lower.includes('laporan akhir') || lower.includes('sintesis')) {
         return "Master Agent";
       }
-      if (lower.includes('proposal') || lower.includes('magang') || lower.includes('studi independen') || lower.includes('sib') || lower.includes('kominfo') || lower.includes('sipintar') || lower.includes('logbook') || lower.includes('portofolio')) {
-        return matchedWorkers[0]?.name || findWorker('proposal', findWorker('academic', findWorker('bangga', 'Proposal & Academic Specialist')));
+      if (lower.includes('proposal') || lower.includes('magang') || lower.includes('studi independen') || lower.includes('sib') || lower.includes('kominfo') || lower.includes('sipintar') || lower.includes('logbook') || lower.includes('portofolio') || lower.includes('arya')) {
+        return matchedWorkers[0]?.name || findWorker('arya', findWorker('magang', findWorker('proposal', findWorker('academic', findWorker('bangga', 'ARYA-MAGANG-KOMINFO')))));
       }
       if (lower.includes('bangga') || lower.includes('sapawarga') || lower.includes('feed ig') || lower.includes('feed instagram') || lower.includes('ngonten')) {
         return matchedWorkers[0]?.name || findWorker('bangga', findWorker('visual', findWorker('desain', 'Bangga Surabaya Art Director & Content Designer')));
