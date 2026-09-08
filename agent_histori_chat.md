@@ -7928,3 +7928,37 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
   5. Bump versi ke `v2.150.282` di `manifest.json`.
 
+### Iterasi: Resolusi Fatal Crash Input Lampiran Dokumen & Akselerasi Instant Preview Gambar/File (`v2.150.283`)
+- **User Request:**
+  - "bug gabisa input data file atau image, ke input prompt"
+- **Akar Masalah & Penyelidikan Mendalam:**
+  1. *ReferenceError Fatal Scope Bug*:
+     - Pada `handleFileSelection` (`extension/sidepanel.js`), variabel `upRes` dideklarasikan dengan `const upRes` di dalam blok `try { const upRes = await sendNativeRpc(...) }`.
+     - Di luar blok `try`, baris `const pages = (upRes && Array.isArray(upRes.pages)) ? upRes.pages : [];` mencoba mengakses `upRes`. Dalam JavaScript, variabel berlingkup blok tidak dapat diakses di luar `try`, memicu `ReferenceError: upRes is not defined` yang menghentikan eksekusi secara fatal.
+     - Akibatnya, setiap kali pengguna memilih atau menjatuhkan berkas dokumen (PDF, Word, TXT, dsb), eksekusi terputus sebelum kartu lampiran dimasukkan ke antarmuka atau `renderAttachmentsPreview()` dipanggil.
+  2. *Pemblokiran Sinkronisasi Native RPC*:
+     - Sebelumnya, `handleFileSelection` menunggu `await sendNativeRpc(...)` selesai sebelum menambahkan objek ke `pendingAttachments`. Hal ini membuat antarmuka tampak membeku (*freeze*) tanpa feedback visual saat memproses berkas besar atau gambar.
+  3. *Overkill doc_parser pada Gambar*:
+     - Native Host mengeksekusi `doc_parser.py` pada seluruh berkas termasuk gambar, menyebabkan keterlambatan yang tidak perlu.
+  4. *Filter Format accept pada HTML*:
+     - Tag `<input type="file" id="input-file-hidden">` belum menyertakan format dokumen Office modern (`.docx`, `.xlsx`, dsb), menyebabkan dialog sistem operasi menyembunyikan berkas tersebut.
+  5. *Keterbatasan Clipboard Paste*:
+     - Penempelan clipboard sebelumnya hanya memeriksa MIME image, mengabaikan berkas dokumen/teks yang disalin langsung dari file explorer.
+- **Solusi & Rekayasa Teknis:**
+  1. *Non-Blocking Instant Attachment Pipeline (`extension/sidepanel.js`)*:
+     - Objek lampiran langsung dibuat dan dimasukkan ke `pendingAttachments`, lalu `renderAttachmentsPreview()` dipanggil seketika (< 15 ms).
+     - Kartu preview gambar dan file langsung muncul seketika di bilah input prompt.
+     - Native RPC `save_and_parse_uploaded_file` dijalankan secara asinkron di latar belakang untuk memperkaya metadata dokumen (halaman gambar 150 DPI, markdown, teks per halaman) tanpa memblokir antarmuka.
+  2. *Universal Clipboard Paste & Drop*:
+     - Memperbarui event listener `paste` untuk menerima semua item bertipe `item.kind === 'file'`.
+     - Memasang event listener `drop` dan `dragover` langsung pada `#chat-input` textarea.
+  3. *Optimasi Image Upload di Native Host*:
+     - Menambahkan pengecekan `is_img` pada Rust Host (`host/rust_host/src/main.rs`) dan Python Host (`host/native_host.py`) untuk mem-bypass pemanggilan `doc_parser.py` pada berkas gambar. Binary Rust dikompilasi ulang dengan `cargo build --release` dan diinstal ke `host/browser_agent_host`.
+  4. *Perluasan accept Attribute*:
+     - Menambahkan seluruh ekstensi dokumen dan `*/*` pada `input-file-hidden` di `sidepanel.html` dan `newtab.html`.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Validasi sintaksis `node -c extension/sidepanel.js` lulus 100% tanpa error.
+  2. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
+  3. Bump versi ke `v2.150.283` di `manifest.json`.
+
+

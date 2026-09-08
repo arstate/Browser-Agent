@@ -1016,7 +1016,9 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 let mut pages_dir = String::new();
                 let mut pages_val = Value::Array(Vec::new());
 
-                if parser_script.exists() {
+                let is_img = ["png", "jpg", "jpeg", "webp", "gif", "bmp", "svg", "ico", "avif"].contains(&fmt.to_lowercase().as_str()) || mime_type.starts_with("image/");
+
+                if !is_img && parser_script.exists() {
                     let is_doc = ["pdf", "docx", "doc", "odt", "rtf", "pptx", "ppt"].contains(&fmt.as_str());
                     let mut cmd = Command::new("python3");
                     cmd.arg(parser_script.to_string_lossy().as_ref());

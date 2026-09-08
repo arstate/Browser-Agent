@@ -1429,5 +1429,39 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Di gelembung obrolan pengguna (`appendUserMessage`): menampilkan thumbnail dokumen asli dan badge halaman berwarna aksen neon yang elegan.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah limit 800 baris.
 
+166. **Resolusi Fatal Crash Input Lampiran Dokumen & Akselerasi Instant Preview Gambar/File (`v2.150.283`):**
+    - **Akar Masalah**:
+      1. `ReferenceError: upRes is not defined` pada `handleFileSelection` (`extension/sidepanel.js`):
+         - Variabel `upRes` dideklarasikan menggunakan kata kunci `const` di dalam blok `try { const upRes = await sendNativeRpc(...) }`.
+         - Di luar blok `try`, evaluasi ekspresi `const pages = (upRes && Array.isArray(upRes.pages)) ? ...` mencoba mengakses variabel `upRes` yang berada di luar cakupan blok (*block scope*), memicu `ReferenceError: upRes is not defined`.
+         - Fatal crash ini menghentikan eksekusi JavaScript seketika saat pengguna melampirkan berkas dokumen, teks, atau kode, sehingga `pendingAttachments.push` dan `renderAttachmentsPreview()` tidak pernah dieksekusi dan kartu lampiran gagal tampil di bilah input prompt.
+      2. Pemblokiran Sinkronisasi Native RPC (*Synchronous Blocking Freeze*):
+         - Alur lampiran sebelumnya menunggu penyelesaian `await sendNativeRpc("save_and_parse_uploaded_file", ...)` sebelum menambahkan kartu ke `pendingAttachments` dan sebelum memanggil `renderAttachmentsPreview()`.
+         - Pada berkas berukuran besar atau gambar beresolusi tinggi, antarmuka pengguna tampak diam tanpa umpan balik (*freeze* atau tampak tidak merespons) selama proses RPC berlangsung.
+      3. Overkill Pemrosesan Gambar di Native Host:
+         - Pada Rust Host (`main.rs`) dan Python Host (`native_host.py`), berkas gambar (`.png`, `.jpg`, `.jpeg`, dll.) secara keliru diteruskan ke `doc_parser.py` yang mencoba membaca byte biner gambar sebagai teks polos, memakan waktu pemrosesan yang tidak perlu.
+      4. Restriksi Atribut `accept` pada Elemen HTML:
+         - Elemen `<input type="file" id="input-file-hidden">` di `sidepanel.html` dan `newtab.html` belum mencantumkan ekstensi dokumen populer seperti `.docx`, `.doc`, `.xlsx`, `.xls`, `.pptx`, `.ppt`, `.odt`, `.ods`, `.odp`, `.rtf`, `.epub`, sehingga dialog pemilih berkas sistem operasi menyaring/menyembunyikan berkas-berkas tersebut.
+      5. Keterbatasan Clipboard Paste Listener:
+         - Listener `paste` hanya memeriksa `items[i].type.indexOf('image') !== -1`, mengabaikan berkas dokumen atau teks yang disalin langsung dari file manager desktop (Nautilus/Dolphin).
+    - **Implementasi Teknis & Solusi Terpadu**:
+      1. **Penyusunan Ulang Non-Blocking Instant Attachment Pipeline (`extension/sidepanel.js`)**:
+         - Objek lampiran (`newAtt`) langsung dibuat dan dimasukkan ke `pendingAttachments`, lalu fungsi `renderAttachmentsPreview()` langsung dipanggil seketika dalam hitungan milidetik setelah berkas dibaca.
+         - Pengguna langsung melihat pratinjau kartu gambar/thumbnail dokumen dan tombol hapus di bilah prompt secara instan (*zero-lag*).
+         - Operasi penyimpanan IndexedDB dan Native RPC `save_and_parse_uploaded_file` dijalankan secara asinkron di latar belakang (*background promise*). Saat respons tiba, properti dokumen (`pages`, `totalPages`, `thumbnailUrl`, `textContent`, `filePath`) diperbarui dan pratinjau di-refresh otomatis.
+      2. **Pembersihan Cakupan Variabel & Safe Fallback**:
+         - Menghilangkan `upRes` out-of-scope reference dan menambahkan fallback pembacaan teks instan via `readFileAsText`.
+         - Memperkaya deteksi format berkas gambar dan video yang toleran terhadap MIME type kosong atau ekstensi non-standar (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp`, `.svg`, `.ico`, `.heic`, `.heif`, `.avif`).
+         - Penjagaan aman `(att.name || '')` pada `renderAttachmentsPreview` untuk mencegah `TypeError: Cannot read properties of undefined (reading 'toLowerCase')`.
+      3. **Penyempurnaan Clipboard Paste & Drag-and-Drop Terpadu**:
+         - Listener `paste` kini memindai seluruh item clipboard berjenis `item.kind === 'file'`, mendukung penempelan gambar screenshot, berkas gambar, maupun berkas dokumen yang disalin dari clipboard.
+         - Menambahkan event listener `dragover` dan `drop` langsung pada elemen `#chat-input` textarea selain pada window overlay.
+      4. **Bypass Doc-Parser untuk Berkas Gambar di Native Host**:
+         - Pada Rust Host (`host/rust_host/src/main.rs`) dan Python Host (`host/native_host.py`): memeriksa `is_img`. Jika berkas adalah gambar, proses `doc_parser.py` di-bypass total, berkas disimpan langsung, dan respons dikembalikan dalam sekejap.
+      5. **Perluasan Atribut `accept` Berkas**:
+         - Memperbarui atribut `accept` pada `input-file-hidden` di `sidepanel.html` dan `newtab.html` agar mencakup seluruh format dokumen, teks, audio, video, dan `*/*`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah limit 800 baris.
+
+
 
 

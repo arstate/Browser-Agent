@@ -1027,11 +1027,13 @@ def save_and_parse_uploaded_file(file_name, file_data, mime_type="", session_id=
         fmt = os.path.splitext(clean_name)[1].lstrip(".").lower()
         char_count = 0
         approx_tokens = 0
-        is_doc = True
+        is_img = fmt in ("png", "jpg", "jpeg", "webp", "gif", "bmp", "svg", "ico", "avif") or (mime_type and mime_type.startswith("image/"))
+        is_doc = not is_img
 
-        try:
-            from doc_parser import parse_document_to_markdown
-            parsed = parse_document_to_markdown(file_path)
+        if not is_img:
+            try:
+                from doc_parser import parse_document_to_markdown
+                parsed = parse_document_to_markdown(file_path)
             if parsed.get("status") == "ok":
                 markdown_content = parsed.get("markdown", "")
                 fmt = parsed.get("format", fmt)

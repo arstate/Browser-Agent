@@ -13844,17 +13844,19 @@ function renderAttachmentsPreview() {
       `;
     } else if (att.isDocument && att.thumbnailUrl) {
       const pageCount = att.totalPages || (att.pages ? att.pages.length : 1);
-      const isPdf = att.name.toLowerCase().endsWith('.pdf');
-      const docBadge = isPdf ? `PDF • ${pageCount} Hal` : `Doc • ${pageCount} Hal`;
+      const safeName = att.name || 'Dokumen';
+      const isPdf = safeName.toLowerCase().endsWith('.pdf');
+      const isWord = /\.(docx?|odt|rtf)$/i.test(safeName);
+      const docBadge = isPdf ? `PDF • ${pageCount} Hal` : (isWord ? `DOC • ${pageCount} Hal` : `Doc • ${pageCount} Hal`);
       card.innerHTML = `
         <div style="position:relative;width:42px;height:48px;border-radius:6px;overflow:hidden;background:#0F172A;border:1px solid rgba(255,255,255,0.12);flex-shrink:0;">
-          <img src="${att.thumbnailUrl}" alt="${escapeHtml(att.name)}" style="width:100%;height:100%;object-fit:cover;object-position:top;">
+          <img src="${att.thumbnailUrl}" alt="${escapeHtml(safeName)}" style="width:100%;height:100%;object-fit:cover;object-position:top;">
           <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(15,23,42,0.85);font-size:8px;font-weight:700;color:#CEF128;text-align:center;padding:1px 0;line-height:1.2;">
             1/${pageCount}
           </div>
         </div>
         <div class="attachment-file-meta">
-          <span class="attachment-file-name" title="${escapeHtml(att.name)}">${escapeHtml(att.name)}</span>
+          <span class="attachment-file-name" title="${escapeHtml(safeName)}">${escapeHtml(safeName)}</span>
           <div style="display:flex;align-items:center;gap:4px;">
             <span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(206,241,40,0.15);color:#CEF128;font-weight:600;">${docBadge}</span>
           </div>
@@ -13983,132 +13985,147 @@ async function handleFileSelection(files) {
   
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    const isImg = file.type.startsWith('image/');
-    const isVid = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi|m4v)$/i.test(file.name);
+    if (!file) continue;
+
+    const fileName = file.name || (file.type && file.type.startsWith('image/') ? 'image.png' : 'file');
+    const fileType = file.type || '';
+    const isImg = fileType.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg|ico|heic|heif|avif)$/i.test(fileName);
+    const isVid = fileType.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi|m4v|flv|wmv)$/i.test(fileName);
 
     if (isImg) {
       const dataUrl = await readFileAsDataURL(file);
       const attId = 'att_img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-      // Persist full image dataUrl into IndexedDB asynchronously
-      saveImageToIndexedDB(attId, dataUrl, file.name || 'image.png');
 
-      // Also persist to ~/.browser-agent/uploads/ via native host
-      let filePath = "";
-      if (typeof sendNativeRpc === 'function') {
-        try {
-          const upRes = await sendNativeRpc("save_and_parse_uploaded_file", {
-            file_name: file.name || 'image.png',
-            file_data: dataUrl,
-            mime_type: file.type || 'image/png',
-            session_id: currentSessionId || ''
-          });
-          if (upRes && upRes.status === 'ok') {
-            filePath = upRes.file_path || "";
-          }
-        } catch (e) {
-          console.warn("Upload image to local uploads notice:", e);
-        }
-      }
-
-      pendingAttachments.push({
+      const newAtt = {
         id: attId,
-        name: file.name || 'image.png',
-        type: file.type || 'image/png',
-        size: file.size,
+        name: fileName,
+        type: fileType || 'image/png',
+        size: file.size || 0,
         isImage: true,
         isVideo: false,
         isDocument: false,
-        filePath,
+        filePath: '',
         dataUrl,
         thumbnailUrl: dataUrl
-      });
+      };
+      pendingAttachments.push(newAtt);
+      renderAttachmentsPreview();
+
+      // Persist full image dataUrl into IndexedDB asynchronously
+      saveImageToIndexedDB(attId, dataUrl, fileName);
+
+      // Save to local ~/.browser-agent/uploads/ via native host in background
+      if (typeof sendNativeRpc === 'function') {
+        sendNativeRpc("save_and_parse_uploaded_file", {
+          file_name: fileName,
+          file_data: dataUrl,
+          mime_type: fileType || 'image/png',
+          session_id: currentSessionId || ''
+        }, 0, 10000).then(upRes => {
+          if (upRes && upRes.status === 'ok') {
+            newAtt.filePath = upRes.file_path || "";
+          }
+        }).catch(e => {
+          console.warn("Upload image to local uploads notice:", e);
+        });
+      }
     } else if (isVid) {
       const dataUrl = await readFileAsDataURL(file);
-      const meta = await extractVideoMetadataAndFrames(file, dataUrl);
       const attId = 'att_vid_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-      
-      // Persist full video dataUrl into IndexedDB asynchronously
-      saveVideoToIndexedDB(attId, dataUrl, file.name || 'video.mp4', meta.duration || 0);
 
-      pendingAttachments.push({
+      const newAtt = {
         id: attId,
-        name: file.name || 'video.mp4',
-        type: file.type || 'video/mp4',
-        size: file.size,
+        name: fileName,
+        type: fileType || 'video/mp4',
+        size: file.size || 0,
         isImage: false,
         isVideo: true,
         isDocument: false,
         dataUrl,
-        duration: meta.duration,
-        width: meta.width,
-        height: meta.height,
-        keyframes: meta.keyframes,
-        thumbnailUrl: meta.thumbnailUrl
+        duration: 0,
+        width: 640,
+        height: 360,
+        keyframes: [],
+        thumbnailUrl: ''
+      };
+      pendingAttachments.push(newAtt);
+      renderAttachmentsPreview();
+
+      extractVideoMetadataAndFrames(file, dataUrl).then(meta => {
+        newAtt.duration = meta.duration || 0;
+        newAtt.width = meta.width || 640;
+        newAtt.height = meta.height || 360;
+        newAtt.keyframes = meta.keyframes || [];
+        newAtt.thumbnailUrl = meta.thumbnailUrl || '';
+        saveVideoToIndexedDB(attId, dataUrl, fileName, meta.duration || 0);
+        renderAttachmentsPreview();
+      }).catch(e => {
+        console.warn("Video metadata notice:", e);
       });
     } else {
       // Document / Data / Text files (PDF, Word DOCX/DOC, Excel XLSX/XLS, PPTX, CSV, TXT, MD, Code, etc.)
       const dataUrl = await readFileAsDataURL(file);
-      let textContent = "";
-      let filePath = "";
-      let parsedWithAnydoc = false;
-      let format = "";
-      let charCount = 0;
+      const attId = 'att_doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      const isDoc = /\.(pdf|docx|doc|xlsx|xls|pptx|ppt|rtf|odt|ods|odp|epub|csv|tsv)$/i.test(fileName);
 
-      // Primary: Save to ~/.browser-agent/uploads/ and parse to clean Markdown via Firecrawl Anydoc
-      if (typeof sendNativeRpc === 'function') {
-        try {
-          const upRes = await sendNativeRpc("save_and_parse_uploaded_file", {
-            file_name: file.name || 'document',
-            file_data: dataUrl,
-            mime_type: file.type || 'application/octet-stream',
-            session_id: currentSessionId || ''
-          });
-          if (upRes && upRes.status === 'ok') {
-            filePath = upRes.file_path || "";
-            textContent = upRes.markdown || "";
-            format = upRes.format || "";
-            charCount = upRes.char_count || textContent.length;
-            parsedWithAnydoc = true;
-          }
-        } catch (e) {
-          console.warn("Anydoc parse via native host notice:", e);
-        }
-      }
-
-      // Fallback if native host returned empty or unavailable
-      if (!textContent) {
-        try {
-          textContent = await readFileAsText(file);
-        } catch (e) {
-          console.warn("Could not read as text:", e);
-        }
-      }
-
-      const pages = (upRes && Array.isArray(upRes.pages)) ? upRes.pages : [];
-      const totalPages = (upRes && upRes.total_pages) ? upRes.total_pages : (pages.length || 1);
-      const pagesDir = (upRes && upRes.pages_dir) ? upRes.pages_dir : "";
-      const firstPageThumb = (pages.length > 0 && pages[0].data_url) ? pages[0].data_url : "";
-
-      const isDoc = /\.(pdf|docx|doc|xlsx|xls|pptx|ppt|rtf|odt|ods|odp|epub|csv|tsv)$/i.test(file.name) || parsedWithAnydoc || pages.length > 0;
-
-      pendingAttachments.push({
-        id: 'att_doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-        name: file.name || 'file',
-        type: file.type || 'text/plain',
-        size: file.size,
+      const newAtt = {
+        id: attId,
+        name: fileName,
+        type: fileType || 'text/plain',
+        size: file.size || 0,
         isImage: false,
         isVideo: false,
         isDocument: isDoc,
-        filePath,
-        textContent,
-        parsedMarkdown: textContent,
-        format,
-        charCount,
-        totalPages,
-        pagesDir,
-        pages,
-        thumbnailUrl: firstPageThumb
-      });
+        filePath: '',
+        textContent: '',
+        parsedMarkdown: '',
+        format: '',
+        charCount: 0,
+        totalPages: 1,
+        pagesDir: '',
+        pages: [],
+        thumbnailUrl: ''
+      };
+      pendingAttachments.push(newAtt);
+      renderAttachmentsPreview();
+
+      // Read plaintext fallback immediately in background
+      readFileAsText(file).then(txt => {
+        if (txt && !newAtt.textContent) {
+          newAtt.textContent = txt;
+          newAtt.parsedMarkdown = txt;
+          newAtt.charCount = txt.length;
+        }
+      }).catch(e => {});
+
+      // Parse & convert document via native host in background
+      if (typeof sendNativeRpc === 'function') {
+        sendNativeRpc("save_and_parse_uploaded_file", {
+          file_name: fileName,
+          file_data: dataUrl,
+          mime_type: fileType || 'application/octet-stream',
+          session_id: currentSessionId || ''
+        }, 0, 30000).then(upRes => {
+          if (upRes && upRes.status === 'ok') {
+            newAtt.filePath = upRes.file_path || "";
+            if (upRes.markdown) {
+              newAtt.textContent = upRes.markdown;
+              newAtt.parsedMarkdown = upRes.markdown;
+            }
+            newAtt.format = upRes.format || "";
+            newAtt.charCount = upRes.char_count || (newAtt.textContent ? newAtt.textContent.length : 0);
+            newAtt.pages = Array.isArray(upRes.pages) ? upRes.pages : [];
+            newAtt.totalPages = upRes.total_pages || (newAtt.pages.length || 1);
+            newAtt.pagesDir = upRes.pages_dir || "";
+            if (newAtt.pages.length > 0 && newAtt.pages[0].data_url) {
+              newAtt.thumbnailUrl = newAtt.pages[0].data_url;
+            }
+            renderAttachmentsPreview();
+          }
+        }).catch(e => {
+          console.warn("Document parse via native host notice:", e);
+        });
+      }
     }
   }
 
@@ -14134,7 +14151,9 @@ function readFileAsText(file) {
 }
 
 // Attach Button Trigger
-btnAttachFile?.addEventListener('click', () => {
+btnAttachFile?.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
   inputFileHidden?.click();
 });
 
@@ -14145,24 +14164,25 @@ inputFileHidden?.addEventListener('change', (e) => {
   }
 });
 
-// Clipboard Paste Listener (Images & Text files)
+// Clipboard Paste Listener (Images, Screenshots, and Files)
 window.addEventListener('paste', async (e) => {
   const items = e.clipboardData?.items;
-  if (!items) return;
+  if (!items || items.length === 0) return;
 
-  const imageFiles = [];
+  const files = [];
   for (let i = 0; i < items.length; i++) {
-    if (items[i].type.indexOf('image') !== -1) {
-      const blob = items[i].getAsFile();
+    const item = items[i];
+    if (item.kind === 'file') {
+      const blob = item.getAsFile();
       if (blob) {
-        imageFiles.push(blob);
+        files.push(blob);
       }
     }
   }
 
-  if (imageFiles.length > 0) {
+  if (files.length > 0) {
     e.preventDefault();
-    await handleFileSelection(imageFiles);
+    await handleFileSelection(files);
   }
 });
 
@@ -14193,6 +14213,20 @@ window.addEventListener('drop', (e) => {
   dragCounter = 0;
   if (dragDropOverlay) dragDropOverlay.style.display = 'none';
   if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    handleFileSelection(e.dataTransfer.files);
+  }
+});
+
+chatInput?.addEventListener('dragover', (e) => {
+  e.preventDefault();
+});
+
+chatInput?.addEventListener('drop', (e) => {
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragDropOverlay) dragDropOverlay.style.display = 'none';
+    dragCounter = 0;
     handleFileSelection(e.dataTransfer.files);
   }
 });
