@@ -8186,6 +8186,35 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris.
   3. Bump versi ke `v2.150.290` di `extension/manifest.json`.
 
+### 🚀 Iterasi 174: Streamlining Plugin KV Cache, Claude Fable, dan Opus 5 Menjadi Pure Toggle Switches (On/Off) & Eliminasi Modal Settings Redundan
+- **Waktu Eksekusi**: 2026-09-09 01:00 WIB
+- **Versi**: `v2.150.291`
+- **Problem Statement Pengguna**:
+  1. *"ui di plugin seting ini ngaruh ga bro setelah lo update barusan"*
+  2. *"kalo gitu plugin ini klo cuma ngaruh di on off mending gausah ada seting opsion nya bro cukup togle on off aja, gimana menurut lo"*
+  3. *"gas"*
+- **Akar Masalah (Root Causes)**:
+  1. *Opsi Pengaturan Placebo / Redundan*: Tombol Settings dan slider Reasoning Effort (10-100), Tier selector (Lite/Mythos), dan checklist taksonomi file Obsidian tidak lagi relevan pasca distilasi 3 baris direktif kognitif presisi dan determinisme KV Cache otomatis.
+  2. *Beban DOM Berlebih*: 3 modal konfigurasi di `options.html` memuat ~387 baris kode HTML tak terpakai yang membingungkan pengguna dan menambah overhead DOM.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Penghapusan Tombol Settings dari Kartu Plugin (`extension/options.html`)**:
+     - Menghapus tombol `btn-config-kvcache` pada kartu KV Cache Optimizer.
+     - Menghapus tombol `btn-config-claude-fable` pada kartu Claude Fable 5.
+     - Menghapus tombol `btn-config-claude-opus-5` pada kartu Claude Opus 5 Distill.
+  2. **Pembersihan 3 Modal Dialog Konfigurasi (`extension/options.html`)**:
+     - Menghapus `#modal-plugin-kvcache` (~150 baris).
+     - Menghapus `#modal-claude-fable-config` (~115 baris).
+     - Menghapus `#modal-claude-opus-5-config` (~120 baris).
+     - Total DOM options.html terpangkas 387 baris kode.
+  3. **Preservasi State Storage & Null-Safety Handler**:
+     - Fungsionalitas On/Off toggle switch tetap 100% aktif dan menyimpan status ke `chrome.storage.local` melalui key `plugin_settings.kvcache.enabled`, `claude_fable.enabled`, dan `claude_opus_5.enabled`.
+     - Script pengendali plugin (`kvcache.js`, `claude_fable.js`, `claude_opus_5.js`) telah terproteksi oleh guard null-checking (`if (modal)`, `btnOpen?`) sehingga terhindar dari runtime crash.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Validasi sintaksis `node -c extension/options.js`, `node -c extension/plugins/kvcache/*.js`, `node -c extension/plugins/claude_fable/*.js`, dan `node -c extension/plugins/claude_opus_5/*.js` lolos 100% tanpa error.
+  2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris.
+  3. Bump versi ke `v2.150.291` di `extension/manifest.json`.
+
+
 
 
 

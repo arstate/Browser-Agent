@@ -1645,3 +1645,27 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
   3. **Verifikasi Pengujian & Standar Sub-800 Baris**:
      - Validasi sintaksis `node -c` lulus 100% pada semua modul.
      - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+
+### 174. Rilis Versi v2.150.291 - Streamlining Plugin KV Cache, Claude Fable, dan Opus 5 Menjadi Pure Toggle Switches (On/Off) & Eliminasi Modal Settings Redundan
+- **Waktu Rilis**: 2026-09-09 01:00 WIB
+- **Fokus Utama**: Merampingkan antarmuka pengguna pada halaman Options (`extension/options.html`) dengan mengubah 3 plugin (KV Cache Optimizer, Claude Fable 5, dan Claude Opus 5 Distill) menjadi pure on/off toggle switches tanpa tombol Settings maupun modal konfigurasi berlebih yang redundan/placebo.
+- **Akar Masalah (Root Causes)**:
+  1. *Opsi Pengaturan Placebo / Membingungkan*: Slider Reasoning Effort (10-100), pemilihan Tier (Lite/Mythos/Standard/Deep Analytical/Truth-Seeking), dan checklist taksonomi file Obsidian tidak lagi relevan pasca distilasi direktif kognitif presisi 3 baris (~30 token) dan penanganan KV Cache otomatis yang deterministik.
+  2. *Beban DOM Berlebih*: Tiga modal overlay dengan total ~387 baris kode HTML membebani parsing halaman options tanpa memberikan nilai fungsional bagi alur kerja pengguna.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Penghapusan Tombol Settings dari Plugin Cards (`extension/options.html`)**:
+     - Menghapus tombol `btn-config-kvcache` pada kartu KV Cache Optimizer.
+     - Menghapus tombol `btn-config-claude-fable` pada kartu Claude Fable 5.
+     - Menghapus tombol `btn-config-claude-opus-5` pada kartu Claude Opus 5 Distill.
+  2. **Eliminasi 3 Modal Dialog Konfigurasi Redundan (`extension/options.html`)**:
+     - Menghapus `#modal-plugin-kvcache` (~150 baris).
+     - Menghapus `#modal-claude-fable-config` (~115 baris).
+     - Menghapus `#modal-claude-opus-5-config` (~120 baris).
+     - Total pengurangan markup mencapai 387 baris kode bersih.
+  3. **Preservasi State Storage & Null-Safety Handler**:
+     - Fungsionalitas On/Off toggle switch tetap berjalan 100% mulus dan persisten ke `chrome.storage.local` melalui key `plugin_settings.kvcache.enabled`, `claude_fable.enabled`, dan `claude_opus_5.enabled`.
+     - Script pengendali (`kvcache.js`, `claude_fable.js`, `claude_opus_5.js`) telah terproteksi oleh guard null-checking (`if (modal)`, `btnOpen?`) sehingga tidak memicu runtime error saat modal ditiadakan.
+  4. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Validasi sintaksis `node -c` lulus 100% pada semua berkas JavaScript terkait.
+     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+

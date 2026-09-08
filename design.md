@@ -2401,6 +2401,27 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
 
+## 🏛️ 67. Pure Toggle Switches UI Architecture & Redundant Modal Elimination (v2.150.291)
+
+1. **Prinsip Zero-Waste Minimalist UX**:
+   - Menghapus tombol "Settings" dan dialog modal konfigurasi berlebih dari 3 plugin:
+     - **KV Cache Optimizer** (`#modal-plugin-kvcache`)
+     - **Claude Fable 5** (`#modal-claude-fable-config`)
+     - **Claude Opus 5 Distill** (`#modal-claude-opus-5-config`)
+   - Eliminasi elemen kontrol placebo (Reasoning Effort slider 10-100, Tier selector buttons, dan checkbox taksonomi file) yang tidak lagi relevan setelah distilasi direktif kognitif ringkas 3 baris (~30 token) dan mekanisme penahan prefix KV Cache otomatis.
+
+2. **Perampingan DOM Options Page**:
+   - Memotong ~387 baris markup HTML dari `extension/options.html`.
+   - Mengurangi overhead rendering dan parsing halaman opsi secara signifikan.
+
+3. **Integritas Runtime & Safe Degradation**:
+   - Fungsionalitas On/Off toggle switch tetap 100% aktif dan menyimpan state secara persisten ke `chrome.storage.local`.
+   - Seluruh event handler di `kvcache.js`, `claude_fable.js`, dan `claude_opus_5.js` diproteksi guard null-safety (`if (modal)`, optional chaining `?.`) sehingga bebas error di konsol.
+
+4. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
+
+
 
 
 
