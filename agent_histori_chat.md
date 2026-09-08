@@ -8127,4 +8127,41 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
   4. Bump versi ke `v2.150.288` di `extension/manifest.json`.
 
+### 🚀 Iterasi 172: True KV Cache & Prefix Pinning Engine, Deterministic Tools Sorting, Dynamic Suffix Relocation, dan Eliminasi Placebo Token Bloat
+- **Waktu Eksekusi**: 2026-09-09 00:30 WIB
+- **Versi**: `v2.150.289`
+- **Problem Statement Pengguna**:
+  1. *"coba cek in plugin cache token apakah itu bener bener bisa bikin hemat token apa cuman bulshit bro"*
+  2. *"opsi a beneran bisa hemat ga soalnya saya pakenya 9router"*
+  3. *"Lo mau pilih Opsi A (kita bikin beneran sakti) atau Opsi B (copot aja)? gas opsi A"*
+- **Akar Masalah (Root Causes)**:
+  1. *Prefix-Busting Timestamp di Byte 0*: Injeksi waktu lokal dinamis di baris 1 `buildDynamicSystemPrompt` memicu perubahan konstan pada token awal, menyebabkan Headroom Proxy (port 8787) dan backend LLM menghasilkan 0% cache hit (`miss_attribution: prefix_change` pada 1.57 juta token yang diproses).
+  2. *Urutan Tool Acak*: Skema array tools tidak disortir secara alfabetis, menyebabkan mutasi hash prefix skema tool antar request.
+  3. *Injeksi Placebo String*: Teks `• [PLUGIN: KV CACHE OPTIMIZER...]` sebelumnya hanya teks kosong yang menghabiskan ~60 token tanpa mekanisme caching teknis nyata.
+  4. *Ketiadaan Cache Control Ephemeral*: Tidak ada penanda `cache_control: { type: "ephemeral" }` untuk Anthropic Claude, DeepSeek, maupun proxy Headroom.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **True KV Cache & Prefix Pinning Engine (`extension/plugins/kvcache/kvcache_optimizer.js`)**:
+     - Membangun ulang fungsi utama `applyKVCacheOptimization(systemPrompt, tools, messages, dynamicContext, configOverride)`.
+     - Mengisolasi dan membersihkan seluruh variabel waktu dan tab info dari static system prompt.
+     - Menyortir array tools secara alfabetis deterministik berdasarkan `function.name`.
+     - Merelokasi seluruh konteks dinamis (waktu lokal dan status tab aktif) ke **Suffix pesan user terakhir** (`=== 🕒 DYNAMIC EXECUTION CONTEXT (SUFFIX - ISOLATED FOR KV CACHE) ===`), mengunci System Prompt 100% beku.
+     - Menambahkan proteksi substring deduplikasi suffix agar tidak berlipat ganda saat multi-step tool execution.
+  2. **Injeksi Provider Cache Control (`injectProviderCacheControl`)**:
+     - Mendeteksi endpoint/model Anthropic Claude, DeepSeek, dan Headroom Proxy (port 8787).
+     - Menyuntikkan `cache_control: { type: "ephemeral" }` pada system message dan tool definition terakhir untuk mengaktifkan prompt caching hingga diskon 90%.
+  3. **Sinkronisasi Prefix Multi-Turn di Conversation History**:
+     - Di `runAgentLoop`, `runChatModeLoop` (`extension/sidepanel.js`), dan `executeAgentLoop` (`extension/background.js`), konten pesan user yang telah dioptimasi dengan suffix disinkronkan kembali ke `conversationHistory` / `conversationTurns`. Dengan demikian, turn-turn lampau tetap memiliki konten yang persis sama di turn berikutnya, menjamin prefix hit 100% pada giliran kedua dan seterusnya.
+  4. **Pembersihan Placebo Token Bloat**:
+     - Menghapus injeksi string placebo ~60 token dari `buildDynamicSystemPrompt` di `sidepanel.js` dan `systemInstruction` di `background.js`.
+     - Mengubah tool `kvcache_status_meter` untuk memanggil `getKVCacheRealReport()` yang mengembalikan data telemetri nyata.
+  5. **Pendaftaran Script di UI Host**:
+     - Menambahkan script `plugins/kvcache/kvcache_optimizer.js` di `extension/sidepanel.html` dan `extension/newtab.html`.
+     - Memastikan impor di `extension/background.js` via `importScripts` aktif.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Validasi sintaksis `node -c extension/sidepanel.js`, `node -c extension/background.js`, dan `node -c extension/plugins/kvcache/kvcache_optimizer.js` lolos 100% tanpa error.
+  2. Pengujian simulasi multi-turn Node.js membuktikan Turn 0 (System) dan Turn 1 (First User Turn) 100% identik bit-for-bit antar giliran.
+  3. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris.
+  4. Bump versi ke `v2.150.289` di `extension/manifest.json`.
+
+
 

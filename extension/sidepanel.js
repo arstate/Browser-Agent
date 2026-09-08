@@ -960,9 +960,7 @@ function buildDynamicSystemPrompt(agentOrAgents = null) {
 
   let prompt = "";
 
-  // 1. Inject Real-Time Current Temporal Context
-  prompt += getDetailedCurrentTimeContext() + "\n\n";
-
+  // 1. Static Prefix Pinning: Temporal and dynamic contexts are strictly isolated to the suffix of the latest user turn
   const hasBoss = (agents[0]?.id === "master_agent" || agents[0]?.id === "boss_agent" || agents[0]?.is_boss);
   const workers = hasBoss ? agents.slice(1) : agents;
 
@@ -1234,11 +1232,7 @@ Always provide clear, comprehensive final answers in clean Markdown.`;
     }
   }
 
-  const kvcache = cachedPluginSettings?.kvcache || { enabled: true, mode: 'aggressive' };
-  if (kvcache.enabled !== false) {
-    const kvMode = (kvcache.mode || 'aggressive').toUpperCase();
-    prompt += `• [PLUGIN: KV CACHE OPTIMIZER (AKTIF - MODE: ${kvMode})]: Prefix Pinning & Dynamic Suffix Relocation aktif. Seluruh skema tools telah diurutkan alfabetis dan prefix dijaga 100% deterministik untuk mencapai target 90% KV Cache Hit Ratio.\n`;
-  }
+  // KV Cache: True Prefix Pinning & Dynamic Suffix Relocation executed at payload pipeline without prompt pollution
 
   const caveman = cachedPluginSettings?.caveman || { enabled: true, mode: 'terse' };
   if (caveman.enabled !== false) {
@@ -3392,6 +3386,9 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
     }
 
     case "kvcache_status_meter": {
+      if (typeof getKVCacheRealReport === "function") {
+        return getKVCacheRealReport();
+      }
       const kv = (cachedPluginSettings?.kvcache) || { enabled: true, mode: 'aggressive' };
       return {
         status: "ok",
@@ -6624,13 +6621,49 @@ Tugas Anda:
 
         try {
           const safeMaxTokens = getSafeMaxOutputTokens(config.maxTokens);
+
+          let finalMessages = messages;
+          let finalTools = isPlanningTurn ? undefined : AGENT_TOOLS;
+          const dynamicContext = {
+            currentTime: typeof getDetailedCurrentTimeContext === 'function' ? getDetailedCurrentTimeContext() : new Date().toLocaleString(),
+            activeTabUrl: (typeof activeTabTitle !== 'undefined' && activeTabTitle) ? `${activeTabTitle} (${activeTabId || ''})` : ''
+          };
+          const kvPluginConfig = cachedPluginSettings?.kvcache || { enabled: true };
+          if (typeof applyKVCacheOptimization === 'function') {
+            const kvRes = applyKVCacheOptimization(
+              "",
+              finalTools,
+              finalMessages,
+              dynamicContext,
+              kvPluginConfig
+            );
+            finalMessages = kvRes.messages;
+            finalTools = kvRes.tools;
+            if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+              for (let ci = conversationHistory.length - 1; ci >= 0; ci--) {
+                if (conversationHistory[ci].role === 'user') {
+                  const lastOptUser = finalMessages.slice().reverse().find(m => m.role === 'user');
+                  if (lastOptUser && typeof lastOptUser.content === 'string') {
+                    conversationHistory[ci].content = lastOptUser.content;
+                  }
+                  break;
+                }
+              }
+            }
+          }
+          if (typeof injectProviderCacheControl === 'function') {
+            const ccRes = injectProviderCacheControl(finalMessages, finalTools, endpointUrl, activeModelChoice);
+            finalMessages = ccRes.messages;
+            finalTools = ccRes.tools;
+          }
+
           const resp = await fetch(endpointUrl, {
             method: "POST",
             headers,
             body: JSON.stringify({
               model: activeModelChoice,
-              messages,
-              tools: isPlanningTurn ? undefined : AGENT_TOOLS,
+              messages: finalMessages,
+              tools: finalTools,
               tool_choice: isPlanningTurn ? undefined : "auto",
               temperature: parseFloat(config.temperature) || 0.2,
               ...(safeMaxTokens ? { max_tokens: safeMaxTokens } : {}),
@@ -8808,12 +8841,45 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 
         try {
           const safeMaxTokens = getSafeMaxOutputTokens(config.maxTokens);
+
+          let finalMessages = messages;
+          const dynamicContext = {
+            currentTime: typeof getDetailedCurrentTimeContext === 'function' ? getDetailedCurrentTimeContext() : new Date().toLocaleString(),
+            activeTabUrl: (typeof activeTabTitle !== 'undefined' && activeTabTitle) ? `${activeTabTitle} (${activeTabId || ''})` : ''
+          };
+          const kvPluginConfig = cachedPluginSettings?.kvcache || { enabled: true };
+          if (typeof applyKVCacheOptimization === 'function') {
+            const kvRes = applyKVCacheOptimization(
+              "",
+              undefined,
+              finalMessages,
+              dynamicContext,
+              kvPluginConfig
+            );
+            finalMessages = kvRes.messages;
+            if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+              for (let ci = conversationHistory.length - 1; ci >= 0; ci--) {
+                if (conversationHistory[ci].role === 'user') {
+                  const lastOptUser = finalMessages.slice().reverse().find(m => m.role === 'user');
+                  if (lastOptUser && typeof lastOptUser.content === 'string') {
+                    conversationHistory[ci].content = lastOptUser.content;
+                  }
+                  break;
+                }
+              }
+            }
+          }
+          if (typeof injectProviderCacheControl === 'function') {
+            const ccRes = injectProviderCacheControl(finalMessages, [], endpointUrl, activeModelChoice);
+            finalMessages = ccRes.messages;
+          }
+
           const resp = await fetch(endpointUrl, {
             method: "POST",
             headers,
             body: JSON.stringify({
               model: activeModelChoice,
-              messages,
+              messages: finalMessages,
               temperature: parseFloat(config.temperature) || 0.7,
               ...(safeMaxTokens ? { max_tokens: safeMaxTokens } : {}),
               stream: true

@@ -3076,6 +3076,9 @@ code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: m
     }
 
     if (toolName === "kvcache_status_meter") {
+      if (typeof getKVCacheRealReport === "function") {
+        return getKVCacheRealReport();
+      }
       const pluginData = await chrome.storage.local.get(['plugin_settings']);
       const kv = pluginData.plugin_settings?.kvcache || { enabled: true, mode: 'aggressive' };
       return {
@@ -3499,7 +3502,7 @@ YOU HAVE FULL ACCESS TO OFFICIAL BROWSER AGENT CDP & OS TOOLS:
 - 'read_os_file' & 'write_os_file': Membaca dan menulis file lokal.
 
 Current Browser State:
-• Active Tab: ${activeTabInfo}
+• Tab Context: Dynamically attached per request turn.
 
 MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
 1. 📄 MANIPULASI FILE, PDF, GAMBAR, AUDIO & ZIP:
@@ -3597,10 +3600,7 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       }
     }
 
-    const kvcache = pluginSettings.kvcache || { enabled: true, mode: 'aggressive' };
-    if (kvcache.enabled !== false) {
-      systemInstruction += `• [PLUGIN: KV CACHE OPTIMIZER (AKTIF - MODE: ${(kvcache.mode || 'aggressive').toUpperCase()})]: Prefix Pinning & Dynamic Suffix Relocation aktif. Seluruh skema tools telah diurutkan alfabetis dan prefix dijaga 100% deterministik untuk mencapai target 90% KV Cache Hit Ratio.\n`;
-    }
+    // KV Cache: True Prefix Pinning & Dynamic Suffix Relocation executed at payload pipeline without prompt pollution
 
     const caveman = pluginSettings.caveman || { enabled: true, mode: 'terse' };
     if (caveman.enabled !== false) {
@@ -3772,13 +3772,44 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       const optimizedTurns = applyPonytailContextOptimization(conversationTurns, storageData.plugin_settings);
       const sanitizedTurns = sanitizeBackgroundTurnsForApi(optimizedTurns);
 
+      let finalBgTurns = sanitizedTurns;
+      let finalBgTools = BACKGROUND_AGENT_TOOLS;
+      const kvPluginConfig = storageData.plugin_settings?.kvcache || { enabled: true };
+      if (typeof applyKVCacheOptimization === 'function') {
+        const kvRes = applyKVCacheOptimization(
+          "",
+          finalBgTools,
+          finalBgTurns,
+          { activeTabUrl: activeTabInfo },
+          kvPluginConfig
+        );
+        finalBgTurns = kvRes.messages;
+        finalBgTools = kvRes.tools;
+        if (Array.isArray(conversationTurns) && conversationTurns.length > 0) {
+          for (let ci = conversationTurns.length - 1; ci >= 0; ci--) {
+            if (conversationTurns[ci].role === 'user') {
+              const lastOptUser = finalBgTurns.slice().reverse().find(m => m.role === 'user');
+              if (lastOptUser && typeof lastOptUser.content === 'string') {
+                conversationTurns[ci].content = lastOptUser.content;
+              }
+              break;
+            }
+          }
+        }
+      }
+      if (typeof injectProviderCacheControl === 'function') {
+        const ccRes = injectProviderCacheControl(finalBgTurns, finalBgTools, endpoint, model);
+        finalBgTurns = ccRes.messages;
+        finalBgTools = ccRes.tools;
+      }
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers,
         body: JSON.stringify({
           model: model,
-          messages: sanitizedTurns,
-          tools: BACKGROUND_AGENT_TOOLS,
+          messages: finalBgTurns,
+          tools: finalBgTools,
           tool_choice: "auto",
           stream: false,
           temperature: cfg.temperature ?? 0.2,

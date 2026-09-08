@@ -1594,7 +1594,35 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
   4. **Penerusan Parameter Lampiran di Runtime Loop**:
      - Memperbarui panggilan `resolveAutoAgents(userMessage, explicitMentions, attachments)` di `runAgentLoop` dan `runChatModeLoop`.
   5. **Verifikasi Pengujian & Standar Sub-800 Baris**:
-     - Menjalankan simulasi Node.js pada 5 skenario nyata (proposal via prompt, proposal via attachment PDF, audit iklan Meta, simulasi KPR Tiar Property, dan skrip coding Linux): seluruh 5 skenario lolos 100% akurat.
+      - Menjalankan simulasi Node.js pada 5 skenario nyata (proposal via prompt, proposal via attachment PDF, audit iklan Meta, simulasi KPR Tiar Property, dan skrip coding Linux): seluruh 5 skenario lolos 100% akurat.
+      - Memastikan seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+
+### 172. Rilis Versi v2.150.289 - True KV Cache & Prefix Pinning Engine, Deterministic Tools Sorting, Dynamic Suffix Relocation, dan Eliminasi Placebo Token Bloat
+- **Waktu Rilis**: 2026-09-09 00:30 WIB
+- **Fokus Utama**: Mengubah plugin KV Cache dari sekadar dead code / placebo teks menjadi arsitektur nyata (True Production-Grade Engine) yang menjamin penghematan token, mempertahankan prefix deterministik bit-for-bit di Headroom Proxy (port 8787) dan 9Router (Google Antigravity / OpenAI / Claude / DeepSeek), serta merelokasi variabel waktu ke suffix turn pesan user.
+- **Akar Masalah (Root Causes)**:
+  1. *Cache Invalidation Akibat Injeksi Timestamp di Baris 1*: Sebelumnya, `buildDynamicSystemPrompt` di `sidepanel.js` menyuntikkan `getDetailedCurrentTimeContext()` pada byte pertama prompt (`prompt += getDetailedCurrentTimeContext() + "\n\n"`). Karena timestamp berubah setiap detik/menit, seluruh prefix System Prompt termutasi secara konstan sehingga KV Cache di backend LLM dan Headroom Proxy selalu miss (`miss_attribution: prefix_change`, 0% cache hit dari 1.57 juta token).
+  2. *Ketidakteraturan Urutan Tool (Non-Deterministic Tool Order)*: Urutan array tools tidak disortir secara konsisten, memicu mutasi token prefix skema tools antar permintaan.
+  3. *Injeksi Placebo String yang Memboroskan Kuota*: Plugin sebelumnya menyuntikkan kalimat placebo `• [PLUGIN: KV CACHE OPTIMIZER...]` ke System Prompt yang justru membuang ~60 token tanpa melakukan caching nyata.
+  4. *Ketiadaan Cache Control Ephemeral*: Tidak ada penanda `cache_control: { type: "ephemeral" }` untuk endpoint Anthropic Claude, DeepSeek, maupun proxy Headroom.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **True KV Cache & Prefix Pinning Engine (`extension/plugins/kvcache/kvcache_optimizer.js`)**:
+     - Membangun ulang engine penuh dengan fungsi utama `applyKVCacheOptimization(systemPrompt, tools, messages, dynamicContext, configOverride)`.
+     - Mengisolasi dan membersihkan seluruh variabel waktu/tanggal dan status tab dinamis dari static system prompt.
+     - Menyortir array tools secara deterministik alfabetis berdasarkan `function.name` (`config.deterministicToolSort: true`).
+     - Memindahkan seluruh konteks dinamis (waktu lokal dan status tab aktif) ke **Suffix pesan user terakhir** (`=== 🕒 DYNAMIC EXECUTION CONTEXT (SUFFIX - ISOLATED FOR KV CACHE) ===`), mengunci System Prompt dan seluruh turn percakapan sebelumnya 100% beku dan identik bit-for-bit.
+     - Menerapkan proteksi deduplikasi suffix (`!currentContent.includes('=== 🕒 DYNAMIC EXECUTION CONTEXT')`) agar pada multi-turn tool calling dalam satu siklus agent loop tidak terjadi inflasi teks dan prefix tetap konstan.
+  2. **Injeksi Provider Cache Breakpoints (`injectProviderCacheControl`)**:
+     - Secara otomatis mendeteksi model dan endpoint Anthropic, DeepSeek, serta Headroom Proxy (port 8787).
+     - Menyuntikkan `cache_control: { type: "ephemeral" }` pada blok system message dan tool definition terakhir untuk mengaktifkan prompt caching diskon s/d 90%.
+  3. **Preservasi Prefix Multi-Turn di Conversation History**:
+     - Di `runAgentLoop`, `runChatModeLoop` (`extension/sidepanel.js`), dan `executeAgentLoop` (`extension/background.js`), konten pesan user yang telah dioptimasi dengan suffix disinkronkan kembali ke `conversationHistory` / `conversationTurns`. Dengan demikian, turn-turn lampau tetap memiliki konten yang persis sama di turn berikutnya, menjamin prefix hit 100% pada giliran kedua dan seterusnya.
+  4. **Pembersihan Placebo Token Bloat**:
+     - Menghapus injeksi string placebo ~60 token dari `buildDynamicSystemPrompt` di `sidepanel.js` dan `systemInstruction` di `background.js`.
+     - Mengubah tool `kvcache_status_meter` untuk memanggil `getKVCacheRealReport()` yang mengembalikan data telemetri nyata (rasio cache hit, static prefix length, tools count, dan status determinisme).
+  5. **Pendaftaran Script di Seluruh Host View**:
+     - Menambahkan `<script src="plugins/kvcache/kvcache_optimizer.js"></script>` di `extension/sidepanel.html` dan `extension/newtab.html`.
+     - Memastikan impor di `extension/background.js` via `importScripts` aktif sempurna.
+  6. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Menjalankan simulasi Node.js multi-turn 2-turn conversation: Turn 0 (System) dan Turn 1 (First User Turn) terbukti 100% identik bit-for-bit antar giliran.
      - Memastikan seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
-
-

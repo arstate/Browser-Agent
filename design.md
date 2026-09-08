@@ -2361,4 +2361,28 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 5. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
 
+## ⚡ 65. True KV Cache & Prefix Pinning Engine, Dynamic-to-Suffix Relocation, & Deterministic Tool Sorting (v2.150.289)
+
+1. **Akar Masalah Cache Invalidation di Proxy & LLM Provider**:
+   - **Prefix Busting di Byte 0**: Injeksi timestamp lokal dinamis pada baris 1 `buildDynamicSystemPrompt` memicu perubahan konstan pada token-token awal permintaan. Pada pengujian proxy Headroom (port 8787), 1.57 juta token mengalami 0% cache hit akibat kegagalan `miss_attribution: prefix_change`.
+   - **Urutan Tool Acak (Non-Deterministic Tool Schemas)**: Ketiadaan pengurutan konsisten pada array tools mengubah representasi token skema tools.
+   - **Placebo String Prompt Bloat**: Injeksi teks penjelasan status plugin membuang ~60 token tanpa memberikan manfaat caching teknis.
+
+2. **Arsitektur Prefix Pinning & Dynamic Suffix Relocation (`extension/plugins/kvcache/kvcache_optimizer.js`)**:
+   - **Zero-Bust Static Prefix Guarantee**: Seluruh System Prompt dan skema tools dijaga 100% statis dan beku.
+   - **Dynamic Context Suffix**: Variabel waktu lokal (`currentTime`) dan URL tab aktif (`activeTabUrl`) dipindahkan ke suffix turn pesan user paling akhir (`=== 🕒 DYNAMIC EXECUTION CONTEXT (SUFFIX - ISOLATED FOR KV CACHE) ===`).
+   - **Deduplication Guard**: Proteksi substring mencegah duplikasi suffix saat multi-step tool execution terjadi dalam satu siklus agent loop.
+   - **Multi-Turn History Synchronization**: Konten pesan user yang telah diinjeksi suffix disinkronkan ke `conversationHistory` dan `conversationTurns` sehingga giliran berikutnya mewarisi prefix yang 100% bit-exact dari giliran sebelumnya.
+
+3. **Injeksi Provider Cache Breakpoints (`injectProviderCacheControl`)**:
+   - Mendeteksi request menuju Anthropic Claude, DeepSeek, dan Headroom Proxy.
+   - Menyuntikkan `cache_control: { type: "ephemeral" }` pada system message dan skema tools terakhir untuk membuka diskon prompt caching hingga 90% dan memangkas Time-to-First-Token (TTFT).
+
+4. **Telemetri Real-Time Tool `kvcache_status_meter`**:
+   - Menghubungkan fungsi `getKVCacheRealReport()` ke runtime sidepanel dan background service worker untuk memantau rasio cache hit terestimasi, panjang karakter prefix statis, jumlah tool tersortir, dan kompatibilitas Headroom.
+
+5. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
+
+
 
