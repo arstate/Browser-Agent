@@ -6624,6 +6624,10 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     ? SelfCorrectionEngine.createFailureTracker() 
     : null;
 
+  const criticTracker = (typeof SemanticCriticEngine !== 'undefined')
+    ? SemanticCriticEngine.createCriticTracker()
+    : null;
+
   try {
     while (currentStep < maxSteps && isExecuting) {
       currentStep++;
@@ -7169,9 +7173,39 @@ Tugas Anda:
           pendingVisualDocPages = [];
         }
       } else {
-        // No more tool calls: Option 3 Completion Guard check (only when tools were actually used)
+        // No more tool calls in this turn: check response quality via SemanticCriticEngine
+        const currentAssistantText = message.content || "";
+        const toolTurnsCount = conversationHistory.filter(m => m.role === 'tool').length;
+
+        // 1. Autonomous Semantic Critic Evaluation:
+        // Cek apakah jawaban sudah benar & lengkap sesuai kontrak permintaan user
+        let qualityEvaluation = { passed: true, shouldRefine: false };
+        if (typeof SemanticCriticEngine !== 'undefined' && criticTracker && !criticTracker.hasExceeded()) {
+          qualityEvaluation = SemanticCriticEngine.evaluateResponseQuality(userMessage, currentAssistantText, {
+            toolCount: toolTurnsCount,
+            currentStep,
+            maxSteps,
+            criticRetryCount: criticTracker.getRetries()
+          });
+        }
+
+        // Jika evaluasi mendeteksi kekurangan nyata dan batas revisi belum habis:
+        if (!qualityEvaluation.passed && qualityEvaluation.shouldRefine && currentStep < maxSteps - 2) {
+          const refineCount = criticTracker.increment();
+          const criticPrompt = SemanticCriticEngine.generateTargetedCriticPrompt(qualityEvaluation, refineCount);
+          conversationHistory.push({
+            role: "user",
+            content: criticPrompt
+          });
+          updateAssistantActiveAgent(assistantBubble, "Master Agent", `Audit Kualitas: Menyempurnakan poin yang kurang (#${refineCount})...`, true, false);
+          updateFooterStatus(`Master Agent: Menyempurnakan detail jawaban (#${refineCount})...`);
+          continue;
+        }
+
+        // 2. Anti-Overthinking Completion Guard check:
+        // Hanya picu kelanjutan jika jawaban BELUM substantif dan benar-benar ada milestone pending
         const hasPending = (activeGoalMilestones && typeof GoalTracker !== 'undefined')
-          ? GoalTracker.hasPendingMilestones(activeGoalMilestones, conversationHistory)
+          ? GoalTracker.hasPendingMilestones(activeGoalMilestones, conversationHistory, currentAssistantText)
           : false;
 
         if (hasPending && currentStep < maxSteps - 2) {
@@ -7180,13 +7214,17 @@ Tugas Anda:
             role: "user",
             content: contPrompt
           });
-          updateAssistantActiveAgent(assistantBubble, "Master Agent", "Melanjutkan milestone yang tertunda...", true, false);
-          updateFooterStatus("Master Agent: Melanjutkan milestone sasaran...");
+          updateAssistantActiveAgent(assistantBubble, "Master Agent", "Melanjutkan sasaran tugas...", true, false);
+          updateFooterStatus("Master Agent: Melanjutkan sasaran tugas...");
           continue;
         }
 
-        // Direct answer finished without further tools! Mark all remaining milestones completed.
-        if (activeGoalMilestones && Array.isArray(activeGoalMilestones)) {
+        // 3. Task Finished! Semantic Early-Exit:
+        // Jawaban sudah tuntas dan terverifikasi -> Otomatis tandai seluruh sisa milestone 100% Selesai!
+        if (activeGoalMilestones && typeof GoalTracker !== 'undefined' && typeof GoalTracker.autoFulfillMilestones === 'function') {
+          GoalTracker.autoFulfillMilestones(activeGoalMilestones);
+          updateTaskScheduleProgress(assistantBubble, activeGoalMilestones, activeGoalMilestones.length, false);
+        } else if (activeGoalMilestones && Array.isArray(activeGoalMilestones)) {
           activeGoalMilestones.forEach(m => {
             m.completed = true;
             m.inProgress = false;
@@ -7194,7 +7232,7 @@ Tugas Anda:
           updateTaskScheduleProgress(assistantBubble, activeGoalMilestones, activeGoalMilestones.length, false);
         }
 
-        // Task finished!
+        // Task finished cleanly!
         break;
       }
 

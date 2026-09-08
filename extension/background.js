@@ -5,6 +5,7 @@
 try {
   importScripts(
     'core/self_correction_engine.js',
+    'core/semantic_critic_engine.js',
     'core/goal_tracker.js',
     'connected-apps/google_workspace/google_workspace_service.js',
     'plugins/ponytail/ponytail_optimizer.js',
@@ -3664,6 +3665,11 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
       ? SelfCorrectionEngine.createFailureTracker() 
       : null;
 
+    // Initialize Autonomous Quality Critic Tracker
+    const criticTracker = (typeof SemanticCriticEngine !== 'undefined')
+      ? SemanticCriticEngine.createCriticTracker()
+      : null;
+
     const conversationTurns = [
       { role: "system", content: systemInstruction }
     ];
@@ -3868,8 +3874,40 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
           });
         }
       } else {
-        // Final text answer reached: Option 3 Completion Guard check
-        if (activeGoalMilestones && typeof GoalTracker !== 'undefined' && GoalTracker.hasPendingMilestones(activeGoalMilestones) && stepCount < maxSteps - 2) {
+        // Final text answer reached: evaluate response quality via SemanticCriticEngine
+        const currentAssistantText = message.content || "";
+        const toolTurnsCount = conversationTurns.filter(m => m.role === 'tool').length;
+
+        let qualityEvaluation = { passed: true, shouldRefine: false };
+        if (typeof SemanticCriticEngine !== 'undefined' && criticTracker && !criticTracker.hasExceeded()) {
+          qualityEvaluation = SemanticCriticEngine.evaluateResponseQuality(text, currentAssistantText, {
+            toolCount: toolTurnsCount,
+            currentStep: stepCount,
+            maxSteps,
+            criticRetryCount: criticTracker.getRetries()
+          });
+        }
+
+        if (!qualityEvaluation.passed && qualityEvaluation.shouldRefine && stepCount < maxSteps - 2) {
+          const refineCount = criticTracker.increment();
+          const criticPrompt = SemanticCriticEngine.generateTargetedCriticPrompt(qualityEvaluation, refineCount);
+          conversationTurns.push(message);
+          conversationTurns.push({
+            role: "user",
+            content: criticPrompt
+          });
+          currentEmoji = "📋";
+          currentBaseText = `Menyempurnakan detail (#${refineCount})`;
+          await renderLiveStatus(true);
+          continue;
+        }
+
+        // Anti-Overthinking Completion Guard check (Only if answer is not substantive and pending real actions)
+        const hasPending = (activeGoalMilestones && typeof GoalTracker !== 'undefined')
+          ? GoalTracker.hasPendingMilestones(activeGoalMilestones, conversationTurns, currentAssistantText)
+          : false;
+
+        if (hasPending && stepCount < maxSteps - 2) {
           conversationTurns.push(message);
           const contPrompt = GoalTracker.generateGoalContinuationPrompt(activeGoalMilestones);
           conversationTurns.push({
@@ -3877,9 +3915,14 @@ MANDAT EKSEKUTIF UTAMA (UNRESTRICTED POWER & FILE DELIVERY):
             content: contPrompt
           });
           currentEmoji = "🎯";
-          currentBaseText = "Melanjutkan milestone yang belum selesai";
+          currentBaseText = "Melanjutkan sasaran tugas";
           await renderLiveStatus(true);
           continue;
+        }
+
+        // Semantic Early-Exit: Auto-fulfill remaining milestones cleanly
+        if (activeGoalMilestones && typeof GoalTracker !== 'undefined' && typeof GoalTracker.autoFulfillMilestones === 'function') {
+          GoalTracker.autoFulfillMilestones(activeGoalMilestones);
         }
 
         finalResponseText = message.content || "";

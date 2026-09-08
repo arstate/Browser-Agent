@@ -8060,3 +8060,38 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   6. Validasi sintaksis `node -c extension/sidepanel.js` dan `node -c extension/background.js` sukses tanpa error.
   7. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
   8. Bump versi ke `v2.150.286` di `extension/manifest.json`.
+### 🚀 Iterasi 170: Autonomous Semantic Critic & Evaluator Engine, Anti-Overthinking Semantic Early-Exit, Auto-Fulfill Milestones, dan Targeted Refinement Protocol
+- **Waktu Eksekusi**: 2026-09-08 23:56 WIB
+- **Versi**: `v2.150.287`
+- **Problem Statement Pengguna**:
+  1. *"mau tanya bro kok kadang agentnya itu udah ngirim hasil nah udah bener sesuai yang saya minta tapi dia masih belum selesai milestone trus malah mikir lagi trus yg dikirim malah salah itu kenapa ya mau tanya dulu"*
+  2. *"mau tanya apakah kalau jawaban ai belum bener dia bisa tau kalau jawaban dia belum bner dan otomatis kerja lagi sampai bener apakah bisa gitu juga"*
+- **Akar Masalah (Root Causes)**:
+  1. *Rigid Synthetic Milestones & Tool Counting Naif*: Penghitungan kemajuan milestone bergantung kaku pada rumus `Math.floor(toolCount / 2)`. Jika agent menyelesaikan tugas secara cepat dan cerdas (cukup 1 tool call atau langsung menemukan data yang tepat), milestone intermediate tetap dianggap pending (`hasPendingMilestones = true`).
+  2. *Intimidating Completion Guard Injection*: Sistem menyuntikkan prompt bentakan `🛑 [SYSTEM GOAL COMPLETION GUARD]: Tugas BELUM selesai! DILARANG BERHENTI!`, memicu efek *LLM Sycophancy & Self-Doubt* sehingga model meragukan pekerjaannya sendiri, berhalusinasi, dan merombak jawaban yang sudah benar menjadi salah.
+  3. *UI In-Place Content Overwrite*: Di turn berikutnya, streaming teks baru yang salah langsung menimpa teks jawaban benar yang sudah tampil di bubble chat.
+  4. *Ketiadaan Evaluator Mandiri*: Model tidak memiliki lapis evaluasi objektif untuk mengukur apakah jawabannya benar-benar sudah memenuhi kontrak permintaan pengguna (kuantitas item, format tabel, data harga/kontak).
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Autonomous Semantic Critic Engine (`extension/core/semantic_critic_engine.js`)**:
+     - Membangun modul evaluasi independen berbasis pola *Actor-Critic*:
+       - `isSubstantiveResponse(text)`: Memastikan respon bukan kalimat penundaan/boilerplate kosong.
+       - `extractPromptConstraints(userPrompt)`: Mengekstrak kuantitas numerik (misal: "5 rekomendasi"), format tabel Markdown, dan rincian harga/kontak.
+       - `evaluateResponseQuality(userPrompt, assistantDraft, executionContext)`: Mengevaluasi apakah draft jawaban lolos uji substantif, tidak mengelak (*anti-cop-out*), dan memenuhi seluruh kontrak permintaan pengguna.
+       - `generateTargetedCriticPrompt(evalResult, retryCount)`: Menyusun arahan perbaikan yang sopan, presisi, dan non-intimidatif dengan mandat tegas: *"Pertahankan seluruh data yang sudah benar di atas, lengkapi hanya bagian yang kurang."*
+       - `createCriticTracker()` & Circuit Breaker: Membatasi maksimal 2x iterasi perbaikan mandiri (`MAX_CRITIC_REFINE_TURNS = 2`) demi mencegah risiko *infinite loop*.
+  2. **Anti-Overthinking Semantic Early-Exit (`extension/core/goal_tracker.js`)**:
+     - Memperbarui `hasPendingMilestones(milestones, turns, latestAssistantText)`: Jika asisten telah memberikan teks jawaban substantif dan tidak ada pemanggilan tool lagi, fungsi langsung mengembalikan `false` (sasaran terpenuhi tuntas), mengeliminasi loop paksa tanpa alasan.
+     - Menambahkan fungsi `autoFulfillMilestones(milestones)` yang secara cerdas mencentang hijau (100% Selesai) seluruh milestone template yang tersisa saat jawaban final telah tercapai.
+     - Menghaluskan `generateGoalContinuationPrompt` menjadi format analitis dan edukatif tanpa bentakan intimidatif.
+  3. **Integrasi Sidepanel & Background Service Worker (`extension/sidepanel.js` & `extension/background.js`)**:
+     - Menginisialisasi `criticTracker` pada siklus eksekusi agen.
+     - Di blok tanpa tool calls (`else`), sistem memprioritaskan audit `SemanticCriticEngine`. Jika ada kekurangan terbukti, sistem menjalankan targeted refinement turn. Jika telah substantif dan lengkap, sistem langsung mengaktifkan Semantic Early-Exit, mengeksekusi `autoFulfillMilestones`, dan melakukan `break` tuntas tanpa merusak teks jawaban yang sudah ada.
+  4. **Pendaftaran Script di UI Host & Service Worker**:
+     - Mendaftarkan `core/semantic_critic_engine.js` di `extension/sidepanel.html` dan `extension/newtab.html`.
+     - Mengimpor `core/semantic_critic_engine.js` pada `importScripts` di `extension/background.js`.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Validasi sintaksis `node -c extension/core/semantic_critic_engine.js`, `node -c extension/core/goal_tracker.js`, `node -c extension/sidepanel.js`, dan `node -c extension/background.js` berhasil 100% tanpa error.
+  2. Unit test Node.js: menguji deteksi substantif, ekstraksi constraint, evaluasi draft terhadap kontrak, early-exit `hasPendingMilestones === false`, dan auto-fulfill milestone berjalan sukses 100%.
+  3. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
+  4. Bump versi ke `v2.150.287` di `extension/manifest.json`.
+

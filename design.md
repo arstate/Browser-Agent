@@ -2308,3 +2308,30 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 
 
 
+## 🛡️ 63. Autonomous Semantic Critic & Quality Evaluator Engine, Anti-Overthinking Semantic Early-Exit, Auto-Fulfill Milestones, & Targeted Refinement Protocol (v2.150.287)
+
+1. **Arsitektur Actor-Critic & Autonomous Evaluator (`extension/core/semantic_critic_engine.js`)**:
+   - Menerapkan pola *Evaluator-Optimizer Loop* mandiri:
+     - `isSubstantiveResponse(text)`: Memastikan jawaban bukan kalimat penundaan/boilerplate kosong.
+     - `extractPromptConstraints(userPrompt)`: Mengekstrak kuantitas numerik (misal: "5 rekomendasi"), format tabel Markdown, dan rincian harga/kontak.
+     - `evaluateResponseQuality(userPrompt, assistantDraft, executionContext)`: Mengevaluasi apakah draft jawaban lolos uji substantif, tidak mengelak (*anti-cop-out*), dan memenuhi seluruh kontrak permintaan pengguna.
+     - `generateTargetedCriticPrompt(evalResult, retryCount)`: Menyusun arahan perbaikan yang sopan, presisi, dan non-intimidatif dengan mandat tegas: *"Pertahankan seluruh data yang sudah benar di atas, lengkapi hanya bagian yang kurang."*
+     - `createCriticTracker()` & Circuit Breaker: Membatasi maksimal 2x iterasi perbaikan mandiri (`MAX_CRITIC_REFINE_TURNS = 2`) demi mencegah risiko *infinite loop*.
+
+2. **Anti-Overthinking Semantic Early-Exit (`extension/core/goal_tracker.js`)**:
+   - Mengatasi fenomena *Overthinking & Self-Doubt Loop* (di mana agent yang sudah menjawab benar malah dipaksa berpikir lagi dan merusak jawabannya).
+   - Memperbarui `hasPendingMilestones(milestones, turns, latestAssistantText)`: Jika asisten telah memberikan teks jawaban substantif dan tidak ada pemanggilan tool lagi, fungsi langsung mengembalikan `false` (sasaran terpenuhi tuntas), mengeliminasi loop paksa tanpa alasan.
+   - Menambahkan fungsi `autoFulfillMilestones(milestones)` yang secara cerdas mencentang hijau (100% Selesai) seluruh milestone template yang tersisa saat jawaban final telah tercapai.
+   - Menghaluskan `generateGoalContinuationPrompt` menjadi format analitis dan edukatif tanpa bentakan intimidatif.
+
+3. **Integrasi Sidepanel & Background Service Worker (`extension/sidepanel.js` & `extension/background.js`)**:
+   - Menginisialisasi `criticTracker` pada siklus eksekusi agen.
+   - Di blok tanpa tool calls (`else`), sistem memprioritaskan audit `SemanticCriticEngine`. Jika ada kekurangan terbukti, sistem menjalankan targeted refinement turn. Jika telah substantif dan lengkap, sistem langsung mengaktifkan Semantic Early-Exit, mengeksekusi `autoFulfillMilestones`, dan melakukan `break` tuntas tanpa merusak teks jawaban yang sudah ada.
+
+4. **Pendaftaran Script di UI Host & Service Worker**:
+   - Mendaftarkan `core/semantic_critic_engine.js` di `extension/sidepanel.html` dan `extension/newtab.html`.
+   - Mengimpor `core/semantic_critic_engine.js` pada `importScripts` di `extension/background.js`.
+
+5. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
+

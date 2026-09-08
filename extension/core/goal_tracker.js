@@ -647,8 +647,18 @@ PROTOKOL EKSEKUSI BOS PERFEKSIONIS:
    * Returns true if there are still pending unstarted worker milestones
    * ONLY applies when tools were actually used in this session!
    */
-  function hasPendingMilestones(milestones, conversationHistory = []) {
+  function hasPendingMilestones(milestones, conversationHistory = [], latestAssistantText = "") {
     if (!milestones || milestones.length === 0) return false;
+
+    // ANTI-OVERTHINKING SEMANTIC EARLY EXIT:
+    // If the assistant has already provided a substantive, meaningful answer,
+    // the goal is satisfied! Do NOT force an artificial loop!
+    const isSubstantive = (typeof SemanticCriticEngine !== 'undefined')
+      ? SemanticCriticEngine.isSubstantiveResponse(latestAssistantText)
+      : (typeof latestAssistantText === 'string' && latestAssistantText.trim().length > 35);
+    if (isSubstantive) {
+      return false;
+    }
 
     // If no tools were called in the conversation (e.g. conversational/strategy/copywriting response),
     // the model answered directly without needing tool execution -> do NOT block or force loop!
@@ -663,17 +673,30 @@ PROTOKOL EKSEKUSI BOS PERFEKSIONIS:
   }
 
   /**
-   * Generates strict continuation prompt if LLM attempts premature stop during tool workflow
+   * Marks all remaining milestones as completed when task is resolved (Anti-Overthinking Auto-Fulfill)
+   */
+  function autoFulfillMilestones(milestones) {
+    if (!milestones || !Array.isArray(milestones)) return milestones;
+    milestones.forEach(m => {
+      m.completed = true;
+      m.inProgress = false;
+    });
+    return milestones;
+  }
+
+  /**
+   * Generates analytical continuation prompt if LLM attempts premature stop during tool workflow
    */
   function generateGoalContinuationPrompt(milestones) {
     const pending = milestones.filter(m => !m.completed).map(m => `• Milestone ${m.id}: ${m.title}`).join('\n');
 
-    return `🛑 [SYSTEM GOAL COMPLETION GUARD]:
-Tugas BELUM selesai! Masih ada Milestone yang tertunda dan belum dieksekusi tuntas:
+    return `📋 [SISTEM PENDAMPING SASARAN]:
+Masih ada tahapan sasaran yang dapat dieksekusi untuk memastikan kelengkapan data:
 ${pending}
 
-MANDAT:
-Lanjutkan eksekusi langkah berikutnya sekarang juga menggunakan tool browser / bash / manipulasi data yang sesuai. DILARANG berhenti sebelum seluruh Milestone di atas terselesaikan 100%!`;
+PANDUAN EKSEKUSI:
+1. Lanjutkan langkah kerja berikutnya menggunakan tool browser / terminal / manipulasi data yang sesuai jika masih membutuhkan data.
+2. Jika seluruh data yang dibutuhkan sudah Anda peroleh, sajikan kesimpulan dan laporan akhir yang lengkap dan tuntas.`;
   }
 
   const GoalTracker = {
@@ -685,6 +708,7 @@ Lanjutkan eksekusi langkah berikutnya sekarang juga menggunakan tool browser / b
     updateMilestonesFromTurns,
     getGoalStatusString,
     hasPendingMilestones,
+    autoFulfillMilestones,
     generateGoalContinuationPrompt
   };
 
