@@ -2129,3 +2129,23 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Fail-Safe Sanitizer Sweep**:
    - Filter pembersih akhir pada `formatMarkdown()` secara otomatis mengeliminasi setiap karakter PUA `[\uE000\uE001]` yang mungkin tersisa jika terjadi anomali parser, memastikan antarmuka chat 100% bersih tanpa artefak internal.
 
+## 🛡️ 54. Multi-Context Slide Deck PDF Downloader & Standalone Blob Tab RPC Architecture (v2.150.278)
+
+1. **Problem Statement & Execution Gap**:
+   - Saat pengguna mengekspor atau membuka pratinjau slide deck ke tab terpisah via URL Blob (`blob:chrome-extension://...`), penekanan tombol *Download slide deck as PDF* pada floating dock atau shortcut keyboard `P` tidak melakukan unduhan apa pun.
+   - Akar masalah: script interaktif runtime slide deck hanya mengandalkan `window.parent.postMessage` ke Canvas Manager parent. Pada tab mandiri, `window.parent` merujuk ke dirinya sendiri sehingga event pesan tidak tertangkap oleh siapa pun.
+   - Latar belakang service worker (`extension/background.js`) juga belum menyediakan penanganan pesan `EXPORT_SLIDE_DECK_PDF` untuk meneruskan muatan dokumen ke Native Host JSON-RPC.
+
+2. **Multi-Tier Bulletproof Downloader (`slide_deck_engine.js`)**:
+   - Merancang logika ekspor adaptif dengan degradasi anggun (*graceful fallback*):
+     - **Context A (Iframe Embed)**: Mengirim sinyal `EXPORT_SLIDE_DECK_PDF` via `window.parent.postMessage` ke host ekstensi induk.
+     - **Context B (Extension Blob / Standalone Tab)**: Menggunakan `chrome.runtime.sendMessage({ type: 'EXPORT_SLIDE_DECK_PDF', ... })` untuk berkoordinasi langsung dengan background worker, menerima stream base64 PDF hasil render headless Chrome 16:9, dan memicu download otomatis file `.pdf`.
+     - **Context C (Fallback / Offline Browser)**: Jika RPC atau runtime messaging tidak tersedia, script memanggil `window.print()`. Tampilan cetak telah dikunci sempurna pada ukuran widescreen 16:9 (`1200px` x `675px`) dengan eliminasi floating dock/sidebar via CSS `@media print`.
+
+3. **Background Native RPC Relay (`background.js`)**:
+   - Mengintegrasikan handler `EXPORT_SLIDE_DECK_PDF` di `chrome.runtime.onMessage.addListener`, memanggil `sendNativeRpcInBackground("export_slide_deck_pdf", { html_content, title })` dengan batas waktu 120 detik, dan mengembalikan file PDF utuh ke pemanggil.
+
+4. **Dynamic Runtime Script Ingestion & Popout Regeneration**:
+   - Menyematkan `ensureLatestSlideDeckRuntimeScript(html)` di `slide_deck_engine.js` dan tombol popout `canvas_manager.js` agar seluruh arsip presentasi lama yang dibuka ke tab baru langsung diperbarui dengan kapabilitas ekspor PDF mandiri terbaru.
+
+

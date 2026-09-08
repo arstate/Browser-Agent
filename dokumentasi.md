@@ -1313,3 +1313,23 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menambahkan filter pengaman di baris penutup `formatMarkdown()` untuk membersihkan setiap karakter kontrol PUA `[\uE000\uE001]` yang mungkin tertinggal, menjamin tidak ada artefak visual internal yang dapat bocor ke antarmuka pengguna.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh di bawah limit 800 baris.
 
+161. **Perbaikan Ekspor PDF Slide Deck Mandiri (Standalone Tab / Blob URL) & Bulletproof Multi-Context Downloader (`v2.150.278`):**
+    - **Akar Masalah**:
+      - Ketika pengguna membuka pratinjau slide deck ke tab baru mandiri via URL Blob (`blob:chrome-extension://<id>/<uuid>`) atau tombol popout, tombol *Download slide deck as PDF* (`#dock-export-pdf-item` / tombol P) tidak merespons sama sekali.
+      - Hal ini terjadi karena script runtime slide deck sebelumnya (`getSlideDeckRuntimeScript()`) hanya mengirimkan pesan `window.parent.postMessage({ type: 'EXPORT_SLIDE_DECK_PDF', ... }, '*')`. Pada tab mandiri, `window.parent === window` (tidak berada di dalam iframe ekstensi), sehingga postMessage tersebut menguap ke ruang hampa tanpa ada penerima (`listener`).
+      - Selain itu, `extension/background.js` belum memiliki handler `chrome.runtime.onMessage` untuk aksi `EXPORT_SLIDE_DECK_PDF`, sehingga proses native RPC dari halaman ekstensi tab mandiri belum terhubung.
+    - **Implementasi Teknis & Solusi**:
+      1. **Multi-Context Intelligent Downloader (`extension/design/slide_deck_engine.js`)**:
+         - Mengembangkan fungsi `exportDeckAsPdf()` bertingkat 3 lapis:
+           - **Lapis 1 (Iframe Context)**: Jika berada di dalam iframe preview sidepanel atau newtab (`window.parent !== window`), mengirimkan `window.parent.postMessage` ke Canvas Manager parent ekstensi.
+           - **Lapis 2 (Standalone Extension Tab Context)**: Jika berada di tab ekstensi mandiri (`blob:chrome-extension://...`), memanggil `chrome.runtime.sendMessage({ type: 'EXPORT_SLIDE_DECK_PDF', html_content, title })`. Saat background service worker mengembalikan data base64 PDF hasil render headless Chrome native host, script secara otomatis mendekode payload dan memicu unduhan berkas `.pdf` 16:9 secara langsung dengan toast notifikasi.
+           - **Lapis 3 (Universal Browser Print Fallback)**: Jika komunikasi native gagal atau tab dibuka di luar lingkungan ekstensi, script otomatis memicu `window.print()` yang telah dikunci rapi pada rasio 16:9 widescreen (`@page { size: 1200px 675px; margin: 0; }`) per slide, menyembunyikan floating dock dan sidebar, sehingga pengguna tetap dapat menyimpan PDF berkualitas tinggi secara langsung.
+      2. **Background RPC Relay (`extension/background.js`)**:
+         - Menambahkan handler `message.type === "EXPORT_SLIDE_DECK_PDF"` pada `chrome.runtime.onMessage.addListener` di background service worker. Handler ini meneruskan permintaan ke `sendNativeRpcInBackground("export_slide_deck_pdf", { html_content, title }, 120000)` dan mengembalikan respon berisi base64 PDF ke tab pemanggil.
+      3. **Dynamic Script Auto-Injection (`ensureLatestSlideDeckRuntimeScript`) & Canvas Popout**:
+         - Menambahkan helper `ensureLatestSlideDeckRuntimeScript(html)` di `slide_deck_engine.js` dan menyematkannya pada tombol popout di `canvas_manager.js`, sehingga berkas slide deck lama yang dimuat dari database atau cache otomatis memperoleh modul download PDF terbaru saat dibuka ke tab baru.
+         - Memberikan atribut `id="slide-deck-controller-script"` pada script runtime di `slide_template.js` untuk identifikasi dan regenerasi bersih.
+      4. **Canvas Exporter Fallback Chain (`extension/design/canvas_exporter.js`)**:
+         - Menambahkan fallback panggilan `chrome.runtime.sendMessage` di dalam `exportSlideDeckPdf()` jika fungsi `rpcFn` (`sendNativeRpc`) tidak tersedia di scope lokal jendela.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh di bawah limit 800 baris (slide_deck_engine.js: 795 baris, canvas_manager.js: 795 baris, slide_template.js: 686 baris, canvas_exporter.js: 264 baris).
+

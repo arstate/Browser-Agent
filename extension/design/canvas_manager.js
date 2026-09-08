@@ -636,8 +636,8 @@ function initOpenDesignCanvas() {
       }
     } else {
       // In newtab: open standalone HTML tab
-      const blob = new Blob([activeDesignArtifact.html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
+      const finalHtml = (typeof ensureLatestSlideDeckRuntimeScript === 'function') ? ensureLatestSlideDeckRuntimeScript(activeDesignArtifact.html) : activeDesignArtifact.html;
+      const url = URL.createObjectURL(new Blob([finalHtml], { type: 'text/html' }));
       window.open(url, '_blank');
     }
   });

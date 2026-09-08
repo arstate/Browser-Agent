@@ -593,6 +593,80 @@ function getSlideDeckRuntimeScript() {
       }
       window.goToSlide = goToSlide;
 
+      function showDeckToast(text) {
+        let toast = document.getElementById('deck-toast-msg');
+        if (!toast) {
+          toast = document.createElement('div');
+          toast.id = 'deck-toast-msg';
+          toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.92);color:#fff;padding:9px 18px;border-radius:24px;font-family:system-ui,-apple-system,sans-serif;font-size:12px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,0.35);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.12);z-index:999999;pointer-events:none;transition:all 0.25s ease;opacity:0;';
+          document.body.appendChild(toast);
+        }
+        toast.textContent = text;
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        clearTimeout(toast.__timer);
+        toast.__timer = setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(-50%) translateY(8px)';
+        }, 3000);
+      }
+
+      function exportDeckAsPdf() {
+        const wrapper = document.getElementById('dock-export-wrapper');
+        if (wrapper) wrapper.classList.remove('open');
+        const title = document.title || 'Slide Deck';
+        const html = document.documentElement.outerHTML;
+
+        // 1. If inside an iframe (e.g. Sidepanel or Newtab drawer), message parent extension
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'EXPORT_SLIDE_DECK_PDF', html, title }, '*');
+          return;
+        }
+
+        // 2. If standalone in Chrome with extension API access (blob:chrome-extension://...)
+        if (typeof chrome !== 'undefined' && chrome.runtime && typeof chrome.runtime.sendMessage === 'function') {
+          showDeckToast('⏳ Memproses ekspor PDF 16:9 via Native Host...');
+          try {
+            chrome.runtime.sendMessage({ type: 'EXPORT_SLIDE_DECK_PDF', html, title }, function(res) {
+              if (!chrome.runtime.lastError && res && res.status === 'ok' && res.base64_data) {
+                try {
+                  const byteChars = atob(res.base64_data);
+                  const byteArrays = [];
+                  for (let o = 0; o < byteChars.length; o += 512) {
+                    const slice = byteChars.slice(o, o + 512);
+                    const byteNums = new Array(slice.length);
+                    for (let i = 0; i < slice.length; i++) byteNums[i] = slice.charCodeAt(i);
+                    byteArrays.push(new Uint8Array(byteNums));
+                  }
+                  const pdfBlob = new Blob(byteArrays, { type: 'application/pdf' });
+                  const dlUrl = URL.createObjectURL(pdfBlob);
+                  const a = document.createElement('a');
+                  a.href = dlUrl;
+                  a.download = res.filename || ((title || 'slide_deck').replace(/[^a-zA-Z0-9_\-]+/g, '_') + '.pdf');
+                  document.body.appendChild(a);
+                  a.click();
+                  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(dlUrl); }, 1500);
+                  showDeckToast('✅ PDF slide deck berhasil diunduh!');
+                  return;
+                } catch (bErr) {
+                  console.warn('PDF blob decode error, fallback to print:', bErr);
+                }
+              }
+              showDeckToast('📄 Membuka dialog cetak PDF 16:9...');
+              window.print();
+            });
+            return;
+          } catch (sendErr) {
+            console.warn('chrome.runtime.sendMessage failed, fallback to print:', sendErr);
+          }
+        }
+
+        // 3. Standalone browser tab fallback (offline / saved HTML / fallback)
+        showDeckToast('📄 Membuka dialog cetak PDF 16:9...');
+        window.print();
+      }
+      window.exportDeckAsPdf = exportDeckAsPdf;
+
       document.addEventListener('click', function(e) {
         const thumb = e.target.closest('.thumb-item');
         if (thumb) {
@@ -619,9 +693,7 @@ function getSlideDeckRuntimeScript() {
         const exportPdfItem = e.target.closest('#dock-export-pdf-item, [data-action="export-pdf"]');
         if (exportPdfItem) {
           e.preventDefault();
-          const wrapper = document.getElementById('dock-export-wrapper');
-          if (wrapper) wrapper.classList.remove('open');
-          window.parent.postMessage({ type: 'EXPORT_SLIDE_DECK_PDF', html: document.documentElement.outerHTML, title: document.title || 'Slide Deck' }, '*');
+          exportDeckAsPdf();
           return;
         }
         const exportWrapper = document.getElementById('dock-export-wrapper');
@@ -639,7 +711,7 @@ function getSlideDeckRuntimeScript() {
           const wrapper = document.getElementById('dock-export-wrapper');
           if (wrapper) wrapper.classList.toggle('open');
         } else if (e.key === 'p' || e.key === 'P') {
-          window.parent.postMessage({ type: 'EXPORT_SLIDE_DECK_PDF', html: document.documentElement.outerHTML, title: document.title || 'Slide Deck' }, '*');
+          exportDeckAsPdf();
         } else if (e.key === 'f' || e.key === 'F') {
           if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
           else document.exitFullscreen().catch(() => {});
@@ -648,21 +720,19 @@ function getSlideDeckRuntimeScript() {
 
       window.addEventListener('message', (e) => {
         if (e.data && e.data.type === 'GO_TO_SLIDE') goToSlide(e.data.index);
+        else if (e.data && e.data.type === 'EXPORT_SLIDE_DECK_PDF') exportDeckAsPdf();
       });
     })();
   `;
 }
 
 function replaceImagePlaceholdersInHtml(html, userImages = []) {
-  if (!html || typeof html !== 'string') return html;
+  if (!html || typeof html !== 'string' || !Array.isArray(userImages) || userImages.length === 0) return html;
   let res = html;
-  if (Array.isArray(userImages) && userImages.length > 0) {
-    userImages.forEach((img, idx) => {
-      const ph = `__USER_IMG_${idx}__`;
-      const url = img.dataUrl || img.thumbnailUrl || '';
-      if (url) res = res.split(ph).join(url);
-    });
-  }
+  userImages.forEach((img, idx) => {
+    const url = img.dataUrl || img.thumbnailUrl || '';
+    if (url) res = res.split(`__USER_IMG_${idx}__`).join(url);
+  });
   return res;
 }
 
@@ -681,26 +751,17 @@ function injectImagesIntoSlideDeckHtml(html, userImages = []) {
         userImages.forEach((img, idx) => {
           const card = cards[idx % cards.length];
           if (card && !card.querySelector('.card-image-wrap')) {
-            const wrap = doc.createElement('div');
-            wrap.className = 'card-image-wrap';
-            wrap.innerHTML = `<img class="card-image" src="${img.dataUrl}" alt="${escapeHtml(img.name || 'Foto')}">`;
+            const wrap = Object.assign(doc.createElement('div'), { className: 'card-image-wrap', innerHTML: `<img class="card-image" src="${img.dataUrl}" alt="${escapeHtml(img.name || 'Foto')}">` });
             card.insertBefore(wrap, card.firstChild);
           }
         });
       } else {
         const canvas = activeSlide.querySelector('.slide-canvas');
         if (canvas) {
-          const gallery = doc.createElement('div');
-          gallery.className = 'slide-image-gallery';
+          const gallery = Object.assign(doc.createElement('div'), { className: 'slide-image-gallery', innerHTML: userImages.map(img => `<div class="card-image" style="flex:1;height:100%;"><img class="card-image" src="${img.dataUrl}" alt="${escapeHtml(img.name || 'Foto')}"></div>`).join('') });
           gallery.style.cssText = 'display:flex;gap:14px;margin:16px 0;width:100%;height:180px;justify-content:center;';
-          gallery.innerHTML = userImages.map(img => `
-            <div class="card-image-wrap" style="flex:1;height:100%;margin-bottom:0;">
-              <img class="card-image" src="${img.dataUrl}" alt="${escapeHtml(img.name || 'Foto')}">
-            </div>
-          `).join('');
           const footer = canvas.querySelector('.slide-footer-bar');
-          if (footer) canvas.insertBefore(gallery, footer);
-          else canvas.appendChild(gallery);
+          if (footer) canvas.insertBefore(gallery, footer); else canvas.appendChild(gallery);
         }
       }
       return doc.documentElement.outerHTML;
@@ -711,6 +772,15 @@ function injectImagesIntoSlideDeckHtml(html, userImages = []) {
   return res;
 }
 
+function ensureLatestSlideDeckRuntimeScript(html) {
+  if (!html || typeof html !== 'string' || html.includes('exportDeckAsPdf')) return html;
+  if (!html.includes('deck-floating-dock') && !html.includes('slide-section')) return html;
+  const scriptContent = typeof getSlideDeckRuntimeScript === 'function' ? getSlideDeckRuntimeScript() : '';
+  if (!scriptContent) return html;
+  const scriptTag = `<script id="slide-deck-controller-script">\n${scriptContent}\n</script>`;
+  return html.includes('</body>') ? html.replace('</body>', `${scriptTag}\n</body>`) : `${html}\n${scriptTag}`;
+}
+
 // Global attachments
 if (typeof window !== "undefined") {
   window.toRoman = toRoman;
@@ -719,6 +789,7 @@ if (typeof window !== "undefined") {
   window.extractSlidesFromRawHtml = extractSlidesFromRawHtml;
   window.upgradeSlideDeckHtmlIfNeeded = upgradeSlideDeckHtmlIfNeeded;
   window.getSlideDeckRuntimeScript = getSlideDeckRuntimeScript;
+  window.ensureLatestSlideDeckRuntimeScript = ensureLatestSlideDeckRuntimeScript;
   window.replaceImagePlaceholdersInHtml = replaceImagePlaceholdersInHtml;
   window.injectImagesIntoSlideDeckHtml = injectImagesIntoSlideDeckHtml;
 }

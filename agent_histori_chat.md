@@ -7778,3 +7778,32 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   4. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
   5. Bump versi ke `v2.150.277` di `manifest.json`.
 
+### Iterasi: Perbaikan Ekspor PDF Slide Deck Mandiri (Standalone Tab / Blob URL) & Bulletproof Multi-Context Downloader (`v2.150.278`)
+- **User Request:**
+  - "blob:chrome-extension://lifodpllfgehiendpgpomfjbejhfffik/9aa1c7c0-bf3b-4eca-9e1a-a573f4f6d714 bro kok tombol donload slide deck as pdf gabisa di download ya"
+- **Akar Masalah & Penyelidikan Mendalam:**
+  1. Saat slide deck dibuka di tab baru mandiri (popout melalui URL Blob `blob:chrome-extension://...`), dokumen tersebut berjalan di jendela utama tab baru (`window.parent === window`), terpisah dari iframe preview ekstensi.
+  2. Implementasi script runtime slide deck sebelumnya (`getSlideDeckRuntimeScript()` di `slide_deck_engine.js`) hanya memanggil `window.parent.postMessage({ type: 'EXPORT_SLIDE_DECK_PDF', ... }, '*')`. Di tab mandiri, `postMessage` dikirimkan ke `window` sendiri, namun tidak ada listener `message` yang menangani unduhan di tab tersebut sehingga klik tombol `#dock-export-pdf-item` menguap tanpa efek.
+  3. Modul `canvas_exporter.js` dan fungsi `sendNativeRpc` tidak dimuat di dalam dokumen HTML slide deck mandiri.
+  4. Latar belakang service worker (`extension/background.js`) belum memiliki handler `chrome.runtime.onMessage` untuk pesan `EXPORT_SLIDE_DECK_PDF`, sehingga permintaan RPC native host dari tab ekstensi belum terjembatani.
+- **Solusi & Rekayasa Teknis:**
+  1. *Multi-Context Intelligent Downloader (`extension/design/slide_deck_engine.js`)*:
+     - Merancang fungsi `exportDeckAsPdf()` dan notifikasi visual `showDeckToast()` yang adaptif terhadap konteks runtime:
+       - **Konteks Iframe Ekstensi** (`window.parent !== window`): Meneruskan pesan ke Canvas Manager parent via `window.parent.postMessage`.
+       - **Konteks Tab Mandiri Ekstensi** (`blob:chrome-extension://...`): Memanggil `chrome.runtime.sendMessage({ type: 'EXPORT_SLIDE_DECK_PDF', html_content, title })`, menerima base64 PDF hasil kompilasi headless Chrome dari native host, mendekode payload biner, dan otomatis men-trigger download berkas `.pdf` 16:9.
+       - **Konteks Browser Umum / Fallback Offline**: Jika komunikasi runtime gagal atau slide deck disimpan sebagai file HTML lokal biasa di luar ekstensi, sistem otomatis memicu `window.print()`. Tampilan cetak telah terpaginasi sempurna 16:9 (`@page { size: 1200px 675px; margin: 0; }`) dengan floating dock dan sidebar tersembunyi berkat CSS `@media print`.
+     - Menghubungkan klik tombol dock, event message `EXPORT_SLIDE_DECK_PDF`, dan shortcut keyboard `P` langsung ke `exportDeckAsPdf()`.
+  2. *Background RPC Relay (`extension/background.js`)*:
+     - Menambahkan listener `message.type === "EXPORT_SLIDE_DECK_PDF"` di `chrome.runtime.onMessage.addListener` yang memanggil `sendNativeRpcInBackground("export_slide_deck_pdf", { html_content, title }, 120000)` dan mengembalikan respon biner ke tab.
+  3. *Dynamic Script Auto-Injection (`ensureLatestSlideDeckRuntimeScript`)*:
+     - Menambahkan fungsi `ensureLatestSlideDeckRuntimeScript(html)` di `slide_deck_engine.js` dan mengintegrasikannya pada tombol popout di `canvas_manager.js`. Dokumen slide deck lama yang dibuka dari cache/database otomatis disuntikkan script runtime terbaru sehingga tombol download PDF langsung aktif.
+     - Menyematkan `id="slide-deck-controller-script"` pada script runtime di `slide_template.js`.
+  4. *Canvas Exporter Fallback Chain (`extension/design/canvas_exporter.js`)*:
+     - Menambahkan fallback `chrome.runtime.sendMessage` pada fungsi `exportSlideDeckPdf` jika fungsi RPC lokal jendela tidak terdefinisi.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Uji RPC native host Python (`native_host.py`) dan Rust (`browser_agent_host`) terbukti sukses merender dan mengekspor dokumen HTML slide deck menjadi PDF 16:9 beresolusi tinggi dengan base64 payload.
+  2. Syntax check `node -c extension/background.js extension/sidepanel.js extension/design/*.js` lulus 100% tanpa error.
+  3. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris (seluruh berkas <= 798 baris).
+  4. Bump versi ke `v2.150.278` di `manifest.json`.
+
+

@@ -4132,6 +4132,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === "EXPORT_SLIDE_DECK_PDF") {
+    (async () => {
+      try {
+        const rpcRes = await sendNativeRpcInBackground("export_slide_deck_pdf", {
+          html_content: message.html_content || message.html || "",
+          title: message.title || "presentation"
+        }, 120000);
+        sendResponse(rpcRes || { status: "error", message: "No RPC response from native host" });
+      } catch (err) {
+        sendResponse({ status: "error", message: err.message || String(err) });
+      }
+    })();
+    return true;
+  }
+
   if (message.type === "TELEGRAM_CONFIG_UPDATED") {
     checkAndRestartTelegramPoller(true);
     sendResponse({ status: "ok" });

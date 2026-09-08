@@ -667,7 +667,7 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     </main>
   </div>
 
-  <script>
+  <script id="slide-deck-controller-script">
     ${(typeof getSlideDeckRuntimeScript === 'function' ? getSlideDeckRuntimeScript() : (typeof window !== 'undefined' && window.getSlideDeckRuntimeScript ? window.getSlideDeckRuntimeScript() : ''))}
   </script>
   ${(typeof getSlideDeckEditorHtml === 'function' ? getSlideDeckEditorHtml() : (typeof window !== 'undefined' && window.getSlideDeckEditorHtml ? window.getSlideDeckEditorHtml() : ''))}

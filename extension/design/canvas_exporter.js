@@ -181,6 +181,26 @@ async function exportSlideDeckPdf(htmlContent, title = "presentation") {
       }
     }
 
+    // Fallback: chrome.runtime.sendMessage to background worker
+    if (typeof chrome !== "undefined" && chrome?.runtime?.sendMessage) {
+      try {
+        const res = await new Promise((resolve) => {
+          chrome.runtime.sendMessage({
+            type: "EXPORT_SLIDE_DECK_PDF",
+            html_content: sanitizedHtml,
+            title: cleanTitle
+          }, (r) => resolve(chrome.runtime.lastError ? null : r));
+        });
+        if (res?.status === "ok" && res?.base64_data) {
+          const blob = base64ToBlob(res.base64_data, "application/pdf");
+          const finalFilename = res.filename || `${cleanTitle}.pdf`;
+          triggerDownloadBlob(blob, finalFilename);
+          notify(`✅ Berhasil mengunduh ${finalFilename} (Vektor 16:9)!`);
+          return;
+        }
+      } catch (_) {}
+    }
+
     // Fallback: OpenDesignBridge
     if (typeof window !== "undefined" && window.OpenDesignBridge?.exportArtifact) {
       const res = await window.OpenDesignBridge.exportArtifact({
