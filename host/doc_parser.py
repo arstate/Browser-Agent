@@ -216,9 +216,9 @@ def parse_document_to_markdown(file_path: str, format_hint: str = "") -> dict:
 def convert_document_to_page_images(
     file_path: str,
     output_dir: str = None,
-    dpi: int = 150,
-    quality: int = 85,
-    max_pages: int = 30,
+    dpi: int = 140,
+    quality: int = 80,
+    max_pages: int = 35,
     page_range: str = None,
     img_format: str = "jpg",
     include_base64: bool = True
@@ -368,6 +368,20 @@ def convert_document_to_page_images(
         # Sort naturally by page number (1, 2, 3... 10)
         raw_files.sort(key=get_pg_num)
 
+        # Fast single-pass page text extraction via pdftotext form-feed (\x0c)
+        page_texts = {}
+        if shutil.which("pdftotext"):
+            try:
+                txt_cmd = ["pdftotext", "-f", str(first_page), "-l", str(last_page), "-layout", pdf_path, "-"]
+                res_txt = subprocess.run(txt_cmd, capture_output=True, text=True, timeout=20)
+                if res_txt.returncode == 0 and res_txt.stdout:
+                    chunks = res_txt.stdout.split("\x0c")
+                    for offset, chunk in enumerate(chunks):
+                        pg_num = first_page + offset
+                        page_texts[pg_num] = chunk.strip()
+            except Exception:
+                pass
+
         pages = []
         for raw_f in raw_files:
             pg_idx = get_pg_num(raw_f)
@@ -378,12 +392,12 @@ def convert_document_to_page_images(
 
             file_sz = os.path.getsize(dest_path)
             
-            # Extract page text
-            page_text = ""
-            if shutil.which("pdftotext"):
+            # Extract page text from pre-extracted dictionary with single-page fallback
+            page_text = page_texts.get(pg_idx, "")
+            if not page_text and shutil.which("pdftotext"):
                 try:
                     txt_cmd = ["pdftotext", "-f", str(pg_idx), "-l", str(pg_idx), "-layout", pdf_path, "-"]
-                    res_txt = subprocess.run(txt_cmd, capture_output=True, text=True, timeout=15)
+                    res_txt = subprocess.run(txt_cmd, capture_output=True, text=True, timeout=5)
                     if res_txt.returncode == 0:
                         page_text = res_txt.stdout.strip()
                 except Exception:
@@ -428,10 +442,10 @@ def convert_document_to_page_images(
         if temp_pdf_dir and os.path.exists(temp_pdf_dir):
             shutil.rmtree(temp_pdf_dir, ignore_errors=True)
 
-def parse_and_convert_document(file_path: str, max_pages: int = 30) -> dict:
+def parse_and_convert_document(file_path: str, max_pages: int = 35, dpi: int = 140, quality: int = 80) -> dict:
     """Convenience helper returning both clean Markdown and page images."""
     md_res = parse_document_to_markdown(file_path)
-    pages_res = convert_document_to_page_images(file_path, max_pages=max_pages)
+    pages_res = convert_document_to_page_images(file_path, max_pages=max_pages, dpi=dpi, quality=quality)
     return {
         "status": "ok" if (md_res.get("status") == "ok" or pages_res.get("status") == "ok") else "error",
         "file_name": os.path.basename(file_path),

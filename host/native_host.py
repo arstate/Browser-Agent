@@ -1062,9 +1062,9 @@ def save_and_parse_uploaded_file(file_name, file_data, mime_type="", session_id=
                 p_res = convert_document_to_page_images(
                     file_path=file_path,
                     output_dir=pages_dir,
-                    dpi=150,
-                    quality=85,
-                    max_pages=2,
+                    dpi=140,
+                    quality=80,
+                    max_pages=35,
                     include_base64=True
                 )
                 if p_res.get("status") == "ok":

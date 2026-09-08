@@ -6351,13 +6351,25 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
 
   ensureCurrentSessionInitialized(userMessage, attachments, 'Chat Session');
 
-  // Construct user content payload
+  // Ensure any pending document conversions complete before building payload
+  if (Array.isArray(attachments)) {
+    const pendingDocPromises = attachments
+      .filter(a => a.isDocument && a._parsePromise && (!a.pages || a.pages.length === 0))
+      .map(a => a._parsePromise);
+    if (pendingDocPromises.length > 0) {
+      await Promise.race([
+        Promise.all(pendingDocPromises),
+        new Promise(r => setTimeout(r, 8000))
+      ]);
+    }
+  }
+
   // Construct user content payload
   let userPayloadContent = userMessage;
   const imageAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isImage && a.dataUrl) : [];
   const videoAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isVideo) : [];
   const docAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isDocument && Array.isArray(a.pages) && a.pages.length > 0) : [];
-  const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && (a.textContent || a.parsedMarkdown)) : [];
+  const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && !a.isDocument && (a.textContent || a.parsedMarkdown)) : [];
   let pendingVisualDocPages = [];
 
   let combinedPrompt = userMessage || "";
@@ -6406,15 +6418,16 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
       });
     });
 
-    // Add document page images in strict sequential order
+    // Add document page images in strict sequential order with digital text & visual clarity
     docAttachments.forEach(doc => {
-      const pagesToShow = doc.pages.slice(0, 20);
+      const pagesToShow = doc.pages.slice(0, 35);
       pagesToShow.forEach(p => {
         if (p.data_url) {
           const pNum = p.page_num || p.page || 1;
+          const textSnippet = p.text ? `\n[Teks Digital Halaman ${pNum}]:\n${p.text}\n` : '';
           userPayloadContent.push({
             type: "text",
-            text: `--- [Dokumen: "${doc.name}" - Halaman ${pNum} dari ${doc.totalPages || doc.pages.length} (150 DPI)] ---`
+            text: `--- [Dokumen: "${doc.name}" - Halaman ${pNum} dari ${doc.totalPages || doc.pages.length} (140 DPI)] ---${textSnippet}[Pratinjau Visual Halaman ${pNum}]:`
           });
           userPayloadContent.push({
             type: "image_url",
@@ -7085,16 +7098,17 @@ Tugas Anda:
             const visualParts = [
               {
                 type: "text",
-                text: `👁️ [Inspeksi Visual Dokumen: ${docInfo.file_name} - Total ${docInfo.total_pages} Halaman Urut (150 DPI)]\nBerikut adalah pratinjau visual tajam per halaman secara urut dari halaman 1 sampai ${docInfo.pages.length} dengan resolusi tajam (150 DPI) dan ukuran ringan. Mohon telaah detail visual, teks, tabel, bagan, dan tata letak per halaman secara akurat:`
+                text: `👁️ [Inspeksi Visual Dokumen: ${docInfo.file_name} - Total ${docInfo.total_pages} Halaman Urut (140 DPI)]\nBerikut adalah pratinjau visual tajam dan teks digital per halaman secara urut dari halaman 1 sampai ${docInfo.pages.length} dengan resolusi tajam (140 DPI). Mohon telaah detail visual, teks, tabel, bagan, dan tata letak per halaman secara akurat:`
               }
             ];
-            const pagesToShow = docInfo.pages.slice(0, 15);
+            const pagesToShow = docInfo.pages.slice(0, 35);
             pagesToShow.forEach(p => {
               if (p.data_url) {
                 const pageNum = p.page_num || p.page || 1;
+                const textSnippet = p.text ? `\n[Teks Digital Halaman ${pageNum}]:\n${p.text}\n` : '';
                 visualParts.push({
                   type: "text",
-                  text: `--- [Halaman ${pageNum} dari ${docInfo.total_pages} (File: ${p.file_name || docInfo.file_name})] ---`
+                  text: `--- [Halaman ${pageNum} dari ${docInfo.total_pages} (File: ${p.file_name || docInfo.file_name})] ---${textSnippet}[Visual Halaman ${pageNum}]:`
                 });
                 visualParts.push({
                   type: "image_url",
@@ -8616,12 +8630,25 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 
   ensureCurrentSessionInitialized(userMessage, attachments, 'Chat Session');
 
+  // Ensure any pending document conversions complete before building payload
+  if (Array.isArray(attachments)) {
+    const pendingDocPromises = attachments
+      .filter(a => a.isDocument && a._parsePromise && (!a.pages || a.pages.length === 0))
+      .map(a => a._parsePromise);
+    if (pendingDocPromises.length > 0) {
+      await Promise.race([
+        Promise.all(pendingDocPromises),
+        new Promise(r => setTimeout(r, 8000))
+      ]);
+    }
+  }
+
   // Construct user content payload
   let userPayloadContent = userMessage;
   const imageAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isImage && a.dataUrl) : [];
   const videoAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isVideo) : [];
   const docAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isDocument && Array.isArray(a.pages) && a.pages.length > 0) : [];
-  const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && (a.textContent || a.parsedMarkdown)) : [];
+  const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && !a.isDocument && (a.textContent || a.parsedMarkdown)) : [];
 
   let combinedPrompt = userMessage || "";
   if (textAttachments.length > 0) {
@@ -8650,15 +8677,16 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
         image_url: { url: img.dataUrl }
       });
     });
-    // Add document page images in strict sequential order
+    // Add document page images in strict sequential order with digital text & visual clarity
     docAttachments.forEach(doc => {
-      const pagesToShow = doc.pages.slice(0, 20);
+      const pagesToShow = doc.pages.slice(0, 35);
       pagesToShow.forEach(p => {
         if (p.data_url) {
           const pNum = p.page_num || p.page || 1;
+          const textSnippet = p.text ? `\n[Teks Digital Halaman ${pNum}]:\n${p.text}\n` : '';
           userPayloadContent.push({
             type: "text",
-            text: `--- [Dokumen: "${doc.name}" - Halaman ${pNum} dari ${doc.totalPages || doc.pages.length} (150 DPI)] ---`
+            text: `--- [Dokumen: "${doc.name}" - Halaman ${pNum} dari ${doc.totalPages || doc.pages.length} (140 DPI)] ---${textSnippet}[Pratinjau Visual Halaman ${pNum}]:`
           });
           userPayloadContent.push({
             type: "image_url",
@@ -12514,7 +12542,7 @@ async function executeSaveCurrentSessionToDB() {
             };
           }
         }
-        await sendNativeRpc("db_save_session", { session: rpcSession }, 0, 8000);
+        await sendNativeRpc("db_save_session", { session: rpcSession }, 0, 25000);
       }
     } catch (e) {
       console.warn("SQLite save notice (cached locally):", e);
@@ -14105,12 +14133,12 @@ async function handleFileSelection(files) {
 
       // Parse & convert document via native host in background
       if (typeof sendNativeRpc === 'function') {
-        sendNativeRpc("save_and_parse_uploaded_file", {
+        newAtt._parsePromise = sendNativeRpc("save_and_parse_uploaded_file", {
           file_name: fileName,
           file_data: dataUrl,
           mime_type: fileType || 'application/octet-stream',
           session_id: currentSessionId || ''
-        }, 0, 30000).then(upRes => {
+        }, 0, 60000).then(upRes => {
           if (upRes && upRes.status === 'ok') {
             newAtt.filePath = upRes.file_path || "";
             if (upRes.markdown) {
@@ -14127,8 +14155,10 @@ async function handleFileSelection(files) {
             }
             renderAttachmentsPreview();
           }
+          return upRes;
         }).catch(e => {
           console.warn("Document parse via native host notice:", e);
+          return null;
         });
       }
     }
