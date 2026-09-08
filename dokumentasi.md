@@ -1293,3 +1293,23 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
            `--- [File Lampiran: <nama> (Tersimpan di: <path>)] ---\n<clean_markdown>`.
          - Seluruh metadata lampiran dan teks Markdown tersimpan permanen di `sessions.messages_json` SQLite dan IndexedDB, menjamin agen di setiap histori chat masa lalu selalu dapat membaca dan mengingat isi dokumen tersebut secara instan.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh di bawah limit 800 baris.
+
+160. **Eliminasi Total Kebocoran Placeholder Markdown & Isolasi Subscript LaTeX (`v2.150.277`):**
+    - **Akar Masalah**:
+      - Ketika AI menghasilkan respon yang memadukan potongan *inline code* (tanda backtick) dan formula/simbol LaTeX (seperti `\rightarrow` atau `$..$`), teks pesan di antarmuka obrolan bocor menampilkan token internal mentah seperti `🪟INLINE_CODE21≡ → ≡INLINE_CODE22≡`.
+      - Investigasi menemukan bahwa placeholder lama `\uE000INLINE_CODE_${idx}\uE001` mengandung karakter *underscore* (`_`). Saat modul matematika LaTeX `parseLatexMath()` berjalan, regex subscript global `_([0-9a-zA-Z\+\-]+)` secara keliru memakan kata `_CODE` dan `_21` pada placeholder tersebut, mengubahnya menjadi tag HTML `<sub>CODE</sub>` dan `<sub>21</sub>`.
+      - Akibatnya, token rusak menjadi `\uE000INLINE<sub>CODE</sub><sub>21</sub>\uE001` sehingga tahap restorasi kode gagal mencocokkan string asli, dan karakter kontrol Private Use Area `\uE000` & `\uE001` dirender sebagai glyph tofu kotak (`🪟` / `≡`) ber-subscript pada layar pengguna.
+    - **Implementasi Teknis & Solusi**:
+      1. **Collision-Free Underscore-Less Placeholders**:
+         - Seluruh token placeholder di `extension/sidepanel.js` diubah menjadi format alfanumerik murni tanpa karakter underscore:
+           `\uE000INLINECODE${idx}\uE001`, `\uE000CODEBLOCK${idx}\uE001`, `\uE000TABLEBLOCK${idx}\uE001`, `\uE000IMAGEBLOCK${idx}\uE001`, dan `\uE000FILECARD${idx}\uE001`.
+         - Peniadaan karakter underscore menjamin placeholder 100% kebal terhadap aturan Markdown bold (`__`), italic (`_`), maupun formula subscript LaTeX.
+      2. **Placeholder Shielding di `convertMathTokens()`**:
+         - Memecah teks dengan regex pemisah `(\uE000[^\uE001]+\uE001)` dan melewati pemrosesan matematika pada seluruh token placeholder yang ada di dalamnya.
+      3. **Isolasi Subscript & Preservasi Whitespace**:
+         - Regex subscript tanpa kurung kurawal `_([0-9a-zA-Z\+\-]+)` hanya diaktifkan di dalam konteks formula matematika eksplisit (`isExplicitMath: true`), mencegah kerusakan nama variabel teks seperti `user_id` atau `session_id`.
+         - Menghilangkan `s.trim()` pada potongan teks non-matematika di dalam `convertMathTokens()` untuk menjaga kerapian spasi antar-token inline code dan simbol panah LaTeX.
+      4. **Fail-Safe PUA Cleanup**:
+         - Menambahkan filter pengaman di baris penutup `formatMarkdown()` untuk membersihkan setiap karakter kontrol PUA `[\uE000\uE001]` yang mungkin tertinggal, menjamin tidak ada artefak visual internal yang dapat bocor ke antarmuka pengguna.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh di bawah limit 800 baris.
+

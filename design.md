@@ -2108,3 +2108,24 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 3. **Komponen Visual UI & Akses Langsung (`sidepanel.js`)**:
    - Kartu preview lampiran dan bubble pesan obrolan menampilkan lencana status `Anydoc MD` serta icon file Mac OS modern.
    - Pill berkas interaktif di bubble obrolan dapat diklik langsung untuk memanggil `reveal_file` / `open_file`, membuka folder penyimpanan lokal di file manager OS secara instan.
+
+## 🛡️ 53. Zero-Collision Underscore-Less Markdown Placeholders & LaTeX Subscript Context Isolation (v2.150.277)
+
+1. **Root Cause Analysis & Leaked Token Elimination**:
+   - Menghilangkan bug kebocoran token internal parser seperti `🪟INLINE_CODE21≡ → ≡INLINE_CODE22≡` saat pesan AI memadukan potongan *inline code* (backtick) dan formula/panah LaTeX (`\rightarrow` atau `$..$`).
+   - Akar masalah: token internal terdahulu `\uE000INLINE_CODE_${idx}\uE001` mengandung karakter *underscore* (`_`). Regex subscript LaTeX global `_([0-9a-zA-Z\+\-]+)` secara keliru memakan kata `_CODE` dan `_21` pada placeholder tersebut dan mengubahnya menjadi tag HTML `<sub>CODE</sub>` dan `<sub>21</sub>`.
+   - String placeholder bermutasi menjadi `\uE000INLINE<sub>CODE</sub><sub>21</sub>\uE001`, menyebabkan tahap restorasi kode gagal mencocokkan string asli sehingga karakter Private Use Area `\uE000` dan `\uE001` dirender sistem sebagai glyph kotak tofu (`🪟`/`≡`) ber-subscript pada layar pengguna.
+
+2. **Collision-Free Underscore-Less Placeholder Architecture**:
+   - Mengganti seluruh format token placeholder di `sidepanel.js` menjadi string alfanumerik murni tanpa tanda underscore:
+     `\uE000INLINECODE${idx}\uE001`, `\uE000CODEBLOCK${idx}\uE001`, `\uE000TABLEBLOCK${idx}\uE001`, `\uE000IMAGEBLOCK${idx}\uE001`, dan `\uE000FILECARD${idx}\uE001`.
+   - Peniadaan karakter *underscore* menjamin seluruh placeholder 100% imun terhadap tabrakan sintaks Markdown bold (`__`), italic (`_`), maupun rumus matematika subscript.
+
+3. **Contextual Subscript Isolation & Whitespace Fidelity**:
+   - Memecah teks dengan regex pemisah `(\uE000[^\uE001]+\uE001)` di `convertMathTokens()`, menjamin token placeholder dilewati tanpa modifikasi.
+   - Pembentukan subscript non-kurung kurawal `_([0-9a-zA-Z\+\-]+)` dan superscript `\^([0-9a-zA-Z\+\-]+)` hanya diaktifkan di dalam blok matematika eksplisit (`isExplicitMath: true`), mencegah kerusakan nama variabel teks seperti `user_id` atau `session_id`.
+   - Menghilangkan `s.trim()` parsial pada potongan non-matematika di dalam `convertMathTokens()` untuk mempertahankan spasi presisi antara potongan inline code dan simbol panah LaTeX.
+
+4. **Fail-Safe Sanitizer Sweep**:
+   - Filter pembersih akhir pada `formatMarkdown()` secara otomatis mengeliminasi setiap karakter PUA `[\uE000\uE001]` yang mungkin tersisa jika terjadi anomali parser, memastikan antarmuka chat 100% bersih tanpa artefak internal.
+

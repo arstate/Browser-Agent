@@ -7747,5 +7747,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   1. Uji konversi dokumen nyata (PDF, DOCX, CSV) sukses mengubah dokumen 150KB–340KB menjadi clean Markdown 200–700 token dalam waktu belasan milidetik.
   2. Syntax check `node -c extension/sidepanel.js` dan Python compilation `native_host.py` lulus 100%.
   3. Cargo release build `browser_agent_host` berhasil dikompilasi dan dideploy.
+### Iterasi: Eliminasi Total Kebocoran Placeholder Markdown & Isolasi Subscript LaTeX (`v2.150.277`)
+- **User Request:**
+  - "ada bug in line code ini maksutnya apa"
+  - Menampilkan tangkapan layar chat di mana teks pesan AI berisi token mentah: `🪟INLINE_CODE21≡ → ≡INLINE_CODE22≡, dan 🪟INLINE_CODE23≡ → ≡INLINE_CODE24≡`.
+- **Akar Masalah & Penyelidikan Mendalam:**
+  1. Pada `formatMarkdown()`, potongan kode inline ber-backtick disimpan sementara sebagai placeholder `\uE000INLINE_CODE_${idx}\uE001`.
+  2. Karakter garis bawah ganda (`_CODE_`) pada placeholder berbenturan dengan modul matematika LaTeX `parseLatexMath()`.
+  3. Ketika baris teks mengandung simbol LaTeX (seperti `\rightarrow` atau formula `$..$`), regex subscript LaTeX `_([0-9a-zA-Z\+\-]+)` secara keliru memakan kata `_CODE` dan `_21` pada placeholder itu sendiri, mengubahnya menjadi tag HTML `<sub>CODE</sub>` dan `<sub>21</sub>`.
+  4. Akibatnya, string placeholder bermutasi menjadi `\uE000INLINE<sub>CODE</sub><sub>21</sub>\uE001`. Tahap restorasi kode `finalHtml.split('\uE000INLINE_CODE_21\uE001')` gagal menemukan kecocokan, sehingga placeholder rusak bocor langsung ke antarmuka pengguna sebagai glyph PUA tofu (`🪟`/`≡`) dengan teks subscript.
+- **Solusi & Rekayasa Teknis:**
+  1. *Collision-Free Underscore-Less Placeholders*:
+     - Menghapus seluruh karakter underscore `_` dari seluruh placeholder internal di `sidepanel.js`:
+       - `\uE000INLINECODE${idx}\uE001`
+       - `\uE000CODEBLOCK${idx}\uE001`
+       - `\uE000TABLEBLOCK${idx}\uE001`
+       - `\uE000IMAGEBLOCK${idx}\uE001`
+       - `\uE000FILECARD${idx}\uE001`
+  2. *Placeholder Shielding di `convertMathTokens()`*:
+     - Memecah ekspresi matematika dengan regex pemisah `(\uE000[^\uE001]+\uE001)` dan memastikan seluruh token placeholder diabaikan (dilewati 100% tanpa modifikasi).
+  3. *Isolasi Konteks Subscript*:
+     - Regex subscript tanpa kurung kurawal `_([0-9a-zA-Z\+\-]+)` dan superscript `\^([0-9a-zA-Z\+\-]+)` hanya diaktifkan di dalam blok matematika eksplisit (`isExplicitMath: true`), mencegah kerusakan nama variabel teks seperti `snake_case_variable`.
+     - Mempertahankan spasi asli antar-token inline code dan simbol panah LaTeX dengan meniadakan `s.trim()` parsial pada potongan token non-matematika.
+  4. *Fail-Safe Sanitizer Cleanup*:
+     - Menambahkan filter pengaman di baris akhir `formatMarkdown()` untuk membersihkan setiap karakter Private Use Area `[\uE000\uE001]` yang mungkin tertinggal jika terjadi anomali parser.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Pengujian Node.js pada teks riil percakapan membuktikan formula panah LaTeX dan 4 inline code (`Puri (2025)`, `(2024)`, `Abdurrahman (2025)`, `Irfan (2022)`) ter-render 100% sempurna dengan spasi rapi dan tanpa kebocoran placeholder.
+  2. Pengujian tabel Markdown, blok kode, dan variabel `snake_case` lulus 100%.
+  3. Syntax check `node -c extension/sidepanel.js` sukses tanpa error.
   4. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
-  5. Bump versi ke `v2.150.276` di `manifest.json`.
+  5. Bump versi ke `v2.150.277` di `manifest.json`.
+

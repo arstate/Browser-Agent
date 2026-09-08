@@ -10446,113 +10446,124 @@ function parseLatexMath(str) {
   if (!str || (!str.includes('$') && !str.includes('\\'))) return str;
   let res = str;
 
-  function convertMathTokens(expr) {
-    let s = expr;
-    // 0. Clean LaTeX delimiters \left and \right
-    s = s.replace(/\\left\s*([(\[{|.\\])/g, '$1');
-    s = s.replace(/\\right\s*([)\]}|.\\])/g, '$1');
-    s = s.replace(/\\left\b/g, '');
-    s = s.replace(/\\right\b/g, '');
+  function convertMathTokens(expr, isExplicitMath = false) {
+    if (!expr) return "";
+    // Shield placeholders if any present in expr
+    const parts = expr.split(/(\uE000[^\uE001]+\uE001)/g);
+    const resStr = parts.map((part, idx) => {
+      if (idx % 2 === 1) return part; // placeholder token, leave untouched!
+      let s = part;
+      // 0. Clean LaTeX delimiters \left and \right
+      s = s.replace(/\\left\s*([(\[{|.\\])/g, '$1');
+      s = s.replace(/\\right\s*([)\]}|.\\])/g, '$1');
+      s = s.replace(/\\left\b/g, '');
+      s = s.replace(/\\right\b/g, '');
 
-    // 1. Text wrappers: \text{...}, \mathrm{...}, \mathbf{...}, \textbf{...}, \textit{...}
-    s = s.replace(/\\(?:text|mathrm|mathbf|textbf|textit|textsf)\{([^}]+)\}/g, '$1');
-    
-    // 2. Fractions: \frac{a}{b} -> a/b
-    s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1/$2');
-    
-    // 3. Square root: \sqrt{a} -> √a or √(a)
-    s = s.replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
+      // 1. Text wrappers: \text{...}, \mathrm{...}, \mathbf{...}, \textbf{...}, \textit{...}
+      s = s.replace(/\\(?:text|mathrm|mathbf|textbf|textit|textsf)\{([^}]+)\}/g, '$1');
+      
+      // 2. Fractions: \frac{a}{b} -> a/b
+      s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1/$2');
+      
+      // 3. Square root: \sqrt{a} -> √a or √(a)
+      s = s.replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
 
-    // 4. Common operators & symbols
-    const symbolMap = [
-      [/\\ge\b|\\geq\b/g, '≥'],
-      [/\\le\b|\\leq\b/g, '≤'],
-      [/\\neq\b|\\ne\b/g, '≠'],
-      [/\\approx\b/g, '≈'],
-      [/\\pm\b/g, '±'],
-      [/\\mp\b/g, '∓'],
-      [/\\times\b/g, '×'],
-      [/\\div\b/g, '÷'],
-      [/\\cdot\b/g, '·'],
-      [/\\bullet\b/g, '•'],
-      [/\\circ\b|\^\\circ\b|\\degree\b/g, '°'],
-      [/\\infty\b/g, '∞'],
-      [/\\sim\b/g, '∼'],
-      [/\\equiv\b/g, '≡'],
-      [/\\propto\b/g, '∝'],
-      [/\\ll\b/g, '≪'],
-      [/\\gg\b/g, '≫'],
-      [/\\in\b/g, '∈'],
-      [/\\notin\b/g, '∉'],
-      [/\\subset\b/g, '⊂'],
-      [/\\subseteq\b/g, '⊆'],
-      [/\\cup\b/g, '∪'],
-      [/\\cap\b/g, '∩'],
-      [/\\forall\b/g, '∀'],
-      [/\\exists\b/g, '∃'],
-      [/\\to\b|\\rightarrow\b/g, '→'],
-      [/\\leftarrow\b/g, '←'],
-      [/\\Rightarrow\b/g, '⇒'],
-      [/\\Leftarrow\b/g, '⇐'],
-      [/\\Leftrightarrow\b|\\iff\b/g, '⇔'],
-      [/\\sum\b/g, '∑'],
-      [/\\prod\b/g, '∏'],
-      [/\\int\b/g, '∫'],
-      [/\\partial\b/g, '∂'],
-      [/\\nabla\b/g, '∇'],
-      [/\\quad\b/g, ' '],
-      [/\\qquad\b/g, '  '],
-      [/\\%/g, '%'],
-      [/\\\$/g, '$'],
-      [/\\_/g, '_'],
-      [/\\&/g, '&'],
-      [/\\#/g, '#'],
-      [/\\\{/g, '{'],
-      [/\\\}/g, '}'],
-      [/\\alpha\b/g, 'α'],
-      [/\\beta\b/g, 'β'],
-      [/\\gamma\b/g, 'γ'],
-      [/\\delta\b/g, 'δ'],
-      [/\\epsilon\b|\\varepsilon\b/g, 'ε'],
-      [/\\zeta\b/g, 'ζ'],
-      [/\\eta\b/g, 'η'],
-      [/\\theta\b|\\vartheta\b/g, 'θ'],
-      [/\\iota\b/g, 'ι'],
-      [/\\kappa\b/g, 'κ'],
-      [/\\lambda\b/g, 'λ'],
-      [/\\mu\b/g, 'μ'],
-      [/\\nu\b/g, 'ν'],
-      [/\\xi\b/g, 'ξ'],
-      [/\\pi\b/g, 'π'],
-      [/\\rho\b/g, 'ρ'],
-      [/\\sigma\b/g, 'σ'],
-      [/\\tau\b/g, 'τ'],
-      [/\\upsilon\b/g, 'υ'],
-      [/\\phi\b|\\varphi\b/g, 'φ'],
-      [/\\chi\b/g, 'χ'],
-      [/\\psi\b/g, 'ψ'],
-      [/\\omega\b/g, 'ω'],
-      [/\\Gamma\b/g, 'Γ'],
-      [/\\Delta\b/g, 'Δ'],
-      [/\\Theta\b/g, 'Θ'],
-      [/\\Lambda\b/g, 'Λ'],
-      [/\\Xi\b/g, 'Ξ'],
-      [/\\Pi\b/g, 'Π'],
-      [/\\Sigma\b/g, 'Σ'],
-      [/\\Upsilon\b/g, 'Υ'],
-      [/\\Phi\b/g, 'Φ'],
-      [/\\Psi\b/g, 'Ψ'],
-      [/\\Omega\b/g, 'Ω']
-    ];
+      // 4. Common operators & symbols
+      const symbolMap = [
+        [/\\ge\b|\\geq\b/g, '≥'],
+        [/\\le\b|\\leq\b/g, '≤'],
+        [/\\neq\b|\\ne\b/g, '≠'],
+        [/\\approx\b/g, '≈'],
+        [/\\pm\b/g, '±'],
+        [/\\mp\b/g, '∓'],
+        [/\\times\b/g, '×'],
+        [/\\div\b/g, '÷'],
+        [/\\cdot\b/g, '·'],
+        [/\\bullet\b/g, '•'],
+        [/\\circ\b|\^\\circ\b|\\degree\b/g, '°'],
+        [/\\infty\b/g, '∞'],
+        [/\\sim\b/g, '∼'],
+        [/\\equiv\b/g, '≡'],
+        [/\\propto\b/g, '∝'],
+        [/\\ll\b/g, '≪'],
+        [/\\gg\b/g, '≫'],
+        [/\\in\b/g, '∈'],
+        [/\\notin\b/g, '∉'],
+        [/\\subset\b/g, '⊂'],
+        [/\\subseteq\b/g, '⊆'],
+        [/\\cup\b/g, '∪'],
+        [/\\cap\b/g, '∩'],
+        [/\\forall\b/g, '∀'],
+        [/\\exists\b/g, '∃'],
+        [/\\to\b|\\rightarrow\b/g, '→'],
+        [/\\leftarrow\b/g, '←'],
+        [/\\Rightarrow\b/g, '⇒'],
+        [/\\Leftarrow\b/g, '⇐'],
+        [/\\Leftrightarrow\b|\\iff\b/g, '⇔'],
+        [/\\sum\b/g, '∑'],
+        [/\\prod\b/g, '∏'],
+        [/\\int\b/g, '∫'],
+        [/\\partial\b/g, '∂'],
+        [/\\nabla\b/g, '∇'],
+        [/\\quad\b/g, ' '],
+        [/\\qquad\b/g, '  '],
+        [/\\%/g, '%'],
+        [/\\\$/g, '$'],
+        [/\\_/g, '_'],
+        [/\\&/g, '&'],
+        [/\\#/g, '#'],
+        [/\\\{/g, '{'],
+        [/\\\}/g, '}'],
+        [/\\alpha\b/g, 'α'],
+        [/\\beta\b/g, 'β'],
+        [/\\gamma\b/g, 'γ'],
+        [/\\delta\b/g, 'δ'],
+        [/\\epsilon\b|\\varepsilon\b/g, 'ε'],
+        [/\\zeta\b/g, 'ζ'],
+        [/\\eta\b/g, 'η'],
+        [/\\theta\b|\\vartheta\b/g, 'θ'],
+        [/\\iota\b/g, 'ι'],
+        [/\\kappa\b/g, 'κ'],
+        [/\\lambda\b/g, 'λ'],
+        [/\\mu\b/g, 'μ'],
+        [/\\nu\b/g, 'ν'],
+        [/\\xi\b/g, 'ξ'],
+        [/\\pi\b/g, 'π'],
+        [/\\rho\b/g, 'ρ'],
+        [/\\sigma\b/g, 'σ'],
+        [/\\tau\b/g, 'τ'],
+        [/\\upsilon\b/g, 'υ'],
+        [/\\phi\b|\\varphi\b/g, 'φ'],
+        [/\\chi\b/g, 'χ'],
+        [/\\psi\b/g, 'ψ'],
+        [/\\omega\b/g, 'ω'],
+        [/\\Gamma\b/g, 'Γ'],
+        [/\\Delta\b/g, 'Δ'],
+        [/\\Theta\b/g, 'Θ'],
+        [/\\Lambda\b/g, 'Λ'],
+        [/\\Xi\b/g, 'Ξ'],
+        [/\\Pi\b/g, 'Π'],
+        [/\\Sigma\b/g, 'Σ'],
+        [/\\Upsilon\b/g, 'Υ'],
+        [/\\Phi\b/g, 'Φ'],
+        [/\\Psi\b/g, 'Ψ'],
+        [/\\Omega\b/g, 'Ω']
+      ];
 
-    for (const [regex, rep] of symbolMap) {
-      s = s.replace(regex, rep);
-    }
+      for (const [regex, rep] of symbolMap) {
+        s = s.replace(regex, rep);
+      }
 
-    s = s.replace(/\^{([^}]+)}|\^([0-9a-zA-Z\+\-]+)/g, (m, p1, p2) => `<sup>${p1 || p2}</sup>`);
-    s = s.replace(/_{([^}]+)}|_([0-9a-zA-Z\+\-]+)/g, (m, p1, p2) => `<sub>${p1 || p2}</sub>`);
+      s = s.replace(/\^{([^}]+)}/g, (m, p1) => `<sup>${p1}</sup>`);
+      s = s.replace(/_{([^}]+)}/g, (m, p1) => `<sub>${p1}</sub>`);
+      if (isExplicitMath) {
+        s = s.replace(/\^([0-9a-zA-Z\+\-]+)/g, (m, p) => `<sup>${p}</sup>`);
+        s = s.replace(/_([0-9a-zA-Z\+\-]+)/g, (m, p) => `<sub>${p}</sub>`);
+      }
 
-    return s.trim();
+      return s;
+    }).join('');
+    return isExplicitMath ? resStr.trim() : resStr;
   }
 
   function isMathExpression(s) {
@@ -10576,13 +10587,13 @@ function parseLatexMath(str) {
 
   // 1. Block Math: $$...$$ or \[...\]
   res = res.replace(/\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]/g, (match, b1, b2) => {
-    const mathContent = convertMathTokens(b1 || b2 || "");
+    const mathContent = convertMathTokens(b1 || b2 || "", true);
     return `<div class="md-math-block">${mathContent}</div>`;
   });
 
   // 2. Explicit inline LaTeX: \( ... \)
   res = res.replace(/\\\(([\s\S]+?)\\\)/g, (match, inner) => {
-    const mathContent = convertMathTokens(inner);
+    const mathContent = convertMathTokens(inner, true);
     return `<span class="md-math-inline">${mathContent}</span>`;
   });
 
@@ -10591,12 +10602,12 @@ function parseLatexMath(str) {
     if (!isMathExpression(inner)) {
       return match;
     }
-    const mathContent = convertMathTokens(inner);
+    const mathContent = convertMathTokens(inner, true);
     return `<span class="md-math-inline">${mathContent}</span>`;
   });
 
   // 4. Standalone raw LaTeX tokens outside dollars
-  res = convertMathTokens(res);
+  res = convertMathTokens(res, false);
   return res;
 }
 
@@ -10656,7 +10667,7 @@ function formatMarkdown(raw) {
   // 1. Extract code blocks (```lang ... ```) to safe unicode placeholders
   const codeBlocks = [];
   let text = raw.replace(/```([a-zA-Z0-9_\-\.]*)\n([\s\S]*?)```/g, (match, lang, code) => {
-    const placeholder = `\uE000CODE_BLOCK_${codeBlocks.length}\uE001`;
+    const placeholder = `\uE000CODEBLOCK${codeBlocks.length}\uE001`;
     codeBlocks.push({ lang: lang || 'code', code: code.trim() });
     return placeholder;
   });
@@ -10693,7 +10704,7 @@ function formatMarkdown(raw) {
         </div>
       </div>
     `;
-    const placeholder = `\uE000IMAGE_BLOCK_${imageBlocks.length}\uE001`;
+    const placeholder = `\uE000IMAGEBLOCK${imageBlocks.length}\uE001`;
     imageBlocks.push(card);
     return `\n${placeholder}\n`;
   });
@@ -10705,7 +10716,7 @@ function formatMarkdown(raw) {
   text = text.replace(fileLineRegex, (match, pathVal, meta) => {
     if (!pathVal || pathVal.startsWith('http://') || pathVal.startsWith('https://')) return match;
     const cardHtml = buildFileCardHtml(pathVal, meta || '');
-    const placeholder = `\uE000FILE_CARD_${fileCardBlocks.length}\uE001`;
+    const placeholder = `\uE000FILECARD${fileCardBlocks.length}\uE001`;
     fileCardBlocks.push(cardHtml);
     return `\n${placeholder}\n`;
   });
@@ -10716,7 +10727,7 @@ function formatMarkdown(raw) {
   // 4. Inline code placeholders
   const inlineCodes = [];
   text = text.replace(/`([^`\n]+)`/g, (match, code) => {
-    const placeholder = `\uE000INLINE_CODE_${inlineCodes.length}\uE001`;
+    const placeholder = `\uE000INLINECODE${inlineCodes.length}\uE001`;
     inlineCodes.push(code);
     return placeholder;
   });
@@ -10757,7 +10768,7 @@ function formatMarkdown(raw) {
     }
 
     html += '</tbody></table></div>';
-    const placeholder = `\uE000TABLE_BLOCK_${tableBlocks.length}\uE001`;
+    const placeholder = `\uE000TABLEBLOCK${tableBlocks.length}\uE001`;
     tableBlocks.push(html);
     return `\n${placeholder}\n`;
   });
@@ -10840,9 +10851,9 @@ function formatMarkdown(raw) {
       trimmed.startsWith('<h2') || trimmed.startsWith('<h3') || 
       trimmed.startsWith('<h4') || trimmed.startsWith('<h5') || 
       trimmed.startsWith('<h6') || trimmed.startsWith('<blockquote') || 
-      trimmed.startsWith('<hr') || trimmed.includes('\uE000CODE_BLOCK_') || 
-      trimmed.includes('\uE000TABLE_BLOCK_') || trimmed.includes('\uE000IMAGE_BLOCK_') ||
-      trimmed.includes('\uE000FILE_CARD_')
+      trimmed.startsWith('<hr') || trimmed.includes('\uE000CODEBLOCK') || 
+      trimmed.includes('\uE000TABLEBLOCK') || trimmed.includes('\uE000IMAGEBLOCK') ||
+      trimmed.includes('\uE000FILECARD')
     );
 
     // If inside a list and encountered continuation line
@@ -10890,18 +10901,18 @@ function formatMarkdown(raw) {
 
   // 9. Restore Tables FIRST so table cells can have their code blocks/images restored
   tableBlocks.forEach((tbl, idx) => {
-    finalHtml = finalHtml.split(`\uE000TABLE_BLOCK_${idx}\uE001`).join(tbl);
+    finalHtml = finalHtml.split(`\uE000TABLEBLOCK${idx}\uE001`).join(tbl);
   });
 
   // 10. Restore Inline Code (with Intelligent Color Swatches & Clean Handle Badges)
   inlineCodes.forEach((code, idx) => {
     const trimmed = code.trim();
     if (/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/i.test(trimmed)) {
-      finalHtml = finalHtml.split(`\uE000INLINE_CODE_${idx}\uE001`).join(`<code class="md-inline-code md-color-pill"><span class="color-swatch-dot" style="background-color: ${trimmed};"></span>${trimmed}</code>`);
+      finalHtml = finalHtml.split(`\uE000INLINECODE${idx}\uE001`).join(`<code class="md-inline-code md-color-pill"><span class="color-swatch-dot" style="background-color: ${trimmed};"></span>${trimmed}</code>`);
     } else if (/^@[a-zA-Z0-9_\-\.]+$/i.test(trimmed)) {
-      finalHtml = finalHtml.split(`\uE000INLINE_CODE_${idx}\uE001`).join(`<code class="md-inline-code md-handle-pill"><span class="mention-at">@</span>${escapeHtml(trimmed.slice(1))}</code>`);
+      finalHtml = finalHtml.split(`\uE000INLINECODE${idx}\uE001`).join(`<code class="md-inline-code md-handle-pill"><span class="mention-at">@</span>${escapeHtml(trimmed.slice(1))}</code>`);
     } else {
-      finalHtml = finalHtml.split(`\uE000INLINE_CODE_${idx}\uE001`).join(`<code class="md-inline-code">${code}</code>`);
+      finalHtml = finalHtml.split(`\uE000INLINECODE${idx}\uE001`).join(`<code class="md-inline-code">${code}</code>`);
     }
   });
 
@@ -10916,18 +10927,22 @@ function formatMarkdown(raw) {
         <pre><code class="language-${escapeHtml(block.lang)}">${escapeHtml(block.code)}</code></pre>
       </div>
     `;
-    finalHtml = finalHtml.split(`\uE000CODE_BLOCK_${idx}\uE001`).join(codeCard);
+    finalHtml = finalHtml.split(`\uE000CODEBLOCK${idx}\uE001`).join(codeCard);
   });
 
   // 12. Restore Images
   imageBlocks.forEach((imgCard, idx) => {
-    finalHtml = finalHtml.split(`\uE000IMAGE_BLOCK_${idx}\uE001`).join(imgCard);
+    finalHtml = finalHtml.split(`\uE000IMAGEBLOCK${idx}\uE001`).join(imgCard);
   });
 
   // 13. Restore File Cards
   fileCardBlocks.forEach((card, idx) => {
-    finalHtml = finalHtml.split(`\uE000FILE_CARD_${idx}\uE001`).join(card);
+    finalHtml = finalHtml.split(`\uE000FILECARD${idx}\uE001`).join(card);
   });
+
+  // 14. Safety cleanup: Guarantee no leaked internal PUA characters or malformed tokens reach DOM
+  finalHtml = finalHtml.replace(/\uE000(?:INLINECODE|CODEBLOCK|TABLEBLOCK|IMAGEBLOCK|FILECARD)\d+\uE001/g, '');
+  finalHtml = finalHtml.replace(/[\uE000\uE001]/g, '');
 
   return finalHtml;
 }
