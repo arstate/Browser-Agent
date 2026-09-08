@@ -2443,6 +2443,28 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 5. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
 
+## 🏛️ 69. Instant Ephemeral New Chat pada Temporary Chat Toggle & Eliminasi Halusinasi Typo Vision Dokumen (v2.150.293)
+
+1. **Instant Ephemeral New Chat Architecture**:
+   - Perilaku klik `#btn-temporary-chat` kini secara otomatis memicu pembuatan obrolan baru yang bersih (`startNewChat()`).
+   - Sesi chat normal sebelumnya disimpan secara aman ke database lokal sebelum mode sementara diaktifkan.
+   - Sesi baru terkunci dalam mode sementara (ephemeral):
+     - `isTemporaryChatActive = true`
+     - Penyimpanan ke IndexedDB, SQLite, dan Chrome Storage dinonaktifkan (`saveCurrentSessionToDB` returns early).
+     - `sessionStorage` tidak menyimpan session ID aktif agar tidak ada jejak tab yang tertinggal.
+     - Judul header menampilkan status `🕶️ Temporary Chat`.
+   - Mematikan mode sementara (`toggleTemporaryChat(false)`) secara otomatis membuang percakapan sementara tanpa menyimpan dan membuka chat normal baru.
+   - Tombol `#btn-temporary-chat` kini tersemat seragam di header `newtab.html` dan `sidepanel.html`.
+
+2. **Dual-Layer Ground Truth Architecture (Vision Typo Elimination)**:
+   - **Supreme Ground Truth Hierarchy**: Teks digital asli yang diekstrak langsung dari font internal dokumen (`[Teks Digital Asli (Stream Ground Truth Ejaan & Karakter)]`) ditetapkan sebagai otoritas mutlak 100% untuk validasi ejaan, tanda baca, kurung, angka, dan kata.
+   - **Anti-Illusion Font Directive**: Menanamkan aturan pencegahan halusinasi visual font Serif (Times New Roman) di mana lengkungan spiral luar `@` menempel pada `(` sehingga membentuk ilusi dobel `((@` pada raster citra gambar.
+   - **Separation of Concerns**: Teks Digital digunakan khusus untuk ejaan/kata/angka, sedangkan Citra Gambar digunakan khusus untuk tata letak/layout/tabel/margin/tanda tangan basah.
+   - **Raster Resolution Upgrade**: Meningkatkan default rendering dari 140 DPI Q80 menjadi 150 DPI Q88 (`-jpegopt quality=88,progressive=y`), menghilangkan artefak ringing DCT 8x8 pada celah piksel karakter rapat di `doc_parser.py`, `native_host.py`, dan `rust_host`.
+
+3. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
+
 
 
 

@@ -1126,7 +1126,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                         json!({ "status": "error", "error": "doc_parser.py script not found" })
                     } else {
                         let max_pages = msg.get("max_pages").and_then(|v| v.as_u64()).unwrap_or(35).to_string();
-                        let dpi = msg.get("dpi").and_then(|v| v.as_u64()).unwrap_or(140).to_string();
+                        let dpi = msg.get("dpi").and_then(|v| v.as_u64()).unwrap_or(150).to_string();
                         let mut cmd = Command::new("python3");
                         cmd.args([
                             parser_script.to_string_lossy().as_ref(),

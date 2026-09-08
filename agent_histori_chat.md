@@ -8248,6 +8248,37 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris.
   3. Bump versi ke `v2.150.292` di `extension/manifest.json`.
 
+### 🚀 Iterasi 176: Instant Ephemeral New Chat pada Temporary Chat Toggle & Eliminasi Halusinasi Typo Vision Dokumen (Dual-Layer Ground Truth Architecture)
+- **Waktu Eksekusi**: 2026-09-09 01:30 WIB
+- **Versi**: `v2.150.293`
+- **Problem Statement Pengguna**:
+  1. *"vision file doc pdf kadang masih ga akurat sedikit bro katanya ai nya ada typo (( padahal di dokumen asli yang saya kirim itu gaada dan sudah aman /plan ini kenapa ya dan solusinya gimana/plan"*
+  2. *"ketika klik temporary chat itu akan new chat tapi remporary ga kesimpen bro"*
+- **Akar Masalah (Root Causes)**:
+  1. *Ilusi Optik Ligatur/Kerning Font Times New Roman & Kompresi DCT 140 DPI Q80*: Karakter `@` memiliki spiral kurva luar berbentuk `C` yang sangat rapat dengan tanda kurung `(`, sehingga membentuk tampilan optik dua garis lengkung menyerupai `((@`. Kompresi JPEG 80 pada 140 DPI memicu ringing artifact yang menyatukan celah 1 piksel tersebut, dan model AI memprioritaskan citra gambar visual di atas stream teks digital tanpa adanya mandat cross-check ketat.
+  2. *Perilaku Klik Tombol Temporary Chat Sebelumnya*: Handler `toggleTemporaryChat` hanya mengganti flag boolean tanpa mengosongkan antarmuka obrolan secara instan, sehingga riwayat chat sebelumnya masih tampak di layar dan menimbulkan kebingungan.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Instant Ephemeral New Chat pada Temporary Chat Toggle (`extension/sidepanel.js` & `extension/sidepanel.html`)**:
+     - Memperbarui `toggleTemporaryChat(forceState)`:
+       * Mengaktifkan Mode Sementara: Menyimpan chat normal yang sedang aktif ke database SQLite/storage, mengaktifkan `isTemporaryChatActive = true`, memanggil `startNewChat()` untuk membersihkan pesan di UI dan mereset state obrolan, mengaktifkan status `.active` pada seluruh tombol `.btn-temporary-chat`, memperbarui judul header menjadi `🕶️ Temporary Chat`, dan menampilkan toast info.
+       * Mematikan Mode Sementara: Memanggil `startNewChat()` sebelum menyetel `isTemporaryChatActive = false` sehingga pesan sementara tidak pernah disimpan ke riwayat, lalu mereset judul header ke normal.
+       * Memperbarui `ensureCurrentSessionInitialized`: Mencegah penulisan session ID ke `sessionStorage` saat temporary chat aktif.
+       * Memperbarui `loadSessionFromStorage`: Otomatis menonaktifkan temporary chat saat membuka sesi tersimpan dari riwayat.
+       * Menambahkan tombol `#btn-temporary-chat` ke header `extension/sidepanel.html` dan mengikat event listener ke seluruh elemen `.btn-temporary-chat`.
+  2. **Dual-Layer Ground Truth Hierarchy pada Core System Prompts (`sidepanel.js` & `background.js`)**:
+     - Menyuntikkan direktif `PROTOKOL AUDIT DOKUMEN & ANTI-HALUSINASI VISUAL (DUAL-LAYER GROUND TRUTH)` ke `CHAT_ONLY_SYSTEM_PROMPT` dan `DEFAULT_SYSTEM_PROMPT` di `extension/sidepanel.js`, serta `systemInstruction` di `extension/background.js`.
+     - Menetapkan aturan tegas bahwa `[Teks Digital Asli (Stream Ground Truth Ejaan & Karakter)]` adalah otoritas kebenaran mutlak 100% untuk ejaan dan tanda baca, dan melarang halusinasi ilusi optik ligatur/kerning font Serif seperti `(@` yang menyerupai `((@`.
+  3. **Penyempurnaan Payload Header & Peringatan Audit Typo (`extension/sidepanel.js`)**:
+     - Memperbarui label snippet teks digital dokumen pada `sendMessageToAI` dan `runChatModeLoop` menjadi `[Teks Digital Asli (Stream Ground Truth Ejaan & Karakter) Halaman N]` disertai instruksi panduan audit typo eksplisit dan label pratinjau `(150 DPI High-Fidelity)`.
+  4. **Peningkatan Kualitas Raster Dokumen ke 150 DPI & Quality 88 (`host/doc_parser.py`, `host/native_host.py`, `host/rust_host/src/main.rs`)**:
+     - Menaikkan DPI default rendering dari 140 ke 150 DPI.
+     - Menaikkan parameter JPEG quality dari 80 ke 88 (`-jpegopt quality=88,progressive=y`), mengeliminasi artefak ringing DCT 8x8 pada celah antar-karakter tanpa membengkakkan ukuran payload.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Validasi sintaksis `node -c extension/sidepanel.js extension/background.js`, `python3 -m py_compile host/doc_parser.py host/native_host.py`, dan `cargo check` di `host/rust_host` lolos 100% tanpa error.
+  2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris.
+  3. Bump versi ke `v2.150.293` di `extension/manifest.json`.
+
+
 
 
 

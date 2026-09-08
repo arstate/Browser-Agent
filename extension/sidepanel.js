@@ -33,15 +33,17 @@ let currentSessionCreatedAt = null;
 function ensureCurrentSessionInitialized(initialMessage = "", attachments = [], defaultTitle = "Chat Session") {
   if (!currentSessionId) {
     currentSessionId = 'sess_' + Date.now();
-    try {
-      sessionStorage.setItem('tab_active_session_id', currentSessionId);
-    } catch (e) {}
+    if (!isTemporaryChatActive) {
+      try {
+        sessionStorage.setItem('tab_active_session_id', currentSessionId);
+      } catch (e) {}
+    }
     const fallbackTitle = (attachments && attachments[0] ? attachments[0].name : defaultTitle);
     const rawTitle = (typeof initialMessage === 'string' ? initialMessage : '')
       .replace(/^\[\/[a-zA-Z0-9_-]+\]\s*/, '')
       .replace(/^@[a-zA-Z0-9_-]+\s*/, '')
       .trim();
-    currentSessionTitle = (rawTitle || fallbackTitle).slice(0, 45).trim() || defaultTitle;
+    currentSessionTitle = isTemporaryChatActive ? "🕶️ Temporary Chat" : ((rawTitle || fallbackTitle).slice(0, 45).trim() || defaultTitle);
     currentSessionCreatedAt = Date.now();
     if (typeof updateHeaderChatTitle === 'function') {
       updateHeaderChatTitle(currentSessionTitle);
@@ -223,6 +225,11 @@ STANDAR KOMUNIKASI (HIGH DIGNITY & ZERO FLUFF):
 2. Direct Prose & Zero Fluff: Langsung ke poin inti tanpa kalimat pembuka/penutup klise. DILARANG menarasikan memori ("Berdasarkan ingatan...").
 3. Truth-Seeking & Anti-Sycophancy: Utamakan kebenaran faktual di atas kepatuhan buta (anti-flattery). Berani berikan sanggahan konstruktif demi solusi terbaik.
 
+PROTOKOL AUDIT DOKUMEN & ANTI-HALUSINASI VISUAL (DUAL-LAYER GROUND TRUTH):
+- Prioritas Teks Digital Mutlak: Saat memeriksa berkas dokumen (PDF/DOCX/XLSX), "[Teks Digital Asli (Stream Ground Truth Ejaan & Karakter)]" adalah sumber kebenaran 100% mutlak untuk validasi ejaan, tanda baca, tanda kurung, angka, dan kata. Seluruh temuan typo WAJIB diverifikasi ke teks digital ini!
+- Larangan Halusinasi Ilusi Optik Font: Font Serif (seperti Times New Roman) menampilkan simbol '@' dengan spiral kurva luar yang menempel rapat pada '(', tampak seperti kurung dobel '((@' pada gambar. DILARANG KERAS melaporkan typo tanda kurung dobel jika pada Teks Digital Asli karakternya tunggal '(@'!
+- Pembagian Peran: Gunakan Teks Digital untuk ejaan/typo/angka; gunakan Citra Visual untuk layout/tabel/margin/tanda tangan/cap.
+
 FITUR BAWAAN RESMI (CONNECTED APPS & TELEGRAM BOT REMOTE):
 - Browser Agent SUDAH MEMILIKI fitur bawaan (Built-in Native) bernama "Connected Apps" di menu Pengaturan (Options -> Connected Apps -> Telegram Bot).
 - Pengguna TIDAK PERLU membuat script Python/Node.js manual! Pengguna bisa langsung mengontrol AI dan Browser dari smartphone via bot Telegram.
@@ -269,6 +276,11 @@ Browser Agent SUDAH MEMILIKI fitur bawaan terintegrasi (Built-in Native) bernama
    - Jika pengguna bertanya apakah bisa terkoneksi ke bot Telegram (misal: "bisa konek ke bot tele ga", "ada bot tele ga", "gimana cara remote dari telegram"):
      * JANGAN PERNAH menyuruh user membuat script Python/Node.js sendiri!
      * Beritahu pengguna bahwa Browser Agent SUDAH MEMILIKI fitur bawaan "Connected Apps" di menu Pengaturan -> Connected Apps -> Telegram Bot. Jika token sudah ada di tab web Telegram, tawarkan atau langsung bantu konfigurasikan secara otomatis via tool configure_telegram_bot!
+
+PROTOKOL AUDIT DOKUMEN & ANTI-HALUSINASI VISUAL (DUAL-LAYER GROUND TRUTH):
+- Prioritas Teks Digital Mutlak: Saat memeriksa berkas dokumen (PDF/DOCX/XLSX), "[Teks Digital Asli (Stream Ground Truth Ejaan & Karakter)]" adalah sumber kebenaran 100% mutlak untuk validasi ejaan, tanda baca, tanda kurung, angka, dan kata. Seluruh temuan typo WAJIB diverifikasi ke teks digital ini!
+- Larangan Halusinasi Ilusi Optik Font: Font Serif (seperti Times New Roman) menampilkan simbol '@' dengan spiral kurva luar yang menempel rapat pada '(', tampak seperti kurung dobel '((@' pada gambar. DILARANG KERAS melaporkan typo tanda kurung dobel jika pada Teks Digital Asli karakternya tunggal '(@'!
+- Pembagian Peran: Gunakan Teks Digital untuk ejaan/typo/angka; gunakan Citra Visual untuk layout/tabel/margin/tanda tangan/cap.
 
 You have access to 3 categories of tools:
 1. BROWSER AUTOMATION TOOLS (via Chrome DevTools Protocol):
@@ -6389,10 +6401,10 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
       pagesToShow.forEach(p => {
         if (p.data_url) {
           const pNum = p.page_num || p.page || 1;
-          const textSnippet = p.text ? `\n[Teks Digital Ground-Truth (Stream Asli) Halaman ${pNum}]:\n${p.text}\n` : '';
+          const textSnippet = p.text ? `\n[Teks Digital Asli (Stream Ground Truth Ejaan & Karakter) Halaman ${pNum}]:\n${p.text}\n[⚠️ PANDUAN AUDIT TYPO: Teks Digital di atas diekstrak langsung dari byte font internal dokumen. Jika pada citra gambar di bawah tampak kurung ganda atau karakter menempel (misal '(@' tampak seperti '((@'), WAJIB jadikan Teks Digital di atas sebagai sumber kebenaran 100%. DILARANG melaporkan ilusi optik rendering font sebagai typo!]\n` : '';
           userPayloadContent.push({
             type: "text",
-            text: `=== [DOKUMEN: "${doc.name}" | HALAMAN ${pNum} DARI ${totalP}] ===${textSnippet}\n[Pratinjau Visual Halaman ${pNum} (140 DPI)]: `
+            text: `=== [DOKUMEN: "${doc.name}" | HALAMAN ${pNum} DARI ${totalP}] ===${textSnippet}\n[Pratinjau Visual Halaman ${pNum} (150 DPI High-Fidelity)]: `
           });
           userPayloadContent.push({
             type: "image_url",
@@ -8727,10 +8739,10 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
       pagesToShow.forEach(p => {
         if (p.data_url) {
           const pNum = p.page_num || p.page || 1;
-          const textSnippet = p.text ? `\n[Teks Digital Ground-Truth (Stream Asli) Halaman ${pNum}]:\n${p.text}\n` : '';
+          const textSnippet = p.text ? `\n[Teks Digital Asli (Stream Ground Truth Ejaan & Karakter) Halaman ${pNum}]:\n${p.text}\n[⚠️ PANDUAN AUDIT TYPO: Teks Digital di atas diekstrak langsung dari byte font internal dokumen. Jika pada citra gambar di bawah tampak kurung ganda atau karakter menempel (misal '(@' tampak seperti '((@'), WAJIB jadikan Teks Digital di atas sebagai sumber kebenaran 100%. DILARANG melaporkan ilusi optik rendering font sebagai typo!]\n` : '';
           userPayloadContent.push({
             type: "text",
-            text: `=== [DOKUMEN: "${doc.name}" | HALAMAN ${pNum} DARI ${totalP}] ===${textSnippet}\n[Pratinjau Visual Halaman ${pNum} (140 DPI)]: `
+            text: `=== [DOKUMEN: "${doc.name}" | HALAMAN ${pNum} DARI ${totalP}] ===${textSnippet}\n[Pratinjau Visual Halaman ${pNum} (150 DPI High-Fidelity)]: `
           });
           userPayloadContent.push({
             type: "image_url",
@@ -12485,29 +12497,57 @@ let isSavingSession = false;
 let saveSessionDebounceTimer = null;
 
 function toggleTemporaryChat(forceState) {
-  if (typeof forceState === 'boolean') {
-    isTemporaryChatActive = forceState;
-  } else {
-    isTemporaryChatActive = !isTemporaryChatActive;
-  }
-  window.isTemporaryChatActive = isTemporaryChatActive;
+  const targetState = (typeof forceState === 'boolean') ? forceState : !isTemporaryChatActive;
+  if (targetState === isTemporaryChatActive && typeof forceState !== 'undefined') return;
 
-  const btn = document.getElementById('btn-temporary-chat');
-  if (btn) {
-    btn.classList.toggle('active', isTemporaryChatActive);
-    btn.setAttribute('aria-pressed', isTemporaryChatActive ? 'true' : 'false');
-    btn.title = isTemporaryChatActive
-      ? 'Mode Chat Sementara: AKTIF (Percakapan tidak disimpan ke riwayat)'
-      : 'Mode Chat Sementara (Klik untuk mengaktifkan)';
-  }
+  if (targetState) {
+    // 1. Jika sesi sebelumnya adalah chat normal dan ada percakapan, simpan dulu
+    if (!isTemporaryChatActive && (currentSessionId || (conversationHistory && conversationHistory.length > 0))) {
+      executeSaveCurrentSessionToDB().catch(() => {});
+    }
 
-  if (isTemporaryChatActive) {
+    // 2. Set status mode temporary chat aktif
+    isTemporaryChatActive = true;
+    window.isTemporaryChatActive = true;
+
+    // 3. Langsung mulai chat baru yang bersih (tidak disimpan ke DB/riwayat)
+    startNewChat();
+
+    // 4. Update UI seluruh tombol temporary chat
+    document.querySelectorAll('.btn-temporary-chat').forEach(btn => {
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
+      btn.title = 'Mode Chat Sementara: AKTIF (Percakapan tidak disimpan ke riwayat)';
+    });
+
+    if (typeof updateHeaderChatTitle === 'function') {
+      updateHeaderChatTitle("🕶️ Temporary Chat");
+    }
+
     if (typeof showUniversalToast === 'function') {
-      showUniversalToast('🕶️ Mode Chat Sementara Aktif: Pesan tidak akan disimpan ke riwayat.');
+      showUniversalToast('🕶️ Chat Sementara Dimulai: Percakapan baru ini tidak akan disimpan ke riwayat.');
     }
   } else {
+    // Mematikan mode temporary chat
+    // Percakapan temporary saat ini TIDAK disimpan ke database!
+    startNewChat();
+
+    isTemporaryChatActive = false;
+    window.isTemporaryChatActive = false;
+
+    // Update UI seluruh tombol temporary chat
+    document.querySelectorAll('.btn-temporary-chat').forEach(btn => {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-pressed', 'false');
+      btn.title = 'Mode Chat Sementara (Klik untuk mengaktifkan)';
+    });
+
+    if (typeof updateHeaderChatTitle === 'function') {
+      updateHeaderChatTitle("");
+    }
+
     if (typeof showUniversalToast === 'function') {
-      showUniversalToast('💾 Mode Chat Normal: Pesan disimpan ke riwayat.');
+      showUniversalToast('💾 Mode Chat Normal: Percakapan baru akan disimpan ke riwayat.');
     }
   }
 }
@@ -13412,6 +13452,16 @@ async function resumeSession(sessionId) {
     return;
   }
 
+  if (isTemporaryChatActive) {
+    isTemporaryChatActive = false;
+    window.isTemporaryChatActive = false;
+    document.querySelectorAll('.btn-temporary-chat').forEach(btn => {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-pressed', 'false');
+      btn.title = 'Mode Chat Sementara (Klik untuk mengaktifkan)';
+    });
+  }
+
   currentSessionId = session.id;
   currentSessionTitle = session.title;
   currentSessionIsPinned = !!session.is_pinned;
@@ -13719,7 +13769,9 @@ inputHistoryImportFile?.addEventListener('change', (e) => {
 document.getElementById('btn-history-new-chat')?.addEventListener('click', startNewChat);
 document.getElementById('btn-header-new-chat')?.addEventListener('click', startNewChat);
 document.getElementById('btn-clear-all-history')?.addEventListener('click', openClearAllConfirmModal);
-document.getElementById('btn-temporary-chat')?.addEventListener('click', () => toggleTemporaryChat());
+document.querySelectorAll('.btn-temporary-chat').forEach(btn => {
+  btn.addEventListener('click', () => toggleTemporaryChat());
+});
 if (typeof window !== 'undefined') {
   window.toggleTemporaryChat = toggleTemporaryChat;
 }

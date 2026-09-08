@@ -1692,6 +1692,30 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Memberikan styling active glow amber pada `.btn-temporary-chat.active`.
      - Menerapkan guard `if (isTemporaryChatActive) return;` pada `saveCurrentSessionToDB()` dan `executeSaveCurrentSessionToDB()` di `sidepanel.js`.
   5. **Verifikasi Pengujian & Standar Sub-800 Baris**:
-     - Validasi sintaksis `node -c extension/design/*.js extension/sidepanel.js` dan `python3 -m py_compile host/native_host.py` lulus 100% tanpa error.
-     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+      - Validasi sintaksis `node -c extension/design/*.js extension/sidepanel.js` dan `python3 -m py_compile host/native_host.py` lulus 100% tanpa error.
+      - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
 
+### 176. Rilis Versi v2.150.293 - Instant Ephemeral New Chat pada Temporary Chat Toggle & Eliminasi Halusinasi Typo Vision Dokumen (Dual-Layer Ground Truth Architecture)
+- **Waktu Rilis**: 2026-09-09 01:30 WIB
+- **Fokus Utama**: Mengintegrasikan 2 penyempurnaan krusial:
+  1. *Perilaku Klik Temporary Chat Menjadi Instant New Chat Ephemeral*: Mengubah handler `#btn-temporary-chat` sehingga saat diklik, sistem langsung memicu obrolan baru (`startNewChat()`) yang bersih, menyimpan obrolan normal sebelumnya (jika ada), dan mengunci sesi baru dalam mode sementara (ephemeral) yang sama sekali tidak disimpan ke riwayat IndexedDB/SQLite maupun storage lokal. Saat dimatikan, obrolan sementara tidak disimpan dan langsung membuka chat baru normal.
+  2. *Eliminasi Halusinasi Typo Vision Dokumen PDF/DOCX*: Mengatasi false positive typo tanda kurung dobel `((@` yang dilaporkan AI pada font Times New Roman (di mana karakter `@` memiliki busur spiral luar yang sangat menempel pada tanda kurung `(`, sehingga tampak seperti kurung ganda pada resolusi raster). Mengimplementasikan Dual-Layer Ground Truth Hierarchy (Teks Digital sebagai supreme authority ejaan & karakter, Gambar Visual untuk layout/tata letak) serta meningkatkan resolusi render dari 140 DPI Q80 ke 150 DPI Q88.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Instant Ephemeral New Chat pada Temporary Chat Toggle (`extension/sidepanel.js` & `extension/sidepanel.html`)**:
+     - Memperbarui fungsi `toggleTemporaryChat(forceState)`:
+       * Saat beralih ke Mode Sementara: Menyimpan sesi normal aktif ke database, mengaktifkan `isTemporaryChatActive = true`, memanggil `startNewChat()` untuk membersihkan UI, menyetel title `🕶️ Temporary Chat`, memperbarui seluruh tombol `.btn-temporary-chat` menjadi aktif, dan menampilkan toast notifikasi `🕶️ Chat Sementara Dimulai: Percakapan baru ini tidak akan disimpan ke riwayat.`.
+       * Saat mematikan Mode Sementara: Memanggil `startNewChat()` sebelum menonaktifkan flag agar chat sementara tidak pernah tersimpan ke database, mengembalikan tombol ke status normal, dan menampilkan toast `💾 Mode Chat Normal: Percakapan baru akan disimpan ke riwayat.`.
+       * Memperbarui `ensureCurrentSessionInitialized`: Mencegah penulisan `tab_active_session_id` ke `sessionStorage` saat temporary chat aktif.
+       * Memperbarui `loadSessionFromStorage`: Otomatis menonaktifkan temporary chat jika pengguna membuka sesi tersimpan dari riwayat.
+       * Menambahkan tombol `#btn-temporary-chat` ke header `extension/sidepanel.html` dan mengikat event listener ke seluruh elemen `.btn-temporary-chat`.
+  2. **Dual-Layer Ground Truth Hierarchy pada Core System Prompts (`sidepanel.js` & `background.js`)**:
+     - Menyuntikkan direktif `PROTOKOL AUDIT DOKUMEN & ANTI-HALUSINASI VISUAL (DUAL-LAYER GROUND TRUTH)` ke `CHAT_ONLY_SYSTEM_PROMPT` dan `DEFAULT_SYSTEM_PROMPT` di `extension/sidepanel.js`, serta `systemInstruction` di `extension/background.js`.
+     - Menetapkan aturan tegas bahwa `[Teks Digital Asli (Stream Ground Truth Ejaan & Karakter)]` adalah otoritas kebenaran mutlak 100% untuk ejaan dan tanda baca, dan melarang halusinasi ilusi optik ligatur/kerning font Serif seperti `(@` yang menyerupai `((@`.
+  3. **Penyempurnaan Payload Header & Peringatan Audit Typo (`extension/sidepanel.js`)**:
+     - Memperbarui label snippet teks digital dokumen pada `sendMessageToAI` dan `runChatModeLoop` menjadi `[Teks Digital Asli (Stream Ground Truth Ejaan & Karakter) Halaman N]` disertai instruksi panduan audit typo eksplisit dan label pratinjau `(150 DPI High-Fidelity)`.
+  4. **Peningkatan Kualitas Raster Dokumen ke 150 DPI & Quality 88 (`host/doc_parser.py`, `host/native_host.py`, `host/rust_host/src/main.rs`)**:
+     - Menaikkan DPI default rendering dari 140 ke 150 DPI.
+     - Menaikkan parameter JPEG quality dari 80 ke 88 (`-jpegopt quality=88,progressive=y`), mengeliminasi artefak ringing DCT 8x8 pada celah antar-karakter tanpa membengkakkan ukuran payload.
+  5. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Validasi sintaksis `node -c extension/sidepanel.js extension/background.js`, `python3 -m py_compile host/doc_parser.py host/native_host.py`, dan `cargo check` di `host/rust_host` lulus 100% tanpa error.
+     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.

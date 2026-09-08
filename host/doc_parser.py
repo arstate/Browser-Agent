@@ -440,8 +440,8 @@ def inspect_document_region(
 def convert_document_to_page_images(
     file_path: str,
     output_dir: str = None,
-    dpi: int = 140,
-    quality: int = 80,
+    dpi: int = 150,
+    quality: int = 88,
     max_pages: int = 35,
     page_range: str = None,
     img_format: str = "jpg",
@@ -449,7 +449,7 @@ def convert_document_to_page_images(
 ) -> dict:
     """
     Converts pages of a PDF, Word (DOCX/DOC), ODT, RTF, or PPTX document
-    into sequential, high-resolution, lightweight page images (140 DPI JPG/PNG).
+    into sequential, high-resolution, lightweight page images (150 DPI JPG/PNG).
     Features:
       - 4x Multi-Core Parallel Chunked Rendering via ThreadPoolExecutor
       - Ephemeral Cache Isolation in ~/.browser-agent/cache/document_pages/
@@ -719,7 +719,7 @@ def convert_document_to_page_images(
         if temp_pdf_dir and os.path.exists(temp_pdf_dir):
             shutil.rmtree(temp_pdf_dir, ignore_errors=True)
 
-def parse_and_convert_document(file_path: str, max_pages: int = 35, dpi: int = 140, quality: int = 80) -> dict:
+def parse_and_convert_document(file_path: str, max_pages: int = 35, dpi: int = 150, quality: int = 88) -> dict:
     """Convenience helper returning both clean Markdown and page images."""
     md_res = parse_document_to_markdown(file_path)
     pages_res = convert_document_to_page_images(file_path, max_pages=max_pages, dpi=dpi, quality=quality)
@@ -755,8 +755,8 @@ if __name__ == "__main__":
     inspect_region = "all"
     target_path = None
     output_dir = None
-    dpi = 140
-    quality = 80
+    dpi = 150
+    quality = 88
     max_pages = 35
     page_range = None
     include_base64 = True
@@ -808,8 +808,8 @@ if __name__ == "__main__":
             target_path,
             page_num=inspect_page_num,
             region=inspect_region,
-            dpi=dpi if dpi != 140 else 250,
-            quality=quality if quality != 80 else 90
+            dpi=dpi if dpi != 150 else 250,
+            quality=quality if quality != 88 else 90
         )
     elif both_mode:
         result = parse_and_convert_document(target_path, max_pages=max_pages, dpi=dpi, quality=quality)

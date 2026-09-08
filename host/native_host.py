@@ -1061,8 +1061,8 @@ def save_and_parse_uploaded_file(file_name, file_data, mime_type="", session_id=
                 p_res = convert_document_to_page_images(
                     file_path=file_path,
                     output_dir=None,
-                    dpi=140,
-                    quality=80,
+                    dpi=150,
+                    quality=88,
                     max_pages=35,
                     include_base64=True
                 )
