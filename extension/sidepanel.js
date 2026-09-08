@@ -3123,7 +3123,7 @@ function connectNativeHost() {
   }
 }
 
-async function sendNativeRpc(action, params = {}, retryCount = 0) {
+async function sendNativeRpc(action, params = {}, retryCount = 0, customTimeoutMs = 30000) {
   // If not connected, attempt immediate connection and wait up to 2.0s
   if (!nativePort) {
     connectNativeHost();
@@ -3141,22 +3141,37 @@ async function sendNativeRpc(action, params = {}, retryCount = 0) {
     const id = nativeReqId++;
     nativeRpcCallbacks.set(id, { resolve, reject });
     
-    // 30s timeout
     const timeoutHandle = setTimeout(() => {
       if (nativeRpcCallbacks.has(id)) {
         nativeRpcCallbacks.delete(id);
         reject(new Error(`RPC action '${action}' timed out`));
       }
-    }, 30000);
+    }, customTimeoutMs || 30000);
 
     try {
-      nativePort.postMessage({ id, action, ...params });
+      const CHUNK_SIZE = 450 * 1024; // 450 KB chunk limit (well under Chrome 1MB native messaging limit)
+      const rawPayload = JSON.stringify({ id, action, ...params });
+      if (rawPayload.length > CHUNK_SIZE) {
+        const totalChunks = Math.ceil(rawPayload.length / CHUNK_SIZE);
+        for (let i = 0; i < totalChunks; i++) {
+          const chunkData = rawPayload.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+          nativePort.postMessage({
+            id: id,
+            is_chunk: true,
+            chunk_index: i,
+            total_chunks: totalChunks,
+            chunk_data: chunkData
+          });
+        }
+      } else {
+        nativePort.postMessage({ id, action, ...params });
+      }
     } catch (postErr) {
       clearTimeout(timeoutHandle);
       nativeRpcCallbacks.delete(id);
       if (retryCount < 1) {
         nativePort = null;
-        return sendNativeRpc(action, params, retryCount + 1).then(resolve).catch(reject);
+        return sendNativeRpc(action, params, retryCount + 1, customTimeoutMs).then(resolve).catch(reject);
       }
       reject(postErr);
     }
@@ -5642,31 +5657,39 @@ function sanitizeMessagesForApi(history, isChatOnly = false, isEmergency = false
           userText = msg.displayContent || "";
         }
 
-        if (userText) {
-          textHistory.push({
-            role: 'user',
-            content: userText
-          });
+        if (userText && userText.trim()) {
+          if (textHistory.length > 0 && textHistory[textHistory.length - 1].role === 'user') {
+            textHistory[textHistory.length - 1].content = (textHistory[textHistory.length - 1].content + '\n\n' + userText.trim()).trim();
+          } else {
+            textHistory.push({
+              role: 'user',
+              content: userText.trim()
+            });
+          }
         }
       } else if (msg.role === 'assistant') {
         let textContent = (typeof msg.content === 'string') ? msg.content : (msg.displayContent || "");
         if (textContent && textContent.trim()) {
           textContent = textContent.replace(/!\[([^\]]*)\]\((?:data:image\/[^\s)]+|local-img:\/\/[^\s)]+)\)/g, '[Gambar: $1]');
           textContent = textContent.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[data:image stripped]');
-          textHistory.push({
-            role: 'assistant',
-            content: textContent
-          });
+          if (textHistory.length > 0 && textHistory[textHistory.length - 1].role === 'assistant') {
+            textHistory[textHistory.length - 1].content = (textHistory[textHistory.length - 1].content + '\n\n' + textContent.trim()).trim();
+          } else {
+            textHistory.push({
+              role: 'assistant',
+              content: textContent.trim()
+            });
+          }
         }
       }
     }
 
-    // Sliding window for Chat-Only mode
-    const chatMaxTokens = isEmergency ? 50000 : 200000;
+    // Sliding window for Chat-Only mode (strictly compact to prevent API timeout)
+    const chatMaxTokens = isEmergency ? 25000 : 60000;
     let chatTokens = textHistory.reduce((s, m) => s + estimateMessageTokens(m), 0);
     if (chatTokens > chatMaxTokens && textHistory.length > 4) {
       const firstTurn = textHistory[0];
-      const minTail = Math.min(10, textHistory.length - 1);
+      const minTail = Math.min(8, textHistory.length - 1);
       while (chatTokens > chatMaxTokens && textHistory.length > minTail + 1) {
         const dropped = textHistory.splice(1, 1)[0];
         chatTokens -= estimateMessageTokens(dropped);
@@ -5822,7 +5845,15 @@ function sanitizeMessagesForApi(history, isChatOnly = false, isEmergency = false
 
     if (current.role === 'user') {
       if (pendingToolCallIds.size > 0) {
-        continue;
+        // Auto-fulfill unfulfilled or interrupted tool calls with synthetic responses
+        for (const missingId of pendingToolCallIds) {
+          sequenced.push({
+            role: 'tool',
+            tool_call_id: missingId,
+            content: '{"status":"interrupted"}'
+          });
+        }
+        pendingToolCallIds.clear();
       }
       if (sequenced.length > 0 && sequenced[sequenced.length - 1].role === 'user') {
         const prev = sequenced[sequenced.length - 1];
@@ -5849,7 +5880,7 @@ function sanitizeMessagesForApi(history, isChatOnly = false, isEmergency = false
   // =========================================================================
   // Atomic Sliding Window & Token Budget Engine
   // =========================================================================
-  const MAX_TOKEN_BUDGET = isEmergency ? 60000 : 250000;
+  const MAX_TOKEN_BUDGET = isEmergency ? 30000 : 70000;
   let currentTokens = sequenced.reduce((sum, m) => sum + estimateMessageTokens(m), 0);
 
   if (currentTokens > MAX_TOKEN_BUDGET && sequenced.length > 4) {
@@ -7073,6 +7104,27 @@ Tugas Anda:
 
         // 2. Generate final answer with strict Master Agent recap prompt
         const cleanUserPrompt = typeof userMessage === 'string' ? userMessage.trim() : "permintaan saya";
+        const finalPromptText = `Tolong Master Agent sajikan laporan hasil analisis/tindakan akhir secara lengkap, to the point, dan terstruktur rapi dalam format Markdown berdasarkan permintaan saya ("${cleanUserPrompt}") dan hasil eksekusi tool di atas.`;
+
+        const normalizedHistory = [];
+        for (const m of cleanTextHistory) {
+          if (!m || !m.content) continue;
+          if (normalizedHistory.length > 0) {
+            const prev = normalizedHistory[normalizedHistory.length - 1];
+            if (prev.role === m.role) {
+              prev.content = (prev.content + '\n\n' + m.content).trim();
+              continue;
+            }
+          }
+          normalizedHistory.push({ role: m.role, content: m.content });
+        }
+
+        if (normalizedHistory.length > 0 && normalizedHistory[normalizedHistory.length - 1].role === 'user') {
+          normalizedHistory[normalizedHistory.length - 1].content = (normalizedHistory[normalizedHistory.length - 1].content + '\n\n' + finalPromptText).trim();
+        } else {
+          normalizedHistory.push({ role: 'user', content: finalPromptText });
+        }
+
         const synthesisMessages = [
           { 
             role: "system", 
@@ -7085,11 +7137,7 @@ Tugas Anda:
             "4. Berkas Lokal: Jika ada berkas yang diunduh/dibuat di PC lokal, sebutkan lokasinya secara presisi (contoh: `/home/arya/Downloads/<nama_file>`).\n" +
             "5. Kesimpulan & Rekomendasi Strategis: Berikan langkah aksi konkret terbaik bagi pengguna."
           },
-          ...cleanTextHistory,
-          { 
-            role: "user", 
-            content: `Tolong Master Agent sajikan laporan hasil analisis/tindakan akhir secara lengkap, to the point, dan terstruktur rapi dalam format Markdown berdasarkan permintaan saya ("${cleanUserPrompt}") dan hasil eksekusi tool di atas.` 
-          }
+          ...normalizedHistory
         ];
 
         const endpointUrl = getNormalizedChatEndpoint(config.endpoint);
@@ -12074,7 +12122,17 @@ chrome.storage.onChanged.addListener((changes, area) => {
 // =========================================================================
 function sanitizeHistoryForStorage(history) {
   if (!Array.isArray(history)) return [];
-  return history.map(msg => {
+
+  // Find index of the latest designArtifact in history
+  let lastArtifactIdx = -1;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i]?.designArtifact) {
+      lastArtifactIdx = i;
+      break;
+    }
+  }
+
+  return history.map((msg, index) => {
     let content = msg.content;
     let attachments = msg.attachments;
 
@@ -12082,10 +12140,11 @@ function sanitizeHistoryForStorage(history) {
     if (msg.role === 'tool') {
       content = '{"status":"success"}';
     } else if (typeof content === 'string') {
-      // For assistant or user messages, preserve full markdown image syntax intact
-      const hasImageMarkdown = /!\[([^\]]*)\]\((https?:\/\/[^\s)]+|data:image\/[^\s)]+|local-img:\/\/[^\s)]+)\)/.test(content);
-      if (!hasImageMarkdown && content.length > 50000) {
-        content = content.slice(0, 50000) + '... [storage truncated]';
+      if (content.includes('data:image/')) {
+        content = content.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[gambar tersimpan]');
+      }
+      if (content.length > 15000) {
+        content = content.slice(0, 15000) + '... [storage truncated]';
       }
     } else if (Array.isArray(content)) {
       content = content.map(part => {
@@ -12097,35 +12156,71 @@ function sanitizeHistoryForStorage(history) {
     }
 
     if (Array.isArray(attachments)) {
-      attachments = attachments.map(att => ({
-        id: att.id || ('att_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
-        name: att.name,
-        size: att.size,
-        type: att.type,
-        isImage: !!att.isImage,
-        isVideo: !!att.isVideo,
-        duration: att.duration || 0,
-        thumbnailUrl: att.thumbnailUrl || (att.isImage && att.dataUrl ? att.dataUrl : "") || "",
-        dataUrl: (att.isImage && att.dataUrl) ? att.dataUrl : (att.thumbnailUrl || ""),
-        textContent: att.textContent || "",
-        width: att.width || 0,
-        height: att.height || 0
-      }));
+      attachments = attachments.map(att => {
+        let textContent = att.textContent || "";
+        if (textContent.length > 3000) {
+          textContent = textContent.slice(0, 3000) + "... [lampiran teks]";
+        }
+        let dataUrl = att.dataUrl || "";
+        if (dataUrl.length > 15000) dataUrl = "";
+        let thumbUrl = att.thumbnailUrl || "";
+        if (thumbUrl.length > 15000) thumbUrl = "";
+
+        return {
+          id: att.id || ('att_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
+          name: att.name || "",
+          size: att.size || 0,
+          type: att.type || "",
+          filePath: att.filePath || "",
+          isImage: !!att.isImage,
+          isVideo: !!att.isVideo,
+          duration: att.duration || 0,
+          thumbnailUrl: thumbUrl,
+          dataUrl: dataUrl,
+          textContent: textContent,
+          width: att.width || 0,
+          height: att.height || 0
+        };
+      });
     }
 
     const clean = {
       role: msg.role,
       content: content,
-      displayContent: msg.role === 'tool' ? "" : ((typeof msg.displayContent === 'string') ? msg.displayContent : (typeof msg.content === 'string' ? msg.content : ""))
+      displayContent: msg.role === 'tool' ? "" : ((typeof msg.displayContent === 'string') ? msg.displayContent.slice(0, 2000) : (typeof msg.content === 'string' ? msg.content.slice(0, 2000) : ""))
     };
-    if (attachments) clean.attachments = attachments;
+    if (attachments && attachments.length > 0) clean.attachments = attachments;
     if (msg.name) clean.name = msg.name;
     if (msg.tool_calls) clean.tool_calls = msg.tool_calls;
     if (msg.tool_call_id) clean.tool_call_id = msg.tool_call_id;
-    if (msg.agentInfo) clean.agentInfo = msg.agentInfo;
-    if (msg.designArtifact) clean.designArtifact = msg.designArtifact;
+    if (msg.agentInfo) {
+      clean.agentInfo = {
+        name: msg.agentInfo.name,
+        displayName: msg.agentInfo.displayName,
+        isAuto: !!msg.agentInfo.isAuto,
+        isBoss: !!msg.agentInfo.isBoss,
+        isMulti: !!msg.agentInfo.isMulti
+      };
+    }
+    if (msg.designArtifact) {
+      const art = msg.designArtifact;
+      if (index === lastArtifactIdx) {
+        clean.designArtifact = {
+          id: art.id,
+          meta: art.meta,
+          slideCount: art.slideCount,
+          html: (art.html && art.html.length < 90000) ? art.html : (art.html ? art.html.slice(0, 90000) + '<!-- truncated -->' : '')
+        };
+      } else {
+        clean.designArtifact = {
+          id: art.id,
+          meta: art.meta,
+          slideCount: art.slideCount,
+          summary: art.summary || (art.meta?.title ? `Slide deck: ${art.meta.title}` : "Slide Deck")
+        };
+      }
+    }
     if (msg.chatMode) clean.chatMode = msg.chatMode;
-    if (msg.rawContent) clean.rawContent = msg.rawContent;
     return clean;
   });
 }
@@ -12240,10 +12335,36 @@ async function executeSaveCurrentSessionToDB() {
       }
     }
 
-    // Save to SQLite via Native Host RPC (clean & fast)
+    // Save to SQLite via Native Host RPC (clean, fast & payload guarded)
     try {
       if (nativePort) {
-        await sendNativeRpc("db_save_session", { session: sessionData });
+        let rpcSession = sessionData;
+        let serialized = JSON.stringify({ session: rpcSession });
+        if (serialized.length > 650 * 1024 && Array.isArray(rpcSession.messages)) {
+          const msgs = rpcSession.messages;
+          if (msgs.length > 40) {
+            rpcSession = {
+              ...sessionData,
+              messages: [msgs[0], ...msgs.slice(-35)]
+            };
+            serialized = JSON.stringify({ session: rpcSession });
+          }
+          if (serialized.length > 650 * 1024 && Array.isArray(rpcSession.messages)) {
+            rpcSession = {
+              ...rpcSession,
+              messages: rpcSession.messages.map((m, idx, arr) => {
+                if (idx === arr.length - 1) return m;
+                return {
+                  role: m.role,
+                  content: typeof m.content === 'string' ? m.content.slice(0, 400) : (Array.isArray(m.content) ? '[Lampiran]' : ''),
+                  tool_calls: m.tool_calls,
+                  tool_call_id: m.tool_call_id
+                };
+              })
+            };
+          }
+        }
+        await sendNativeRpc("db_save_session", { session: rpcSession }, 0, 8000);
       }
     } catch (e) {
       console.warn("SQLite save notice (cached locally):", e);

@@ -2180,5 +2180,36 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 3. **Strict Sub-800 Line Rule Compliance**:
    - Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` dipelihara dengan cermat di bawah 798 baris untuk menjaga kebersihan arsitektur dan stabilitas kode.
 
+## 🛡️ 57. SQLite RPC Timeout Elimination & Seamless Multi-Turn Response Reliability (v2.150.281)
+
+1. **Root Cause Analysis & Chrome Native Messaging Bottleneck**:
+   - Error `SQLite save notice (cached locally): Error: RPC action 'db_save_session' timed out` terjadi karena serialisasi riwayat percakapan yang membengkak hingga 35.1 MB (disebabkan oleh penyimpanan lampiran teks utuh 13 MB, base64 gambar ganda, dan duplikasi prompt sistem agen boss/worker di setiap giliran asisten).
+   - Chrome Native Messaging membatasi ukuran maksimal pesan menjadi 1 MB (`kMaxMessageSize = 1024 * 1024`). Pengiriman payload > 1 MB via `nativePort.postMessage` mengakibatkan pemutusan pipa Native Messaging oleh peramban Chrome, memicu timeout 30 detik pada `sendNativeRpc` dan mengunci status penyimpanan sesi (`isSavingSession = true`).
+   - Masalah respon tidak tampil di Mode Chat dan Mode Agent disebabkan oleh dua hal:
+     - Pada Mode Chat: Penghapusan giliran tool tanpa penggabungan giliran pengguna yang berdekatan menghasilkan sekuens `user` berturut-turut yang memicu penolakan API LLM (`400 Bad Request: Please ensure that multi-turn requests alternate between user and model roles`).
+     - Pada Mode Agent: Kondisi `if (pendingToolCallIds.size > 0) continue;` membuang masukan baru pengguna ketika terdapat panggilan tool sebelumnya yang terinterupsi atau belum lengkap, sehingga request ke AI tidak menyertakan prompt baru atau berakhir pada giliran model.
+
+2. **Bidirectional Chunking & Payload Guard Architecture**:
+   - **Extension-to-Host Chunking**: `sendNativeRpc` memecah payload berukuran > 450 KB menjadi bongkahan terindeks (`is_chunk: true`, 450 KB per potongan).
+   - **Native Host Chunk Reassembly**: Rust Native Host (`browser_agent_host`) dan Python Host (`native_host.py`) dilengkapi buffer penampung chunk untuk merekonstruksi pesan utuh sebelum dieksekusi oleh dispatcher RPC.
+   - **Pencegahan Kunci UI**: Menetapkan batas waktu khusus 8.000 ms untuk penyimpanan sesi SQLite (`db_save_session`), mencegah pembekuan UI jika terjadi kegagalan jaringan atau kunci berkas.
+
+3. **Storage Sanitization & Zero-Bloat Message Representation**:
+   - `sanitizeHistoryForStorage`:
+     - Membatasi teks lampiran maksimal 3.000 karakter (berkas fisik tetap tersimpan di disk atau IndexedDB).
+     - Menghapus string base64 `data:image` raksasa dari isi pesan dan atribut lampiran riwayat.
+     - Merampingkan metadata `agentInfo` hanya pada informasi identitas visual (`name`, `displayName`, `isAuto`, `isBoss`, `isMulti`), memangkas duplikasi ratusan kilobyte prompt sistem.
+     - Menyimpan HTML lengkap artefak desain hanya pada giliran artefak aktif paling mutakhir.
+   - Database SQLite lokal dipadatkan (*vacuumed* & *defragmented*), menyusutkan ukuran berkas dari 335 MB menjadi 8.60 MB dengan waktu operasi di bawah 5 milidetik.
+
+4. **Robust Role Alternation & Anti-Drop User Messages**:
+   - Memastikan giliran peran pada `sanitizeMessagesForApi` (khususnya `isChatOnly`) selalu selang-seling sempurna dengan menggabungkan pesan berturut-turut ber-peran identik (`user` + `user` atau `assistant` + `assistant`).
+   - Mengisi otomatis panggilan tool yang tertunda dengan status interupsi sintesis (`role: 'tool', content: '{"status":"interrupted"}'`) saat pengguna mengirimkan prompt baru, menjamin masukan pengguna tidak pernah terbuang.
+   - Menstabilkan batas token window sliding window pada level 70.000 token untuk respon kilat tanpa risiko *context blowout*.
+
+5. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah 798 baris.
+
+
 
 

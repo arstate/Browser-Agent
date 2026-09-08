@@ -5049,6 +5049,7 @@ def main():
 
     def read_from_chrome():
         nonlocal running
+        chunk_buffers = {}
         while running:
             msg = read_message()
             if msg is None:
@@ -5057,6 +5058,32 @@ def main():
                 break
             
             try:
+                # Handle incoming chunk reassembly from extension
+                if isinstance(msg, dict) and msg.get("is_chunk"):
+                    req_id = msg.get("id")
+                    chunk_idx = msg.get("chunk_index", 0)
+                    total_chunks = msg.get("total_chunks", 1)
+                    chunk_data = msg.get("chunk_data", "")
+
+                    if req_id not in chunk_buffers:
+                        chunk_buffers[req_id] = [None] * total_chunks
+                    
+                    buf = chunk_buffers[req_id]
+                    if chunk_idx < len(buf):
+                        buf[chunk_idx] = chunk_data
+                    
+                    if all(part is not None for part in buf):
+                        full_str = "".join(buf)
+                        del chunk_buffers[req_id]
+                        try:
+                            msg = json.loads(full_str)
+                        except Exception as parse_err:
+                            log(f"Failed to parse reassembled chunked message id {req_id}: {parse_err}")
+                            write_message({"id": req_id, "status": "error", "error": "Chunk reassembly parse error"})
+                            continue
+                    else:
+                        continue # wait for remaining chunks
+
                 # Handle RPC action commands for local PC tools
                 if "action" in msg:
                     try:

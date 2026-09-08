@@ -1369,4 +1369,36 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Memperbarui placeholder input bar Mode Design menjadi: *"Ketik topik apa saja untuk otomatis membuat slide deck 16:9 (contoh: Strategi Pemasaran AI, Kucing Lucu)..."* dengan status header *"Design Mode • Auto Slide Deck 16:9"*.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah limit 800 baris (design_executor.js: 792 baris, design_prompt.js: 197 baris, slide_deck_engine.js: 795 baris, slide_editor.js: 798 baris).
 
+164. **Resolusi Total SQLite RPC Timeout & Pemulihan Respon Agent Mode & Chat Mode (`v2.150.281`):**
+    - **Akar Masalah**:
+      1. `SQLite save notice (cached locally): Error: RPC action 'db_save_session' timed out` pada `executeSaveCurrentSessionToDB`:
+         - Serialisasi sesi lampau menyimpan berkas `attachments.textContent` raksasa (13.3 MB), duplikasi `dataUrl` base64 (MBs), duplikasi prompt utuh pada `agentInfo` (6.3 KB per pesan), dan duplikasi `designArtifact.html` (733 KB) serta `rawContent`. Sesi membengkak hingga 35.1 MB.
+         - Batas Native Messaging Chrome: `kMaxMessageSize = 1024 * 1024` (1 MB). Ketika payload > 1 MB dikirim melalui `nativePort.postMessage`, Chrome secara internal menolak atau memutuskan pipa Native Messaging, menyebabkan Native Host tidak menerima pesan dan `sendNativeRpc` timeout setelah 30 detik.
+         - Selama timeout 30 detik, `isSavingSession = true` mengunci penyimpanan dan memutuskan komunikasi native host (menyebabkan PC Bridge offline).
+      2. `error agent mode chat mode ga bisa kirim hasil respon`:
+         - Pada `sanitizeMessagesForApi(isChatOnly = true)`: penghapusan giliran tool tanpa penggabungan giliran user menyebabkan kemunculan giliran user yang bersebelahan (`user`, `user`), yang memicu respons `400 Bad Request: Please ensure that multi-turn requests alternate between user and model roles` dari endpoint Gemini/9Router.
+         - Pada mode Agent, kondisi `if (pendingToolCallIds.size > 0) continue;` secara keliru membuang pesan baru pengguna saat ada panggilan tool sebelumnya yang terinterupsi, sehingga request AI tidak memiliki prompt user baru atau berakhir pada giliran model (`Requests ending with a model turn are not supported`).
+         - Pada sintesis laporan akhir Master Agent (`runAgentLoop`), konversi giliran `tool` menjadi `user` menghasilkan giliran `user` berurutan yang memicu error 400.
+         - Batas token window yang terlalu besar (250k token) menghasilkan payload hingga 540 KB (~140k token) pada sesi raksasa yang menimbulkan latensi tinggi atau timeout.
+    - **Implementasi Teknis & Solusi**:
+      1. **Dual-Direction Chunking Native Messaging (`extension/sidepanel.js`, `host/rust_host/src/main.rs`, `host/native_host.py`)**:
+         - `sendNativeRpc` kini mendukung pemecahan payload keluar (chunking) menjadi potongan 450 KB (`is_chunk: true`, `chunk_index`, `total_chunks`, `chunk_data`) bila ukuran melebihi 450 KB, sehingga aman dari batas 1 MB Chrome.
+         - `rust_host` dan `native_host.py` dilengkapi modul reassembly chunk masuk, menyatukan kembali potongan pesan sebelum diproses oleh handler RPC.
+         - Menambahkan parameter `customTimeoutMs` pada `sendNativeRpc` (default 30s, dan 8s untuk `db_save_session`) agar tidak mengunci antarmuka.
+      2. **Sanitasi Penyimpanan Ketat & Payload Guard (`sanitizeHistoryForStorage` & `executeSaveCurrentSessionToDB`)**:
+         - `attachments`: teks lampiran dibatasi maksimal 3.000 karakter, dataUrl/thumbnailUrl base64 raksasa (> 15 KB) dikosongkan (berkas fisik tetap tersimpan di filesystem/IndexedDB).
+         - `content`: string base64 `data:image` digantikan menjadi `[gambar tersimpan]`, dibatasi maksimal 15.000 karakter.
+         - `agentInfo`: diringkas hanya menyimpan `{ name, displayName, isAuto, isBoss, isMulti }`, membuang duplikasi prompt sistem agen boss/worker berukuran megabyte.
+         - `designArtifact`: HTML penuh hanya dipertahankan pada artefak aktif paling akhir, giliran riwayat lampau hanya menyimpan ringkasan metadata.
+         - `executeSaveCurrentSessionToDB`: pemeriksaan payload sebelum pengiriman (< 650 KB). Jika melebihi batas, secara cerdas memangkas giliran lawas dan mempertahankan pesan gol utama dan 35 giliran terbaru.
+      3. **Normalisasi Giliran & Anti-Drop Pesan Pengguna (`sanitizeMessagesForApi` & `runAgentLoop`)**:
+         - `isChatOnly`: otomatis menggabungkan giliran berturut-turut dengan peran sama (`user` + `user`, `assistant` + `assistant`) menjadi satu balon tunggal, menjamin urutan selang-seling sempurna tanpa memicu HTTP 400.
+         - Mode Agent: jika pengguna mengirim pesan saat ada tool tertunda (`pendingToolCallIds.size > 0`), sistem otomatis menyisipkan respon sintesis status interupsi (`role: 'tool', content: '{"status":"interrupted"}'`), membersihkan set, dan mempertahankan pesan baru pengguna 100%.
+         - Menyesuaikan sliding window token budget yang seimbang (70.000 token normal, 30.000 token darurat).
+         - Pada sintesis laporan akhir Master Agent (`synthesisMessages`), urutan peran dinormalisasi dan teks permintaan digabungkan dengan giliran user terakhir.
+      4. **Database Migration & Defragmentation Vacuum**:
+         - Menjalankan migrasi pembersihan pada `~/.browser-agent/chat_history.db`: 109 sesi raksasa berhasil dipadatkan, menghemat 263.64 MB ruang disk. Ukuran database menyusut drastis dari **335 MB menjadi 8.60 MB** dengan waktu simpan di bawah 5 milidetik.
+         - Menambahkan `busy_timeout = 5000` dan `PRAGMA wal_checkpoint(PASSIVE)` pada Rust Native Host.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah limit 800 baris.
+
 

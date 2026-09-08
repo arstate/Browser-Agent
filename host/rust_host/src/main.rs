@@ -104,8 +104,9 @@ fn init_db() -> Result<Connection, rusqlite::Error> {
 
     let conn = Connection::open(get_db_path())?;
 
-    // Enable WAL mode for ultra fast concurrent read/write throughput
-    let _ = conn.execute_batch("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;");
+    // Enable WAL mode for ultra fast concurrent read/write throughput and robust busy handling
+    let _ = conn.busy_timeout(std::time::Duration::from_millis(5000));
+    let _ = conn.execute_batch("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000;");
 
     conn.execute_batch(
         "
@@ -1479,6 +1480,8 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 params![sid, title, model, count, preview, messages, is_pinned, now],
             );
 
+            let _ = conn.execute_batch("PRAGMA wal_checkpoint(PASSIVE);");
+
             match res {
                 Ok(_) => json!({ "status": "ok", "session_id": sid }),
                 Err(e) => json!({ "status": "error", "error": e.to_string() }),
@@ -2237,8 +2240,39 @@ fn main() {
 
     let mut stdin = io::stdin();
     let mut stdout = io::stdout();
+    let mut chunk_buffers: std::collections::HashMap<u64, (usize, Vec<Option<String>>)> = std::collections::HashMap::new();
 
-    while let Some(msg) = read_message(&mut stdin) {
+    while let Some(mut msg) = read_message(&mut stdin) {
+        // Handle incoming chunk reassembly from extension
+        if msg.get("is_chunk").and_then(|v| v.as_bool()).unwrap_or(false) {
+            if let Some(id) = msg.get("id").and_then(|v| v.as_u64()) {
+                let idx = msg.get("chunk_index").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+                let total = msg.get("total_chunks").and_then(|v| v.as_u64()).unwrap_or(1) as usize;
+                let data = msg.get("chunk_data").and_then(|v| v.as_str()).unwrap_or("").to_string();
+
+                let entry = chunk_buffers.entry(id).or_insert_with(|| (0, vec![None; total]));
+                if idx < entry.1.len() && entry.1[idx].is_none() {
+                    entry.1[idx] = Some(data);
+                    entry.0 += 1;
+                }
+
+                if entry.0 == total {
+                    let full_str: String = entry.1.iter().filter_map(|s| s.as_ref()).cloned().collect();
+                    chunk_buffers.remove(&id);
+                    if let Ok(parsed) = serde_json::from_str::<Value>(&full_str) {
+                        msg = parsed;
+                    } else {
+                        log_msg(&format!("Failed to parse reassembled chunked message id {}", id));
+                        let resp = json!({ "id": id, "status": "error", "error": "Chunk reassembly parse error" });
+                        write_message(&mut stdout, &resp);
+                        continue;
+                    }
+                } else {
+                    continue; // Wait for remaining chunks
+                }
+            }
+        }
+
         let resp = handle_rpc(msg, &conn);
         write_message(&mut stdout, &resp);
     }
