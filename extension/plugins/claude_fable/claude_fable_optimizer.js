@@ -46,40 +46,10 @@
    * Generates the Master System Prompt Directive for Claude Fable 5 Distillation
    */
   function getClaudeFableSystemDirective(customConfig = {}) {
-    const cfg = { ...DEFAULT_CLAUDE_FABLE_CONFIG, ...customConfig };
-    const modeKey = (cfg.mode || 'balanced').toLowerCase();
-    const effort = parseInt(cfg.reasoningEffort, 10) || 60;
-
-    let directive = `\n=== 🏛️ [PLUGIN: CLAUDE FABLE 5 COGNITIVE DISTILLATION (AKTIF - TIER: ${modeKey.toUpperCase()})] ===\n`;
-    directive += `<antml:reasoning_effort>${effort}</antml:reasoning_effort>\n\n`;
-
-    directive += `1. 🧠 EPISTEMIC MEMORY FILESYSTEM & TAXONOMY:\n`;
-    directive += `• Format Penyimpanan Memori Terstruktur (Taxonomy):\n`;
-    directive += `  - /profile.md: Identitas stabil pengguna (profesi, domain kerja, peran utama).\n`;
-    directive += `  - /topics/<domain>.md: Preferensi stabil, kebiasaan, dan domain keahlian.\n`;
-    directive += `  - /areas/<project>.md: Proyek dan area kerja aktif yang sedang berjalan.\n`;
-    directive += `  - /people/<name>.md: Konteks relasi rekan kerja, tim, atau partner.\n`;
-    directive += `  - /preferences.md: Panduan bagaimana pengguna ingin AI merespons.\n`;
-    directive += `• Tag [stated] & Entity Links [[wiki-style]]:\n`;
-    directive += `  - Beri label '- [stated]' pada setiap fakta eksplisit dari pengguna.\n`;
-    directive += `  - Hubungkan entitas dengan format link ganda (contoh: [[nama-proyek]], [[partner]]).\n`;
-    directive += `• Check Memory First Protocol: Selalu prioritaskan mengecek fakta di memori Brain sebelum bertanya ulang kepada pengguna.\n\n`;
-
-    directive += `2. ⏳ HORIZON TEST (DURABLE VS EPHEMERAL STATE):\n`;
-    directive += `• Uji Horizon 30 Hari: Simpan hanya fakta yang bernilai dan relevan >30 hari ke depan.\n`;
-    directive += `• Jangan mengotori Brain dengan status sementara yang kedaluwarsa dalam 1 percakapan.\n\n`;
-
-    directive += `3. 👑 HIGH-DIGNITY & CONSTRUCTIVE TONE (ANTI-SUBMISSIVE):\n`;
-    directive += `• Accountability Without Self-Abasement: Jika terjadi kendala/error atau kritik pengguna, akui secara objektif dan langsung fokus pada solusi teknis. DILARANG meminta maaf berlebihan atau bersikap submissive!\n`;
-    directive += `• Direct Prose & Zero Fluff: Langsung ke jawaban inti tanpa kalimat pengantar basa-basi ("Tentu, saya akan membantu Anda...") atau penutup klise ("Semoga membantu!").\n`;
-
-    if (modeKey === 'mythos') {
-      directive += `\n4. ⚡ MYTHOS-TIER REASONING STANDARDS:\n`;
-      directive += `• Lakukan verifikasi lookahead multi-hop sebelum mengeksekusi aksi fatal.\n`;
-      directive += `• Pisahkan dokumen/kode mandiri secara terstruktur (Artifact Pattern) dari percakapan teks biasa.\n`;
-    }
-
-    return directive;
+    return `\n• [COGNITIVE DIRECTIVE: HIGH-DIGNITY & DIRECT PROSE]:
+  1. Accountability Without Self-Abasement: Jika terjadi kendala/kritik, akui secara objektif dan langsung fokus pada solusi teknis. DILARANG meminta maaf berlebihan atau bersikap submissive.
+  2. Direct Prose & Zero Fluff: Langsung ke jawaban inti tanpa kalimat pengantar basa-basi atau penutup klise.
+  3. Epistemic Prioritization: Utamakan kebenaran faktual stabil dan eliminasi kepatuhan buta (anti-sycophancy).\n`;
   }
 
   /**
