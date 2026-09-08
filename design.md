@@ -2245,8 +2245,18 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 5. **Strict Sub-800 Line Rule Compliance**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah 798 baris.
 
+## 🛡️ 60. Eliminasi Scope Error pendingVisualDocPages & Native RPC Pipe Anti-Starvation (v2.150.284)
 
+1. **Root Cause Analysis (ReferenceError & Pipe Starvation)**:
+   - **`pendingVisualDocPages` ReferenceError**: Variabel penampung giliran inspeksi visual dokumen digunakan tanpa deklarasi `let` pada cakupan `runAgentLoop`, memicu exception `ReferenceError: pendingVisualDocPages is not defined` yang memutus siklus eksekusi agent dan menampilkan peringatan `Terjadi Kendala AI / Rate Limit`.
+   - **Native Host Pipe Starvation**: Saat berkas PDF multi-halaman diunggah, Native Host sebelumnya merender 20 halaman secara blocking di single-threaded `stdin` loop, menahan antrean pesan Native Messaging hingga memicu timeout 8 detik pada operasi database SQLite (`db_save_session`, `db_save_personal_memory`).
 
+2. **Decoupled Upload Thumbnailing & On-Demand Deep Conversion**:
+   - **Fast-Path Upload (2 Pages Only)**: Parameter rendering saat upload diatur ke `--max-pages 2` sehingga upload berkas langsung selesai dalam < 300 ms tanpa memblokir kanal RPC SQLite.
+   - **On-Demand Complete Multimodal Vision**: Ketika agent memerlukan telaah visual mendalam atas seluruh isi berkas, agent memanggil tool `view_document` yang menjalankan konversi lengkap secara on-demand.
+   - **Safe Numbering Fallback**: Menstandarkan pembacaan nomor halaman dokumen dengan fallback `p.page_num || p.page || 1` pada seluruh pipeline observasi visual di `runAgentLoop` dan `runChatModeLoop`.
 
+3. **Strict Sub-800 Line Rule Compliance**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
 
 

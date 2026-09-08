@@ -1024,7 +1024,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                     cmd.arg(parser_script.to_string_lossy().as_ref());
                     if is_doc {
                         cmd.arg("--both");
-                        cmd.args(["--max-pages", "20"]);
+                        cmd.args(["--max-pages", "2"]);
                     }
                     cmd.arg(target_path.to_string_lossy().as_ref());
 

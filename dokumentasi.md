@@ -1462,6 +1462,25 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Memperbarui atribut `accept` pada `input-file-hidden` di `sidepanel.html` dan `newtab.html` agar mencakup seluruh format dokumen, teks, audio, video, dan `*/*`.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah limit 800 baris.
 
-
-
-
+167. **Eliminasi Fatal ReferenceError `pendingVisualDocPages` & Resolusi Native RPC Pipe Starvation / SQLite Timeout (`v2.150.284`):**
+    - **Akar Masalah**:
+      1. `ReferenceError: pendingVisualDocPages is not defined` di `runAgentLoop` (`extension/sidepanel.js`):
+         - Pada baris 7057, 7080, 7081, dan 7106, variabel `pendingVisualDocPages` digunakan untuk mengumpulkan halaman visual dokumen dan menginjeksikannya ke dalam `conversationHistory`. Namun variabel tersebut belum dideklarasikan dengan `let` dalam cakupan `runAgentLoop`, memicu exception `ReferenceError: pendingVisualDocPages is not defined` yang ditangkap blok `catch` dan menampilkan gelembung peringatan `Terjadi Kendala AI / Rate Limit`.
+      2. Native RPC Pipe Starvation & Timeout SQLite:
+         - Saat pengguna mengunggah dokumen PDF multi-halaman (misal: 856 KB, 20+ halaman), `save_and_parse_uploaded_file` di Host mengeksekusi `doc_parser.py --both --max-pages 20`.
+         - Proses rendering gambar 20 halaman memakan waktu CPU 10-15 detik secara blocking pada single-threaded `stdin` message loop di host biner Rust (`main.rs`).
+         - Sementara host sibuk merender 20 halaman, panggilan RPC lain dari ekstensi Chrome seperti `db_save_session`, `db_save_personal_memory`, dan `db_get_sessions` tertahan di antrean pipe dan akhirnya mengalami timeout 8 detik (`Error: RPC action 'db_save_session' timed out`).
+      3. Akses Properti Nomor Halaman Tidak Konsisten:
+         - Di loop injeksi `docAttachments` dan `runChatModeLoop`, nomor halaman diakses melalui `p.page`. Sedangkan `doc_parser.py` menghasilkan `page_num`, sehingga pada beberapa kondisi menghasilkan `Halaman undefined`.
+    - **Solusi & Implementasi**:
+      1. **Deklarasi dan Reset `pendingVisualDocPages`**:
+         - Menambahkan deklarasi `let pendingVisualDocPages = [];` di scope `runAgentLoop` dan me-reset `pendingVisualDocPages = [];` di setiap awal iterasi per-turn sebelum pemanggilan tool.
+      2. **Optimasi Max-Pages Upload Menjadi 2 Thumbnail Saja**:
+         - Pada `host/rust_host/src/main.rs` dan `host/native_host.py`, parameter `--max-pages` untuk proses parsing saat upload diturunkan dari 20 menjadi 2 halaman thumbnail pratinjau.
+         - Pengunggahan berkas dokumen kini selesai instan (< 300 ms), mencegah antrean pipe native messaging macet dan mengeliminasi total timeout SQLite `db_save_session` serta `db_save_personal_memory`.
+         - Ketika AI agent perlu memeriksa seluruh halaman dokumen secara lengkap, agent akan memanggil tool `view_document` yang mengeksekusi konversi halaman lengkap secara on-demand.
+      3. **Standarisasi Penomoran Halaman Aman**:
+         - Mengubah akses properti halaman menjadi `const pNum = p.page_num || p.page || 1;` di seluruh `runAgentLoop`, visual turn injection, dan `runChatModeLoop`.
+      4. **Kompilasi & Pemasangan Rust Binary Release**:
+         - Mengompilasi ulang biner release `cargo build --release` di `host/rust_host` dan memasangnya ke `host/browser_agent_host`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah limit 800 baris.

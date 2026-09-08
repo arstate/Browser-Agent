@@ -6358,6 +6358,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   const videoAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isVideo) : [];
   const docAttachments = Array.isArray(attachments) ? attachments.filter(a => a.isDocument && Array.isArray(a.pages) && a.pages.length > 0) : [];
   const textAttachments = Array.isArray(attachments) ? attachments.filter(a => !a.isImage && !a.isVideo && (a.textContent || a.parsedMarkdown)) : [];
+  let pendingVisualDocPages = [];
 
   let combinedPrompt = userMessage || "";
   if (textAttachments.length > 0) {
@@ -6410,9 +6411,10 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
       const pagesToShow = doc.pages.slice(0, 20);
       pagesToShow.forEach(p => {
         if (p.data_url) {
+          const pNum = p.page_num || p.page || 1;
           userPayloadContent.push({
             type: "text",
-            text: `--- [Dokumen: "${doc.name}" - Halaman ${p.page} dari ${doc.totalPages || doc.pages.length} (150 DPI)] ---`
+            text: `--- [Dokumen: "${doc.name}" - Halaman ${pNum} dari ${doc.totalPages || doc.pages.length} (150 DPI)] ---`
           });
           userPayloadContent.push({
             type: "image_url",
@@ -6841,6 +6843,7 @@ Tugas Anda:
       }
 
       let shouldStopTurn = false;
+      pendingVisualDocPages = [];
 
       // Check if model called tools
       if (message.tool_calls && message.tool_calls.length > 0) {
@@ -7088,9 +7091,10 @@ Tugas Anda:
             const pagesToShow = docInfo.pages.slice(0, 15);
             pagesToShow.forEach(p => {
               if (p.data_url) {
+                const pageNum = p.page_num || p.page || 1;
                 visualParts.push({
                   type: "text",
-                  text: `--- [Halaman ${p.page} dari ${docInfo.total_pages} (File: ${p.file_name || docInfo.file_name})] ---`
+                  text: `--- [Halaman ${pageNum} dari ${docInfo.total_pages} (File: ${p.file_name || docInfo.file_name})] ---`
                 });
                 visualParts.push({
                   type: "image_url",
@@ -8651,9 +8655,10 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
       const pagesToShow = doc.pages.slice(0, 20);
       pagesToShow.forEach(p => {
         if (p.data_url) {
+          const pNum = p.page_num || p.page || 1;
           userPayloadContent.push({
             type: "text",
-            text: `--- [Dokumen: "${doc.name}" - Halaman ${p.page} dari ${doc.totalPages || doc.pages.length} (150 DPI)] ---`
+            text: `--- [Dokumen: "${doc.name}" - Halaman ${pNum} dari ${doc.totalPages || doc.pages.length} (150 DPI)] ---`
           });
           userPayloadContent.push({
             type: "image_url",

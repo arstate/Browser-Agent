@@ -1064,7 +1064,7 @@ def save_and_parse_uploaded_file(file_name, file_data, mime_type="", session_id=
                     output_dir=pages_dir,
                     dpi=150,
                     quality=85,
-                    max_pages=20,
+                    max_pages=2,
                     include_base64=True
                 )
                 if p_res.get("status") == "ok":
