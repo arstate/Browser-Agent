@@ -613,6 +613,23 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     <main class="deck-stage-wrap" id="deck-stage-wrap">
       ${slidesHtml}
 
+      ${getPatentedFloatingDockHtml(total)}
+    </main>
+  </div>
+
+  <script id="slide-deck-controller-script">
+    ${(typeof getSlideDeckRuntimeScript === 'function' ? getSlideDeckRuntimeScript() : (typeof window !== 'undefined' && window.getSlideDeckRuntimeScript ? window.getSlideDeckRuntimeScript() : ''))}
+  </script>
+  ${(typeof getSlideDeckEditorHtml === 'function' ? getSlideDeckEditorHtml() : (typeof window !== 'undefined' && window.getSlideDeckEditorHtml ? window.getSlideDeckEditorHtml() : ''))}
+  <script>
+    ${(typeof getSlideDeckEditorScript === 'function' ? getSlideDeckEditorScript() : (typeof window !== 'undefined' && window.getSlideDeckEditorScript ? window.getSlideDeckEditorScript() : ''))}
+  </script>
+</body>
+</html>`;
+}
+
+function getPatentedFloatingDockHtml(total = 1) {
+  return `
       <nav class="deck-floating-dock">
         <button type="button" class="dock-btn dock-btn-circle" id="dock-btn-prev" title="Slide Sebelumnya (ArrowLeft)">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -663,24 +680,13 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         <button type="button" class="dock-btn dock-btn-circle" id="dock-btn-fullscreen" title="Layar Penuh (F)">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
         </button>
-      </nav>
-    </main>
-  </div>
-
-  <script id="slide-deck-controller-script">
-    ${(typeof getSlideDeckRuntimeScript === 'function' ? getSlideDeckRuntimeScript() : (typeof window !== 'undefined' && window.getSlideDeckRuntimeScript ? window.getSlideDeckRuntimeScript() : ''))}
-  </script>
-  ${(typeof getSlideDeckEditorHtml === 'function' ? getSlideDeckEditorHtml() : (typeof window !== 'undefined' && window.getSlideDeckEditorHtml ? window.getSlideDeckEditorHtml() : ''))}
-  <script>
-    ${(typeof getSlideDeckEditorScript === 'function' ? getSlideDeckEditorScript() : (typeof window !== 'undefined' && window.getSlideDeckEditorScript ? window.getSlideDeckEditorScript() : ''))}
-  </script>
-</body>
-</html>`;
+      </nav>`;
 }
 
 // Global attachments
 if (typeof window !== "undefined") {
   window.buildExecutiveSlideDeckHtml = buildExecutiveSlideDeckHtml;
+  window.getPatentedFloatingDockHtml = getPatentedFloatingDockHtml;
   if (!window.escapeHtml) window.escapeHtml = escapeHtml;
   if (!window.toRoman) window.toRoman = toRoman;
 }

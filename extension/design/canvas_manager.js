@@ -9,7 +9,7 @@ if (typeof escapeHtml !== 'function') {
   function escapeHtml(str) { return typeof str !== 'string' ? String(str || '') : str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
 }
 function getActiveDesignArtifact() { return (typeof window !== 'undefined' && window.activeDesignArtifact) ? window.activeDesignArtifact : activeDesignArtifact; }
-function setActiveDesignArtifact(artifact) { activeDesignArtifact = artifact; if (typeof window !== 'undefined') { window.activeDesignArtifact = artifact; window.__activeDesignArtifact = artifact; } }
+function setActiveDesignArtifact(artifact) { if (artifact?.html && typeof upgradeSlideDeckHtmlIfNeeded === 'function') artifact.html = upgradeSlideDeckHtmlIfNeeded(artifact.html, artifact.meta?.title || "", artifact.meta || {}); activeDesignArtifact = artifact; if (typeof window !== 'undefined') { window.activeDesignArtifact = artifact; window.__activeDesignArtifact = artifact; } }
 function isCanvasOpen() { const p = document.getElementById('opendesign-canvas-pane'); return Boolean(p && p.style.display !== 'none' && document.body.classList.contains('canvas-active')); }
 
 function ensureSlideEditorInjected(iframe) {
@@ -67,16 +67,15 @@ function attachSlideDeckController(iframe) {
       doc.head.appendChild(styleTag);
     }
 
-    // Guarantee realtime editor toolbar, styles, and dock button in iframe (resilient for old artifacts)
-    const dock = doc.querySelector('.deck-floating-dock');
-    if (dock && !doc.getElementById('dock-btn-edit')) {
-      const fsBtn = doc.getElementById('dock-btn-fullscreen');
-      const div = doc.createElement('div'); div.className = 'dock-divider';
-      const b = doc.createElement('button');
-      b.type = 'button'; b.className = 'dock-btn'; b.id = 'dock-btn-edit'; b.title = 'Mode Edit Realtime';
-      b.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Edit</span>`;
-      if (fsBtn) { dock.insertBefore(div, fsBtn); dock.insertBefore(b, fsBtn); }
-      else { dock.appendChild(div); dock.appendChild(b); }
+    // Guarantee 100% patented official floating dock in iframe (resilient for old artifacts / AI improvisations)
+    let dock = doc.querySelector('.deck-floating-dock, #deck-floating-dock, nav');
+    if (!doc.getElementById('dock-export-wrapper')) {
+      const getDock = (typeof getPatentedFloatingDockHtml === 'function') ? getPatentedFloatingDockHtml : (typeof window !== 'undefined' ? window.getPatentedFloatingDockHtml : null);
+      if (getDock) {
+        const temp = doc.createElement('div'); temp.innerHTML = getDock(slides.length);
+        const newDock = temp.firstElementChild;
+        if (newDock) { if (dock) dock.replaceWith(newDock); else (doc.getElementById('deck-stage-wrap') || doc.body).appendChild(newDock); }
+      }
     }
 
     let currentIndex = 0;

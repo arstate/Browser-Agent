@@ -2148,4 +2148,21 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Dynamic Runtime Script Ingestion & Popout Regeneration**:
    - Menyematkan `ensureLatestSlideDeckRuntimeScript(html)` di `slide_deck_engine.js` dan tombol popout `canvas_manager.js` agar seluruh arsip presentasi lama yang dibuka ke tab baru langsung diperbarui dengan kapabilitas ekspor PDF mandiri terbaru.
 
+## 🛡️ 55. Patented Slide Deck UI Shell & Zero-Hallucination Navigation Standard (v2.150.279)
+
+1. **Root Cause & Visual Inconsistency Elimination**:
+   - Menuntaskan anomali UI floating dock yang sering berubah-ubah atau memburuk (misal tombol kontrol berubah menjadi tombol teks biasa `‹ Prev 9 / 10 Next › | Reset 🖨️ PDF Fullscreen | ✏️ Edit` tanpa menu dropup ekspor resmi).
+   - Masalah terjadi karena LLM menghasilkan tag navigasi darurat sendiri, yang kemudian memicu bypass pada `upgradeSlideDeckHtmlIfNeeded` karena tag darurat tersebut menyertakan nama class `deck-floating-dock`.
+
+2. **Strict System Chrome Separation**:
+   - Memisahkan secara tegas antara *System UI Chrome* dan *Slide Content Design*:
+     - **System UI Chrome (100% Fixed & Patented)**: Panggung `#deck-stage-wrap`, bilah samping miniatur `#deck-sidebar`, floating dock `.deck-floating-dock` (dengan icon SVG bulat, counter slide, tombol reset dengan badge `R`, dropup menu `Export ⌵` berfitur PDF Vector 16:9, tombol Edit pensil, dan tombol Fullscreen), serta skrip pengendali runtime.
+     - **AI Creative Domain**: 100% dialokasikan untuk perancangan visual dan susunan materi di dalam `.slide-section` (tata letak, tipografi, bento cards, metrics, quote, timeline, materi, dan gambar).
+
+3. **Multi-Level Self-Healing & Dock Enforcement**:
+   - Helper `getPatentedFloatingDockHtml(total)` di `slide_template.js` menjadi sumber kebenaran tunggal (*single source of truth*) pembuatan dock presentasi.
+   - Pengecekan ketat pada `upgradeSlideDeckHtmlIfNeeded`: hanya dokumen yang memiliki `dock-export-wrapper`, `dock-export-pdf-item`, `dock-btn-reset`, `dock-btn-edit`, `dock-btn-fullscreen`, dan `slide-deck-controller-script` yang dipertahankan. Dokumen lama atau dock darurat AI otomatis diekstrak slidenya (mempertahankan custom canvas HTML 1:1) dan dibungkus ulang dengan shell paten resmi.
+   - Deteksi in-DOM pada `attachSlideDeckController` di `canvas_manager.js`: jika dock tidak memiliki `dock-export-wrapper`, dock darurat langsung digantikan secara instan dengan `getPatentedFloatingDockHtml()`.
+
+
 

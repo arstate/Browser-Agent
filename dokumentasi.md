@@ -1333,3 +1333,22 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
          - Menambahkan fallback panggilan `chrome.runtime.sendMessage` di dalam `exportSlideDeckPdf()` jika fungsi `rpcFn` (`sendNativeRpc`) tidak tersedia di scope lokal jendela.
     - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh di bawah limit 800 baris (slide_deck_engine.js: 795 baris, canvas_manager.js: 795 baris, slide_template.js: 686 baris, canvas_exporter.js: 264 baris).
 
+162. **Sistem Shell Slide Deck Paten & Purnarupa Navigasi Baku (Zero-UI Hallucination) (`v2.150.279`):**
+    - **Akar Masalah**:
+      - Pengguna melaporkan bahwa tampilan UI slide deck sering kali berubah-ubah tidak konsisten (misalnya tombol navigasi berubah menjadi tombol teks mentah `‹ Prev 9 / 10 Next › | Reset 🖨️ PDF Fullscreen | ✏️ Edit` tanpa dropup Export resmi dan tanpa icon SVG).
+      - Investigasi menemukan bahwa model AI mencoba menghasilkan sendiri kode tag `<nav class="deck-floating-dock">` dan tombol kontrolnya. Ketika AI menghasilkan dock darurat ini, logika `upgradeSlideDeckHtmlIfNeeded` sebelumnya secara keliru menganggap deck tersebut "sudah lengkap" hanya karena mengandung string `deck-floating-dock`, sehingga mem-bypass sistem upgrade dan membiarkan UI darurat LLM tetap tampil di layar.
+    - **Implementasi Teknis & Solusi**:
+      1. **Mandatori UI Chrome Paten (`design_prompt.js`)**:
+         - Menetapkan direktif mutlak bahwa UI Shell luar (`#deck-stage-wrap`, `#deck-sidebar`, `.deck-floating-dock` dengan Prev/Counter/Next, Reset R, Export dropup 16:9 Vector PDF, Realtime Edit, dan Fullscreen) adalah SHELL SISTEM BAKU yang dipatenkan platform.
+         - AI Agent diinstruksikan 100% fokus merancang KONTEN SLIDE di dalam `.slide-section` (tata letak, tipografi, bento cards, metrics, quote, timeline, materi, dan gambar) dan DILARANG KERAS mengarang tombol navigasi sendiri atau memodifikasi floating dock.
+      2. **Enforce Patented Dock & Engine Purification (`slide_deck_engine.js` & `slide_template.js`)**:
+         - Mengekstrak generator dock baku `getPatentedFloatingDockHtml(total)` ke dalam `slide_template.js` dan mengekspornya ke window.
+         - Memperketat penjaga `upgradeSlideDeckHtmlIfNeeded`: hanya mem-bypass jika dokumen benar-benar memiliki komponen paten resmi (`dock-export-wrapper`, `dock-export-pdf-item`, `dock-btn-reset`, `dock-btn-edit`, `dock-btn-fullscreen`, dan `slide-deck-controller-script`).
+         - Jika dock darurat AI atau versi lama terdeteksi, sistem secara otomatis mengekstrak seluruh slide (mempertahankan custom canvas HTML, styling, dan kartu materi 1:1) dan merakitnya ulang ke dalam shell paten resmi via `buildExecutiveSlideDeckHtml`.
+      3. **In-DOM Self-Healing & Canvas Resilience (`canvas_manager.js`)**:
+         - Pada `attachSlideDeckController(iframe)`: jika dokumen di dalam iframe tidak memiliki `#dock-export-wrapper`, dock darurat langsung digantikan secara live dengan `getPatentedFloatingDockHtml(slides.length)`.
+         - Pada `setActiveDesignArtifact`: secara otomatis memanggil `upgradeSlideDeckHtmlIfNeeded` sehingga setiap artefak yang dibuka selalu berselimutkan UI paten.
+         - Pada alur revisi `design_executor.js`: secara otomatis memurnikan hasil revisi AI melalui `upgradeSlideDeckHtmlIfNeeded`.
+    - **Strict Sub-800 Line Rule Compliance**: Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` tetap patuh di bawah limit 800 baris.
+
+

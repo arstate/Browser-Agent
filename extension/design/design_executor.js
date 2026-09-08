@@ -328,9 +328,10 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
             const art = extractHtmlArtifact(accumulatedContent);
             if (art.html) {
               let revHtml = (typeof replaceImagePlaceholdersInHtml === 'function') ? replaceImagePlaceholdersInHtml(art.html, imageAttachments) : art.html;
-              if (imageAttachments.length > 0 && /tambah|masuk|sisip|taruh|gambar|image|foto/i.test(userMessage)) {
-                revHtml = (typeof injectImagesIntoSlideDeckHtml === 'function') ? injectImagesIntoSlideDeckHtml(revHtml, imageAttachments) : revHtml;
+              if (imageAttachments.length > 0 && /tambah|masuk|sisip|taruh|gambar|image|foto/i.test(userMessage) && typeof injectImagesIntoSlideDeckHtml === 'function') {
+                revHtml = injectImagesIntoSlideDeckHtml(revHtml, imageAttachments);
               }
+              if (typeof upgradeSlideDeckHtmlIfNeeded === 'function') revHtml = upgradeSlideDeckHtmlIfNeeded(revHtml, activeDeckTitle, targetArtifact.meta);
               targetArtifact.html = revHtml;
               break;
             }

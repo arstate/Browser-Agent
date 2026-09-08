@@ -7806,4 +7806,34 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris (seluruh berkas <= 798 baris).
   4. Bump versi ke `v2.150.278` di `manifest.json`.
 
+### Iterasi: Sistem Shell Slide Deck Paten & Purnarupa Navigasi Baku (Zero-UI Hallucination) (`v2.150.279`)
+- **User Request:**
+  - "kok slide deck ui ini selalu berubah ubah ya coba buat fix paten jadi ai agent fokus desain slide deck aja jangan uba fungsi ui slide deck nya bro , perasaaan ga gini ui defaultnya bro"
+  - Menampilkan tangkapan layar floating dock yang terdegradasi menjadi tombol teks: `‹ Prev 9 / 10 Next › | Reset 🖨️ PDF Fullscreen | ✏️ Edit`.
+- **Akar Masalah & Penyelidikan Mendalam:**
+  1. Saat model AI menghasilkan slide deck, AI mencoba menyusun sendiri tag HTML navigasi `<nav class="deck-floating-dock">` dan tombol-tombolnya.
+  2. Model AI sering mengimprovisasi tombol dengan teks sederhana seperti `‹ Prev`, `🖨️ PDF`, dan tombol teks polos tanpa dropup menu Export resmi, tanpa shortcut keyboard `R`, dan tanpa SVG icons.
+  3. Pada fungsi `upgradeSlideDeckHtmlIfNeeded` sebelumnya, penjaga kelengkapan slide deck memeriksa `html.includes("deck-floating-dock")`. Karena tag darurat buatan AI tersebut mengandung class `deck-floating-dock`, sistem menganggap deck sudah lengkap dan mengembalikannya apa adanya tanpa merekonstruksi floating dock paten resmi.
+  4. Akibatnya, pengguna mendapati tampilan UI navigasi yang tidak konsisten, berubah-ubah di setiap generasi, dan kehilangan fitur dropup menu ekspor PDF Vektor 16:9 yang semestinya.
+- **Solusi & Rekayasa Teknis:**
+  1. *Direktif UI Paten Baku (`extension/design/design_prompt.js`)*:
+     - Menetapkan aturan pemisahan tegas antara UI Shell platform dan Slide Content:
+       - AI Agent HANYA berfokus 100% pada konten slide di dalam `.slide-section` (tata letak, tipografi, bento cards, metrics, quote, timeline, materi, dan gambar).
+       - UI Shell platform (`#deck-stage-wrap`, `#deck-sidebar`, `.deck-floating-dock`, dropup export, dan controller script) adalah SHELL PATEN BAKU yang dikelola platform. AI DILARANG KERAS mengarang tombol navigasi sendiri.
+  2. *Single Source of Truth Dock Baku (`extension/design/slide_template.js`)*:
+     - Mengekstrak fungsi pembangun dock `getPatentedFloatingDockHtml(total)` yang menyajikan dock obsidian kaca akrilik resmi: tombol bulat Prev/Next dengan ikon SVG polyline, counter `X / Total`, tombol reset dengan badge `R`, dropup menu `Export ⌵` berfitur `PDF slide deck (Vektor 16:9)`, tombol Edit pensil, dan tombol Fullscreen bulat.
+  3. *Engine Purification & Strict Gatekeeper (`extension/design/slide_deck_engine.js`)*:
+     - Memperketat pengecekan di `upgradeSlideDeckHtmlIfNeeded`: hanya dokumen yang memiliki `dock-export-wrapper`, `dock-export-pdf-item`, `dock-btn-reset`, `dock-btn-edit`, `dock-btn-fullscreen`, dan `slide-deck-controller-script` yang dipertahankan.
+     - Jika dokumen memakai dock darurat AI, sistem secara otomatis mengekstrak seluruh slide (mempertahankan custom canvas HTML, styling, dan kartu materi 1:1) dan merakitnya ulang ke dalam shell paten via `buildExecutiveSlideDeckHtml`.
+  4. *In-DOM Self-Healing & Canvas Synchronization (`extension/design/canvas_manager.js`)*:
+     - Pada `attachSlideDeckController`: jika dock di dalam iframe tidak memiliki `#dock-export-wrapper`, elemen dock darurat tersebut langsung digantikan secara instan dengan `getPatentedFloatingDockHtml(slides.length)`.
+     - Menyinkronkan `setActiveDesignArtifact` agar otomatis menjalankan `upgradeSlideDeckHtmlIfNeeded`.
+     - Menyinkronkan hasil revisi di `design_executor.js` agar selalu dibersihkan melalui `upgradeSlideDeckHtmlIfNeeded`.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Pengujian simulasi Node.js membuktikan HTML dengan dock darurat `🖨️ PDF` secara otomatis dibersihkan dan digantikan dengan dock paten resmi (`dock-export-wrapper`, `dock-export-pdf-item`, `dock-btn-reset`, dll.) dengan seluruh slide dan materi tersimpan 100% utuh.
+  2. Syntax check `node -c extension/design/*.js` dan seluruh skrip ekstensi sukses 100% tanpa error.
+  3. Seluruh 12 berkas di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 800 baris.
+  4. Bump versi ke `v2.150.279` di `manifest.json`.
+
+
 

@@ -320,7 +320,7 @@ function extractSlidesFromRawHtml(html) {
 
           // Preserve rawCanvasHtml if the slide already has rich custom canvas
           const canvasEl = el.querySelector(".slide-canvas");
-          const rawCanvasHtml = canvasEl ? canvasEl.outerHTML : "";
+          const rawCanvasHtml = canvasEl ? canvasEl.outerHTML : (el.innerHTML && el.innerHTML.trim() ? `<div class="slide-canvas">${el.innerHTML.trim()}</div>` : "");
 
           // Detect layout from classes
           let layout = "";
@@ -533,10 +533,10 @@ function upgradeSlideDeckHtmlIfNeeded(html, userPrompt = "", meta = {}) {
   // Check if existing deck contains legacy Djadi spill when user prompt is NOT about Djadi
   const hasLegacyDjadiSpill = /DJADI CREATIVE|STANDAR IDENTITAS VISUAL RESMI|CONFIDENTIAL \/\/ ENTERPRISE/i.test(html) && !/djadi/i.test(userPrompt);
 
-  // If already a complete slide deck with floating dock/editor/stage, NEVER overwrite manual edits; return as-is
-  const isCompleteDeck = (html.includes("deck-floating-dock") || html.includes("dock-btn-edit") || html.includes("deck-editor-toolbar")) && (html.includes("slide-section") || html.includes("slide-stage-wrap"));
-  if (!hasLegacyDjadiSpill && isCompleteDeck) {
-    return html;
+  // Only bypass if the deck ALREADY has the 100% official patented UI shell
+  const hasPatentedUi = html.includes("dock-export-wrapper") && html.includes("dock-export-pdf-item") && html.includes("dock-btn-reset") && html.includes("slide-deck-controller-script");
+  if (!hasLegacyDjadiSpill && hasPatentedUi && (html.includes("slide-section") || html.includes("slide-stage-wrap"))) {
+    return (typeof ensureLatestSlideDeckRuntimeScript === 'function') ? ensureLatestSlideDeckRuntimeScript(html) : html;
   }
 
   // If HTML contains slide elements, upgrade to full executive layout
