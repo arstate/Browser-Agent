@@ -544,7 +544,7 @@ Arketipe Tata Letak: ${layout.toUpperCase()}
 Sasaran Topik Slide: "${title}"
 ${prevSlideSummary ? `Konteks Slide Sebelumnya: "${prevSlideSummary}"` : ''}
 
-${coverDirective}`
+${coverDirective}
 
 ATURAN KETAT:
 1. DILARANG menggunakan teks korporat palsu ("Djadi Creative", "GSM v3.0", "Confidential // Enterprise", "PILAR 01"${isPlayful ? ', "Action Playbook", "Eksekutif"' : ''}).

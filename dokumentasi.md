@@ -1719,3 +1719,25 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
   5. **Verifikasi Pengujian & Standar Sub-800 Baris**:
      - Validasi sintaksis `node -c extension/sidepanel.js extension/background.js`, `python3 -m py_compile host/doc_parser.py host/native_host.py`, dan `cargo check` di `host/rust_host` lulus 100% tanpa error.
      - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+
+### 177. Rilis Versi v2.150.294 - Eliminasi Syntax Error KETAT & scale pada OpenDesign, Infinite Recursion Guard, & Bulletproof Fallback workingSlides
+- **Waktu Rilis**: 2026-09-09 02:00 WIB
+- **Fokus Utama**: Memperbaiki bug kritis di mana kartu preview slide deck tidak dapat dibuka saat diklik dan muncul error `Cannot read properties of undefined (reading 'title')`, `Maximum call stack size exceeded`, `Unexpected identifier 'KETAT'`, dan `Unexpected identifier 'scale'`.
+- **Akar Masalah (Root Causes)**:
+  1. *Premature Closing Backtick*: Pada `extension/design/design_agent.js` baris 547, template literal ditutup secara prematur oleh karakter backtick `${coverDirective}\`` sehingga baris 549 (`ATURAN KETAT:`) dievaluasi sebagai kode JavaScript mentah, memicu `SyntaxError: Unexpected identifier 'KETAT'`. Akibatnya seluruh script `design_agent.js` gagal dimuat di browser.
+  2. *Unescaped Template String Backtick*: Pada `extension/design/slide_deck_engine.js` baris 569 di dalam `getSlideDeckRuntimeScript()`, ekspresi CSS transform menggunakan nested template literal `slides[i].style.transform = \`scale(${scale})\`;` tanpa escaping sehingga menutup template string luar secara prematur dan memicu `SyntaxError: Unexpected identifier 'scale'`. Akibatnya `slide_deck_engine.js` juga gagal dimuat.
+  3. *Infinite Recursion Fallback*: Karena `slide_deck_engine.js` gagal dimuat, fungsi `upgradeSlideDeckHtmlIfNeeded` di `sidepanel.js` jatuh ke fallback shim yang memanggil `window.upgradeSlideDeckHtmlIfNeeded`. Karena variabel global merujuk ke dirinya sendiri, terjadi pemanggilan rekursif tanpa henti yang memicu `RangeError: Maximum call stack size exceeded` saat tombol "Buka Canvas" diklik.
+  4. *Array workingSlides Kosong*: Karena `design_agent.js` gagal dimuat, fungsi `createDefaultBlueprint` tidak tersedia sehingga fallback menghasilkan `{ slides: [] }`. Saat `design_executor.js` mencoba mengakses `workingSlides[0].title`, JavaScript melempar `Cannot read properties of undefined (reading 'title')` dan menghentikan pipeline pembuatan slide.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Koreksi Template Literal `design_agent.js`**:
+     - Menghapus backtick prematur pada `${coverDirective}` sehingga blok prompt `ATURAN KETAT:` hingga penutup format JSON tetap berada di dalam template literal string.
+  2. **Koreksi Nested Template Literal `slide_deck_engine.js`**:
+     - Mengubah `slides[i].style.transform = \`scale(${scale})\`;` menjadi string concatenation biasa `'scale(' + scale + ')'`, mengeliminasi benturan karakter backtick.
+  3. **Proteksi Anti-Rekursi pada Fallback Shim (`sidepanel.js`)**:
+     - Menambahkan pengecekan `window.upgradeSlideDeckHtmlIfNeeded !== upgradeSlideDeckHtmlIfNeeded` untuk mencegah rekursi diri tak terbatas jika modul slide engine mengalami kendala pemuatan.
+  4. **Bulletproof Fallback workingSlides (`design_executor.js`)**:
+     - Menambahkan guard otomatis: jika `defaultBp.slides` kosong, `workingSlides` otomatis diinisialisasi dengan minimal 1 slide cover default sehingga `workingSlides[0]` tidak pernah bernilai undefined.
+     - Menerapkan optional chaining pada `(workingSlides[sIdx - 1]?.title || '')`.
+  5. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Validasi sintaksis `node -c` lulus 100% pada seluruh berkas `extension/*.js`, `extension/design/*.js`, `extension/apps-integration/*.js`, dan `extension/core/*.js`.
+     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris (`design_executor.js`: 795, `slide_editor.js`: 798).

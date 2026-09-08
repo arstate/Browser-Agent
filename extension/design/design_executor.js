@@ -359,7 +359,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
     } else {
       // === PROGRESSIVE SLIDE-BY-SLIDE PIPELINE ===
       const isCatRequest = /kucing|cat|kitten|anabul|hewan|pet/i.test(userMessage);
-      workingSlides = defaultBp.slides.map((s, idx) => {
+      workingSlides = (defaultBp?.slides || []).map((s, idx) => {
         let assignedImg = (imageAttachments.length > 0) ? (imageAttachments[idx % imageAttachments.length]?.dataUrl || '') : '';
         if (!assignedImg && isCatRequest && typeof resolveThematicImageUrl === 'function') {
           assignedImg = resolveThematicImageUrl(userMessage, idx);
@@ -372,6 +372,9 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
           status: idx === 0 ? 'generating' : 'pending'
         };
       });
+      if (!workingSlides.length) {
+        workingSlides = [{ title: cleanTopic.slice(0, 45) || 'Executive Presentation Deck', subtitle: 'Overview & Strategi Utama', layout: 'cover', badge: 'EDISI EKSKLUSIF', cards: [], loading: true, completed: false, status: 'generating' }];
+      }
 
       // Milestone 1 complete: Brief analyzed & handoff initiated
       designMilestones[0].completed = true;
@@ -509,7 +512,7 @@ async function runDesignModeLoop(userMessage, attachments = [], explicitMentions
           );
         }
 
-        const prevContext = workingSlides[sIdx - 1].title + ': ' + (workingSlides[sIdx - 1].subtitle || '');
+        const prevContext = (workingSlides[sIdx - 1]?.title || '') + ': ' + (workingSlides[sIdx - 1]?.subtitle || '');
         const aiSlide = await fetchSlideContentFromAI(sIdx, targetSlideCount, userMessage, curSlide, prevContext, config, abortController.signal, userMessage);
         curSlide = { ...curSlide, ...aiSlide };
 

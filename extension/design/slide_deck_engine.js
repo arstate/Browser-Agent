@@ -566,7 +566,7 @@ function getSlideDeckRuntimeScript() {
           const availH = Math.max(150, stage.clientHeight - 96);
           const scale = Math.min(availW / 1200, availH / 675);
           for (let i = 0; i < slides.length; i++) {
-            slides[i].style.transform = `scale(${scale})`;
+            slides[i].style.transform = 'scale(' + scale + ')';
             slides[i].style.transformOrigin = 'center center';
           }
         }

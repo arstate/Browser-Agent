@@ -2465,6 +2465,22 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 3. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
 
+## 🏛️ 70. Eliminasi Syntax Error KETAT & scale pada OpenDesign, Infinite Recursion Guard, & Bulletproof Fallback workingSlides (v2.150.294)
+
+1. **Koreksi Template Literal Syntax Error**:
+   - Menghapus backtick prematur pada `${coverDirective}` di `extension/design/design_agent.js` yang memicu `SyntaxError: Unexpected identifier 'KETAT'`.
+   - Mengganti nested template literal `slides[i].style.transform = \`scale(${scale})\`;` di `extension/design/slide_deck_engine.js` menjadi string concatenation biasa `'scale(' + scale + ')'` guna mengeliminasi `SyntaxError: Unexpected identifier 'scale'`.
+
+2. **Infinite Recursion Guard pada Fallback Engine (`sidepanel.js`)**:
+   - Menambahkan guard `window.upgradeSlideDeckHtmlIfNeeded !== upgradeSlideDeckHtmlIfNeeded` pada fallback `upgradeSlideDeckHtmlIfNeeded` untuk mencegah rekursi diri tak terbatas (`Maximum call stack size exceeded`) saat membuka canvas.
+
+3. **Bulletproof Fallback workingSlides (`design_executor.js`)**:
+   - Menjamin `workingSlides` selalu memiliki minimal 1 slide cover default meskipun blueprint generator mengalami kendala, mencegah runtime error `Cannot read properties of undefined (reading 'title')`.
+   - Menambahkan optional chaining pada `(workingSlides[sIdx - 1]?.title || '')`.
+
+4. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris (`design_executor.js`: 795, `slide_editor.js`: 798).
+
 
 
 

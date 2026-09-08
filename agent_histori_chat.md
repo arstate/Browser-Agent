@@ -8278,6 +8278,31 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris.
   3. Bump versi ke `v2.150.293` di `extension/manifest.json`.
 
+### 🚀 Iterasi 177: Eliminasi Syntax Error KETAT & scale pada OpenDesign, Infinite Recursion Guard, & Bulletproof Fallback workingSlides
+- **Waktu Eksekusi**: 2026-09-09 02:00 WIB
+- **Versi**: `v2.150.294`
+- **Problem Statement Pengguna**:
+  - *"adabug ketika ai kirim chat open canvas slide deck itu gabisa buka padahal udah saya klik, fix in bro"*
+  - Screenshot error `chrome://extensions/errors`:
+    1. `Cannot read properties of undefined (reading 'title')`
+    2. `Uncaught RangeError: Maximum call stack size exceeded`
+    3. `Uncaught SyntaxError: Unexpected identifier 'KETAT'`
+    4. `Uncaught SyntaxError: Unexpected identifier 'scale'`
+- **Akar Masalah (Root Causes)**:
+  1. *SyntaxError KETAT*: Karakter backtick penutup prematur pada `${coverDirective}\`` di `design_agent.js:547` menyebabkan teks prompt berikutnya `ATURAN KETAT:` dievaluasi sebagai kode JavaScript mentah, membuat `design_agent.js` gagal dimuat.
+  2. *SyntaxError scale*: Nested template literal `slides[i].style.transform = \`scale(${scale})\`;` di dalam template string runtime script di `slide_deck_engine.js:569` tanpa escaping membuat `slide_deck_engine.js` gagal dimuat.
+  3. *Maximum Call Stack Exceeded*: Akibat `slide_deck_engine.js` tidak termuat, pemanggilan `upgradeSlideDeckHtmlIfNeeded` jatuh ke shim fallback di `sidepanel.js:9213` yang memanggil dirinya sendiri secara rekursif tanpa henti saat pengguna mengklik tombol "Buka Canvas".
+  4. *Cannot read title of undefined*: Akibat `design_agent.js` tidak termuat, fungsi `createDefaultBlueprint` tidak tersedia dan menghasilkan `slides: []`, sehingga `workingSlides[0]` bernilai undefined saat diakses properti `.title`-nya.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Koreksi Template Literal `design_agent.js`**: Menghapus backtick prematur pada `${coverDirective}`.
+  2. **Koreksi Nested Template Literal `slide_deck_engine.js`**: Mengubah template string menjadi `'scale(' + scale + ')'`.
+  3. **Proteksi Anti-Rekursi Fallback Shim (`sidepanel.js`)**: Menambahkan guard `window.upgradeSlideDeckHtmlIfNeeded !== upgradeSlideDeckHtmlIfNeeded`.
+  4. **Bulletproof Fallback workingSlides (`design_executor.js`)**: Menginisialisasi `workingSlides` dengan 1 slide cover default jika `defaultBp.slides` kosong dan menerapkan optional chaining `workingSlides[sIdx - 1]?.title`.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Validasi sintaksis `node -c` pada seluruh file JS di `extension/` lulus 100% tanpa error.
+  2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris (`design_executor.js`: 795, `slide_editor.js`: 798).
+  3. Bump versi ke `v2.150.294` di `extension/manifest.json`.
+
 
 
 

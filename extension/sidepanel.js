@@ -9212,7 +9212,7 @@ if (typeof window !== 'undefined') {
 
 if (typeof upgradeSlideDeckHtmlIfNeeded !== "function") {
   var upgradeSlideDeckHtmlIfNeeded = function(...args) {
-    if (typeof window !== "undefined" && typeof window.upgradeSlideDeckHtmlIfNeeded === "function") {
+    if (typeof window !== "undefined" && typeof window.upgradeSlideDeckHtmlIfNeeded === "function" && window.upgradeSlideDeckHtmlIfNeeded !== upgradeSlideDeckHtmlIfNeeded) {
       return window.upgradeSlideDeckHtmlIfNeeded(...args);
     }
     return args[0] || "";
