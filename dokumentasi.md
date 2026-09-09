@@ -1782,5 +1782,26 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
   3. **Verifikasi Pengujian & Standar Sub-800 Baris**:
      - Seluruh berkas JavaScript dan CSS lulus validasi 100%.
      - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah 798 baris.
-
-
+### 180. Rilis Versi v2.150.297 - Eliminasi Halusinasi Pembuatan & Auto-Append Kartu Slide Deck PDF pada Permintaan Prompt Konten Medsos / Feed Carousel
+- **Waktu Rilis**: 2026-09-09 11:35 WIB
+- **Fokus Utama**: Memperbaiki bug kritis di mana saat pengguna meminta ide atau prompt generate gambar (Midjourney, Ideogram, Flux) untuk carousel feed Instagram (dengan frasa seperti *"prompt nya itu per slide feed"*), sistem AI secara keliru memicu pembuatan, pengalihan, atau penempelan kartu OpenDesign Slide Deck Widescreen 16:9 PDF (`[Live Updated]` `Buka Canvas (Update) ↗`) di bagian bawah bubble jawaban asisten.
+- **Akar Masalah (Root Causes)**:
+  1. *Overly Broad & Ambiguous Slide Regex*: Regex `/(?:slide|deck|presentasi|presentation|powerpoint|ppt|kanvas|canvas)/i` di `runAgentLoop` (baris 7542) dan `runChatModeLoop` (baris 9085) memicu nilai `true` pada kata `"slide"` dari frasa `"per slide feed"`, `"slide carousel"`, `"slide ig"`, atau postingan multi-slide Instagram.
+  2. *Ghost Slide Deck Auto-Append*: Di akhir `runAgentLoop`, jika di memori terdapat artefak slide deck aktif (`activeSlideArt`) dari giliran chat sebelumnya, kondisi `if (activeSlideArt && (touchedSlideTool || userAskedSlide || assistantBubble?._activeDesignArtifact))` secara otomatis menempelkan kartu `renderOpenDesignCard(..., { isRevision: true })` ke bubble asisten meskipun Master Agent sama sekali TIDAK menjalankan tool `create_slide_deck_design` pada giliran tersebut!
+  3. *Unbounded Revision Context Hijacking*: Nilai `isDeckRevision` dan `isDeckRevisionContext` di `handleSendMessage`, `processNextQueuedPrompt`, dan `runAgentLoop` mengasumsikan bahwa selama drawer canvas pernah terbuka (`canvasIsOpen && activeArt`), SEMUA prompt pengguna berikutnya adalah instruksi revisi slide deck, sehingga menyuntikkan arahan keras `[TARGET FILE REVISI...]` ke model AI dan mengalihkan routing ke `runDesignModeLoop`.
+  4. *Truthiness Pitfall pada Options Fallback*: Nilai `null !== false` mengevaluasi `true`, menyebabkan opsi `{ activeDeck: null }` tetap memicu fallback penempelan lencana slide deck di bubble pengguna (`appendUserMessage`).
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Trio Helper Disambiguasi Semantik Eksplisit (`extension/sidepanel.js`)**:
+     - `isSocialMediaOrImagePrompt(text)`: Mendeteksi secara spesifik prompt yang berkaitan dengan media sosial, postingan feed carousel, Instagram, TikTok, atau prompt gambar AI (Midjourney, Ideogram, Flux, `slide feed`, `feed slide`, `view depan`, `view dapur`).
+     - `isExplicitSlideDeckIntent(text)`: Menjamin hanya niat pembuatan slide presentasi/dokumen PDF 16:9 yang lolos, dan secara mutlak menolak jika `isSocialMediaOrImagePrompt` bernilai true.
+     - `isSlideDeckRevisionInstruction(text)`: Mengharuskan adanya kata kerja revisi nyata (`revisi`, `ubah`, `ganti`, `edit`, `tambah`, `pisah`, `split`, `perbaiki`) berpadu dengan target slide presentasi, dan menolak konteks feed medsos.
+  2. **Strict Tool Execution Gate pada `runAgentLoop` & `runChatModeLoop`**:
+     - Kartu `renderOpenDesignCard` HANYA ditempelkan ke bubble asisten jika `create_slide_deck_design` benar-benar dieksekusi pada giliran aktif tersebut (`sessionExecutedTools.includes('create_slide_deck_design')`) atau jika pengguna secara eksplisit meminta pembukaan canvas presentasi (`buka slide deck`, `lihat presentasi`).
+     - Jika prompt bertema feed medsos/prompt gambar (`isSocialFeed`), penempelan kartu OpenDesign diblokir 100% dan referensi `_activeDesignArtifact` pada bubble asisten dibersihkan.
+  3. **Proteksi Injeksi Konteks Revisi & Smart Routing**:
+     - `isDeckRevisionContext` di `runAgentLoop` dan `runChatModeLoop` kini mewajibkan `isSlideDeckRevisionInstruction && !isSocialMediaOrImagePrompt`, membebaskan AI dari suntikan salah paham `[TARGET FILE REVISI...]`.
+     - `handleSendMessage` dan `processNextQueuedPrompt` hanya mengalihkan ke `runDesignModeLoop` jika prompt benar-benar permintaan pembuatan presentasi baru atau instruksi revisi slide deck nyata.
+     - Menyematkan aturan negatif (Rule 6) pada Master Agent System Prompt dan deskripsi tool `create_slide_deck_design` yang melarang keras pemanggilan tool slide deck untuk konten feed carousel medsos atau prompt image generator.
+  4. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Sintaks JavaScript divalidasi 100% menggunakan `node -c extension/sidepanel.js`.
+     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.

@@ -8344,11 +8344,24 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Seluruh 12 berkas modular tetap patuh `<= 798` baris.
   3. Bump versi ke `v2.150.296` di `extension/manifest.json`.
 
-
-
-
-
-
-
-
+### 🚀 Iterasi 180: Eliminasi Halusinasi Pembuatan & Auto-Append Kartu Slide Deck PDF pada Permintaan Prompt Konten Medsos / Feed Carousel
+- **Waktu Eksekusi**: 2026-09-09 11:35 WIB
+- **Versi**: `v2.150.297`
+- **Problem Statement Pengguna**:
+  - *"ADA BUG PADHALA SAYA GAMINTA BUATIN SLIDE DECK PDF MALAH DIBUATIN BRO COBA ANDA LIHAT INI KENAPA YA TRUS ANDA FIX"*
+  - Screenshot yang dilampirkan menunjukkan pengguna meminta prompt image generator Midjourney/Ideogram/Flux untuk Feed Carousel Instagram (*"trus prompt nya itu per slide feed"*). Asisten AI menjawab dengan prompt teks, namun di bagian paling bawah jawaban asisten, sistem secara otomatis menempelkan kartu OpenDesign Slide Deck 16:9 PDF (`Slide Deck 16:9` `[Live Updated]` `Buka Canvas (Update) ↗`).
+- **Akar Masalah (Root Causes)**:
+  1. *False-Positive Slide Regex*: Regex `/(?:slide|deck|presentasi|presentation|powerpoint|ppt|kanvas|canvas)/i` di `sidepanel.js` mencocokkan kata `"slide"` dari frasa `"per slide feed"` dan mengira pengguna meminta presentasi/slide deck.
+  2. *Ghost Card Auto-Append*: Di akhir `runAgentLoop`, jika ada artefak slide di memori dari sesi sebelumnya, kondisi `activeSlideArt && (touchedSlideTool || userAskedSlide)` mengevaluasi `true` karena kata "slide", sehingga menempelkan kartu slide deck secara siluman meski tool slide deck tidak pernah dipanggil!
+  3. *Unbounded Revision Context Hijacking*: `isDeckRevision` di router menganggap setiap chat saat drawer terbuka adalah revisi slide deck, menyuntikkan arahan revisi ke LLM.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Trio Helper Semantik**: Mengimplementasikan `isSocialMediaOrImagePrompt`, `isExplicitSlideDeckIntent`, dan `isSlideDeckRevisionInstruction` di `extension/sidepanel.js`.
+  2. **Strict Tool Execution Gate**: Kartu OpenDesign di `runAgentLoop` HANYA ditempelkan jika tool `create_slide_deck_design` benar-benar dieksekusi di giliran tersebut. Jika prompt bertema medsos/feed carousel, kartu diblokir 100%.
+  3. **Router & Prompt Protection**: `handleSendMessage`, `processNextQueuedPrompt`, dan injeksi prompt Master Agent diproteksi dari pembajakan revisi slide deck.
+  4. **Master Agent Rule 6**: Menambahkan aturan eksplisit di system prompt yang melarang memanggil tool slide deck untuk ide feed medsos atau prompt image generator.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Unit test via node mengonfirmasi regex akurat 100% membedakan feed carousel vs slide deck vs instruksi revisi.
+  2. Syntax check `node -c extension/sidepanel.js` lulus 100%.
+  3. Seluruh 12 berkas modular tetap patuh `<= 798` baris.
+  4. Bump versi ke `v2.150.297` di `extension/manifest.json`.
 

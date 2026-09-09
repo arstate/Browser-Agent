@@ -962,6 +962,28 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
   return [getMasterBoss(), ...sortedWorkers];
 }
 
+function isSocialMediaOrImagePrompt(text = '') {
+  if (!text || typeof text !== 'string') return false;
+  return /(?:feed|carousel|karosel|instagram|ig\b|konten|postingan|post\b|gambar|foto|photo|image|midjourney|ideogram|flux|prompt\s*(?:image|gambar|foto)|gambar\s*referensi|view\s*depan|view\s*nyamping|view\s*dapur|denah|desain\s*feed|slide\s*feed|feed\s*slide)/i.test(text);
+}
+
+function isExplicitSlideDeckIntent(text = '') {
+  if (!text || typeof text !== 'string') return false;
+  if (isSocialMediaOrImagePrompt(text)) return false;
+  const hasSlideKeyword = /(?:slide\s*deck|presentasi|presentation|powerpoint|ppt\b|bikin\s+slide\s*deck|buat\s+slide\s*deck|deck\s*presentasi)/i.test(text);
+  const hasCreateSlide = /(?:buat|bikin|rancang|generate|create|siapkan)\s+(?:(?:sebuah|beberapa|\d+)\s+)?(?:slide\s+deck|presentasi|presentation|powerpoint|ppt)\b/i.test(text);
+  const hasSlideHeader = /^(?:slide\s*deck|presentasi|presentation|ppt)\s*[:=]/i.test(text);
+  return Boolean(hasSlideKeyword || hasCreateSlide || hasSlideHeader);
+}
+
+function isSlideDeckRevisionInstruction(text = '') {
+  if (!text || typeof text !== 'string') return false;
+  if (isSocialMediaOrImagePrompt(text)) return false;
+  const hasRevisionAction = /(?:revisi|ubah|ganti|edit|tambah|kurang|hapus|split|pisah|perbaiki|update|sesuaikan|rombak)/i.test(text);
+  const hasDeckTarget = /(?:slide\s*deck|slide\b|deck\b|halaman|warna\s+slide|layout\s+slide|presentasi|ppt)/i.test(text);
+  return Boolean(hasRevisionAction && hasDeckTarget);
+}
+
 function buildDynamicSystemPrompt(agentOrAgents = null) {
   let agents = [];
   if (Array.isArray(agentOrAgents)) {
@@ -1108,6 +1130,8 @@ ATURAN KRUSIAL:
    - TAHAP 2 (PLANNING TERPERINCI): Susun rencana restrukturisasi materi. Tentukan judul spesifik, subjudul, dan alokasi poin untuk setiap slide baru. DILARANG KERAS menyertakan teks placeholder atau label skema seperti "4 STAT CARDS", "2 BALANCED SUMMARY CARDS", "PAGE NUMBER", "BADGE", "TITLE".
    - TAHAP 3 (EKSEKUSI MASTER DESIGN / EXECUTE): Panggil \`create_slide_deck_design\` dengan materi lengkap yang telah direncanakan secara rapi dan proporsional.
    - TAHAP 4 (VERIFIKASI ULANG PASCA-EKSEKUSI / RE-READ): Master Agent WAJIB memanggil kembali \`read_slide_deck\` untuk memeriksa ulang slide-slide yang baru dihasilkan (Slide 1, 2, 3, dst). Pastikan jumlah slide sesuai, pemecahan berhasil, dan tidak ada elemen placeholder slop sebelum memberikan jawaban akhir ke pengguna.
+6. 🚫 NEGATIVE CONSTRAINT UNTUK SLIDE DECK (ANTI-SLIDE HALLUCINATION):
+   DILARANG KERAS memanggil tool \`create_slide_deck_design\` atau \`read_slide_deck\` jika pengguna HANYA meminta ide prompt image (Midjourney, Ideogram, Flux), konten media sosial (Instagram feed / carousel / postingan), atau desain grafis biasa, meskipun pengguna menggunakan kata 'slide' dalam konteks 'slide feed IG' atau 'slide carousel'. Jawab langsung dalam teks Markdown tanpa memanggil tool slide deck!
 
 === CAPABILITIES & TOOLS AVAILABLE ===
 1. 🧠 Autonomous Brain & Self-Evolution Tools: manage_personal_memory, create_autonomous_skill, update_autonomous_skill, create_autonomous_agent, edit_manual_skill, edit_manual_agent, rollback_brain_item, record_anti_pattern, save_epistemic_triplet, query_epistemic_graph, execute_jit_microtool.
@@ -1335,7 +1359,7 @@ const AGENT_TOOLS = [
     type: "function",
     function: {
       name: "create_slide_deck_design",
-      description: "Generates or updates an interactive 16:9 widescreen presentation slide deck / PDF report directly in the OpenDesign Canvas Drawer. Master Agent executes this tool AFTER completing browser analysis, research, or data extraction to delegate final presentation slide creation to Master Design. Supports 3 to 30 slides with rich analytical cards, metrics, and visual themes. MANDATORY: If the user asked for data analysis or audit (e.g. Meta Ads audit), you MUST first perform the analysis using browser/data tools to obtain real findings before invoking this tool!",
+      description: "Generates or updates an interactive 16:9 widescreen presentation slide deck / PDF report directly in the OpenDesign Canvas Drawer. Master Agent executes this tool AFTER completing browser analysis, research, or data extraction to delegate final presentation slide creation to Master Design. Supports 3 to 30 slides with rich analytical cards, metrics, and visual themes. MANDATORY: If the user asked for data analysis or audit (e.g. Meta Ads audit), you MUST first perform the analysis using browser/data tools to obtain real findings before invoking this tool! RESTRICTION: DO NOT invoke this tool for Instagram carousel feeds, TikTok/social media multi-image posts, image generation prompts (Midjourney/Flux/Ideogram prompts for feeds), or general graphic design questions. This tool is SOLELY for 16:9 widescreen presentation slide decks / PDF documents.",
       parameters: {
         type: "object",
         properties: {
@@ -6367,7 +6391,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
 
   const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
   const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
-  const isDeckRevisionContext = Boolean(canvasIsOpen && activeArt && activeArt.html);
+  const isDeckRevisionContext = Boolean(canvasIsOpen && activeArt && activeArt.html && isSlideDeckRevisionInstruction(userMessage || "") && !isSocialMediaOrImagePrompt(userMessage || ""));
 
   if (isDeckRevisionContext) {
     const deckTitle = activeArt.meta?.title || "Slide Deck";
@@ -6452,7 +6476,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     deckTitle: isDeckRevisionContext ? (activeArt.meta?.title || 'Slide Deck') : undefined,
     deckSlideCount: isDeckRevisionContext ? (activeArt.slideCount || (activeArt.html?.match(/class=["'][^"']*deck-slide(?:\s|["'])/g) || []).length || undefined) : undefined
   });
-  appendUserMessage(userMessage, attachments, true, true, { activeDeck: isDeckRevisionContext ? activeArt : null });
+  appendUserMessage(userMessage, attachments, true, true, { activeDeck: isDeckRevisionContext ? activeArt : false });
   saveAttachmentsToIndexedDB(attachments);
 
   const isAutoMode = (activeAgentId === AUTO_AGENT_ID || !activeAgentId);
@@ -7532,16 +7556,18 @@ Tugas Anda:
       }
     }
 
-    // Guarantee: If slide deck artifact was created, modified, read, or requested in Agent Mode, ALWAYS render the OpenDesign card into assistantBubble
+    // Guarantee: If slide deck artifact was created or modified in Agent Mode, render the OpenDesign card into assistantBubble
     const activeSlideArt = assistantBubble?._activeDesignArtifact || 
                            (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact() : null) || 
                            (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact : null) ||
                            (typeof window !== 'undefined' ? window.__activeDesignArtifact : null);
 
-    const touchedSlideTool = sessionExecutedTools.some(t => t === 'create_slide_deck_design' || t === 'read_slide_deck');
-    const userAskedSlide = /(?:slide|deck|presentasi|presentation|powerpoint|ppt|kanvas|canvas)/i.test(userMessage || "");
+    const isSocialFeed = isSocialMediaOrImagePrompt(userMessage || "");
+    const touchedSlideTool = sessionExecutedTools.some(t => t === 'create_slide_deck_design');
+    const wasSlideCreatedThisTurn = Boolean(assistantBubble?._activeDesignArtifact && touchedSlideTool);
+    const userExplicitlyRequestedOpenDeck = !isSocialFeed && /(?:buka|tampilkan|lihat|open)\s+(?:slide\s*deck|presentasi|presentation|canvas|kanvas|ppt)/i.test(userMessage || "");
 
-    if (activeSlideArt && activeSlideArt.html && (touchedSlideTool || userAskedSlide || assistantBubble?._activeDesignArtifact)) {
+    if (!isSocialFeed && activeSlideArt && activeSlideArt.html && (touchedSlideTool || wasSlideCreatedThisTurn || userExplicitlyRequestedOpenDeck)) {
       assistantBubble._activeDesignArtifact = activeSlideArt;
       const curContentEl = assistantBubble?.querySelector('.message-content') || assistantBubble;
       if (curContentEl) {
@@ -7561,6 +7587,10 @@ Tugas Anda:
       }
       if (typeof syncCanvasQuickReopenButton === 'function') {
         syncCanvasQuickReopenButton(true);
+      }
+    } else {
+      if (!touchedSlideTool && assistantBubble?._activeDesignArtifact) {
+        delete assistantBubble._activeDesignArtifact;
       }
     }
 
@@ -8776,9 +8806,9 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 
   const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
   const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
-  const isDeckRevisionContext = Boolean(canvasIsOpen && activeArt && activeArt.html);
+  const isDeckRevisionContext = Boolean(canvasIsOpen && activeArt && activeArt.html && isSlideDeckRevisionInstruction(userMessage || "") && !isSocialMediaOrImagePrompt(userMessage || ""));
 
-  appendUserMessage(userMessage, attachments, true, true, { activeDeck: isDeckRevisionContext ? activeArt : null });
+  appendUserMessage(userMessage, attachments, true, true, { activeDeck: isDeckRevisionContext ? activeArt : false });
   saveVideoAttachmentsToIndexedDB(attachments);
 
   // Resolve Master Agent and custom skills / memories identical to Agent Mode
@@ -9082,8 +9112,9 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
       const activeChatArt = (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact() : null) || 
                             (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact : null) ||
                             (typeof window !== 'undefined' ? window.__activeDesignArtifact : null);
-      const userAskedSlideInChat = /(?:slide|deck|presentasi|presentation|powerpoint|ppt|kanvas|canvas)/i.test(userMessage || "");
-      if (activeChatArt && activeChatArt.html && userAskedSlideInChat) {
+      const isSocialFeedChat = isSocialMediaOrImagePrompt(userMessage || "");
+      const userAskedOpenDeckInChat = !isSocialFeedChat && /(?:buka|tampilkan|lihat|open)\s+(?:slide\s*deck|presentasi|presentation|canvas|kanvas|ppt)/i.test(userMessage || "");
+      if (!isSocialFeedChat && activeChatArt && activeChatArt.html && userAskedOpenDeckInChat) {
         const curContentEl = assistantBubble?.querySelector('.message-content') || assistantBubble;
         if (curContentEl && !curContentEl.querySelector('.opendesign-result-card')) {
           curContentEl.style.display = 'block';
@@ -9103,7 +9134,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
         content: cleanFinalText || accumulatedContent,
         agentInfo: agentInfo
       };
-      if (activeChatArt && userAskedSlideInChat) {
+      if (!isSocialFeedChat && activeChatArt && userAskedOpenDeckInChat) {
         asstChatMsg.designArtifact = activeChatArt;
         asstChatMsg.chatMode = "design";
       }
@@ -9386,10 +9417,14 @@ function appendUserMessage(text, attachments = [], autoScroll = true, attachToDo
     deckTitle = options.deckTitle;
     deckSlideCount = options.deckSlideCount || null;
     targetDeck = curActiveArt;
-  } else if (curCanvasOpen && curActiveArt && curActiveArt.html && (!options || options.activeDeck !== false)) {
-    targetDeck = curActiveArt;
-    deckTitle = targetDeck.meta?.title || 'Slide Deck 16:9';
-    deckSlideCount = targetDeck.slideCount || (targetDeck.html ? (targetDeck.html.match(/class=["'][^"']*deck-slide(?:\s|["'])/g) || []).length : null);
+  } else if (curCanvasOpen && curActiveArt && curActiveArt.html && (!options || (options.activeDeck !== false && options.activeDeck !== null && options.activeDeck !== undefined))) {
+    const isSocialPrompt = isSocialMediaOrImagePrompt(cleanText || "");
+    const isSlideContext = !isSocialPrompt && (isExplicitSlideDeckIntent(cleanText || "") || isSlideDeckRevisionInstruction(cleanText || ""));
+    if (isSlideContext) {
+      targetDeck = curActiveArt;
+      deckTitle = targetDeck.meta?.title || 'Slide Deck 16:9';
+      deckSlideCount = targetDeck.slideCount || (targetDeck.html ? (targetDeck.html.match(/class=["'][^"']*deck-slide(?:\s|["'])/g) || []).length : null);
+    }
   }
 
   let deckAttachmentHtml = '';
@@ -14604,22 +14639,23 @@ function checkAndProcessNextPromptQueue() {
     const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
     const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
 
-    const isDeckRevision = Boolean(canvasIsOpen && activeArt && activeArt.html);
+    const isSocialMedia = isSocialMediaOrImagePrompt(nextItem.text || "");
+    const isExplicitSlide = !isSocialMedia && isExplicitSlideDeckIntent(nextItem.text || "");
+    const isDeckRevisionReq = !isSocialMedia && Boolean(canvasIsOpen && activeArt && activeArt.html && isSlideDeckRevisionInstruction(nextItem.text || ""));
     const isExplicitExternalWeb = /^(?:https?:\/\/|www\.)|(?:buka\s+(?:url|web|situs|link|tab\s+baru))\s+https?:/i.test(nextItem.text || "");
-    const isExplicitSlideDeckIntent = /(?:buat|bikin|rancang|generate|create|siapkan)\s+(?:(?:sebuah|beberapa|\d+)\s+)?(?:slide|slides|deck|slide\s+deck|presentasi|presentation|ppt)\b/i.test(nextItem.text || "") ||
-      /^(?:slide|slides|deck|slide\s+deck|presentasi|presentation|ppt)\s*[:=]/i.test(nextItem.text || "");
     const hasAgentActionOrAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|tab|browser|url|web)/i.test(nextItem.text || "");
 
     if (nextItem.chatMode === 'design') {
-      if (isDeckRevision && !isExplicitExternalWeb) {
+      const isRevision = Boolean(canvasIsOpen && activeArt && activeArt.html);
+      if (isRevision && !isExplicitExternalWeb) {
         runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
       } else {
         runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
       }
-    } else if (isExplicitSlideDeckIntent && !isExplicitExternalWeb && nextItem.chatMode !== 'chat') {
+    } else if (isExplicitSlide && !isExplicitExternalWeb && nextItem.chatMode !== 'chat') {
       if (typeof setChatMode === 'function') setChatMode('design');
       runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
-    } else if (isDeckRevision && !isExplicitExternalWeb && nextItem.chatMode !== 'chat') {
+    } else if (isDeckRevisionReq && !isExplicitExternalWeb && nextItem.chatMode !== 'chat') {
       runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
     } else if (nextItem.chatMode === 'chat') {
       runChatModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
@@ -14892,23 +14928,24 @@ function handleSendMessage() {
   const canvasIsOpen = (typeof isCanvasOpen === 'function') ? isCanvasOpen() : (typeof window !== 'undefined' && typeof window.isCanvasOpen === 'function' ? window.isCanvasOpen() : false);
   const activeArt = (typeof getActiveDesignArtifact === 'function') ? getActiveDesignArtifact() : (typeof window !== 'undefined' && typeof window.getActiveDesignArtifact === 'function' ? window.getActiveDesignArtifact() : null);
 
-  const isDeckRevision = Boolean(canvasIsOpen && activeArt && activeArt.html);
+  const isSocialMedia = isSocialMediaOrImagePrompt(displayMessage || "");
+  const isExplicitSlide = !isSocialMedia && isExplicitSlideDeckIntent(displayMessage || "");
+  const isDeckRevisionReq = !isSocialMedia && Boolean(canvasIsOpen && activeArt && activeArt.html && isSlideDeckRevisionInstruction(displayMessage || ""));
   const isExplicitExternalWeb = /^(?:https?:\/\/|www\.)|(?:buka\s+(?:url|web|situs|link|tab\s+baru))\s+https?:/i.test(displayMessage || "");
-  const isExplicitSlideDeckIntent = /(?:buat|bikin|rancang|generate|create|siapkan)\s+(?:(?:sebuah|beberapa|\d+)\s+)?(?:slide|slides|deck|slide\s+deck|presentasi|presentation|ppt)\b/i.test(displayMessage || "") ||
-    /^(?:slide|slides|deck|slide\s+deck|presentasi|presentation|ppt)\s*[:=]/i.test(displayMessage || "");
   const hasAgentActionOrAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|tab|browser|url|web)/i.test(displayMessage || "");
 
   if (currentChatMode === 'design') {
     // Mode Design = 100% Otomatis Membuat atau Merevisi Slide Deck Eksekutif 16:9 untuk Topik Apa Pun
-    if (isDeckRevision && !isExplicitExternalWeb) {
+    const isRevision = Boolean(canvasIsOpen && activeArt && activeArt.html);
+    if (isRevision && !isExplicitExternalWeb) {
       runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
     } else {
       runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
     }
-  } else if (isExplicitSlideDeckIntent && !isExplicitExternalWeb && currentChatMode !== 'chat') {
+  } else if (isExplicitSlide && !isExplicitExternalWeb && currentChatMode !== 'chat') {
     if (typeof setChatMode === 'function') setChatMode('design');
     runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
-  } else if (isDeckRevision && !isExplicitExternalWeb && currentChatMode !== 'chat') {
+  } else if (isDeckRevisionReq && !isExplicitExternalWeb && currentChatMode !== 'chat') {
     runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
   } else if (currentChatMode === 'chat') {
     runChatModeLoop(displayMessage, currentAttachments, currentMentions);

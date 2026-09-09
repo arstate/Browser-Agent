@@ -2510,13 +2510,23 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Interaksi kursor pada `.site-tile:hover .site-icon-box` mengaktifkan transisi halus `scale(1.06)` dengan border highlight `rgba(206, 241, 40, 0.5)` dan efek cahaya neon Bento Lime `box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), 0 0 14px rgba(206, 241, 40, 0.2)`.
    - Label teks situs `.site-title` bertransisi lembut ke warna putih salju kontras tinggi `#F0F6FC`.
 
-3. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+## 🏛️ 73. Semantic Disambiguation Pipeline: Eliminasi Ghost Slide Deck & Proteksi Konten Carousel Media Sosial (v2.150.297)
+
+1. **Semantic Disambiguation Triple Guard (`isSocialMediaOrImagePrompt`, `isExplicitSlideDeckIntent`, `isSlideDeckRevisionInstruction`)**:
+   - Menghilangkan ambiguitas istilah *"slide"* yang umum dipakai oleh pengguna dalam konteks media sosial (misal: *"slide feed Instagram"*, *"slide 1 cover postingan"*, *"prompt image generator per slide feed"*).
+   - `isSocialMediaOrImagePrompt`: Menangkap entitas feed, carousel, karosel, IG, Instagram, konten, postingan, foto/gambar referensi, Midjourney, Ideogram, Flux, view depan/dapur, dan desain feed.
+   - `isExplicitSlideDeckIntent`: Mensyaratkan penyebutan eksplisit slide deck, presentasi, PowerPoint, PPT 16:9, dan menolak mentah-mentah jika prompt mengandung konteks media sosial.
+   - `isSlideDeckRevisionInstruction`: Memvalidasi instruksi revisi slide deck nyata (`revisi`, `ubah`, `ganti`, `edit`, `tambah`, `pisah`, `split`, `perbaiki`) pada target slide deck aktif.
+
+2. **Ghost Slide Card Auto-Append Elimination**:
+   - Di `runAgentLoop`, kartu OpenDesign Slide Deck 16:9 (`renderOpenDesignCard`) HANYA dirender jika tool `create_slide_deck_design` benar-benar dieksekusi pada sesi giliran tersebut (`touchedSlideTool === true`), bukan karena riwayat memori artefak lama yang terpicu kata "slide".
+   - Referensi `assistantBubble._activeDesignArtifact` otomatis dibersihkan jika tidak ada tool perancangan slide yang dieksekusi, mencegah kartu menempel secara siluman pada streaming chunk atau render akhir.
+   - Di `runChatModeLoop`, kartu artefak hanya dirender jika pengguna secara sadar meminta membuka kembali kanvas presentasi (`buka slide deck`, `lihat presentasi`).
+
+3. **Injeksi Konteks Revisi & Dispatcher Routing Protection**:
+   - `isDeckRevisionContext` di `runAgentLoop` dan `runChatModeLoop` tidak lagi mengasumsikan setiap pesan saat kanvas terbuka sebagai revisi slide, melainkan memvalidasi niat revisi nyata.
+   - `handleSendMessage` dan `processNextQueuedPrompt` mengalirkan pesan ke `runDesignModeLoop` HANYA jika niat eksplisit slide deck terpenuhi atau instruksi revisi valid.
+   - Aturan larangan halusinasi (Rule 6) disuntikkan ke Master Agent System Prompt dan deskripsi parameter tool `create_slide_deck_design`.
+
+4. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
-
-
-
-
-
-
-
-
