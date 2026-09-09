@@ -2498,6 +2498,22 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris (`canvas_manager.js`: 794 baris).
 
+## 🏛️ 72. Full Rounded Circular Speed Dial Geometry pada Recent Sites (v2.150.296)
+
+1. **Full Rounded Circular Icon Geometry (`border-radius: 9999px`)**:
+   - Menyelaraskan kotak pintasan `.site-icon-box` dengan prinsip full-rounded pill & circular elements pada Browser Agent.
+   - Ukuran terkunci pada `50px x 50px` dengan `border-radius: 9999px !important;` (lingkaran bulat sempurna).
+   - Latar kaca frosted glass `rgba(28, 28, 32, 0.85)` berpadu dengan `backdrop-filter: blur(12px)` dan subtle border `1px solid var(--border-subtle)`.
+   - Favicon di dalam kontainer diproteksi dengan `border-radius: 4px; object-fit: contain;` agar favicon aplikasi dengan latar bersudut tajam tetap rapi dan terisolasi di dalam lingkaran.
+
+2. **Bento Lime Halo Glow on Hover**:
+   - Interaksi kursor pada `.site-tile:hover .site-icon-box` mengaktifkan transisi halus `scale(1.06)` dengan border highlight `rgba(206, 241, 40, 0.5)` dan efek cahaya neon Bento Lime `box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), 0 0 14px rgba(206, 241, 40, 0.2)`.
+   - Label teks situs `.site-title` bertransisi lembut ke warna putih salju kontras tinggi `#F0F6FC`.
+
+3. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
+
+
 
 
 

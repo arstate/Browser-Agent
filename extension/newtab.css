@@ -1323,39 +1323,58 @@ body.has-messages .chat-messages {
   gap: 8px;
   text-decoration: none;
   width: 74px;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .site-tile:hover {
-  transform: translateY(-3px) scale(1.04);
+  transform: translateY(-3px);
 }
 
 .site-icon-box {
   width: 50px;
   height: 50px;
-  border-radius: 14px;
+  border-radius: 9999px !important;
   background: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+.site-icon-box img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 4px;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .site-tile:hover .site-icon-box {
-  border-color: rgba(206, 241, 40, 0.4);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45), 0 0 12px rgba(206, 241, 40, 0.15);
+  border-color: rgba(206, 241, 40, 0.5);
+  background: rgba(36, 38, 44, 0.95);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), 0 0 14px rgba(206, 241, 40, 0.2);
+  transform: scale(1.06);
+}
+
+.site-tile:hover .site-icon-box img {
+  transform: scale(1.08);
 }
 
 .site-title {
   font-size: 11px;
+  font-weight: 500;
   color: var(--text-secondary);
   max-width: 74px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
+  transition: color 0.18s ease;
 }
 
 .site-tile:hover .site-title {

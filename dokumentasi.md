@@ -1766,3 +1766,21 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Syntax check `node -c` lulus 100% pada `extension/design/canvas_manager.js`, `extension/newtab.js`, dan `extension/sidepanel.js`.
      - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 798 baris (`canvas_manager.js`: 794 baris).
 
+### 179. Rilis Versi v2.150.296 - Full Rounded Circular Geometry pada Kotak Ikon Recent Sites (Bento Speed Dial Alignment)
+- **Waktu Rilis**: 2026-09-09 11:18 WIB
+- **Fokus Utama**: Menyelaraskan kotak ikon pintasan Recent Sites (`.site-icon-box`) pada halaman New Tab (`newtab.html`) dengan filosofi desain Dark Luxury Full Rounded Browser Agent, mengubah bentuk kotak bersudut tumpul lama (`border-radius: 14px`) menjadi lingkaran bulat penuh (`border-radius: 9999px !important`).
+- **Akar Masalah (Root Causes)**:
+  - Kotak ikon situs `.site-icon-box` sebelumnya menggunakan `border-radius: 14px;`, menciptakan bentuk squircle/kotak membulat kaku yang tidak selaras dengan standar estetika elemen kapsul dan tombol bundar Browser Agent (`border-radius: 9999px`).
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Full Rounded Circular Geometry (`extension/newtab.css`)**:
+     - Mengubah `.site-icon-box` menjadi `border-radius: 9999px !important;` (lingkaran 50px x 50px yang sempurna).
+     - Menambahkan `overflow: hidden;` dan `backdrop-filter: blur(12px);` untuk kedalaman kaca frosted glass yang mewah.
+     - Menyematkan `border-radius: 4px; object-fit: contain;` pada gambar favicon `.site-icon-box img` agar logo bersudut tajam tetap rapi dan tidak bocor ke luar lingkaran.
+  2. **Interaksi Hover Halus & Glowing Halo**:
+     - Efek hover pada `.site-tile:hover .site-icon-box` ditingkatkan dengan `border-color: rgba(206, 241, 40, 0.5);`, latar belakang lebih solid `rgba(36, 38, 44, 0.95)`, serta bayangan cahaya neon Bento Lime `box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), 0 0 14px rgba(206, 241, 40, 0.2);` dan scale `1.06`.
+     - Judul situs `.site-title` bertransisi lembut menjadi teks putih terang `#F0F6FC` dengan bobot `font-weight: 500`.
+  3. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Seluruh berkas JavaScript dan CSS lulus validasi 100%.
+     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah 798 baris.
+
+

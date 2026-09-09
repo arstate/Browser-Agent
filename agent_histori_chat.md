@@ -8324,6 +8324,27 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 798 baris (`canvas_manager.js`: 794 baris).
   3. Bump versi ke `v2.150.295` di `extension/manifest.json`.
 
+### 🚀 Iterasi 179: Full Rounded Circular Speed Dial Geometry pada Recent Sites
+- **Waktu Eksekusi**: 2026-09-09 11:18 WIB
+- **Versi**: `v2.150.296`
+- **Problem Statement Pengguna**:
+  - *"update ui ini jadi full rounded biar lebih sesuai dengan style desain ui browser agent"*
+  - Screenshot yang dilampirkan memperlihatkan baris RECENT SITES dengan kotak ikon yang sebelumnya berbentuk squircle (`border-radius: 14px`), ditandai dengan kotak merah pada tile GitHub.
+- **Akar Masalah (Root Causes)**:
+  - Kotak ikon `.site-icon-box` di `extension/newtab.css` menggunakan `border-radius: 14px`, tidak selaras dengan bahasa desain Dark Luxury Full Rounded Browser Agent yang serba bulat penuh (`9999px` / `50%` lingkaran).
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Full Rounded Circular Geometry (`extension/newtab.css`)**:
+     - Mengubah `.site-icon-box` menjadi `border-radius: 9999px !important;` (lingkaran 50px x 50px sempurna).
+     - Menambahkan `overflow: hidden;`, `backdrop-filter: blur(12px);`, dan transisi halus `cubic-bezier(0.16, 1, 0.3, 1)`.
+     - Menyematkan `border-radius: 4px; object-fit: contain;` pada `.site-icon-box img` agar logo bersudut tajam tetap rapi dan terpusat.
+  2. **Elevated Hover Interaction**:
+     - Hover pada `.site-tile:hover .site-icon-box` mengaktifkan border Bento Lime `rgba(206, 241, 40, 0.5)`, background `rgba(36, 38, 44, 0.95)`, dan glowing halo `box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), 0 0 14px rgba(206, 241, 40, 0.2)` dengan scale `1.06`.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Syntax check JS/CSS lulus 100%.
+  2. Seluruh 12 berkas modular tetap patuh `<= 798` baris.
+  3. Bump versi ke `v2.150.296` di `extension/manifest.json`.
+
+
 
 
 
