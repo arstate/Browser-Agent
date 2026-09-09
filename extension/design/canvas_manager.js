@@ -672,7 +672,7 @@ function initOpenDesignCanvas() {
   });
 
   // Close, Copy Code & File
-  document.getElementById('btn-canvas-close')?.addEventListener('click', closeOpenDesignCanvas);
+  ['btn-canvas-close', 'btn-header-new-chat', 'btn-history-new-chat', 'btn-sidebar-brand'].forEach(id => document.getElementById(id)?.addEventListener('click', closeOpenDesignCanvas));
   document.getElementById('btn-canvas-copy-code')?.addEventListener('click', async () => {
     if (!activeDesignArtifact?.html) return;
     try {

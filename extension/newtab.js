@@ -215,8 +215,13 @@ function initNewTab() {
   }
 
   // Home Button (Back to Chat / Reset to Clean Welcome Screen)
-  document.getElementById('btn-header-new-chat')?.addEventListener('click', (e) => {
-    e.preventDefault();
+  const handleHomeNavigation = (e) => {
+    if (e) e.preventDefault();
+    if (typeof closeOpenDesignCanvas === 'function') {
+      closeOpenDesignCanvas();
+    } else if (typeof window !== 'undefined' && typeof window.closeOpenDesignCanvas === 'function') {
+      window.closeOpenDesignCanvas();
+    }
     closeFullscreenSettings();
     closeAppsView();
     const welcomeCardEl = document.getElementById('welcome-card');
@@ -226,7 +231,15 @@ function initNewTab() {
     }
     document.body.classList.remove('has-messages');
     updateActiveSidebarTab('home');
-  });
+    try {
+      window.scrollTo(0, 0);
+      const chatMain = document.querySelector('.fullscreen-chat-main');
+      if (chatMain) chatMain.scrollTop = 0;
+    } catch (_) {}
+  };
+
+  document.getElementById('btn-header-new-chat')?.addEventListener('click', handleHomeNavigation);
+  document.getElementById('btn-sidebar-brand')?.addEventListener('click', handleHomeNavigation);
 
   // Apps Page Button in Sidebar (Navigates to Apps Page)
   document.getElementById('btn-open-apps')?.addEventListener('click', (e) => {

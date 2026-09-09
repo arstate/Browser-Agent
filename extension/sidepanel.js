@@ -13425,6 +13425,11 @@ async function resumeSession(sessionId) {
   if (isExecuting) {
     cancelExecution();
   }
+  if (typeof closeOpenDesignCanvas === 'function') {
+    closeOpenDesignCanvas();
+  } else if (typeof window !== 'undefined' && typeof window.closeOpenDesignCanvas === 'function') {
+    window.closeOpenDesignCanvas();
+  }
   let session = null;
 
   // 1. Fetch from SQLite for regular browser sessions
@@ -13559,6 +13564,11 @@ function cancelExecution() {
 }
 
 function resetChatMessagesUI() {
+  if (typeof closeOpenDesignCanvas === 'function') {
+    closeOpenDesignCanvas();
+  } else if (typeof window !== 'undefined' && typeof window.closeOpenDesignCanvas === 'function') {
+    window.closeOpenDesignCanvas();
+  }
   if (!chatMessages) return;
   const workspace = document.getElementById('agent-workspace');
   if (welcomeCard && workspace && workspace.contains(welcomeCard) && !chatMessages.contains(welcomeCard)) {
@@ -13579,14 +13589,27 @@ function startNewChat() {
   if (isExecuting) {
     cancelExecution();
   }
+  if (typeof closeOpenDesignCanvas === 'function') {
+    closeOpenDesignCanvas();
+  } else if (typeof window !== 'undefined' && typeof window.closeOpenDesignCanvas === 'function') {
+    window.closeOpenDesignCanvas();
+  }
   hideClarificationDock();
   saveCurrentSessionToDB();
   currentSessionId = null;
   currentSessionTitle = "New Chat";
   currentSessionIsPinned = false;
   currentSessionCreatedAt = null;
+  activeDesignArtifact = null;
+  if (typeof window !== 'undefined') {
+    window.activeDesignArtifact = null;
+    window.__activeDesignArtifact = null;
+  }
   try {
     sessionStorage.removeItem('tab_active_session_id');
+  } catch (e) {}
+  try {
+    sessionStorage.removeItem('canvas_was_open');
   } catch (e) {}
   try {
     chrome.storage.local.remove(['last_active_session_id']);

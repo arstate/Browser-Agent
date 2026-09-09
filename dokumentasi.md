@@ -1741,3 +1741,28 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
   5. **Verifikasi Pengujian & Standar Sub-800 Baris**:
      - Validasi sintaksis `node -c` lulus 100% pada seluruh berkas `extension/*.js`, `extension/design/*.js`, `extension/apps-integration/*.js`, dan `extension/core/*.js`.
      - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris (`design_executor.js`: 795, `slide_editor.js`: 798).
+
+### 178. Rilis Versi v2.150.295 - Auto-Close Slide Deck Canvas Drawer saat Navigasi ke Home / Mulai Chat Baru
+- **Waktu Rilis**: 2026-09-09 09:40 WIB
+- **Fokus Utama**: Memperbaiki bug di mana saat drawer canvas slide deck PDF sedang terbuka dan pengguna mengklik tombol Home (`#btn-header-new-chat` / data-tab="home"), antarmuka beralih ke layar Home tetapi drawer canvas slide deck PDF tidak tertutup secara otomatis dan tetap terbuka di sisi layar.
+- **Akar Masalah (Root Causes)**:
+  1. *Omission of Canvas Teardown on Home Click*: Handler klik tombol Home (`#btn-header-new-chat`) pada `extension/newtab.js` hanya memanggil `closeFullscreenSettings()`, `closeAppsView()`, mereset `welcomeCardEl.style.display = 'flex'`, dan menghapus kelas `has-messages`, namun sama sekali tidak memanggil `closeOpenDesignCanvas()`.
+  2. *Missing Canvas Reset in `startNewChat()` & `resetChatMessagesUI()`*: Pada `extension/sidepanel.js`, fungsi `startNewChat()` dan `resetChatMessagesUI()` mereset pesan dan status obrolan tetapi tidak menutup canvas maupun menghapus kelas `.canvas-active` dari `document.body`.
+  3. *CSS Priority Lock (`display: none !important`)*: Pada `extension/newtab.css`, aturan `body.canvas-active .welcome-card` memiliki prioritas `display: none !important;`. Akibatnya, selama `.canvas-active` belum dilepas dari `body`, kartu hero Home tidak dapat tampil sempurna dan layout chat utama tetap terkunci pada lebar sempit `440px`.
+  4. *Session Persistence Flag Leak*: Flag `sessionStorage.getItem('canvas_was_open')` dan memori global `activeDesignArtifact` tidak dibersihkan saat chat baru dimulai.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Integrasi Canvas Auto-Close pada Navigasi Home (`extension/newtab.js`)**:
+     - Membuat handler `handleHomeNavigation` yang secara eksplisit memanggil `closeOpenDesignCanvas()` (atau `window.closeOpenDesignCanvas()`) sebelum mereset UI.
+     - Mengaitkan handler ke tombol Home utama (`#btn-header-new-chat`) dan logo brand sidebar (`#btn-sidebar-brand`).
+     - Menambahkan reset scroll `window.scrollTo(0, 0)` dan `chatMain.scrollTop = 0` untuk pendaratan yang mulus di halaman Home.
+  2. **Pengikatan Auto-Close pada `startNewChat()`, `resetChatMessagesUI()`, & `resumeSession()` (`extension/sidepanel.js`)**:
+     - Memanggil `closeOpenDesignCanvas()` di awal `startNewChat()` dan `resetChatMessagesUI()`.
+     - Mengosongkan `activeDesignArtifact = null`, `window.__activeDesignArtifact = null`, dan menghapus `sessionStorage.removeItem('canvas_was_open')`.
+     - Memanggil `closeOpenDesignCanvas()` pada `resumeSession()` agar pembukaan sesi lama tidak mengalami kebocoran drawer canvas dari sesi sebelumnya.
+  3. **Event Listener Safeguard di Modul Canvas (`extension/design/canvas_manager.js`)**:
+     - Memperluas listener penutupan kanvas pada baris 675 menjadi: `['btn-canvas-close', 'btn-header-new-chat', 'btn-history-new-chat', 'btn-sidebar-brand'].forEach(...)`.
+     - Menjamin bahwa klik pada tombol Home atau Chat Baru langsung menutup drawer kanvas secara deterministik tanpa menambah baris kode (tetap 794 baris).
+  4. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Syntax check `node -c` lulus 100% pada `extension/design/canvas_manager.js`, `extension/newtab.js`, dan `extension/sidepanel.js`.
+     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 798 baris (`canvas_manager.js`: 794 baris).
+

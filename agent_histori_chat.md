@@ -8303,6 +8303,28 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah batas 798 baris (`design_executor.js`: 795, `slide_editor.js`: 798).
   3. Bump versi ke `v2.150.294` di `extension/manifest.json`.
 
+### 🚀 Iterasi 178: Auto-Close Slide Deck Canvas Drawer saat Navigasi ke Home / Mulai Chat Baru
+- **Waktu Eksekusi**: 2026-09-09 09:40 WIB
+- **Versi**: `v2.150.295`
+- **Problem Statement Pengguna**:
+  - *"update ketika lagi berada di mode open canvas slide deck pdf itu ketika klik home harusnya slide deck canvas pdf otomatis di close dan langsung pindah ke home sekarang bug soalnya slide deck pdf gamau close otomatis tapi udah pindah ke home"*
+- **Akar Masalah (Root Causes)**:
+  1. *Missing Canvas Teardown on Home Click*: Handler tombol Home (`#btn-header-new-chat`) di `newtab.js` tidak memanggil `closeOpenDesignCanvas()`.
+  2. *Missing Reset in `startNewChat()` & `resetChatMessagesUI()`*: Fungsi reset chat di `sidepanel.js` tidak menutup drawer canvas atau mencabut `.canvas-active`.
+  3. *CSS `!important` Masking*: Aturan CSS `body.canvas-active .welcome-card { display: none !important; }` memblokir kemunculan kartu hero welcome saat canvas tetap terbuka.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Integrasi Canvas Auto-Close pada Navigasi Home (`extension/newtab.js`)**:
+     - Handler `handleHomeNavigation` pada `#btn-header-new-chat` dan `#btn-sidebar-brand` memanggil `closeOpenDesignCanvas()`, mencabut `.canvas-active`, menampilkan kembali `.welcome-card`, dan mereset scroll ke atas (`scrollTop = 0`).
+  2. **Pengikatan Auto-Close pada `startNewChat()`, `resetChatMessagesUI()`, & `resumeSession()` (`extension/sidepanel.js`)**:
+     - Memanggil `closeOpenDesignCanvas()`, mengosongkan `activeDesignArtifact = null`, dan mencabut flag `canvas_was_open` dari `sessionStorage`.
+  3. **Event Delegation Safeguard di Modul Canvas (`extension/design/canvas_manager.js`)**:
+     - Mendaftarkan listener penutupan ke `['btn-canvas-close', 'btn-header-new-chat', 'btn-history-new-chat', 'btn-sidebar-brand']`.
+- **Verifikasi & Kepatuhan Arsitektur:**
+  1. Syntax check `node -c` lulus 100% pada `extension/design/canvas_manager.js`, `extension/newtab.js`, dan `extension/sidepanel.js`.
+  2. Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` 100% patuh di bawah limit 798 baris (`canvas_manager.js`: 794 baris).
+  3. Bump versi ke `v2.150.295` di `extension/manifest.json`.
+
+
 
 
 

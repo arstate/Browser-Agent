@@ -2481,6 +2481,24 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 4. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris (`design_executor.js`: 795, `slide_editor.js`: 798).
 
+## 🏛️ 71. Auto-Close Slide Deck Canvas Drawer saat Navigasi ke Home / Mulai Chat Baru (v2.150.295)
+
+1. **Deterministic Canvas Teardown on Home Navigation**:
+   - `handleHomeNavigation` pada `extension/newtab.js` secara otomatis memanggil `closeOpenDesignCanvas()` saat pengguna mengklik tombol Home (`#btn-header-new-chat`) atau logo brand (`#btn-sidebar-brand`).
+   - Melepaskan kelas CSS `canvas-active` dari `document.body` sehingga kartu hero `.welcome-card`, placeholder input, dan recent sites unblocked dari `display: none !important;` dan kembali ke tata letak centered hero asli.
+   - Mengatur scrollbar halaman dan chat main kembali ke posisi puncak (`scrollTop = 0`).
+
+2. **Lifecycle State Cleansing on New Chat & Session Switch (`sidepanel.js`)**:
+   - `startNewChat()` dan `resetChatMessagesUI()` memanggil `closeOpenDesignCanvas()`, mengosongkan artefak desain aktif `activeDesignArtifact = null`, dan mencabut flag `canvas_was_open` dari `sessionStorage`.
+   - `resumeSession(sessionId)` juga memanggil `closeOpenDesignCanvas()` agar sesi yang baru dipilih bersih dari drawer canvas sesi sebelumnya.
+
+3. **Global Event Delegation Safeguard (`canvas_manager.js`)**:
+   - Mendaftarkan listener penutupan kanvas langsung ke elemen `['btn-canvas-close', 'btn-header-new-chat', 'btn-history-new-chat', 'btn-sidebar-brand']`.
+
+4. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris (`canvas_manager.js`: 794 baris).
+
+
 
 
 
