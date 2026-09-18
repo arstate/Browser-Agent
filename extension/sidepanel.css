@@ -9313,4 +9313,394 @@ body.canvas-active .opendesign-canvas-pane {
   color: #0A0F1D;
 }
 
+/* ==========================================================================
+   SUBSCRIPTION & LICENSING SYSTEM (Dark Luxury Bento)
+   ========================================================================== */
+.btn-subscription-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px !important;
+  width: auto !important;
+}
+
+.sub-status-pill {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: rgba(206, 241, 40, 0.15);
+  color: #CEF128;
+  border: 1px solid rgba(206, 241, 40, 0.3);
+  text-transform: uppercase;
+}
+
+.sub-status-pill.expired {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.sub-status-pill.trial {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* Modal Card */
+.subscription-modal-card {
+  max-width: 480px;
+  width: 92%;
+  background: #0B0F19;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(206, 241, 40, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.subscription-modal-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 72vh;
+  overflow-y: auto;
+}
+
+/* Status Card */
+.sub-status-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.sub-status-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(206, 241, 40, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.sub-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sub-tier-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #F8FAFC;
+  text-transform: uppercase;
+}
+
+.sub-status-tag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.sub-status-tag.active {
+  background: rgba(206, 241, 40, 0.15);
+  color: #CEF128;
+  border: 1px solid rgba(206, 241, 40, 0.35);
+}
+
+.sub-status-tag.expired {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.sub-status-tag.trial {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.sub-status-countdown {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sub-days-number {
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1;
+  color: #CEF128;
+  letter-spacing: -1px;
+}
+
+.sub-status-card.expired .sub-days-number {
+  color: #EF4444;
+}
+
+.sub-days-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+.sub-progress-wrapper {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.sub-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #38BDF8 0%, #CEF128 100%);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.sub-status-card.expired .sub-progress-bar {
+  background: #EF4444;
+  width: 0% !important;
+}
+
+.sub-meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sub-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sub-meta-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.sub-meta-val {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #E2E8F0;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+/* Sections */
+.sub-section-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sub-input-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #CBD5E1;
+}
+
+.sub-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.sub-text-input {
+  flex: 1;
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #F8FAFC;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.sub-text-input:focus {
+  border-color: #CEF128;
+  box-shadow: 0 0 0 1px rgba(206, 241, 40, 0.3);
+}
+
+.sub-feedback-msg {
+  font-size: 11.5px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  line-height: 1.4;
+}
+
+.sub-feedback-msg.success {
+  background: rgba(206, 241, 40, 0.1);
+  color: #CEF128;
+  border: 1px solid rgba(206, 241, 40, 0.3);
+}
+
+.sub-feedback-msg.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Top-Up Promo */
+.topup-promo-card {
+  background: linear-gradient(145deg, rgba(20, 30, 48, 0.5) 0%, rgba(10, 15, 28, 0.8) 100%);
+  border-color: rgba(206, 241, 40, 0.15);
+}
+
+.topup-promo-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #F8FAFC;
+}
+
+.topup-promo-desc {
+  font-size: 11px;
+  color: #94A3B8;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.topup-price-tag {
+  font-size: 20px;
+  font-weight: 900;
+  color: #CEF128;
+  margin-top: 6px;
+}
+
+.topup-price-tag span {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #64748B;
+}
+
+.topup-actions-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sub-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.sub-action-btn.primary {
+  background: #CEF128;
+  color: #0A0F1D;
+}
+
+.sub-action-btn.primary:hover {
+  background: #B5D41F;
+  transform: translateY(-1px);
+}
+
+.sub-action-btn.checkout {
+  background: linear-gradient(90deg, #CEF128 0%, #A3E635 100%);
+  color: #0A0F1D;
+  font-size: 12.5px;
+  font-weight: 800;
+  padding: 11px 16px;
+  box-shadow: 0 4px 14px rgba(206, 241, 40, 0.25);
+}
+
+.sub-action-btn.checkout:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.sub-action-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: #94A3B8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sub-action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #F8FAFC;
+}
+
+/* Footer */
+.subscription-modal-footer {
+  padding: 12px 20px;
+  background: rgba(10, 15, 28, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sub-footer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.sub-footer-btn.primary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #E2E8F0;
+}
+
+.sub-footer-btn.primary:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.sub-footer-btn.secondary {
+  background: transparent;
+  color: #64748B;
+}
+
+.sub-footer-btn.secondary:hover {
+  color: #94A3B8;
+}
+
+
 

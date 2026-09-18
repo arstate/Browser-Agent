@@ -1467,6 +1467,37 @@ def db_clear_all():
         log(f"Error in db_clear_all: {e}")
         return {"status": "error", "error": str(e)}
 
+def get_machine_fingerprint():
+    """Generates a stable hardware-bound device ID for licensing and subscription binding."""
+    try:
+        import uuid, hashlib, platform
+        raw_parts = [
+            str(uuid.getnode()),
+            str(platform.node()),
+            str(platform.system()),
+            str(platform.machine())
+        ]
+        for mid_path in ["/etc/machine-id", "/var/lib/dbus/machine-id"]:
+            if os.path.exists(mid_path):
+                try:
+                    with open(mid_path, "r") as f:
+                        raw_parts.append(f.read().strip())
+                        break
+                except Exception:
+                    pass
+        combined = ":".join(raw_parts)
+        h = hashlib.sha256(combined.encode("utf-8")).hexdigest()
+        device_id = f"BA-{h[:4].upper()}-{h[4:8].upper()}-{h[8:12].upper()}"
+        return {
+            "status": "ok",
+            "device_id": device_id,
+            "fingerprint": h,
+            "platform": platform.system()
+        }
+    except Exception as e:
+        log(f"Error in get_machine_fingerprint: {e}")
+        return {"status": "error", "error": str(e)}
+
 # ==========================================
 # Dedicated Settings & Model Configs SQLite Handlers
 # ==========================================
@@ -4348,6 +4379,11 @@ def handle_local_rpc(msg):
 
     elif action == "db_clear_all":
         res = db_clear_all()
+        res["id"] = req_id
+        return res
+
+    elif action == "get_machine_fingerprint":
+        res = get_machine_fingerprint()
         res["id"] = req_id
         return res
 

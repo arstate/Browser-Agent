@@ -13834,6 +13834,172 @@ if (typeof window !== 'undefined') {
   window.toggleTemporaryChat = toggleTemporaryChat;
 }
 
+// =========================================================================
+// Subscription & Licensing Management UI Controller
+// =========================================================================
+const subModal = document.getElementById('subscription-modal');
+const badgeSubStatus = document.getElementById('badge-subscription-status');
+const modalSubBadge = document.getElementById('modal-sub-badge');
+const subCardContainer = document.getElementById('sub-card-container');
+const subTierBadge = document.getElementById('sub-tier-badge');
+const subStatusTag = document.getElementById('sub-status-tag');
+const subDaysNumber = document.getElementById('sub-days-number');
+const subProgressBar = document.getElementById('sub-progress-bar');
+const subExpiresAt = document.getElementById('sub-expires-at');
+const subDeviceId = document.getElementById('sub-device-id');
+const subInputKey = document.getElementById('sub-input-license-key');
+const subFeedback = document.getElementById('sub-activation-feedback');
+const linkSubTopupPay = document.getElementById('link-sub-topup-pay');
+
+function updateSubscriptionUI(licenseData) {
+  if (!licenseData) return;
+  const { licenseKey, status, tier, expiresAt, daysRemaining, deviceId } = licenseData;
+  const isExpired = status === 'expired' || daysRemaining <= 0;
+
+  // Header pill badge
+  if (badgeSubStatus) {
+    badgeSubStatus.className = 'sub-status-pill ' + (isExpired ? 'expired' : (status || 'active'));
+    badgeSubStatus.textContent = isExpired ? 'EXPIRED' : `${(tier || 'PRO').toUpperCase()} • ${daysRemaining}h`;
+  }
+
+  // Modal elements
+  if (modalSubBadge) modalSubBadge.textContent = `${(tier || 'PRO').toUpperCase()} LICENSE`;
+  if (subTierBadge) subTierBadge.textContent = `${(tier || 'PRO').toUpperCase()} PLAN`;
+  
+  if (subStatusTag) {
+    subStatusTag.className = 'sub-status-tag ' + (isExpired ? 'expired' : (status || 'active'));
+    subStatusTag.textContent = isExpired ? 'EXPIRED' : (status || 'active').toUpperCase();
+  }
+
+  if (subDaysNumber) {
+    subDaysNumber.textContent = daysRemaining;
+  }
+
+  if (subCardContainer) {
+    if (isExpired) {
+      subCardContainer.classList.add('expired');
+    } else {
+      subCardContainer.classList.remove('expired');
+    }
+  }
+
+  if (subProgressBar) {
+    const pct = Math.min(100, Math.max(0, Math.round((daysRemaining / 30) * 100)));
+    subProgressBar.style.width = isExpired ? '0%' : `${pct}%`;
+  }
+
+  if (subExpiresAt) {
+    if (expiresAt) {
+      const d = new Date(expiresAt);
+      subExpiresAt.textContent = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    } else {
+      subExpiresAt.textContent = '-';
+    }
+  }
+
+  if (subDeviceId) {
+    subDeviceId.textContent = deviceId || 'Detecting...';
+  }
+
+  if (subInputKey && licenseKey) {
+    if (!subInputKey.value) subInputKey.value = licenseKey;
+  }
+
+  if (linkSubTopupPay && typeof LicensingManager !== 'undefined') {
+    linkSubTopupPay.href = LicensingManager.getTopupUrl();
+  }
+}
+
+function openSubscriptionModal() {
+  if (subModal) {
+    subModal.style.display = 'flex';
+    if (typeof LicensingManager !== 'undefined') {
+      updateSubscriptionUI(LicensingManager.getLicense());
+      LicensingManager.checkStatus(false).then(updateSubscriptionUI).catch(() => {});
+    }
+  }
+}
+
+function hideSubscriptionModal() {
+  if (subModal) {
+    subModal.style.display = 'none';
+  }
+  if (subFeedback) {
+    subFeedback.style.display = 'none';
+  }
+}
+
+// Attach listeners
+document.getElementById('btn-open-subscription')?.addEventListener('click', openSubscriptionModal);
+document.getElementById('btn-close-subscription')?.addEventListener('click', hideSubscriptionModal);
+document.getElementById('btn-close-sub-footer')?.addEventListener('click', hideSubscriptionModal);
+
+document.getElementById('btn-sub-activate')?.addEventListener('click', async () => {
+  const key = subInputKey?.value?.trim();
+  if (!key) {
+    if (subFeedback) {
+      subFeedback.style.display = 'block';
+      subFeedback.className = 'sub-feedback-msg error';
+      subFeedback.textContent = 'Silakan masukkan License Key Anda.';
+    }
+    return;
+  }
+  if (subFeedback) {
+    subFeedback.style.display = 'block';
+    subFeedback.className = 'sub-feedback-msg';
+    subFeedback.textContent = 'Memverifikasi lisensi ke server...';
+  }
+  if (typeof LicensingManager !== 'undefined') {
+    const res = await LicensingManager.activateKey(key);
+    if (subFeedback) {
+      subFeedback.style.display = 'block';
+      subFeedback.className = 'sub-feedback-msg ' + (res.success ? 'success' : 'error');
+      subFeedback.textContent = res.message;
+    }
+    updateSubscriptionUI(LicensingManager.getLicense());
+  }
+});
+
+document.getElementById('btn-sub-simulate-topup')?.addEventListener('click', async () => {
+  if (typeof LicensingManager !== 'undefined') {
+    if (subFeedback) {
+      subFeedback.style.display = 'block';
+      subFeedback.className = 'sub-feedback-msg';
+      subFeedback.textContent = 'Memproses penambahan masa aktif 30 hari...';
+    }
+    const res = await LicensingManager.simulateTopup(30);
+    if (subFeedback) {
+      subFeedback.className = 'sub-feedback-msg success';
+      subFeedback.textContent = 'Top-Up Simulasi Sukses! Masa aktif bertambah 30 hari.';
+    }
+    updateSubscriptionUI(LicensingManager.getLicense());
+  }
+});
+
+document.getElementById('btn-sub-refresh')?.addEventListener('click', async () => {
+  if (typeof LicensingManager !== 'undefined') {
+    if (subFeedback) {
+      subFeedback.style.display = 'block';
+      subFeedback.className = 'sub-feedback-msg';
+      subFeedback.textContent = 'Memperbarui status lisensi...';
+    }
+    const lic = await LicensingManager.checkStatus(true);
+    updateSubscriptionUI(lic);
+    if (subFeedback) {
+      subFeedback.className = 'sub-feedback-msg success';
+      subFeedback.textContent = `Status diperbarui: ${(lic.status || 'active').toUpperCase()} (${lic.daysRemaining} hari tersisa).`;
+    }
+  }
+});
+
+if (typeof LicensingManager !== 'undefined') {
+  LicensingManager.init().then(lic => {
+    updateSubscriptionUI(lic);
+  });
+  LicensingManager.onStateChange(updateSubscriptionUI);
+}
+
+
 async function exportFullDatabaseFromSidepanel() {
   try {
     updateFooterStatus("Mengompres seluruh database ke tar.gz...");
@@ -14874,6 +15040,17 @@ function handleSendMessage() {
   }
 
   if (!hasInput) return;
+
+  // Gatekeeper: Enforce active subscription/top-up status
+  if (typeof LicensingManager !== 'undefined' && !LicensingManager.isUsable()) {
+    openSubscriptionModal();
+    if (subFeedback) {
+      subFeedback.style.display = 'block';
+      subFeedback.className = 'sub-feedback-msg error';
+      subFeedback.textContent = 'Masa aktif lisensi telah habis. Silakan perpanjang / top-up masa aktif untuk melanjutkan pengiriman pesan.';
+    }
+    return;
+  }
 
   // Trigger continuous autonomous self-learning reflex in background
   autoLearnReflexFromUserText(text);

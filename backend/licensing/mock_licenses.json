@@ -1,0 +1,38 @@
+{
+  "BA-PRO-ACTIVE-DEMO": {
+    "license_key": "BA-PRO-ACTIVE-DEMO",
+    "customer_name": "Demo Pro User",
+    "customer_email": "user@example.com",
+    "status": "active",
+    "tier": "pro",
+    "max_devices": 2,
+    "device_ids": [
+      "BA-94A5-1EB3-3B72"
+    ],
+    "expires_at": "2026-10-19T03:15:32.927880"
+  },
+  "BA-PRO-EXPIRED-TEST": {
+    "license_key": "BA-PRO-EXPIRED-TEST",
+    "customer_name": "Expired Test User",
+    "customer_email": "expired@example.com",
+    "status": "active",
+    "tier": "pro",
+    "max_devices": 1,
+    "device_ids": [
+      "BA-94A5-1EB3-3B72"
+    ],
+    "expires_at": "2026-10-19T03:15:32.930700"
+  },
+  "BA-TRIAL-NEW-USER": {
+    "license_key": "BA-TRIAL-NEW-USER",
+    "customer_name": "Trial Explorer",
+    "customer_email": "trial@example.com",
+    "status": "trial",
+    "tier": "trial",
+    "max_devices": 1,
+    "device_ids": [
+      "DEVICE-A"
+    ],
+    "expires_at": "2026-09-22T03:15:32.927880"
+  }
+}

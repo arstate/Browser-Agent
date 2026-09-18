@@ -68,6 +68,15 @@
           </svg>
           <span id="badge-brain-total-count" style="display: none; position: absolute; top: -4px; right: -4px; background: #3b82f6; color: #fff; font-size: 9px; font-weight: 700; border-radius: 10px; padding: 1px 4px; min-width: 12px; text-align: center; border: 1px solid #1e293b;">0</span>
         </button>
+
+        <!-- Subscription & License Status Trigger -->
+        <button id="btn-open-subscription" type="button" class="icon-btn btn-subscription-badge" title="Status Langganan & Top-Up Masa Aktif">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+          <span id="badge-subscription-status" class="sub-status-pill">PRO</span>
+        </button>
       </div>
     </header>
 
@@ -925,6 +934,90 @@
     </div>
   </div>
 
+  <!-- Modal: Subscription & License Top-Up -->
+  <div class="modal-overlay" id="subscription-modal" style="display: none; z-index: 999999;">
+    <div class="modal-card subscription-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-pill" id="modal-sub-badge">PRO LICENSE</div>
+          <h2 class="modal-title">Langganan & Masa Aktif</h2>
+          <span class="modal-subtitle">Kelola lisensi, perpanjangan masa aktif, dan device binding</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-subscription" title="Tutup Modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body subscription-modal-body">
+        <!-- Card 1: Subscription Status Banner -->
+        <div class="sub-status-card" id="sub-card-container">
+          <div class="sub-status-header">
+            <div class="sub-tier-badge" id="sub-tier-badge">PRO MEMBER</div>
+            <span class="sub-status-tag active" id="sub-status-tag">ACTIVE</span>
+          </div>
+          <div class="sub-status-countdown">
+            <span class="sub-days-number" id="sub-days-number">30</span>
+            <span class="sub-days-label">Hari Tersisa</span>
+          </div>
+          <div class="sub-progress-wrapper">
+            <div class="sub-progress-bar" id="sub-progress-bar" style="width: 100%;"></div>
+          </div>
+          <div class="sub-meta-row">
+            <div class="sub-meta-col">
+              <span class="sub-meta-lbl">Berlaku Hingga</span>
+              <span class="sub-meta-val" id="sub-expires-at">-</span>
+            </div>
+            <div class="sub-meta-col">
+              <span class="sub-meta-lbl">Device ID (Hardware)</span>
+              <span class="sub-meta-val font-mono" id="sub-device-id">BA-XXXX-XXXX</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Activation Form -->
+        <div class="sub-section-card">
+          <label class="sub-input-label">Aktivasi / Ganti License Key</label>
+          <div class="sub-input-group">
+            <input type="text" id="sub-input-license-key" class="sub-text-input" placeholder="BA-PRO-XXXX-XXXX-XXXX" spellcheck="false" autocomplete="off" />
+            <button type="button" id="btn-sub-activate" class="sub-action-btn primary">
+              <span>Aktivasi</span>
+            </button>
+          </div>
+          <div id="sub-activation-feedback" class="sub-feedback-msg" style="display: none;"></div>
+        </div>
+
+        <!-- Card 3: Top-Up Package & Extension Actions -->
+        <div class="sub-section-card topup-promo-card">
+          <div class="topup-promo-content">
+            <div class="topup-promo-title">Perpanjang Masa Aktif (Top-Up)</div>
+            <div class="topup-promo-desc">Dapatkan akses unmetered semua agent swarm, canvas slide deck 16:9, Google Workspace apps, dan PTY native bridge.</div>
+            <div class="topup-price-tag">Rp 99.000 <span>/ 30 Hari</span></div>
+          </div>
+          <div class="topup-actions-row">
+            <a href="#" id="link-sub-topup-pay" target="_blank" rel="noopener noreferrer" class="sub-action-btn checkout">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              <span>Top-Up Sekarang (QRIS / VA / E-Wallet)</span>
+            </a>
+            <button type="button" id="btn-sub-simulate-topup" class="sub-action-btn secondary" title="Khusus Pengujian Pengembang: Tambah 30 hari instan">
+              <span>⚡ Dev Top-Up +30 Hari</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer subscription-modal-footer">
+        <button type="button" id="btn-sub-refresh" class="sub-footer-btn secondary">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <span>Refresh Status</span>
+        </button>
+        <button type="button" id="btn-close-sub-footer" class="sub-footer-btn primary">Tutup</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Global Drag & Drop Overlay -->
   <div class="drag-drop-overlay" id="drag-drop-overlay" style="display: none;">
     <div class="drag-drop-box">
@@ -1023,6 +1116,7 @@
   <script src="design/canvas_manager.js"></script>
   <script src="apps-integration/apps_registry.js"></script>
   <script src="apps-integration/apps_manager.js"></script>
+  <script src="core/licensing_manager.js"></script>
   <script src="sidepanel.js"></script>
   <script src="design/design_executor.js"></script>
 </body>
