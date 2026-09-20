@@ -2540,3 +2540,14 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 
 2. **Isolasi Preview Sandbox**:
    - Memisahkan script controller demo stickman swarm ke modul `stickman-preview.js` tersendiri, mematuhi standar zero inline script dan zero inline event handler di seluruh berkas proyek.
+
+## 🏛️ 75. Mode Primacy: Anti-Hijacking Agent Mode & Semantic Regex Guard (v2.150.299)
+
+1. **Strict Mode Primacy Architectural Contract**:
+   - Menghilangkan pembajakan mode otomatis di mana pemilihan `currentChatMode === 'agent'` atau `chatMode === 'agent'` dijamin 100% diproses oleh `runAgentLoop`.
+   - Menghapus pemanggilan `setChatMode('design')` dan pengalihan ke `runDesignModeLoop` dari aliran mode Agent.
+   - Master Agent di `runAgentLoop` mempertahankan kapabilitas perancangan slide deck secara otonom via tool `create_slide_deck_design` tanpa mengganggu pilihan mode antarmuka pengguna.
+
+2. **Perbaikan False-Positive Deteksi Semantik**:
+   - `isExplicitSlideDeckIntent`: Kata tunggal seperti "presentasi", "presentation", atau "ppt" tidak lagi memicu deteksi tanpa adanya kata kerja pembentukan (`buat`, `bikin`, `rancang`, `generate`). Hanya frasa gabungan eksplisit (`slide deck`, `deck presentasi`, `powerpoint deck`) yang dapat lolos.
+   - `isSlideDeckRevisionInstruction`: Mengeliminasi kata generik `"halaman"` (yang sering merujuk ke halaman web atau dokumen) dan menggantinya dengan target presisi `"halaman slide"`.

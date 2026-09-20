@@ -8387,3 +8387,21 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
      - Seluruh 12 berkas modular tetap patuh `<= 798` baris.
      - Bump versi ke `v2.150.298` di `extension/manifest.json`.
 
+### 🚀 Iterasi 182: Jaminan Mode Primacy Mutlak (Anti-Hijacking Agent Mode) & Pengetatan Regex Deteksi Slide Deck
+- **Waktu Eksekusi**: 2026-09-20 09:50 WIB
+- **Versi**: `v2.150.299`
+- **Problem Statement Pengguna**:
+  - *"trus error padahal di agent mode tapi saya kirim prompt banyak ya trus, saya kirim itu malah langsung ganti ke design mode apdahal di agent mode aslinya"*
+- **Akar Masalah (Root Causes)**:
+  1. *Router Mode Hijacking*: Kondisi `else if (isExplicitSlide && currentChatMode !== 'chat')` dan `isDeckRevisionReq` di `handleSendMessage` dan `processNextQueuedPrompt` memanggil `setChatMode('design')` dan membelokkan prompt pengguna dari `runAgentLoop` ke `runDesignModeLoop`.
+  2. *Overly Broad Slide Regex*: Regex `hasSlideKeyword` mencakup kata tunggal `"presentasi"` / `"presentation"`, dan `hasDeckTarget` mencakup kata tunggal `"halaman"`. Akibatnya, prompt panjang yang memuat kata-kata tersebut otomatis memicu deteksi palsu.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Mode Primacy Mutlak**: `currentChatMode === 'agent'` dan antrean `nextItem.chatMode === 'agent'` dijamin 100% selalu dieksekusi di `runAgentLoop`. Tidak ada lagi pengalihan otomatis atau perubahan UI ke Design Mode.
+  2. **Pengetatan Regex**: Menghapus kata tunggal `presentasi` dari `hasSlideKeyword` (mensyaratkan kata kerja buat/bikin/rancang atau frasa gabungan `slide deck`), serta mengubah target `halaman` menjadi `halaman slide`.
+- **Verifikasi & Kepatuhan Arsitektur**:
+  1. Unit test 10 skenario semantik lulus 100%.
+  2. Validasi sintaks `node -c extension/sidepanel.js` lulus 100%.
+  3. Seluruh 12 berkas modular tetap patuh `<= 798` baris.
+  4. Bump versi ke `v2.150.299` di `extension/manifest.json`.
+
+

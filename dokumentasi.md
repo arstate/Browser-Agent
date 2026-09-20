@@ -1828,6 +1828,30 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Menghapus seluruh atribut `onclick` dan blok `<script>` inline di `index.html`.
      - Membuat file pengendali terisolasi `stickman-preview.js` yang mendaftarkan event listener via DOMContentLoaded secara bersih dan aman.
   3. **Verifikasi Komprehensif & Standar Sub-800 Baris**:
-     - Pemindaian regex seluruh direktori `extension/` mengonfirmasi 0 (nol) event handler inline yang tersisa.
-     - Sintaks JavaScript divalidasi 100% menggunakan `node -c extension/*.js extension/design/*.js extension/stickman-animation/*.js`.
-     - Seluruh berkas modular di `extension/design/` tetap patuh ketat di bawah batas 798 baris.
+      - Pemindaian regex seluruh direktori `extension/` mengonfirmasi 0 (nol) event handler inline yang tersisa.
+      - Sintaks JavaScript divalidasi 100% menggunakan `node -c extension/*.js extension/design/*.js extension/stickman-animation/*.js`.
+      - Seluruh berkas modular di `extension/design/` tetap patuh ketat di bawah batas 798 baris.
+
+### 182. Rilis Versi v2.150.299 - Jaminan Mode Primacy Mutlak (Anti-Hijacking Agent Mode) & Pengetatan Regex Deteksi Slide Deck
+- **Waktu Rilis**: 2026-09-20 09:50 WIB
+- **Fokus Utama**: Menghilangkan insiden di mana saat pengguna berada di Mode Agent (`currentChatMode === 'agent'`) dan mengirim prompt yang panjang, sistem secara sepihak membajak mode dan mengubahnya ke Mode Design (`setChatMode('design')`), mengalihkan eksekusi ke `runDesignModeLoop`, serta memicu error eksekusi.
+- **Akar Masalah (Root Causes)**:
+  1. *Unchecked Mode Hijacking di Router (`handleSendMessage` & `processNextQueuedPrompt`)*:
+     - Kondisi `else if (isExplicitSlide && currentChatMode !== 'chat')` mengevaluasi `true` saat pengguna berada di Mode Agent. Akibatnya, pemanggilan `setChatMode('design')` membajak mode aktif pengguna secara paksa.
+  2. *Overly Broad Slide Keyword Regex*:
+     - Regex `hasSlideKeyword` pada `isExplicitSlideDeckIntent` mencakup kata tunggal `"presentasi"`, `"presentation"`, dan `"ppt"` tanpa kata kerja pendamping. Akibatnya, prompt panjang yang sekadar menyebutkan kata "presentasi" (misal materi presentasi, rapat, analisa) otomatis memicu deteksi slide deck.
+  3. *Overly Broad Revision Target*:
+     - Regex `hasDeckTarget` pada `isSlideDeckRevisionInstruction` mencocokkan kata tunggal `"halaman"` (misal *"tambah validasi di halaman ini"*, *"edit halaman login"*), sehingga menganggap prompt agent sebagai revisi slide canvas jika canvas pernah dibuka sebelumnya.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Mode Primacy Mutlak (`extension/sidepanel.js`)**:
+     - Router `handleSendMessage` dan `processNextQueuedPrompt` kini menerapkan prinsip **Mode Primacy**:
+       - Jika pengguna memilih `agent`, prompt **100% selalu dieksekusi di `runAgentLoop`**. Dilarang keras membajak mode ke `design`.
+       - Jika pengguna memilih `chat`, prompt selalu dieksekusi di `runChatModeLoop`.
+       - Mode Design (`runDesignModeLoop`) hanya dieksekusi jika pengguna secara sadar memilih mode `design`.
+  2. **Pengetatan Regex Semantik (`isExplicitSlideDeckIntent` & `isSlideDeckRevisionInstruction`)**:
+     - `hasSlideKeyword` kini hanya menerima frasa gabungan eksplisit (`slide deck`, `deck presentasi`, `presentation deck`, `powerpoint deck`). Kata tunggal "presentasi" atau "presentation" biasa tidak lagi memicu deteksi kecuali ada kata kerja pembuatan (`buat`, `bikin`, `rancang`, `generate`).
+     - `hasDeckTarget` diubah dari kata generik `"halaman"` menjadi `"halaman slide"`, membebaskan instruksi halaman web atau dokumen dari jebakan revisi slide deck.
+  3. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Unit test 10 skenario semantik lulus 100% tanpa false-positive.
+     - Sintaks JavaScript divalidasi 100% menggunakan `node -c extension/sidepanel.js`.
+     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.

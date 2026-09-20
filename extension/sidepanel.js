@@ -970,9 +970,9 @@ function isSocialMediaOrImagePrompt(text = '') {
 function isExplicitSlideDeckIntent(text = '') {
   if (!text || typeof text !== 'string') return false;
   if (isSocialMediaOrImagePrompt(text)) return false;
-  const hasSlideKeyword = /(?:slide\s*deck|presentasi|presentation|powerpoint|ppt\b|bikin\s+slide\s*deck|buat\s+slide\s*deck|deck\s*presentasi)/i.test(text);
-  const hasCreateSlide = /(?:buat|bikin|rancang|generate|create|siapkan)\s+(?:(?:sebuah|beberapa|\d+)\s+)?(?:slide\s+deck|presentasi|presentation|powerpoint|ppt)\b/i.test(text);
-  const hasSlideHeader = /^(?:slide\s*deck|presentasi|presentation|ppt)\s*[:=]/i.test(text);
+  const hasSlideKeyword = /(?:slide\s*deck|deck\s*presentasi|presentation\s*deck|powerpoint\s*deck)/i.test(text);
+  const hasCreateSlide = /(?:buat|bikin|rancang|generate|create|siapkan)\s+(?:(?:sebuah|beberapa|\d+)\s+)?(?:slide\s*deck|presentasi|presentation|powerpoint|ppt)\b/i.test(text);
+  const hasSlideHeader = /^(?:slide\s*deck|deck\s*presentasi)\s*[:=]/i.test(text);
   return Boolean(hasSlideKeyword || hasCreateSlide || hasSlideHeader);
 }
 
@@ -980,7 +980,7 @@ function isSlideDeckRevisionInstruction(text = '') {
   if (!text || typeof text !== 'string') return false;
   if (isSocialMediaOrImagePrompt(text)) return false;
   const hasRevisionAction = /(?:revisi|ubah|ganti|edit|tambah|kurang|hapus|split|pisah|perbaiki|update|sesuaikan|rombak)/i.test(text);
-  const hasDeckTarget = /(?:slide\s*deck|slide\b|deck\b|halaman|warna\s+slide|layout\s+slide|presentasi|ppt)/i.test(text);
+  const hasDeckTarget = /(?:slide\s*deck|slide\b|deck\b|halaman\s+slide|warna\s+slide|layout\s+slide)/i.test(text);
   return Boolean(hasRevisionAction && hasDeckTarget);
 }
 
@@ -14652,14 +14652,12 @@ function checkAndProcessNextPromptQueue() {
       } else {
         runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
       }
-    } else if (isExplicitSlide && !isExplicitExternalWeb && nextItem.chatMode !== 'chat') {
-      if (typeof setChatMode === 'function') setChatMode('design');
-      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
-    } else if (isDeckRevisionReq && !isExplicitExternalWeb && nextItem.chatMode !== 'chat') {
-      runDesignModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions, { isRevision: true });
+    } else if (nextItem.chatMode === 'agent') {
+      // Mode Agent Primacy: Pengguna secara sadar memilih Mode Agent, eksekusi selalu di runAgentLoop
+      runAgentLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
     } else if (nextItem.chatMode === 'chat') {
       runChatModeLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
-    } else if (nextItem.chatMode === 'agent' || hasAgentActionOrAnalysis) {
+    } else if (hasAgentActionOrAnalysis) {
       runAgentLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
     } else {
       runAgentLoop(nextItem.text, nextItem.attachments, nextItem.mentions);
@@ -14942,14 +14940,12 @@ function handleSendMessage() {
     } else {
       runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
     }
-  } else if (isExplicitSlide && !isExplicitExternalWeb && currentChatMode !== 'chat') {
-    if (typeof setChatMode === 'function') setChatMode('design');
-    runDesignModeLoop(displayMessage, currentAttachments, currentMentions);
-  } else if (isDeckRevisionReq && !isExplicitExternalWeb && currentChatMode !== 'chat') {
-    runDesignModeLoop(displayMessage, currentAttachments, currentMentions, { isRevision: true });
+  } else if (currentChatMode === 'agent') {
+    // Mode Agent Primacy: Pengguna secara sadar memilih Mode Agent, eksekusi selalu di runAgentLoop
+    runAgentLoop(displayMessage, currentAttachments, currentMentions);
   } else if (currentChatMode === 'chat') {
     runChatModeLoop(displayMessage, currentAttachments, currentMentions);
-  } else if (currentChatMode === 'agent' || hasAgentActionOrAnalysis) {
+  } else if (hasAgentActionOrAnalysis) {
     runAgentLoop(displayMessage, currentAttachments, currentMentions);
   } else {
     runAgentLoop(displayMessage, currentAttachments, currentMentions);
