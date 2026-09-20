@@ -112,12 +112,27 @@ function initNewTab() {
       tile.className = 'site-tile';
       tile.href = site.url;
       tile.target = '_blank';
-      tile.innerHTML = `
-        <div class="site-icon-box">
-          <img src="${iconUrl}" width="24" height="24" onerror="this.src='icons/icon48.png'" alt="${site.title}">
-        </div>
-        <span class="site-title" title="${site.title || hostname}">${site.title || hostname}</span>
-      `;
+
+      const iconBox = document.createElement('div');
+      iconBox.className = 'site-icon-box';
+
+      const img = document.createElement('img');
+      img.src = iconUrl;
+      img.width = 24;
+      img.height = 24;
+      img.alt = site.title || hostname;
+      img.addEventListener('error', () => {
+        img.src = 'icons/icon48.png';
+      }, { once: true });
+      iconBox.appendChild(img);
+
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'site-title';
+      titleSpan.title = site.title || hostname;
+      titleSpan.textContent = site.title || hostname;
+
+      tile.appendChild(iconBox);
+      tile.appendChild(titleSpan);
       recentSitesGrid.appendChild(tile);
     });
   }

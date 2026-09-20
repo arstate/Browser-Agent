@@ -111,8 +111,8 @@
         <span>⚡ AI Stickman Swarm - Live Sandbox Preview</span>
       </div>
       <div class="preview-controls">
-        <button type="button" class="btn-preview btn-start" onclick="window.startStickmanSwarmAnimation()">▶ Play (AI Bekerja)</button>
-        <button type="button" class="btn-preview btn-stop" onclick="window.stopStickmanSwarmAnimation()">⏹ Stop (AI Selesai)</button>
+        <button type="button" class="btn-preview btn-start" id="btn-preview-start">▶ Play (AI Bekerja)</button>
+        <button type="button" class="btn-preview btn-stop" id="btn-preview-stop">⏹ Stop (AI Selesai)</button>
       </div>
     </div>
 
@@ -135,14 +135,6 @@
   <script src="stickman-physics.js"></script>
   <script src="stickman-scenery.js"></script>
   <script src="stickman-engine.js"></script>
-
-  <script>
-    // Auto start on load in sandbox preview
-    window.addEventListener('load', () => {
-      if (typeof window.startStickmanSwarmAnimation === 'function') {
-        window.startStickmanSwarmAnimation();
-      }
-    });
-  </script>
+  <script src="stickman-preview.js"></script>
 </body>
 </html>

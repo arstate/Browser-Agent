@@ -8365,3 +8365,25 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Seluruh 12 berkas modular tetap patuh `<= 798` baris.
   4. Bump versi ke `v2.150.297` di `extension/manifest.json`.
 
+### 🚀 Iterasi 181: Resolusi Pelanggaran Content Security Policy (CSP) Inline Event Handler pada Favicon Speed Dial & Sandbox Preview
+- **Waktu Eksekusi**: 2026-09-20 09:45 WIB
+- **Versi**: `v2.150.298`
+- **Problem Statement Pengguna**:
+  - *"ini kok ada error ya"*
+  - Screenshot di dashboard `chrome://extensions` menunjukkan 2 peringatan error merah:
+    *"Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''... Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."*
+- **Akar Masalah (Root Causes)**:
+  1. *Inline onerror di Favicon Recent Sites*: Di `extension/newtab.js` (baris 117), fallback gambar favicon dirender via string template `onerror="this.src='icons/icon48.png'"`. Begitu ada favicon website yang gagal di-fetch dari Google Favicons API, browser memblokir inline handler `onerror` karena melanggar CSP Manifest V3 (`script-src 'self'`).
+  2. *Inline onclick di Sandbox Stickman*: Di `extension/stickman-animation/index.html`, tombol Play dan Stop menggunakan atribut `onclick="window.startStickmanSwarmAnimation()"` dan inline `<script>` tag.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Programmatic DOM Elements & Event Listeners (`extension/newtab.js`)**:
+     - Mengubah render Recent Sites ke `document.createElement('img')` dan mendaftarkan `img.addEventListener('error', () => { img.src = 'icons/icon48.png'; }, { once: true })`.
+     - Menggunakan `titleSpan.textContent` untuk keamanan DOM XSS.
+  2. **Isolasi Script Stickman Sandbox (`extension/stickman-animation/stickman-preview.js`)**:
+     - Memisahkan controller preview ke berkas mandiri `stickman-preview.js` dan mendaftarkan listener via `DOMContentLoaded`.
+  3. **Verifikasi & Kepatuhan Arsitektur**:
+     - Pemindaian regex mengonfirmasi 0 inline event handler tersisa di seluruh direktori `extension/`.
+     - Validasi sintaks `node -c extension/*.js extension/design/*.js extension/stickman-animation/*.js` lulus 100% tanpa error.
+     - Seluruh 12 berkas modular tetap patuh `<= 798` baris.
+     - Bump versi ke `v2.150.298` di `extension/manifest.json`.
+

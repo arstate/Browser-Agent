@@ -2530,3 +2530,13 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 
 4. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas limit 800 baris.
+
+## 🛡️ 74. CSP Compliance: Eliminasi Inline Event Handlers & Programmatic DOM Listeners (v2.150.298)
+
+1. **Manifest V3 Content Security Policy Compliance**:
+   - Menghapus seluruh residu event handler inline (`onerror="..."`, `onclick="..."`) dari template literal dan berkas HTML di dalam lingkungan ekstensi.
+   - Mengalihkan penanganan fallback kegagalan muat gambar favicon di Recent Sites Speed Dial ke `addEventListener('error', ..., { once: true })` programatik murni.
+   - Menjamin bahwa tidak ada string JavaScript yang dievaluasi di level DOM attribute, sehingga lolos 100% dari batasan ketat `script-src 'self'`.
+
+2. **Isolasi Preview Sandbox**:
+   - Memisahkan script controller demo stickman swarm ke modul `stickman-preview.js` tersendiri, mematuhi standar zero inline script dan zero inline event handler di seluruh berkas proyek.

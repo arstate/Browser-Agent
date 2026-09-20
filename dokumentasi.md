@@ -1803,5 +1803,31 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - `handleSendMessage` dan `processNextQueuedPrompt` hanya mengalihkan ke `runDesignModeLoop` jika prompt benar-benar permintaan pembuatan presentasi baru atau instruksi revisi slide deck nyata.
      - Menyematkan aturan negatif (Rule 6) pada Master Agent System Prompt dan deskripsi tool `create_slide_deck_design` yang melarang keras pemanggilan tool slide deck untuk konten feed carousel medsos atau prompt image generator.
   4. **Verifikasi Pengujian & Standar Sub-800 Baris**:
-     - Sintaks JavaScript divalidasi 100% menggunakan `node -c extension/sidepanel.js`.
-     - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+      - Sintaks JavaScript divalidasi 100% menggunakan `node -c extension/sidepanel.js`.
+      - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+
+### 181. Rilis Versi v2.150.298 - Resolusi Pelanggaran Content Security Policy (CSP) Inline Event Handler pada Favicon Speed Dial & Sandbox Preview
+- **Waktu Rilis**: 2026-09-20 09:45 WIB
+- **Fokus Utama**: Memperbaiki error peringatan CSP di halaman `chrome://extensions` (*"Executing inline event handler violates the following Content Security Policy directive 'script-src 'self'..."*).
+- **Akar Masalah (Root Causes)**:
+  1. *Inline onerror di Favicon Recent Sites (`extension/newtab.js`)*:
+     - Pada fungsi `renderSitesList(list)`, elemen ikon website dirender menggunakan template literal string dengan atribut HTML inline `onerror="this.src='icons/icon48.png'"`.
+     - Dalam spesifikasi Chrome Extension Manifest V3, Content Security Policy (`script-src 'self'`) melarang keras dan memblokir eksekusi event handler inline (`onclick`, `onerror`, `onload`, dll.). Setiap kali ada favicon yang gagal dimuat dari Google Favicons API, browser memblokir inline handler tersebut dan mencatat error CSP merah di dashboard ekstensi.
+  2. *Inline onclick di Sandbox Preview Stickman (`extension/stickman-animation/index.html`)*:
+     - Tombol Play/Stop di sandbox preview menggunakan atribut `onclick="window.startStickmanSwarmAnimation()"`, yang juga merupakan inline event handler terlarang di bawah CSP ekstensi.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Programmatic DOM Element & Event Listener (`extension/newtab.js`)**:
+     - Mengganti pembuatan HTML berbasis innerHTML/onerror dengan `document.createElement('img')` dan menambahkan listener error programatik:
+       ```javascript
+       img.addEventListener('error', () => {
+         img.src = 'icons/icon48.png';
+       }, { once: true });
+       ```
+     - Menggunakan `titleSpan.textContent` untuk mencegah celah injeksi teks atau karakter khusus pada judul website.
+  2. **Isolasi Handler Stickman Preview (`extension/stickman-animation/stickman-preview.js`)**:
+     - Menghapus seluruh atribut `onclick` dan blok `<script>` inline di `index.html`.
+     - Membuat file pengendali terisolasi `stickman-preview.js` yang mendaftarkan event listener via DOMContentLoaded secara bersih dan aman.
+  3. **Verifikasi Komprehensif & Standar Sub-800 Baris**:
+     - Pemindaian regex seluruh direktori `extension/` mengonfirmasi 0 (nol) event handler inline yang tersisa.
+     - Sintaks JavaScript divalidasi 100% menggunakan `node -c extension/*.js extension/design/*.js extension/stickman-animation/*.js`.
+     - Seluruh berkas modular di `extension/design/` tetap patuh ketat di bawah batas 798 baris.
