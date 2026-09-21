@@ -60,32 +60,29 @@
       }
 
       // 2. Explicit Brand Detection from Prompt Text
-      if (
-        t.includes("bangga surabaya") || t.includes("sapawarga") ||
-        t.includes("kominfo") || t.includes("diskominfo") ||
-        t.includes("pemkot surabaya") || t.includes("balai kota") ||
-        t.includes("magang") || t.includes("internship") ||
-        t.includes("proposal") || t.includes("logbook") ||
-        t.includes("laporan akhir") || t.includes("laporan magang") ||
-        t.includes("sib") || t.includes("studi independen") ||
-        t.includes("vokasi") || t.includes("d4 desain") ||
-        t.includes("arya")
-      ) {
-        return "bangga_surabaya";
+      const isDjadiCreativeTerms = (
+        t.includes("djadi") || t.includes("djadi creative") ||
+        t.includes("agensi kreatif") || t.includes("creative agency") ||
+        t.includes("branding agency") || t.includes("agensi branding") ||
+        t.includes("brand activation") || t.includes("corporate client") ||
+        t.includes("klien corporate") || t.includes("b2b branding") ||
+        t.includes("distinctive brand asset") || t.includes("gsm v3") ||
+        t.includes("campaign retainer") || t.includes("pitch deck agensi") ||
+        t.includes("production house") || t.includes("agency retainer")
+      );
+      if (isDjadiCreativeTerms) {
+        return "djadi_creative";
       }
 
       if (
         t.includes("unesa") || t.includes("sipintar") ||
-        t.includes("skripsi") || t.includes("thesis") || t.includes("tugas akhir")
+        t.includes("skripsi") || t.includes("thesis") || t.includes("tugas akhir") ||
+        t.includes("cbt unesa")
       ) {
         return "unesa";
       }
 
-      if (t.includes("djadi") || t.includes("djadi creative")) {
-        return "djadi_creative";
-      }
-
-      if (t.includes("dga") || t.includes("dapur annisa") || t.includes("annisa")) {
+      if (t.includes("dga") || t.includes("dapur annisa") || t.includes("annisa") || t.includes("catering") || t.includes("katering")) {
         return "dga";
       }
 
@@ -108,6 +105,21 @@
         return "tiar_property";
       }
 
+      if (
+        t.includes("bangga surabaya") || t.includes("sapawarga") ||
+        t.includes("kominfo") || t.includes("diskominfo") ||
+        t.includes("pemkot surabaya") || t.includes("balai kota") ||
+        t.includes("magang") || t.includes("internship") ||
+        t.includes("proposal magang") || t.includes("laporan magang") ||
+        t.includes("logbook") || t.includes("laporan akhir") ||
+        t.includes("sib") || t.includes("studi independen") ||
+        t.includes("vokasi") ||
+        (t.includes("proposal") && (t.includes("surabaya") || t.includes("pemkot") || t.includes("arya") || t.includes("kominfo"))) ||
+        t.includes("arya")
+      ) {
+        return "bangga_surabaya";
+      }
+
       return null;
     }
 
@@ -116,7 +128,7 @@
       const full = `${String(ag.id || '')} ${String(ag.name || '')} ${String(ag.description || '')}`.toLowerCase();
       if (full.includes("bangga surabaya") || full.includes("sapawarga") || full.includes("kominfo") || full.includes("diskominfo") || full.includes("pemkot")) return "bangga_surabaya";
       if (full.includes("unesa") || full.includes("skripsi") || full.includes("thesis") || full.includes("academic") || full.includes("sipintar")) return "unesa";
-      if (full.includes("djadi")) return "djadi_creative";
+      if (full.includes("djadi") || full.includes("agency orchestrator") || full.includes("creative agency") || full.includes("branding agency")) return "djadi_creative";
       if (full.includes("dga") || full.includes("annisa") || full.includes("dapur")) return "dga";
       if (full.includes("tiar") || full.includes("ningsih") || full.includes("busi jaya") || (full.includes("properti") && !full.includes("djadi"))) return "tiar_property";
       return null;

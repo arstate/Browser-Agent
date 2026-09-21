@@ -608,13 +608,13 @@ function getAgentBrand(ag) {
   if (full.includes("bangga surabaya") || full.includes("sapawarga") || full.includes("kominfo") || full.includes("diskominfo") || full.includes("pemkot")) {
     return "bangga_surabaya";
   }
-  if (full.includes("unesa") || full.includes("skripsi") || full.includes("thesis") || full.includes("academic") || full.includes("sipintar")) {
+  if (full.includes("unesa") || full.includes("skripsi") || full.includes("thesis") || full.includes("academic") || full.includes("sipintar") || full.includes("cbt")) {
     return "unesa";
   }
-  if (full.includes("djadi")) {
+  if (full.includes("djadi") || full.includes("agency orchestrator") || full.includes("creative agency") || full.includes("branding agency")) {
     return "djadi_creative";
   }
-  if (full.includes("dga") || full.includes("annisa") || full.includes("dapur")) {
+  if (full.includes("dga") || full.includes("annisa") || full.includes("dapur") || full.includes("catering")) {
     return "dga";
   }
   if (full.includes("tiar") || full.includes("ningsih") || full.includes("busi jaya") || (full.includes("properti") && !full.includes("djadi"))) {
@@ -637,32 +637,29 @@ function detectBrandEcosystem(t = "", workers = []) {
   }
 
   // 2. Explicit Brand Detection from Prompt Text
-  if (
-    text.includes("bangga surabaya") || text.includes("sapawarga") ||
-    text.includes("kominfo") || text.includes("diskominfo") ||
-    text.includes("pemkot surabaya") || text.includes("balai kota") ||
-    text.includes("magang") || text.includes("internship") ||
-    text.includes("proposal") || text.includes("logbook") ||
-    text.includes("laporan akhir") || text.includes("laporan magang") ||
-    text.includes("sib") || text.includes("studi independen") ||
-    text.includes("vokasi") || text.includes("d4 desain") ||
-    text.includes("arya")
-  ) {
-    return "bangga_surabaya";
+  const isDjadiCreativeTerms = (
+    text.includes("djadi") || text.includes("djadi creative") ||
+    text.includes("agensi kreatif") || text.includes("creative agency") ||
+    text.includes("branding agency") || text.includes("agensi branding") ||
+    text.includes("brand activation") || text.includes("corporate client") ||
+    text.includes("klien corporate") || text.includes("b2b branding") ||
+    text.includes("distinctive brand asset") || text.includes("gsm v3") ||
+    text.includes("campaign retainer") || text.includes("pitch deck agensi") ||
+    text.includes("production house") || text.includes("agency retainer")
+  );
+  if (isDjadiCreativeTerms) {
+    return "djadi_creative";
   }
 
   if (
     text.includes("unesa") || text.includes("sipintar") ||
-    text.includes("skripsi") || text.includes("thesis") || text.includes("tugas akhir") || text.includes("sidang")
+    text.includes("skripsi") || text.includes("thesis") || text.includes("tugas akhir") || text.includes("sidang") ||
+    text.includes("cbt unesa")
   ) {
     return "unesa";
   }
 
-  if (text.includes("djadi") || text.includes("djadi creative")) {
-    return "djadi_creative";
-  }
-
-  if (text.includes("dga") || text.includes("dapur annisa") || text.includes("annisa") || text.includes("catering")) {
+  if (text.includes("dga") || text.includes("dapur annisa") || text.includes("annisa") || text.includes("catering") || text.includes("katering")) {
     return "dga";
   }
 
@@ -683,6 +680,21 @@ function detectBrandEcosystem(t = "", workers = []) {
 
   if (isExplicitTiar || isRealEstateTerms || isLocationWithHouse) {
     return "tiar_property";
+  }
+
+  if (
+    text.includes("bangga surabaya") || text.includes("sapawarga") ||
+    text.includes("kominfo") || text.includes("diskominfo") ||
+    text.includes("pemkot surabaya") || text.includes("balai kota") ||
+    text.includes("magang") || text.includes("internship") ||
+    text.includes("proposal magang") || text.includes("laporan magang") ||
+    text.includes("logbook") || text.includes("laporan akhir") ||
+    text.includes("sib") || text.includes("studi independen") ||
+    text.includes("vokasi") ||
+    (text.includes("proposal") && (text.includes("surabaya") || text.includes("pemkot") || text.includes("arya") || text.includes("kominfo"))) ||
+    text.includes("arya")
+  ) {
+    return "bangga_surabaya";
   }
 
   return null;
@@ -738,22 +750,36 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
 
   const targetBrand = detectBrandEcosystem(text, matchedWorkers);
 
-  // Dynamic Semantic Roster Matcher (No fragile regex 'cek' or 'lihat'!):
-  // Analyzes user prompt & file attachment context against candidate agents
+  // Universal Semantic Profile Matcher:
+  // Evaluates every candidate agent across all domains and custom agent attributes
   const scoredWorkers = [];
 
-  // 1. Academic, Internship, Proposal & Diskominfo Domain
-  const isInternshipAcademic = (
-    text.includes("proposal") || text.includes("magang") || text.includes("internship") ||
-    text.includes("kominfo") || text.includes("diskominfo") || text.includes("sipintar") ||
-    text.includes("logbook") || text.includes("laporan akhir") || text.includes("portofolio") ||
-    text.includes("studi independen") || text.includes("sib") || text.includes("vokasi") ||
-    text.includes("d4 desain") || text.includes("humanizer") || text.includes("unesa") ||
-    text.includes("skripsi") || text.includes("thesis") || text.includes("tugas akhir") ||
-    text.includes("sidang") || text.includes("arya")
+  // Domain intent recognizers
+  const isCreativeAgency = (
+    text.includes("djadi") || text.includes("creative agency") || text.includes("agensi kreatif") ||
+    text.includes("branding agency") || text.includes("agensi branding") || text.includes("brand activation") ||
+    text.includes("corporate client") || text.includes("klien corporate") || text.includes("pitch deck") ||
+    text.includes("b2b branding") || text.includes("brand asset") || text.includes("dba") ||
+    text.includes("gsm v3") || text.includes("agency retainer") || text.includes("production house") ||
+    text.includes("identity guidelines")
   );
 
-  // 2. Real Estate / KPR / Property Sales Domain (Mbak Ningsih)
+  const isAcademicUnesa = (
+    text.includes("unesa") || text.includes("sipintar") || text.includes("skripsi") ||
+    text.includes("thesis") || text.includes("tugas akhir") || text.includes("sidang") ||
+    text.includes("cbt unesa") || text.includes("cbt") || text.includes("d4 desain grafis")
+  );
+
+  const isInternshipKominfo = !isCreativeAgency && (
+    text.includes("proposal magang") || text.includes("magang") || text.includes("internship") ||
+    text.includes("kominfo") || text.includes("diskominfo") || text.includes("bangga surabaya") ||
+    text.includes("sapawarga") || text.includes("pemkot surabaya") || text.includes("balai kota") ||
+    text.includes("logbook") || text.includes("laporan akhir") || text.includes("laporan magang") ||
+    text.includes("studi independen") || text.includes("sib") || text.includes("vokasi") ||
+    (text.includes("proposal") && (text.includes("surabaya") || text.includes("pemkot") || text.includes("arya") || text.includes("kominfo"))) ||
+    text.includes("arya")
+  );
+
   const isRealEstateDomain = (
     text.includes("perumahan") || text.includes("kpr") || text.includes("beli rumah") ||
     text.includes("angsuran rumah") || text.includes("cicilan rumah") || text.includes("dp 0") ||
@@ -762,7 +788,6 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
     text.includes("sukodono") || text.includes("sedati") || text.includes("anggaswangi") || text.includes("masangan")
   );
 
-  // 3. Paid Ads & Campaign Marketing Domain (ONLY triggered by real ads keywords)
   const isAdsDomain = (
     text.includes("meta ads") || text.includes("fb ads") || text.includes("facebook ads") ||
     text.includes("adset") || text.includes("cpr") || text.includes("cpl") || text.includes("roas") ||
@@ -771,7 +796,6 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
     text.includes("scale iklan") || text.includes("budget iklan") || text.includes("ads manager")
   );
 
-  // 4. Slide Deck & Visual Design Domain
   const isVisualDomain = (
     text.includes("slide") || text.includes("presentasi") || text.includes("deck") ||
     text.includes("poster") || text.includes("desain") || text.includes("feed ig") ||
@@ -779,7 +803,6 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
     text.includes("banner") || text.includes("gambar")
   );
 
-  // 5. Copywriting & Scriptwriting Domain
   const isCopyDomain = (
     text.includes("copywriting") || text.includes("caption") || text.includes("hook") ||
     text.includes("naskah") || text.includes("skrip") || text.includes("script") ||
@@ -787,15 +810,20 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
     text.includes("headline") || text.includes("kata-kata")
   );
 
-  // 6. Coding, Linux CLI & System Domain
   const isCodingDomain = (
     text.includes("coding") || text.includes("koding") || text.includes("terminal") ||
     text.includes("bash") || text.includes("command") || text.includes("script python") ||
-    text.includes("javascript") || text.includes("bug") || text.includes("refactor") ||
-    text.includes("git") || text.includes("sqlite") || text.includes("zip") || text.includes("dump")
+    text.includes("javascript") || text.includes("nodejs") || text.includes("bug") ||
+    text.includes("refactor") || text.includes("git") || text.includes("sqlite") ||
+    text.includes("zip") || text.includes("dump") || text.includes("unit test")
   );
 
-  // 7. Casual & Personal Fact Domain
+  const isCulinaryDomain = (
+    text.includes("dga") || text.includes("dapur annisa") || text.includes("annisa") ||
+    text.includes("katering") || text.includes("catering") || text.includes("tumpeng") ||
+    text.includes("nasi kotak") || text.includes("kuliner")
+  );
+
   const isCasualDomain = (
     text.includes("siapa kamu") || text.includes("siapa nama") || text.includes("nama kamu") ||
     text.includes("nama anda") || text.includes("kamu siapa") || text.includes("halo") ||
@@ -819,15 +847,32 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
 
     let score = 0;
 
-    // 1. Academic & Internship Isolation:
-    // When dealing with proposals or internship, completely disqualify commercial property agents!
-    if (isInternshipAcademic) {
+    // Brand match boost
+    if (targetBrand && agentBrand && targetBrand === agentBrand) {
+      score += 40;
+    }
+
+    // 1. Creative Agency & B2B Branding (Djadi Creative)
+    if (isCreativeAgency) {
+      if (agentBrand === "djadi_creative" || idLower.includes("djadi") || nameLower.includes("djadi") || fullAgentText.includes("agency")) {
+        score += 85;
+      }
+    }
+
+    // 2. Academic & Thesis (UNESA)
+    if (isAcademicUnesa) {
+      if (agentBrand === "unesa" || idLower.includes("unesa") || nameLower.includes("unesa") || fullAgentText.includes("skripsi") || fullAgentText.includes("thesis")) {
+        score += 85;
+      }
+    }
+
+    // 3. Internship & Kominfo Domain
+    if (isInternshipKominfo) {
       if (agentBrand === "tiar_property" || idLower.includes("tiar") || idLower.includes("ningsih") || idLower.includes("closer")) {
         continue; // Disqualified!
       }
       if (idLower === "arya_magang_kominfo" || nameLower.includes("arya") || nameLower.includes("magang") || descLower.includes("diskominfo")) {
         score += 90;
-        // Heavy boost if file attachment name matches
         if (attachmentStr.toLowerCase().includes("proposal") || attachmentStr.toLowerCase().includes("magang") || attachmentStr.toLowerCase().includes("kominfo")) {
           score += 60;
         }
@@ -836,7 +881,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
       }
     }
 
-    // 2. Real Estate Domain (Mbak Ningsih Closer / Admin)
+    // 4. Real Estate Domain (Mbak Ningsih Closer / Admin)
     if (isRealEstateDomain) {
       if (agentBrand === "tiar_property") {
         score += 70;
@@ -848,7 +893,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
       }
     }
 
-    // 3. Paid Ads Marketing Domain
+    // 5. Paid Ads Marketing Domain
     if (isAdsDomain) {
       if (idLower.includes("auditor") || nameLower.includes("auditor") || fullAgentText.includes("junk leads")) {
         score += (text.includes("audit") || text.includes("evaluasi") || text.includes("boncos") ? 75 : 50);
@@ -859,53 +904,70 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
       }
     }
 
-    // 4. Slide Deck & Visual Design Domain
+    // 6. Slide Deck & Visual Design Domain
     if (isVisualDomain) {
       if (idLower.includes("visual") || idLower.includes("desain") || nameLower.includes("visual") || nameLower.includes("designer")) {
         score += 70;
       }
     }
 
-    // 5. Copywriting & Scriptwriting Domain
+    // 7. Copywriting & Scriptwriting Domain
     if (isCopyDomain) {
       if (idLower.includes("copy") || nameLower.includes("copywriter") || fullAgentText.includes("viral")) {
         score += 70;
       }
     }
 
-    // 6. Coding, Linux CLI & System Domain
+    // 8. Coding, Linux CLI & System Domain
     if (isCodingDomain) {
       if (idLower.includes("coding") || idLower.includes("engineer") || nameLower.includes("coding") || nameLower.includes("engineer")) {
-        score += 75;
+        score += 85;
       }
     }
 
-    // 7. Casual & Personal Fact Domain
+    // 9. Culinary & Catering Domain (DGA)
+    if (isCulinaryDomain) {
+      if (agentBrand === "dga" || idLower.includes("dga") || nameLower.includes("annisa")) {
+        score += 85;
+      }
+    }
+
+    // 10. Casual & Personal Fact Domain
     if (isCasualDomain) {
       if (idLower.includes("companion") || nameLower.includes("companion") || idLower.includes("casual") || nameLower.includes("sahabat")) {
         score += 85;
       }
     }
 
-    // 8. General Web Navigation & Browser Utility
+    // 11. General Web Navigation & Browser Utility
     const isWebUtility = (
       text.includes("buka ") || text.includes("kunjungi ") || text.includes("navigasi") ||
       text.includes("klik ") || text.includes("login ") || text.includes("search google") ||
       text.includes("tonton")
     );
-
     if (isWebUtility && score === 0) {
       if (idLower === "default_agent" || nameLower.includes("browser")) {
         score += 25;
       }
     }
 
-    // Semantic token matching bonus
-    const significantTokens = text.split(/[\s,._\-\(\)]+/).filter(w => w.length >= 4);
+    // 12. Universal Token Matching across Name, Desc, Skills, and System Prompt:
+    // Enables accurate autonomous selection for any custom, user-defined, or new agent!
+    const significantTokens = text.split(/[\s,._\-\(\)\/\\]+/).filter(w => w.length >= 4);
     significantTokens.forEach(tok => {
-      if (nameLower.includes(tok)) score += 8;
-      else if (descLower.includes(tok)) score += 3;
+      if (idLower.includes(tok)) score += 10;
+      if (nameLower.includes(tok)) score += 12;
+      else if (descLower.includes(tok)) score += 5;
     });
+
+    if (Array.isArray(ag.skills)) {
+      ag.skills.forEach(sId => {
+        const sStr = String(sId || '').toLowerCase();
+        significantTokens.forEach(tok => {
+          if (sStr.includes(tok)) score += 8;
+        });
+      });
+    }
 
     if (score > 0) {
       scoredWorkers.push({ agent: ag, score: score, brand: agentBrand });
@@ -917,7 +979,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
   if (scoredWorkers.length > 0) {
     matchedWorkers.push(scoredWorkers[0].agent);
 
-    // Multi-agent swarm support
+    // Multi-agent swarm support (up to 3 specialists)
     const topScore = scoredWorkers[0].score;
     const leadBrand = scoredWorkers[0].brand || targetBrand;
     for (let i = 1; i < scoredWorkers.length; i++) {
@@ -1016,6 +1078,15 @@ function buildDynamicSystemPrompt(agentOrAgents = null) {
       prompt += `Karyawan ${idx + 1} (${ag.name}): ${ag.description || 'Specialist'}\n`;
     });
     prompt += `\nALUR KERJA RESMI MASTER AGENT & SIKLUS PERINTAH KARYAWAN (MASTER MANDATE):
+
+0. 🧠 TAHAP 0: UNIVERSAL AGENT SELECTION REASONING & RECRUITMENT (ANTI-MISS-ASSIGNMENT):
+   - Di awal setiap giliran / tugas baru, Master Agent WAJIB berpikir (reasoning) terlebih dahulu:
+     * "Apa domain dan intensi inti dari prompt pengguna ini?" (misal: Agensi Kreatif / Branding Djadi, Properti / KPR Tiar, Akademik / Skripsi UNESA, Layanan Publik Bangga Surabaya, Kuliner DGA, Coding / CLI, atau Penjelajahan Web Umum).
+     * "Apakah tim agen bawahan yang aktif saat ini sudah paling tepat dan akurat untuk menyelesaikan tugas ini?"
+   - JIKA tim saat ini belum mencakup spesialis domain tersebut ATAU ada agen spesialis yang jauh lebih cocok di direktori:
+     * Master Agent WAJIB mencari agen spesialis menggunakan \`search_agent_catalog({ query, domain })\` atau membaca profilnya via \`read_agent_detail({ agent_name_or_id })\`.
+     * Rekrut agen spesialis tersebut menggunakan \`summon_specialist_agent({ agent_name_or_id, reason, subtask_assignment })\`.
+     * Delegasikan subtask spesifik kepada agen tersebut untuk menjamin hasil terbaik tanpa halusinasi dan tanpa salah sasaran!
 
 1. 🤔 TAHAP 1: INTERAKTIF 2-ARAH & KLARIFIKASI OPSI (JIKA PROMPT AMBIGU / KURANG LENGKAP):
    - JIKA instruksi pengguna masih umum, luas, atau kurang spesifik (contoh: "analisis mendalam bro lihat ke dalam iklan yang iklan paling rame di meta ads"):
@@ -1440,6 +1511,44 @@ const AGENT_TOOLS = [
           recommended_next_action: { type: "string", description: "Recommended next action for General Browser Assistant (e.g. Klik tombol Lanjutkan, Masukkan nama duplikat, Tinjau dan Terbitkan)" }
         },
         required: ["agent_name", "focus", "findings"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_agent_catalog",
+      description: "Search the universal multi-agent catalog by keyword, domain, or skill to discover the most suitable specialist sub-agents for the task (e.g. 'creative agency', 'branding', 'djadi', 'unesa', 'skripsi', 'properti', 'tiar', 'copywriting', 'meta ads', 'coding', 'cbt'). Returns matching agents with their IDs, names, descriptions, and assigned skills.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Keyword, brand name, skill, or domain to search for (e.g. 'agensi kreatif', 'branding', 'djadi', 'unesa', 'skripsi', 'properti', 'copywriting', 'meta ads', 'coding')"
+          },
+          domain: {
+            type: "string",
+            description: "Optional domain filter: 'creative', 'academic', 'real_estate', 'marketing', 'coding', 'culinary', 'general'"
+          }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "read_agent_detail",
+      description: "Inspect the full profile, persona system prompt, and capabilities of a specific agent by ID or name to verify suitability before delegating or summoning.",
+      parameters: {
+        type: "object",
+        properties: {
+          agent_name_or_id: {
+            type: "string",
+            description: "Exact ID or name of the agent to inspect"
+          }
+        },
+        required: ["agent_name_or_id"]
       }
     }
   },
@@ -3714,6 +3823,102 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
       };
     }
 
+    case "search_agent_catalog": {
+      const q = String(args.query || '').toLowerCase().trim();
+      const domainFilter = String(args.domain || '').toLowerCase().trim();
+      
+      const results = customAgents
+        .filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss)
+        .map(a => {
+          const id = String(a.id || '').toLowerCase();
+          const name = String(a.name || '').toLowerCase();
+          const desc = String(a.description || '').toLowerCase();
+          const brand = getAgentBrand(a);
+          const assignedSkills = (a.skills || []).map(sId => {
+            const sk = customSkills.find(s => s.id === sId);
+            return sk ? sk.name : sId;
+          }).filter(Boolean);
+
+          let matchScore = 0;
+          if (id.includes(q)) matchScore += 30;
+          if (name.includes(q)) matchScore += 25;
+          if (desc.includes(q)) matchScore += 15;
+          if (brand && brand.includes(q)) matchScore += 20;
+          if (assignedSkills.some(s => s.toLowerCase().includes(q))) matchScore += 20;
+
+          // Domain filter match
+          if (domainFilter) {
+            if (domainFilter === 'creative' && (brand === 'djadi_creative' || desc.includes('kreatif') || desc.includes('agency') || desc.includes('desain'))) matchScore += 25;
+            if (domainFilter === 'academic' && (brand === 'unesa' || desc.includes('akademik') || desc.includes('skripsi') || desc.includes('magang'))) matchScore += 25;
+            if (domainFilter === 'real_estate' && (brand === 'tiar_property' || desc.includes('properti') || desc.includes('kpr'))) matchScore += 25;
+            if (domainFilter === 'marketing' && (desc.includes('ads') || desc.includes('iklan') || desc.includes('marketing'))) matchScore += 25;
+            if (domainFilter === 'coding' && (desc.includes('coding') || desc.includes('developer') || id.includes('coding'))) matchScore += 25;
+            if (domainFilter === 'culinary' && (brand === 'dga' || desc.includes('kuliner') || desc.includes('katering'))) matchScore += 25;
+          }
+
+          return {
+            agent_id: a.id,
+            name: a.name,
+            description: a.description,
+            brand: brand || "universal",
+            skills: assignedSkills,
+            matchScore
+          };
+        })
+        .filter(r => r.matchScore > 0 || !q)
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 8);
+
+      return {
+        status: "success",
+        query: q,
+        total_found: results.length,
+        agents: results.map(r => ({
+          agent_id: r.agent_id,
+          name: r.name,
+          description: r.description,
+          brand: r.brand,
+          skills: r.skills
+        })),
+        hint: results.length > 0 
+          ? `Ditemukan ${results.length} agen yang cocok. Anda dapat memanggil 'read_agent_detail' untuk memeriksa instruksi/persona agen, atau langsung merekrutnya dengan 'summon_specialist_agent({ agent_name_or_id, reason, subtask_assignment })'.`
+          : "Tidak ditemukan agen spesialis dengan kata kunci tersebut. Master Agent dapat menggunakan agen yang tersedia atau menangani tugas secara mandiri."
+      };
+    }
+
+    case "read_agent_detail": {
+      const q = String(args.agent_name_or_id || '').toLowerCase().trim();
+      const ag = customAgents.find(a => 
+        String(a.id || '').toLowerCase() === q || 
+        String(a.name || '').toLowerCase() === q ||
+        String(a.name || '').toLowerCase().includes(q) ||
+        String(a.id || '').toLowerCase().includes(q)
+      );
+
+      if (!ag) {
+        return {
+          status: "not_found",
+          error: `Agen dengan nama atau ID '${args.agent_name_or_id}' tidak ditemukan di katalog. Panggil search_agent_catalog untuk mencari agen yang tersedia.`
+        };
+      }
+
+      const assignedSkills = (ag.skills || []).map(sId => {
+        const sk = customSkills.find(s => s.id === sId);
+        return sk ? { id: sk.id, name: sk.name, description: sk.description } : { id: sId, name: sId };
+      }).filter(Boolean);
+
+      return {
+        status: "success",
+        agent_id: ag.id,
+        name: ag.name,
+        description: ag.description,
+        brand: getAgentBrand(ag) || "universal",
+        skills: assignedSkills,
+        system_prompt: (ag.content || "").substring(0, 1000) + ((ag.content && ag.content.length > 1000) ? "... [truncated]" : ""),
+        hint: `Profil agen [${ag.name}] berhasil dibaca. Untuk merekrut agen ini ke dalam tim eksekutor aktif, panggil summon_specialist_agent({ agent_name_or_id: '${ag.id}', reason, subtask_assignment }).`
+      };
+    }
+
     case "summon_specialist_agent": {
       const targetQuery = String(args.agent_name_or_id || '').trim().toLowerCase();
       const reason = args.reason || "Kebutuhan keahlian spesialis tambahan";
@@ -3730,13 +3935,30 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
         description: reason
       };
 
+      const targetBubble = assistantBubble || currentActiveAssistantBubble;
+      if (targetBubble) {
+        if (!targetBubble._resolvedAgents) targetBubble._resolvedAgents = [];
+        if (!targetBubble._resolvedAgents.some(a => String(a.id || '') === String(recruited.id || ''))) {
+          targetBubble._resolvedAgents.push(recruited);
+        }
+        if (!targetBubble._workerAgents) targetBubble._workerAgents = [];
+        if (!targetBubble._workerAgents.some(a => String(a.id || '') === String(recruited.id || ''))) {
+          targetBubble._workerAgents.push(recruited);
+        }
+        if (targetBubble._agentInfo && Array.isArray(targetBubble._agentInfo.workers)) {
+          if (!targetBubble._agentInfo.workers.some(a => String(a.id || '') === String(recruited.id || ''))) {
+            targetBubble._agentInfo.workers.push(recruited);
+          }
+        }
+      }
+
       if (typeof dynamicallyAddSubAgentToUI === 'function') {
-        dynamicallyAddSubAgentToUI(currentActiveAssistantBubble, recruited, subtask);
+        dynamicallyAddSubAgentToUI(targetBubble, recruited, subtask);
       }
 
       if (activeGoalMilestones && typeof GoalTracker !== 'undefined' && typeof GoalTracker.addRevisionMilestone === 'function') {
         GoalTracker.addRevisionMilestone(activeGoalMilestones, recruited.name, subtask || reason);
-        renderTaskScheduleSection(currentActiveAssistantBubble, activeGoalMilestones, 'min');
+        renderTaskScheduleSection(targetBubble, activeGoalMilestones, 'min');
       }
 
       return {
@@ -6500,6 +6722,9 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   };
 
   const assistantBubble = appendAssistantMessage(null, true, agentInfo);
+  assistantBubble._agentInfo = agentInfo;
+  assistantBubble._resolvedAgents = resolvedAgents;
+  assistantBubble._workerAgents = workerAgents;
   
   // Dynamic Max Steps ceiling based on AI Thinking Level & Settings
   let maxSteps = 60;
@@ -8902,6 +9127,9 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
   };
 
   const assistantBubble = appendAssistantMessage(null, true, agentInfo);
+  assistantBubble._agentInfo = agentInfo;
+  assistantBubble._resolvedAgents = resolvedAgents;
+  assistantBubble._workerAgents = workerAgents;
   const contentEl = assistantBubble.querySelector('.message-content');
   const pillStatusEl = assistantBubble.querySelector('.agent-pill-status');
   const pillDotEl = assistantBubble.querySelector('.agent-pill-dot');

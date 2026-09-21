@@ -1883,5 +1883,34 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
   5. **Verifikasi Pengujian**:
      - Unit test node otomatis untuk `isContinuationIntent`, `hasPendingMilestones`, dan `isSubstantiveResponse` lulus 100%.
      - Sintaks JavaScript divalidasi 100% menggunakan `node -c extension/sidepanel.js extension/core/goal_tracker.js extension/core/semantic_critic_engine.js extension/options.js`.
-     - Seluruh berkas modular di `extension/design/` tetap patuh ketat di bawah batas 798 baris.
+  ### 184. Rilis Versi v2.150.301 - Universal Autonomous Multi-Agent Selection & Cognitive Discovery Engine
+- **Waktu Rilis**: 2026-09-21 20:15 WIB
+- **Fokus Utama**: Mengatasi keluhan di mana pemilihan sub-agent sering salah sasaran (miss-assignment), terutama saat prompt menyebutkan entitas seperti Djadi Creative, agensi branding, atau topik spesifik lainnya, yang sebelumnya sering keliru jatuh ke agen lain seperti Tiar Property atau Bangga Surabaya karena minimnya reasoning dan pencarian agen.
+- **Akar Masalah (Root Causes)**:
+  1. *Hardcoded & Fragile Brand Detection*:
+     - `detectBrandEcosystem` di `sidepanel.js` dan `detectBrand` di `goal_tracker.js` sebelumnya mengecek kata kunci secara terbatas. Kata umum seperti `"proposal"` dipetakan membabi-buta ke `bangga_surabaya`, sehingga prompt proposal B2B agensi kreatif langsung teralihkan ke Kominfo Magang.
+     - Tidak adanya kategori domain untuk Creative Agency / B2B Branding (Djadi Creative), CBT UNESA, dan agen kustom pengguna di pipeline matcher.
+  2. *Kurangnya Alat Kognitif untuk Master Agent*:
+     - Master Agent tidak memiliki tool katalog untuk mencari agen (`search_agent_catalog`) atau membaca persona dan kapabilitas agen (`read_agent_detail`) sebelum mendelegasikan tugas.
+     - Master Agent tidak memiliki mandat penalaran (reasoning mandate) di sistem prompt untuk menganalisis intensi prompt dan mengevaluasi ketepatan tim agen di awal giliran.
+  3. *Keterbatasan Sinkronisasi Swarm Memori*:
+     - Pemanggilan `summon_specialist_agent` hanya menambahkan elemen ke UI DOM tanpa menyinkronkan array memori aktif (`_resolvedAgents`, `_workerAgents`, `_agentInfo.workers`) pada objek assistant bubble.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Universal Profile Token Matcher (Tier 1 Fast Matcher)**:
+     - Mengembangkan mesin pencocokan semantik universal di `resolveAutoAgents` yang menganalisis ID, Nama, Deskripsi, Daftar Skills, dan System Prompt dari seluruh kandidat agen (`nonBossCandidates`).
+     - Menambahkan isolasi silo merek berbobot tinggi (+40 poin kecocokan, diskualifikasi 0% kontaminasi silang).
+     - Memperluas deteksi domain mencakup Creative Agency & B2B Branding (`djadi_creative`), Academic & Thesis (`unesa`), Real Estate KPR (`tiar_property`), Paid Ads (`auditor/strategist`), Visual Design, Copywriting, Coding Engineer, Culinary (`dga`), dan agen kustom pengguna.
+     - Mengurutkan prioritas deteksi brand secara ketat: Creative Agency -> Academic -> Culinary -> Real Estate -> Kominfo/Public Service (dengan pengetatan kata "proposal" agar hanya berlaku untuk magang/kominfo).
+  2. **Alat Penemuan & Inspeksi Agen Kognitif (Tier 2 Autonomous Discovery)**:
+     - Menambahkan tool `search_agent_catalog({ query, domain })` ke `AGENT_TOOLS` dan tool switch dispatcher untuk mencari agen di katalog berdasarkan kata kunci, domain, atau skill.
+     - Menambahkan tool `read_agent_detail({ agent_name_or_id })` ke `AGENT_TOOLS` untuk membaca persona, deskripsi, skill, dan instruksi lengkap agen.
+     - Memperbarui `summon_specialist_agent` agar secara dinamis menyinkronkan memori aktif agen pada `assistantBubble._resolvedAgents`, `_workerAgents`, dan `_agentInfo.workers`.
+  3. **Tahap 0: Mandat Penalaran Seleksi Agen di Master Mandate**:
+     - Menyuntikkan **Tahap 0: Universal Agent Selection Reasoning & Recruitment** ke dalam `buildDynamicSystemPrompt`.
+     - Master Agent diwajibkan secara eksplisit menganalisis intensi prompt pengguna di awal eksekusi, memverifikasi kesesuaian tim agen yang ditugaskan, dan secara otonom mencari serta merekrut agen spesialis jika diperlukan sebelum memulai tindakan browser.
+  4. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Unit test 8 skenario domain (Djadi Creative, Djadi Domain-only, Tiar Property, UNESA Academic, Bangga Surabaya Magang, Coding Engineer, DGA Culinary, dan Custom Security Pentester) lulus 100%.
+     - Validasi sintaksis `node -c extension/sidepanel.js extension/core/goal_tracker.js` lulus tanpa error.
+     - Seluruh berkas di `extension/design/*.js` tetap patuh di bawah batas 798 baris.
+
 

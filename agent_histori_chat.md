@@ -8430,5 +8430,33 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Seluruh berkas di `extension/design/` tetap `<= 798` baris.
   4. Bump versi ke `v2.150.300` di `extension/manifest.json`.
 
+### 🚀 Iterasi 184: Universal Autonomous Multi-Agent Selection & Cognitive Discovery Engine
+- **Waktu Eksekusi**: 2026-09-21 20:15 WIB
+- **Versi**: `v2.150.301`
+- **Problem Statement Pengguna**:
+  - *"pemilihan multi agent kok masih sering miss ya bro coba anda cek kalau ngeprompt input prompt misal djadi baru kepilih djadi creativve kek ai agent masternya itu harusnya dia mikir reasoning dulu search agent dlu read search agent baru dia menyimpulkan mana yang agent akurat untuk tugas ini coba cek detail"*
+  - *"tapi bukan berlaku di agent djadi doang kan ya berlaku keseluruhan kan ya bro"*
+- **Akar Masalah (Root Causes)**:
+  1. *Fragile & Incomplete Brand Silo Detection*: `detectBrandEcosystem` di `sidepanel.js` dan `detectBrand` di `goal_tracker.js` sebelumnya mengecek kata kunci secara kaku. Kata umum seperti `"proposal"` dipetakan membabi-buta ke `bangga_surabaya`, mengalihkan proposal B2B klien korporat ke agen magang. Selain itu, domain Creative Agency (`djadi_creative`), CBT UNESA, dan agen kustom pengguna tidak memiliki kategori matcher.
+  2. *Ketiadaan Cognitive Tools & Reasoning Mandate*: Master Agent tidak memiliki tool untuk mencari direktori agen (`search_agent_catalog`) atau membaca persona instruksinya (`read_agent_detail`), serta tidak memiliki mandat penalaran terstruktur di system prompt untuk menguji ketepatan tim agen di awal giliran.
+  3. *Inkonsistensi Memori Swarm*: Pemanggilan `summon_specialist_agent` hanya menambahkan visual UI DOM tanpa menyinkronkan array memori tim aktif pada `assistantBubble._resolvedAgents`, `_workerAgents`, dan `_agentInfo.workers`.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Universal Profile Token Matcher (Tier 1 Fast Matcher)**:
+     - Mengembangkan pemetaan semantik universal di `resolveAutoAgents` yang menganalisis seluruh atribut agen (`id`, `name`, `description`, `skills`, dan `system_prompt`).
+     - Menetapkan prioritas brand bersih: Creative Agency -> Academic -> Culinary -> Real Estate -> Kominfo/Public Service (dengan pengetatan kata "proposal" agar hanya relevan untuk magang/kominfo).
+     - Menghadirkan brand silo isolation: +40 poin kecocokan brand, diskualifikasi 0% kontaminasi silang.
+  2. **Cognitive Discovery & Inspection Tools (Tier 2 Autonomous Tools)**:
+     - Ditambahkan tool `search_agent_catalog({ query, domain })` ke `AGENT_TOOLS` dan dispatcher switch di `executeTool` untuk pencarian agen dinamis.
+     - Ditambahkan tool `read_agent_detail({ agent_name_or_id })` ke `AGENT_TOOLS` dan dispatcher switch untuk membaca detail profil dan persona agen.
+     - Diperbarui `summon_specialist_agent` agar secara runtime menyinkronkan array memori `_resolvedAgents`, `_workerAgents`, dan `_agentInfo.workers`.
+  3. **Tahap 0: Mandat Penalaran Seleksi Agen (Master Mandate)**:
+     - Disuntikkan **Tahap 0: Universal Agent Selection Reasoning & Recruitment** ke `buildDynamicSystemPrompt`, mewajibkan Master Agent menganalisis intensi prompt pengguna secara eksplisit, mengevaluasi tim agen yang ditugaskan, dan secara proaktif mencari/merekrut agen spesialis jika diperlukan sebelum tindakan browser.
+- **Verifikasi & Kepatuhan Arsitektur**:
+  1. Unit test 8 skenario domain (Djadi Creative, Djadi Domain-only, Tiar Property, UNESA Academic, Bangga Surabaya Magang, Coding Engineer, DGA Culinary, dan Custom Security Pentester) lulus 100%.
+  2. Validasi sintaks `node -c extension/sidepanel.js extension/core/goal_tracker.js` lulus 100%.
+  3. Seluruh berkas di `extension/design/*.js` tetap patuh `<= 798` baris.
+  4. Bump versi ke `v2.150.301` di `extension/manifest.json`.
+
+
 
 

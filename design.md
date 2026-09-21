@@ -2569,3 +2569,20 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
    - Status agen disetel ke *"Batas Langkah"* dan merender kartu interaktif berlatar frosted glass kuning elegan dengan tombol `[▶ Lanjutkan 50 Langkah Lagi]`. Pengguna dapat mengklik tombol ini untuk melanjutkan eksekusi tugas kompleks secara instan tanpa kehilangan memori sesi dan tanpa mengulang dari awal.
    - Di menu Pengaturan (Options), disediakan opsi `Max Agent Execution Steps` (0 = dinamis otomatis) untuk kontrol granular pengguna.
 
+## 🤖 77. Universal Autonomous Multi-Agent Selection & Cognitive Discovery Engine (v2.150.301)
+
+1. **Universal Semantic Profile Matcher (Tier 1 Fast Matcher)**:
+   - Menggantikan logika pencocokan berbasis keyword parsial yang rapuh dengan sistem pemetaan semantik universal yang mengevaluasi seluruh atribut agen (`id`, `name`, `description`, `skills`, dan `system_prompt`).
+   - Menerapkan isolasi silo merek yang ketat (+40 poin kecocokan brand terdeteksi, diskualifikasi 0% kontaminasi silang).
+   - Memprioritaskan pengenalan domain secara berurutan: Creative Agency & B2B Branding (`djadi_creative`), Academic & Thesis (`unesa`), Culinary (`dga`), Real Estate (`tiar_property`), dan Public Service / Kominfo (`bangga_surabaya`).
+   - Menghapus jebakan false-positive pada kata umum seperti "proposal" sehingga proposal B2B klien korporat tidak lagi terseret ke agen magang/kominfo.
+
+2. **Cognitive Discovery & Inspection Tools (Tier 2 Autonomous Discovery)**:
+   - Tool `search_agent_catalog({ query, domain })`: Memungkinkan Master Agent mencari agen yang cocok di katalog multi-agent berdasarkan kata kunci, domain, atau skill tersemat.
+   - Tool `read_agent_detail({ agent_name_or_id })`: Memungkinkan Master Agent membaca instruksi sistem prompt, deskripsi peran, dan keahlian spesifik suatu agen sebelum mendelegasikan tugas.
+   - Tool `summon_specialist_agent({ agent_name_or_id, reason, subtask_assignment })`: Ditingkatkan untuk menyinkronkan array memori tim agen aktif (`_resolvedAgents`, `_workerAgents`, `_agentInfo.workers`) pada objek assistant bubble secara runtime.
+
+3. **Tahap 0: Mandat Penalaran Seleksi Agen pada Master Mandate**:
+   - Master Agent diwajibkan secara eksplisit melakukan reasoning di awal setiap giliran: menganalisis domain dan intensi prompt pengguna, menguji ketepatan tim agen yang ditugaskan, dan secara proaktif mencari serta merekrut agen spesialis dari direktori katalog sebelum mengeksekusi aksi browser.
+
+
