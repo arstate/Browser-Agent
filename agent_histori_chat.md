@@ -8404,4 +8404,31 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Seluruh 12 berkas modular tetap patuh `<= 798` baris.
   4. Bump versi ke `v2.150.299` di `extension/manifest.json`.
 
+### 🚀 Iterasi 183: Eliminasi Bug Berhenti Prematur 200 Langkah, Dynamic Step Expansion, dan Interactive Execution Resume Card
+- **Waktu Eksekusi**: 2026-09-21 19:50 WIB
+- **Versi**: `v2.150.300`
+- **Problem Statement Pengguna**:
+  - *"ada bug ketika eksekusi sampai 200 langkah tb tb ai berhenti sendiri padahal tugasnya masih belum selesai bro coba cek bro apa yang bikin bug ini trus fix bro"*
+- **Akar Masalah (Root Causes)**:
+  1. *Hard Ceiling `maxSteps`*: Plafon langkah di `sidepanel.js` mentok di 100 turn (level extreme). Karena 1 turn memicu ~2 tools, eksekusi berhenti tepat saat 200 tool badge selesai dieksekusi.
+  2. *Premature Semantic Early-Exit*: Di `goal_tracker.js`, teks progres perantara model (> 35 karakter) dianggap sebagai jawaban substantif final, memicu `autoFulfillMilestones` dan `break;`.
+  3. *Blokade Circuit Breaker*: `currentStep < maxSteps - 2` menghentikan pengiriman prompt lanjutan saat mendekati limit.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Skalasi Plafon Eksekusi & Dynamic Expansion**:
+     - Baseline batas langkah ditingkatkan: Low 30, Med 60, High 120, XHigh 200, Extreme 300 turn (~600 tool actions).
+     - Deteksi batch numerik di prompt (misal *"200 langkah/data"*), plafon menyesuaikan dinamis: `Math.max(maxSteps, Math.min(1000, plannedStepsTotal + 30))`.
+     - Auto-expansion +30 langkah jika tools masih aktif firing saat mendekati plafon.
+  2. **Deteksi Intensi Lanjutan (`isContinuationIntent`)**:
+     - Ditambahkan `isContinuationIntent` di `goal_tracker.js` dan diintegrasikan ke `SemanticCriticEngine.isSubstantiveResponse`. Frasa kelanjutan dikenali sebagai in-progress status, mencegah early-exit dan menyuntikkan prompt kelanjutan otomatis.
+  3. **Interactive Execution Resume Card**:
+     - Jika batas langkah tercapai (`reachedMaxSteps`), status menampilkan *"Batas Langkah"* dan merender kartu interaktif dengan tombol `[▶ Lanjutkan 50 Langkah Lagi]` agar pengguna bisa lanjut instan tanpa mengulang dari awal.
+  4. **Opsi Pengaturan `Max Agent Execution Steps`**:
+     - Ditambahkan input pengaturan di `options.html` dan `options.js` untuk keleluasaan konfigurasi batas putaran.
+- **Verifikasi & Kepatuhan Arsitektur**:
+  1. Unit test node otomatis untuk deteksi kelanjutan dan milestone pending lulus 100%.
+  2. Validasi sintaks `node -c extension/sidepanel.js extension/core/goal_tracker.js extension/core/semantic_critic_engine.js extension/options.js` lulus 100%.
+  3. Seluruh berkas di `extension/design/` tetap `<= 798` baris.
+  4. Bump versi ke `v2.150.300` di `extension/manifest.json`.
+
+
 

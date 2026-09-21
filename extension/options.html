@@ -533,6 +533,12 @@
                   <input type="number" id="setting-max-tokens" min="0" max="65536" step="512" placeholder="0 (Otomatis / Unlimited)" value="0">
                 </div>
               </div>
+
+              <div class="form-group" style="margin-top: 14px;">
+                <label for="setting-max-agent-steps">Max Agent Execution Steps <span style="font-size: 11px; color: var(--text-muted); font-weight: 400;">(0 = Skala Dinamis Otomatis s/d 1000 langkah)</span></label>
+                <input type="number" id="setting-max-agent-steps" min="0" max="1000" step="10" placeholder="0 (Otomatis: Low 30, Med 60, High 120, Extreme 300)" value="0">
+                <small class="form-hint">Batas maksimal putaran agent loop saat mengeksekusi tugas. Nilai 0 menerapkan penskalaan dinamis otomatis sesuai kompleksitas prompt.</small>
+              </div>
             </div>
 
             <!-- AI Image Generation Setup -->

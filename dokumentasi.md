@@ -1855,3 +1855,33 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Unit test 10 skenario semantik lulus 100% tanpa false-positive.
      - Sintaks JavaScript divalidasi 100% menggunakan `node -c extension/sidepanel.js`.
      - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris.
+
+### 183. Rilis Versi v2.150.300 - Eliminasi Bug Berhenti Prematur 200 Langkah, Dynamic Step Expansion, dan Interactive Execution Resume Card
+- **Waktu Rilis**: 2026-09-21 19:50 WIB
+- **Fokus Utama**: Mengatasi keluhan di mana saat eksekusi multi-langkah di Mode Agent berjalan hingga ~200 langkah (badge tindakan selesai), AI mendadak berhenti sendiri padahal tugas belum tuntas.
+- **Akar Masalah (Root Causes)**:
+  1. *Hard Ceiling `maxSteps`*:
+     - Di `sidepanel.js`, batas turn agen mentok di batas default hardcode (extreme = 100 turn). Karena 1 turn model memanggil rata-rata 2 tool calls, pas tepat di 200 aksi badge (*"200 Langkah Tindakan Selesai"*), loop `while (currentStep < maxSteps && isExecuting)` langsung terputus.
+  2. *Premature Early-Exit pada Teks Progres Perantara*:
+     - Di `extension/core/goal_tracker.js` (`hasPendingMilestones`), teks respon model > 35 karakter secara keliru dianggap sebagai jawaban final (`isSubstantive = true`), sehingga `hasPendingMilestones` mengembalikan `false`. Akibatnya, saat model memberikan laporan progres antara (misal: *"Data 1-50 selesai, lanjut ke data 51-100..."*), sistem langsung memanggil `autoFulfillMilestones` dan melakukan `break;` dari loop.
+  3. *Blokade Circuit Breaker Mendekati Batas*:
+     - Pengecekan `currentStep < maxSteps - 2` memblokir pengiriman prompt lanjutan saat mendekati limit, mematikan kelanjutan eksekusi.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Skalasi Plafon Eksekusi & Adaptasi Dinamis (`extension/sidepanel.js`)**:
+     - Baseline batas langkah ditingkatkan secara substansial: Low (15 -> 30), Medium (25 -> 60), High (40 -> 120), XHigh (60 -> 200), Extreme (100 -> 300 turn / ~600 tool steps).
+     - **Dynamic Step Adaptation**: Menambahkan pendeteksian permintaan batch numerik di prompt pengguna (misal *"eksekusi 200 data/langkah"*). Plafon disesuaikan secara otomatis: `maxSteps = Math.max(maxSteps, Math.min(1000, plannedStepsTotal + 30))`.
+     - **Auto-Expansion Active Tools**: Jika agen masih aktif menjalankan tool dan berada dalam 5 langkah dari plafon (`currentStep >= maxSteps - 5`), plafon diperpanjang dinamis +30 langkah (hingga batas aman 1000 langkah).
+  2. **Deteksi Intensi Lanjutan (`isContinuationIntent`) & Pencegahan Early-Exit**:
+     - Ditambahkan `isContinuationIntent` di `extension/core/goal_tracker.js` dan diintegrasikan ke `SemanticCriticEngine.isSubstantiveResponse`.
+     - Frasa kelanjutan (seperti *"akan melanjutkan"*, *"langkah berikutnya"*, *"memproses batch selanjutnya"*, *"will continue"*, *"next step"*) dikenali sebagai progres aktif, sehingga `hasPendingMilestones` tetap bernilai `true` dan mencegah pemutusan loop dini.
+     - Prompt pendamping eksekusi langsung menyuntikkan instruksi kelanjutan otomatis tanpa menghentikan proses.
+  3. **Interactive Execution Resume Card**:
+     - Jika eksekusi benar-benar mencapai batas langkah maksimum (`reachedMaxSteps = true`), agen tidak lagi mengklaim tugas selesai 100%. Status bubble menampilkan *"Batas Langkah"* dan merender kartu interaktif berdesain modern dengan tombol `[▶ Lanjutkan 50 Langkah Lagi]`.
+     - Pengguna dapat langsung melanjutkan eksekusi tanpa kehilangan histori chat dan tanpa mengulang proses dari awal.
+  4. **Pengaturan Kustomisasi di Options (`options.html` & `options.js`)**:
+     - Ditambahkan input field `Max Agent Execution Steps` pada kartu Parameter Generasi untuk fleksibilitas pengguna mengatur batas putaran (0 = otomatis dinamis s/d 1000 langkah).
+  5. **Verifikasi Pengujian**:
+     - Unit test node otomatis untuk `isContinuationIntent`, `hasPendingMilestones`, dan `isSubstantiveResponse` lulus 100%.
+     - Sintaks JavaScript divalidasi 100% menggunakan `node -c extension/sidepanel.js extension/core/goal_tracker.js extension/core/semantic_critic_engine.js extension/options.js`.
+     - Seluruh berkas modular di `extension/design/` tetap patuh ketat di bawah batas 798 baris.
+

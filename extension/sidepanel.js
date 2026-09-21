@@ -6501,13 +6501,19 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
 
   const assistantBubble = appendAssistantMessage(null, true, agentInfo);
   
-  // Dynamic Max Steps ceiling based on AI Thinking Level
-  let maxSteps = 35;
-  if (currentThinkingLevel === 'low') maxSteps = 15;
-  else if (currentThinkingLevel === 'medium') maxSteps = 25;
-  else if (currentThinkingLevel === 'high') maxSteps = 40;
-  else if (currentThinkingLevel === 'xhigh') maxSteps = 60;
-  else if (currentThinkingLevel === 'extreme' || currentThinkingLevel === 'max') maxSteps = 100;
+  // Dynamic Max Steps ceiling based on AI Thinking Level & Settings
+  let maxSteps = 60;
+  if (currentThinkingLevel === 'low') maxSteps = 30;
+  else if (currentThinkingLevel === 'medium') maxSteps = 60;
+  else if (currentThinkingLevel === 'high') maxSteps = 120;
+  else if (currentThinkingLevel === 'xhigh') maxSteps = 200;
+  else if (currentThinkingLevel === 'extreme' || currentThinkingLevel === 'max') maxSteps = 300;
+
+  // Check user-configured override from settings (if specified and > 0)
+  const configuredMaxSteps = parseInt(config?.max_agent_steps || config?.maxAgentSteps, 10);
+  if (configuredMaxSteps && configuredMaxSteps > 0) {
+    maxSteps = configuredMaxSteps;
+  }
 
   function detectPlannedStepsCount(text) {
     if (!text || typeof text !== 'string') return null;
@@ -6519,11 +6525,21 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
     if (planTagMatch && parseInt(planTagMatch[1], 10) > 0) {
       return parseInt(planTagMatch[1], 10);
     }
+    // Also detect numeric batch / step requests in user prompt: e.g. "eksekusi sampai 200 langkah", "200 data", "150 item"
+    const batchMatch = text.match(/\b(?:sampai|hingga|total|sebanyak|proses)?\s*(\d+)\s*(?:langkah|steps|item|baris|data|halaman|pages)\b/i);
+    if (batchMatch && parseInt(batchMatch[1], 10) >= 20) {
+      return parseInt(batchMatch[1], 10);
+    }
     return null;
   }
 
   let plannedStepsTotal = detectPlannedStepsCount(userMessage);
+  if (plannedStepsTotal && plannedStepsTotal > 0) {
+    // Dynamically expand ceiling with a safety buffer of +30 turns
+    maxSteps = Math.max(maxSteps, Math.min(1000, plannedStepsTotal + 30));
+  }
   let currentStep = 0;
+  let reachedMaxSteps = false;
   const sessionExecutedTools = [];
   const sessionGeneratedImages = [];
 
@@ -6880,6 +6896,7 @@ Tugas Anda:
       const detectedInPlan = detectPlannedStepsCount(accumulatedContent || message.content);
       if (detectedInPlan && (!plannedStepsTotal || detectedInPlan > plannedStepsTotal)) {
         plannedStepsTotal = detectedInPlan;
+        maxSteps = Math.max(maxSteps, Math.min(1000, plannedStepsTotal + 30));
       }
 
       // Dynamic task schedule refinement from Master Agent thought / plan
@@ -6903,6 +6920,11 @@ Tugas Anda:
       if (message.tool_calls && message.tool_calls.length > 0) {
         if (!plannedStepsTotal || plannedStepsTotal < currentStep + message.tool_calls.length - 1) {
           plannedStepsTotal = Math.max(plannedStepsTotal || 0, currentStep + message.tool_calls.length - 1);
+        }
+        // Dynamic expansion when approaching ceiling during active tool execution
+        if (currentStep >= maxSteps - 5 && maxSteps < 1000) {
+          maxSteps = Math.min(1000, maxSteps + 30);
+          console.log(`[Browser Agent] Dynamic maxSteps auto-expanded to ${maxSteps} due to active tool execution.`);
         }
 
         // Clear interim pseudo-tool strings from bubble so only clean tool section is shown, preserving active design card if present
@@ -7173,10 +7195,15 @@ Tugas Anda:
         const currentAssistantText = message.content || "";
         const toolTurnsCount = conversationHistory.filter(m => m.role === 'tool').length;
 
+        // Check if the assistant text indicates continuation intent (e.g. "Data 1-50 selesai, sekarang lanjut 51-100...")
+        const isContinuing = (typeof GoalTracker !== 'undefined' && typeof GoalTracker.isContinuationIntent === 'function')
+          ? GoalTracker.isContinuationIntent(currentAssistantText)
+          : false;
+
         // 1. Autonomous Semantic Critic Evaluation:
         // Cek apakah jawaban sudah benar & lengkap sesuai kontrak permintaan user
         let qualityEvaluation = { passed: true, shouldRefine: false };
-        if (typeof SemanticCriticEngine !== 'undefined' && criticTracker && !criticTracker.hasExceeded()) {
+        if (!isContinuing && typeof SemanticCriticEngine !== 'undefined' && criticTracker && !criticTracker.hasExceeded()) {
           qualityEvaluation = SemanticCriticEngine.evaluateResponseQuality(userMessage, currentAssistantText, {
             toolCount: toolTurnsCount,
             currentStep,
@@ -7186,7 +7213,7 @@ Tugas Anda:
         }
 
         // Jika evaluasi mendeteksi kekurangan nyata dan batas revisi belum habis:
-        if (!qualityEvaluation.passed && qualityEvaluation.shouldRefine && currentStep < maxSteps - 2) {
+        if (!qualityEvaluation.passed && qualityEvaluation.shouldRefine && currentStep < maxSteps - 1) {
           const refineCount = criticTracker.increment();
           const criticPrompt = SemanticCriticEngine.generateTargetedCriticPrompt(qualityEvaluation, refineCount);
           conversationHistory.push({
@@ -7199,19 +7226,21 @@ Tugas Anda:
         }
 
         // 2. Anti-Overthinking Completion Guard check:
-        // Hanya picu kelanjutan jika jawaban BELUM substantif dan benar-benar ada milestone pending
+        // Picu kelanjutan jika asisten menyatakan akan melanjutkan ATAU ada milestone pending
         const hasPending = (activeGoalMilestones && typeof GoalTracker !== 'undefined')
           ? GoalTracker.hasPendingMilestones(activeGoalMilestones, conversationHistory, currentAssistantText)
           : false;
 
-        if (hasPending && currentStep < maxSteps - 2) {
-          const contPrompt = GoalTracker.generateGoalContinuationPrompt(activeGoalMilestones);
+        if ((isContinuing || hasPending) && currentStep < maxSteps - 1) {
+          const contPrompt = isContinuing
+            ? `📋 [SISTEM PENDAMPING EKSEKUSI]: Terdeteksi proses masih berjalan ("${currentAssistantText.slice(0, 120).replace(/\n/g, ' ')}..."). Silakan lanjutkan eksekusi langkah berikutnya menggunakan tool yang sesuai hingga seluruh tugas tuntas 100%.`
+            : GoalTracker.generateGoalContinuationPrompt(activeGoalMilestones);
           conversationHistory.push({
             role: "user",
             content: contPrompt
           });
-          updateAssistantActiveAgent(assistantBubble, "Master Agent", "Melanjutkan sasaran tugas...", true, false);
-          updateFooterStatus("Master Agent: Melanjutkan sasaran tugas...");
+          updateAssistantActiveAgent(assistantBubble, "Master Agent", "Melanjutkan eksekusi langkah berikutnya...", true, false);
+          updateFooterStatus("Master Agent: Melanjutkan eksekusi langkah berikutnya...");
           continue;
         }
 
@@ -7237,7 +7266,11 @@ Tugas Anda:
       }
     }
 
-    finalizeTaskScheduleSection(assistantBubble);
+    if (currentStep >= maxSteps) {
+      reachedMaxSteps = true;
+    }
+
+    finalizeTaskScheduleSection(assistantBubble, !reachedMaxSteps);
     finalizeToolSection(assistantBubble, true);
     
     // If clarification dock was rendered, pause and wait for user option click
@@ -7508,7 +7541,9 @@ Tugas Anda:
           } else {
             // General clean tool completion summary
             const completedCount = toolBadges.length;
-            let summaryText = `### ✅ Tugas Berhasil Diselesaikan\n\nMaster Agent dan tim agen spesialis telah menyelesaikan **${completedCount} tindakan** sesuai dengan sasaran yang Anda minta.`;
+            let summaryText = reachedMaxSteps
+              ? `### ⚠️ Batas Langkah Tercapai (${completedCount} Tindakan)\n\nMaster Agent dan tim agen telah mengeksekusi **${completedCount} tindakan** hingga batas langkah tercapai (${maxSteps} langkah). Tugas kompleks ini dapat Anda lanjutkan langsung dengan menekan tombol di bawah.`
+              : `### ✅ Tugas Berhasil Diselesaikan\n\nMaster Agent dan tim agen spesialis telah menyelesaikan **${completedCount} tindakan** sesuai dengan sasaran yang Anda minta.`;
             updateAssistantText(assistantBubble, ensureGeneratedImagesInText(summaryText, sessionGeneratedImages), false);
             const asstMsg = {
               role: "assistant",
@@ -7524,7 +7559,9 @@ Tugas Anda:
         }
       } catch (synthErr) {
         console.warn("Auto synthesis turn warning:", synthErr);
-        let summaryText = `### ✅ Tindakan Selesai\n\nSeluruh langkah browser telah dieksekusi dengan sukses.`;
+        let summaryText = reachedMaxSteps
+          ? `### ⚠️ Batas Langkah Tercapai\n\nEksekusi mencapai batas putaran langkah (${maxSteps} langkah). Silakan lanjutkan jika tugas belum selesai.`
+          : `### ✅ Tindakan Selesai\n\nSeluruh langkah browser telah dieksekusi dengan sukses.`;
         updateAssistantText(assistantBubble, ensureGeneratedImagesInText(summaryText, sessionGeneratedImages), false);
       }
     }
@@ -7595,8 +7632,42 @@ Tugas Anda:
     }
 
     const finalAgentName = hasBoss ? "Master Agent" : (resolvedAgents[0]?.name || "General Agent");
-    updateAssistantActiveAgent(assistantBubble, finalAgentName, (currentExecutionMode === 'planning' && !isPlanApprovedRun) ? "Rencana Siap" : "Selesai", hasBoss, true);
-    updateFooterStatus("Agent Ready");
+    if (reachedMaxSteps) {
+      updateAssistantActiveAgent(assistantBubble, finalAgentName, "Batas Langkah", hasBoss, false);
+      updateFooterStatus(`Batas langkah (${maxSteps}) tercapai. Klik tombol lanjutkan untuk meneruskan.`);
+
+      const targetContainer = assistantBubble?.querySelector('.message-content') || assistantBubble;
+      if (targetContainer && !targetContainer.querySelector('.max-steps-resume-card')) {
+        const resumeCard = document.createElement('div');
+        resumeCard.className = 'max-steps-resume-card';
+        resumeCard.style.cssText = 'margin-top: 14px; padding: 12px 16px; background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.25); border-radius: 14px; display: flex; flex-direction: column; gap: 8px; backdrop-filter: blur(8px);';
+        resumeCard.innerHTML = `
+          <div style="font-size: 12px; font-weight: 600; color: #facc15; display: flex; align-items: center; gap: 6px;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Batas Eksekusi Tercapai (${currentStep} Langkah)</span>
+          </div>
+          <div style="font-size: 11.5px; color: #cbd5e1; line-height: 1.45;">
+            Tugas kompleks ini terhenti karena telah mencapai batas putaran langkah (${maxSteps} langkah). Anda dapat melanjutkan tugas ini secara instan tanpa mengulang dari awal:
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 4px;">
+            <button type="button" class="btn-resume-steps" style="padding: 7px 16px; background: #eab308; color: #0f172a; border: none; border-radius: 9999px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+              ▶ Lanjutkan 50 Langkah Lagi
+            </button>
+          </div>
+        `;
+        const btnResume = resumeCard.querySelector('.btn-resume-steps');
+        if (btnResume) {
+          btnResume.addEventListener('click', () => {
+            resumeCard.remove();
+            runAgentLoop("Lanjutkan eksekusi langkah berikutnya sesuai rencana hingga seluruh tugas tuntas 100%.", []);
+          });
+        }
+        targetContainer.appendChild(resumeCard);
+      }
+    } else {
+      updateAssistantActiveAgent(assistantBubble, finalAgentName, (currentExecutionMode === 'planning' && !isPlanApprovedRun) ? "Rencana Siap" : "Selesai", hasBoss, true);
+      updateFooterStatus("Agent Ready");
+    }
 
     // Final Notification to Telegram Remote (In-Place Edit + Clean Completion)
     if (activeTelegramSession && activeTelegramSession.botToken && activeTelegramSession.senderId) {
@@ -10183,7 +10254,7 @@ function updateTaskScheduleProgress(bubble, milestones, activeMilestoneIdx = 0, 
   requestSmoothScrollToBottom(false, wrapper);
 }
 
-function finalizeTaskScheduleSection(bubble) {
+function finalizeTaskScheduleSection(bubble, isCompleted = true) {
   if (!bubble) return;
   const wrapper = bubble.querySelector('.task-schedule-wrapper');
   if (!wrapper) return;
@@ -10194,18 +10265,27 @@ function finalizeTaskScheduleSection(bubble) {
     return;
   }
 
-  items.forEach(itemEl => {
-    itemEl.className = 'task-schedule-item completed';
-    const iconSpan = itemEl.querySelector('.task-item-status-icon');
-    if (iconSpan) {
-      iconSpan.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-    }
-  });
+  if (isCompleted) {
+    items.forEach(itemEl => {
+      itemEl.className = 'task-schedule-item completed';
+      const iconSpan = itemEl.querySelector('.task-item-status-icon');
+      if (iconSpan) {
+        iconSpan.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      }
+    });
 
-  const total = items.length;
-  const titleEl = wrapper.querySelector('.task-schedule-title');
-  if (titleEl) {
-    titleEl.textContent = `✓ Semua Tugas Master Agent Selesai (${total}/${total})`;
+    const total = items.length;
+    const titleEl = wrapper.querySelector('.task-schedule-title');
+    if (titleEl) {
+      titleEl.textContent = `✓ Semua Tugas Master Agent Selesai (${total}/${total})`;
+    }
+  } else {
+    const completedItems = wrapper.querySelectorAll('.task-schedule-item.completed');
+    const total = items.length;
+    const titleEl = wrapper.querySelector('.task-schedule-title');
+    if (titleEl) {
+      titleEl.textContent = `⚠️ Sasaran Terhenti (${completedItems.length}/${total} Selesai)`;
+    }
   }
 
   // Automatically collapse/hide when finished

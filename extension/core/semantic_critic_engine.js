@@ -29,6 +29,18 @@
       if (pat.test(clean)) return false;
     }
 
+    // Deteksi jika respon menyatakan akan melanjutkan batch / langkah berikutnya (bukan jawaban final)
+    if (typeof GoalTracker !== 'undefined' && typeof GoalTracker.isContinuationIntent === 'function') {
+      if (GoalTracker.isContinuationIntent(clean)) return false;
+    } else {
+      const continuationPatterns = [
+        /\b(?:akan melanjutkan|langkah berikutnya|tahap selanjutnya|batch berikutnya|memproses batch|belum selesai|will continue|next step)\b/i
+      ];
+      for (const pat of continuationPatterns) {
+        if (pat.test(clean)) return false;
+      }
+    }
+
     return true;
   }
 

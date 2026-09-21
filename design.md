@@ -2551,3 +2551,21 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 2. **Perbaikan False-Positive Deteksi Semantik**:
    - `isExplicitSlideDeckIntent`: Kata tunggal seperti "presentasi", "presentation", atau "ppt" tidak lagi memicu deteksi tanpa adanya kata kerja pembentukan (`buat`, `bikin`, `rancang`, `generate`). Hanya frasa gabungan eksplisit (`slide deck`, `deck presentasi`, `powerpoint deck`) yang dapat lolos.
    - `isSlideDeckRevisionInstruction`: Mengeliminasi kata generik `"halaman"` (yang sering merujuk ke halaman web atau dokumen) dan menggantinya dengan target presisi `"halaman slide"`.
+
+## ⚡ 76. Execution Resilience: Dynamic Step Ceiling, Anti-Premature Stop, and Interactive Resume (v2.150.300)
+
+1. **Skalasi Plafon Eksekusi Multi-Step & Dynamic Adaptation**:
+   - Plafon batas putaran langkah `maxSteps` ditingkatkan secara substansial pada seluruh Thinking Levels: Low (30), Medium (60), High (120), XHigh (200), Extreme (300 turn / ~600 tool actions).
+   - Pengenalan adaptasi dinamis: Jika prompt pengguna meminta batch besar (misal *"200 langkah/data"*), plafon langkah otomatis dinaikkan dengan rumus `Math.max(maxSteps, Math.min(1000, plannedStepsTotal + 30))`.
+   - Auto-expansion proaktif: Jika model masih aktif menjalankan tool dan berada dalam 5 langkah dari plafon, batas langkah otomatis diperpanjang +30 langkah (hingga 1000 langkah).
+
+2. **Deteksi Intensi Lanjutan (`isContinuationIntent`) & Anti-Early Exit**:
+   - `extension/core/goal_tracker.js` dan `extension/core/semantic_critic_engine.js` dilengkapi pendeteksi intensi kelanjutan.
+   - Teks laporan progres antara yang memuat kata kunci kelanjutan (seperti *"akan melanjutkan"*, *"langkah berikutnya"*, *"memproses batch selanjutnya"*, *"will continue"*, *"next step"*) tidak lagi diklasifikasikan sebagai jawaban substantif final.
+   - `hasPendingMilestones` mempertahankan status aktif, dan sistem secara otomatis menyuntikkan prompt lanjutan terarah tanpa menghentikan loop eksekusi.
+
+3. **Interactive Execution Resume Card**:
+   - Saat batas langkah putaran benar-benar tercapai (`reachedMaxSteps = true`), agen tidak mengklaim tugas selesai 100%.
+   - Status agen disetel ke *"Batas Langkah"* dan merender kartu interaktif berlatar frosted glass kuning elegan dengan tombol `[▶ Lanjutkan 50 Langkah Lagi]`. Pengguna dapat mengklik tombol ini untuk melanjutkan eksekusi tugas kompleks secara instan tanpa kehilangan memori sesi dan tanpa mengulang dari awal.
+   - Di menu Pengaturan (Options), disediakan opsi `Max Agent Execution Steps` (0 = dinamis otomatis) untuk kontrol granular pengguna.
+

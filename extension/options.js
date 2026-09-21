@@ -179,6 +179,7 @@ const settingImageModel = document.getElementById('setting-image-model');
 const settingTemp = document.getElementById('setting-temp');
 const tempValDisplay = document.getElementById('temp-val-display');
 const settingMaxTokens = document.getElementById('setting-max-tokens');
+const settingMaxAgentSteps = document.getElementById('setting-max-agent-steps');
 const modelsRowsContainer = document.getElementById('settings-models-rows');
 const btnAddRow = document.getElementById('btn-add-model-row');
 const btnSaveHeader = document.getElementById('btn-save-header');
@@ -492,6 +493,7 @@ function applyConfigToUI() {
     if (tempValDisplay) tempValDisplay.textContent = Number(config.temperature ?? 0.2).toFixed(2);
   }
   if (settingMaxTokens) settingMaxTokens.value = (config.maxTokens !== undefined && config.maxTokens !== null) ? config.maxTokens : 0;
+  if (settingMaxAgentSteps) settingMaxAgentSteps.value = (config.max_agent_steps !== undefined && config.max_agent_steps !== null) ? config.max_agent_steps : 0;
   const settingStickman = document.getElementById('setting-stickman-animation');
   if (settingStickman) {
     settingStickman.checked = (config.stickmanAnimation !== false);
@@ -660,6 +662,8 @@ async function saveAllConfig(silent = false) {
   config.imageModel = settingImageModel ? settingImageModel.value.trim() : config.imageModel;
   const parsedTokens = settingMaxTokens ? parseInt(settingMaxTokens.value, 10) : 0;
   config.maxTokens = (!isNaN(parsedTokens) && parsedTokens > 0) ? (parsedTokens > 65536 ? 32768 : parsedTokens) : 0;
+  const parsedSteps = settingMaxAgentSteps ? parseInt(settingMaxAgentSteps.value, 10) : 0;
+  config.max_agent_steps = (!isNaN(parsedSteps) && parsedSteps > 0) ? (parsedSteps > 1000 ? 1000 : parsedSteps) : 0;
   const settingStickman = document.getElementById('setting-stickman-animation');
   config.stickmanAnimation = settingStickman ? settingStickman.checked : (config.stickmanAnimation !== false);
   const settingFloatingBtn = document.getElementById('setting-floating-button');
@@ -2852,6 +2856,7 @@ function setupEventListeners() {
   settingApiKey?.addEventListener('input', () => triggerAutoSave(300));
   settingImageModel?.addEventListener('input', () => triggerAutoSave(300));
   settingMaxTokens?.addEventListener('input', () => triggerAutoSave(300));
+  settingMaxAgentSteps?.addEventListener('input', () => triggerAutoSave(300));
   
   // Stickman Animation Toggle
   document.getElementById('setting-stickman-animation')?.addEventListener('change', (e) => {

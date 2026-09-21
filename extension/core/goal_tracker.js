@@ -650,11 +650,39 @@ PROTOKOL EKSEKUSI BOS PERFEKSIONIS:
   }
 
   /**
+   * Detects if the assistant's text expresses an intent to continue working,
+   * process the next batch/step, or indicates that work is still incomplete.
+   */
+  function isContinuationIntent(text) {
+    if (!text || typeof text !== 'string') return false;
+    const lower = text.toLowerCase();
+    
+    // Continuation phrases in Indonesian & English
+    const continuationPatterns = [
+      /akan (?:melanjutkan|meneruskan|memproses|mengeksekusi|mengambil|mencari|mengecek|menganalisis)/i,
+      /(?:langkah|tahap|step|batch|proses|tindakan) (?:selanjutnya|berikutnya|kedua|ketiga|lanjutan)/i,
+      /(?:sedang|masih) (?:berlangsung|memproses|menunggu|mengerjakan|mengumpulkan)/i,
+      /(?:belum|tidak) (?:selesai|tuntas|lengkap|sepenuhnya)/i,
+      /mari kita (?:lanjutkan|teruskan|eksekusi|proses)/i,
+      /(?:next|subsequent|following) (?:step|batch|stage|action|phase)/i,
+      /(?:will|now|let us|let's) (?:continue|proceed|process next|fetch next|execute next)/i,
+      /(?:still in progress|not finished|remaining items|to be processed)/i
+    ];
+
+    return continuationPatterns.some(pat => pat.test(lower));
+  }
+
+  /**
    * Returns true if there are still pending unstarted worker milestones
    * ONLY applies when tools were actually used in this session!
    */
   function hasPendingMilestones(milestones, conversationHistory = [], latestAssistantText = "") {
     if (!milestones || milestones.length === 0) return false;
+
+    // If the model explicitly stated continuation intent, work is definitely pending!
+    if (isContinuationIntent(latestAssistantText)) {
+      return true;
+    }
 
     // ANTI-OVERTHINKING SEMANTIC EARLY EXIT:
     // If the assistant has already provided a substantive, meaningful answer,
@@ -715,7 +743,8 @@ PANDUAN EKSEKUSI:
     getGoalStatusString,
     hasPendingMilestones,
     autoFulfillMilestones,
-    generateGoalContinuationPrompt
+    generateGoalContinuationPrompt,
+    isContinuationIntent
   };
 
   if (typeof module !== 'undefined' && module.exports) {
