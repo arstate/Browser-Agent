@@ -8457,6 +8457,35 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Seluruh berkas di `extension/design/*.js` tetap patuh `<= 798` baris.
   4. Bump versi ke `v2.150.301` di `extension/manifest.json`.
 
+### 🚀 Iterasi 185: Multi-Turn History-Aware Agent Selection & Adaptive Thread Continuity
+- **Waktu Eksekusi**: 2026-09-21 20:25 WIB
+- **Versi**: `v2.150.302`
+- **Problem Statement Pengguna**:
+  - *"cek lagi bro apakah udah akurat pemilihan agent nah master agent akan analisis juga saat ini itu lagi mbahas apa misal mbahas tiar property di histori chat berarti agent harus tiar property yg sesuai spesialis gitu gimana bro, jawab kritis jangan sellau iya dan membuat saya senang"*
+- **Akar Masalah (Root Causes)**:
+  1. *Stateless Pre-Flight Matcher*:
+     - `resolveAutoAgents` mengevaluasi `userMessage` giliran saat ini secara terisolasi. Jika prompt lanjutan tidak menyebutkan nama merek (misal: *"buatkan simulasi cicilannya 15 tahun"* atau *"tulis chat WA follow up"*), matcher kehilangan konteks ekosistem obrolan dan tergelincir ke agen generik.
+  2. *Risiko Sticky Context Trap*:
+     - Jika histori chat dipaksakan secara naif, pergantian topik ke skripsi UNESA atau kodingan Python bisa tertahan di ekosistem Tiar Property.
+  3. *Intra-Brand Role Drift*:
+     - Dalam satu merek terdapat banyak spesialis (Closer, Ads Auditor, Copywriter, Visual Designer). Pewarisan brand tanpa pemetaan aksi spesifik berisiko salah menunjuk peran.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Adaptive History Context Prior (`resolveAutoAgents`)**:
+     - `resolveAutoAgents` kini menerima parameter `history = []` (2-3 pesan user terakhir dari `conversationHistory`).
+     - Jika prompt baru tidak menyebutkan brand eksplisit dan bukan pergantian topik yang jelas (`!hasDistinctTopicShift`), sistem secara cerdas mewarisi konteks ekosistem brand dari histori percakapan aktif.
+  2. **Topic Shift Override Guarantee**:
+     - Jika prompt baru memuat kata kunci domain kuat (seperti UNESA skripsi, coding Python, agensi Djadi, kuliner DGA), sistem 100% memprioritaskan domain baru dan mengabaikan histori lama.
+  3. **Intra-Brand Task Intent Mapping**:
+     - Memadukan konteks brand terwarisi dengan kata kerja aksi prompt terkini (iklan/boncos ➔ Ads Auditor; naskah/reels ➔ Copywriter; feed/layout ➔ Visual Designer; cicilan/KPR/chat WA ➔ Sales Closer Mbak Ningsih).
+  4. **Penyempurnaan Tahap 0 di Master Mandate**:
+     - `buildDynamicSystemPrompt` menginstruksikan Master Agent mengevaluasi dua cabang: Thread Continuity (jaga ekosistem brand, pilih sub-agent aksi yang tepat) vs Topic Shift (pivot ke domain baru via `search_agent_catalog` dan `summon_specialist_agent`).
+- **Verifikasi & Kepatuhan Arsitektur**:
+  1. Unit test 6 skenario multi-turn lulus 100% (Turn 1 KPR Tiar ➔ Turn 2 Simulasi Cicilan Implisit ➔ Turn 3 Intra-brand Ads Audit ➔ Turn 4 Intra-brand Copy Reels ➔ Turn 5 Pivot UNESA ➔ Turn 6 Pivot Coding).
+  2. Validasi sintaks `node -c extension/sidepanel.js extension/core/goal_tracker.js` lulus 100%.
+  3. Seluruh berkas di `extension/design/*.js` dan `extension/core/goal_tracker.js` tetap patuh di bawah batas 798 baris.
+  4. Bump versi ke `v2.150.302` di `extension/manifest.json`.
+
+
 
 
 

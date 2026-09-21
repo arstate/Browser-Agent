@@ -2585,4 +2585,32 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 3. **Tahap 0: Mandat Penalaran Seleksi Agen pada Master Mandate**:
    - Master Agent diwajibkan secara eksplisit melakukan reasoning di awal setiap giliran: menganalisis domain dan intensi prompt pengguna, menguji ketepatan tim agen yang ditugaskan, dan secara proaktif mencari serta merekrut agen spesialis dari direktori katalog sebelum mengeksekusi aksi browser.
 
+## 🤖 78. Multi-Turn History-Aware Agent Selection & Adaptive Thread Continuity (v2.150.302)
+
+1. **Adaptive History Context Inheritance (Tier 1 Matcher Enhancement)**:
+   - `resolveAutoAgents` diperluas dengan parameter `history = []` yang menerima giliran percakapan terkini (`conversationHistory`).
+   - Pada pesan lanjutan (*follow-up prompt*) yang tidak menyebutkan nama brand secara eksplisit (contoh: *"buatkan simulasi cicilan 15 tahun"* atau *"tulis skrip chat follow up wa"*), sistem secara cerdas mengevaluasi histori 3 giliran terakhir dan mewarisi ekosistem brand aktif (`historicalBrand`).
+   - Menghilangkan degradasi konteks (*stateless drift*) sehingga asisten tidak tergelincir ke agen generik di tengah rangkaian percakapan.
+
+2. **Guaranteed Topic Shift Override Protection (Anti-Sticky Context Trap)**:
+   - Mengatasi risiko "konteks lengket" (*sticky context trap*) di mana pengguna yang beralih topik (misal dari properti ke skripsi UNESA, agensi Djadi, atau debugging koding Python) tidak terkunci secara keliru pada ekosistem lama.
+   - Pemeriksaan `hasDistinctTopicShift` (`isCodingCheck`, `isAcademicUnesaCheck`, `isCulinaryCheck`, `isCreativeAgencyCheck`) mengesampingkan histori 100% saat kata kunci domain baru yang kontras terdeteksi.
+   - Pilihan brand eksplisit pada prompt baru selalu memiliki bobot absolut di atas riwayat percakapan.
+
+3. **Intra-Brand Task-Intent Dynamic Role Assignment**:
+   - Di dalam silo ekosistem merek yang sama (seperti Tiar Property), pemilihan sub-agent bawahan diselaraskan secara dinamis berdasarkan kata kerja tindakan pada giliran saat ini:
+     * Niat KPR/Cicilan/Chat/Follow-up/Survei ➔ `tiar_sales_closer_cs` (Mbak Ningsih Closer).
+     * Niat Iklan/Campaign/Boncos/CPR ➔ `tiar_meta_ads_auditor` / `tiar_meta_ads_strategist`.
+     * Niat Naskah/Skrip/Reels/TikTok/Caption ➔ `tiar_copywriter_expert`.
+     * Niat Desain/Feed/Layout/Palet ➔ `tiar_visual_designer`.
+
+4. **Dual-Branch Cognition pada Master Mandate (Tahap 0)**:
+   - Mandat Tahap 0 di `buildDynamicSystemPrompt` diperkaya dengan pedoman penalaran cabang ganda:
+     * **Thread Continuity**: Jika prompt merupakan kelanjutan logis dari giliran sebelumnya, pertahankan silo ekosistem merek dan pilih spesialis peran yang tepat.
+     * **Topic Shift / Pivot**: Jika pengguna beralih topik, lepaskan spesialis lama, gunakan `search_agent_catalog` untuk mencari spesialis domain baru, dan rekrut via `summon_specialist_agent`.
+
+5. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
+   - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris (`goal_tracker.js`: 767 baris).
+
+
 

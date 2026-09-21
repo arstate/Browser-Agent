@@ -700,7 +700,7 @@ function detectBrandEcosystem(t = "", workers = []) {
   return null;
 }
 
-function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachments = []) {
+function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachments = [], history = []) {
   const cleanStr = (typeof userMessage === 'string') ? userMessage : (userMessage?.content || userMessage?.textContent || "");
   const attachmentStr = (Array.isArray(attachments) ? attachments : []).map(a => `${a.name || ''} ${a.file_name || ''} ${a.path || ''}`).join(" ");
   const combinedContext = `${cleanStr} ${attachmentStr}`.trim();
@@ -748,7 +748,64 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
     return [getMasterBoss(), ...sortAgentsByPipeline(matchedWorkers)];
   }
 
-  const targetBrand = detectBrandEcosystem(text, matchedWorkers);
+  // 1. Direct Brand from current user message
+  const directBrand = detectBrandEcosystem(text, matchedWorkers);
+
+  // Check for distinct non-brand domain intents that represent strong Topic Shifts
+  const isCodingCheck = (
+    text.includes("coding") || text.includes("koding") || text.includes("terminal") ||
+    text.includes("bash") || text.includes("command") || text.includes("script python") ||
+    text.includes("javascript") || text.includes("nodejs") || text.includes("bug") ||
+    text.includes("refactor") || text.includes("git") || text.includes("sqlite") ||
+    text.includes("zip") || text.includes("dump") || text.includes("unit test")
+  );
+  const isAcademicUnesaCheck = (
+    text.includes("unesa") || text.includes("sipintar") || text.includes("skripsi") ||
+    text.includes("thesis") || text.includes("tugas akhir") || text.includes("sidang") ||
+    text.includes("cbt unesa") || text.includes("cbt") || text.includes("d4 desain grafis")
+  );
+  const isCulinaryCheck = (
+    text.includes("dga") || text.includes("dapur annisa") || text.includes("annisa") ||
+    text.includes("katering") || text.includes("catering") || text.includes("tumpeng") ||
+    text.includes("nasi kotak") || text.includes("kuliner")
+  );
+  const isCreativeAgencyCheck = (
+    text.includes("djadi") || text.includes("creative agency") || text.includes("agensi kreatif") ||
+    text.includes("branding agency") || text.includes("agensi branding") || text.includes("brand activation") ||
+    text.includes("corporate client") || text.includes("klien corporate") || text.includes("pitch deck") ||
+    text.includes("b2b branding") || text.includes("brand asset") || text.includes("dba") ||
+    text.includes("gsm v3") || text.includes("agency retainer") || text.includes("production house") ||
+    text.includes("identity guidelines")
+  );
+
+  const hasDistinctTopicShift = isCodingCheck || isAcademicUnesaCheck || isCulinaryCheck || isCreativeAgencyCheck;
+
+  // 2. Multi-turn History Context Inheritance (Adaptive Context Prior):
+  // If current prompt does NOT explicitly specify a brand AND is not an obvious pivot to coding/academic/agency/culinary,
+  // inspect the last 2-3 user messages in history to inherit the active brand ecosystem!
+  let targetBrand = directBrand;
+  if (!targetBrand && !hasDistinctTopicShift && Array.isArray(history) && history.length > 0) {
+    const recentUserTurns = history
+      .filter(m => m && m.role === "user")
+      .slice(-3)
+      .map(m => {
+        if (typeof m.content === 'string') return m.content;
+        if (typeof m.displayContent === 'string') return m.displayContent;
+        if (Array.isArray(m.content)) {
+          return m.content.map(c => c.text || c.content || '').join(' ');
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join(" ");
+
+    if (recentUserTurns.trim().length > 0) {
+      const historicalBrand = detectBrandEcosystem(recentUserTurns);
+      if (historicalBrand) {
+        targetBrand = historicalBrand;
+      }
+    }
+  }
 
   // Universal Semantic Profile Matcher:
   // Evaluates every candidate agent across all domains and custom agent attributes
@@ -785,7 +842,9 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
     text.includes("angsuran rumah") || text.includes("cicilan rumah") || text.includes("dp 0") ||
     text.includes("utj") || text.includes("cluster") || text.includes("tiar property") ||
     text.includes("closing kpr") || text.includes("survei lokasi") || text.includes("busi jaya") ||
-    text.includes("sukodono") || text.includes("sedati") || text.includes("anggaswangi") || text.includes("masangan")
+    text.includes("sukodono") || text.includes("sedati") || text.includes("anggaswangi") || text.includes("masangan") ||
+    text.includes("simulasi cicilan") || text.includes("syarat berkas") || text.includes("follow up prospek") ||
+    text.includes("chat wa") || text.includes("follow up wa") || text.includes("prospek konsumen")
   );
 
   const isAdsDomain = (
@@ -882,11 +941,11 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
     }
 
     // 4. Real Estate Domain (Mbak Ningsih Closer / Admin)
-    if (isRealEstateDomain) {
+    if (isRealEstateDomain || targetBrand === "tiar_property") {
       if (agentBrand === "tiar_property") {
-        score += 70;
+        score += (isRealEstateDomain ? 70 : 35);
         if (idLower.includes("closer") || nameLower.includes("closer") || nameLower.includes("ningsih") || nameLower.includes("sales")) {
-          score += 30;
+          score += (isCopyDomain || text.includes("chat") || text.includes("wa") || text.includes("follow up") || text.includes("prospek") || text.includes("konsumen") || text.includes("cicilan") ? 35 : 20);
         } else if (idLower.includes("admin") || nameLower.includes("admin")) {
           score += 20;
         }
@@ -1079,14 +1138,16 @@ function buildDynamicSystemPrompt(agentOrAgents = null) {
     });
     prompt += `\nALUR KERJA RESMI MASTER AGENT & SIKLUS PERINTAH KARYAWAN (MASTER MANDATE):
 
-0. 🧠 TAHAP 0: UNIVERSAL AGENT SELECTION REASONING & RECRUITMENT (ANTI-MISS-ASSIGNMENT):
-   - Di awal setiap giliran / tugas baru, Master Agent WAJIB berpikir (reasoning) terlebih dahulu:
-     * "Apa domain dan intensi inti dari prompt pengguna ini?" (misal: Agensi Kreatif / Branding Djadi, Properti / KPR Tiar, Akademik / Skripsi UNESA, Layanan Publik Bangga Surabaya, Kuliner DGA, Coding / CLI, atau Penjelajahan Web Umum).
-     * "Apakah tim agen bawahan yang aktif saat ini sudah paling tepat dan akurat untuk menyelesaikan tugas ini?"
-   - JIKA tim saat ini belum mencakup spesialis domain tersebut ATAU ada agen spesialis yang jauh lebih cocok di direktori:
-     * Master Agent WAJIB mencari agen spesialis menggunakan \`search_agent_catalog({ query, domain })\` atau membaca profilnya via \`read_agent_detail({ agent_name_or_id })\`.
-     * Rekrut agen spesialis tersebut menggunakan \`summon_specialist_agent({ agent_name_or_id, reason, subtask_assignment })\`.
-     * Delegasikan subtask spesifik kepada agen tersebut untuk menjamin hasil terbaik tanpa halusinasi dan tanpa salah sasaran!
+0. 🧠 TAHAP 0: UNIVERSAL AGENT SELECTION REASONING & ADAPTIVE RECRUITMENT:
+   - Di awal setiap giliran / tugas baru, Master Agent WAJIB melakukan evaluasi konteks penalaran adaptif:
+     a. 🔄 CEK KONTINUITAS TOPIK (THREAD CONTINUITY):
+        * Apakah prompt pengguna merupakan kelanjutan dari diskusi sebelumnya di histori chat (misal: "lanjutkan simulasi yang tadi", "tuliskan chat follow-up WA nya", "audit iklan kemarin")?
+        * JIKA YA: Pertahankan domain brand yang sama (misal Tiar Property), tetapi evaluasi apakah SPESIALIS yang aktif sudah sesuai dengan jenis tugas spesifik yang baru diminta (contoh: jika diskusi sebelumnya tentang KPR lalu sekarang meminta audit iklan, rekrut Meta Ads Auditor; jika meminta naskah/copy, rekrut Copywriter; jika meminta closing chat, rekrut Sales Closer).
+     b. 🔀 CEK PERGANTIAN TOPIK (TOPIC SHIFT / PIVOT):
+        * Apakah pengguna tiba-tiba berpindah topik ke domain baru (misal dari properti ke skripsi UNESA, koding Python, atau agensi Djadi Creative)?
+        * JIKA TERJADI PERGANTIAN TOPIK: DILARANG TERJEBAK DI KONTEKS LAMA! Segera beralih ke domain baru tersebut, panggil \`search_agent_catalog({ query, domain })\`, dan rekrut spesialis yang relevan via \`summon_specialist_agent\`.
+     c. 🛠️ REKRUTMEN SPESIALIS PRESISI:
+        * JIKA tim saat ini belum mencakup spesialis yang tepat: Master Agent WAJIB mencari agen spesialis menggunakan \`search_agent_catalog({ query, domain })\` atau membaca profilnya via \`read_agent_detail({ agent_name_or_id })\`, lalu merekrutnya via \`summon_specialist_agent({ agent_name_or_id, reason, subtask_assignment })\`.
 
 1. 🤔 TAHAP 1: INTERAKTIF 2-ARAH & KLARIFIKASI OPSI (JIKA PROMPT AMBIGU / KURANG LENGKAP):
    - JIKA instruksi pengguna masih umum, luas, atau kurang spesifik (contoh: "analisis mendalam bro lihat ke dalam iklan yang iklan paling rame di meta ads"):
@@ -6702,7 +6763,7 @@ async function runAgentLoop(userMessage, attachments = [], explicitMentions = []
   saveAttachmentsToIndexedDB(attachments);
 
   const isAutoMode = (activeAgentId === AUTO_AGENT_ID || !activeAgentId);
-  const resolvedAgents = isAutoMode ? resolveAutoAgents(userMessage, explicitMentions, attachments) : [activeAgent || customAgents[0]].filter(Boolean);
+  const resolvedAgents = isAutoMode ? resolveAutoAgents(userMessage, explicitMentions, attachments, conversationHistory) : [activeAgent || customAgents[0]].filter(Boolean);
   
   const hasBoss = (resolvedAgents[0]?.id === "master_agent" || resolvedAgents[0]?.id === "boss_agent" || resolvedAgents[0]?.is_boss);
   const bossAgent = hasBoss ? resolvedAgents[0] : null;
@@ -9109,7 +9170,7 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
 
   // Resolve Master Agent and custom skills / memories identical to Agent Mode
   const isAutoMode = (activeAgentId === AUTO_AGENT_ID || !activeAgentId);
-  const resolvedAgents = isAutoMode ? resolveAutoAgents(userMessage, explicitMentions, attachments) : [activeAgent || customAgents[0]].filter(Boolean);
+  const resolvedAgents = isAutoMode ? resolveAutoAgents(userMessage, explicitMentions, attachments, conversationHistory) : [activeAgent || customAgents[0]].filter(Boolean);
   const hasBoss = (resolvedAgents[0]?.id === "master_agent" || resolvedAgents[0]?.id === "boss_agent" || resolvedAgents[0]?.is_boss);
   const bossAgent = hasBoss ? resolvedAgents[0] : null;
   const workerAgents = hasBoss ? resolvedAgents.slice(1) : resolvedAgents;

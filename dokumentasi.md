@@ -1913,4 +1913,30 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Validasi sintaksis `node -c extension/sidepanel.js extension/core/goal_tracker.js` lulus tanpa error.
      - Seluruh berkas di `extension/design/*.js` tetap patuh di bawah batas 798 baris.
 
+### 185. Rilis Versi v2.150.302 - Multi-Turn History-Aware Agent Selection & Adaptive Thread Continuity
+- **Waktu Rilis**: 2026-09-21 20:25 WIB
+- **Fokus Utama**: Mengatasi kendala di mana pemilihan sub-agent pada prompt percakapan bertahap (multi-turn follow-up / referensi implisit) sering kehilangan konteks brand (misal setelah membahas Tiar Property, prompt lanjutan *"buatkan simulasi cicilan 15 tahun"* atau *"tulis chat WA follow up"* sebelumnya rentan tergelincir ke agen generik karena stateless), sekaligus mencegah jebakan konteks lengket (*sticky context*) saat terjadi pergantian topik (*topic shift*).
+- **Akar Masalah (Root Causes)**:
+  1. *Stateless Pre-Flight Matcher*:
+     - `resolveAutoAgents` sebelumnya hanya mengevaluasi `userMessage` giliran saat ini secara terisolasi. Jika prompt lanjutan tidak menyebutkan nama merek, matcher kehilangan konteks ekosistem obrolan.
+  2. *Risiko Sticky Context Trap*:
+     - Jika histori chat dipaksakan secara naif, pergantian topik ke skripsi UNESA atau kodingan Python bisa tertahan di ekosistem Tiar Property.
+  3. *Intra-Brand Role Drift*:
+     - Dalam satu merek terdapat banyak spesialis (Closer, Ads Auditor, Copywriter, Visual Designer). Pewarisan brand tanpa pemetaan aksi spesifik berisiko salah menunjuk peran.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Adaptive History Context Prior (`resolveAutoAgents`)**:
+     - `resolveAutoAgents` kini menerima `history = []` (2-3 pesan user terakhir dari `conversationHistory`).
+     - Jika prompt baru tidak menyebutkan brand eksplisit dan bukan pergantian topik yang jelas (`!hasDistinctTopicShift`), sistem secara cerdas mewarisi konteks ekosistem brand dari histori percakapan aktif.
+  2. **Topic Shift Override Guarantee**:
+     - Jika prompt baru memuat kata kunci domain kuat (seperti UNESA skripsi, coding Python, agensi Djadi, kuliner DGA), sistem 100% memprioritaskan domain baru dan mengabaikan histori lama.
+  3. **Intra-Brand Task Intent Mapping**:
+     - Memadukan konteks brand terwarisi dengan kata kerja aksi prompt terkini (iklan/boncos ➔ Ads Auditor; naskah/reels ➔ Copywriter; feed/layout ➔ Visual Designer; cicilan/KPR/chat WA ➔ Sales Closer Mbak Ningsih).
+  4. **Penyempurnaan Tahap 0 di Master Mandate**:
+     - `buildDynamicSystemPrompt` menginstruksikan Master Agent mengevaluasi dua cabang: Thread Continuity (jaga ekosistem brand, pilih sub-agent aksi yang tepat) vs Topic Shift (pivot ke domain baru via `search_agent_catalog` dan `summon_specialist_agent`).
+  5. **Verifikasi Pengujian & Standar Sub-800 Baris**:
+     - Unit test 6 skenario multi-turn lulus 100% (Turn 1 KPR Tiar ➔ Turn 2 Simulasi Cicilan Implisit ➔ Turn 3 Intra-brand Ads Audit ➔ Turn 4 Intra-brand Copy Reels ➔ Turn 5 Pivot UNESA ➔ Turn 6 Pivot Coding).
+     - Validasi sintaks `node -c extension/sidepanel.js extension/core/goal_tracker.js` lulus tanpa error.
+     - Seluruh berkas di `extension/design/*.js` tetap patuh di bawah batas 798 baris.
+
+
 
