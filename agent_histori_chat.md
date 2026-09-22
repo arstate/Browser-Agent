@@ -8485,6 +8485,41 @@ Dokumen ini mencatat seluruh riwayat keputusan arsitektur, preferensi pengguna, 
   3. Seluruh berkas di `extension/design/*.js` dan `extension/core/goal_tracker.js` tetap patuh di bawah batas 798 baris.
   4. Bump versi ke `v2.150.302` di `extension/manifest.json`.
 
+### 🚀 Iterasi 186: Robust Multi-Agent Ecosystem Synchronization, Compound Token Normalization, & Elimination of Blind Casual Companion Fallback
+- **Waktu Eksekusi**: 2026-09-22 09:35 WIB
+- **Versi**: `v2.150.303`
+- **Problem Statement Pengguna**:
+  - *"bro enaknya djadicreative saya bikin apa lagi ya yg di todolist"*
+  - Screenshot antarmuka menunjukkan sistem secara keliru menugaskan: `Tim Agen yang Ditugaskan (1): Casual Companion & Personal Fact Assistant`.
+- **Akar Masalah (Root Causes)**:
+  1. *Sinkronisasi Agen di `sidepanel.js` Terputus dari Native Host*: `sidepanel.js` tidak pernah memanggil `list_agents` ke native host; hanya membaca `chrome.storage.local`. Tanpa membuka `options.html`, agen baru di `~/.browser-agent/agents/*.md` (seperti 4 agen spesialis Djadi Creative) tidak termuat ke memori chat tab.
+  2. *Blind Fallback ke Casual Companion di `resolveAutoAgents`*: Ketika kandidat belum termuat atau skornya 0, sistem secara membabi-buta menugaskan Casual Companion untuk seluruh prompt non-browser.
+  3. *Bypass Brand Silo*: `getAgentBrand(casual_companion_agent)` mengembalikan `null`, sehingga tidak terdiskualifikasi oleh aturan brand silo.
+  4. *Token Majemuk Tanpa Spasi (`djadicreative`)*: Perlu normalisasi token awal agar dapat dikenali oleh aturan regex dan domain recognizer.
+  5. *Ketiadaan Domain Djadi Creative di GoalTracker*: `inferAgentForTask` dan `extractGoalMilestones` tidak memiliki blok untuk Djadi Creative.
+  6. *Hilangnya Data `workers`*: `sanitizeHistoryForStorage` tidak menyimpan `agentInfo.workers` saat serialisasi ke SQLite.
+- **Solusi & Rekayasa Teknis Komprehensif**:
+  1. **Live Agent Synchronization (`syncAgentsFromNativeHost`)**:
+     - Menghubungkan `sidepanel.js` langsung dengan native RPC `list_agents`, `list_skills`, dan `loadPersistentMemoryFromHost`.
+     - Dipanggil otomatis pada `connectNativeHost` dan akhir `loadAgentsAndSkills`.
+  2. **Compound Word Normalization**:
+     - Normalisasi token majemuk (`djadicreative` -> `djadi creative`, `djadiberjaya` -> `djadi berjaya`, `tiarproperty` -> `tiar property`) di `detectBrandEcosystem` dan `resolveAutoAgents`.
+  3. **Strict Brand Silo & Eliminasi Blind Fallback**:
+     - Diskualifikasi mutlak `casual_companion_agent` jika `targetBrand` aktif dan bukan domain kasual (`!isCasualDomain`).
+     - Jika kecocokan 0 tetapi `targetBrand` terdeteksi, prioritaskan agen utama brand (misal `djadi_master_orchestrator`) atau `default_agent`.
+  4. **Intra-Brand Djadi Scoring**:
+     - Pemberian bobot intra-brand spesifik: `djadi_master_orchestrator` (+35 untuk todolist/rencana/strategi/bikin apa), `djadi_visual_designer` (+35 untuk desain/feed/deck), `djadi_meta_ads_strategist` (+35 untuk ads/cbo/cpr), `djadi_sales_closer` (+35 untuk closing/klien/retainer).
+  5. **Integrasi Domain Djadi Creative pada GoalTracker Engine**:
+     - Pemetaan sub-agent Djadi di `inferAgentForTask` dan template milestone di `extractGoalMilestones`.
+     - Menggunakan helper `makeM` sehingga berkas `extension/core/goal_tracker.js` tetap ramping (777 baris <= 798 baris).
+  6. **Preservasi Workers pada Chat History SQLite**:
+     - Properti `clean.agentInfo.workers` tersimpan saat serialisasi ke basis data chat history.
+- **Verifikasi & Kepatuhan Arsitektur**:
+  1. Unit test 6 skenario multi-agent lulus 100% (User prompt Djadi todolist, Pitch deck visual, Ads boncos, Casual greeting, Tiar KPR, Topic shift).
+  2. Validasi sintaks `node -c extension/sidepanel.js extension/core/goal_tracker.js` lulus 100%.
+  3. Seluruh berkas di `extension/design/*.js` dan `extension/core/goal_tracker.js` tetap patuh di bawah batas 798 baris.
+  4. Bump versi ke `v2.150.303` di `extension/manifest.json`.
+
 
 
 

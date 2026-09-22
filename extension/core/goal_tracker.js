@@ -46,7 +46,7 @@
     if (!promptText || typeof promptText !== 'string') return [];
 
     let text = promptText.replace(/^\/goal\s*/i, '').trim();
-    const cleanLower = text.toLowerCase();
+    const cleanLower = text.toLowerCase().replace(/djadicreative/gi, "djadi creative").replace(/djadiberjaya/gi, "djadi berjaya").replace(/tiarproperty/gi, "tiar property");
     const milestones = [];
 
     // Helper to detect brand ecosystem from prompt text or active workers
@@ -59,63 +59,65 @@
         }
       }
 
+      const normT = (t || '').toLowerCase().replace(/djadicreative/gi, "djadi creative").replace(/djadiberjaya/gi, "djadi berjaya").replace(/tiarproperty/gi, "tiar property");
+
       // 2. Explicit Brand Detection from Prompt Text
       const isDjadiCreativeTerms = (
-        t.includes("djadi") || t.includes("djadi creative") ||
-        t.includes("agensi kreatif") || t.includes("creative agency") ||
-        t.includes("branding agency") || t.includes("agensi branding") ||
-        t.includes("brand activation") || t.includes("corporate client") ||
-        t.includes("klien corporate") || t.includes("b2b branding") ||
-        t.includes("distinctive brand asset") || t.includes("gsm v3") ||
-        t.includes("campaign retainer") || t.includes("pitch deck agensi") ||
-        t.includes("production house") || t.includes("agency retainer")
+        normT.includes("djadi") || normT.includes("djadi creative") ||
+        normT.includes("agensi kreatif") || normT.includes("creative agency") ||
+        normT.includes("branding agency") || normT.includes("agensi branding") ||
+        normT.includes("brand activation") || normT.includes("corporate client") ||
+        normT.includes("klien corporate") || normT.includes("b2b branding") ||
+        normT.includes("distinctive brand asset") || normT.includes("gsm v3") ||
+        normT.includes("campaign retainer") || normT.includes("pitch deck agensi") ||
+        normT.includes("production house") || normT.includes("agency retainer")
       );
       if (isDjadiCreativeTerms) {
         return "djadi_creative";
       }
 
       if (
-        t.includes("unesa") || t.includes("sipintar") ||
-        t.includes("skripsi") || t.includes("thesis") || t.includes("tugas akhir") ||
-        t.includes("cbt unesa")
+        normT.includes("unesa") || normT.includes("sipintar") ||
+        normT.includes("skripsi") || normT.includes("thesis") || normT.includes("tugas akhir") ||
+        normT.includes("cbt unesa")
       ) {
         return "unesa";
       }
 
-      if (t.includes("dga") || t.includes("dapur annisa") || t.includes("annisa") || t.includes("catering") || t.includes("katering")) {
+      if (normT.includes("dga") || normT.includes("dapur annisa") || normT.includes("annisa") || normT.includes("catering") || normT.includes("katering")) {
         return "dga";
       }
 
       // STRICT REAL ESTATE DETECTION: NEVER classify as tiar_property from naked city names like 'surabaya' or 'sidoarjo'!
       const isExplicitTiar = (
-        t.includes("tiar") || t.includes("tiar property") || t.includes("busi jaya") ||
-        t.includes("ningsih")
+        normT.includes("tiar") || normT.includes("tiar property") || normT.includes("busi jaya") ||
+        normT.includes("ningsih")
       );
       const isRealEstateTerms = (
-        t.includes("perumahan") || t.includes("kpr") || t.includes("beli rumah") ||
-        t.includes("angsuran rumah") || t.includes("cicilan rumah") || t.includes("dp 0%") ||
-        t.includes("utj") || t.includes("cluster hunian") || t.includes("subsidi kpr") ||
-        t.includes("biaya kpr") || t.includes("takeover kpr") || t.includes("tanpa dp") ||
-        t.includes("marketing properti")
+        normT.includes("perumahan") || normT.includes("kpr") || normT.includes("beli rumah") ||
+        normT.includes("angsuran rumah") || normT.includes("cicilan rumah") || normT.includes("dp 0%") ||
+        normT.includes("utj") || normT.includes("cluster hunian") || normT.includes("subsidi kpr") ||
+        normT.includes("biaya kpr") || normT.includes("takeover kpr") || normT.includes("tanpa dp") ||
+        normT.includes("marketing properti")
       );
       // Location only counts for real estate if explicitly combined with house/cluster/property
-      const isLocationWithHouse = /(?:rumah|cluster|perumahan|kpr)\s+(?:di|daerah|area|kawasan)?\s*(?:surabaya|sidoarjo|sukodono|masangan|anggaswangi|sedati|juanda)/i.test(t);
+      const isLocationWithHouse = /(?:rumah|cluster|perumahan|kpr)\s+(?:di|daerah|area|kawasan)?\s*(?:surabaya|sidoarjo|sukodono|masangan|anggaswangi|sedati|juanda)/i.test(normT);
 
       if (isExplicitTiar || isRealEstateTerms || isLocationWithHouse) {
         return "tiar_property";
       }
 
       if (
-        t.includes("bangga surabaya") || t.includes("sapawarga") ||
-        t.includes("kominfo") || t.includes("diskominfo") ||
-        t.includes("pemkot surabaya") || t.includes("balai kota") ||
-        t.includes("magang") || t.includes("internship") ||
-        t.includes("proposal magang") || t.includes("laporan magang") ||
-        t.includes("logbook") || t.includes("laporan akhir") ||
-        t.includes("sib") || t.includes("studi independen") ||
-        t.includes("vokasi") ||
-        (t.includes("proposal") && (t.includes("surabaya") || t.includes("pemkot") || t.includes("arya") || t.includes("kominfo"))) ||
-        t.includes("arya")
+        normT.includes("bangga surabaya") || normT.includes("sapawarga") ||
+        normT.includes("kominfo") || normT.includes("diskominfo") ||
+        normT.includes("pemkot surabaya") || normT.includes("balai kota") ||
+        normT.includes("magang") || normT.includes("internship") ||
+        normT.includes("proposal magang") || normT.includes("laporan magang") ||
+        normT.includes("logbook") || normT.includes("laporan akhir") ||
+        normT.includes("sib") || normT.includes("studi independen") ||
+        normT.includes("vokasi") ||
+        (normT.includes("proposal") && (normT.includes("surabaya") || normT.includes("pemkot") || normT.includes("arya") || normT.includes("kominfo"))) ||
+        normT.includes("arya")
       ) {
         return "bangga_surabaya";
       }
@@ -184,6 +186,18 @@
       if (lower.includes('deep think') || lower.includes('analisis sasaran') || lower.includes('koordinasi') || lower.includes('validasi') || lower.includes('laporan akhir') || lower.includes('sintesis')) {
         return "Master Agent";
       }
+      if (targetBrand === 'djadi_creative' || lower.includes('djadi') || lower.includes('agensi')) {
+        if (lower.includes('ads') || lower.includes('iklan') || lower.includes('cbo') || lower.includes('cpr') || lower.includes('meta')) {
+          return findWorker('djadi_meta_ads_strategist', findWorker('ads', 'Djadi Creative - Meta Ads Strategist & Performance Director'));
+        }
+        if (lower.includes('desain') || lower.includes('visual') || lower.includes('feed') || lower.includes('deck') || lower.includes('pitch')) {
+          return findWorker('djadi_visual_designer', findWorker('visual', 'Djadi Creative - Visual Designer & Art Director'));
+        }
+        if (lower.includes('closing') || lower.includes('sales') || lower.includes('retainer') || lower.includes('spk') || lower.includes('klien') || lower.includes('inbound')) {
+          return findWorker('djadi_sales_closer', findWorker('closer', 'Djadi Creative - Inbound Sales Closer & Client Success'));
+        }
+        return findWorker('djadi_master_orchestrator', findWorker('orchestrator', 'Djadi Creative - Master Agency Orchestrator'));
+      }
       if (lower.includes('proposal') || lower.includes('magang') || lower.includes('studi independen') || lower.includes('sib') || lower.includes('kominfo') || lower.includes('sipintar') || lower.includes('logbook') || lower.includes('portofolio') || lower.includes('arya')) {
         return matchedWorkers[0]?.name || findWorker('arya', findWorker('magang', findWorker('proposal', findWorker('academic', findWorker('bangga', 'ARYA-MAGANG-KOMINFO')))));
       }
@@ -224,13 +238,8 @@
     }
 
     // Always start with Task 1: Master Agent Deep Thinking & Strategic Planning
-    milestones.push({
-      id: 1,
-      title: "Deep Thinking: Analisis Sasaran & Pemilihan Tim Spesialis",
-      assignedAgent: "Master Agent",
-      completed: false,
-      inProgress: true
-    });
+    const makeM = (id, title, assignedAgent) => ({ id, title, assignedAgent, completed: false, inProgress: false });
+    milestones.push({ id: 1, title: "Deep Thinking: Analisis Sasaran & Pemilihan Tim Spesialis", assignedAgent: "Master Agent", completed: false, inProgress: true });
 
     // -------------------------------------------------------------
     // PRIORITY 1: Explicit numbered lines or bullets from user (Inline & Multi-Line)
@@ -299,10 +308,20 @@
       const dbAgent = findWorker('backup', findWorker('database', 'Database & Brain Backup Specialist'));
       const codeAgent = findWorker('coding', 'Coding & System Engineer');
       milestones.push(
-        { id: 2, title: "Pencadangan Database SQLite & Ekstraksi Riwayat Percakapan", assignedAgent: dbAgent, completed: false, inProgress: false },
-        { id: 3, title: "Sinkronisasi Direktori Brain, Agen, Skills & Snapshot Media", assignedAgent: dbAgent, completed: false, inProgress: false },
-        { id: 4, title: "Kompresi Berkas Arsip ZIP & Verifikasi Integritas Cadangan", assignedAgent: codeAgent, completed: false, inProgress: false },
-        { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Verifikasi Laporan Cadangan", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        makeM(2, "Pencadangan Database SQLite & Ekstraksi Riwayat Percakapan", dbAgent),
+        makeM(3, "Sinkronisasi Direktori Brain, Agen, Skills & Snapshot Media", dbAgent),
+        makeM(4, "Kompresi Berkas Arsip ZIP & Verifikasi Integritas Cadangan", codeAgent),
+        makeM(5, "Validasi Kualitas 100% (Perfeksionis) & Verifikasi Laporan Cadangan", "Master Agent")
+      );
+    } else if (cleanLower.includes('djadi') || targetBrand === 'djadi_creative' || (targetBrand === 'djadi_creative' && (cleanLower.includes('todolist') || cleanLower.includes('todo') || cleanLower.includes('rencana') || cleanLower.includes('bikin apa') || cleanLower.includes('agensi') || cleanLower.includes('klien')))) {
+      const orchestratorAgent = findWorker('djadi_master_orchestrator', 'Djadi Creative - Master Agency Orchestrator');
+      const visualAgent = findWorker('djadi_visual_designer', 'Djadi Creative - Visual Designer & Art Director');
+      const closerAgent = findWorker('djadi_sales_closer', 'Djadi Creative - Inbound Sales Closer & Client Success');
+      milestones.push(
+        makeM(2, "Telaah Strategic Blueprint & Roadmapping Eksekusi Agensi", orchestratorAgent),
+        makeM(3, "Kurasi Aset Visual, Pitch Deck & Creative Production", visualAgent),
+        makeM(4, "Setup Funnel Inbound, Skrip Closing & Retainer Client Onboarding", closerAgent),
+        makeM(5, "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Todo List Tuntas", "Master Agent")
       );
     } else if (cleanLower.includes('lead') || cleanLower.includes('ads') || cleanLower.includes('iklan') || cleanLower.includes('boncos') || cleanLower.includes('cpr') || cleanLower.includes('gacor') || cleanLower.includes('campaign') || cleanLower.includes('meta')) {
       const isAuditQuery = (cleanLower.includes('cek') || cleanLower.includes('audit') || cleanLower.includes('lihat') || cleanLower.includes('pantau') || cleanLower.includes('evaluasi') || cleanLower.includes('periksa') || cleanLower.includes('aktif') || cleanLower.includes('detail') || cleanLower.includes('status'));
@@ -311,20 +330,20 @@
       if (isAuditQuery && !isStrategyQuery) {
         const auditorAgent = findWorker('auditor', findWorker('ads', 'Tiar Property - Meta Ads Visual Auditor & Lead Quality Analyst'));
         milestones.push(
-          { id: 2, title: "Akses & Orientasi Live Ads Manager via Browser MCP / CDP Control", assignedAgent: auditorAgent, completed: false, inProgress: false },
-          { id: 3, title: "Audit Matriks Kinerja Iklan, Status Kampanye & Adset Aktif", assignedAgent: auditorAgent, completed: false, inProgress: false },
-          { id: 4, title: "Ekstraksi Metrik CPR, CTR, Volume Chat & Eliminasi Junk Leads", assignedAgent: auditorAgent, completed: false, inProgress: false },
-          { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+          makeM(2, "Akses & Orientasi Live Ads Manager via Browser MCP / CDP Control", auditorAgent),
+          makeM(3, "Audit Matriks Kinerja Iklan, Status Kampanye & Adset Aktif", auditorAgent),
+          makeM(4, "Ekstraksi Metrik CPR, CTR, Volume Chat & Eliminasi Junk Leads", auditorAgent),
+          makeM(5, "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", "Master Agent")
         );
       } else {
         const adsAgent = findWorker('auditor', findWorker('ads', 'Tiar Property - Meta Ads Visual Auditor & Lead Quality Analyst'));
         const strategistAgent = findWorker('strategist', 'Tiar Meta Ads Strategist');
         const salesAgent = findWorker('closer', findWorker('sales', 'Tiar Sales Closer CS'));
         milestones.push(
-          { id: 2, title: "Audit Matriks Kinerja Iklan & Eliminasi Junk Leads", assignedAgent: adsAgent, completed: false, inProgress: false },
-          { id: 3, title: "Perumusan Strategi Targeting Advantage+ CBO & Optimasi CPR", assignedAgent: strategistAgent, completed: false, inProgress: false },
-          { id: 4, title: "Evaluasi Funnel Chat Closing & Kualifikasi Prospek KPR", assignedAgent: salesAgent, completed: false, inProgress: false },
-          { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+          makeM(2, "Audit Matriks Kinerja Iklan & Eliminasi Junk Leads", adsAgent),
+          makeM(3, "Perumusan Strategi Targeting Advantage+ CBO & Optimasi CPR", strategistAgent),
+          makeM(4, "Evaluasi Funnel Chat Closing & Kualifikasi Prospek KPR", salesAgent),
+          makeM(5, "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", "Master Agent")
         );
       }
     } else if (
@@ -333,15 +352,12 @@
       cleanLower.includes('sipintar') || cleanLower.includes('portofolio') || cleanLower.includes('laporan magang') ||
       cleanLower.includes('logbook') || (targetBrand === 'bangga_surabaya' && (cleanLower.includes('proposal') || cleanLower.includes('revisi') || cleanLower.includes('ubah') || cleanLower.includes('review') || cleanLower.includes('bikin')))
     ) {
-      // -------------------------------------------------------------
-      // DOMAIN: Magang / Studi Independen (SIB) / Proposal / Laporan / Akademik
-      // -------------------------------------------------------------
       const proposalAgent = matchedWorkers[0]?.name || findWorker('bangga', findWorker('academic', findWorker('proposal', findWorker('desain', 'Proposal & Academic Specialist'))));
       milestones.push(
-        { id: 2, title: "Analisis Brief Kebutuhan, Telaah Berkas Acuan & Identifikasi Parameter Proposal", assignedAgent: proposalAgent, completed: false, inProgress: false },
-        { id: 3, title: "Perumusan Konsep, Struktur Dokumen Proposal Individu & Evaluasi Substantif", assignedAgent: proposalAgent, completed: false, inProgress: false },
-        { id: 4, title: "Penyempurnaan Bab/Bagian Dokumen, Verifikasi Format & Finalisasi Rekomendasi", assignedAgent: proposalAgent, completed: false, inProgress: false },
-        { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        makeM(2, "Analisis Brief Kebutuhan, Telaah Berkas Acuan & Identifikasi Parameter Proposal", proposalAgent),
+        makeM(3, "Perumusan Konsep, Struktur Dokumen Proposal Individu & Evaluasi Substantif", proposalAgent),
+        makeM(4, "Penyempurnaan Bab/Bagian Dokumen, Verifikasi Format & Finalisasi Rekomendasi", proposalAgent),
+        makeM(5, "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", "Master Agent")
       );
     } else if (
       cleanLower.includes('bangga surabaya') || cleanLower.includes('sapawarga') ||
@@ -349,15 +365,12 @@
       (cleanLower.includes('feed') && (cleanLower.includes('desain') || cleanLower.includes('ngonten') || cleanLower.includes('medsos'))) ||
       (cleanLower.includes('ngonten') && (cleanLower.includes('medsos') || cleanLower.includes('instagram')))
     ) {
-      // -------------------------------------------------------------
-      // DOMAIN: Social Media Feed / Bangga Surabaya / Sapawarga / Konten Kreatif
-      // -------------------------------------------------------------
       const contentAgent = matchedWorkers[0]?.name || findWorker('bangga', findWorker('visual', findWorker('desain', 'Bangga Surabaya Art Director & Content Designer')));
       milestones.push(
-        { id: 2, title: "Analisis Brief Konten, Kurasi Aset Visual & Penentuan Angle Informasi", assignedAgent: contentAgent, completed: false, inProgress: false },
-        { id: 3, title: "Perancangan Layout Desain Carousel, Tipografi & Narasi Edukasi Publik", assignedAgent: contentAgent, completed: false, inProgress: false },
-        { id: 4, title: "Quality Check Komposisi Visual, Safe-Zone 4:5 & Konsistensi Identitas Brand", assignedAgent: contentAgent, completed: false, inProgress: false },
-        { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Finalisasi Aset Siap Tayang", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        makeM(2, "Analisis Brief Konten, Kurasi Aset Visual & Penentuan Angle Informasi", contentAgent),
+        makeM(3, "Perancangan Layout Desain Carousel, Tipografi & Narasi Edukasi Publik", contentAgent),
+        makeM(4, "Quality Check Komposisi Visual, Safe-Zone 4:5 & Konsistensi Identitas Brand", contentAgent),
+        makeM(5, "Validasi Kualitas 100% (Perfeksionis) & Finalisasi Aset Siap Tayang", "Master Agent")
       );
     } else if (
       cleanLower.includes('properti') || cleanLower.includes('perumahan') || cleanLower.includes('kpr') ||
@@ -367,16 +380,13 @@
       ((cleanLower.includes('rumah') || cleanLower.includes('cluster') || cleanLower.includes('hunian')) &&
        (cleanLower.includes('survei') || cleanLower.includes('survey') || cleanLower.includes('unit') || cleanLower.includes('lokasi') || cleanLower.includes('tiar') || cleanLower.includes('harga') || cleanLower.includes('dp') || cleanLower.includes('utj')))
     ) {
-      // -------------------------------------------------------------
-      // DOMAIN: Real Estate / Properti / KPR (HANYA jika eksplisit properti/rumah)
-      // -------------------------------------------------------------
       const salesAgent = findWorker('closer', findWorker('sales', 'Tiar Sales Closer CS'));
       const adminAgent = findWorker('admin', 'Tiar Admin Customer CS');
       milestones.push(
-        { id: 2, title: "Analisis Kebutuhan Hunian & Seleksi Unit Cluster Strategis", assignedAgent: salesAgent, completed: false, inProgress: false },
-        { id: 3, title: "Simulasi Skema KPR 2026, DP 0% & Perhitungan Angsuran Ringan", assignedAgent: salesAgent, completed: false, inProgress: false },
-        { id: 4, title: "Kualifikasi Profil Finansial & Penguncian Jadwal Survei Lokasi", assignedAgent: adminAgent, completed: false, inProgress: false },
-        { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
+        makeM(2, "Analisis Kebutuhan Hunian & Seleksi Unit Cluster Strategis", salesAgent),
+        makeM(3, "Simulasi Skema KPR 2026, DP 0% & Perhitungan Angsuran Ringan", salesAgent),
+        makeM(4, "Kualifikasi Profil Finansial & Penguncian Jadwal Survei Lokasi", adminAgent),
+        makeM(5, "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", "Master Agent")
       );
     } else if (cleanLower.includes('copy') || cleanLower.includes('caption') || cleanLower.includes('hook') || cleanLower.includes('naskah') || cleanLower.includes('genz') || cleanLower.includes('reels') || cleanLower.includes('tiktok') || cleanLower.includes('video')) {
       const trendAgent = (targetBrand === 'tiar_property') ? findWorker('trend', 'Tiar Trend Surfer') : (matchedWorkers[0]?.name || findWorker('trend', 'Trend & Content Researcher'));
@@ -435,7 +445,7 @@
         { id: 4, title: "Analisis Kelengkapan Data & Pembersihan Informasi", assignedAgent: "Master Agent", completed: false, inProgress: false },
         { id: 5, title: "Validasi Kualitas 100% (Perfeksionis) & Penyusunan Laporan Tuntas", assignedAgent: "Master Agent", completed: false, inProgress: false }
       );
-    } else if (cleanLower.includes('companion') || cleanLower.includes('casual') || cleanLower.includes('sahabat') || cleanLower.includes('santai') || cleanLower.includes('fakta') || cleanLower.includes('personal') || cleanLower.includes('obrolan') || cleanLower.includes('tanya jawab') || cleanLower.length < 35) {
+    } else if (!targetBrand && (cleanLower.includes('companion') || cleanLower.includes('casual') || cleanLower.includes('sahabat') || cleanLower.includes('santai') || cleanLower.includes('fakta') || cleanLower.includes('personal') || cleanLower.includes('obrolan') || cleanLower.includes('tanya jawab') || (cleanLower.length < 35 && !cleanLower.includes('djadi') && !cleanLower.includes('tiar') && !cleanLower.includes('unesa')))) {
       const companionAgent = findWorker('companion', 'Casual Companion & Personal Fact Assistant');
       milestones.push(
         { id: 2, title: "Pemberian Informasi Ramah, Interaksi Santai & Fakta Personal", assignedAgent: companionAgent, completed: false, inProgress: false },

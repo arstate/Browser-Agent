@@ -2612,5 +2612,33 @@ Untuk menjamin navigasi sidebar selalu terlihat dan tidak pernah terdorong kelua
 5. **Kepatuhan Sub-800 Baris (Strict Sub-800 Line Rule Compliance)**:
    - Seluruh 12 berkas modular di `extension/design/` dan `extension/apps-integration/` tetap patuh ketat di bawah batas 798 baris (`goal_tracker.js`: 767 baris).
 
+## 🤖 79. Robust Multi-Agent Ecosystem Synchronization & Presisi Pemilihan Sub-Agent (v2.150.303)
+
+1. **Live Host Agent Synchronization (`syncAgentsFromNativeHost`)**:
+   - Menghubungkan tab chat (`extension/sidepanel.js`) langsung dengan disk lokal (`~/.browser-agent/agents/*.md`) melalui pemanggilan RPC `list_agents` dan `list_skills` ke native host.
+   - Tidak lagi bergantung pasif pada pembukaan halaman `options.html`; setiap kali port native terhubung (`connectNativeHost`) atau inisialisasi `loadAgentsAndSkills` berjalan, seluruh agen disk dan memori otonom SQLite langsung dimuat ke `customAgents` dan disinkronkan ke `chrome.storage.local`.
+
+2. **Compound Word Normalization**:
+   - Mengurai token majemuk tanpa spasi (`djadicreative` -> `djadi creative`, `djadiberjaya` -> `djadi berjaya`, `tiarproperty` -> `tiar property`, `cbtunesa` -> `cbt unesa`) baik pada fungsi global `detectBrandEcosystem` maupun pra-filter `resolveAutoAgents`.
+
+3. **Strict Brand Silo Guard & Eliminasi Blind Fallback ke Casual Companion**:
+   - `casual_companion_agent` secara tegas didiskualifikasi jika `targetBrand` aktif dan prompt bukan pertanyaan kasual murni (`!isCasualDomain`).
+   - Pada blok fallback jika kecocokan spesialis 0, sistem wajib memprioritaskan agen utama dari brand tersebut (misal `djadi_master_orchestrator`) atau `default_agent`, DILARANG jatuh ke Casual Companion.
+
+4. **Intra-Brand Djadi Specialization Scoring**:
+   - Menambahkan penilaian kontekstual khusus untuk 4 sub-agent spesialis Djadi Creative:
+     * `djadi_master_orchestrator`: +35 untuk todolist, rencana, strategi, langkah kerja agensi.
+     * `djadi_visual_designer`: +35 untuk desain, feed, pitch deck, visual, foto, rendering.
+     * `djadi_meta_ads_strategist`: +35 untuk ads, iklan, cbo, cpr, scale, audiens.
+     * `djadi_sales_closer`: +35 untuk closing, klien, retainer, spk, inbound wa.
+
+5. **Integrasi Penuh Domain Djadi Creative pada GoalTracker Engine**:
+   - Menambahkan pemetaan sub-agent Djadi pada `inferAgentForTask` dan template milestone 4 tahapan strategis agensi pada `extractGoalMilestones`.
+   - Mengonsolidasikan pembentukan milestone menggunakan fungsi ringkas `makeM` sehingga berkas `extension/core/goal_tracker.js` tetap ramping (777 baris <= 798 baris).
+
+6. **Preservasi Workers pada Chat History SQLite (`sanitizeHistoryForStorage`)**:
+   - Memastikan properti `workers` pada `clean.agentInfo` tersimpan utuh saat serialisasi riwayat pesan ke SQLite, sehingga kartu tim agen yang ditugaskan tetap muncul saat sesi dimuat ulang.
+
+
 
 

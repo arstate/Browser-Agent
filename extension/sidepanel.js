@@ -626,7 +626,7 @@ function getAgentBrand(ag) {
 // Global Helper: Detect Brand Ecosystem from User Prompt Text or Assigned Workers
 function detectBrandEcosystem(t = "", workers = []) {
   const cleanStr = (typeof t === 'string') ? t : (t?.content || t?.textContent || "");
-  const text = cleanStr.toLowerCase().trim();
+  const text = cleanStr.toLowerCase().replace(/djadicreative/gi, "djadi creative").replace(/djadiberjaya/gi, "djadi berjaya").replace(/tiarproperty/gi, "tiar property").replace(/cbtunesa/gi, "cbt unesa").replace(/dapurannisa/gi, "dapur annisa").trim();
 
   // 1. Primary: If worker agent(s) already assigned, inspect their brand first!
   if (Array.isArray(workers) && workers.length > 0) {
@@ -704,7 +704,7 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
   const cleanStr = (typeof userMessage === 'string') ? userMessage : (userMessage?.content || userMessage?.textContent || "");
   const attachmentStr = (Array.isArray(attachments) ? attachments : []).map(a => `${a.name || ''} ${a.file_name || ''} ${a.path || ''}`).join(" ");
   const combinedContext = `${cleanStr} ${attachmentStr}`.trim();
-  const text = combinedContext.toLowerCase();
+  const text = combinedContext.toLowerCase().replace(/djadicreative/gi, "djadi creative").replace(/djadiberjaya/gi, "djadi berjaya").replace(/tiarproperty/gi, "tiar property").replace(/cbtunesa/gi, "cbt unesa").replace(/dapurannisa/gi, "dapur annisa");
   const matchedWorkers = [];
 
   const nonBossCandidates = customAgents.filter(a => a && a.id !== "master_agent" && a.id !== "boss_agent" && !a.is_boss);
@@ -904,6 +904,11 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
       continue; // 0% chance of cross-brand contamination!
     }
 
+    // DISQUALIFY CASUAL COMPANION FROM BRAND QUERIES:
+    if (targetBrand && (idLower.includes("companion") || idLower.includes("casual") || nameLower.includes("companion")) && !isCasualDomain) {
+      continue;
+    }
+
     let score = 0;
 
     // Brand match boost
@@ -912,9 +917,27 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
     }
 
     // 1. Creative Agency & B2B Branding (Djadi Creative)
-    if (isCreativeAgency) {
+    if (isCreativeAgency || targetBrand === "djadi_creative") {
       if (agentBrand === "djadi_creative" || idLower.includes("djadi") || nameLower.includes("djadi") || fullAgentText.includes("agency")) {
         score += 85;
+        // Intra-brand specialization:
+        if (idLower.includes("orchestrator") || nameLower.includes("orchestrator")) {
+          if (text.includes("todo") || text.includes("rencana") || text.includes("strategi") || text.includes("bikin apa") || text.includes("arah") || text.includes("langkah")) {
+            score += 35;
+          }
+        } else if (idLower.includes("visual") || nameLower.includes("visual") || nameLower.includes("art director")) {
+          if (text.includes("desain") || text.includes("feed") || text.includes("deck") || text.includes("pitch") || text.includes("gambar") || text.includes("visual")) {
+            score += 35;
+          }
+        } else if (idLower.includes("ads") || idLower.includes("meta") || nameLower.includes("ads")) {
+          if (text.includes("ads") || text.includes("iklan") || text.includes("cbo") || text.includes("cpr") || text.includes("scale")) {
+            score += 35;
+          }
+        } else if (idLower.includes("closer") || idLower.includes("sales") || nameLower.includes("closer")) {
+          if (text.includes("closing") || text.includes("klien") || text.includes("retainer") || text.includes("spk") || text.includes("inbound")) {
+            score += 35;
+          }
+        }
       }
     }
 
@@ -1065,17 +1088,31 @@ function resolveAutoAgents(userMessage = "", explicitMentionAgents = [], attachm
   if (matchedWorkers.length === 0 && !isDirectGSuiteAction) {
     const isExplicitBrowserAction = (text.includes("buka") || text.includes("navigasi") || text.includes("klik") || text.includes("login") || text.includes("website") || text.includes("tab") || text.includes("url") || text.includes("scroll") || text.includes("tonton") || text.includes("download") || text.includes("scrape"));
     
-    const casualAgent = customAgents.find(a => {
-      const id = String(a.id || '').toLowerCase();
-      const n = String(a.name || '').toLowerCase();
-      return (id.includes("companion") || n.includes("companion") || id.includes("casual") || n.includes("casual") || id.includes("personal") || n.includes("personal") || n.includes("fact") || id.includes("sahabat") || n.includes("sahabat"));
-    });
+    // If a brand ecosystem was detected, pick the brand's primary agent, NEVER casualAgent!
+    if (targetBrand) {
+      const brandAgent = customAgents.find(a => {
+        if (!a || a.id === "master_agent" || a.id === "boss_agent" || a.is_boss) return false;
+        return getAgentBrand(a) === targetBrand;
+      });
+      if (brandAgent) {
+        matchedWorkers.push(brandAgent);
+      }
+    }
 
-    if (casualAgent && !isExplicitBrowserAction) {
-      matchedWorkers.push(casualAgent);
-    } else {
-      const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || nonBossCandidates[0];
-      if (defaultAgent) matchedWorkers.push(defaultAgent);
+    if (matchedWorkers.length === 0) {
+      const casualAgent = customAgents.find(a => {
+        const id = String(a.id || '').toLowerCase();
+        const n = String(a.name || '').toLowerCase();
+        return (id.includes("companion") || n.includes("companion") || id.includes("casual") || n.includes("casual") || id.includes("personal") || n.includes("personal") || n.includes("fact") || id.includes("sahabat") || n.includes("sahabat"));
+      });
+
+      // ONLY allow casualAgent if no targetBrand is active AND prompt is actually casual / personal conversation!
+      if (casualAgent && !isExplicitBrowserAction && !targetBrand && isCasualDomain) {
+        matchedWorkers.push(casualAgent);
+      } else {
+        const defaultAgent = customAgents.find(a => String(a.id || '') === "default_agent") || nonBossCandidates[0];
+        if (defaultAgent) matchedWorkers.push(defaultAgent);
+      }
     }
   }
 
@@ -1148,6 +1185,9 @@ function buildDynamicSystemPrompt(agentOrAgents = null) {
         * JIKA TERJADI PERGANTIAN TOPIK: DILARANG TERJEBAK DI KONTEKS LAMA! Segera beralih ke domain baru tersebut, panggil \`search_agent_catalog({ query, domain })\`, dan rekrut spesialis yang relevan via \`summon_specialist_agent\`.
      c. 🛠️ REKRUTMEN SPESIALIS PRESISI:
         * JIKA tim saat ini belum mencakup spesialis yang tepat: Master Agent WAJIB mencari agen spesialis menggunakan \`search_agent_catalog({ query, domain })\` atau membaca profilnya via \`read_agent_detail({ agent_name_or_id })\`, lalu merekrutnya via \`summon_specialist_agent({ agent_name_or_id, reason, subtask_assignment })\`.
+     d. 🚫 CEK BRAND VS CASUAL MISMATCH:
+        * JIKA prompt pengguna jelas bertema brand agensi (Djadi Creative), properti (Tiar Property), akademik (UNESA), atau sistem/coding, TETAPI tim karyawan yang terdaftar saat ini hanya berisi agen percakapan umum (seperti Casual Companion):
+        * Master Agent DILARANG MENJAWAB DENGAN KACAMATA KASUAL! Master Agent WAJIB segera memanggil \`summon_specialist_agent({ agent_name_or_id, reason, subtask_assignment })\` untuk merekrut spesialis brand terkait sebelum memberikan output!
 
 1. 🤔 TAHAP 1: INTERAKTIF 2-ARAH & KLARIFIKASI OPSI (JIKA PROMPT AMBIGU / KURANG LENGKAP):
    - JIKA instruksi pengguna masih umum, luas, atau kurang spesifik (contoh: "analisis mendalam bro lihat ke dalam iklan yang iklan paling rame di meta ads"):
@@ -3202,6 +3242,11 @@ function connectNativeHost() {
   try {
     nativePort = chrome.runtime.connectNative('com.antigravity.chrome.agent');
     updateHostStatus('connected');
+    setTimeout(() => {
+      if (typeof syncAgentsFromNativeHost === 'function') {
+        syncAgentsFromNativeHost();
+      }
+    }, 150);
 
     nativePort.onMessage.addListener((msg) => {
       // 0. Handle Chunked RPC Messages (Chunk Reassembly)
@@ -12289,6 +12334,80 @@ document.addEventListener('click', (e) => {
 const agentDropdownMenu = document.getElementById('agent-dropdown-menu');
 const btnActiveAgent = document.getElementById('btn-active-agent');
 
+async function syncAgentsFromNativeHost() {
+  if (!nativePort) return;
+  try {
+    const res = await sendNativeRpc("list_agents");
+    if (res && res.status === "ok" && Array.isArray(res.items) && res.items.length > 0) {
+      const incomingList = res.items.filter(a => a && a.id !== "property_closer_agent" && a.name && a.name !== "Untitled" && a.name !== "Untitled Sub-Agent" && a.name !== "Untitled Agent");
+      
+      let masterFound = false;
+      const merged = [];
+
+      const allCandidates = [...incomingList, ...(customAgents || [])];
+      for (const ag of allCandidates) {
+        if (!ag || !ag.id || ag.name === "Untitled" || ag.name === "Untitled Sub-Agent" || ag.name === "Untitled Agent") continue;
+        
+        if (ag.id === "boss_agent" || ag.id === "master_agent" || ag.is_boss) {
+          if (!masterFound) {
+            masterFound = true;
+            merged.push({
+              id: "master_agent",
+              name: "Master Agent (Supreme Orchestrator)",
+              description: "Koordinator utama dan direktur ekosistem AI",
+              skills: [...new Set(ag.skills || ["skill_screenshot_walkthrough", "skill_dashboard_preflight", "skill_browser_wait", "skill_extract_data", "skill_fill_form"])],
+              memories: [...new Set(ag.memories || ["mem_user_guidelines", "mem_response_terse"])],
+              is_boss: true,
+              is_default: true
+            });
+          }
+        } else {
+          const normName = String(ag.name).toLowerCase().trim();
+          const existingIdx = merged.findIndex(item => item.id === ag.id || (item.name && normName === String(item.name).toLowerCase().trim()));
+          if (existingIdx === -1) {
+            ag.skills = [...new Set(ag.skills || [])];
+            ag.memories = [...new Set(ag.memories || [])];
+            merged.push(ag);
+          } else {
+            if (/^\d+$/.test(merged[existingIdx].id) && !/^\d+$/.test(ag.id)) {
+              merged[existingIdx] = { ...merged[existingIdx], ...ag };
+            }
+            merged[existingIdx].skills = [...new Set([...(merged[existingIdx].skills || []), ...(ag.skills || [])])];
+            merged[existingIdx].memories = [...new Set([...(merged[existingIdx].memories || []), ...(ag.memories || [])])];
+          }
+        }
+      }
+
+      if (merged.length > 0) {
+        customAgents = merged;
+        chrome.storage.local.set({ custom_agents: merged }).catch(() => {});
+        updateAgentUI();
+        renderAgentDropdown();
+      }
+    }
+
+    try {
+      const skillsRes = await sendNativeRpc("list_skills");
+      if (skillsRes && skillsRes.status === "ok" && Array.isArray(skillsRes.items) && skillsRes.items.length > 0) {
+        for (const sk of skillsRes.items) {
+          if (!sk || !sk.id) continue;
+          const idx = customSkills.findIndex(s => s.id === sk.id);
+          if (idx >= 0) {
+            customSkills[idx] = { ...customSkills[idx], ...sk };
+          } else {
+            customSkills.push(sk);
+          }
+        }
+        chrome.storage.local.set({ custom_skills: customSkills }).catch(() => {});
+      }
+    } catch (e) {}
+
+    await loadPersistentMemoryFromHost();
+  } catch (err) {
+    console.warn("[Agents] syncAgentsFromNativeHost non-fatal error:", err);
+  }
+}
+
 async function loadAgentsAndSkills() {
   const res = await chrome.storage.local.get(['custom_agents', 'custom_skills', 'custom_memories', 'active_agent_id']);
   if (res && Array.isArray(res.custom_agents) && res.custom_agents.length > 0) {
@@ -12401,6 +12520,10 @@ async function loadAgentsAndSkills() {
 
   updateAgentUI();
   renderAgentDropdown();
+
+  if (nativePort) {
+    syncAgentsFromNativeHost();
+  }
 }
 
 function updateAgentUI() {
@@ -12870,7 +12993,10 @@ function sanitizeHistoryForStorage(history) {
         displayName: msg.agentInfo.displayName,
         isAuto: !!msg.agentInfo.isAuto,
         isBoss: !!msg.agentInfo.isBoss,
-        isMulti: !!msg.agentInfo.isMulti
+        isMulti: !!msg.agentInfo.isMulti,
+        workers: Array.isArray(msg.agentInfo.workers)
+          ? msg.agentInfo.workers.map(w => ({ id: w.id, name: w.name, description: w.description }))
+          : []
       };
     }
     if (msg.designArtifact) {
