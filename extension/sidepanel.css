@@ -1350,6 +1350,22 @@ body.stickman-active .chat-messages {
   color: var(--accent-color, #CEF128);
 }
 
+.chat-history-sentinel-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.chat-history-progress-text {
+  font-size: 10px;
+  color: var(--text-muted, #94A3B8);
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+  animation: fadeIn 0.2s ease-out;
+}
+
 .chat-history-loader-subtle {
   display: flex;
   justify-content: center;

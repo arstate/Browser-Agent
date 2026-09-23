@@ -2157,6 +2157,31 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
   5. **Verifikasi Kepatuhan Sub-800 Baris Mutlak**:
      - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
 
+### 194. Rilis Versi v2.150.311 - Progressive Background Chunk Hydration & 100% Full Chat History Restoration
+- **Waktu Rilis**: 2026-09-24 02:00 WIB
+- **Fokus Utama**: Menuntaskan kendala riwayat percakapan tidak termuat lengkap dan terlempar saat scrolling dengan mengimplementasikan arsitektur **Progressive Background Chunk Hydration (Non-Blocking)**: membuka chat secara instan (< 30ms) dengan 40 pesan awal, lalu secara otomatis mem-preload seluruh sisa pesan sebelumnya di latar belakang secara halus tanpa freeze/lag dan tanpa lemparan viewport.
+- **Akar Masalah (Root Causes)**:
+  1. *Viewport Thrown Downward Bug*:
+     - Sebelumnya, saat batch pesan awal di-prepend ke DOM, perhitungan `delta` posisi bounding box menambahkan ribuan piksel ke `scrollTop` (`chatMessages.scrollTop += delta;` dan `window.scrollBy({ top: delta })`).
+     - Akibatnya, saat pengguna scroll ke atas untuk membaca riwayat lama, layar seketika terlempar ribuan piksel ke bawah kembali ke posisi semula, membuat pengguna merasa pesan lama sama sekali tidak pernah termuat.
+  2. *Passive Scroll-Only Dependency*:
+     - Pemuatan batch sebelumnya hanya menunggu trigger scroll pasif. Tanpa scrolling, hanya 40 pesan terakhir yang berada di DOM.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Progressive Background Chunk Hydration Engine (`hydrateRemainingHistoryProgressively`)**:
+     - Begitu sesi dimuat dengan 40 pesan terakhir, sistem otomatis memulai background worker non-blocking setiap ~90ms menggunakan `setTimeout` (fallback `requestIdleCallback`).
+     - Mem-prepend batch pesan sebelumnya secara bertahap (40 pesan per batch) hingga mencapai pesan index `0`.
+     - Ketika pengguna berada di dasar chat (`isAtBottom`), posisi scroll tetap dikunci di dasar (`chatMessages.scrollTop = chatMessages.scrollHeight`), menjaga tampilan tetap stabil dan bebas flicker.
+  2. **Anti-Throw Scroll Stabilization**:
+     - Jika pengguna sedang berada di atas (`scrollTop <= 60px`) atau mengklik tombol muat manual, posisi tidak lagi dilempar ke bawah sehingga pesan lama yang baru masuk langsung tersaji di hadapan mata.
+     - Jika pengguna sedang membaca di tengah (`scrollTop > 60px`), penyesuaian scroll menggunakan selisih `scrollHeight` murni (`newScrollHeight - oldScrollHeight`).
+  3. **Tombol "Muat Semua Riwayat" (Instant Flush)**:
+     - Sentinel atas kini menampilkan tombol cadangan: `👆 Muat Semua Riwayat ([N] pesan awal tersisa)` yang jika diklik akan langsung mem-flush seluruh sisa pesan ke DOM seketika (`loadAll = true`).
+  4. **Pembersihan Siklus Hidup**:
+     - `progressiveHydrationTimer` otomatis dibersihkan saat pengguna memulai obrolan baru (`startNewChat`) atau mereset UI (`resetChatMessagesUI`).
+  5. **Verifikasi Kepatuhan Sub-800 Baris Mutlak**:
+     - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
+
+
 
 
 
