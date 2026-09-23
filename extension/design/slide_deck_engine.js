@@ -202,16 +202,32 @@ function isPlaceholderCard(cardTitle, cardDesc) {
         layout = 'quote';
       } else if (cards.length === 2) {
         layout = 'split';
-      } else if (/tahap|langkah|step|alur|proses|roadmap|jadwal/i.test(title)) {
+      } else if (/bocor|leak|rugi|masalah|friksi/i.test(title)) {
+        layout = 'leaks';
+      } else if (/alur|corong|funnel|ekosistem|flow/i.test(title)) {
+        layout = 'hero_flow';
+      } else if (/deliverable|matriks|layanan|output/i.test(title)) {
+        layout = 'deliverables_matrix';
+      } else if (/ekonomi|unit economics|harga|biaya|margin|omzet/i.test(title)) {
+        layout = 'economics_table';
+      } else if (/studi kasus|portfolio|portofolio|hasil|pembuktian/i.test(title)) {
+        layout = 'case_studies';
+      } else if (/penawaran|offer|garansi|investasi|closing/i.test(title)) {
+        layout = 'closing_offer';
+      } else if (/tahap|langkah|step|roadmap|jadwal/i.test(title)) {
         layout = 'timeline';
+      } else if (cards.length === 2) {
+        layout = 'split';
       } else if (cards.length === 4) {
         layout = 'metrics';
       } else {
-        const cycle = (idx - 1) % 4;
-        if (cycle === 0) layout = 'split';
-        else if (cycle === 1) layout = 'bento';
-        else if (cycle === 2) layout = 'metrics';
-        else layout = 'timeline';
+        const cycle = (idx - 1) % 6;
+        if (cycle === 0) layout = 'leaks';
+        else if (cycle === 1) layout = 'hero_flow';
+        else if (cycle === 2) layout = 'deliverables_matrix';
+        else if (cycle === 3) layout = 'split';
+        else if (cycle === 4) layout = 'economics_table';
+        else layout = 'bento';
       }
     }
 
@@ -263,6 +279,7 @@ function isPlaceholderCard(cardTitle, cardDesc) {
       title,
       subtitle,
       layout,
+      theme: idx % 2 === 0 ? 'theme-navy' : 'theme-cream',
       badge: slideBadge || "",
       quoteText,
       quoteAuthor,
@@ -564,7 +581,10 @@ function getSlideDeckRuntimeScript() {
         function updateScale() {
           const availW = Math.max(200, stage.clientWidth - 48);
           const availH = Math.max(150, stage.clientHeight - 96);
-          const scale = Math.min(availW / 1200, availH / 675);
+          const firstSlide = slides[0];
+          const baseW = (firstSlide && firstSlide.offsetWidth > 200) ? firstSlide.offsetWidth : 1920;
+          const baseH = (firstSlide && firstSlide.offsetHeight > 100) ? firstSlide.offsetHeight : 1080;
+          const scale = Math.min(availW / baseW, availH / baseH);
           for (let i = 0; i < slides.length; i++) {
             slides[i].style.transform = 'scale(' + scale + ')';
             slides[i].style.transformOrigin = 'center center';

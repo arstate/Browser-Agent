@@ -1296,12 +1296,12 @@ ATURAN KRUSIAL:
    - TAHAP 1 (ANALISIS MANDIRI): Master Agent WAJIB memeriksa tab browser aktif atau mengekstrak data tabel riil terlebih dahulu (gunakan \`browser_list_tabs\`, \`browser_switch_tab\`, \`browser_extract_table\`, \`browser_snapshot\`, \`browser_evaluate_script\`, dll). DILARANG KERAS langsung memanggil \`create_slide_deck_design\` di Step 1 tanpa mengambil data riil terlebih dahulu!
    - TAHAP 2 (PERUMUSAN PPT SLIDE BRIEF): Setelah temuan data riil terkumpul, Master Agent merumuskan brief presentasi slide-by-slide yang kaya data, metrik konkrit, dan rekomendasi taktis.
    - TAHAP 3 (DELEGASI KE MASTER DESIGN): Barulah Master Agent memanggil tool \`create_slide_deck_design({ topic, slide_count, detailed_outline_or_content, design_archetype })\` dengan menyertakan brief temuan riil tersebut. Master Design akan langsung merancang dan memperbarui slide deck 16:9 widescreen di Canvas Drawer.
-5. 📊 4-STAGE SLIDE REFINEMENT & VERIFICATION PROTOCOL (READ -> PLAN -> EXECUTE -> RE-READ):
-   Setiap kali pengguna meminta mengubah, merevisi, memecah slide (misal: "slide 3 dipisah jadi 2 halaman biar ga terlalu padet"), menambah slide, atau menata ulang slide deck:
-   - TAHAP 1 (BACA SLIDE AKTIF / READ): Master Agent WAJIB memanggil \`read_slide_deck({ slide_numbers: [...] })\` terlebih dahulu untuk membaca konten eksisting (Slide 1, Slide 2, dst) secara presisi. Dilarang keras langsung eksekusi tanpa membaca data slide terlebih dahulu!
-   - TAHAP 2 (PLANNING TERPERINCI): Susun rencana restrukturisasi materi. Tentukan judul spesifik, subjudul, dan alokasi poin untuk setiap slide baru. DILARANG KERAS menyertakan teks placeholder atau label skema seperti "4 STAT CARDS", "2 BALANCED SUMMARY CARDS", "PAGE NUMBER", "BADGE", "TITLE".
-   - TAHAP 3 (EKSEKUSI MASTER DESIGN / EXECUTE): Panggil \`create_slide_deck_design\` dengan materi lengkap yang telah direncanakan secara rapi dan proporsional.
-   - TAHAP 4 (VERIFIKASI ULANG PASCA-EKSEKUSI / RE-READ): Master Agent WAJIB memanggil kembali \`read_slide_deck\` untuk memeriksa ulang slide-slide yang baru dihasilkan (Slide 1, 2, 3, dst). Pastikan jumlah slide sesuai, pemecahan berhasil, dan tidak ada elemen placeholder slop sebelum memberikan jawaban akhir ke pengguna.
+5. 📂 PROTOKOL MANAJEMEN DECK LOKAL & REVISI PRESISI (CHECK EXISTING -> CONFIRM/ASK -> REVISE SLIDE):
+   Setiap kali pengguna meminta membuat, mengecek, atau merevisi pitch deck / slide deck / presentasi:
+   - TAHAP 1 (CEK ARSIP LOKAL): Panggil \`check_existing_slide_decks({ query })\` terlebih dahulu untuk memeriksa apakah file deck terkait sudah pernah dibuat atau tersimpan di \`~/.browser-agent/presentations/\`. JANGAN langsung membuat deck baru dari nol jika arsip lokal sudah ada!
+   - TAHAP 2 (KONFIRMASI / TANYA USER): Jika deck lokal ditemukan, informasikan judul, jumlah slide, dan lokasi PDF-nya. Jika pengguna ingin merevisi, tanyakan: *"Slide nomor berapa yang ingin direvisi?"*, atau jika pengguna sudah menyebutkan nomor slide tertentu (misal: "revisi slide 2"), langsung panggil \`load_slide_deck_to_canvas({ slug })\`.
+   - TAHAP 3 (REVISI TARGET SLIDE SECARA PRESISI): Gunakan \`revise_slide_deck_slide({ slide_number, revised_title, revised_cards, ... })\` untuk memperbarui slide yang dimaksud secara bedah presisi tanpa merusak struktur slide lainnya, lalu pastikan tersinkronisasi kembali ke Canvas dan disk.
+   - TAHAP 4 (BUAT BARU HANYA JIKA BELUM ADA): Jika \`check_existing_slide_decks\` menyatakan belum ada deck yang cocok dan pengguna meminta membuat baru, barulah gunakan \`create_slide_deck_design\`.
 6. 🚫 NEGATIVE CONSTRAINT UNTUK SLIDE DECK (ANTI-SLIDE HALLUCINATION):
    DILARANG KERAS memanggil tool \`create_slide_deck_design\` atau \`read_slide_deck\` jika pengguna HANYA meminta ide prompt image (Midjourney, Ideogram, Flux), konten media sosial (Instagram feed / carousel / postingan), atau desain grafis biasa, meskipun pengguna menggunakan kata 'slide' dalam konteks 'slide feed IG' atau 'slide carousel'. Jawab langsung dalam teks Markdown tanpa memanggil tool slide deck!
 
@@ -1309,7 +1309,7 @@ ATURAN KRUSIAL:
 1. 🧠 Autonomous Brain & Self-Evolution Tools: manage_personal_memory, create_autonomous_skill, update_autonomous_skill, create_autonomous_agent, edit_manual_skill, edit_manual_agent, rollback_brain_item, record_anti_pattern, save_epistemic_triplet, query_epistemic_graph, execute_jit_microtool.
 2. 🌐 Browser Automation Tools: browser_navigate, browser_snapshot, browser_click, browser_type, browser_press_key, browser_hover, browser_scroll, browser_control_media, browser_evaluate_script, browser_screenshot, browser_get_console_logs, browser_extract_table, browser_list_tabs, browser_switch_tab, browser_wait.
 3. 💻 Local PC Tools: view_document, inspect_page_detail, local_read_file, local_write_file, local_list_dir, local_run_command.
-4. 🎨 AI Image & Presentation Design: generate_image(prompt, size), create_slide_deck_design(topic, slide_count, detailed_outline_or_content, design_archetype), read_slide_deck(slide_numbers, detail_level).
+4. 🎨 AI Image & Presentation Design: generate_image(prompt, size), check_existing_slide_decks(query), load_slide_deck_to_canvas(slug), revise_slide_deck_slide(slide_number, revised_title, ...), create_slide_deck_design(topic, slide_count, detailed_outline_or_content, design_archetype), read_slide_deck(slide_numbers, detail_level).
 5. 💬 Interactive Clarification & Multi-Agent Swarm: ask_clarification, agent_subtask_analysis, summon_specialist_agent.
 6. 📱 Built-in Connected Apps & Telegram Bot Remote: configure_telegram_bot, get_telegram_bot_status, telegram_send_message.
 7. 📑 Google Workspace REST API Suite: gsuite_create_presentation, gsuite_append_slide, gsuite_create_doc, gsuite_append_doc_text, gsuite_replace_doc_content, gsuite_read_doc, gsuite_create_sheet, gsuite_append_sheet_row, gsuite_update_sheet_range, gsuite_read_sheet, gsuite_send_gmail, gsuite_search_gmail, gsuite_search_drive, gsuite_create_form, gsuite_create_calendar_event, gsuite_create_task, gsuite_search_contacts, gsuite_get_status.
@@ -1575,6 +1575,88 @@ const AGENT_TOOLS = [
             description: "Detail level: 'full' (all card texts, stats, and badges) or 'summary' (titles and layouts only). Defaults to 'full'."
           }
         }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_existing_slide_decks",
+      description: "Checks local storage and disk (~/.browser-agent/presentations/) for existing saved presentation slide decks and PDF reports. MANDATORY BEFORE CREATING A NEW DECK: When the user asks to generate, update, or check a pitch deck / presentation / PDF report, call this tool first to check if a relevant presentation already exists on local disk instead of blindly creating a duplicate from scratch.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Optional keyword or topic to search among local presentation decks (e.g. 'pitch deck', 'tiar', 'meta ads')"
+          }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "load_slide_deck_to_canvas",
+      description: "Loads an existing saved presentation slide deck from local disk (~/.browser-agent/presentations/<slug>/) into the active OpenDesign Canvas Drawer for viewing, editing, or revising.",
+      parameters: {
+        type: "object",
+        properties: {
+          slug: {
+            type: "string",
+            description: "Directory slug or identifier of the presentation deck to load (e.g. 'pitch-zoom-15-menit-mas-tiar')"
+          }
+        },
+        required: ["slug"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "revise_slide_deck_slide",
+      description: "Revises a specific slide in the active presentation slide deck on Canvas Drawer without regenerating the entire deck. Master Agent calls this when user specifies which slide to revise (e.g. 'revisi slide 2', 'ubah harga di slide 5'). Automatically updates the Canvas and persists changes to local disk.",
+      parameters: {
+        type: "object",
+        properties: {
+          slide_number: {
+            type: "integer",
+            description: "1-based index of the slide to revise (e.g. 1 for Slide 1, 2 for Slide 2, etc.)"
+          },
+          revised_title: {
+            type: "string",
+            description: "Updated title for the slide"
+          },
+          revised_subtitle: {
+            type: "string",
+            description: "Updated subtitle or lead description for the slide"
+          },
+          revised_layout: {
+            type: "string",
+            enum: ["leaks", "hero_flow", "deliverables_matrix", "economics_table", "case_studies", "closing_offer", "split", "bento", "metrics", "timeline", "quote", "conclusion"],
+            description: "Layout type for the revised slide"
+          },
+          revised_cards: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                desc: { type: "string" },
+                stat: { type: "string" },
+                metricValue: { type: "string" },
+                badge: { type: "string" },
+                footerHighlight: { type: "string" }
+              }
+            },
+            description: "List of card items or points for the revised slide"
+          },
+          raw_canvas_html: {
+            type: "string",
+            description: "Optional complete custom HTML markup for the slide canvas body"
+          }
+        },
+        required: ["slide_number"]
       }
     }
   },
@@ -3800,6 +3882,23 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
           : `🎨 Master Design: Presentasi 16:9 (${artifact.slideCount} Slide) berhasil dibuka di Canvas!`);
       }
 
+      // Auto-save presentation to local disk (~/.browser-agent/presentations/<slug>/)
+      const rpcFnSave = (typeof sendNativeRpc === 'function')
+        ? sendNativeRpc
+        : (typeof window !== 'undefined' && typeof window.sendNativeRpc === 'function' ? window.sendNativeRpc : null);
+      if (rpcFnSave && artifact.html) {
+        rpcFnSave("save_slide_deck", {
+          title: artifact.meta?.title || topic,
+          html_content: artifact.html,
+          meta: {
+            title: artifact.meta?.title || topic,
+            slide_count: artifact.slideCount,
+            theme: artifact.meta?.theme || designArchetype,
+            created_at: new Date().toISOString()
+          }
+        }).catch(() => {});
+      }
+
       return {
         status: "success",
         topic: artifact.meta?.title || topic,
@@ -3894,6 +3993,259 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
         slides_inspected: formattedSlides.length,
         slides: formattedSlides,
         guidance: "Tinjau detail slide di atas. Jika ingin memecah/merevisi slide, susun rencana materi baru (bebas placeholder schema tags), lalu panggil create_slide_deck_design dan verifikasi ulang."
+      };
+    }
+
+    case "check_existing_slide_decks": {
+      const query = (args.query || "").trim();
+      const rpcFn = (typeof sendNativeRpc === 'function')
+        ? sendNativeRpc
+        : (typeof window !== 'undefined' && typeof window.sendNativeRpc === 'function' ? window.sendNativeRpc : null);
+
+      if (!rpcFn) {
+        return {
+          status: "unavailable",
+          message: "Native RPC host tidak terhubung. Tidak dapat memeriksa arsip lokal."
+        };
+      }
+
+      try {
+        const res = await rpcFn("list_slide_decks", { query });
+        if (res?.status === "ok") {
+          const decks = Array.isArray(res.decks) ? res.decks : [];
+          if (decks.length === 0) {
+            return {
+              status: "success",
+              found: false,
+              total_found: 0,
+              message: query 
+                ? `Tidak ditemukan presentasi lokal dengan kata kunci '${query}'. Siap membuat presentasi baru.`
+                : "Belum ada slide deck tersimpan di ~/.browser-agent/presentations/. Siap membuat presentasi baru."
+            };
+          }
+          return {
+            status: "success",
+            found: true,
+            total_found: decks.length,
+            decks: decks.map(d => ({
+              slug: d.slug,
+              title: d.title,
+              slide_count: d.slide_count,
+              pdf_path: d.pdf_path,
+              updated_at: d.updated_at
+            })),
+            guidance: "Slide deck lokal ditemukan! Informasikan ke pengguna bahwa deck sudah ada di penyimpanan lokal beserta judul dan jumlah slidenya. Tanyakan apakah pengguna ingin membukanya di Canvas untuk direvisi (tanyakan slide nomor berapa yang mau direvisi) atau membuat deck baru dari nol."
+          };
+        } else {
+          return {
+            status: "error",
+            error: res?.error || "Gagal membaca daftar slide deck dari disk."
+          };
+        }
+      } catch (err) {
+        return {
+          status: "error",
+          error: err.message || String(err)
+        };
+      }
+    }
+
+    case "load_slide_deck_to_canvas": {
+      const slug = (args.slug || "").trim();
+      if (!slug) {
+        return { error: "Parameter 'slug' wajib diisi untuk memuat slide deck lokal." };
+      }
+
+      const rpcFn = (typeof sendNativeRpc === 'function')
+        ? sendNativeRpc
+        : (typeof window !== 'undefined' && typeof window.sendNativeRpc === 'function' ? window.sendNativeRpc : null);
+
+      if (!rpcFn) {
+        return { error: "Native RPC host tidak terhubung." };
+      }
+
+      try {
+        const res = await rpcFn("load_slide_deck", { slug });
+        if (res?.status === "ok" && res.html_content) {
+          const extractFn = (typeof extractSlidesFromRawHtml === 'function')
+            ? extractSlidesFromRawHtml
+            : (typeof window !== 'undefined' && typeof window.extractSlidesFromRawHtml === 'function' ? window.extractSlidesFromRawHtml : null);
+
+          const parsedSlides = extractFn ? extractFn(res.html_content) : [];
+          const deckMeta = res.meta || {};
+          const slideCount = parsedSlides.length || deckMeta.slide_count || 1;
+
+          const artifact = {
+            id: `loaded-deck-${Date.now()}`,
+            type: "slide_deck",
+            html: res.html_content,
+            slideCount: slideCount,
+            slides: parsedSlides,
+            meta: {
+              title: deckMeta.title || slug,
+              slug: slug,
+              theme: deckMeta.theme || "executive_navy_cream",
+              pdfPath: deckMeta.pdf_path || ""
+            },
+            timestamp: Date.now()
+          };
+
+          if (typeof setActiveDesignArtifact === 'function') {
+            setActiveDesignArtifact(artifact);
+          } else {
+            activeDesignArtifact = artifact;
+            if (typeof window !== 'undefined') window.__activeDesignArtifact = artifact;
+          }
+
+          if (assistantBubble) {
+            assistantBubble._activeDesignArtifact = artifact;
+          }
+
+          const contentEl = assistantBubble?.querySelector('.message-content') || assistantBubble;
+          if (contentEl) {
+            contentEl.style.display = 'block';
+            if (typeof renderOpenDesignCard === 'function') {
+              renderOpenDesignCard(contentEl, artifact, { isRevision: false });
+            }
+          }
+
+          if (typeof openOpenDesignCanvas === 'function') {
+            openOpenDesignCanvas(artifact);
+          }
+
+          if (typeof showUniversalToast === 'function') {
+            showUniversalToast(`📖 Memuat slide deck '${artifact.meta.title}' (${slideCount} Slide) ke Canvas!`);
+          }
+
+          return {
+            status: "success",
+            slug: slug,
+            title: artifact.meta.title,
+            slide_count: slideCount,
+            pdf_path: deckMeta.pdf_path || "",
+            canvas_status: "open",
+            message: `Slide deck '${artifact.meta.title}' (${slideCount} slide) berhasil dimuat ke Canvas Drawer dari local disk. Tanyakan ke user bagian atau nomor slide mana yang mau direvisi.`
+          };
+        } else {
+          return { error: res?.error || `Gagal memuat slide deck '${slug}' dari disk.` };
+        }
+      } catch (err) {
+        return { error: err.message || String(err) };
+      }
+    }
+
+    case "revise_slide_deck_slide": {
+      const slideNum = parseInt(args.slide_number, 10);
+      if (isNaN(slideNum) || slideNum < 1) {
+        return { error: "Nomor slide tidak valid. Berikan slide_number >= 1." };
+      }
+
+      let activeArt = (typeof getActiveDesignArtifact === 'function' ? getActiveDesignArtifact() : null) ||
+                      (typeof activeDesignArtifact !== 'undefined' ? activeDesignArtifact : null) ||
+                      (typeof window !== 'undefined' ? window.__activeDesignArtifact : null);
+
+      if (!activeArt || !activeArt.html) {
+        return { error: "Belum ada slide deck aktif di Canvas. Panggil 'check_existing_slide_decks' dan 'load_slide_deck_to_canvas' terlebih dahulu." };
+      }
+
+      const extractFn = (typeof extractSlidesFromRawHtml === 'function')
+        ? extractSlidesFromRawHtml
+        : (typeof window !== 'undefined' && typeof window.extractSlidesFromRawHtml === 'function' ? window.extractSlidesFromRawHtml : null);
+
+      let allSlides = extractFn ? extractFn(activeArt.html) : (activeArt.slides || []);
+      if (!allSlides || allSlides.length === 0) {
+        return { error: "Tidak dapat mengekstrak slide dari deck yang sedang aktif." };
+      }
+
+      if (slideNum > allSlides.length) {
+        return { error: `Slide nomor ${slideNum} tidak ditemukan. Deck saat ini hanya memiliki ${allSlides.length} slide.` };
+      }
+
+      const targetIdx = slideNum - 1;
+      const targetSlide = allSlides[targetIdx];
+
+      if (args.revised_title) targetSlide.title = args.revised_title;
+      if (args.revised_subtitle !== undefined) targetSlide.subtitle = args.revised_subtitle;
+      if (args.revised_layout) targetSlide.layout = args.revised_layout;
+      if (Array.isArray(args.revised_cards) && args.revised_cards.length > 0) {
+        targetSlide.cards = args.revised_cards;
+      }
+      if (args.raw_canvas_html) {
+        targetSlide.rawCanvasHtml = args.raw_canvas_html;
+      }
+
+      // Recompile HTML using buildExecutiveSlideDeckHtml
+      const buildFn = (typeof buildExecutiveSlideDeckHtml === 'function')
+        ? buildExecutiveSlideDeckHtml
+        : (typeof window !== 'undefined' && typeof window.buildExecutiveSlideDeckHtml === 'function' ? window.buildExecutiveSlideDeckHtml : null);
+
+      if (!buildFn) {
+        return { error: "buildExecutiveSlideDeckHtml renderer tidak tersedia di runtime." };
+      }
+
+      const resolveThemeFn = (typeof resolveSlideDeckTheme === 'function')
+        ? resolveSlideDeckTheme
+        : (typeof window !== 'undefined' && typeof window.resolveSlideDeckTheme === 'function' ? window.resolveSlideDeckTheme : null);
+
+      const deckTitle = activeArt.meta?.title || "Presentation Deck";
+      const themeObj = resolveThemeFn ? resolveThemeFn(activeArt.meta?.theme || deckTitle) : { key: "executive_navy_cream" };
+
+      const newHtml = buildFn(allSlides, {
+        title: deckTitle,
+        subtitle: activeArt.meta?.subtitle || "",
+        category: activeArt.meta?.category || "PITCH DECK EKSEKUTIF"
+      }, themeObj);
+
+      activeArt.html = newHtml;
+      activeArt.slides = allSlides;
+      activeArt.timestamp = Date.now();
+
+      if (typeof setActiveDesignArtifact === 'function') {
+        setActiveDesignArtifact(activeArt);
+      }
+      if (assistantBubble) {
+        assistantBubble._activeDesignArtifact = activeArt;
+      }
+
+      // Update Canvas drawer iframe live
+      if (typeof openOpenDesignCanvas === 'function') {
+        openOpenDesignCanvas(activeArt);
+      }
+
+      // Persist to local disk automatically!
+      const rpcFn = (typeof sendNativeRpc === 'function')
+        ? sendNativeRpc
+        : (typeof window !== 'undefined' && typeof window.sendNativeRpc === 'function' ? window.sendNativeRpc : null);
+
+      let savedDir = "";
+      if (rpcFn) {
+        try {
+          const saveRes = await rpcFn("save_slide_deck", {
+            title: deckTitle,
+            html_content: newHtml,
+            meta: {
+              title: deckTitle,
+              slide_count: allSlides.length,
+              revised_slide: slideNum,
+              updated_at: new Date().toISOString()
+            }
+          });
+          if (saveRes?.saved_dir) savedDir = saveRes.saved_dir;
+        } catch (_) {}
+      }
+
+      if (typeof showUniversalToast === 'function') {
+        showUniversalToast(`✅ Slide ${slideNum} berhasil direvisi & disinkronkan ke local!`);
+      }
+
+      return {
+        status: "success",
+        revised_slide_number: slideNum,
+        slide_title: targetSlide.title,
+        slide_layout: targetSlide.layout,
+        total_slides: allSlides.length,
+        saved_dir: savedDir,
+        message: `Slide ${slideNum} ('${targetSlide.title}') berhasil direvisi dan disinkronkan ke Canvas Drawer serta local disk. Silakan periksa hasilnya di Canvas.`
       };
     }
 
@@ -7286,7 +7638,7 @@ Tugas Anda:
           const isLocalTool = toolName.startsWith("local_");
           const isAnalysisTool = (toolName === "agent_subtask_analysis");
           const isClarificationTool = (toolName === "ask_clarification");
-          const isDesignTool = (toolName === "create_slide_deck_design" || toolName === "read_slide_deck");
+          const isDesignTool = (toolName === "create_slide_deck_design" || toolName === "read_slide_deck" || toolName === "check_existing_slide_decks" || toolName === "load_slide_deck_to_canvas" || toolName === "revise_slide_deck_slide");
           let activeWorkerAgent = null;
 
           if (isClarificationTool) {
@@ -7345,6 +7697,12 @@ Tugas Anda:
             badgeActionName = `Merancang Slide Deck 16:9 (${toolArgs.slide_count || 10} Slide)`;
           } else if (toolName === "read_slide_deck") {
             badgeActionName = `Membaca Struktur Slide Deck (Audit Slide)`;
+          } else if (toolName === "check_existing_slide_decks") {
+            badgeActionName = `Memeriksa Arsip Slide Deck Lokal (${toolArgs.query || 'Semua'})`;
+          } else if (toolName === "load_slide_deck_to_canvas") {
+            badgeActionName = `Memuat Slide Deck ke Canvas (${toolArgs.slug || ''})`;
+          } else if (toolName === "revise_slide_deck_slide") {
+            badgeActionName = `Merevisi Slide ${toolArgs.slide_number || 1} di Canvas`;
           } else if (toolName === "view_document" || toolName === "view_file" || toolName === "view_document_file" || toolName === "local_view_file" || toolName === "convert_document_pages" || toolName === "read_document_pages") {
             const shortName = toolArgs.path ? toolArgs.path.split('/').pop() : 'Dokumen';
             badgeActionName = `Konversi & Inspeksi Visual Dokumen (${shortName})`;
@@ -7388,6 +7746,9 @@ Tugas Anda:
             else if (toolName.startsWith("gsuite_sheet") || toolName.includes("sheet")) userFriendlyAction = `Mengakses Google Sheets...`;
             else if (toolName === "create_slide_deck_design") userFriendlyAction = `🎨 Merancang slide deck 16:9 di Canvas Drawer...`;
             else if (toolName === "read_slide_deck") userFriendlyAction = `📖 Memeriksa isi slide di Canvas Drawer...`;
+            else if (toolName === "check_existing_slide_decks") userFriendlyAction = `Memeriksa arsip presentasi di penyimpanan lokal...`;
+            else if (toolName === "load_slide_deck_to_canvas") userFriendlyAction = `Membuka presentasi lokal ke Canvas Drawer...`;
+            else if (toolName === "revise_slide_deck_slide") userFriendlyAction = `Memperbarui slide presentasi di Canvas Drawer...`;
             else if (toolName.includes("view_document") || toolName.includes("view_file") || toolName.includes("convert_document_pages")) userFriendlyAction = `📄 Mengonversi & memeriksa dokumen visual (PDF/Word)...`;
             else if (toolName === "inspect_page_detail" || toolName === "zoom_page_detail") userFriendlyAction = `🔍 Zoom detail visual halaman dokumen (250 DPI)...`;
             else userFriendlyAction = `Menjalankan aksi (${badgeActionName})...`;
@@ -7931,7 +8292,7 @@ Tugas Anda:
                            (typeof window !== 'undefined' ? window.__activeDesignArtifact : null);
 
     const isSocialFeed = isSocialMediaOrImagePrompt(userMessage || "");
-    const touchedSlideTool = sessionExecutedTools.some(t => t === 'create_slide_deck_design');
+    const touchedSlideTool = sessionExecutedTools.some(t => t === 'create_slide_deck_design' || t === 'load_slide_deck_to_canvas' || t === 'revise_slide_deck_slide');
     const wasSlideCreatedThisTurn = Boolean(assistantBubble?._activeDesignArtifact && touchedSlideTool);
     const userExplicitlyRequestedOpenDeck = !isSocialFeed && /(?:buka|tampilkan|lihat|open)\s+(?:slide\s*deck|presentasi|presentation|canvas|kanvas|ppt)/i.test(userMessage || "");
 

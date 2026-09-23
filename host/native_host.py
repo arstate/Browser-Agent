@@ -3906,7 +3906,221 @@ def export_od_artifact(file_path="", html_content="", project_id="browser-agent-
             except Exception:
                 pass
 
-def export_slide_deck_pdf(html_content="", title="presentation"):
+PRESENTATIONS_DIR = os.path.expanduser("~/.browser-agent/presentations")
+try:
+    os.makedirs(PRESENTATIONS_DIR, exist_ok=True)
+except Exception:
+    pass
+
+def list_slide_decks():
+    decks = []
+    scan_dirs = [PRESENTATIONS_DIR]
+    djadi_deck_dir = "/mnt/DATA/FILE/DJADI CREATIVE/DATA BRAND/DATASET TRAINING/PDF SLIDE DECK"
+    if os.path.isdir(djadi_deck_dir):
+        scan_dirs.append(djadi_deck_dir)
+
+    seen_slugs = set()
+    for base in scan_dirs:
+        if not os.path.exists(base):
+            continue
+        try:
+            for entry in os.scandir(base):
+                if entry.is_dir():
+                    dir_path = entry.path
+                    meta_path = os.path.join(dir_path, "deck_meta.json")
+                    html_files = [f for f in os.listdir(dir_path) if f.endswith(".html")]
+                    pdf_files = [f for f in os.listdir(dir_path) if f.endswith(".pdf")]
+                    if not html_files and not pdf_files:
+                        continue
+
+                    slug = entry.name
+                    if slug in seen_slugs:
+                        continue
+                    seen_slugs.add(slug)
+
+                    meta = {}
+                    if os.path.exists(meta_path):
+                        try:
+                            with open(meta_path, "r", encoding="utf-8") as mf:
+                                meta = json.load(mf)
+                        except Exception:
+                            pass
+
+                    html_path = os.path.join(dir_path, html_files[0]) if html_files else None
+                    pdf_path = os.path.join(dir_path, pdf_files[0]) if pdf_files else None
+
+                    title = meta.get("title")
+                    slide_count = meta.get("slide_count")
+                    slides_summary = meta.get("slides_summary", [])
+
+                    if not title and html_path and os.path.exists(html_path):
+                        try:
+                            with open(html_path, "r", encoding="utf-8", errors="ignore") as hf:
+                                h_head = hf.read(4000)
+                                t_match = re.search(r'<title[^>]*>([^<]+)</title>', h_head, re.IGNORECASE)
+                                if t_match:
+                                    title = t_match.group(1).strip()
+                                sec_matches = re.findall(r'<section\b', h_head)
+                                if not slide_count:
+                                    # scan full html for sections
+                                    hf.seek(0)
+                                    h_all = hf.read()
+                                    sec_count = len(re.findall(r'<section\b[^>]*class=["\'][^"\']*\b(?:slide-section|slide)\b[^"\']*["\']', h_all, re.IGNORECASE))
+                                    if sec_count > 0:
+                                        slide_count = sec_count
+                        except Exception:
+                            pass
+
+                    if not title:
+                        title = slug.replace("_", " ").replace("-", " ").title()
+                    if not slide_count:
+                        slide_count = 7 if "7_slide" in slug.lower() else 5
+
+                    mtime = os.path.getmtime(pdf_path or html_path or dir_path)
+                    updated_at = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
+
+                    decks.append({
+                        "slug": slug,
+                        "title": title,
+                        "slide_count": slide_count,
+                        "html_path": html_path,
+                        "pdf_path": pdf_path,
+                        "updated_at": updated_at,
+                        "dir_path": dir_path,
+                        "slides_summary": slides_summary
+                    })
+        except Exception:
+            pass
+
+    decks.sort(key=lambda d: d.get("updated_at", ""), reverse=True)
+    return {"status": "ok", "decks": decks, "count": len(decks)}
+
+def save_slide_deck(title="presentation", slug=None, html_content="", slides_data=None, compile_pdf=True):
+    if not html_content:
+        return {"status": "error", "error": "No html_content provided"}
+    try:
+        clean_slug = (slug or title).lower()
+        clean_slug = re.sub(r'[^a-z0-9]+', '_', clean_slug).strip('_')[:60] or "slide_deck"
+        deck_dir = os.path.join(PRESENTATIONS_DIR, clean_slug)
+        os.makedirs(deck_dir, exist_ok=True)
+
+        html_path = os.path.join(deck_dir, "deck.html")
+        pdf_path = os.path.join(deck_dir, "deck.pdf")
+        meta_path = os.path.join(deck_dir, "deck_meta.json")
+
+        with open(html_path, "w", encoding="utf-8") as f:
+            f.write(html_content)
+
+        slide_count = 1
+        slides_summary = []
+        if isinstance(slides_data, list):
+            slide_count = len(slides_data)
+            slides_summary = [s.get("title", f"Slide {i+1}") for i, s in enumerate(slides_data) if isinstance(s, dict)]
+        else:
+            sec_count = len(re.findall(r'<section\b[^>]*class=["\'][^"\']*\b(?:slide-section|slide)\b[^"\']*["\']', html_content, re.IGNORECASE))
+            if sec_count > 0:
+                slide_count = sec_count
+
+        pdf_b64 = None
+        pdf_size = 0
+        if compile_pdf:
+            exp_res = export_slide_deck_pdf(html_content=html_content, title=title, custom_out_path=pdf_path)
+            if exp_res.get("status") == "ok":
+                pdf_b64 = exp_res.get("base64_data")
+                pdf_size = exp_res.get("file_size", 0)
+
+        meta = {
+            "title": title,
+            "slug": clean_slug,
+            "slide_count": slide_count,
+            "slides_summary": slides_summary,
+            "html_path": html_path,
+            "pdf_path": pdf_path if os.path.exists(pdf_path) else None,
+            "updated_at": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            "created_at": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        }
+        with open(meta_path, "w", encoding="utf-8") as mf:
+            json.dump(meta, mf, indent=2)
+
+        return {
+            "status": "ok",
+            "slug": clean_slug,
+            "title": title,
+            "slide_count": slide_count,
+            "html_path": html_path,
+            "pdf_path": pdf_path if os.path.exists(pdf_path) else None,
+            "file_size": pdf_size,
+            "base64_data": pdf_b64
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+def load_slide_deck(slug_or_path=""):
+    if not slug_or_path:
+        return {"status": "error", "error": "No slug_or_path provided"}
+    try:
+        if os.path.isabs(slug_or_path) and os.path.exists(slug_or_path):
+            dir_path = slug_or_path if os.path.isdir(slug_or_path) else os.path.dirname(slug_or_path)
+        else:
+            dir_path = os.path.join(PRESENTATIONS_DIR, slug_or_path)
+
+        scan_dirs = [PRESENTATIONS_DIR]
+        djadi_deck_dir = "/mnt/DATA/FILE/DJADI CREATIVE/DATA BRAND/DATASET TRAINING/PDF SLIDE DECK"
+        if os.path.isdir(djadi_deck_dir):
+            scan_dirs.append(djadi_deck_dir)
+
+        if not os.path.isdir(dir_path):
+            found_dir = None
+            for base in scan_dirs:
+                if not os.path.exists(base):
+                    continue
+                for d in os.listdir(base):
+                    full_d = os.path.join(base, d)
+                    if os.path.isdir(full_d) and (slug_or_path.lower() in d.lower() or d.lower() in slug_or_path.lower()):
+                        found_dir = full_d
+                        break
+                if found_dir:
+                    break
+            if found_dir:
+                dir_path = found_dir
+            else:
+                return {"status": "error", "error": f"Slide deck '{slug_or_path}' tidak ditemukan di disk lokal"}
+
+        html_files = [f for f in os.listdir(dir_path) if f.endswith(".html")]
+        pdf_files = [f for f in os.listdir(dir_path) if f.endswith(".pdf")]
+        meta_path = os.path.join(dir_path, "deck_meta.json")
+
+        if not html_files:
+            return {"status": "error", "error": "Berkas HTML slide deck tidak ditemukan"}
+
+        html_path = os.path.join(dir_path, html_files[0])
+        pdf_path = os.path.join(dir_path, pdf_files[0]) if pdf_files else None
+
+        with open(html_path, "r", encoding="utf-8", errors="ignore") as f:
+            html_content = f.read()
+
+        meta = {}
+        if os.path.exists(meta_path):
+            try:
+                with open(meta_path, "r", encoding="utf-8") as mf:
+                    meta = json.load(mf)
+            except Exception:
+                pass
+
+        return {
+            "status": "ok",
+            "slug": os.path.basename(dir_path),
+            "title": meta.get("title") or os.path.basename(dir_path).replace("_", " ").title(),
+            "slide_count": meta.get("slide_count") or 7,
+            "html_path": html_path,
+            "pdf_path": pdf_path,
+            "html_content": html_content,
+            "meta": meta
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+def export_slide_deck_pdf(html_content="", title="presentation", custom_out_path=None):
     if not html_content:
         return {"status": "error", "error": "No html_content provided"}
     try:
@@ -3914,27 +4128,28 @@ def export_slide_deck_pdf(html_content="", title="presentation"):
         ts = int(time.time() * 1000)
         temp_dir = tempfile.gettempdir()
         tmp_html = os.path.join(temp_dir, f"deck_{ts}.html")
-        tmp_pdf = os.path.join(temp_dir, f"{clean_title}_{ts}.pdf")
+        tmp_pdf = custom_out_path if custom_out_path else os.path.join(temp_dir, f"{clean_title}_{ts}.pdf")
 
-        # Sanitize injected interactive styles and enforce all-slides 16:9 vector print styles
+        # Sanitize injected interactive styles and enforce high-res 1920x1080 16:9 Full HD vector print styles
         sanitized_html = re.sub(r'<style\b[^>]*id=["\']slide-deck-controller-style["\'][^>]*>[\s\S]*?</style>', '', html_content, flags=re.IGNORECASE)
-        if "bulletproof-pdf-print-pagination" not in sanitized_html:
-            print_css = """<style id="bulletproof-pdf-print-pagination">
-@page { size: 1200px 675px !important; margin: 0 !important; }
+        sanitized_html = re.sub(r'<style\b[^>]*id=["\']bulletproof-pdf-print-pagination["\'][^>]*>[\s\S]*?</style>', '', sanitized_html, flags=re.IGNORECASE)
+
+        print_css = """<style id="bulletproof-pdf-print-pagination">
+@page { size: 1920px 1080px !important; margin: 0 !important; }
 @media print {
   *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  html, body { background: var(--bg-slide, #0b0f19) !important; color: var(--text-main, #ffffff) !important; overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
+  html, body { background: #0b0f19 !important; color: #ffffff !important; overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
   .presentation-workspace { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; position: static !important; }
   .deck-sidebar, .deck-floating-dock, nav, aside, button, .deck-dock-wrap { display: none !important; }
-  .deck-stage-wrap { padding: 0 !important; margin: 0 !important; height: auto !important; display: block !important; overflow: visible !important; background: var(--bg-slide, #0b0f19) !important; position: static !important; }
-  .slide-section { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 1200px !important; height: 675px !important; min-width: 1200px !important; min-height: 675px !important; max-width: 1200px !important; max-height: 675px !important; page-break-after: always !important; page-break-inside: avoid !important; break-after: page !important; break-inside: avoid !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; background: var(--bg-slide, #0b0f19) !important; position: relative !important; }
+  .deck-stage-wrap { padding: 0 !important; margin: 0 !important; height: auto !important; display: block !important; overflow: visible !important; background: transparent !important; position: static !important; }
+  .slide-section, .slide { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 1920px !important; height: 1080px !important; min-width: 1920px !important; min-height: 1080px !important; max-width: 1920px !important; max-height: 1080px !important; page-break-after: always !important; page-break-inside: avoid !important; break-after: page !important; break-inside: avoid !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; position: relative !important; }
   .slide-canvas { height: 100% !important; width: 100% !important; box-shadow: none !important; border-radius: 0 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-sizing: border-box !important; }
 }
 </style>"""
-            if "</head>" in sanitized_html:
-                sanitized_html = sanitized_html.replace("</head>", print_css + "\n</head>", 1)
-            else:
-                sanitized_html = print_css + sanitized_html
+        if "</head>" in sanitized_html:
+            sanitized_html = sanitized_html.replace("</head>", print_css + "\n</head>", 1)
+        else:
+            sanitized_html = print_css + sanitized_html
 
         with open(tmp_html, "w", encoding="utf-8") as f:
             f.write(sanitized_html)
@@ -3992,6 +4207,21 @@ def export_slide_deck_pdf(html_content="", title="presentation"):
             with open(tmp_pdf, "rb") as f:
                 pdf_bytes = f.read()
             b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+
+            # Also auto-persist into ~/.browser-agent/presentations/<clean_title>/
+            try:
+                auto_dir = os.path.join(PRESENTATIONS_DIR, clean_title.replace("-", "_"))
+                os.makedirs(auto_dir, exist_ok=True)
+                auto_pdf = os.path.join(auto_dir, "deck.pdf")
+                auto_html = os.path.join(auto_dir, "deck.html")
+                if not os.path.exists(auto_html) or not custom_out_path:
+                    with open(auto_html, "w", encoding="utf-8") as ah:
+                        ah.write(html_content)
+                if not os.path.exists(auto_pdf) or not custom_out_path:
+                    shutil.copyfile(tmp_pdf, auto_pdf)
+            except Exception:
+                pass
+
             return {
                 "status": "ok",
                 "base64_data": b64,
@@ -4114,9 +4344,32 @@ def handle_local_rpc(msg):
     elif action == "export_slide_deck_pdf":
         html_content = msg.get("html_content") or msg.get("html") or ""
         title = msg.get("title") or "presentation"
-        res = export_slide_deck_pdf(html_content=html_content, title=title)
+        custom_out_path = msg.get("custom_out_path") or msg.get("out_path")
+        res = export_slide_deck_pdf(html_content=html_content, title=title, custom_out_path=custom_out_path)
         res["id"] = req_id
         return res
+
+    elif action == "list_slide_decks":
+        res = list_slide_decks()
+        res["id"] = req_id
+        return res
+
+    elif action == "save_slide_deck":
+        title = msg.get("title") or "presentation"
+        slug = msg.get("slug")
+        html_content = msg.get("html_content") or msg.get("html") or ""
+        slides_data = msg.get("slides_data") or msg.get("slides")
+        compile_pdf = msg.get("compile_pdf", True)
+        res = save_slide_deck(title=title, slug=slug, html_content=html_content, slides_data=slides_data, compile_pdf=compile_pdf)
+        res["id"] = req_id
+        return res
+
+    elif action == "load_slide_deck":
+        slug_or_path = msg.get("slug") or msg.get("slug_or_path") or msg.get("path") or ""
+        res = load_slide_deck(slug_or_path=slug_or_path)
+        res["id"] = req_id
+        return res
+
 
     elif action == "od_export_artifact":
         file_path = msg.get("file_path") or msg.get("file") or ""

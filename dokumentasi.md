@@ -1975,5 +1975,46 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Unit test 6 skenario multi-agent lulus 100% (User prompt Djadi todolist, Pitch deck visual, Ads boncos, Casual greeting, Tiar KPR, Topic shift).
      - Seluruh berkas di `extension/design/*.js` dan `extension/core/*.js` tetap patuh di bawah batas 798 baris.
 
+### 187. Rilis Versi v2.150.304 - Ultra-Fidelity 1920x1080 Full HD Presentation Engine, Multi-Layout Thematic System, & Local Presentation Storage/Revision Manager
+- **Waktu Rilis**: 2026-09-23 23:15 WIB
+- **Fokus Utama**: Mengatasi masalah kualitas visual slide deck Canvas Drawer yang sebelumnya tampak kaku, template kartu berulang, kanvas kekecilan (1200x675 pt), ketiadaan variasi layout bertema, serta kebiasaan agent selalu membuat deck baru dari nol tanpa mengecek arsip lokal dan menanyakan slide mana yang mau direvisi.
+- **Benchmark Acuan**: Menyamai standar desain eksekutif lokal pada `/mnt/DATA/FILE/DJADI CREATIVE/DATA BRAND/DATASET TRAINING/PDF SLIDE DECK/01_PITCH_DECK_ZOOM_15_MENIT_MAS_TIAR/` (HTML & PDF 1920x1080 Full HD).
+- **Akar Masalah (Root Causes)**:
+  1. *Resolusi Kanvas Kaku & Font Terjepit*:
+     - `slide_styles.js` dan `canvas_exporter.js` sebelumnya mematok ukuran `@page { size: 1200px 675px; }`. Saat dicetak ke PDF oleh Chrome Skia, rasio poin menghasilkan 900x506 pt dengan font yang sangat padat dan proporsi kartu yang terjepit.
+  2. *Monoton & Minim Variasi Layout*:
+     - Seluruh slide dipaksa menjadi bento 3-kolom standar atau 2-kolom split generik tanpa template tematik seperti Leak Problem, Corong Solusi, Matriks Deliverables, Tabel Unit Economics, Portofolio Studi Kasus, atau Penawaran Garansi.
+  3. *Ketiadaan Tema Selang-Seling (Alternating Themes)*:
+     - Slide deck tidak memiliki variasi latar belakang kontras antar slide (Deep Navy `#012969` vs Warm Cream `#F7F4EC`), membuat pembaca cepat jenuh.
+  4. *Ketiadaan Persistensi & Manajemen Revisi Slide Lokal*:
+     - Setiap kali user meminta pembuatan atau revisi deck, agent selalu merakit ulang deck baru dari awal dan membuang riwayat sebelumnya, alih-alih mengecek penyimpanan lokal di `~/.browser-agent/presentations/<slug>/` dan menanyakan bagian/slide mana yang ingin direvisi.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Ultra-Fidelity Full HD 1920x1080 Engine**:
+     - Memperbarui `slide_styles.js` dan `canvas_exporter.js` dengan standar dimensi 1920x1080 px (`1440 x 810 pt` dalam Chrome Skia PDF @ 72 DPI).
+     - Mengadaptasi `initSlideDeckAutoscale` di `slide_deck_engine.js` agar secara dinamis mendeteksi dimensi dasar slide 1920x1080 untuk penskalaan mulus di drawer samping.
+  2. **Multi-Layout Thematic Engine & Alternating Themes**:
+     - Menambahkan class `.theme-navy` (Deep Navy `#012969`) dan `.theme-cream` (Warm Cream `#F7F4EC`) yang berganti secara ritmis dan harmonis.
+     - Mengembangkan 6 layout spesialis baru di `slide_template.js` dan `slide_styles.js`:
+       - `leaks`: Kartu kebocoran omzet bergaris aksen tebal dan badge friksi.
+       - `hero_flow`: Alur corong horizontal 3 tahap terintegrasi dengan panah konektor.
+       - `deliverables_matrix`: Matriks output 4 kanal dengan badge status performa.
+       - `economics_table`: Tabel komparasi unit economics tradisional vs ekosistem modern.
+       - `case_studies`: Portofolio hasil pembuktian nyata dengan metrik pertumbuhan besar.
+       - `closing_offer`: Penawaran paket akselerasi dan zero-risk guarantee.
+  3. **Manajemen Persistensi Lokal (`~/.browser-agent/presentations/<slug>/`)**:
+     - Implementasi penyimpanan terstruktur di local disk dengan `deck.html`, `deck.pdf`, dan `deck_meta.json`.
+     - Ditangani oleh Native Host (`native_host.py` dan `host/rust_host/src/main.rs`) via RPC native: `list_slide_decks`, `save_slide_deck`, `load_slide_deck`, dan `export_slide_deck_pdf`.
+  4. **Peralatan Agent Baru di `sidepanel.js`**:
+     - `check_existing_slide_decks`: Memeriksa keberadaan deck lokal sebelum membuat baru.
+     - `load_slide_deck_to_canvas`: Memuat deck lokal yang sudah ada ke Canvas Drawer.
+     - `revise_slide_deck_slide`: Merevisi nomor slide tertentu secara bedah presisi dan otomatis menyinkronkannya kembali ke Canvas dan disk.
+  5. **Mandat Prompt Master Agent**:
+     - Wajib memanggil `check_existing_slide_decks` terlebih dahulu saat user membahas presentasi/pitch deck.
+     - Jika deck sudah ada, informasikan ke user dan tanyakan slide nomor berapa yang ingin direvisi.
+  6. **Kepatuhan Mutlak Sub-800 Baris (Strict Sub-800 Line Rule)**:
+     - Seluruh 15 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris` (misal `slide_template.js`: 743 baris, `slide_deck_engine.js`: 793 baris, `slide_styles.js`: 788 baris).
+     - Seluruh pengujian native RPC dan ekspor PDF 7-halaman berhasil 100% tanpa error.
+
+
 
 

@@ -245,12 +245,12 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
     @media screen {
       .slide-section {
         display: none !important;
-        width: 1200px !important;
-        height: 675px !important;
-        min-width: 1200px !important;
-        min-height: 675px !important;
-        max-width: 1200px !important;
-        max-height: 675px !important;
+        width: 1920px !important;
+        height: 1080px !important;
+        min-width: 1920px !important;
+        min-height: 1080px !important;
+        max-width: 1920px !important;
+        max-height: 1080px !important;
         aspect-ratio: 16 / 9;
         opacity: 0;
         position: absolute;
@@ -478,6 +478,54 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
     .conclusion-list { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
     .conclusion-item { display: flex; gap: 10px; align-items: flex-start; font-family: var(--font-body); font-size: 13px; color: var(--text-main); line-height: 1.45; }
     .conclusion-check { font-weight: 800; font-size: 14px; flex-shrink: 0; }
+
+    /* Alternating Themes (Deep Navy vs Warm Cream) */
+    .theme-navy { background-color: #012969 !important; color: #FFFFFF !important; background-image: linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px) !important; background-size: 64px 64px !important; }
+    .theme-cream { background-color: #F7F4EC !important; color: #0F172A !important; background-image: linear-gradient(rgba(1,41,105,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(1,41,105,0.035) 1px, transparent 1px) !important; background-size: 64px 64px !important; }
+    .theme-navy .slide-canvas { background: transparent !important; color: #FFFFFF !important; }
+    .theme-cream .slide-canvas { background: transparent !important; color: #0F172A !important; }
+
+    /* Leaks / Friction Grid */
+    .leaks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; flex: 1; margin: 12px 0 16px 0; }
+    .leak-card { background: var(--card-bg, #FFFFFF); border-radius: 12px; padding: 24px 22px; display: flex; flex-direction: column; justify-content: space-between; border: 2px solid; }
+    .leak-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .leak-number-tag { font-family: 'Space Grotesk', monospace; font-size: 13px; font-weight: 800; padding: 4px 10px; border-radius: 4px; color: #FFF; background: #012969; }
+    .leak-stat-badge { font-family: 'Space Grotesk', monospace; font-size: 13px; font-weight: 800; color: #B3001B; background: #FEE2E2; padding: 4px 10px; border-radius: 4px; }
+    .leak-title { font-family: var(--font-heading); font-size: 20px; font-weight: 800; line-height: 1.25; margin-bottom: 8px; }
+    .leak-desc { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+    .leak-impact-box { background: rgba(179,0,27,0.08); border-left: 3px solid #B3001B; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; color: #B3001B; }
+
+    /* Hero Flow Architecture */
+    .hero-flow-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; flex: 1; align-items: stretch; margin: 12px 0 16px 0; }
+    .hero-pilar-card { background: var(--card-bg); border: var(--card-border); border-radius: 12px; padding: 24px 22px; display: flex; flex-direction: column; justify-content: space-between; }
+    .hero-pilar-tag { font-family: 'Space Grotesk', monospace; font-size: 12px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+    .hero-pilar-title { font-family: var(--font-heading); font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .hero-pilar-desc { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+    .hero-flow-banner { background: var(--accent); color: #012969; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px; text-align: center; }
+
+    /* Deliverables Matrix */
+    .deliverables-matrix { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 16px; flex: 1; margin: 10px 0 14px 0; }
+    .deliverable-card { background: var(--card-bg); border: var(--card-border); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; }
+    .deliv-code { font-family: 'Space Grotesk', monospace; font-size: 12px; font-weight: 800; color: var(--accent); }
+    .deliv-title { font-family: var(--font-heading); font-size: 17px; font-weight: 700; margin: 6px 0; }
+    .deliv-desc { font-size: 13px; color: var(--text-muted); line-height: 1.45; }
+
+    /* Unit Economics Comparison Table */
+    .economics-wrap { flex: 1; display: flex; flex-direction: column; justify-content: center; margin: 8px 0; }
+    .economics-table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--card-bg); border-radius: 10px; overflow: hidden; }
+    .economics-table th { padding: 12px 18px; text-align: left; background: rgba(0,0,0,0.15); font-weight: 800; }
+    .economics-table td { padding: 12px 18px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .savings-highlight { margin-top: 12px; background: rgba(16,185,129,0.12); border: 1.5px solid #10B981; color: #10B981; padding: 10px 18px; border-radius: 8px; font-weight: 800; text-align: center; }
+
+    /* Case Studies & Proof Grid */
+    .case-studies-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1; margin: 12px 0; }
+    .case-card { background: var(--card-bg); border: var(--card-border); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; }
+    .case-stat-big { font-family: var(--font-heading); font-size: 38px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 8px; }
+
+    /* Closing Offer & Risk-Reversal */
+    .closing-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; flex: 1; margin: 12px 0; align-items: stretch; }
+    .offer-card { background: var(--card-box-bg); border: 2px solid var(--accent); border-radius: 14px; padding: 26px; display: flex; flex-direction: column; justify-content: space-between; }
+    .offer-price { font-family: var(--font-heading); font-size: 38px; font-weight: 800; color: var(--accent); margin: 6px 0; }
 
     /* FOOTER */
     .slide-footer-bar {
@@ -723,13 +771,13 @@ function getExecutiveSlideDeckCss(theme = {}, options = {}) {
 
     /* === PRINT FOR VECTOR 16:9 PDF EXPORT === */
     @media print {
-      @page { size: 1200px 675px; margin: 0; }
+      @page { size: 1920px 1080px; margin: 0; }
       *, *::before, *::after { box-sizing: border-box !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       html, body { background: var(--bg-slide) !important; color: var(--text-main) !important; overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
       .presentation-workspace { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; position: static !important; }
       .deck-sidebar, .deck-floating-dock { display: none !important; }
       .deck-stage-wrap { padding: 0 !important; margin: 0 !important; height: auto !important; display: block !important; overflow: visible !important; background: var(--bg-slide) !important; position: static !important; }
-      .slide-section { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 1200px !important; height: 675px !important; page-break-after: always !important; break-after: page !important; margin: 0 !important; padding: 0 !important; background: var(--bg-slide) !important; position: relative !important; }
+      .slide-section, .slide { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 1920px !important; height: 1080px !important; min-width: 1920px !important; min-height: 1080px !important; max-width: 1920px !important; max-height: 1080px !important; page-break-after: always !important; break-after: page !important; margin: 0 !important; padding: 0 !important; background: var(--bg-slide) !important; position: relative !important; }
       .slide-canvas { height: 100% !important; width: 100% !important; box-shadow: none !important; border-radius: 0 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; }
     }`;
 }

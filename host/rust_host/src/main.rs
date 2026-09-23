@@ -1379,7 +1379,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                     }
                 }
                 if !sanitized_html.contains("bulletproof-pdf-print-pagination") {
-                    let print_css = "<style id=\"bulletproof-pdf-print-pagination\">\n@page { size: 1200px 675px !important; margin: 0 !important; }\n@media print {\n  *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }\n  html, body { background: var(--bg-slide, #0b0f19) !important; color: var(--text-main, #ffffff) !important; overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }\n  .presentation-workspace { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; position: static !important; }\n  .deck-sidebar, .deck-floating-dock, nav, aside, button, .deck-dock-wrap { display: none !important; }\n  .deck-stage-wrap { padding: 0 !important; margin: 0 !important; height: auto !important; display: block !important; overflow: visible !important; background: var(--bg-slide, #0b0f19) !important; position: static !important; }\n  .slide-section { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 1200px !important; height: 675px !important; min-width: 1200px !important; min-height: 675px !important; max-width: 1200px !important; max-height: 675px !important; page-break-after: always !important; page-break-inside: avoid !important; break-after: page !important; break-inside: avoid !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; background: var(--bg-slide, #0b0f19) !important; position: relative !important; }\n  .slide-canvas { height: 100% !important; width: 100% !important; box-shadow: none !important; border-radius: 0 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-sizing: border-box !important; }\n}\n</style>";
+                    let print_css = "<style id=\"bulletproof-pdf-print-pagination\">\n@page { size: 1920px 1080px !important; margin: 0 !important; }\n@media print {\n  *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }\n  html, body { background: #0b0f19 !important; color: #ffffff !important; overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }\n  .presentation-workspace { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; position: static !important; }\n  .deck-sidebar, .deck-floating-dock, nav, aside, button, .deck-dock-wrap { display: none !important; }\n  .deck-stage-wrap { padding: 0 !important; margin: 0 !important; height: auto !important; display: block !important; overflow: visible !important; background: transparent !important; position: static !important; }\n  .slide-section, .slide { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 1920px !important; height: 1080px !important; min-width: 1920px !important; min-height: 1080px !important; max-width: 1920px !important; max-height: 1080px !important; page-break-after: always !important; page-break-inside: avoid !important; break-after: page !important; break-inside: avoid !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; position: relative !important; }\n  .slide-canvas { height: 100% !important; width: 100% !important; box-shadow: none !important; border-radius: 0 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-sizing: border-box !important; }\n}\n</style>";
                     if let Some(pos) = sanitized_html.find("</head>") {
                         sanitized_html.insert_str(pos, &format!("{}\n", print_css));
                     } else {
@@ -1435,6 +1435,13 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                                     match fs::read(&pdf_path) {
                                         Ok(bytes) if !bytes.is_empty() => {
                                             let b64 = BASE64_STANDARD.encode(&bytes);
+
+                                            // Auto-archive into ~/.browser-agent/presentations/<clean_title>/
+                                            let auto_dir = get_db_dir().join("presentations").join(clean_title.replace("-", "_"));
+                                            let _ = fs::create_dir_all(&auto_dir);
+                                            let _ = fs::copy(&pdf_path, auto_dir.join("deck.pdf"));
+                                            let _ = fs::write(auto_dir.join("deck.html"), html_content);
+
                                             json!({
                                                 "status": "ok",
                                                 "base64_data": b64,
@@ -1459,6 +1466,79 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 }
             }
         }
+
+        "list_slide_decks" => {
+            let host_dir_str = get_host_dir().to_string_lossy().to_string();
+            let py_script = format!(
+                "import sys, json; sys.path.insert(0, '{}'); import native_host; print(json.dumps(native_host.list_slide_decks()))",
+                host_dir_str
+            );
+            if let Ok(out) = Command::new("python3").args(["-c", &py_script]).output() {
+                if let Ok(val) = serde_json::from_slice::<Value>(&out.stdout) {
+                    val
+                } else {
+                    json!({ "status": "error", "error": "Failed to parse list_slide_decks output" })
+                }
+            } else {
+                json!({ "status": "error", "error": "Python invocation failed for list_slide_decks" })
+            }
+        }
+
+        "save_slide_deck" => {
+            let title = msg.get("title").and_then(|v| v.as_str()).unwrap_or("presentation");
+            let slug = msg.get("slug").and_then(|v| v.as_str()).unwrap_or("");
+            let html_content = msg.get("html_content").or_else(|| msg.get("html")).and_then(|v| v.as_str()).unwrap_or("");
+            let slides_json = msg.get("slides_data").or_else(|| msg.get("slides")).map(|v| v.to_string()).unwrap_or_else(|| "None".to_string());
+            let compile_pdf = msg.get("compile_pdf").and_then(|v| v.as_bool()).unwrap_or(true);
+
+            let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis();
+            let tmp_html = std::env::temp_dir().join(format!("save_deck_{}.html", ts));
+            let _ = fs::write(&tmp_html, html_content);
+
+            let host_dir_str = get_host_dir().to_string_lossy().to_string();
+            let py_script = format!(
+                "import sys, json; sys.path.insert(0, '{}'); import native_host; h = open({:?}, 'r', encoding='utf-8').read(); print(json.dumps(native_host.save_slide_deck(title={:?}, slug=None if not {:?} else {:?}, html_content=h, slides_data={}, compile_pdf={})))",
+                host_dir_str,
+                tmp_html.to_string_lossy(),
+                title,
+                slug,
+                slug,
+                slides_json,
+                if compile_pdf { "True" } else { "False" }
+            );
+            let res = if let Ok(out) = Command::new("python3").args(["-c", &py_script]).output() {
+                if let Ok(val) = serde_json::from_slice::<Value>(&out.stdout) {
+                    val
+                } else {
+                    let err_str = String::from_utf8_lossy(&out.stderr).to_string();
+                    json!({ "status": "error", "error": format!("Failed to parse save_slide_deck output: {}", err_str) })
+                }
+            } else {
+                json!({ "status": "error", "error": "Python invocation failed for save_slide_deck" })
+            };
+            let _ = fs::remove_file(&tmp_html);
+            res
+        }
+
+        "load_slide_deck" => {
+            let slug = msg.get("slug").or_else(|| msg.get("slug_or_path")).or_else(|| msg.get("path")).and_then(|v| v.as_str()).unwrap_or("");
+            let host_dir_str = get_host_dir().to_string_lossy().to_string();
+            let py_script = format!(
+                "import sys, json; sys.path.insert(0, '{}'); import native_host; print(json.dumps(native_host.load_slide_deck({:?})))",
+                host_dir_str,
+                slug
+            );
+            if let Ok(out) = Command::new("python3").args(["-c", &py_script]).output() {
+                if let Ok(val) = serde_json::from_slice::<Value>(&out.stdout) {
+                    val
+                } else {
+                    json!({ "status": "error", "error": "Failed to parse load_slide_deck output" })
+                }
+            } else {
+                json!({ "status": "error", "error": "Python invocation failed for load_slide_deck" })
+            }
+        }
+
 
         "capture_os_screenshot" => {
             let tmp_path = if cfg!(windows) {

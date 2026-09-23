@@ -108,6 +108,12 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     if (s && s.layout) {
       const l = String(s.layout).toLowerCase().trim();
       if (/cover|hero|title|sampul/i.test(l)) return 'cover';
+      if (/leaks?|friction|masalah|bocor/i.test(l)) return 'leaks';
+      if (/hero[-_]?flow|funnel|architecture|arsitektur|pilar[-_]?flow/i.test(l)) return 'hero_flow';
+      if (/deliverable|fasilitas|modul|matrix|grid-6/i.test(l)) return 'deliverables';
+      if (/economics?|pricing|tabel|komparasi|biaya|roi/i.test(l)) return 'economics';
+      if (/case[-_]?stud|testimoni|bukti|proof|spotlight/i.test(l)) return 'case_studies';
+      if (/closing|offer|garansi|penawaran|deal|cta/i.test(l)) return 'closing_offer';
       if (/split|duo|grid-2|comparison|dua/i.test(l)) return 'split';
       if (/metrics|metric|stat|kpi|grid-4|angka/i.test(l)) return 'metrics';
       if (/quote|kutipan|statement|manifesto/i.test(l)) return 'quote';
@@ -116,13 +122,20 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       if (/bento|trio|grid-3/i.test(l)) return 'bento';
     }
     if (idx === 0) return 'cover';
-    if (idx === totalSlides - 1 && totalSlides >= 4) return 'conclusion';
+    if (idx === totalSlides - 1 && totalSlides >= 4) return 'closing_offer';
 
-    const cards = s.cards || [];
+    const t = ((s && s.title) || '').toLowerCase();
+    if (/kebocoran|bocor|leaks?|friksi|masalah|kendala/i.test(t)) return 'leaks';
+    if (/solusi|alur|corong|funnel|ekosistem|pilar|flow/i.test(t)) return 'hero_flow';
+    if (/deliverable|fasilitas|output|katalog/i.test(t)) return 'deliverables';
+    if (/biaya|ekonomi|komparasi|in-house|perbandingan|hemat|roi/i.test(t)) return 'economics';
+    if (/studi\s+kasus|case\s+study|klien|bukti|testimoni/i.test(t)) return 'case_studies';
+
+    const cards = (s && s.cards) || [];
     if (cards.length === 2) return 'split';
-    if (s.steps || /tahap|langkah|step|alur|proses|jadwal|roadmap/i.test(s.title || '')) return 'timeline';
+    if (s && (s.steps || /tahap|langkah|step|proses|jadwal|roadmap/i.test(s.title || ''))) return 'timeline';
     if (cards.length === 4) return 'metrics';
-    if (s.quoteText || s.quote || (cards.length === 1 && !s.title)) return 'quote';
+    if (s && (s.quoteText || s.quote || (cards.length === 1 && !s.title))) return 'quote';
 
     return 'bento';
   }
@@ -151,45 +164,9 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
     } else if (layout === 'cover') {
       thumbBodyHtml = `
         <div class="thumb-mini-cover">
-          <div class="thumb-mini-cover-tag" style="color: ${accentColor}; border-color: ${accentColor};">${escapeHtml((s.badge || badgeTag || 'COVER').slice(0, 16))}</div>
+          <div class="thumb-mini-cover-tag" style="color: ${accentColor};">${escapeHtml((s.badge || badgeTag || 'COVER').slice(0, 16))}</div>
           <div class="thumb-mini-cover-title">${escapeHtml((s.title || categoryTitle).slice(0, 36))}</div>
           <div class="thumb-mini-cover-sub">${escapeHtml((s.subtitle || brandName).slice(0, 48))}</div>
-          <div class="thumb-mini-cover-badges">
-            <span>16:9 WIDESCREEN</span>
-            <span style="color: ${accentColor}; font-weight: 800;">${total} SLIDES</span>
-          </div>
-        </div>
-      `;
-    } else if (layout === 'split') {
-      thumbBodyHtml = `
-        <div class="thumb-mini-hero">
-          <div class="thumb-mini-title">${escapeHtml(s.title || '')}</div>
-          <div class="thumb-mini-counter">${slideNumStr} // ${totalStr}</div>
-        </div>
-        <div class="thumb-mini-split">
-          ${cards.slice(0, 2).map((c, ci) => `
-            <div class="thumb-mini-col">
-              <div class="thumb-mini-badge" style="color: ${ci === 0 ? accentColor : accentSecondary};">${escapeHtml((c.badge || `PILAR 0${ci + 1}`).slice(0, 14))}</div>
-              <div class="thumb-mini-col-title">${escapeHtml((c.title || '').slice(0, 22))}</div>
-              <div class="thumb-mini-box"><span style="color: ${ci === 0 ? accentColor : accentSecondary};">${escapeHtml((c.footerHighlight || c.title || '').slice(0, 16))}</span></div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    } else if (layout === 'metrics') {
-      const metricCards = cards.length >= 4 ? cards.slice(0, 4) : [...cards, { title: 'Pilar 04', metricValue: '100%' }].slice(0, 4);
-      thumbBodyHtml = `
-        <div class="thumb-mini-hero">
-          <div class="thumb-mini-title">${escapeHtml(s.title || '')}</div>
-          <div class="thumb-mini-counter">${slideNumStr} // ${totalStr}</div>
-        </div>
-        <div class="thumb-mini-metrics">
-          ${metricCards.map((c, ci) => `
-            <div class="thumb-mini-metric-col">
-              <div class="thumb-mini-metric-num" style="color: ${ci === 0 ? accentColor : accentSecondary};">${escapeHtml((c.metricValue || c.stat || `0${ci + 1}`).slice(0, 6))}</div>
-              <div class="thumb-mini-metric-title">${escapeHtml((c.title || '').slice(0, 14))}</div>
-            </div>
-          `).join('')}
         </div>
       `;
     } else if (layout === 'quote') {
@@ -197,43 +174,6 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
         <div class="thumb-mini-quote">
           <div class="thumb-mini-quote-mark" style="color: ${accentColor};">“</div>
           <div class="thumb-mini-quote-text">${escapeHtml((s.quoteText || s.subtitle || s.title || '').slice(0, 56))}...</div>
-          <div class="thumb-mini-quote-author" style="color: ${accentColor};">— ${escapeHtml((s.quoteAuthor || brandName).slice(0, 20))}</div>
-        </div>
-      `;
-    } else if (layout === 'timeline') {
-      thumbBodyHtml = `
-        <div class="thumb-mini-hero">
-          <div class="thumb-mini-title">${escapeHtml(s.title || '')}</div>
-          <div class="thumb-mini-counter">${slideNumStr} // ${totalStr}</div>
-        </div>
-        <div class="thumb-mini-timeline">
-          ${cards.slice(0, 4).map((c, ci) => `
-            <div class="thumb-mini-timeline-step">
-              <div class="thumb-mini-step-num" style="color: ${ci === 0 ? accentColor : 'inherit'};">STEP 0${ci + 1}</div>
-              <div class="thumb-mini-col-title">${escapeHtml((c.title || '').slice(0, 14))}</div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    } else if (layout === 'conclusion') {
-      thumbBodyHtml = `
-        <div class="thumb-mini-hero">
-          <div class="thumb-mini-title">${escapeHtml(s.title || 'Kesimpulan')}</div>
-          <div class="thumb-mini-counter">${slideNumStr} // ${totalStr}</div>
-        </div>
-        <div class="thumb-mini-conclusion">
-          <div class="thumb-mini-col">
-            <div class="thumb-mini-badge" style="color: ${accentColor};">SUMMARY</div>
-            <div class="thumb-mini-col-title">${escapeHtml((s.title || '').slice(0, 16))}</div>
-            <div class="thumb-mini-box"><span>ACTION</span></div>
-          </div>
-          <div class="thumb-mini-col">
-            <div class="thumb-mini-badge" style="color: ${accentSecondary};">CHECKLIST</div>
-            <div class="thumb-mini-checklist-lines">
-              <div>✔ <span>${escapeHtml((cards[0]?.title || 'Poin 1').slice(0, 14))}</span></div>
-              <div>✔ <span>${escapeHtml((cards[1]?.title || 'Poin 2').slice(0, 14))}</span></div>
-            </div>
-          </div>
         </div>
       `;
     } else {
@@ -243,24 +183,11 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           <div class="thumb-mini-counter">${slideNumStr} // ${totalStr}</div>
         </div>
         <div class="thumb-mini-grid">
-          ${cards.slice(0, 3).map((c, ci) => {
-            const badgeColor = c.badgeColor || (ci === 0 ? accentColor : ci === 1 ? accentSecondary : accentTertiary);
-            const highlightColor = c.highlightColor || badgeColor;
-            const rawBadge = c.badge || `POIN 0${ci + 1} // ANALISIS`;
-            const cleanBadge = (/ORTOGRAFI|FILOSOFI|DIFERENSIASI/i.test(rawBadge) && !/ortografi|filosofi/i.test(c.title || '')) ? `POIN 0${ci + 1} // ANALISIS` : rawBadge;
-            const rawHl = c.footerHighlight || c.keyTakeaway || c.title || `POIN UTAMA 0${ci + 1}`;
-            const cleanHl = (/"DJ" → JADI|TERWUJUD & SELESAI|DISTINCTIVE BRAND ASSET/i.test(rawHl) && !/djadi/i.test(promptOrTitle)) ? (c.title || `POIN UTAMA 0${ci + 1}`).slice(0, 24).toUpperCase() : rawHl;
-
-            return `
-              <div class="thumb-mini-col">
-                <div class="thumb-mini-badge" style="color: ${badgeColor};">${escapeHtml(cleanBadge)}</div>
-                <div class="thumb-mini-col-title">${escapeHtml((c.title || '').slice(0, 24))}</div>
-                <div class="thumb-mini-box">
-                  <span style="color: ${highlightColor};">${escapeHtml(cleanHl.slice(0, 20))}</span>
-                </div>
-              </div>
-            `;
-          }).join('')}
+          ${cards.slice(0, 3).map((c, ci) => `
+            <div class="thumb-mini-col">
+              <div class="thumb-mini-col-title">${escapeHtml((c.title || '').slice(0, 20))}</div>
+            </div>
+          `).join('')}
         </div>
       `;
     }
@@ -517,6 +444,129 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
           </div>
         </div>
       `;
+    } else if (layout === 'leaks') {
+      const borderColors = ['#B3001B', '#012969', '#0F172A'];
+      slideBodyContent = `
+        <div class="slide-hero">
+          <h1 class="slide-main-title">${escapeHtml(s.title || 'Titik Kebocoran Omzet')}</h1>
+          <div class="hero-sub-row"><p class="slide-lead-desc">${escapeHtml(s.subtitle || 'Identifikasi friksi kritis yang menguras performa bisnis setiap hari.')}</p></div>
+        </div>
+        <div class="leaks-grid">
+          ${(cards.length ? cards.slice(0, 3) : [{ title: 'Website Lambat', desc: 'Bounce rate tinggi di atas 3 detik.', stat: '68% BOUNCE' }, { title: 'Konten Tanpa Konversi', desc: 'Reels ramai views tapi nol chat WhatsApp.', stat: 'ZERO RETENTION' }, { title: 'Iklan Meta Ads Boncos', desc: 'Junk leads karena targeting kurang tajam.', stat: 'BUDGET BURN' }]).map((c, ci) => `
+            <div class="leak-card" style="border-color: ${borderColors[ci % 3]};">
+              <div>
+                <div class="leak-card-header">
+                  <span class="leak-number-tag" style="background: ${borderColors[ci % 3]};">${escapeHtml(c.badge || `LEAK 0${ci + 1}`)}</span>
+                  <span class="leak-stat-badge">${escapeHtml(c.metricValue || c.stat || 'FRICTION')}</span>
+                </div>
+                <h3 class="leak-title">${escapeHtml(c.title || '')}</h3>
+                <p class="leak-desc">${escapeHtml(c.desc || '')}</p>
+              </div>
+              <div class="leak-impact-box">${escapeHtml(c.footerHighlight || 'Dampak Fatal: Potensi omzet hangus sebelum terjadi konversi.')}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else if (layout === 'hero_flow') {
+      slideBodyContent = `
+        <div class="slide-hero">
+          <h1 class="slide-main-title">${escapeHtml(s.title || 'Sistem Solusi Terpadu')}</h1>
+          <div class="hero-sub-row"><p class="slide-lead-desc">${escapeHtml(s.subtitle || 'Satu komando mengintegrasikan seluruh corong pemasaran tanpa pihak ketiga.')}</p></div>
+        </div>
+        <div class="hero-flow-grid">
+          ${(cards.length ? cards.slice(0, 3) : [{ title: 'CAPTURE', desc: 'Website custom speed < 1.5 detik langsung checkout.' }, { title: 'CONVERT', desc: '20 konten reels/feed dengan fatal hook 3 detik.' }, { title: 'SCALE', desc: 'Managed Meta Ads CBO dengan target CPR < Rp 10rb.' }]).map((c, ci) => `
+            <div class="hero-pilar-card">
+              <div>
+                <div class="hero-pilar-tag">${escapeHtml(c.badge || `PILAR 0${ci + 1} // ALUR`)}</div>
+                <h3 class="hero-pilar-title">${escapeHtml(c.title || '')}</h3>
+                <p class="hero-pilar-desc">${escapeHtml(c.desc || '')}</p>
+              </div>
+              <div class="col-tag-chip" style="color: ${accentColor};"><span class="col-tag-dot" style="background: ${accentColor};"></span><span>${escapeHtml(c.footerHighlight || 'TERKONEKSI')}</span></div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="hero-flow-banner">${escapeHtml(s.quoteTakeaway || 'TERIMA BERES TANPA PERLU REKRUT 3 TIM IN-HOUSE TERPISAH')}</div>
+      `;
+    } else if (layout === 'deliverables') {
+      slideBodyContent = `
+        <div class="slide-hero">
+          <h1 class="slide-main-title">${escapeHtml(s.title || 'Deliverables & Fasilitas')}</h1>
+          <div class="hero-sub-row"><p class="slide-lead-desc">${escapeHtml(s.subtitle || 'Rincian spesifikasi fasilitas bulanan wajib yang dieksekusi.')}</p></div>
+        </div>
+        <div class="deliverables-matrix">
+          ${(cards.length ? cards.slice(0, 6) : [{ title: 'Custom Speed Website', desc: 'Hosting dedicated, loading < 1.5 detik.' }, { title: '20 Konten Feed/Reels', desc: 'Format video vertikal sinematik.' }, { title: 'Managed Meta Ads', desc: 'Advantage+ budget optimization.' }, { title: 'Dashboard Transparan', desc: 'Monitoring omzet & leads real-time.' }, { title: 'A/B Creative Testing', desc: 'Pengujian visual winning mingguan.' }, { title: 'Dedicated Closer Lead', desc: 'Konsultasi berkala optimasi konversi.' }]).map((c, ci) => `
+            <div class="deliverable-card">
+              <span class="deliv-code">${escapeHtml(c.badge || `MODUL 0${ci + 1}`)}</span>
+              <h4 class="deliv-title">${escapeHtml(c.title || '')}</h4>
+              <p class="deliv-desc">${escapeHtml(c.desc || '')}</p>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else if (layout === 'economics') {
+      slideBodyContent = `
+        <div class="slide-hero">
+          <h1 class="slide-main-title">${escapeHtml(s.title || 'Unit Economics & Komparasi')}</h1>
+          <div class="hero-sub-row"><p class="slide-lead-desc">${escapeHtml(s.subtitle || 'Perbandingan biaya riil tim in-house vs solusi terpadu agensi.')}</p></div>
+        </div>
+        <div class="economics-wrap">
+          <table class="economics-table">
+            <thead><tr><th>Pos Operasional</th><th>Metode Konvensional / In-House</th><th>Solusi Terpadu Agensi</th></tr></thead>
+            <tbody>
+              ${(cards.length ? cards.slice(0, 4) : [{ title: 'Gaji 3 Tim Terpisah', desc: 'Rp 13 Jt - Rp 18 Jt / bln', footerHighlight: 'Termasuk all-in satu paket' }, { title: 'Biaya Trial Boncos', desc: 'Rp 5.000.000 / bln', footerHighlight: 'SOP CPR < Rp 10.000 teruji' }, { title: 'Manajemen Vendor', desc: 'Koordinasi pusing 3 pihak', footerHighlight: '1 Dedicated Lead Director' }]).map(c => `
+                <tr><td><strong>${escapeHtml(c.title || '')}</strong></td><td>${escapeHtml(c.desc || '')}</td><td style="color: ${accentColor}; font-weight: 700;">✔ ${escapeHtml(c.footerHighlight || 'Optimal')}</td></tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="savings-highlight">${escapeHtml(s.quoteTakeaway || 'HEMAT BIAYA OPERASIONAL HINGGA 65% SETIAP BULAN')}</div>
+        </div>
+      `;
+    } else if (layout === 'case_studies') {
+      slideBodyContent = `
+        <div class="slide-hero">
+          <h1 class="slide-main-title">${escapeHtml(s.title || 'Studi Kasus & Pembuktian')}</h1>
+          <div class="hero-sub-row"><p class="slide-lead-desc">${escapeHtml(s.subtitle || 'Rekam jejak implementasi riil pada brand mitra kami.')}</p></div>
+        </div>
+        <div class="case-studies-grid">
+          ${(cards.length ? cards.slice(0, 2) : [{ title: 'Brand Fashion & Lifestyle', desc: 'Optimasi landing page & Meta Ads CBO.', stat: '3.8x ROI', footerHighlight: 'LEADS NAIK 240%' }, { title: 'Bisnis Properti Lokal', desc: 'Struktur video reels hook & lead qualification.', stat: 'Rp 8.500 CPR', footerHighlight: 'CLOSING UNIT SPK' }]).map((c, ci) => `
+            <div class="case-card">
+              <div>
+                <div class="col-badge" style="color: ${accentColor};">${escapeHtml(c.badge || `STUDI KASUS 0${ci + 1}`)}</div>
+                <div class="case-stat-big">${escapeHtml(c.metricValue || c.stat || '3.5x ROI')}</div>
+                <h3 class="split-col-title">${escapeHtml(c.title || '')}</h3>
+                <p class="split-col-desc">${escapeHtml(c.desc || '')}</p>
+              </div>
+              <div class="col-highlight-box"><span class="col-highlight-text" style="color: ${accentColor};">${escapeHtml(c.footerHighlight || 'TERUJI DI LAPANGAN')}</span></div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else if (layout === 'closing_offer') {
+      slideBodyContent = `
+        <div class="slide-hero">
+          <h1 class="slide-main-title">${escapeHtml(s.title || 'Penawaran Khusus & Garansi')}</h1>
+          <div class="hero-sub-row"><p class="slide-lead-desc">${escapeHtml(s.subtitle || 'Langkah awal aktivasi pertumbuhan bisnis Anda tanpa risiko.')}</p></div>
+        </div>
+        <div class="closing-grid">
+          <div class="offer-card">
+            <div>
+              <div class="col-badge" style="color: ${accentColor};">PENAWARAN EKSEKUTIF</div>
+              <div class="offer-price">${escapeHtml(cards[0]?.metricValue || cards[0]?.stat || 'INVESTASI TERUKUR')}</div>
+              <h3 class="split-col-title">${escapeHtml(cards[0]?.title || 'Onboarding 48 Jam & Eksekusi Cepat')}</h3>
+              <p class="split-col-desc">${escapeHtml(cards[0]?.desc || 'Setup website, produksi konten video, dan kampanye iklan dimulai dalam 2 hari kerja.')}</p>
+            </div>
+            <div class="col-tag-chip" style="color: ${accentColor};"><span>KUNCI HARGA PROMO BULAN INI ➔</span></div>
+          </div>
+          <div class="offer-card" style="border-color: #10B981;">
+            <div>
+              <div class="col-badge" style="color: #10B981;">🛡️ ZERO-RISK GUARANTEE</div>
+              <h3 class="split-col-title">${escapeHtml(cards[1]?.title || 'Garansi Pendampingan Penuh')}</h3>
+              <p class="split-col-desc">${escapeHtml(cards[1]?.desc || 'Jaminan revisi materi dan pendampingan teknis intensif sampai target corong aktif.')}</p>
+            </div>
+            <div class="col-highlight-box" style="color: #10B981;"><span>100% TRANSPARAN TANPA BIAYA TERSEMBUNYI</span></div>
+          </div>
+        </div>
+      `;
     } else {
       const cardsHtml = cards.map((c, cIdx) => {
         const badgeColor = c.badgeColor || (cIdx === 0 ? accentColor : cIdx === 1 ? accentSecondary : accentTertiary);
@@ -558,8 +608,9 @@ function buildExecutiveSlideDeckHtml(slidesData, deckMeta = {}) {
       `;
     }
 
+    const themeClass = s.theme || (idx % 2 === 0 ? 'theme-navy' : 'theme-cream');
     return `
-      <section class="slide-section ${idx === 0 ? 'active' : ''}" data-index="${idx}" id="slide-${idx}">
+      <section class="slide-section ${themeClass} ${idx === 0 ? 'active' : ''}" data-index="${idx}" id="slide-${idx}">
         <div class="slide-canvas slide-layout-${layout}">
           ${isPlayfulCute ? `
             <div class="paw-watermark paw-bg-1">${(typeof getCutePawSvg === 'function' ? getCutePawSvg(accentColor, 72) : '')}</div>
