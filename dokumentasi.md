@@ -2081,6 +2081,30 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
   4. **Kepatuhan Sub-800 Baris**:
      - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris` (misal `presentation_location_picker.js`: 328 baris).
 
+### 191. Rilis Versi v2.150.308 - Smart Proposal Location Confirmation Flow & Dynamic Existing Deck Recognition
+- **Waktu Rilis**: 2026-09-24 00:30 WIB
+- **Fokus Utama**: Mengintegrasikan alur konfirmasi cerdas di mana AI secara proaktif mengajukan pertanyaan konfirmasi lokasi folder simpan atau mendeteksi deck eksisting, dilengkapi tombol interaktif: *"🚀 Ya, Langsung Lanjut di Folder Ini"*, *"📁 Pilih Lokasi Folder Simpan yang Berbeda..."*, dan *"📄 Pilih File PDF/HTML Eksisting untuk Direvisi..."*.
+- **Akar Kebutuhan & Desain Interaksi**:
+  1. *Pertanyaan Interaktif Cerdas*: Daripada langsung membebani pengguna dengan form isian direktori, AI mengajukan pertanyaan terstruktur:
+     - *"Saya akan menggunakan folder ini untuk menyimpan slide deck: `[target_dir]`"*
+     - *"Apakah Anda ingin langsung lanjut di folder ini, atau ingin memilih lokasi folder simpan yang berbeda?"*
+  2. *Deteksi Otomatis Slide Deck Eksisting*:
+     - Sistem secara asinkron memindai arsip lokal (`list_slide_decks`) berdasarkan topik yang diminta. Jika deck ditemukan, AI memunculkan notifikasi: *"Saya menemukan slide deck yang sudah ada di folder ini: [nama_deck] ([n] slide)"* dan tombol *"📄 Buka & Revisi Deck Ini di Canvas"*.
+  3. *Transisi Dua State (Proposal View & Picker View)*:
+     - State 1 (`loc-proposal-section`): Menampilkan pertanyaan proposal, badge path aktif, dan tombol pilihan cepat.
+     - State 2 (`loc-picker-section`): Muncul saat pengguna mengklik *"📁 Pilih Lokasi Folder Simpan yang Berbeda..."*, menyediakan input direktori, tombol browse OS Zenity native (`select_save_directory_dialog`), tombol preset folder cepat, dan tombol *"✔ Gunakan Folder Ini & Lanjutkan"*.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Refaktor Dua State di `presentation_location_picker.js`**:
+     - Membangun UI interaktif dengan transisi in-place tanpa me-reload DOM kartu.
+     - Menyediakan tombol *"⬅ Kembali"* untuk beralih kembali ke tampilan proposal jika diinginkan.
+     - Menyediakan feedback visual status terkonfirmasi hijau *"✔ Lokasi Simpan Terkunci: [path]"*.
+  2. **Auto-Send Dispatcher & Bypass Reset Safeguard**:
+     - Mengotomasi pengiriman prompt chat `"📁 Gunakan folder: [path]. Silakan lanjutkan perancangan slide deck sekarang."` saat pengguna mengonfirmasi pilihan.
+     - Menyesuaikan regex `isButtonTriggeredLocation` di `extension/sidepanel.js` untuk mengidentifikasi trigger ini agar `window.__hasConfirmedDeckSaveLocation` tidak di-reset secara keliru.
+  3. **Kepatuhan Sub-800 Baris Mutlak**:
+     - `extension/design/presentation_location_picker.js` bertambah menjadi 475 baris (jauh di bawah batas 798 baris).
+     - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
+
 
 
 

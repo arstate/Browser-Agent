@@ -3835,12 +3835,11 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
           const contentEl = assistantBubble.querySelector('.message-content') || assistantBubble;
           if (contentEl) {
             contentEl.style.display = 'block';
-            const introHtml = `<div class="presentation-prompt-intro" style="margin-bottom: 10px; line-height: 1.5; color: var(--text-color, #E2E8F0); font-size: 13px;">
-              <div style="font-weight: 700; color: #38BDF8; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+            const introHtml = `<div class="presentation-prompt-intro" style="margin-bottom: 6px; line-height: 1.5; color: var(--text-color, #E2E8F0); font-size: 13px;">
+              <div style="font-weight: 700; color: #38BDF8; display: flex; align-items: center; gap: 6px;">
                 <span>📁</span>
-                <span>Konfirmasi Lokasi Simpan & Opsi Revisi Slide Deck</span>
+                <span>Konfirmasi Lokasi Simpan Slide Deck</span>
               </div>
-              Silakan pilih folder penyimpanan slide deck Anda di bawah ini, atau pilih file PDF/HTML eksisting di PC untuk langsung direvisi di Canvas Drawer:
             </div>`;
             if (!contentEl.querySelector('.presentation-prompt-intro')) {
               const introDiv = document.createElement('div');
@@ -3867,7 +3866,7 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
 
         return {
           status: "location_required",
-          error: "MANDATORI LOKASI PENYIMPANAN: Kartu tombol pemilihan lokasi penyimpanan file PDF/HTML dan opsi revisi file eksisting telah disajikan kepada pengguna di gelembung chat. Master Agent DILARANG membuat slide deck sebelum pengguna mengklik tombol 'Simpan ke Folder Ini' atau memilih file PDF eksisting untuk direvisi."
+          error: "MANDATORI KONFIRMASI LOKASI SIMPAN: Kartu pertanyaan konfirmasi lokasi folder dan opsi revisi eksisting telah disajikan ke pengguna di gelembung chat. Master Agent DILARANG membuat slide deck sebelum pengguna mengonfirmasi folder simpan atau memilih file eksisting untuk direvisi."
         };
       }
 
@@ -4077,12 +4076,11 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
         const contentEl = assistantBubble.querySelector('.message-content') || assistantBubble;
         if (contentEl) {
           contentEl.style.display = 'block';
-          const introHtml = `<div class="presentation-prompt-intro" style="margin-bottom: 10px; line-height: 1.5; color: var(--text-color, #E2E8F0); font-size: 13px;">
-            <div style="font-weight: 700; color: #38BDF8; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          const introHtml = `<div class="presentation-prompt-intro" style="margin-bottom: 6px; line-height: 1.5; color: var(--text-color, #E2E8F0); font-size: 13px;">
+            <div style="font-weight: 700; color: #38BDF8; display: flex; align-items: center; gap: 6px;">
               <span>📁</span>
-              <span>Konfirmasi Lokasi Simpan & Opsi Revisi Slide Deck</span>
+              <span>Konfirmasi Lokasi Simpan Slide Deck</span>
             </div>
-            Silakan tentukan folder penyimpanan file presentasi Anda di bawah ini, atau pilih file PDF/HTML yang sudah ada di PC untuk langsung direvisi di Canvas Drawer:
           </div>`;
           if (!contentEl.querySelector('.presentation-prompt-intro')) {
             const introDiv = document.createElement('div');
@@ -4112,7 +4110,7 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
         topic: topic,
         proposed_title: proposedTitle,
         current_target_dir: (typeof getActiveSlideDeckTargetDir === "function" ? getActiveSlideDeckTargetDir() : defaultDir) || "~/.browser-agent/presentations",
-        message: "Kartu pemilihan lokasi penyimpanan dan opsi revisi file PDF eksisting telah ditampilkan ke pengguna di chat bubble. Pengguna dapat memilih folder via dialog OS / tombol cepat atau memilih file PDF eksisting untuk direvisi."
+        message: "Pertanyaan konfirmasi lokasi penyimpanan dan opsi revisi eksisting telah diajukan kepada pengguna di gelembung chat. Menunggu pilihan interaktif dari pengguna (lanjut di folder saat ini atau pilih folder berbeda)."
       };
     }
 
@@ -15947,7 +15945,8 @@ function handleSendMessage() {
   const hasAgentActionOrAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|tab|browser|url|web)/i.test(displayMessage || "");
 
   const isButtonTriggeredLocation = (displayMessage || "").includes("📁 Lokasi penyimpanan telah saya set ke:") || 
-                                    (displayMessage || "").includes("📄 Tolong muat dan revisi slide dari file:");
+                                    (displayMessage || "").includes("📁 Gunakan folder:") ||
+                                    (displayMessage || "").includes("📄 Tolong muat dan revisi slide dari");
   if (isExplicitSlide && !isButtonTriggeredLocation && typeof window !== 'undefined') {
     window.__hasConfirmedDeckSaveLocation = false;
   }
