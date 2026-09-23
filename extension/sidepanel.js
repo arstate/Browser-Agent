@@ -7888,9 +7888,10 @@ Tugas Anda:
           let toolOutput = "";
           let isImageGen = (toolName === "generate_image");
           let genImgResult = null;
+          let toolResult = null;
 
           try {
-            const toolResult = await executeTool(toolName, toolArgs, assistantBubble, {
+            toolResult = await executeTool(toolName, toolArgs, assistantBubble, {
               sessionExecutedTools: [...sessionExecutedTools],
               userMessage: userMessage,
               currentStep: currentStep

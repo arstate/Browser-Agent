@@ -45,6 +45,25 @@ function renderSlideDeckHtml(slidesData, deckMeta = {}) {
   return "";
 }
 
+function isSchemaOrMetaLine(str) {
+  if (!str) return false;
+  const clean = str.replace(/^[-*•\d.\s]+/, "").replace(/[*_~`#]/g, "").trim().toLowerCase();
+  if (/^(?:\d+\s+)?(?:stat\s*cards?|summary\s*cards?|balanced\s*summary(?:\s*cards?)?|balanced\s*cards?|grid\s*cards?|pilar\s*cards?|cards?)\b/i.test(clean)) return true;
+  if (/^(?:page\s*number|slide\s*number|nomor\s*slide|halaman|page|slide)\s*[:=-]/i.test(clean)) return true;
+  if (/^(?:badge|kategori|tag|title|judul|subjudul|subtitle|layout|tipe)\s*[:=-]/i.test(clean)) return true;
+  return false;
+}
+
+function isPlaceholderCard(cardTitle, cardDesc) {
+  const t = (cardTitle || "").replace(/[*_~`]/g, "").trim().toLowerCase();
+  const d = (cardDesc || "").replace(/[*_~`]/g, "").trim().toLowerCase();
+  if (/^(?:\d+\s+)?(?:stat\s*cards?|summary\s*cards?|balanced\s*summary(?:\s*cards?)?|page\s*number|slide\s*number|badge|title|subtitle|subjudul|judul)$/i.test(t)) return true;
+  if (/^(?:\d+\s+)?(?:stat\s*cards?|summary\s*cards?|balanced\s*summary(?:\s*cards?)?)$/i.test(d)) return true;
+  if (/^page\s*number\s*\d+$/i.test(d)) return true;
+  if (t === d && /cards?|summary|badge|page/i.test(t)) return true;
+  return false;
+}
+
 function parseMarkdownToSlides(content, userPrompt = "") {
   if (!content || typeof content !== 'string') return [];
 
@@ -76,26 +95,6 @@ function parseMarkdownToSlides(content, userPrompt = "") {
     const cards = [];
     let quoteText = "";
     let quoteAuthor = "";
-
-function isSchemaOrMetaLine(str) {
-  if (!str) return false;
-  const clean = str.replace(/^[-*•\d.\s]+/, "").replace(/[*_~`#]/g, "").trim().toLowerCase();
-  if (/^(?:\d+\s+)?(?:stat\s*cards?|summary\s*cards?|balanced\s*summary(?:\s*cards?)?|balanced\s*cards?|grid\s*cards?|pilar\s*cards?|cards?)\b/i.test(clean)) return true;
-  if (/^(?:page\s*number|slide\s*number|nomor\s*slide|halaman|page|slide)\s*[:=-]/i.test(clean)) return true;
-  if (/^(?:badge|kategori|tag|title|judul|subjudul|subtitle|layout|tipe)\s*[:=-]/i.test(clean)) return true;
-  return false;
-}
-
-function isPlaceholderCard(cardTitle, cardDesc) {
-  const t = (cardTitle || "").replace(/[*_~`]/g, "").trim().toLowerCase();
-  const d = (cardDesc || "").replace(/[*_~`]/g, "").trim().toLowerCase();
-  if (/^(?:\d+\s+)?(?:stat\s*cards?|summary\s*cards?|balanced\s*summary(?:\s*cards?)?|page\s*number|slide\s*number|badge|title|subtitle|subjudul|judul)$/i.test(t)) return true;
-  if (/^(?:\d+\s+)?(?:stat\s*cards?|summary\s*cards?|balanced\s*summary(?:\s*cards?)?)$/i.test(d)) return true;
-  if (/^page\s*number\s*\d+$/i.test(d)) return true;
-  if (t === d && /cards?|summary|badge|page/i.test(t)) return true;
-  return false;
-}
-
     let slideBadge = "";
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];

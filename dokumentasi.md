@@ -2105,6 +2105,28 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - `extension/design/presentation_location_picker.js` bertambah menjadi 475 baris (jauh di bawah batas 798 baris).
      - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
 
+### 192. Rilis Versi v2.150.309 - Fix ReferenceError `toolResult is not defined` & `isPlaceholderCard is not defined`
+- **Waktu Rilis**: 2026-09-24 00:45 WIB
+- **Fokus Utama**: Menuntaskan runtime ReferenceError yang menyebabkan kegagalan Agent Loop saat pengguna membuat slide deck serta warning konsol pada DOMParser extraction.
+- **Akar Masalah (Root Causes)**:
+  1. *ReferenceError: toolResult is not defined*:
+     - Di `extension/sidepanel.js`, variabel `toolResult` dideklarasikan dengan `const toolResult` di dalam blok `try { ... }`.
+     - Ketika baris 7978 memeriksa `toolResult?.status === "location_required"` di luar blok `try`, V8 melempar `ReferenceError: toolResult is not defined`, menyebabkan agen loop berhenti dengan status "Terjadi Kendala AI / Rate Limit".
+  2. *ReferenceError: isPlaceholderCard is not defined*:
+     - Di `extension/design/slide_deck_engine.js`, fungsi `isPlaceholderCard` dan `isSchemaOrMetaLine` secara tidak sengaja terkurung di dalam callback `validSlides.map` pada fungsi `parseMarkdownToSlides`.
+     - Fungsi terpisah `extractSlidesFromRawHtml` tidak dapat menjangkau fungsi tersebut sehingga `DOMParser` gagal memproses kartu slide.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Relokasi Deklarasi Scope `toolResult`**:
+     - Menempatkan `let toolResult = null;` di luar blok `try` (baris 7891) pada loop eksekusi ReAct di `extension/sidepanel.js`.
+     - Hasil eksekusi `await executeTool(...)` kini dapat diakses secara aman di seluruh alur ReAct tanpa melempar ReferenceError.
+  2. **Elevasi `isPlaceholderCard` & `isSchemaOrMetaLine` ke Module Scope**:
+     - Mengangkat kedua fungsi utilitas tersebut ke module level scope (di atas `parseMarkdownToSlides`) di `extension/design/slide_deck_engine.js`.
+     - `parseMarkdownToSlides` dan `extractSlidesFromRawHtml` kini dapat memanggil fungsi filter kartu tanpa error.
+  3. **Verifikasi Kepatuhan Sub-800 Baris**:
+     - `slide_deck_engine.js` tetap ramping pada 792 baris (`<= 798 baris`).
+     - Seluruh 16 berkas di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
+
+
 
 
 
