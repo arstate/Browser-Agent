@@ -1145,6 +1145,36 @@ body.has-messages.stickman-active .chat-messages {
   pointer-events: none;
 }
 
+.chat-history-sentinel .btn-load-earlier-chunk {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  margin: 10px 0 6px 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-pill, 20px);
+  color: var(--text-muted, #94A3B8);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.chat-history-sentinel .btn-load-earlier-chunk:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(206, 241, 40, 0.4);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.chat-history-sentinel .btn-load-earlier-chunk svg {
+  color: var(--accent-color, #CEF128);
+}
+
 .chat-history-loader-subtle {
   display: flex;
   justify-content: center;

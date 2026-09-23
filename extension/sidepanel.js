@@ -13714,29 +13714,26 @@ async function executeSaveCurrentSessionToDB() {
       if (nativePort) {
         let rpcSession = sessionData;
         let serialized = JSON.stringify({ session: rpcSession });
-        if (serialized.length > 650 * 1024 && Array.isArray(rpcSession.messages)) {
-          const msgs = rpcSession.messages;
-          if (msgs.length > 40) {
-            rpcSession = {
-              ...sessionData,
-              messages: [msgs[0], ...msgs.slice(-35)]
-            };
-            serialized = JSON.stringify({ session: rpcSession });
-          }
-          if (serialized.length > 650 * 1024 && Array.isArray(rpcSession.messages)) {
-            rpcSession = {
-              ...rpcSession,
-              messages: rpcSession.messages.map((m, idx, arr) => {
-                if (idx === arr.length - 1) return m;
-                return {
-                  role: m.role,
-                  content: typeof m.content === 'string' ? m.content.slice(0, 400) : (Array.isArray(m.content) ? '[Lampiran]' : ''),
-                  tool_calls: m.tool_calls,
-                  tool_call_id: m.tool_call_id
-                };
-              })
-            };
-          }
+        if (serialized.length > 700 * 1024 && Array.isArray(rpcSession.messages)) {
+          // Preserve 100% of messages: compress text of older messages instead of slicing array
+          rpcSession = {
+            ...sessionData,
+            messages: rpcSession.messages.map((m, idx, arr) => {
+              if (idx >= arr.length - 15) return m;
+              let c = m.content;
+              if (typeof c === 'string' && c.length > 1500) {
+                c = c.slice(0, 1500) + '... [arsip tersimpan]';
+              }
+              return {
+                role: m.role,
+                content: c,
+                tool_calls: m.tool_calls,
+                tool_call_id: m.tool_call_id,
+                agentInfo: m.agentInfo
+              };
+            })
+          };
+          serialized = JSON.stringify({ session: rpcSession });
         }
         await sendNativeRpc("db_save_session", { session: rpcSession }, 0, 25000);
       }
@@ -14090,7 +14087,7 @@ function updateTopHistorySentinel(isActivelyLoading = false) {
   let beginningBanner = document.getElementById('chat-beginning-banner');
 
   if (currentRenderedMessageStartIndex <= 0) {
-    // Reached the true start of history
+    // Reached the true start of history (earliest messages)
     if (sentinel) sentinel.remove();
     if (!beginningBanner && conversationHistory && conversationHistory.length > 0) {
       beginningBanner = document.createElement('div');
@@ -14101,7 +14098,7 @@ function updateTopHistorySentinel(isActivelyLoading = false) {
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
-          <span>Awal percakapan</span>
+          <span>Awal percakapan (${conversationHistory.length} pesan)</span>
         </div>
       `;
       chatMessages.insertBefore(beginningBanner, chatMessages.firstChild);
@@ -14125,7 +14122,24 @@ function updateTopHistorySentinel(isActivelyLoading = false) {
         </div>
       `;
     } else {
-      sentinel.innerHTML = '';
+      const remainingCount = currentRenderedMessageStartIndex;
+      sentinel.innerHTML = `
+        <button type="button" class="btn-load-earlier-chunk" id="btn-manual-load-earlier" title="Klik untuk memuat 40 pesan sebelumnya, atau Shift+Klik untuk muat semua">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+          <span>Muat pesan sebelumnya (${remainingCount} tersisa)</span>
+        </button>
+      `;
+      const manualBtn = sentinel.querySelector('#btn-manual-load-earlier');
+      if (manualBtn) {
+        manualBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const loadAll = e.shiftKey || e.altKey;
+          loadNextEarlierMessagesBatch(loadAll);
+        });
+      }
     }
 
     if (sentinel !== chatMessages.firstChild) {
@@ -14317,65 +14331,81 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
 
 let isLoadingEarlierMessages = false;
 
-function loadNextEarlierMessagesBatch() {
+function loadNextEarlierMessagesBatch(loadAll = false) {
   if (isLoadingEarlierMessages || currentRenderedMessageStartIndex <= 0) return;
   isLoadingEarlierMessages = true;
+  updateTopHistorySentinel(true);
 
-  const batchSize = 45;
-  const nextStartIndex = Math.max(0, currentRenderedMessageStartIndex - batchSize);
-  const slice = conversationHistory.slice(nextStartIndex, currentRenderedMessageStartIndex);
-  currentRenderedMessageStartIndex = nextStartIndex;
+  try {
+    const batchSize = 40;
+    const nextStartIndex = loadAll ? 0 : Math.max(0, currentRenderedMessageStartIndex - batchSize);
+    const slice = conversationHistory.slice(nextStartIndex, currentRenderedMessageStartIndex);
+    currentRenderedMessageStartIndex = nextStartIndex;
 
-  // 1. Identify the top message element currently visible to use as anchor
-  let anchorEl = chatMessages ? chatMessages.querySelector('.message') : null;
-  const prevAnchorRect = anchorEl ? anchorEl.getBoundingClientRect() : null;
-  const prevScrollHeight = chatMessages ? chatMessages.scrollHeight : 0;
-  const prevScrollTop = chatMessages ? chatMessages.scrollTop : 0;
-  const prevDocHeight = document.documentElement.scrollHeight;
-  const prevWindowScrollY = window.scrollY;
+    // 1. Identify the top message element currently visible to use as anchor
+    const anchorEl = chatMessages ? chatMessages.querySelector('.message') : null;
+    const prevAnchorRect = anchorEl ? anchorEl.getBoundingClientRect() : null;
+    const prevChatScrollHeight = chatMessages ? chatMessages.scrollHeight : 0;
+    const prevChatScrollTop = chatMessages ? chatMessages.scrollTop : 0;
 
-  // 2. Prepend slice cleanly into DOM
-  renderMessageSliceIntoDOM(slice, true);
+    const fullscreenChatMain = document.querySelector('.fullscreen-chat-main');
+    const prevFsScrollHeight = fullscreenChatMain ? fullscreenChatMain.scrollHeight : 0;
+    const prevFsScrollTop = fullscreenChatMain ? fullscreenChatMain.scrollTop : 0;
 
-  // 3. Update top beginning indicator / sentinel
-  updateTopHistorySentinel(false);
+    const prevDocHeight = document.documentElement.scrollHeight;
+    const prevWindowScrollY = window.scrollY;
 
-  // 4. Pixel-perfect zero-latency scroll restoration before paint
-  if (anchorEl && prevAnchorRect) {
-    const newAnchorRect = anchorEl.getBoundingClientRect();
-    const delta = newAnchorRect.top - prevAnchorRect.top;
+    // 2. Prepend slice cleanly into DOM
+    renderMessageSliceIntoDOM(slice, true);
 
-    if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
-      chatMessages.scrollTop += delta;
+    // 3. Pixel-perfect zero-latency scroll restoration before paint
+    if (anchorEl && prevAnchorRect) {
+      const newAnchorRect = anchorEl.getBoundingClientRect();
+      const delta = newAnchorRect.top - prevAnchorRect.top;
+
+      if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
+        chatMessages.scrollTop += delta;
+      }
+      if (fullscreenChatMain && fullscreenChatMain.scrollHeight > fullscreenChatMain.clientHeight) {
+        fullscreenChatMain.scrollTop += delta;
+      }
+      if (delta !== 0 && (window.scrollY > 0 || prevWindowScrollY > 0)) {
+        window.scrollBy({ top: delta, behavior: 'instant' });
+      }
+    } else {
+      if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
+        const diff = chatMessages.scrollHeight - prevChatScrollHeight;
+        chatMessages.scrollTop = prevChatScrollTop + diff;
+      }
+      if (fullscreenChatMain && fullscreenChatMain.scrollHeight > fullscreenChatMain.clientHeight) {
+        const diff = fullscreenChatMain.scrollHeight - prevFsScrollHeight;
+        fullscreenChatMain.scrollTop = prevFsScrollTop + diff;
+      }
+      const docDiff = document.documentElement.scrollHeight - prevDocHeight;
+      if (docDiff > 0 && typeof window.scrollTo === 'function') {
+        window.scrollTo({ top: prevWindowScrollY + docDiff, behavior: 'instant' });
+      }
     }
-    if (delta !== 0 && (window.scrollY > 0 || prevWindowScrollY > 0)) {
-      window.scrollBy({ top: delta, behavior: 'instant' });
-    }
-  } else {
-    if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
-      const scrollHeightDiff = chatMessages.scrollHeight - prevScrollHeight;
-      chatMessages.scrollTop = prevScrollTop + scrollHeightDiff;
-    }
-    const docHeightDiff = document.documentElement.scrollHeight - prevDocHeight;
-    if (docHeightDiff > 0 && typeof window.scrollTo === 'function') {
-      window.scrollTo({ top: prevWindowScrollY + docHeightDiff, behavior: 'instant' });
-    }
-  }
-
-  // 5. Fast double-RAF release so rapid scrolls can cascade fluidly without micro-stutter
-  requestAnimationFrame(() => {
+  } catch (err) {
+    console.error("Error loading earlier messages chunk:", err);
+  } finally {
+    // 4. Update top indicator and release guard
     requestAnimationFrame(() => {
-      isLoadingEarlierMessages = false;
-      checkPreemptiveScrollPosition();
+      requestAnimationFrame(() => {
+        isLoadingEarlierMessages = false;
+        updateTopHistorySentinel(false);
+        checkPreemptiveScrollPosition();
+      });
     });
-  });
+  }
 }
 
 function checkPreemptiveScrollPosition() {
   if (isInitialSessionLoading || isLoadingEarlierMessages || currentRenderedMessageStartIndex <= 0) return;
 
-  const triggerMargin = 650; // Anticipatory margin: preload when within 650px of top
+  const triggerMargin = 800; // Anticipatory margin: preload when within 800px of top
 
+  // 1. Check sidepanel container (#chat-messages)
   if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
     if (chatMessages.scrollTop <= triggerMargin) {
       loadNextEarlierMessagesBatch();
@@ -14383,8 +14413,19 @@ function checkPreemptiveScrollPosition() {
     }
   }
 
+  // 2. Check fullscreen container (.fullscreen-chat-main)
+  const fullscreenChatMain = document.querySelector('.fullscreen-chat-main');
+  if (fullscreenChatMain && fullscreenChatMain.scrollHeight > fullscreenChatMain.clientHeight) {
+    if (fullscreenChatMain.scrollTop <= triggerMargin) {
+      loadNextEarlierMessagesBatch();
+      return;
+    }
+  }
+
+  // 3. Check window / document scroll
   if (typeof window !== 'undefined' && document.body.classList.contains('has-messages')) {
-    if (window.scrollY <= (triggerMargin + 150)) {
+    const winScroll = window.scrollY || document.documentElement.scrollTop || 0;
+    if (winScroll <= (triggerMargin + 150)) {
       loadNextEarlierMessagesBatch();
       return;
     }
@@ -14392,6 +14433,7 @@ function checkPreemptiveScrollPosition() {
 }
 
 function initReverseInfiniteScroll() {
+  // 1. Listen on #chat-messages
   if (chatMessages && !chatMessages.dataset.boundTopAutoLoad) {
     chatMessages.dataset.boundTopAutoLoad = 'true';
     chatMessages.addEventListener('scroll', () => {
@@ -14399,11 +14441,22 @@ function initReverseInfiniteScroll() {
     }, { passive: true });
   }
 
+  // 2. Listen on window
   if (typeof window !== 'undefined' && !window.boundTopAutoLoadWindow) {
     window.boundTopAutoLoadWindow = true;
     window.addEventListener('scroll', () => {
       checkPreemptiveScrollPosition();
     }, { passive: true });
+  }
+
+  // 3. Listen on document scroll with capture for .fullscreen-chat-main
+  if (typeof document !== 'undefined' && !document.body.dataset.boundTopAutoLoadDoc) {
+    document.body.dataset.boundTopAutoLoadDoc = 'true';
+    document.addEventListener('scroll', (e) => {
+      if (e.target && e.target.classList && e.target.classList.contains('fullscreen-chat-main')) {
+        checkPreemptiveScrollPosition();
+      }
+    }, { capture: true, passive: true });
   }
 }
 
@@ -14550,7 +14603,7 @@ async function resumeSession(sessionId) {
   if (welcomeCard) welcomeCard.style.display = 'none';
   document.body.classList.add('has-messages');
 
-  const INITIAL_BATCH_SIZE = 50;
+  const INITIAL_BATCH_SIZE = 40;
   currentRenderedMessageStartIndex = Math.max(0, conversationHistory.length - INITIAL_BATCH_SIZE);
   const initialSlice = conversationHistory.slice(currentRenderedMessageStartIndex);
 
@@ -14617,6 +14670,12 @@ function resetChatMessagesUI() {
   } else if (typeof window !== 'undefined' && typeof window.closeOpenDesignCanvas === 'function') {
     window.closeOpenDesignCanvas();
   }
+  currentRenderedMessageStartIndex = 0;
+  const oldSentinel = document.getElementById('chat-history-top-sentinel');
+  if (oldSentinel) oldSentinel.remove();
+  const oldBanner = document.getElementById('chat-beginning-banner');
+  if (oldBanner) oldBanner.remove();
+
   if (!chatMessages) return;
   const workspace = document.getElementById('agent-workspace');
   if (welcomeCard && workspace && workspace.contains(welcomeCard) && !chatMessages.contains(welcomeCard)) {

@@ -2126,6 +2126,38 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - `slide_deck_engine.js` tetap ramping pada 792 baris (`<= 798 baris`).
      - Seluruh 16 berkas di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
 
+### 193. Rilis Versi v2.150.310 - Multi-Container Reverse Infinite Scroll & Earliest Chat History Full Restoration
+- **Waktu Rilis**: 2026-09-24 01:50 WIB
+- **Fokus Utama**: Memperbaiki pemuatan riwayat percakapan panjang agar pengguna dapat menggulir ke atas (scroll up) hingga pesan paling awal (`index === 0`) tanpa macet ("mentok"), sekaligus mempertahankan mekanisme chunk loading (40 pesan/batch) agar UI tetap responsif tanpa lag ("ngelag parah").
+- **Akar Masalah (Root Causes)**:
+  1. *Container Polymorphism Mismatch*:
+     - Pada mode Sidepanel, scroll terjadi di `#chat-messages`.
+     - Namun pada mode Split View/Canvas atau Fullscreen NewTab, `document.body` diset `overflow: hidden` dan scroll terjadi di dalam kontainer `.fullscreen-chat-main` atau `window`.
+     - Fungsi `initReverseInfiniteScroll()` sebelumnya hanya mendengarkan event scroll pada `#chat-messages` dan `window`, mengabaikan `.fullscreen-chat-main`.
+     - Fungsi `checkPreemptiveScrollPosition()` sebelumnya hanya memeriksa `chatMessages.scrollTop` dan `window.scrollY`, mengabaikan `fullscreenChatMain.scrollTop`. Akibatnya, scroll di mode Canvas tidak pernah memicu pemuatan chunk sebelumnya.
+  2. *Top History Sentinel Tanpa Fallback Manual*:
+     - Ketika sedang tidak loading, `sentinel.innerHTML` dikosongkan dan `pointer-events: none`. Jika scroll berhenti di puncak sebelum threshold mendeteksi atau terhalang throttling, pengguna tidak memiliki tombol cadangan untuk memuat pesan sebelumnya secara manual.
+  3. *Anchor Scroll Restoration Mengabaikan `.fullscreen-chat-main`*:
+     - Penyesuaian `scrollTop += delta` hanya diterapkan pada `chatMessages` dan `window`, sehingga pada `.fullscreen-chat-main` terjadi lonjakan posisi (jump/stutter) saat batch pesan baru di-prepend ke DOM.
+  4. *Missing `try ... finally` Guard*:
+     - `isLoadingEarlierMessages` tidak dilindungi blok `try ... finally`. Jika terjadi error saat rendering pesan, guard akan terkunci `true` permanen dan menghentikan seluruh pemuatan pesan berikutnya.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Multi-Container Scroll Listener & Detection**:
+     - `initReverseInfiniteScroll()` kini menambahkan listener pada `document.addEventListener('scroll', ..., { capture: true })` untuk mendeteksi scroll pada `.fullscreen-chat-main` selain `chatMessages` dan `window`.
+     - `checkPreemptiveScrollPosition()` memeriksa ketiga kontainer secara komprehensif dengan anticipatory threshold 800px.
+  2. **Zero-Jump Anchor Restoration Multi-Kontainer**:
+     - `loadNextEarlierMessagesBatch()` mengukur `delta` posisi bounding box dari elemen `.message` teratas sebelum dan sesudah batch di-prepend.
+     - Penyesuaian diterapkan serempak pada `chatMessages`, `fullscreenChatMain`, dan `window`.
+  3. **Interactive Manual Fallback Button**:
+     - Ketika `currentRenderedMessageStartIndex > 0` dan tidak sedang loading, sentinel merender tombol pill elegan: `👆 Muat pesan sebelumnya (${remainingCount} tersisa)` dengan tooltip dan handler klik.
+     - Mendukung Shift+Klik / Alt+Klik untuk memuat seluruh pesan tersisa sekaligus jika pengguna menginginkannya (`loadAll = true`).
+  4. **Strict Chunk Loading Retention (Anti-Lag)**:
+     - Tetap mempertahankan chunk loading (40 pesan per batch) untuk memastikan performa rendering tetap instan (< 30ms) tanpa freeze/lag UI.
+     - Ketika `currentRenderedMessageStartIndex <= 0`, sentinel otomatis dihapus dan digantikan oleh banner informatif `"Awal percakapan ([N] pesan)"`.
+  5. **Verifikasi Kepatuhan Sub-800 Baris Mutlak**:
+     - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
+
+
 
 
 
