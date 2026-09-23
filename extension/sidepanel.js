@@ -3824,6 +3824,53 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
         };
       }
 
+      // MANDATORY LOCATION CONFIRMATION HARD GATE:
+      // Sebelum slide deck dibuat, pengguna WAJIB disajikan tombol pemilihan folder simpan dan opsi revisi file PDF eksisting!
+      const isConfirmedLocation = (typeof window !== 'undefined' && window.__hasConfirmedDeckSaveLocation) || 
+                                  pastTools.includes("prompt_presentation_save_location");
+
+      if (!isConfirmedLocation) {
+        // Tampilkan kartu pemilihan lokasi langsung ke bubble sekarang juga!
+        if (assistantBubble) {
+          const contentEl = assistantBubble.querySelector('.message-content') || assistantBubble;
+          if (contentEl) {
+            contentEl.style.display = 'block';
+            const introHtml = `<div class="presentation-prompt-intro" style="margin-bottom: 10px; line-height: 1.5; color: var(--text-color, #E2E8F0); font-size: 13px;">
+              <div style="font-weight: 700; color: #38BDF8; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span>📁</span>
+                <span>Konfirmasi Lokasi Simpan & Opsi Revisi Slide Deck</span>
+              </div>
+              Silakan pilih folder penyimpanan slide deck Anda di bawah ini, atau pilih file PDF/HTML eksisting di PC untuk langsung direvisi di Canvas Drawer:
+            </div>`;
+            if (!contentEl.querySelector('.presentation-prompt-intro')) {
+              const introDiv = document.createElement('div');
+              introDiv.innerHTML = introHtml;
+              contentEl.appendChild(introDiv.firstElementChild);
+            }
+            if (typeof renderPresentationLocationCard === 'function') {
+              renderPresentationLocationCard(contentEl, {
+                topic: topic,
+                proposedTitle: topic,
+                defaultDir: (typeof getActiveSlideDeckTargetDir === "function" ? getActiveSlideDeckTargetDir() : null),
+                onConfirmed: (chosenDir) => {
+                  if (typeof showUniversalToast === 'function') {
+                    showUniversalToast(`📁 Lokasi penyimpanan diset ke: ${chosenDir}`);
+                  }
+                }
+              });
+            }
+            if (typeof scrollToBottom === 'function') {
+              scrollToBottom();
+            }
+          }
+        }
+
+        return {
+          status: "location_required",
+          error: "MANDATORI LOKASI PENYIMPANAN: Kartu tombol pemilihan lokasi penyimpanan file PDF/HTML dan opsi revisi file eksisting telah disajikan kepada pengguna di gelembung chat. Master Agent DILARANG membuat slide deck sebelum pengguna mengklik tombol 'Simpan ke Folder Ini' atau memilih file PDF eksisting untuk direvisi."
+        };
+      }
+
       // Extract user attached images from history if any
       let userImages = [];
       if (typeof conversationHistory !== 'undefined' && Array.isArray(conversationHistory)) {
@@ -7928,7 +7975,9 @@ Tugas Anda:
           });
 
           // If clarification or presentation save location prompt requested, stop loop and wait for user's interactive button choice
-          if (toolName === "ask_clarification" || toolName === "prompt_presentation_save_location") {
+          if (toolName === "ask_clarification" || 
+              toolName === "prompt_presentation_save_location" || 
+              toolResult?.status === "location_required") {
             shouldStopTurn = true;
             break;
           }
@@ -11093,8 +11142,16 @@ let pendingStreamingData = null;
 function renderStreamingChunk(data) {
   if (!data || !data.contentEl) return;
   const existingCard = data.contentEl.querySelector('.opendesign-result-card');
+  const existingLocCard = data.contentEl.querySelector('.presentation-loc-card');
+  const existingIntro = data.contentEl.querySelector('.presentation-prompt-intro');
   const formatted = formatMarkdown(data.text);
   data.contentEl.innerHTML = formatted + '<span class="streaming-cursor"></span>';
+  if (existingIntro) {
+    data.contentEl.appendChild(existingIntro);
+  }
+  if (existingLocCard) {
+    data.contentEl.appendChild(existingLocCard);
+  }
   if (existingCard) {
     data.contentEl.appendChild(existingCard);
   } else if (data.bubble?._activeDesignArtifact && typeof renderOpenDesignCard === 'function') {
@@ -11110,6 +11167,8 @@ function updateAssistantText(bubble, text, isStreaming = false) {
   if (!contentEl) return;
 
   const existingCard = contentEl.querySelector('.opendesign-result-card');
+  const existingLocCard = contentEl.querySelector('.presentation-loc-card');
+  const existingIntro = contentEl.querySelector('.presentation-prompt-intro');
 
   if (!isStreaming) {
     // Final flush - execute immediately
@@ -11120,6 +11179,12 @@ function updateAssistantText(bubble, text, isStreaming = false) {
     pendingStreamingData = null;
     contentEl.style.display = 'block';
     contentEl.innerHTML = formatMarkdown(text);
+    if (existingIntro) {
+      contentEl.appendChild(existingIntro);
+    }
+    if (existingLocCard) {
+      contentEl.appendChild(existingLocCard);
+    }
     if (existingCard) {
       contentEl.appendChild(existingCard);
     } else if (bubble?._activeDesignArtifact && typeof renderOpenDesignCard === 'function') {
@@ -15880,6 +15945,12 @@ function handleSendMessage() {
   const isDeckRevisionReq = !isSocialMedia && Boolean(canvasIsOpen && activeArt && activeArt.html && isSlideDeckRevisionInstruction(displayMessage || ""));
   const isExplicitExternalWeb = /^(?:https?:\/\/|www\.)|(?:buka\s+(?:url|web|situs|link|tab\s+baru))\s+https?:/i.test(displayMessage || "");
   const hasAgentActionOrAnalysis = /(?:analisis|analisa|audit|evaluasi|cek\s+|pantau|inspect|buka\s+|ekstrak|scrape|search|cari\s+|riset|hitung|bandingkan|kaji|investigasi|tab|browser|url|web)/i.test(displayMessage || "");
+
+  const isButtonTriggeredLocation = (displayMessage || "").includes("📁 Lokasi penyimpanan telah saya set ke:") || 
+                                    (displayMessage || "").includes("📄 Tolong muat dan revisi slide dari file:");
+  if (isExplicitSlide && !isButtonTriggeredLocation && typeof window !== 'undefined') {
+    window.__hasConfirmedDeckSaveLocation = false;
+  }
 
   if (currentChatMode === 'design') {
     // Mode Design = 100% Otomatis Membuat atau Merevisi Slide Deck Eksekutif 16:9 untuk Topik Apa Pun

@@ -2064,6 +2064,23 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Menambahkan `safeEscapeHtml` independen di `presentation_location_picker.js` dan null-check pada semua tombol.
      - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` patuh `<= 798 baris` (misal `presentation_location_picker.js`: 321 baris).
 
+### 190. Rilis Versi v2.150.307 - Hard Gate Enforcement on create_slide_deck_design & Streaming-Proof Card Preservation
+- **Waktu Rilis**: 2026-09-24 00:15 WIB
+- **Fokus Utama**: Menuntaskan masalah di mana LLM melompati tool pemilihan lokasi dan langsung membuat slide deck tanpa persetujuan user, serta hilangnya kartu lokasi saat asisten mengetik teks jawaban di bubble chat.
+- **Akar Masalah (Root Causes)**:
+  1. *LLM Melompati Tool*: Meskipun diinstruksikan dalam prompt, LLM sering langsung memanggil `create_slide_deck_design` tanpa memanggil `prompt_presentation_save_location`. `create_slide_deck_design` sebelumnya tidak memiliki guard yang memeriksa apakah lokasi sudah dikonfirmasi.
+  2. *Wipe-out di renderStreamingChunk & updateAssistantText*: Setiap kali teks jawaban asisten diperbarui, `innerHTML = formatMarkdown(text)` menghapus kartu lokasi karena hanya mempertahankan `.opendesign-result-card`.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Hard Gate pada `create_slide_deck_design`**:
+     - Jika `!window.__hasConfirmedDeckSaveLocation` dan belum pernah dikonfirmasi, `create_slide_deck_design` **MENOLAK** eksekusi perancangan slide deck!
+     - Secara otomatis menyisipkan kartu `.presentation-loc-card` ke dalam bubble chat, mengembalikan status `location_required`, dan memicu jeda ReAct loop (`shouldStopTurn = true; break;`).
+  2. **Proteksi Kartu di `renderStreamingChunk` & `updateAssistantText`**:
+     - Mengamankan `.presentation-loc-card` dan `.presentation-prompt-intro` agar selalu dipasang kembali setelah render markdown selesai.
+  3. **Auto-Reset Flag pada Prompt Manual Baru**:
+     - Setiap perintah slide deck baru dari user di-reset status konfirmasinya di `handleSendMessage`, memastikan kartu selalu muncul di setiap pembuatan deck baru.
+  4. **Kepatuhan Sub-800 Baris**:
+     - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris` (misal `presentation_location_picker.js`: 328 baris).
+
 
 
 

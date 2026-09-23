@@ -252,6 +252,10 @@ function renderPresentationLocationCard(containerEl, options = {}) {
               });
             }
 
+            if (typeof window !== "undefined") {
+              window.__hasConfirmedDeckSaveLocation = true;
+            }
+
             if (typeof showUniversalToast === "function") {
               showUniversalToast(`📖 Memuat '${filePath.split('/').pop()}' ke Canvas untuk revisi!`);
             }
@@ -285,6 +289,9 @@ function renderPresentationLocationCard(containerEl, options = {}) {
     btnConfirm.addEventListener('click', () => {
       const selectedPath = inputEl?.value?.trim() || initialDir;
       setActiveSlideDeckTargetDir(selectedPath);
+      if (typeof window !== "undefined") {
+        window.__hasConfirmedDeckSaveLocation = true;
+      }
       btnConfirm.disabled = true;
       btnConfirm.style.background = '#10B981';
       btnConfirm.innerHTML = `<span>✔ Lokasi Simpan Terkunci</span>`;
