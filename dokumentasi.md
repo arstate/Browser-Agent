@@ -2040,6 +2040,30 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Seluruh file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
      - Validasi sintaks `node -c` lulus 100%.
 
+### 189. Rilis Versi v2.150.306 - Mandatory Slide Deck Location Prompt, ReAct Pause Guard, & Bubble Card Anti-Wipe Protection
+- **Waktu Rilis**: 2026-09-24 00:00 WIB
+- **Fokus Utama**: Menuntaskan masalah di mana tombol pemilihan lokasi simpan dan file PDF eksisting tidak muncul di layar pengguna saat eksekusi pembuatan slide deck, disebabkan oleh ReAct agent loop yang tidak berhenti (tidak ada pause) dan pembersihan bubble (`contentEl.innerHTML = ''`) di awal setiap langkah tindakan.
+- **Akar Masalah (Root Causes)**:
+  1. *Ketiadaan Pause Loop*: Tool `prompt_presentation_save_location` sebelumnya tidak menyetel `shouldStopTurn = true; break;`, sehingga setelah memanggil tool, agen langsung melanjutkan eksekusi ke langkah berikutnya di turn yang sama.
+  2. *Wipe-out Kartu Bubble*: Di awal setiap langkah ReAct, `contentEl.innerHTML = ''` hanya mempertahankan `.opendesign-result-card` dan menghapus kartu `.presentation-loc-card`. Selain itu, jika tidak ada teks akhir dan tidak ada design card, `contentEl.style.display = 'none'` menyembunyikan bubble sepenuhnya.
+  3. *Uncaught ReferenceError*: Pada lingkungan tertentu, `escapeHtml` belum terdefinisi saat modular script dimuat, menyebabkan pemanggilan fungsi melempar error sebelum elemen terpasang ke DOM.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Mandatori ReAct Pause Guard**:
+     - Memperbarui pengecekan `shouldStopTurn` di `sidepanel.js`:
+       `if (toolName === "ask_clarification" || toolName === "prompt_presentation_save_location") { shouldStopTurn = true; break; }`
+     - Menambahkan handler `hasLocationPrompt` pasca-loop yang menghentikan eksekusi agen (`isExecuting = false; return;`) dan memperbarui status aktif: *"Master Design: Menunggu pemilihan lokasi folder atau file revisi di chat..."*.
+  2. **Bubble Card Anti-Wipe Protection**:
+     - Memperbarui logika pembersihan bubble ReAct agar mempertahankan `.presentation-loc-card` dan `.presentation-prompt-intro`:
+       `if (card || locCard) { if (intro) contentEl.appendChild(intro); if (locCard) contentEl.appendChild(locCard); if (card) contentEl.appendChild(card); contentEl.style.display = 'block'; }`
+     - Memperbarui pengecekan akhir `hasCard`:
+       `const hasCard = !!contentEl.querySelector('.opendesign-result-card') || !!contentEl.querySelector('.presentation-loc-card');`
+  3. **Auto-Dispatch Chat Interaktif**:
+     - Tombol *"🚀 Simpan ke Folder Ini & Buka Canvas"* otomatis mengunci path dan memicu chat *"📁 Lokasi penyimpanan telah saya set ke: [path]..."* sehingga agen langsung melanjutkan pembuatan presentasi secara otonom.
+     - Tombol *"📄 Pilih File PDF/HTML Eksisting untuk Direvisi..."* otomatis membuka dialog file Zenity native, memuat file ke Canvas Drawer, dan memicu chat minta revisi.
+  4. **Pencegahan Error & Standar Sub-800 Baris**:
+     - Menambahkan `safeEscapeHtml` independen di `presentation_location_picker.js` dan null-check pada semua tombol.
+     - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` patuh `<= 798 baris` (misal `presentation_location_picker.js`: 321 baris).
+
 
 
 

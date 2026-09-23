@@ -1296,9 +1296,9 @@ ATURAN KRUSIAL:
    - TAHAP 1 (ANALISIS MANDIRI): Master Agent WAJIB memeriksa tab browser aktif atau mengekstrak data tabel riil terlebih dahulu (gunakan \`browser_list_tabs\`, \`browser_switch_tab\`, \`browser_extract_table\`, \`browser_snapshot\`, \`browser_evaluate_script\`, dll). DILARANG KERAS langsung memanggil \`create_slide_deck_design\` di Step 1 tanpa mengambil data riil terlebih dahulu!
    - TAHAP 2 (PERUMUSAN PPT SLIDE BRIEF): Setelah temuan data riil terkumpul, Master Agent merumuskan brief presentasi slide-by-slide yang kaya data, metrik konkrit, dan rekomendasi taktis.
    - TAHAP 3 (DELEGASI KE MASTER DESIGN): Barulah Master Agent memanggil tool \`create_slide_deck_design({ topic, slide_count, detailed_outline_or_content, design_archetype })\` dengan menyertakan brief temuan riil tersebut. Master Design akan langsung merancang dan memperbarui slide deck 16:9 widescreen di Canvas Drawer.
-5. 📂 PROTOKOL MANAJEMEN DECK LOKAL & REVISI PRESISI (CHECK EXISTING -> CONFIRM/ASK -> REVISE SLIDE):
-   Setiap kali pengguna meminta membuat, mengecek, atau merevisi pitch deck / slide deck / presentasi:
-   - TAHAP 1 (PILIH LOKASI / FILE INTERAKTIF): Sebelum membuat slide deck atau saat mendiskusikan materi, panggil \`prompt_presentation_save_location({ topic })\` agar kartu interaktif pemilihan lokasi simpan dan file PDF eksisting muncul di gelembung chat. Pengguna dapat memilih folder via dialog OS atau memilih file PDF eksisting untuk langsung direvisi.
+5. 📂 PROTOKOL MANAJEMEN DECK LOKAL & REVISI PRESISI (CONFIRM LOCATION -> CHECK EXISTING -> REVISE SLIDE):
+   Setiap kali pengguna meminta membuat, mengecek, atau merevisi pitch deck / slide deck / presentasi (misal: "buat slide deck pdf", "bikin pitch deck di canvas", "slide deck opsi 2"):
+   - TAHAP 1 (PILIH LOKASI / FILE INTERAKTIF - WAJIB MUNCULKAN TOMBOL): Master Agent WAJIB memanggil \`prompt_presentation_save_location({ topic })\` di langkah pertama untuk menyajikan tombol interaktif pemilihan lokasi simpan dan file PDF/HTML eksisting di gelembung chat. Sistem akan otomatis berhenti (pause) menunggu pengguna memilih folder atau file sebelum merender presentasi.
    - TAHAP 2 (CEK ARSIP LOKAL): Panggil \`check_existing_slide_decks({ query })\` untuk memeriksa apakah file deck terkait sudah pernah dibuat atau tersimpan di \`~/.browser-agent/presentations/\`. JANGAN langsung membuat deck baru dari nol jika arsip lokal sudah ada!
    - TAHAP 3 (KONFIRMASI / TANYA USER): Jika deck lokal ditemukan, informasikan judul, jumlah slide, dan lokasi PDF-nya. Jika pengguna ingin merevisi, tanyakan: *"Slide nomor berapa yang ingin direvisi?"*, atau jika pengguna sudah menyebutkan nomor slide tertentu (misal: "revisi slide 2"), langsung panggil \`load_slide_deck_to_canvas({ slug })\`.
    - TAHAP 4 (REVISI TARGET SLIDE SECARA PRESISI): Gunakan \`revise_slide_deck_slide({ slide_number, revised_title, revised_cards, ... })\` untuk memperbarui slide yang dimaksud secara bedah presisi tanpa merusak struktur slide lainnya, lalu pastikan tersinkronisasi kembali ke Canvas dan disk.
@@ -4028,18 +4028,35 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
 
       if (assistantBubble) {
         const contentEl = assistantBubble.querySelector('.message-content') || assistantBubble;
-        if (contentEl && typeof renderPresentationLocationCard === 'function') {
+        if (contentEl) {
           contentEl.style.display = 'block';
-          renderPresentationLocationCard(contentEl, {
-            topic: topic,
-            proposedTitle: proposedTitle,
-            defaultDir: defaultDir,
-            onConfirmed: (chosenDir) => {
-              if (typeof showUniversalToast === 'function') {
-                showUniversalToast(`📁 Lokasi penyimpanan diset ke: ${chosenDir}`);
+          const introHtml = `<div class="presentation-prompt-intro" style="margin-bottom: 10px; line-height: 1.5; color: var(--text-color, #E2E8F0); font-size: 13px;">
+            <div style="font-weight: 700; color: #38BDF8; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <span>📁</span>
+              <span>Konfirmasi Lokasi Simpan & Opsi Revisi Slide Deck</span>
+            </div>
+            Silakan tentukan folder penyimpanan file presentasi Anda di bawah ini, atau pilih file PDF/HTML yang sudah ada di PC untuk langsung direvisi di Canvas Drawer:
+          </div>`;
+          if (!contentEl.querySelector('.presentation-prompt-intro')) {
+            const introDiv = document.createElement('div');
+            introDiv.innerHTML = introHtml;
+            contentEl.appendChild(introDiv.firstElementChild);
+          }
+          if (typeof renderPresentationLocationCard === 'function') {
+            renderPresentationLocationCard(contentEl, {
+              topic: topic,
+              proposedTitle: proposedTitle,
+              defaultDir: defaultDir,
+              onConfirmed: (chosenDir) => {
+                if (typeof showUniversalToast === 'function') {
+                  showUniversalToast(`📁 Lokasi penyimpanan diset ke: ${chosenDir}`);
+                }
               }
-            }
-          });
+            });
+          }
+          if (typeof scrollToBottom === 'function') {
+            scrollToBottom();
+          }
         }
       }
 
@@ -7669,13 +7686,17 @@ Tugas Anda:
           console.log(`[Browser Agent] Dynamic maxSteps auto-expanded to ${maxSteps} due to active tool execution.`);
         }
 
-        // Clear interim pseudo-tool strings from bubble so only clean tool section is shown, preserving active design card if present
+        // Clear interim pseudo-tool strings from bubble so only clean tool section is shown, preserving active design card or location card if present
         const contentEl = assistantBubble?.querySelector('.message-content');
         if (contentEl) {
           const card = contentEl.querySelector('.opendesign-result-card');
+          const locCard = contentEl.querySelector('.presentation-loc-card');
+          const intro = contentEl.querySelector('.presentation-prompt-intro');
           contentEl.innerHTML = '';
-          if (card) {
-            contentEl.appendChild(card);
+          if (card || locCard) {
+            if (intro) contentEl.appendChild(intro);
+            if (locCard) contentEl.appendChild(locCard);
+            if (card) contentEl.appendChild(card);
             contentEl.style.display = 'block';
           } else {
             contentEl.style.display = 'none';
@@ -7906,8 +7927,8 @@ Tugas Anda:
             content: finalToolContent
           });
 
-          // If clarification requested, stop loop and wait for user's interactive bubble choice
-          if (toolName === "ask_clarification") {
+          // If clarification or presentation save location prompt requested, stop loop and wait for user's interactive button choice
+          if (toolName === "ask_clarification" || toolName === "prompt_presentation_save_location") {
             shouldStopTurn = true;
             break;
           }
@@ -8027,11 +8048,17 @@ Tugas Anda:
     finalizeTaskScheduleSection(assistantBubble, !reachedMaxSteps);
     finalizeToolSection(assistantBubble, true);
     
-    // If clarification dock was rendered, pause and wait for user option click
+    // If clarification dock or presentation location card was rendered, pause and wait for user button click
     const hasClarification = activeClarificationState !== null || (document.getElementById('clarification-dock-container')?.style.display !== 'none' && document.getElementById('clarification-dock-container')?.innerHTML !== '');
-    if (hasClarification) {
-      updateAssistantActiveAgent(assistantBubble, "Master Agent", "Menunggu arahan Anda...", true, true);
-      updateFooterStatus("Master Agent: Menunggu pilihan arahan di atas input prompt...");
+    const hasLocationPrompt = Boolean(assistantBubble?.querySelector('.presentation-loc-card'));
+    if (hasClarification || hasLocationPrompt) {
+      const waitAgentName = hasLocationPrompt ? "Master Design" : "Master Agent";
+      const waitActionText = hasLocationPrompt ? "Menunggu pilihan lokasi simpan / revisi..." : "Menunggu arahan Anda...";
+      const waitStatusText = hasLocationPrompt 
+        ? "Master Design: Menunggu pemilihan lokasi folder atau file revisi di chat..." 
+        : "Master Agent: Menunggu pilihan arahan di atas input prompt...";
+      updateAssistantActiveAgent(assistantBubble, waitAgentName, waitActionText, !hasLocationPrompt, true);
+      updateFooterStatus(waitStatusText);
       notifyActiveTabExecutionState(false);
       isExecuting = false;
       updateSendButtonState(false);
@@ -8053,7 +8080,11 @@ Tugas Anda:
         notifyActiveTabExecutionState(true, currentStep, maxSteps, `Master Agent: Menyusun laporan akhir (${stepStr})`);
         if (contentEl) {
           const card = contentEl.querySelector('.opendesign-result-card');
+          const locCard = contentEl.querySelector('.presentation-loc-card');
+          const intro = contentEl.querySelector('.presentation-prompt-intro');
           contentEl.innerHTML = '';
+          if (intro) contentEl.appendChild(intro);
+          if (locCard) contentEl.appendChild(locCard);
           if (card) contentEl.appendChild(card);
           contentEl.style.display = 'block';
         }
@@ -8341,7 +8372,7 @@ Tugas Anda:
       const spinner = contentEl.querySelector('.tool-spinner');
       if (spinner) spinner.remove();
       const finalText = (contentEl.innerText || contentEl.textContent || "").trim();
-      const hasCard = !!contentEl.querySelector('.opendesign-result-card');
+      const hasCard = !!contentEl.querySelector('.opendesign-result-card') || !!contentEl.querySelector('.presentation-loc-card');
       if (!finalText && !hasCard && sessionGeneratedImages.length === 0) {
         contentEl.style.display = 'none';
       }
