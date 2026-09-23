@@ -1490,6 +1490,7 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
             let html_content = msg.get("html_content").or_else(|| msg.get("html")).and_then(|v| v.as_str()).unwrap_or("");
             let slides_json = msg.get("slides_data").or_else(|| msg.get("slides")).map(|v| v.to_string()).unwrap_or_else(|| "None".to_string());
             let compile_pdf = msg.get("compile_pdf").and_then(|v| v.as_bool()).unwrap_or(true);
+            let custom_dir = msg.get("custom_dir").or_else(|| msg.get("target_dir")).or_else(|| msg.get("dir")).and_then(|v| v.as_str()).unwrap_or("");
 
             let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis();
             let tmp_html = std::env::temp_dir().join(format!("save_deck_{}.html", ts));
@@ -1497,14 +1498,16 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
 
             let host_dir_str = get_host_dir().to_string_lossy().to_string();
             let py_script = format!(
-                "import sys, json; sys.path.insert(0, '{}'); import native_host; h = open({:?}, 'r', encoding='utf-8').read(); print(json.dumps(native_host.save_slide_deck(title={:?}, slug=None if not {:?} else {:?}, html_content=h, slides_data={}, compile_pdf={})))",
+                "import sys, json; sys.path.insert(0, '{}'); import native_host; h = open({:?}, 'r', encoding='utf-8').read(); print(json.dumps(native_host.save_slide_deck(title={:?}, slug=None if not {:?} else {:?}, html_content=h, slides_data={}, compile_pdf={}, custom_dir=None if not {:?} else {:?})))",
                 host_dir_str,
                 tmp_html.to_string_lossy(),
                 title,
                 slug,
                 slug,
                 slides_json,
-                if compile_pdf { "True" } else { "False" }
+                if compile_pdf { "True" } else { "False" },
+                custom_dir,
+                custom_dir
             );
             let res = if let Ok(out) = Command::new("python3").args(["-c", &py_script]).output() {
                 if let Ok(val) = serde_json::from_slice::<Value>(&out.stdout) {
@@ -1536,6 +1539,44 @@ fn handle_rpc(msg: Value, conn: &Connection) -> Value {
                 }
             } else {
                 json!({ "status": "error", "error": "Python invocation failed for load_slide_deck" })
+            }
+        }
+
+        "select_save_directory_dialog" => {
+            let initial_dir = msg.get("initial_dir").or_else(|| msg.get("start_dir")).and_then(|v| v.as_str()).unwrap_or("");
+            let host_dir_str = get_host_dir().to_string_lossy().to_string();
+            let py_script = format!(
+                "import sys, json; sys.path.insert(0, '{}'); import native_host; print(json.dumps(native_host.select_save_directory_dialog(initial_dir={:?})))",
+                host_dir_str,
+                initial_dir
+            );
+            if let Ok(out) = Command::new("python3").args(["-c", &py_script]).output() {
+                if let Ok(val) = serde_json::from_slice::<Value>(&out.stdout) {
+                    val
+                } else {
+                    json!({ "status": "error", "error": "Failed to parse select_save_directory_dialog output" })
+                }
+            } else {
+                json!({ "status": "error", "error": "Python invocation failed for select_save_directory_dialog" })
+            }
+        }
+
+        "select_presentation_file_dialog" => {
+            let initial_dir = msg.get("initial_dir").or_else(|| msg.get("start_dir")).and_then(|v| v.as_str()).unwrap_or("");
+            let host_dir_str = get_host_dir().to_string_lossy().to_string();
+            let py_script = format!(
+                "import sys, json; sys.path.insert(0, '{}'); import native_host; print(json.dumps(native_host.select_presentation_file_dialog(initial_dir={:?})))",
+                host_dir_str,
+                initial_dir
+            );
+            if let Ok(out) = Command::new("python3").args(["-c", &py_script]).output() {
+                if let Ok(val) = serde_json::from_slice::<Value>(&out.stdout) {
+                    val
+                } else {
+                    json!({ "status": "error", "error": "Failed to parse select_presentation_file_dialog output" })
+                }
+            } else {
+                json!({ "status": "error", "error": "Python invocation failed for select_presentation_file_dialog" })
             }
         }
 

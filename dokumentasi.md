@@ -2015,6 +2015,31 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
      - Seluruh 15 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris` (misal `slide_template.js`: 743 baris, `slide_deck_engine.js`: 793 baris, `slide_styles.js`: 788 baris).
      - Seluruh pengujian native RPC dan ekspor PDF 7-halaman berhasil 100% tanpa error.
 
+### 188. Rilis Versi v2.150.305 - Pre-Execution Slide Deck Destination Picker Card & Native File Selector for PDF/HTML Revisions
+- **Waktu Rilis**: 2026-09-23 23:45 WIB
+- **Fokus Utama**: Menjawab kebutuhan user agar sebelum slide deck dibuat di Canvas Builder, terdapat kartu interaktif di chat bubble yang memungkinkan user memilih lokasi penyimpanan PDF/HTML serta tombol untuk memilih file PDF eksisting jika ingin melakukan revisi.
+- **Fitur Baru & Solusi Rekayasa Teknis**:
+  1. **Interactive Location Picker Card di Chat Bubble**:
+     - Ditangani oleh modul baru `extension/design/presentation_location_picker.js` (285 baris, patuh `<= 798 baris`).
+     - Menampilkan kartu modern dengan:
+       - Preset folder cepat: `~/.browser-agent/presentations`, Dataset Training Deck (`/mnt/DATA/.../PDF SLIDE DECK`), dan `~/Downloads`.
+       - Tombol pilih folder kustom via file manager dialog OS (`Zenity` di Linux).
+       - Tombol pilih file PDF/HTML eksisting untuk langsung dimuat ke Canvas Drawer (`📄 Pilih File PDF/HTML Eksisting untuk Direvisi...`).
+       - Status badge folder aktif yang tersimpan di `localStorage` dan window context.
+  2. **Native Host Dialog Handlers (`host/native_host.py` & `host/rust_host/src/main.rs`)**:
+     - RPC `select_save_directory_dialog`: Membuka Zenity directory picker dengan fallback ke standard paths.
+     - RPC `select_presentation_file_dialog`: Membuka Zenity file picker dengan filter khusus slide deck (`*.pdf`, `*.html`).
+     - Parameter `custom_dir` pada RPC `save_slide_deck`: Menulis `deck.html`, `deck.pdf`, dan `deck_meta.json` langsung ke direktori kustom yang dipilih user, bukan hanya default path.
+     - Binary release Rust `host/browser_agent_host` diperbarui dan dikompilasi ulang dengan `cargo build --release`.
+  3. **Integrasi Tool Agent Baru (`prompt_presentation_save_location`)**:
+     - Didaftarkan pada schema `AGENT_TOOLS` dan `executeTool` di `extension/sidepanel.js`.
+     - Ditambahkan ke Master Agent ReAct loop sebagai design tool dengan atribusi `🎨 Master Design (Slide Architect)`.
+     - Membantu agen bertanya dan menampilkan kartu interaktif pemilihan folder tujuan sebelum proses render panjang.
+     - Sinkronisasi otomatis ke tool `revise_slide_deck_slide` dan `create_slide_deck_design` dengan parameter `custom_dir`.
+  4. **Kepatuhan Sub-800 Baris & Integritas Sistem**:
+     - Seluruh file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
+     - Validasi sintaks `node -c` lulus 100%.
+
 
 
 

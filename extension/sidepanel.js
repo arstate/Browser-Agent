@@ -1298,10 +1298,11 @@ ATURAN KRUSIAL:
    - TAHAP 3 (DELEGASI KE MASTER DESIGN): Barulah Master Agent memanggil tool \`create_slide_deck_design({ topic, slide_count, detailed_outline_or_content, design_archetype })\` dengan menyertakan brief temuan riil tersebut. Master Design akan langsung merancang dan memperbarui slide deck 16:9 widescreen di Canvas Drawer.
 5. 📂 PROTOKOL MANAJEMEN DECK LOKAL & REVISI PRESISI (CHECK EXISTING -> CONFIRM/ASK -> REVISE SLIDE):
    Setiap kali pengguna meminta membuat, mengecek, atau merevisi pitch deck / slide deck / presentasi:
-   - TAHAP 1 (CEK ARSIP LOKAL): Panggil \`check_existing_slide_decks({ query })\` terlebih dahulu untuk memeriksa apakah file deck terkait sudah pernah dibuat atau tersimpan di \`~/.browser-agent/presentations/\`. JANGAN langsung membuat deck baru dari nol jika arsip lokal sudah ada!
-   - TAHAP 2 (KONFIRMASI / TANYA USER): Jika deck lokal ditemukan, informasikan judul, jumlah slide, dan lokasi PDF-nya. Jika pengguna ingin merevisi, tanyakan: *"Slide nomor berapa yang ingin direvisi?"*, atau jika pengguna sudah menyebutkan nomor slide tertentu (misal: "revisi slide 2"), langsung panggil \`load_slide_deck_to_canvas({ slug })\`.
-   - TAHAP 3 (REVISI TARGET SLIDE SECARA PRESISI): Gunakan \`revise_slide_deck_slide({ slide_number, revised_title, revised_cards, ... })\` untuk memperbarui slide yang dimaksud secara bedah presisi tanpa merusak struktur slide lainnya, lalu pastikan tersinkronisasi kembali ke Canvas dan disk.
-   - TAHAP 4 (BUAT BARU HANYA JIKA BELUM ADA): Jika \`check_existing_slide_decks\` menyatakan belum ada deck yang cocok dan pengguna meminta membuat baru, barulah gunakan \`create_slide_deck_design\`.
+   - TAHAP 1 (PILIH LOKASI / FILE INTERAKTIF): Sebelum membuat slide deck atau saat mendiskusikan materi, panggil \`prompt_presentation_save_location({ topic })\` agar kartu interaktif pemilihan lokasi simpan dan file PDF eksisting muncul di gelembung chat. Pengguna dapat memilih folder via dialog OS atau memilih file PDF eksisting untuk langsung direvisi.
+   - TAHAP 2 (CEK ARSIP LOKAL): Panggil \`check_existing_slide_decks({ query })\` untuk memeriksa apakah file deck terkait sudah pernah dibuat atau tersimpan di \`~/.browser-agent/presentations/\`. JANGAN langsung membuat deck baru dari nol jika arsip lokal sudah ada!
+   - TAHAP 3 (KONFIRMASI / TANYA USER): Jika deck lokal ditemukan, informasikan judul, jumlah slide, dan lokasi PDF-nya. Jika pengguna ingin merevisi, tanyakan: *"Slide nomor berapa yang ingin direvisi?"*, atau jika pengguna sudah menyebutkan nomor slide tertentu (misal: "revisi slide 2"), langsung panggil \`load_slide_deck_to_canvas({ slug })\`.
+   - TAHAP 4 (REVISI TARGET SLIDE SECARA PRESISI): Gunakan \`revise_slide_deck_slide({ slide_number, revised_title, revised_cards, ... })\` untuk memperbarui slide yang dimaksud secara bedah presisi tanpa merusak struktur slide lainnya, lalu pastikan tersinkronisasi kembali ke Canvas dan disk.
+   - TAHAP 5 (BUAT BARU HANYA JIKA BELUM ADA): Jika \`check_existing_slide_decks\` menyatakan belum ada deck yang cocok dan pengguna meminta membuat baru, barulah gunakan \`create_slide_deck_design\`.
 6. 🚫 NEGATIVE CONSTRAINT UNTUK SLIDE DECK (ANTI-SLIDE HALLUCINATION):
    DILARANG KERAS memanggil tool \`create_slide_deck_design\` atau \`read_slide_deck\` jika pengguna HANYA meminta ide prompt image (Midjourney, Ideogram, Flux), konten media sosial (Instagram feed / carousel / postingan), atau desain grafis biasa, meskipun pengguna menggunakan kata 'slide' dalam konteks 'slide feed IG' atau 'slide carousel'. Jawab langsung dalam teks Markdown tanpa memanggil tool slide deck!
 
@@ -1309,7 +1310,7 @@ ATURAN KRUSIAL:
 1. 🧠 Autonomous Brain & Self-Evolution Tools: manage_personal_memory, create_autonomous_skill, update_autonomous_skill, create_autonomous_agent, edit_manual_skill, edit_manual_agent, rollback_brain_item, record_anti_pattern, save_epistemic_triplet, query_epistemic_graph, execute_jit_microtool.
 2. 🌐 Browser Automation Tools: browser_navigate, browser_snapshot, browser_click, browser_type, browser_press_key, browser_hover, browser_scroll, browser_control_media, browser_evaluate_script, browser_screenshot, browser_get_console_logs, browser_extract_table, browser_list_tabs, browser_switch_tab, browser_wait.
 3. 💻 Local PC Tools: view_document, inspect_page_detail, local_read_file, local_write_file, local_list_dir, local_run_command.
-4. 🎨 AI Image & Presentation Design: generate_image(prompt, size), check_existing_slide_decks(query), load_slide_deck_to_canvas(slug), revise_slide_deck_slide(slide_number, revised_title, ...), create_slide_deck_design(topic, slide_count, detailed_outline_or_content, design_archetype), read_slide_deck(slide_numbers, detail_level).
+4. 🎨 AI Image & Presentation Design: generate_image(prompt, size), prompt_presentation_save_location(topic, default_dir), check_existing_slide_decks(query), load_slide_deck_to_canvas(slug), revise_slide_deck_slide(slide_number, revised_title, ...), create_slide_deck_design(topic, slide_count, detailed_outline_or_content, design_archetype), read_slide_deck(slide_numbers, detail_level).
 5. 💬 Interactive Clarification & Multi-Agent Swarm: ask_clarification, agent_subtask_analysis, summon_specialist_agent.
 6. 📱 Built-in Connected Apps & Telegram Bot Remote: configure_telegram_bot, get_telegram_bot_status, telegram_send_message.
 7. 📑 Google Workspace REST API Suite: gsuite_create_presentation, gsuite_append_slide, gsuite_create_doc, gsuite_append_doc_text, gsuite_replace_doc_content, gsuite_read_doc, gsuite_create_sheet, gsuite_append_sheet_row, gsuite_update_sheet_range, gsuite_read_sheet, gsuite_send_gmail, gsuite_search_gmail, gsuite_search_drive, gsuite_create_form, gsuite_create_calendar_event, gsuite_create_task, gsuite_search_contacts, gsuite_get_status.
@@ -1575,6 +1576,27 @@ const AGENT_TOOLS = [
             description: "Detail level: 'full' (all card texts, stats, and badges) or 'summary' (titles and layouts only). Defaults to 'full'."
           }
         }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "prompt_presentation_save_location",
+      description: "Presents an interactive Location & File Picker card in the chat message bubble BEFORE generating or revising a presentation slide deck. This allows the user to browse/select a custom target folder (via native OS dialog) to save the PDF/HTML, or select an existing PDF/HTML file on their PC to load into Canvas for revision.",
+      parameters: {
+        type: "object",
+        properties: {
+          topic: {
+            type: "string",
+            description: "Title or topic of the presentation (e.g. 'Pitch Deck Profil Tiar Property')"
+          },
+          default_dir: {
+            type: "string",
+            description: "Optional suggested default destination directory (e.g. '~/.browser-agent/presentations')"
+          }
+        },
+        required: ["topic"]
       }
     }
   },
@@ -3882,18 +3904,21 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
           : `🎨 Master Design: Presentasi 16:9 (${artifact.slideCount} Slide) berhasil dibuka di Canvas!`);
       }
 
-      // Auto-save presentation to local disk (~/.browser-agent/presentations/<slug>/)
+      // Auto-save presentation to local disk (~/.browser-agent/presentations/<slug>/ or custom_dir)
       const rpcFnSave = (typeof sendNativeRpc === 'function')
         ? sendNativeRpc
         : (typeof window !== 'undefined' && typeof window.sendNativeRpc === 'function' ? window.sendNativeRpc : null);
       if (rpcFnSave && artifact.html) {
+        const targetSaveDir = args.target_dir || (typeof getActiveSlideDeckTargetDir === "function" ? getActiveSlideDeckTargetDir() : null);
         rpcFnSave("save_slide_deck", {
           title: artifact.meta?.title || topic,
           html_content: artifact.html,
+          custom_dir: targetSaveDir,
           meta: {
             title: artifact.meta?.title || topic,
             slide_count: artifact.slideCount,
             theme: artifact.meta?.theme || designArchetype,
+            target_dir: targetSaveDir,
             created_at: new Date().toISOString()
           }
         }).catch(() => {});
@@ -3993,6 +4018,37 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
         slides_inspected: formattedSlides.length,
         slides: formattedSlides,
         guidance: "Tinjau detail slide di atas. Jika ingin memecah/merevisi slide, susun rencana materi baru (bebas placeholder schema tags), lalu panggil create_slide_deck_design dan verifikasi ulang."
+      };
+    }
+
+    case "prompt_presentation_save_location": {
+      const topic = args.topic || "Slide Deck Presentation";
+      const proposedTitle = args.proposed_title || topic;
+      const defaultDir = args.default_dir || (typeof getActiveSlideDeckTargetDir === "function" ? getActiveSlideDeckTargetDir() : null);
+
+      if (assistantBubble) {
+        const contentEl = assistantBubble.querySelector('.message-content') || assistantBubble;
+        if (contentEl && typeof renderPresentationLocationCard === 'function') {
+          contentEl.style.display = 'block';
+          renderPresentationLocationCard(contentEl, {
+            topic: topic,
+            proposedTitle: proposedTitle,
+            defaultDir: defaultDir,
+            onConfirmed: (chosenDir) => {
+              if (typeof showUniversalToast === 'function') {
+                showUniversalToast(`📁 Lokasi penyimpanan diset ke: ${chosenDir}`);
+              }
+            }
+          });
+        }
+      }
+
+      return {
+        status: "location_prompted",
+        topic: topic,
+        proposed_title: proposedTitle,
+        current_target_dir: (typeof getActiveSlideDeckTargetDir === "function" ? getActiveSlideDeckTargetDir() : defaultDir) || "~/.browser-agent/presentations",
+        message: "Kartu pemilihan lokasi penyimpanan dan opsi revisi file PDF eksisting telah ditampilkan ke pengguna di chat bubble. Pengguna dapat memilih folder via dialog OS / tombol cepat atau memilih file PDF eksisting untuk direvisi."
       };
     }
 
@@ -4220,13 +4276,16 @@ async function executeTool(name, args, assistantBubble = null, executionContext 
       let savedDir = "";
       if (rpcFn) {
         try {
+          const targetSaveDir = (typeof getActiveSlideDeckTargetDir === "function" ? getActiveSlideDeckTargetDir() : null) || activeArt?.meta?.target_dir;
           const saveRes = await rpcFn("save_slide_deck", {
             title: deckTitle,
             html_content: newHtml,
+            custom_dir: targetSaveDir,
             meta: {
               title: deckTitle,
               slide_count: allSlides.length,
               revised_slide: slideNum,
+              target_dir: targetSaveDir,
               updated_at: new Date().toISOString()
             }
           });
@@ -7638,7 +7697,7 @@ Tugas Anda:
           const isLocalTool = toolName.startsWith("local_");
           const isAnalysisTool = (toolName === "agent_subtask_analysis");
           const isClarificationTool = (toolName === "ask_clarification");
-          const isDesignTool = (toolName === "create_slide_deck_design" || toolName === "read_slide_deck" || toolName === "check_existing_slide_decks" || toolName === "load_slide_deck_to_canvas" || toolName === "revise_slide_deck_slide");
+          const isDesignTool = (toolName === "create_slide_deck_design" || toolName === "read_slide_deck" || toolName === "check_existing_slide_decks" || toolName === "load_slide_deck_to_canvas" || toolName === "revise_slide_deck_slide" || toolName === "prompt_presentation_save_location");
           let activeWorkerAgent = null;
 
           if (isClarificationTool) {
@@ -7693,6 +7752,8 @@ Tugas Anda:
             badgeActionName = `${toolArgs.focus || 'Analisis Data'}`;
           } else if (isClarificationTool) {
             badgeActionName = "Konfirmasi Opsi Pilihan";
+          } else if (toolName === "prompt_presentation_save_location") {
+            badgeActionName = `Meminta Pilihan Lokasi Simpan / Revisi PDF`;
           } else if (toolName === "create_slide_deck_design") {
             badgeActionName = `Merancang Slide Deck 16:9 (${toolArgs.slide_count || 10} Slide)`;
           } else if (toolName === "read_slide_deck") {
@@ -7744,6 +7805,7 @@ Tugas Anda:
             else if (toolName.startsWith("manage_") || toolName.startsWith("db_")) userFriendlyAction = `Mengakses memori agen...`;
             else if (toolName.startsWith("gsuite_doc") || toolName.includes("doc")) userFriendlyAction = `Mengakses Google Docs...`;
             else if (toolName.startsWith("gsuite_sheet") || toolName.includes("sheet")) userFriendlyAction = `Mengakses Google Sheets...`;
+            else if (toolName === "prompt_presentation_save_location") userFriendlyAction = `📁 Menampilkan opsi lokasi penyimpanan & revisi PDF...`;
             else if (toolName === "create_slide_deck_design") userFriendlyAction = `🎨 Merancang slide deck 16:9 di Canvas Drawer...`;
             else if (toolName === "read_slide_deck") userFriendlyAction = `📖 Memeriksa isi slide di Canvas Drawer...`;
             else if (toolName === "check_existing_slide_decks") userFriendlyAction = `Memeriksa arsip presentasi di penyimpanan lokal...`;

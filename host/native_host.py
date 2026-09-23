@@ -3995,13 +3995,53 @@ def list_slide_decks():
     decks.sort(key=lambda d: d.get("updated_at", ""), reverse=True)
     return {"status": "ok", "decks": decks, "count": len(decks)}
 
-def save_slide_deck(title="presentation", slug=None, html_content="", slides_data=None, compile_pdf=True):
+def select_save_directory_dialog(initial_dir=""):
+    try:
+        start_dir = os.path.expanduser(initial_dir) if initial_dir else PRESENTATIONS_DIR
+        if not os.path.isdir(start_dir):
+            start_dir = os.path.expanduser("~")
+        cmd = ["zenity", "--file-selection", "--directory", "--title=Pilih Folder Penyimpanan Slide Deck", f"--filename={start_dir}/"]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if res.returncode == 0 and res.stdout.strip():
+            selected = res.stdout.strip()
+            return {"status": "ok", "selected_directory": selected, "path": selected}
+        return {"status": "cancelled", "message": "Pemilihan folder dibatalkan"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+def select_presentation_file_dialog(initial_dir=""):
+    try:
+        start_dir = os.path.expanduser(initial_dir) if initial_dir else PRESENTATIONS_DIR
+        if not os.path.isdir(start_dir):
+            start_dir = os.path.expanduser("~")
+        cmd = [
+            "zenity", "--file-selection",
+            "--title=Pilih File PDF atau HTML Slide Deck Eksisting",
+            f"--filename={start_dir}/",
+            "--file-filter=Slide Decks (*.pdf *.html) | *.pdf *.html",
+            "--file-filter=All Files | *"
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if res.returncode == 0 and res.stdout.strip():
+            selected = res.stdout.strip()
+            return {"status": "ok", "selected_file": selected, "path": selected}
+        return {"status": "cancelled", "message": "Pemilihan file dibatalkan"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+def save_slide_deck(title="presentation", slug=None, html_content="", slides_data=None, compile_pdf=True, custom_dir=None):
     if not html_content:
         return {"status": "error", "error": "No html_content provided"}
     try:
         clean_slug = (slug or title).lower()
         clean_slug = re.sub(r'[^a-z0-9]+', '_', clean_slug).strip('_')[:60] or "slide_deck"
-        deck_dir = os.path.join(PRESENTATIONS_DIR, clean_slug)
+        if custom_dir:
+            exp_dir = os.path.expanduser(custom_dir)
+            if not os.path.isabs(exp_dir):
+                exp_dir = os.path.join(PRESENTATIONS_DIR, exp_dir)
+            deck_dir = exp_dir
+        else:
+            deck_dir = os.path.join(PRESENTATIONS_DIR, clean_slug)
         os.makedirs(deck_dir, exist_ok=True)
 
         html_path = os.path.join(deck_dir, "deck.html")
@@ -4360,13 +4400,26 @@ def handle_local_rpc(msg):
         html_content = msg.get("html_content") or msg.get("html") or ""
         slides_data = msg.get("slides_data") or msg.get("slides")
         compile_pdf = msg.get("compile_pdf", True)
-        res = save_slide_deck(title=title, slug=slug, html_content=html_content, slides_data=slides_data, compile_pdf=compile_pdf)
+        custom_dir = msg.get("custom_dir") or msg.get("target_dir") or msg.get("dir")
+        res = save_slide_deck(title=title, slug=slug, html_content=html_content, slides_data=slides_data, compile_pdf=compile_pdf, custom_dir=custom_dir)
         res["id"] = req_id
         return res
 
     elif action == "load_slide_deck":
         slug_or_path = msg.get("slug") or msg.get("slug_or_path") or msg.get("path") or ""
         res = load_slide_deck(slug_or_path=slug_or_path)
+        res["id"] = req_id
+        return res
+
+    elif action == "select_save_directory_dialog":
+        initial_dir = msg.get("initial_dir") or msg.get("start_dir") or ""
+        res = select_save_directory_dialog(initial_dir=initial_dir)
+        res["id"] = req_id
+        return res
+
+    elif action == "select_presentation_file_dialog":
+        initial_dir = msg.get("initial_dir") or msg.get("start_dir") or ""
+        res = select_presentation_file_dialog(initial_dir=initial_dir)
         res["id"] = req_id
         return res
 
