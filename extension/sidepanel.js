@@ -14128,13 +14128,14 @@ function updateTopHistorySentinel(isActivelyLoading = false) {
         </div>
       `;
     } else {
+      const chunkToShow = Math.min(30, remainingCount);
       sentinel.innerHTML = `
         <div class="chat-history-sentinel-inner">
-          <button type="button" class="btn-load-earlier-chunk" id="btn-manual-load-earlier" title="Klik untuk memuat seluruh riwayat percakapan hingga pesan paling awal">
+          <button type="button" class="btn-load-earlier-chunk" id="btn-manual-load-earlier" title="Klik untuk memuat ${chunkToShow} pesan sebelumnya (Shift+Klik untuk muat semua)">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="18 15 12 9 6 15"></polyline>
             </svg>
-            <span>Muat Semua Riwayat (${remainingCount} pesan awal tersisa)</span>
+            <span>Muat pesan sebelumnya (${chunkToShow} dari ${remainingCount} tersisa)</span>
           </button>
         </div>
       `;
@@ -14143,7 +14144,7 @@ function updateTopHistorySentinel(isActivelyLoading = false) {
         manualBtn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          loadNextEarlierMessagesBatch(true);
+          loadNextEarlierMessagesBatch(e.shiftKey || false);
         });
       }
     }
@@ -14336,162 +14337,75 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
 }
 
 let isLoadingEarlierMessages = false;
-let progressiveHydrationTimer = null;
-
-function hydrateRemainingHistoryProgressively() {
-  if (progressiveHydrationTimer) {
-    clearTimeout(progressiveHydrationTimer);
-    progressiveHydrationTimer = null;
-  }
-
-  // If already reached beginning (0) or history empty, stop
-  if (currentRenderedMessageStartIndex <= 0 || !Array.isArray(conversationHistory) || conversationHistory.length === 0) {
-    updateTopHistorySentinel(false);
-    return;
-  }
-
-  progressiveHydrationTimer = setTimeout(() => {
-    if (!currentSessionId || currentRenderedMessageStartIndex <= 0) return;
-
-    // Check if user is pinned near bottom before prepending
-    const chatIsAtBottom = chatMessages ? ((chatMessages.scrollHeight - chatMessages.clientHeight - chatMessages.scrollTop) < 180) : true;
-    const fullscreenChatMain = document.querySelector('.fullscreen-chat-main');
-    const fsIsAtBottom = fullscreenChatMain ? ((fullscreenChatMain.scrollHeight - fullscreenChatMain.clientHeight - fullscreenChatMain.scrollTop) < 180) : true;
-    const winIsAtBottom = typeof window !== 'undefined' ? ((document.documentElement.scrollHeight - window.innerHeight - (window.scrollY || 0)) < 180) : true;
-
-    const prevChatScrollHeight = chatMessages ? chatMessages.scrollHeight : 0;
-    const prevChatScrollTop = chatMessages ? chatMessages.scrollTop : 0;
-    const prevFsScrollHeight = fullscreenChatMain ? fullscreenChatMain.scrollHeight : 0;
-    const prevFsScrollTop = fullscreenChatMain ? fullscreenChatMain.scrollTop : 0;
-    const prevDocHeight = document.documentElement.scrollHeight;
-    const prevWindowScrollY = window.scrollY;
-
-    const batchSize = 40;
-    const nextStartIndex = Math.max(0, currentRenderedMessageStartIndex - batchSize);
-    const slice = conversationHistory.slice(nextStartIndex, currentRenderedMessageStartIndex);
-    currentRenderedMessageStartIndex = nextStartIndex;
-
-    renderMessageSliceIntoDOM(slice, true);
-
-    // Maintain stable scroll position without throwing the user downwards
-    if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
-      if (chatIsAtBottom) {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      } else if (prevChatScrollTop > 60) {
-        const diff = chatMessages.scrollHeight - prevChatScrollHeight;
-        chatMessages.scrollTop = prevChatScrollTop + diff;
-      }
-    }
-
-    if (fullscreenChatMain && fullscreenChatMain.scrollHeight > fullscreenChatMain.clientHeight) {
-      if (fsIsAtBottom) {
-        fullscreenChatMain.scrollTop = fullscreenChatMain.scrollHeight;
-      } else if (prevFsScrollTop > 60) {
-        const diff = fullscreenChatMain.scrollHeight - prevFsScrollHeight;
-        fullscreenChatMain.scrollTop = prevFsScrollTop + diff;
-      }
-    }
-
-    if (typeof window !== 'undefined' && (prevWindowScrollY > 0 || winIsAtBottom)) {
-      if (winIsAtBottom) {
-        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
-      } else if (prevWindowScrollY > 60) {
-        const diff = document.documentElement.scrollHeight - prevDocHeight;
-        window.scrollTo({ top: prevWindowScrollY + diff, behavior: 'instant' });
-      }
-    }
-
-    updateTopHistorySentinel(false);
-
-    // Queue next batch if earlier messages still exist
-    if (currentRenderedMessageStartIndex > 0) {
-      hydrateRemainingHistoryProgressively();
-    }
-  }, 90);
-}
+let scrollPreloadCooldown = false;
 
 function loadNextEarlierMessagesBatch(loadAll = false) {
   if (isLoadingEarlierMessages || currentRenderedMessageStartIndex <= 0) return;
   isLoadingEarlierMessages = true;
   updateTopHistorySentinel(true);
 
-  if (progressiveHydrationTimer) {
-    clearTimeout(progressiveHydrationTimer);
-    progressiveHydrationTimer = null;
-  }
-
   try {
-    const batchSize = 40;
+    const batchSize = 30;
     const nextStartIndex = loadAll ? 0 : Math.max(0, currentRenderedMessageStartIndex - batchSize);
     const slice = conversationHistory.slice(nextStartIndex, currentRenderedMessageStartIndex);
     currentRenderedMessageStartIndex = nextStartIndex;
 
     const fullscreenChatMain = document.querySelector('.fullscreen-chat-main');
-    const chatIsAtBottom = chatMessages ? ((chatMessages.scrollHeight - chatMessages.clientHeight - chatMessages.scrollTop) < 180) : false;
-    const fsIsAtBottom = fullscreenChatMain ? ((fullscreenChatMain.scrollHeight - fullscreenChatMain.clientHeight - fullscreenChatMain.scrollTop) < 180) : false;
-    const winIsAtBottom = typeof window !== 'undefined' ? ((document.documentElement.scrollHeight - window.innerHeight - (window.scrollY || 0)) < 180) : false;
-
+    const firstMsgBefore = (chatMessages || document).querySelector('.message');
+    const prevTopOffset = firstMsgBefore ? firstMsgBefore.getBoundingClientRect().top : 0;
     const prevChatScrollHeight = chatMessages ? chatMessages.scrollHeight : 0;
     const prevChatScrollTop = chatMessages ? chatMessages.scrollTop : 0;
     const prevFsScrollHeight = fullscreenChatMain ? fullscreenChatMain.scrollHeight : 0;
     const prevFsScrollTop = fullscreenChatMain ? fullscreenChatMain.scrollTop : 0;
-    const prevDocHeight = document.documentElement.scrollHeight;
-    const prevWindowScrollY = window.scrollY;
 
     renderMessageSliceIntoDOM(slice, true);
 
-    // If user was at top (< 60px) or clicked load button: DO NOT push them down!
-    // If user was reading in the middle (> 60px): preserve reading position smoothly
-    if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
-      if (chatIsAtBottom) {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      } else if (prevChatScrollTop > 60) {
+    // Pixel-perfect zero-jump anchor restoration via bounding rect delta
+    if (firstMsgBefore) {
+      const newTopOffset = firstMsgBefore.getBoundingClientRect().top;
+      const delta = newTopOffset - prevTopOffset;
+      if (Math.abs(delta) > 0.5) {
+        if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
+          chatMessages.scrollTop += delta;
+        }
+        if (fullscreenChatMain && fullscreenChatMain.scrollHeight > fullscreenChatMain.clientHeight) {
+          fullscreenChatMain.scrollTop += delta;
+        }
+        if (typeof window !== 'undefined' && document.documentElement.scrollHeight > window.innerHeight + 50) {
+          window.scrollBy({ top: delta, behavior: 'instant' });
+        }
+      }
+    } else {
+      if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
         const diff = chatMessages.scrollHeight - prevChatScrollHeight;
         chatMessages.scrollTop = prevChatScrollTop + diff;
       }
-    }
-
-    if (fullscreenChatMain && fullscreenChatMain.scrollHeight > fullscreenChatMain.clientHeight) {
-      if (fsIsAtBottom) {
-        fullscreenChatMain.scrollTop = fullscreenChatMain.scrollHeight;
-      } else if (prevFsScrollTop > 60) {
+      if (fullscreenChatMain && fullscreenChatMain.scrollHeight > fullscreenChatMain.clientHeight) {
         const diff = fullscreenChatMain.scrollHeight - prevFsScrollHeight;
         fullscreenChatMain.scrollTop = prevFsScrollTop + diff;
-      }
-    }
-
-    if (typeof window !== 'undefined' && (prevWindowScrollY > 0 || winIsAtBottom)) {
-      if (winIsAtBottom) {
-        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
-      } else if (prevWindowScrollY > 60) {
-        const diff = document.documentElement.scrollHeight - prevDocHeight;
-        window.scrollTo({ top: prevWindowScrollY + diff, behavior: 'instant' });
       }
     }
   } catch (err) {
     console.error("Error loading earlier messages chunk:", err);
   } finally {
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        isLoadingEarlierMessages = false;
-        updateTopHistorySentinel(false);
-        if (currentRenderedMessageStartIndex > 0) {
-          hydrateRemainingHistoryProgressively();
-        }
-      });
+      isLoadingEarlierMessages = false;
+      updateTopHistorySentinel(false);
     });
   }
 }
 
 function checkPreemptiveScrollPosition() {
-  if (isInitialSessionLoading || isLoadingEarlierMessages || currentRenderedMessageStartIndex <= 0) return;
+  if (isInitialSessionLoading || isLoadingEarlierMessages || currentRenderedMessageStartIndex <= 0 || scrollPreloadCooldown) return;
 
-  const triggerMargin = 800; // Anticipatory margin: preload when within 800px of top
+  const triggerMargin = 120; // Only trigger when user is within 120px of the top
 
   // 1. Check sidepanel container (#chat-messages)
   if (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) {
     if (chatMessages.scrollTop <= triggerMargin) {
-      loadNextEarlierMessagesBatch();
+      scrollPreloadCooldown = true;
+      setTimeout(() => { scrollPreloadCooldown = false; }, 300);
+      loadNextEarlierMessagesBatch(false);
       return;
     }
   }
@@ -14500,17 +14414,25 @@ function checkPreemptiveScrollPosition() {
   const fullscreenChatMain = document.querySelector('.fullscreen-chat-main');
   if (fullscreenChatMain && fullscreenChatMain.scrollHeight > fullscreenChatMain.clientHeight) {
     if (fullscreenChatMain.scrollTop <= triggerMargin) {
-      loadNextEarlierMessagesBatch();
+      scrollPreloadCooldown = true;
+      setTimeout(() => { scrollPreloadCooldown = false; }, 300);
+      loadNextEarlierMessagesBatch(false);
       return;
     }
   }
 
-  // 3. Check window / document scroll
-  if (typeof window !== 'undefined' && document.body.classList.contains('has-messages')) {
-    const winScroll = window.scrollY || document.documentElement.scrollTop || 0;
-    if (winScroll <= (triggerMargin + 150)) {
-      loadNextEarlierMessagesBatch();
-      return;
+  // 3. Check window / document scroll (ONLY if window itself is the scrollable container)
+  if (typeof window !== 'undefined' && document.documentElement.scrollHeight > window.innerHeight + 50) {
+    const isInnerScrollActive = (chatMessages && chatMessages.scrollHeight > chatMessages.clientHeight) ||
+                                (fullscreenChatMain && fullscreenChatMain.scrollHeight > fullscreenChatMain.clientHeight);
+    if (!isInnerScrollActive) {
+      const winScroll = window.scrollY || document.documentElement.scrollTop || 0;
+      if (winScroll <= triggerMargin) {
+        scrollPreloadCooldown = true;
+        setTimeout(() => { scrollPreloadCooldown = false; }, 300);
+        loadNextEarlierMessagesBatch(false);
+        return;
+      }
     }
   }
 }
@@ -14686,7 +14608,7 @@ async function resumeSession(sessionId) {
   if (welcomeCard) welcomeCard.style.display = 'none';
   document.body.classList.add('has-messages');
 
-  const INITIAL_BATCH_SIZE = 40;
+  const INITIAL_BATCH_SIZE = 35;
   currentRenderedMessageStartIndex = Math.max(0, conversationHistory.length - INITIAL_BATCH_SIZE);
   const initialSlice = conversationHistory.slice(currentRenderedMessageStartIndex);
 
@@ -14699,14 +14621,13 @@ async function resumeSession(sessionId) {
   // Force scroll view to land firmly on the very latest message at the bottom
   forceScrollChatToBottom();
 
-  // Release loading guard, arm reverse infinite scroll, and begin progressive background hydration
+  // Release loading guard and arm reverse infinite scroll
   setTimeout(() => {
     isInitialSessionLoading = false;
     isLoadingEarlierMessages = false;
     initReverseInfiniteScroll();
     forceScrollChatToBottom();
-    hydrateRemainingHistoryProgressively();
-  }, 120);
+  }, 100);
 
   updateFooterStatus("Sesi Dimuat");
   setTimeout(() => updateFooterStatus("Agent Ready"), 1500);
@@ -14754,10 +14675,6 @@ function resetChatMessagesUI() {
   } else if (typeof window !== 'undefined' && typeof window.closeOpenDesignCanvas === 'function') {
     window.closeOpenDesignCanvas();
   }
-  if (progressiveHydrationTimer) {
-    clearTimeout(progressiveHydrationTimer);
-    progressiveHydrationTimer = null;
-  }
   currentRenderedMessageStartIndex = 0;
   const oldSentinel = document.getElementById('chat-history-top-sentinel');
   if (oldSentinel) oldSentinel.remove();
@@ -14781,10 +14698,6 @@ function resetChatMessagesUI() {
 }
 
 function startNewChat() {
-  if (progressiveHydrationTimer) {
-    clearTimeout(progressiveHydrationTimer);
-    progressiveHydrationTimer = null;
-  }
   currentRenderedMessageStartIndex = 0;
   if (isExecuting) {
     cancelExecution();
