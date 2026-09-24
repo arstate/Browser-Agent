@@ -1156,7 +1156,8 @@ def extract_text_preview(content):
     if not content:
         return ""
     if isinstance(content, str):
-        return content[:120]
+        c = content.split("=== 🕒 DYNAMIC EXECUTION CONTEXT")[0].split("=== CURRENT REAL-TIME TEMPORAL CONTEXT")[0].strip()
+        return c[:120]
     if isinstance(content, list):
         text_parts = []
         for part in content:

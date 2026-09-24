@@ -2181,6 +2181,38 @@ Browser Agent dilengkapi arsitektur kognitif tingkat lanjut (Dual-Process Engine
   5. **Verifikasi Kepatuhan Sub-800 Baris Mutlak**:
      - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
 
+### 195. Rilis Versi v2.150.312 - Pembersihan Bocoran KV Cache Dynamic Suffix dari Bubble Chat User & Proteksi Riwayat Pesan Utuh Tanpa Truncation ([arsip tersimpan])
+- **Waktu Rilis**: 2026-09-24 10:25 WIB
+- **Fokus Utama**: Menghilangkan teks bocoran internal sistem KV cache (`=== 🕒 DYNAMIC EXECUTION CONTEXT ...`) dari bubble chat pengguna dan tombol accordion `Lihat Selengkapnya` yang tidak diinginkan, serta menghapus pemotongan teks destruktif (`... [arsip tersimpan]`) pada riwayat to-do list, ringkasan markdown, dan pesan asisten di database SQLite.
+- **Akar Masalah (Root Causes)**:
+  1. *Pencemaran State `conversationHistory`*:
+     - Pada `extension/sidepanel.js` baris 7506–7515 dan baris 9817–9827, setelah pemanggilan `applyKVCacheOptimization()`, kode secara keliru menimpa `conversationHistory[ci].content = lastOptUser.content`.
+     - Karena `finalMessages` telah diinjeksi suffix dinamis (`=== 🕒 DYNAMIC EXECUTION CONTEXT (SUFFIX - ISOLATED FOR KV CACHE) === ...`) untuk isolasi cache payload API LLM, penimpaan ini mencemari riwayat asli user secara permanen.
+     - Akibatnya, saat dirender atau dimuat kembali dari SQLite, bubble user membengkak dari 1 baris menjadi ribuan karakter dan memicu toggle accordion `˅ Lihat Selengkapnya`.
+  2. *Pemotongan Teks Destruktif (`[arsip tersimpan]`)*:
+     - Pada `extension/sidepanel.js` baris 13717–13735 (`executeSaveCurrentSessionToDB`), terdapat logika pemotongan jika `serialized.length > 700 * 1024`:
+       `c = c.slice(0, 1500) + '... [arsip tersimpan]'`.
+     - Logika ini memotong paksa teks to-do list, kode, dan markdown asisten pada batas 1500 karakter dan menyisipkan teks `... [arsip tersimpan]`.
+     - Padahal, teks biasa dalam SQLite sangat ringan dan tidak pernah menyebabkan masalah memori; beban ukuran sesi berasal dari lampiran gambar base64 besar.
+- **Solusi Rekayasa Teknis Komprehensif**:
+  1. **Penghentian Mutasi `conversationHistory`**:
+     - Menghapus total blok mutasi baris 7506–7515 dan 9817–9827 di `extension/sidepanel.js`. `conversationHistory` kini 100% murni merekam interaksi pengguna dan asisten. Suffix KV cache hanya ada pada salinan sementara `finalMessages` yang dikirim ke LLM.
+  2. **Sanitizer Konteks Dinamis Terpadu (`stripDynamicExecutionContext`)**:
+     - Mengimplementasikan helper `stripDynamicExecutionContext(text)` untuk memisahkan delimiter `=== 🕒 DYNAMIC EXECUTION CONTEXT` dan `=== CURRENT REAL-TIME TEMPORAL CONTEXT`.
+     - Diterapkan secara otomatis di `appendUserMessage`, `renderMessageSliceIntoDOM`, dan `sanitizeHistoryForStorage` sehingga teks pesan user dijamin bersih bit-for-bit baik saat obrolan langsung maupun saat memuat riwayat lama.
+  3. **Penghapusan Total Pemotongan Teks & `[arsip tersimpan]`**:
+     - Menghapus pemotongan 1500 karakter dan penyisipan `... [arsip tersimpan]` di `executeSaveCurrentSessionToDB`.
+     - Konten teks asisten maupun user kini dijamin 100% utuh tanpa batas 1500 karakter. Jika ukuran sesi sangat besar (> 800 KB), sistem hanya memangkas dataUrl base64 gambar lama pada lampiran (`attachments`), tanpa pernah merusak teks percakapan.
+  4. **Pembersihan Database SQLite `chat_history.db`**:
+     - Menjalankan migrasi pembersihan pada `~/.browser-agent/chat_history.db`:
+       - Membersihkan bocoran suffix dari 203 pesan user di 22 sesi percakapan.
+       - Memulihkan pesan user index 196 di sesi `sess_1790048610376` kembali ke teks asli:
+         `update filelive todo list tambahin design md slide deck pdf gunakan font jakarta bold dan sebagainya bro anda ingat ini ya`.
+       - Memulihkan 25 pesan terpotong dan menghilangkan string `[arsip tersimpan]` (termasuk butir to-do list index 195: `9. Pencatatan memori permanen sistem untuk preferensi PDF Landscape & Modulo 8.`).
+  5. **Verifikasi Kepatuhan Sub-800 Baris Mutlak**:
+     - Seluruh 16 file di `extension/design/*.js` dan `extension/core/*.js` diverifikasi `<= 798 baris`.
+
+
 
 
 

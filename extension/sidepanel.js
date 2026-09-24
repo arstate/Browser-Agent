@@ -480,12 +480,20 @@ function formatUserMentions(text) {
   return escaped;
 }
 
+function stripDynamicExecutionContext(text) {
+  if (typeof text !== 'string') return text;
+  return text
+    .split(/===\s*🕒?\s*DYNAMIC EXECUTION CONTEXT/i)[0]
+    .split(/===\s*CURRENT REAL-TIME TEMPORAL CONTEXT/i)[0]
+    .trim();
+}
+
 function parseUserMessageStructure(text) {
   if (!text || typeof text !== 'string') {
     return { agentsSectionHtml: '', appsSectionHtml: '', cleanPromptText: '', hasTags: false };
   }
 
-  const rawText = text.trim();
+  const rawText = stripDynamicExecutionContext(text).trim();
   const agentBadges = [];
   const appBadges = [];
   let textToClean = rawText;
@@ -7503,17 +7511,6 @@ Tugas Anda:
             );
             finalMessages = kvRes.messages;
             finalTools = kvRes.tools;
-            if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
-              for (let ci = conversationHistory.length - 1; ci >= 0; ci--) {
-                if (conversationHistory[ci].role === 'user') {
-                  const lastOptUser = finalMessages.slice().reverse().find(m => m.role === 'user');
-                  if (lastOptUser && typeof lastOptUser.content === 'string') {
-                    conversationHistory[ci].content = lastOptUser.content;
-                  }
-                  break;
-                }
-              }
-            }
           }
           if (typeof injectProviderCacheControl === 'function') {
             const ccRes = injectProviderCacheControl(finalMessages, finalTools, endpointUrl, activeModelChoice);
@@ -9814,17 +9811,6 @@ async function runChatModeLoop(userMessage, attachments = [], explicitMentions =
               kvPluginConfig
             );
             finalMessages = kvRes.messages;
-            if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
-              for (let ci = conversationHistory.length - 1; ci >= 0; ci--) {
-                if (conversationHistory[ci].role === 'user') {
-                  const lastOptUser = finalMessages.slice().reverse().find(m => m.role === 'user');
-                  if (lastOptUser && typeof lastOptUser.content === 'string') {
-                    conversationHistory[ci].content = lastOptUser.content;
-                  }
-                  break;
-                }
-              }
-            }
           }
           if (typeof injectProviderCacheControl === 'function') {
             const ccRes = injectProviderCacheControl(finalMessages, [], endpointUrl, activeModelChoice);
@@ -10191,7 +10177,7 @@ function appendUserMessage(text, attachments = [], autoScroll = true, attachToDo
   if (typeof text === 'object' && text !== null) {
     text = text.text || "";
   }
-  const cleanText = (typeof text === 'string' ? text.trim() : "");
+  const cleanText = stripDynamicExecutionContext(typeof text === 'string' ? text.trim() : "");
   const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
   
   if (!cleanText && !hasAttachments) return null;
@@ -13452,16 +13438,22 @@ function sanitizeHistoryForStorage(history) {
     if (msg.role === 'tool') {
       content = '{"status":"success"}';
     } else if (typeof content === 'string') {
+      if (msg.role === 'user') {
+        content = stripDynamicExecutionContext(content);
+      }
       if (content.includes('data:image/')) {
         content = content.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[gambar tersimpan]');
       }
-      if (content.length > 15000) {
-        content = content.slice(0, 15000) + '... [storage truncated]';
+      if (content.length > 40000) {
+        content = content.slice(0, 40000) + '... [storage truncated]';
       }
     } else if (Array.isArray(content)) {
       content = content.map(part => {
         if (part && part.type === 'image_url') {
           return { type: 'text', text: '[Lampiran Gambar / Video Frame]' };
+        }
+        if (msg.role === 'user' && part && typeof part.text === 'string') {
+          return { ...part, text: stripDynamicExecutionContext(part.text) };
         }
         return part;
       });
@@ -13496,10 +13488,15 @@ function sanitizeHistoryForStorage(history) {
       });
     }
 
+    const cleanDisplayContent = msg.role === 'tool' ? "" : (
+      (typeof msg.displayContent === 'string') ? stripDynamicExecutionContext(msg.displayContent).slice(0, 2000) : (
+        (typeof content === 'string') ? stripDynamicExecutionContext(content).slice(0, 2000) : ""
+      )
+    );
     const clean = {
       role: msg.role,
       content: content,
-      displayContent: msg.role === 'tool' ? "" : ((typeof msg.displayContent === 'string') ? msg.displayContent.slice(0, 2000) : (typeof msg.content === 'string' ? msg.content.slice(0, 2000) : ""))
+      displayContent: cleanDisplayContent
     };
     if (attachments && attachments.length > 0) clean.attachments = attachments;
     if (msg.name) clean.name = msg.name;
@@ -13640,12 +13637,12 @@ async function executeSaveCurrentSessionToDB() {
     for (const m of sanitizedMessages) {
       if (m.role === 'user' && m.content) {
         if (typeof m.content === 'string') {
-          const t = m.content.trim();
+          const t = stripDynamicExecutionContext(m.content).trim();
           if (t) { previewText = t.slice(0, 150); break; }
         } else if (Array.isArray(m.content)) {
           const textPart = m.content.find(p => p.type === 'text' || p.text);
           if (textPart?.text) {
-            const t = textPart.text.trim();
+            const t = stripDynamicExecutionContext(textPart.text).trim();
             if (t) { previewText = t.slice(0, 150); break; }
           }
         }
@@ -13653,7 +13650,7 @@ async function executeSaveCurrentSessionToDB() {
     }
     if (!previewText && sanitizedMessages[0]) {
       const c = sanitizedMessages[0].content;
-      previewText = (typeof c === 'string' ? c : "").trim().slice(0, 150);
+      previewText = stripDynamicExecutionContext(typeof c === 'string' ? c : "").trim().slice(0, 150);
     }
 
     const sessionData = {
@@ -13714,22 +13711,24 @@ async function executeSaveCurrentSessionToDB() {
       if (nativePort) {
         let rpcSession = sessionData;
         let serialized = JSON.stringify({ session: rpcSession });
-        if (serialized.length > 700 * 1024 && Array.isArray(rpcSession.messages)) {
-          // Preserve 100% of messages: compress text of older messages instead of slicing array
+        if (serialized.length > 800 * 1024 && Array.isArray(rpcSession.messages)) {
+          // Preserve 100% of messages and text intact; only strip oversized binary base64 in attachments of older messages
           rpcSession = {
             ...sessionData,
             messages: rpcSession.messages.map((m, idx, arr) => {
-              if (idx >= arr.length - 15) return m;
-              let c = m.content;
-              if (typeof c === 'string' && c.length > 1500) {
-                c = c.slice(0, 1500) + '... [arsip tersimpan]';
+              if (idx >= arr.length - 10) return m;
+              let cleanAttachments = m.attachments;
+              if (Array.isArray(cleanAttachments)) {
+                cleanAttachments = cleanAttachments.map(att => {
+                  if (att && att.dataUrl && att.dataUrl.length > 10000) {
+                    return { ...att, dataUrl: att.thumbnailUrl || "" };
+                  }
+                  return att;
+                });
               }
               return {
-                role: m.role,
-                content: c,
-                tool_calls: m.tool_calls,
-                tool_call_id: m.tool_call_id,
-                agentInfo: m.agentInfo
+                ...m,
+                attachments: cleanAttachments
               };
             })
           };
@@ -14170,15 +14169,15 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
       const hasAttachments = Array.isArray(msg.attachments) && msg.attachments.length > 0;
       let displayText = "";
       if (typeof msg.displayContent === 'string') {
-        displayText = msg.displayContent;
+        displayText = stripDynamicExecutionContext(msg.displayContent);
       } else if (!hasAttachments) {
         if (typeof msg.content === 'string') {
-          displayText = msg.content;
+          displayText = stripDynamicExecutionContext(msg.content);
         } else if (typeof msg.content === 'object' && msg.content !== null && typeof msg.content.text === 'string') {
-          displayText = msg.content.text;
+          displayText = stripDynamicExecutionContext(msg.content.text);
         }
       }
-      const cleanDisplay = typeof displayText === 'string' ? displayText.trim() : "";
+      const cleanDisplay = typeof displayText === 'string' ? stripDynamicExecutionContext(displayText).trim() : "";
       if ((cleanDisplay && cleanDisplay !== "{}" && cleanDisplay !== "[object Object]") || hasAttachments) {
         const userBubble = appendUserMessage(cleanDisplay, msg.attachments || [], false, false, {
           deckTitle: msg.deckTitle,
