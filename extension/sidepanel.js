@@ -8005,7 +8005,8 @@ Tugas Anda:
             });
             conversationHistory.push({
               role: "user",
-              content: visualParts
+              content: visualParts,
+              isInternal: true
             });
           }
           pendingVisualDocPages = [];
@@ -8038,7 +8039,8 @@ Tugas Anda:
           const criticPrompt = SemanticCriticEngine.generateTargetedCriticPrompt(qualityEvaluation, refineCount);
           conversationHistory.push({
             role: "user",
-            content: criticPrompt
+            content: criticPrompt,
+            isInternal: true
           });
           updateAssistantActiveAgent(assistantBubble, "Master Agent", `Audit Kualitas: Menyempurnakan poin yang kurang (#${refineCount})...`, true, false);
           updateFooterStatus(`Master Agent: Menyempurnakan detail jawaban (#${refineCount})...`);
@@ -8057,7 +8059,8 @@ Tugas Anda:
             : GoalTracker.generateGoalContinuationPrompt(activeGoalMilestones);
           conversationHistory.push({
             role: "user",
-            content: contPrompt
+            content: contPrompt,
+            isInternal: true
           });
           updateAssistantActiveAgent(assistantBubble, "Master Agent", "Melanjutkan eksekusi langkah berikutnya...", true, false);
           updateFooterStatus("Master Agent: Melanjutkan eksekusi langkah berikutnya...");
@@ -13418,6 +13421,28 @@ chrome.storage.onChanged.addListener((changes, area) => {
 // =========================================================================
 // SQLite Chat History & Resume Management
 // =========================================================================
+function isInternalSystemMessage(msg) {
+  if (!msg) return false;
+  if (msg.isInternal === true) return true;
+  const rawContent = typeof msg.content === 'string'
+    ? msg.content
+    : (Array.isArray(msg.content)
+        ? msg.content.map(p => (typeof p === 'string' ? p : (p?.text || ''))).join(' ')
+        : (typeof msg.content?.text === 'string' ? msg.content.text : ''));
+  if (
+    rawContent.includes('[SISTEM PENDAMPING EKSEKUSI]') ||
+    rawContent.includes('[AUDIT KUALITAS INTERNAL]') ||
+    rawContent.includes('[Inspeksi Visual Dokumen:') ||
+    rawContent.includes('📋 [SISTEM PENDAMPING EKSEKUSI]') ||
+    rawContent.includes('🎯 [SISTEM PENDAMPING EKSEKUSI]') ||
+    rawContent.includes('👁️ [Inspeksi Visual Dokumen:') ||
+    rawContent.includes('[SISTEM KRITIK OTONOM]')
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function sanitizeHistoryForStorage(history) {
   if (!Array.isArray(history)) return [];
 
@@ -13493,11 +13518,13 @@ function sanitizeHistoryForStorage(history) {
         (typeof content === 'string') ? stripDynamicExecutionContext(content).slice(0, 2000) : ""
       )
     );
+    const isInternalMsg = !!msg.isInternal || isInternalSystemMessage(msg);
     const clean = {
       role: msg.role,
       content: content,
       displayContent: cleanDisplayContent
     };
+    if (isInternalMsg) clean.isInternal = true;
     if (attachments && attachments.length > 0) clean.attachments = attachments;
     if (msg.name) clean.name = msg.name;
     if (msg.tool_calls) clean.tool_calls = msg.tool_calls;
@@ -13635,7 +13662,7 @@ async function executeSaveCurrentSessionToDB() {
     // Extract clean preview from user messages
     let previewText = "";
     for (const m of sanitizedMessages) {
-      if (m.role === 'user' && m.content) {
+      if (m.role === 'user' && !isInternalSystemMessage(m) && m.content) {
         if (typeof m.content === 'string') {
           const t = stripDynamicExecutionContext(m.content).trim();
           if (t) { previewText = t.slice(0, 150); break; }
@@ -13648,9 +13675,12 @@ async function executeSaveCurrentSessionToDB() {
         }
       }
     }
-    if (!previewText && sanitizedMessages[0]) {
-      const c = sanitizedMessages[0].content;
-      previewText = stripDynamicExecutionContext(typeof c === 'string' ? c : "").trim().slice(0, 150);
+    if (!previewText) {
+      const firstRealUserMsg = sanitizedMessages.find(m => m.role === 'user' && !isInternalSystemMessage(m));
+      if (firstRealUserMsg) {
+        const c = firstRealUserMsg.content;
+        previewText = stripDynamicExecutionContext(typeof c === 'string' ? c : (firstRealUserMsg.displayContent || "")).trim().slice(0, 150);
+      }
     }
 
     const sessionData = {
@@ -14166,6 +14196,12 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
     const msg = messagesSlice[i];
 
     if (msg.role === 'user') {
+      // Filter out internal system continuation / critic prompts
+      if (isInternalSystemMessage(msg)) {
+        // Do NOT reset currentAssistantBubble = null here, so next assistant chunk merges smoothly!
+        continue;
+      }
+
       currentAssistantBubble = null;
       const hasAttachments = Array.isArray(msg.attachments) && msg.attachments.length > 0;
       let displayText = "";
@@ -14234,10 +14270,18 @@ function renderMessageSliceIntoDOM(messagesSlice, prepend = false) {
         if (!currentAssistantBubble) {
           currentAssistantBubble = appendAssistantMessage(textToDisplay, false, msg.agentInfo, false, false);
           if (currentAssistantBubble) {
+            currentAssistantBubble._accumulatedText = textToDisplay;
             fragment.appendChild(currentAssistantBubble);
           }
         } else {
-          updateAssistantText(currentAssistantBubble, textToDisplay);
+          // Assistant bubble continuation: Merge seamlessly if previous text exists
+          const prevText = currentAssistantBubble._accumulatedText || "";
+          if (prevText && !prevText.includes(textToDisplay) && !textToDisplay.includes(prevText)) {
+            currentAssistantBubble._accumulatedText = prevText + "\n\n" + textToDisplay;
+          } else if (textToDisplay.length > prevText.length) {
+            currentAssistantBubble._accumulatedText = textToDisplay;
+          }
+          updateAssistantText(currentAssistantBubble, currentAssistantBubble._accumulatedText);
         }
 
         // Render OpenDesign card if artifact exists or can be extracted
